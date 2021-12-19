@@ -9,10 +9,9 @@ __all__ = ["_BaseWindowForecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.model_selection import CutoffSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.datatypes._panel._convert import _get_time_index
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.model_selection import CutoffSplitter, SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_cv
 
@@ -20,10 +19,12 @@ from sktime.utils.validation.forecasting import check_cv
 class _BaseWindowForecaster(BaseForecaster):
     """Base class for forecasters that use sliding windows."""
 
-    def __init__(self, window_length=None):
+    def __init__(self, window_length=None, transformers=None):
         super(_BaseWindowForecaster, self).__init__()
         self.window_length = window_length
         self.window_length_ = None
+        self.transformers = transformers
+        self.transformers_ = None
 
     def update_predict(
         self,
@@ -55,6 +56,7 @@ class _BaseWindowForecaster(BaseForecaster):
             cv = SlidingWindowSplitter(
                 self.fh.to_relative(self.cutoff),
                 window_length=self.window_length_,
+                transformers=self.transformers_,
                 start_with_window=False,
             )
         return self._predict_moving_cutoff(
@@ -113,7 +115,13 @@ class _BaseWindowForecaster(BaseForecaster):
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
         index = fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+
+        if isinstance(y_pred.index, pd.MultiIndex):
+            y_return = y_pred
+        else:
+            y_return = pd.Series(y_pred, index=index)
+
+        return y_return
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -171,11 +179,35 @@ class _BaseWindowForecaster(BaseForecaster):
         cutoff = self.cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
 
-        # Get the last window of the endogenous variable.
-        y = self._y.loc[start:cutoff].to_numpy()
+        if isinstance(self._y.index, pd.MultiIndex):
 
-        # If X is given, also get the last window of the exogenous variables.
-        X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+            # Get the last window of the endogenous variable.
+            y = self._y.query("Period >= @start & Period <= @cutoff")
+
+            # If X is given, also get the last window of the exogenous variables.
+            X = (
+                self._X.query("Period >= @start & Period <= @cutoff")
+                if self._X is not None
+                else None
+            )
+
+            X_from_y = self.transformers[0].fit().transform(y)
+            X_from_y_cut = X_from_y.groupby(level=0).tail(1)
+            #    X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
+            # fix maxlag to take lag into account
+            X_cut = X.groupby(level=0).tail(1)
+
+            z = pd.concat([X_from_y_cut, X_cut], axis=1)
+
+            # X_cut = X.groupby(level=0).tail(n_timepoints-maxlag)
+            X = z.drop("y", axis=1)
+            y = y.groupby(level=0).tail(1)
+        else:
+            # Get the last window of the endogenous variable.
+            y = self._y.loc[start:cutoff].to_numpy()
+
+            # If X is given, also get the last window of the exogenous variables.
+            X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
 
         return y, X
 
@@ -217,6 +249,61 @@ class _BaseWindowForecaster(BaseForecaster):
             raise NotImplementedError()
         self.update(y, X, update_params=update_params)
         return self._predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def _get_shifted_window(self, y_update, X_update, shift, X_last):
+        """Select last window."""
+        # Get the start and end points of the last window.
+        cutoff = _shift(self.cutoff, by=shift)
+        start = _shift(cutoff, by=-self.window_length_ + 1)
+
+        # danbartl: need to transform
+
+        if isinstance(self._y.index, pd.MultiIndex):
+            # Get the last window of the endogenous variable.
+
+            # If X is given, also get the last window of the exogenous variables.
+            dateline = pd.date_range(start=start, end=cutoff, freq=start.freq)
+            tsids = X_update.index.get_level_values("ts_id").unique()
+
+            mi = pd.MultiIndex.from_product(
+                [tsids, dateline], names=["ts_id", "Period"]
+            )
+
+            # Create new y with old values and new forecasts
+            y = pd.DataFrame(index=mi, columns=["y"])
+            y.update(self._y)
+            y.update(y_update)
+
+            # Create new X with old values and new features derived from forecasts
+            X = pd.DataFrame(index=mi, columns=self._X.columns)
+            X.update(self._X)
+            X.update(X_update)
+
+            y = y.query("Period >= @start & Period <= @cutoff")
+            X_cut = X_update.query("Period == @cutoff")
+
+            ts_index = _get_time_index(y)
+            n_timepoints = ts_index.shape[0]
+
+            X_from_y = self.transformers[0].fit().transform(y)
+            X_from_y_cut = X_from_y.groupby(level=0).tail(
+                n_timepoints - self.window_length + 1
+            )
+            # X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
+            X_cut = X.groupby(level=0).tail(n_timepoints - self.window_length + 1)
+
+            X = pd.concat([X_from_y_cut, X_cut], axis=1)
+
+            # X_cut = X.groupby(level=0).tail(n_timepoints-maxlag)
+            X = X.drop("y", axis=1)
+            y = y.groupby(level=0).tail(1)
+        else:
+            # Get the last window of the endogenous variable.
+            y = self._y.loc[start:cutoff].to_numpy()
+            # If X is given, also get the last window of the exogenous variables.
+            X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+
+        return X
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

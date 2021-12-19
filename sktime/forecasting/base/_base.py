@@ -36,6 +36,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype
+from sktime.datatypes._panel._convert import _get_time_index
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index, check_series
@@ -200,12 +201,15 @@ class BaseForecaster(BaseEstimator):
             )
 
             # convert to output mtype, identical with last y mtype seen
-            y_out = convert_to(
-                y_pred,
-                self._y_mtype_last_seen,
-                as_scitype="Series",
-                store=self._converter_store_y,
-            )
+            if isinstance(y_pred.index, pd.MultiIndex):
+                y_out = y_pred
+            else:
+                y_out = convert_to(
+                    y_pred,
+                    self._y_mtype_last_seen,
+                    as_scitype="Series",
+                    store=self._converter_store_y,
+                )
 
             return y_out
 
@@ -721,25 +725,30 @@ class BaseForecaster(BaseEstimator):
         enforce_index_type = self.get_tag("enforce_index_type")
 
         # checking y
+
+        # danbartl: checks disabled
+
         if y is not None:
-            check_y_args = {
-                "enforce_univariate": enforce_univariate,
-                "enforce_multivariate": enforce_multivariate,
-                "enforce_index_type": enforce_index_type,
-                "allow_None": False,
-                "allow_empty": True,
-            }
+            if not isinstance(y.index, pd.MultiIndex):
+                check_y_args = {
+                    "enforce_univariate": enforce_univariate,
+                    "enforce_multivariate": enforce_multivariate,
+                    "enforce_index_type": enforce_index_type,
+                    "allow_None": False,
+                    "allow_empty": True,
+                }
 
-            y = check_series(y, **check_y_args, var_name="y")
+                y = check_series(y, **check_y_args, var_name="y")
 
-            self._y_mtype_last_seen = mtype(y, as_scitype="Series")
+                self._y_mtype_last_seen = mtype(y, as_scitype="Series")
         # end checking y
 
         # checking X
         if X is not None:
-            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-            if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+            if not isinstance(X.index, pd.MultiIndex):
+                X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+                if self.get_tag("X-y-must-have-same-index"):
+                    check_equal_time_index(X, y)
         # end checking X
 
         # convert X & y to supported inner type, if necessary
@@ -750,20 +759,24 @@ class BaseForecaster(BaseEstimator):
         # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=self._converter_store_y,
-        )
+        if not isinstance(X.index, pd.MultiIndex):
+            y_inner_mtype = self.get_tag("y_inner_mtype")
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype="Series",  # we are dealing with series
+                store=self._converter_store_y,
+            )
 
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-        )
+            X_inner_mtype = self.get_tag("X_inner_mtype")
+            X_inner = convert_to(
+                X,
+                to_type=X_inner_mtype,
+                as_scitype="Series",  # we are dealing with series
+            )
+        else:
+            y_inner = y
+            X_inner = X
 
         return X_inner, y_inner
 
@@ -888,13 +901,20 @@ class BaseForecaster(BaseEstimator):
         -----
         Set self._cutoff to last index seen in `y`.
         """
-        y_mtype = mtype(y, as_scitype="Series")
+        # y_mtype = mtype(y, as_scitype="Series")
 
-        if len(y) > 0:
+        # danbartl: not sure why mtype inference does not work
+        # y_mtype = mtype(y, as_scitype="Series")
+        # danbartl: manual override
+        y_mtype = "pd.DataFrame"
+
+        ts_index = _get_time_index(y)
+
+        if len(ts_index) > 0:
             if y_mtype in ["pd.Series", "pd.DataFrame"]:
-                self._cutoff = y.index[-1]
+                self._cutoff = ts_index[-1]
             elif y_mtype == "np.ndarray":
-                self._cutoff = len(y)
+                self._cutoff = len(ts_index)
             else:
                 raise TypeError("y does not have a supported type")
 

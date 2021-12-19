@@ -15,7 +15,13 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (
+    pd.Int64Index,
+    pd.RangeIndex,
+    pd.PeriodIndex,
+    pd.DatetimeIndex,
+    pd.MultiIndex,
+)
 
 
 def _check_is_univariate(y, var_name="input"):

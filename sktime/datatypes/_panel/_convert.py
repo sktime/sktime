@@ -386,10 +386,16 @@ def _get_time_index(X):
     # assumes that all samples share the same the time index, only looks at
     # first row
     if isinstance(X, pd.DataFrame):
-        return _get_index(X.iloc[0, 0])
+        if isinstance(X.index, pd.MultiIndex):
+            return X.xs(X.index.get_level_values("ts_id")[0], level="ts_id").index
+        else:
+            return _get_index(X.iloc[0, 0])
 
     elif isinstance(X, pd.Series):
-        return _get_index(X.iloc[0])
+        if isinstance(X.index, pd.MultiIndex):
+            return X.xs(X.index.get_level_values("ts_id")[0], level="ts_id").index
+        else:
+            return _get_index(X.iloc[0])
 
     elif isinstance(X, np.ndarray):
         return _get_index(X)

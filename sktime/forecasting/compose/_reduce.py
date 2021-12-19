@@ -25,8 +25,10 @@ __all__ = [
 ]
 
 import numpy as np
+import pandas as pd
 from sklearn.base import RegressorMixin, clone
 
+from sktime.datatypes._panel._convert import _get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -52,7 +54,7 @@ def _check_fh(fh):
 
 
 def _sliding_window_transform(
-    y, window_length, fh, X=None, scitype="tabular-regressor"
+    y, window_length, transformers, fh, X=None, scitype="tabular-regressor"
 ):
     """Transform time series data using sliding window.
 
@@ -86,51 +88,67 @@ def _sliding_window_transform(
     # There are different ways to implement this transform. Pre-allocating an
     # array and filling it by iterating over the window length seems to be the most
     # efficient one.
-    n_timepoints = y.shape[0]
+
+    ts_index = _get_time_index(y)
+
+    n_timepoints = ts_index.shape[0]
     window_length = check_window_length(window_length, n_timepoints)
 
-    z = _concat_y_X(y, X)
-    n_timepoints, n_variables = z.shape
+    if isinstance(y.index, pd.MultiIndex):
+        # danbartl: how to implement iteration over all transformers?
+        X_from_y = transformers[0].fit().transform(y)
+        X_from_y_cut = X_from_y.groupby(level=0).tail(n_timepoints - window_length + 1)
+        #    X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
+        # fix maxlag to take lag into account
+        X_cut = X.groupby(level=0).tail(n_timepoints - window_length + 1)
 
-    fh = _check_fh(fh)
-    fh_max = fh[-1]
+        z = pd.concat([X_from_y_cut, X_cut], axis=1)
+        yt = z[["y"]]
+        Xt = z.drop("y", axis=1)
+    else:
+        z = _concat_y_X(y, X)
+        n_timepoints, n_variables = z.shape
 
-    if window_length + fh_max >= n_timepoints:
-        raise ValueError(
-            "The `window_length` and `fh` are incompatible with the length of `y`"
+        fh = _check_fh(fh)
+        fh_max = fh[-1]
+
+        if window_length + fh_max >= n_timepoints:
+            raise ValueError(
+                "The `window_length` and `fh` are incompatible with the length of `y`"
+            )
+
+        # Get the effective window length accounting for the forecasting horizon.
+        effective_window_length = window_length + fh_max
+        Zt = np.zeros(
+            (
+                n_timepoints + effective_window_length,
+                n_variables,
+                effective_window_length + 1,
+            )
         )
 
-    # Get the effective window length accounting for the forecasting horizon.
-    effective_window_length = window_length + fh_max
+        # Transform data.
+        for k in range(effective_window_length + 1):
+            i = effective_window_length - k
+            j = n_timepoints + effective_window_length - k
+            Zt[i:j, :, k] = z
 
+        # Truncate data, selecting only full windows, discarding incomplete ones.
+        Zt = Zt[effective_window_length:-effective_window_length]
+
+        # Return transformed feature and target variables separately. This
+        # excludes contemporaneous values of the exogenous variables. Including them
+        # would lead to unequal-length data, with more time points for
+        # exogenous series than the target series, which is currently not supported.
+        yt = Zt[:, 0, window_length + fh]
+        Xt = Zt[:, :, :window_length]
     # Pre-allocate array for sliding windows.
-    Zt = np.zeros(
-        (
-            n_timepoints + effective_window_length,
-            n_variables,
-            effective_window_length + 1,
-        )
-    )
-
-    # Transform data.
-    for k in range(effective_window_length + 1):
-        i = effective_window_length - k
-        j = n_timepoints + effective_window_length - k
-        Zt[i:j, :, k] = z
-
-    # Truncate data, selecting only full windows, discarding incomplete ones.
-    Zt = Zt[effective_window_length:-effective_window_length]
-
-    # Return transformed feature and target variables separately. This excludes
-    # contemporaneous values of the exogenous variables. Including them would lead to
-    # unequal-length data, with more time points for exogenous series than the target
-    # series, which is currently not supported.
-    yt = Zt[:, 0, window_length + fh]
-    Xt = Zt[:, :, :window_length]
-
     # If the scitype is tabular regression, we have to convert X into a 2d array.
     if scitype == "tabular-regressor":
-        return yt, Xt.reshape(Xt.shape[0], -1)
+        if isinstance(y.index, pd.MultiIndex):
+            return yt, Xt
+        else:
+            return yt, Xt.reshape(Xt.shape[0], -1)
     else:
         return yt, Xt
 
@@ -140,8 +158,10 @@ class _Reducer(_BaseWindowForecaster):
 
     _required_parameters = ["estimator"]
 
-    def __init__(self, estimator, window_length=10):
-        super(_Reducer, self).__init__(window_length=window_length)
+    def __init__(self, estimator, window_length=10, transformers=None):
+        super(_Reducer, self).__init__(
+            window_length=window_length, transformers=transformers
+        )
         self.estimator = estimator
         self._cv = None
 
@@ -223,8 +243,9 @@ class _DirectReducer(_Reducer):
         y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
-        if not self._is_predictable(y_last):
-            return self._predict_nan(fh)
+        # danbartl- check removed
+        # if not self._is_predictable(y_last):
+        #     return self._predict_nan(fh)
 
         if self._X is None:
             n_columns = 1
@@ -352,7 +373,12 @@ class _RecursiveReducer(_Reducer):
         # used during prediction.
         fh = ForecastingHorizon([1])
         return _sliding_window_transform(
-            y, self.window_length_, fh, X, scitype=self._estimator_scitype
+            y,
+            self.window_length_,
+            self.transformers_,
+            fh,
+            X,
+            scitype=self._estimator_scitype,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -375,10 +401,15 @@ class _RecursiveReducer(_Reducer):
             self.window_length, n_timepoints=len(y)
         )
 
+        self.transformers_ = self.transformers
+
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        yt = yt.ravel()
+        if isinstance(y.index, pd.MultiIndex):
+            yt = yt["y"].ravel()
+        else:
+            yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
@@ -396,46 +427,92 @@ class _RecursiveReducer(_Reducer):
         y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
-        if not self._is_predictable(y_last):
-            return self._predict_nan(fh)
+        # danbartl: remove check
+        # if not self._is_predictable(y_last):
+        #     return self._predict_nan(fh)
+        if isinstance(self._y.index, pd.MultiIndex):
+            fh_max = fh.to_relative(self.cutoff)[-1]
 
-        # Pre-allocate arrays.
-        if X is None:
-            n_columns = 1
+            dateline = pd.date_range(
+                end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
+            )
+            #            fh.to_absolute(self.cutoff).to_pandas()
+            tsids = y_last.index.get_level_values("ts_id")
+
+            mi = pd.MultiIndex.from_product(
+                [tsids, dateline], names=["ts_id", "Period"]
+            )
+
+            y_pred = pd.DataFrame(index=mi, columns=["y"])
+
+            for i in range(fh_max):
+                # Slice prediction window.
+                date_curr = pd.date_range(end=dateline[i], periods=1)
+
+                mi = pd.MultiIndex.from_product(
+                    [tsids, date_curr], names=["ts_id", "Period"]
+                )
+
+                # Generate predictions.
+                y_pred_vector = self.estimator_.predict(X_last)
+                y_pred_curr = pd.DataFrame(y_pred_vector, index=mi, columns=["y"])
+                # fh.to_absolute(self.cutoff).to_pandas()
+                # tsids = y_last.index.get_level_values("ts_id")
+
+                y_pred.update(y_pred_curr)
+                # danbartl: check for horizon larger than one
+
+                X_last = self._get_shifted_window(
+                    y_update=y_pred_curr, X_update=X, shift=i + 1, X_last=X_last
+                )
+
+                # y_pred[i] = self.estimator_.predict(X_pred)
+                # # Update last window with previous prediction.
+                # last[:, 0, window_length + i] = y_pred[i]
         else:
-            n_columns = X.shape[1] + 1
-        window_length = self.window_length_
-        fh_max = fh.to_relative(self.cutoff)[-1]
+            # Pre-allocate arrays.
+            if X is None:
+                n_columns = 1
+            else:
+                n_columns = X.shape[1] + 1
+            window_length = self.window_length_
+            fh_max = fh.to_relative(self.cutoff)[-1]
 
-        y_pred = np.zeros(fh_max)
-        last = np.zeros((1, n_columns, window_length + fh_max))
+            y_pred = np.zeros(fh_max)
+            last = np.zeros((1, n_columns, window_length + fh_max))
 
-        # Fill pre-allocated arrays with available data.
-        last[:, 0, :window_length] = y_last
-        if X is not None:
-            last[:, 1:, :window_length] = X_last.T
-            last[:, 1:, window_length:] = X.T
+            # Fill pre-allocated arrays with available data.
+            last[:, 0, :window_length] = y_last
+            if X is not None:
+                last[:, 1:, :window_length] = X_last.T
+                last[:, 1:, window_length:] = X.T
 
-        # Recursively generate predictions by iterating over forecasting horizon.
-        for i in range(fh_max):
-            # Slice prediction window.
-            X_pred = last[:, :, i : window_length + i]
+            # Recursively generate predictions by iterating over forecasting horizon.
+            for i in range(fh_max):
+                # Slice prediction window.
+                X_pred = last[:, :, i : window_length + i]
 
-            # Reshape data into tabular array.
-            if self._estimator_scitype == "tabular-regressor":
-                X_pred = X_pred.reshape(1, -1)
+                # Reshape data into tabular array.
+                if self._estimator_scitype == "tabular-regressor":
+                    X_pred = X_pred.reshape(1, -1)
 
-            # Generate predictions.
-            y_pred[i] = self.estimator_.predict(X_pred)
+                # Generate predictions.
+                y_pred[i] = self.estimator_.predict(X_pred)
 
-            # Update last window with previous prediction.
-            last[:, 0, window_length + i] = y_pred[i]
+                # Update last window with previous prediction.
+                last[:, 0, window_length + i] = y_pred[i]
 
         # While the recursive strategy requires to generate predictions for all steps
         # until the furthest step in the forecasting horizon, we only return the
         # requested ones.
         fh_idx = fh.to_indexer(self.cutoff)
-        return y_pred[fh_idx]
+
+        if isinstance(self._y.index, pd.MultiIndex):
+            y_return = y_pred
+        else:
+            y_return = y_pred[fh_idx]
+
+        return y_return
 
 
 class _DirRecReducer(_Reducer):
@@ -716,6 +793,7 @@ def make_reduction(
     strategy="recursive",
     window_length=10,
     scitype="infer",
+    transformers=None,
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -757,7 +835,9 @@ def make_reduction(
         scitype = _infer_scitype(estimator)
 
     Forecaster = _get_forecaster(scitype, strategy)
-    return Forecaster(estimator=estimator, window_length=window_length)
+    return Forecaster(
+        estimator=estimator, window_length=window_length, transformers=transformers
+    )
 
 
 def _check_scitype(scitype):
