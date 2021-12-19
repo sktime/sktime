@@ -71,14 +71,14 @@ def _train_test(data, augmentator):
 
 def _calc_checksum(X):
     if isinstance(X, pd.DataFrame):
-        checksum = sum([sum([sum(x) for x in X[c]]) for c in X.columns])
+        checksum = round(sum([sum([sum(x) for x in X[c]]) for c in X.columns]), 6)
     else:
-        checksum = sum(X)
+        checksum = round(sum(X), 6)
     return checksum
 
 
 # Test Data
-expected_checksums_data = [646.1844410000003, -278.36259900000056, 60, 60]
+expected_checksums_data = [646.184441, -278.362599, 60, 60]
 
 
 def test_loaded_data():
@@ -93,11 +93,11 @@ def test_loaded_data():
 # Test WhiteNoiseAugmenter
 expected_shapes_white_noise = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_white_noise = [
-    -353.4417418033514,
-    -450.1602614030863,
-    -373.39111902606186,
-    8730.662994619102,
-    -1181.9703691109278,
+    -353.441742,
+    -450.160261,
+    -373.391119,
+    8730.662995,
+    -1181.970369,
 ]
 
 
@@ -177,11 +177,11 @@ def test_white_noise(parameter):
 # Test InvertAugmenter
 expected_shapes_invert = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_invert = [
-    -321.1576750000005,
-    3027.2553650000013,
-    2039.247608999999,
-    -5084.939050999999,
-    5567.400410999999,
+    -321.157675,
+    3027.255365,
+    2039.247609,
+    -5084.939051,
+    5567.400411,
 ]
 
 
@@ -261,11 +261,11 @@ def test_invert(parameter):
 # Test ReverseAugmenter
 expected_shapes_reverse = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_reverse = [
-    -278.36259900000056,
-    -278.36259900000056,
-    -278.36259900000067,
-    -278.36259900000243,
-    -278.36259900000056,
+    -278.362599,
+    -278.362599,
+    -278.362599,
+    -278.362599,
+    -278.362599,
 ]
 
 
@@ -345,11 +345,11 @@ def test_reverse(parameter):
 # Test ScaleAugmenter
 expected_shapes_scale = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_scale = [
-    -388.9508193002375,
-    -4837.6827805519515,
-    -1166.3225152032387,
-    -360655.26179077814,
-    47750.129927408474,
+    -388.950819,
+    -4837.682781,
+    -1166.322515,
+    -360655.261791,
+    47750.129927,
 ]
 
 
@@ -429,11 +429,11 @@ def test_scale(parameter):
 # Test OffsetAugmenter
 expected_shapes_offset = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_offset = [
-    -18201.91688318999,
-    7238.693795544632,
-    7669.8614458559205,
-    -335331.9467949644,
-    -32685.349670806663,
+    -18201.916883,
+    7238.693796,
+    7669.861446,
+    -335331.946795,
+    -32685.349671,
 ]
 
 
@@ -514,11 +514,11 @@ def test_offset(parameter):
 # Test DriftAugmenter
 expected_shapes_drift = [(40, 6), (40, 6), (40, 6), (40, 6), (40, 6)]
 expected_checksums_drift = [
-    3050.00379820752,
-    -13181.787867767554,
-    1489.572937646976,
-    50027.573433620084,
-    -1089.8973404995957,
+    3050.003798,
+    -13181.787868,
+    1489.572938,
+    50027.573434,
+    -1089.897340,
 ]
 
 
@@ -591,7 +591,6 @@ def test_drift(parameter):
         checksum = _calc_checksum(Xt)
         checksums.append(checksum)
         shapes.append(data[0].shape)
-    print(checksums)
     assert shapes == expected_shapes_drift
     assert checksums == expected_checksums_drift
 
