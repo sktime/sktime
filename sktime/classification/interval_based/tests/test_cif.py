@@ -34,7 +34,6 @@ def test_dtc_on_unit_test_data():
     cif = CanonicalIntervalForest(n_estimators=10, base_estimator="dtc", random_state=0)
     cif.fit(X_train, y_train)
 
-    # assert probabilities are the same
     cif.predict_proba(X_test.iloc[indices])
 
 
@@ -162,36 +161,3 @@ cif_basic_motions_probas = np.array(
         ],
     ]
 )
-
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     cif_u = CanonicalIntervalForest(n_estimators=10, random_state=0)
-#
-#     cif_u.fit(X_train, y_train)
-#     probas = cif_u.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-#
-#     cif_m = CanonicalIntervalForest(n_estimators=10, random_state=0)
-#
-#     cif_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = cif_m.predict_proba(X_test.iloc[indices])
-#     print_array(probas)

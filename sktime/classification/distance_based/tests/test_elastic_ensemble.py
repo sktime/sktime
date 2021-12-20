@@ -71,30 +71,3 @@ ee_unit_test_probas = np.array(
         ],
     ]
 )
-
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     ee = ElasticEnsemble(
-#         proportion_of_param_options=0.1,
-#         proportion_train_for_test=0.1,
-#         random_state=0,
-#     )
-#
-#     ee.fit(X_train, y_train)
-#     probas = ee.predict_proba(X_test.iloc[indices])
-#     print_array(probas)

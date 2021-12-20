@@ -148,35 +148,3 @@ muse_basic_motions_probas = np.array(
         ],
     ]
 )
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     muse_u = MUSE(random_state=0, window_inc=4, use_first_order_differences=False)
-#
-#     muse_u.fit(X_train, y_train)
-#     probas = muse_u.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-#
-#     muse_m = MUSE(random_state=0, window_inc=4, use_first_order_differences=False)
-#
-#     muse_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = muse_m.predict_proba(X_test.iloc[indices])
-#     print_array(probas)

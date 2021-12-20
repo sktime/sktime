@@ -2,9 +2,9 @@
 """HIVE-COTE v1 test code."""
 import numpy as np
 from numpy import testing
+from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.hybrid import HIVECOTEV1
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_unit_test
 
 
@@ -19,7 +19,7 @@ def test_hivecote_v1_on_unit_test_data():
     hc1 = HIVECOTEV1(
         random_state=0,
         stc_params={
-            "estimator": RotationForest(n_estimators=3),
+            "estimator": RandomForestClassifier(n_estimators=3),
             "n_shapelet_samples": 500,
             "max_shapelets": 20,
             "batch_size": 100,
@@ -79,36 +79,3 @@ hivecote_v1_unit_test_probas = np.array(
         ],
     ]
 )
-
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     hc1 = HIVECOTEV1(
-#         random_state=0,
-#         stc_params={
-#             "estimator": RotationForest(n_estimators=3),
-#             "n_shapelet_samples": 500,
-#             "max_shapelets": 20,
-#             "batch_size": 100,
-#         },
-#         tsf_params={"n_estimators": 10},
-#         rise_params={"n_estimators": 10},
-#         cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
-#     )
-#
-#     hc1.fit(X_train.iloc[indices], y_train[indices])
-#     probas = hc1.predict_proba(X_test.iloc[indices])
-#     print_array(probas)

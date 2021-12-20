@@ -37,24 +37,21 @@ def test_stc_on_unit_test_data():
     assert accuracy_score(y_train, train_preds) >= 0.75
 
 
-# def test_contracted_stc_on_unit_test_data():
-#     """Test of contracted ShapeletTransformClassifier on unit test data."""
-#     # load unit test data
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#
-#     # train contracted STC
-#     stc = ShapeletTransformClassifier(
-#         estimator=RotationForest(contract_max_n_estimators=3),
-#         max_shapelets=20,
-#         time_limit_in_minutes=0.25,
-#         contract_max_n_shapelet_samples=500,
-#         batch_size=100,
-#         random_state=0,
-#     )
-#     stc.fit(X_train, y_train)
-#
-#     assert accuracy_score(y_test, stc.predict(X_test)) >= 0.75
+def test_contracted_stc_on_unit_test_data():
+    """Test of contracted ShapeletTransformClassifier on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+
+    # train contracted STC
+    stc = ShapeletTransformClassifier(
+        estimator=RotationForest(contract_max_n_estimators=3),
+        max_shapelets=20,
+        time_limit_in_minutes=0.25,
+        contract_max_n_shapelet_samples=500,
+        batch_size=100,
+        random_state=0,
+    )
+    stc.fit(X_train, y_train)
 
 
 def test_stc_on_basic_motions():
