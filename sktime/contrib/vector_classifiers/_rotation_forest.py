@@ -428,7 +428,6 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         tree.fit(X_t, y)
 
@@ -438,7 +437,6 @@ class RotationForest(BaseEstimator):
         X_t = np.concatenate(
             [pcas[i].transform(X[:, group]) for i, group in enumerate(groups)], axis=1
         )
-        X_t = np.nan_to_num(X_t, False, 0, 0, 0)
         probas = clf.predict_proba(X_t)
 
         if probas.shape[1] != self.n_classes:
