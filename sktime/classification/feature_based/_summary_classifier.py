@@ -1,33 +1,36 @@
 # -*- coding: utf-8 -*-
-"""Catch22 Classifier.
+"""Summary Classifier.
 
-Pipeline classifier using the Catch22 transformer and an estimator.
+Pipeline classifier using the basic summary statistics and an estimator.
 """
 
-__author__ = ["MatthewMiddlehurst", "RavenRudi"]
-__all__ = ["Catch22Classifier"]
+__author__ = ["MatthewMiddlehurst"]
+__all__ = ["SummaryClassifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.catch22 import Catch22
+from sktime.transformations.series.summarize import SummaryTransformer
 
 
-class Catch22Classifier(BaseClassifier):
-    """Canonical Time-series Characteristics (catch22) classifier.
+class SummaryClassifier(BaseClassifier):
+    """Summary statistic classifier.
 
-    This classifier simply transforms the input data using the Catch22 [1]
+    This classifier simply transforms the input data using the SummaryTransformer
     transformer and builds a provided estimator using the transformed data.
 
     Parameters
     ----------
-    outlier_norm : bool, default=False
-        Normalise each series during the two outlier catch22 features, which can take a
-        while to process for large values
-    replace_nans : bool, default=True
-        Replace NaN or inf values from the catch22 transform with 0.
+    summary_functions : str, list, tuple, default=("mean", "std", "min", "max")
+        Either a string, or list or tuple of strings indicating the pandas
+        summary functions that are used to summarize each column of the dataset.
+        Must be one of ("mean", "min", "max", "median", "sum", "skew", "kurt",
+        "var", "std", "mad", "sem", "nunique", "count").
+    summary_quantiles : str, list, tuple or None, default=(0.25, 0.5, 0.75)
+        Optional list of series quantiles to calculate. If None, no quantiles
+        are calculated.
     estimator : sklearn classifier, default=None
         An sklearn estimator to be built using the transformed data. Defaults to a
         Random Forest with 200 trees.
@@ -41,39 +44,23 @@ class Catch22Classifier(BaseClassifier):
     ----------
     n_classes_ : int
         Number of classes. Extracted from the data.
-    classes_ : ndarray of shape (n_classes_)
+    classes_ : ndarray of shape (n_classes)
         Holds the label for each class.
 
     See Also
     --------
-    Catch22
-
-    Notes
-    -----
-    Authors `catch22ForestClassifier <https://github.com/chlubba/sktime-catch22>`_.
-
-    For the Java version, see `tsml <https://github.com/uea-machine-learning/tsml/blob
-    /master/src/main/java/tsml/classifiers/hybrids/Catch22Classifier.java>`_.
-
-    References
-    ----------
-    .. [1] Lubba, Carl H., et al. "catch22: Canonical time-series characteristics."
-        Data Mining and Knowledge Discovery 33.6 (2019): 1821-1852.
-        https://link.springer.com/article/10.1007/s10618-019-00647-x
+    SummaryTransformer
 
     Examples
     --------
-    >>> from sktime.classification.feature_based import Catch22Classifier
+    >>> from sktime.classification.feature_based import SummaryClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = Catch22Classifier(
-    ...     estimator=RandomForestClassifier(n_estimators=10),
-    ...     outlier_norm=True,
-    ... )
+    >>> clf = SummaryClassifier(estimator=RandomForestClassifier(n_estimators=10))
     >>> clf.fit(X_train, y_train)
-    Catch22Classifier(...)
+    SummaryClassifier(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -84,14 +71,14 @@ class Catch22Classifier(BaseClassifier):
 
     def __init__(
         self,
-        outlier_norm=False,
-        replace_nans=True,
+        summary_functions=("mean", "std", "min", "max"),
+        summary_quantiles=(0.25, 0.5, 0.75),
         estimator=None,
         n_jobs=1,
         random_state=None,
     ):
-        self.outlier_norm = outlier_norm
-        self.replace_nans = replace_nans
+        self.summary_functions = summary_functions
+        self.summary_quantiles = summary_quantiles
         self.estimator = estimator
 
         self.n_jobs = n_jobs
@@ -99,8 +86,9 @@ class Catch22Classifier(BaseClassifier):
 
         self._transformer = None
         self._estimator = None
+        self._transform_atts = 0
 
-        super(Catch22Classifier, self).__init__()
+        super(SummaryClassifier, self).__init__()
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.
@@ -122,8 +110,9 @@ class Catch22Classifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = Catch22(
-            outlier_norm=self.outlier_norm, replace_nans=self.replace_nans
+        self._transformer = SummaryTransformer(
+            summary_function=self.summary_functions,
+            quantiles=self.summary_quantiles,
         )
 
         self._estimator = _clone_estimator(
@@ -138,6 +127,10 @@ class Catch22Classifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
+
+        if X_t.shape[0] > len(y):
+            X_t = X_t.to_numpy().reshape((len(y), -1))
+            self._transform_atts = X_t.shape[1]
 
         self._estimator.fit(X_t, y)
 
@@ -156,7 +149,12 @@ class Catch22Classifier(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+
+        if X_t.shape[1] < self._transform_atts:
+            X_t = X_t.to_numpy().reshape((-1, self._transform_atts))
+
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
@@ -171,12 +169,17 @@ class Catch22Classifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        X_t = self._transformer.transform(X)
+
+        if X_t.shape[1] < self._transform_atts:
+            X_t = X_t.to_numpy().reshape((-1, self._transform_atts))
+
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            return self._estimator.predict_proba(X_t)
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
