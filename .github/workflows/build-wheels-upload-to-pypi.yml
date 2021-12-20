@@ -123,10 +123,9 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $env:GITHUB_ENV
 
       - name: Install sktime and dependencies (windows)
-        run: |
-          conda install -c anaconda libpython
-          conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
-          python -m pip install $env:WHEELNAME
+        run: conda install -c anaconda libpython
+      - run: conda install -c conda-forge "pystan>=2.14,<3.0" "fbprophet>=0.7.1" scipy cython
+      - run: python -m pip install $env:WHEELNAME
 
       - name: Install test dependencies
         run: |
