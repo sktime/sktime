@@ -32,6 +32,9 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel
 
+      - name: Fix windows paths
+        run: echo "::add-path::C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64"
+
       - name: Build wheels
         env:
           CIBW_BUILD_VERBOSITY: 1
