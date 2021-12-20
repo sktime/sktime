@@ -36,7 +36,7 @@ jobs:
         env:
           CIBW_BUILD_VERBOSITY: 1
           # CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64 TOOD: uncomment
-          CIBW_SKIP: cp36-* cp37*- pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
+          CIBW_SKIP: cp36-* cp37*- "*-win32 pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
           # Windows causes install problems due to fbprophet so it's tested separately
           CIBW_TEST_EXTRAS_LINUX: "all_extras,dev"
           CIBW_TEST_COMMAND_LINUX: pytest --showlocals --durations=20 -n 2 --pyargs sktime
