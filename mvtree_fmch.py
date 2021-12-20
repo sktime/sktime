@@ -7,12 +7,12 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline
 
 from helpers import MVTimeSeriesSplit
-from mvtree import MVTreeFeatureExtractor, find_maxlag
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
     SlidingWindowSplitter,
 )
+from sktime.transformations.panel.mvtree import MVTreeFeatureExtractor, find_maxlag
 
 pd.options.mode.chained_assignment = None
 pd.set_option("display.max_columns", None)
