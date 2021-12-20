@@ -89,6 +89,7 @@ class TSFreshClassifier(BaseClassifier):
         default_fc_parameters="efficient",
         relevant_feature_extractor=True,
         estimator=None,
+        replace_nans=True,
         verbose=0,
         n_jobs=1,
         chunksize=None,
@@ -158,6 +159,7 @@ class TSFreshClassifier(BaseClassifier):
             self._estimator.n_jobs = self._threads_to_use
 
         X_t = self._transformer.fit_transform(X, y)
+        X_t = np.nan_to_num(X_t, nan=0, posinf=0, neginf=0)
         self._estimator.fit(X_t, y)
 
         return self
@@ -175,7 +177,10 @@ class TSFreshClassifier(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        return self._estimator.predict(self._transformer.transform(X))
+        X_t = self._transformer.transform(X)
+        X_t = np.nan_to_num(X_t, nan=0, posinf=0, neginf=0)
+
+        return self._estimator.predict(X_t)
 
     def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
@@ -190,12 +195,15 @@ class TSFreshClassifier(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
+        X_t = self._transformer.transform(X)
+        X_t = np.nan_to_num(X_t, nan=0, posinf=0, neginf=0)
+
         m = getattr(self._estimator, "predict_proba", None)
         if callable(m):
-            return self._estimator.predict_proba(self._transformer.transform(X))
+            return self._estimator.predict_proba(X_t)
         else:
             dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimator.predict(self._transformer.transform(X))
+            preds = self._estimator.predict(X_t)
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
