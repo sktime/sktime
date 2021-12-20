@@ -6,38 +6,14 @@ from joblib import Parallel, delayed
 from sktime.transformations.base import _PanelToTabularTransformer
 
 
-def find_maxlag(model_kwargs):
+def find_maxlag(kwargs):
     """Find maximum lag based on provided dictionary."""
-    lag_max_list = model_kwargs["lags"]
-    window_functions = model_kwargs["window_functions"]
-    if len(window_functions) > 0:
-        _window_functions = list()
-        for func_name, rw_config in window_functions.items():
-            func_call, window_shifts, window_sizes = rw_config
-            for window_shift in window_shifts:
-                for window_size in window_sizes:
-                    _window_functions.append(
-                        (func_name, func_call, window_shift, window_size)
-                    )
-        _window_functions = _window_functions
-    else:
-        _window_functions = list()
-    if len(_window_functions) > 0:
-        #  lag_kwargs = [{"lag":lag} for lag in lags]
-        rw_kwargs = [
-            {
-                "func_name": window_func[0],
-                "func_call": window_func[1],
-                "window_shift": window_func[2],
-                "window_size": window_func[3],
-            }
-            for window_func in _window_functions
-        ]
-    window_max_list = [(i["window_shift"] - 1 + i["window_size"]) for i in rw_kwargs]
-    maxlag = max(max(lag_max_list), max(window_max_list))
-    # y[y.index <(collect_max-1)] = None
-    # y=y[(collect_max-1):]
-    return maxlag
+    lst = [v["window"] for v in kwargs["functions"].values()]
+    max_lag = []
+    for i in lst:
+        for j in i:
+            max_lag.append(j[0] + j[1])
+    return max(max_lag)
 
 
 class _MVTreeExtractor(_PanelToTabularTransformer):
@@ -45,18 +21,12 @@ class _MVTreeExtractor(_PanelToTabularTransformer):
 
     def __init__(
         self,
-        lags,
-        window_functions,
+        functions,
         n_jobs=-1,
-        # _is_fitted = False,
-        ts_values=None,
     ):
 
-        self.lags = lags
-        self.window_functions = window_functions
+        self.functions = functions
         self.n_jobs = n_jobs
-        # self._is_fitted = _is_fitted
-        self.ts_values = ts_values
 
         super(_MVTreeExtractor, self).__init__()
 
@@ -64,32 +34,16 @@ class _MVTreeExtractor(_PanelToTabularTransformer):
     def fit(self):
         """Fit.
 
-        Parameters
-        ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series or np.array
-            Target variable
-
         Returns
         -------
         self : an instance of self
         """
         # check_X(X, coerce_to_pandas=True)
+        func_dict = pd.DataFrame(self.functions).T.reset_index().explode("window")
 
-        if len(self.window_functions) > 0:
-            _window_functions = list()
-            for func_name, rw_config in self.window_functions.items():
-                func_call, window_shifts, window_sizes = rw_config
-                for window_shift in window_shifts:
-                    for window_size in window_sizes:
-                        _window_functions.append(
-                            (func_name, func_call, window_shift, window_size)
-                        )
-            self._window_functions = _window_functions
-        else:
-            self._window_functions = list()
+        func_dict.rename({"index": "name"}, axis="columns", inplace=True)
 
+        self._func_dict = func_dict
         self._is_fitted = True
 
         return self
@@ -103,9 +57,9 @@ class MVTreeFeatureExtractor(_MVTreeExtractor):
 
         Parameters
         ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series, optional (default=None)
+        Z : pd.DataFrame with y as columns
+            and Time Series ID and Period as
+            MultiIndex
 
         Returns
         -------
@@ -117,88 +71,66 @@ class MVTreeFeatureExtractor(_MVTreeExtractor):
 
         self.check_is_fitted()
 
-        Z = Z.copy()
+        grouped = Z.groupby(level=0)["y"]
+        df = Parallel(n_jobs=self.n_jobs)(
+            delayed(_window_feature)(grouped, **kwargs)
+            for index, kwargs in self._func_dict.iterrows()
+        )
+        col_names = [o.name for o in df]
+        df = pd.concat(df, axis=1)
+        df.columns = col_names
 
-        if (len(self.lags) > 0) or (len(self.window_functions) > 0):
-            lag_kwargs = [{"lag": lag} for lag in self.lags]
-            rw_kwargs = [
-                {
-                    "func_name": window_func[0],
-                    "func_call": window_func[1],
-                    "window_shift": window_func[2],
-                    "window_size": window_func[3],
-                }
-                for window_func in self._window_functions
-            ]
-            input_kwargs = lag_kwargs + rw_kwargs  # lag_kwargs + rw_kwargs
-            grouped = Z.groupby(level=0)["y"]
-            df = Parallel(n_jobs=self.n_jobs)(
-                delayed(compute_lagged_train_feature)(grouped, **kwargs)
-                for kwargs in input_kwargs
-            )
-            col_names = [o.name for o in df]
-            df = pd.concat(df, axis=1)
-            df.columns = col_names
+        Zt = pd.concat([Z, df], axis=1)
 
-        all_features = pd.concat([Z, df], axis=1)
-
-        return all_features
+        return Zt
 
 
-# %%
-
-
-def compute_lagged_train_feature(
+def _window_feature(
     grouped,
-    lag=None,
-    func_name=None,
-    func_call=None,
-    window_shift=None,
-    window_size=None,
+    name=None,
+    func=None,
+    window=None,
 ):
-    """Compute lags.
+    """Compute window features and lag.
 
     grouped: pandas.core.groupby.generic.SeriesGroupBy
-        Groupby object containing the response variable "y"
-        grouped by ts_uid_columns.
-    lag: int
-        Integer lag value.
-    func_name: string
-        Name of the rolling window function.
-    func_call: function or None
+        Object create by grouping across groupBy columns.
+    name: string
+        Name fragmentfor column to be created.
+        Name will also include window shift and size
+    func: function or string
         Callable if a custom function, None otherwise.
-    window_shift: int
-        Integer window shift value.
-    window_size: int
-        Integer window size value.
+    window: list
+        Contains values for window shift and window length.
     """
-    is_lag_feature = lag is not None
-    is_rw_feature = (
-        (func_name is not None)
-        and (window_shift is not None)
-        and (window_size is not None)
-    )
+    pd_rolling = [
+        "sum",
+        "mean",
+        "median",
+        "std",
+        "var",
+        "kurt",
+        "min",
+        "max",
+        "corr",
+        "cov",
+        "skew",
+        "sem",
+    ]
 
-    if is_lag_feature and not is_rw_feature:
-        feature_values = grouped.shift(lag)
-        feature_values.name = f"lag{lag}"
-    elif is_rw_feature and not is_lag_feature:
-        if func_call is None:
-            # native pandas method
-            feature_values = grouped.apply(
-                lambda x: getattr(
-                    x.shift(window_shift).rolling(window_size), func_name
-                )()
+    # danbartl: investivate different engines for pandas
+    if func == "lag":
+        features = grouped.shift(window[0])
+        features.name = name + "_" + str(window[0])
+    else:
+        if func in pd_rolling:
+            features = grouped.apply(
+                lambda x: getattr(x.shift(window[0]).rolling(window[1]), func)()
             )
         else:
-            # custom function
-            feature_values = grouped.apply(
-                lambda x: x.shift(window_shift)
-                .rolling(window_size)
-                .apply(func_call, raw=True)
+            features = grouped.apply(
+                lambda x: x.shift(window[0]).rolling(window[1]).apply(func, raw=True)
             )
-        feature_values.name = f"{func_name}{window_size}_shift{window_shift}"
-    else:
-        raise ValueError("Invalid input parameters.")
+        features.name = name + "_" + str(window[0]) + "_" + str(window[1])
 
-    return feature_values
+    return features

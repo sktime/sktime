@@ -190,8 +190,11 @@ class _BaseWindowForecaster(BaseForecaster):
                 if self._X is not None
                 else None
             )
-
-            X_from_y = self.transformers[0].fit().transform(y)
+            # danbartl: for cross-validation, transformers is not list.... why?
+            if isinstance(self.transformers, list):
+                X_from_y = self.transformers[0].fit().transform(y)
+            else:
+                X_from_y = self.transformers.fit().transform(y)
             X_from_y_cut = X_from_y.groupby(level=0).tail(1)
             #    X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
             # fix maxlag to take lag into account
@@ -284,8 +287,11 @@ class _BaseWindowForecaster(BaseForecaster):
 
             ts_index = _get_time_index(y)
             n_timepoints = ts_index.shape[0]
-
-            X_from_y = self.transformers[0].fit().transform(y)
+            # danbartl: distinction for cross validation.. why?
+            if isinstance(self.transformers, list):
+                X_from_y = self.transformers[0].fit().transform(y)
+            else:
+                X_from_y = self.transformers.fit().transform(y)
             X_from_y_cut = X_from_y.groupby(level=0).tail(
                 n_timepoints - self.window_length + 1
             )

@@ -117,18 +117,19 @@ tscv = MVTimeSeriesSplit(n_splits=3, test_size=5)
 
 X_train, X_test, y_train, y_test = mvts_cv(X, y)
 
-# %%
 
-model_kwargs = {
-    "lags": [1, 5, 7],
-    "window_functions": {
-        "mean": (None, [1, 2], [2]),
-        "median": (None, [1, 2, 3, 4], [2]),
-        "std": (None, [1], [2, 5]),
-    },
+# %%
+kwargs = {
+    "functions": {
+        "lag": {"func": "lag", "window": [[1, 1], [5, 1], [7, 1]]},
+        "mean": {"func": "mean", "window": [[1, 2], [2, 2], [4, 2]]},
+        "median": {"func": "median", "window": [[1, 2], [2, 2], [4, 2]]},
+        "std": {"func": "std", "window": [[1, 3], [2, 3]]},
+    }
 }
 
-window_length = find_maxlag(model_kwargs) + 1
+
+window_length = find_maxlag(kwargs)
 
 # %%
 
@@ -139,7 +140,7 @@ regressor = make_pipeline(
 forecaster = make_reduction(
     regressor,
     scitype="tabular-regressor",
-    transformers=[MVTreeFeatureExtractor(**model_kwargs)],
+    transformers=[MVTreeFeatureExtractor(**kwargs)],
     window_length=window_length,
 )
 
@@ -148,10 +149,25 @@ forecaster.fit(X=X_train, y=y_train, fh=2)
 y_pred = forecaster.predict(X=X_test, fh=2)
 
 # %%
-#Window length is actually not relevant here
+# Window length is actually not relevant here
 # Need to figure out how to change dictionary
 
-forecaster_param_grid = {"window_length": [8, 8]}
+kwargs_cv = {
+    "functions": {
+        "lag": {"func": "lag", "window": [[1, 1], [3, 1], [5, 1]]},
+        "mean": {"func": "mean", "window": [[1, 2], [2, 2], [4, 2]]},
+        "median": {"func": "median", "window": [[1, 2], [2, 2], [4, 2]]},
+        "std": {"func": "std", "window": [[1, 3], [2, 3]]},
+    }
+}
+
+forecaster_param_grid = {
+    "window_length": [8],
+    "transformers": [
+        MVTreeFeatureExtractor(**kwargs),
+        MVTreeFeatureExtractor(**kwargs_cv),
+    ],
+}
 
 y_length = len(
     y_train.xs(y_train.index.get_level_values("ts_id")[0], level="ts_id").index
@@ -169,3 +185,5 @@ y_pred_cv = gscv.predict(X=X_test, fh=2)
 # mean_absolute_percentage_error(y_pred, y_test)
 
 gscv.best_params_
+# print(gscv.best_params_)
+# print(y_pred_cv)

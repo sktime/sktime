@@ -96,7 +96,11 @@ def _sliding_window_transform(
 
     if isinstance(y.index, pd.MultiIndex):
         # danbartl: how to implement iteration over all transformers?
-        X_from_y = transformers[0].fit().transform(y)
+        if isinstance(transformers, list):
+            X_from_y = transformers[0].fit().transform(y)
+        else:
+            X_from_y = transformers.fit().transform(y)
+
         X_from_y_cut = X_from_y.groupby(level=0).tail(n_timepoints - window_length + 1)
         #    X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
         # fix maxlag to take lag into account
