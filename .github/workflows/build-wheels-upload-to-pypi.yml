@@ -93,16 +93,7 @@ jobs:
             bitness: 32
             platform_id: win32
 
-
     steps:
-      - uses: actions/checkout@v2
-      # - name: Set up Python
-      #   uses: actions/setup-python@v2
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
-      # - name: Display Python version
-      #   run: python -c "import sys; print(sys.version)"
-
       - uses: actions/checkout@v2
       - name: Setup conda
         uses: s-weigand/setup-conda@v1
