@@ -8,7 +8,6 @@ classifier.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["FreshPRINCE"]
 
-import numpy as np
 
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
@@ -147,7 +146,6 @@ class FreshPRINCE(BaseClassifier):
         )
 
         X_t = self._tsfresh.fit_transform(X, y)
-        X_t = np.nan_to_num(X_t, nan=0, posinf=0, neginf=0)
         self._rotf.fit(X_t, y)
 
         if self.save_transformed_data:
@@ -168,10 +166,7 @@ class FreshPRINCE(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        X_t = self._tsfresh.transform(X)
-        X_t = np.nan_to_num(X_t, nan=0, posinf=0, neginf=0)
-
-        return self._rotf.predict(X_t)
+        return self._rotf.predict(self._tsfresh.transform(X))
 
     def _predict_proba(self, X):
         """Predict class probabilities for n instances in X.
@@ -186,10 +181,7 @@ class FreshPRINCE(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        X_t = self._tsfresh.transform(X)
-        X_t = np.nan_to_num(X_t, nan=0, posinf=0, neginf=0)
-
-        return self._rotf.predict_proba(X_t)
+        return self._rotf.predict_proba(self._tsfresh.transform(X))
 
     def _get_train_probs(self, X, y):
         self.check_is_fitted()
