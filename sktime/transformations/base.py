@@ -237,10 +237,6 @@ class BaseTransformer(BaseEstimator):
             mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
         ]
 
-        y_inner_mtype = [
-            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
-        ]
-
         # convert X and y to a supported internal type
         #  if X/y type is already supported, no conversion takes place
         X_inner = convert_to(
@@ -248,11 +244,18 @@ class BaseTransformer(BaseEstimator):
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
         )
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype=y_input_scitype,
-        )
+
+        if y_inner_mtype != "None":
+            y_inner_mtype = [
+                mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
+            ]
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype=y_input_scitype,
+            )
+        else:
+            y_inner = None
 
         # todo: uncomment this once Z is completely gone
         # self._fit(X=X_inner, y=y_inner)
@@ -436,10 +439,6 @@ class BaseTransformer(BaseEstimator):
             mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
         ]
 
-        y_inner_mtype = [
-            mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
-        ]
-
         # convert X and y to a supported internal type
         #  if X/y type is already supported, no conversion takes place
         X_inner = convert_to(
@@ -447,11 +446,18 @@ class BaseTransformer(BaseEstimator):
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
         )
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype=y_input_scitype,
-        )
+
+        if y_inner_mtype != "None":
+            y_inner_mtype = [
+                mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
+            ]
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype=y_input_scitype,
+            )
+        else:
+            y_inner = None
 
         # carry out the transformation
         ###################################################
