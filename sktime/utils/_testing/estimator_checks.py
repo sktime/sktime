@@ -122,7 +122,7 @@ def _make_args(estimator, method, **kwargs):
 def _make_fit_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         # we need to handle the TransformedTargetForecaster separately
-        if isinstance(estimator, (_SeriesToSeriesTransformer, BaseTransformer)):
+        if isinstance(estimator, _SeriesToSeriesTransformer):
             y = _make_series(**kwargs)
         else:
             # create matching n_columns input, if n_columns not passed
@@ -145,14 +145,15 @@ def _make_fit_args(estimator, **kwargs):
     elif isinstance(estimator, BaseRegressor):
         return make_regression_problem(**kwargs)
     elif isinstance(
-        estimator, (
-            _SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer, BaseTransformer
-        )
+        estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
     ):
         X = _make_series(**kwargs)
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
     elif isinstance(estimator, BasePairwiseTransformer):
@@ -197,6 +198,9 @@ def _make_transform_args(estimator, **kwargs):
         ),
     ):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
         return (X,)
     elif isinstance(estimator, BasePairwiseTransformer):
         d = {"col1": [1, 2], "col2": [3, 4]}
