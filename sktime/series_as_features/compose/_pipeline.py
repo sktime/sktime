@@ -82,22 +82,19 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         """Fit parameters."""
         transformer_list = self.transformer_list
 
-        transformer_list_ = []
-        for x in transformer_list:
-            transformer_list_ += [(x[0], clone(x[1]))]
-
-        transformer_list_ = [trafo.fit(X, y) for trafo in transformer_list_]
-
+        # clone and fit transformers in transformer_list, store fitted copies
+        transformer_list_ = [clone(trafo[1]).fit(X, y) for trafo in transformer_list]
         self.transformer_list_ = transformer_list_
 
         return self
 
     def _transform(self, X, y):
         """Transform X separately by each transformer, concatenate results."""
+        # retrieve fitted transformers, apply to the new data individually
         transformer_list_ = self.transformer_list_
         Xt_list = [trafo.transform(X, y) for trafo in transformer_list_]
 
-        transformer_names = [x[0] for x in transformer_list_]
+        transformer_names = [x[0] for x in self.transformer_list]
 
         Xt = pd.concat(
             Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
