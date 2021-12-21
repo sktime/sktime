@@ -57,7 +57,6 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import (
     AutoEnsembleForecaster,
-    ColumnEnsembleForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,
@@ -195,7 +194,6 @@ STEPS = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    ColumnEnsembleForecaster: {"forecasters": FORECASTER},
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
