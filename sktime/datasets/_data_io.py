@@ -15,6 +15,7 @@ __all__ = [
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
     "load_from_tsfile_to_dataframe",
+    "load_from_long_to_dataframe",
 ]
 
 import itertools
