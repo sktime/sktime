@@ -10,7 +10,7 @@ from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -38,7 +38,7 @@ class _Pipeline(
         transformers = estimators[:-1]
         forecaster = estimators[-1]
 
-        valid_transformer_type = _SeriesToSeriesTransformer
+        valid_transformer_type = BaseTransformer
         for transformer in transformers:
             if not isinstance(transformer, valid_transformer_type):
                 raise TypeError(

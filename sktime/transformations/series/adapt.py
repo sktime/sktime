@@ -10,29 +10,11 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
 
-def _from_series_to_2d_numpy(x):
-    x = x.to_numpy()
-    if x.ndim == 1:
-        x = x.reshape(-1, 1)
-    return x
-
-
-def _from_2d_numpy_to_series(x, index=None):
-    assert x.ndim < 3
-    if x.ndim == 2 and x.shape[1] > 1:
-        x = pd.DataFrame(x)
-    else:
-        x = pd.Series(x.ravel())
-    if index is not None:
-        x.index = index
-    return x
-
-
-class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
+class TabularToSeriesAdaptor(BaseTransformer):
     """Adapt scikit-learn-like  transformations to time series setting.
 
     This is useful for applying scikit-learn :term:`tabular` transformations
@@ -60,49 +42,65 @@ class TabularToSeriesAdaptor(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["transformer"]
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": False}
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "univariate-only": True,
+        "transform-returns-same-time-index": True,
+        "fit-in-transform": False,
+    }
 
     def __init__(self, transformer):
         self.transformer = transformer
         self.transformer_ = None
         super(TabularToSeriesAdaptor, self).__init__()
 
-    def fit(self, Z, X=None):
-        """Fit data.
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
+
+        core logic
 
         Parameters
         ----------
-        Z : TimeSeries
-        X : TimeSeries
+        X : 2D np.ndarray
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        Z = check_series(Z)
         self.transformer_ = clone(self.transformer)
-        self.transformer_.fit(_from_series_to_2d_numpy(Z))
-        self._is_fitted = True
+        self.transformer_.fit(X)
         return self
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of y.
+        core logic
 
         Parameters
         ----------
-        y : pd.Series
+        X : 2D np.ndarray
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        yt : pd.Series
-            Transformed time series.
+        Xt : 2D np.ndarray
+        transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        Zt = self.transformer_.transform(_from_series_to_2d_numpy(Z))
-        return _from_2d_numpy_to_series(Zt, index=Z.index)
+        Xt = self.transformer_.transform(X)
+        return Xt
 
     @if_delegate_has_method(delegate="transformer")
     def inverse_transform(self, Z, X=None):
