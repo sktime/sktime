@@ -7,10 +7,9 @@ __author__ = ["mloning", "RNKuhns"]
 __all__ = ["SummaryTransformer", "MeanTransformer"]
 
 import pandas as pd
+from deprecated.sphinx import deprecated
 
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.utils._maint import deprecated
-from sktime.utils.validation.series import check_series
 
 ALLOWED_SUM_FUNCS = [
     "mean",
@@ -133,6 +132,7 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
 
     _tags = {
         "fit-in-transform": True,
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
     }
 
     def __init__(
@@ -176,25 +176,6 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
 
         return summary_value.T
 
-    def transform(self, Z, X=None):
-        """Transform series.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            The series to transform.
-
-        Returns
-        -------
-        summary_value : pd.DataFrame
-            DataFrame where series are instances (rows) and calculated summary
-            values are treated as features (columns).
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        summary_value = self._transform(Z, X=X)
-        return summary_value
-
 
 class MeanTransformer(SummaryTransformer):
     """Calculate mean value of a time series.
@@ -214,10 +195,13 @@ class MeanTransformer(SummaryTransformer):
     """
 
     @deprecated(
-        """Please use `SummaryTransformer` from
-        `sktime.transformation.series.summarize` instead.
-        MeanTransformer will be removed in release 0.10.
-        """
+        version="0.9.0",
+        reason=(
+            "MeanTransformer will be removed in release v0.10.0. Please use "
+            "`SummaryTransformer` from `sktime.transformation.series.summarize` "
+            "instead."
+        ),
+        category=FutureWarning,
     )
     def __init__(self):
         super().__init__(summary_function="mean", quantiles=None)

@@ -105,14 +105,8 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "coerce-X-to-numpy",
-        ["forecaster", "classifier", "regressor"],
-        "bool",
-        "should X be coerced to numpy type in check_X? yes/no",
-    ),
-    (
         "symmetric",
-        ["transformer-pairwise-tabular", "transformer-pairwise-panel"],
+        ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
@@ -224,12 +218,6 @@ ESTIMATOR_TAG_REGISTER = [
         "classifier",
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
-    ),
-    (
-        "coerce-X-to-pandas",
-        ["classifier", "transformer"],
-        "bool",
-        "should X be coerced to a nested pandas DataFrame?",
     ),
     # (
     #     "handles-panel",
