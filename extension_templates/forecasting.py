@@ -44,7 +44,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 # todo: add any necessary imports here
 
@@ -225,7 +224,7 @@ class MyForecaster(BaseForecaster):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
+    def _predict_quantiles(self, fh, X=None, alpha=0.5):
         """
         Compute/return prediction quantiles for a forecast.
 
@@ -241,7 +240,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
+        alpha : float or list of float, optional (default=0.5)
             A probability or list of, at which quantile forecasts are computed.
 
         Returns
