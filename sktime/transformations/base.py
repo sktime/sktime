@@ -161,7 +161,7 @@ class BaseTransformer(BaseEstimator):
         # input checks and minor coercions on X, y
         ###########################################
 
-        valid, msg, metadata = check_is_mtype(
+        valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
@@ -169,16 +169,13 @@ class BaseTransformer(BaseEstimator):
 
         # checking X
         enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not metadata["is_univariate"]:
+        if enforce_univariate and not X_metadata["is_univariate"]:
             raise ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
 
-        X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        X_input_scitype = mtype_to_scitype(X_input_mtype)
-        y_input_mtype = mtype(y, as_scitype=["Series", "Panel"])
-        y_input_scitype = mtype_to_scitype(y_input_mtype)
+        X_input_scitype = X_metadata["scitype"]
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
         if not isinstance(X_inner_mtype, list):
@@ -188,7 +185,6 @@ class BaseTransformer(BaseEstimator):
         y_inner_mtype = self.get_tag("y_inner_mtype")
         if not isinstance(y_inner_mtype, list):
             y_inner_mtype = [y_inner_mtype]
-        # y_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in y_inner_mtype]))
 
         # treating Series vs Panel conversion for X
         ###########################################
@@ -222,40 +218,7 @@ class BaseTransformer(BaseEstimator):
             self._is_fitted = True
             return self
 
-        X_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        X_scitype = mtype_to_scitype(X_mtype)
-
-        # for debugging, exception if the conversion fails (this should never happen)
-        if X_scitype not in X_inner_scitypes:
-            raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
-
-        # convert X/y to supported inner type, if necessary
-        ###################################################
-
-        # subset to the mtypes that are of the same scitype as X/y
-        X_inner_mtype = [
-            mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
-        ]
-
-        # convert X and y to a supported internal type
-        #  if X/y type is already supported, no conversion takes place
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype=X_scitype,
-        )
-
-        if y_inner_mtype != "None":
-            y_inner_mtype = [
-                mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
-            ]
-            y_inner = convert_to(
-                y,
-                to_type=y_inner_mtype,
-                as_scitype=y_input_scitype,
-            )
-        else:
-            y_inner = None
+        X_inner, y_inner = self._convert_X_y(X, y)
 
         # todo: uncomment this once Z is completely gone
         # self._fit(X=X_inner, y=y_inner)
@@ -327,7 +290,7 @@ class BaseTransformer(BaseEstimator):
         # input checks and minor coercions on X, y
         ###########################################
 
-        valid, msg, metadata = check_is_mtype(
+        valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
@@ -335,16 +298,14 @@ class BaseTransformer(BaseEstimator):
 
         # checking X
         enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not metadata["is_univariate"]:
+        if enforce_univariate and not X_metadata["is_univariate"]:
             ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
 
-        X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        X_input_scitype = mtype_to_scitype(X_input_mtype)
-        y_input_mtype = mtype(y, as_scitype=["Series", "Panel"])
-        y_input_scitype = mtype_to_scitype(y_input_mtype)
+        X_input_mtype = X_metadata["mtype"]
+        X_input_scitype = X_metadata["scitype"]
 
         output_scitype = self.get_tag("scitype:transform-output")
 
@@ -429,35 +390,7 @@ class BaseTransformer(BaseEstimator):
         # convert X/y to supported inner type, if necessary
         ###################################################
 
-        # variables for the scitype of the current X (possibly converted)
-        #     y wasn't converted so we can use y_input_scitype
-        X_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        X_scitype = mtype_to_scitype(X_mtype)
-
-        # subset to the mtypes that are of the same scitype as X/y
-        X_inner_mtype = [
-            mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
-        ]
-
-        # convert X and y to a supported internal type
-        #  if X/y type is already supported, no conversion takes place
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype=X_scitype,
-        )
-
-        if y_inner_mtype != "None":
-            y_inner_mtype = [
-                mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_input_scitype
-            ]
-            y_inner = convert_to(
-                y,
-                to_type=y_inner_mtype,
-                as_scitype=y_input_scitype,
-            )
-        else:
-            y_inner = None
+        X_inner, y_inner = self._convert_X_y(X, y)
 
         # carry out the transformation
         ###################################################
@@ -571,6 +504,57 @@ class BaseTransformer(BaseEstimator):
     #
     # def update(self, Z, X=None, update_params=False):
     #     raise NotImplementedError("abstract method")
+
+    def _convert_X_y(self, X, y):
+        """Convert X, y to inner type."""
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        if not isinstance(X_inner_mtype, list):
+            X_inner_mtype = [X_inner_mtype]
+        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+
+        y_inner_mtype = self.get_tag("y_inner_mtype")
+        if not isinstance(y_inner_mtype, list):
+            y_inner_mtype = [y_inner_mtype]
+
+        X_mtype = mtype(X, as_scitype=["Series", "Panel"])
+        X_scitype = mtype_to_scitype(X_mtype)
+
+        y_mtype = mtype(y, as_scitype=["Series", "Panel"])
+        y_scitype = mtype_to_scitype(y_mtype)
+
+        # for debugging, exception if the conversion fails (this should never happen)
+        if X_scitype not in X_inner_scitypes:
+            raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
+
+        # convert X/y to supported inner type, if necessary
+        ###################################################
+
+        # subset to the mtypes that are of the same scitype as X/y
+        X_inner_mtype = [
+            mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
+        ]
+
+        # convert X and y to a supported internal type
+        #  if X/y type is already supported, no conversion takes place
+        X_inner = convert_to(
+            X,
+            to_type=X_inner_mtype,
+            as_scitype=X_scitype,
+        )
+
+        if y_inner_mtype != "None":
+            y_inner_mtype = [
+                mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
+            ]
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype=y_scitype,
+            )
+        else:
+            y_inner = None
+
+        return X_inner, y_inner
 
     def _fit(self, X, y=None):
         """
