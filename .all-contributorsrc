@@ -1446,7 +1446,17 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/20466981?v=4",
       "profile": "https://www.imes.uni-hannover.de/de/institut/team/m-sc-karl-philipp-kortmann/",
       "contributions": [
+        "code",
         "doc"
+      ]
+    }
+    {
+      "login": "iljamaurer",
+      "name": "Ilja Maurer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45882103?v=4",
+      "profile": "https://github.com/iljamaurer",
+      "contributions": [
+        "code"
       ]
     }
   ],
