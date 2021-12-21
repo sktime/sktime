@@ -89,6 +89,7 @@ from sktime.registry import (
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
     ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
@@ -431,7 +432,7 @@ NON_STATE_CHANGING_METHODS = (
 )
 
 # The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
+VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
 
 VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
 
