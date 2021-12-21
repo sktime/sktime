@@ -6,6 +6,17 @@ import numpy as np
 from sklearn.utils.validation import check_array, indexable
 
 
+def mvts_cv(X, y, tscv):
+    """Split dataset based on tsids column."""
+    for train_index, test_index in tscv.split(
+        X, y, groups=X.index.get_level_values("ts_id")
+    ):
+        # print("TRAIN:", train_index, "TEST:", test_index)
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+        return X_train, X_test, y_train, y_test
+
+
 def _num_samples(x):
     """Return number of samples in array-like x."""
     message = "Expected sequence or array-like, got %s" % type(x)
