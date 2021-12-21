@@ -226,6 +226,9 @@ def _make_inverse_transform_args(estimator, **kwargs):
     elif isinstance(estimator, _PanelToPanelTransformer):
         X = _make_panel_X(**kwargs)
         return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
 
