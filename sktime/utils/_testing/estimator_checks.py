@@ -331,3 +331,12 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
+
+
+def _has_capability(est, method: str) -> bool:
+    """Check whether estimator has capability of method."""
+    if not hasattr(est, method):
+        return False
+    if method == "inverse_transform":
+        return est.get_class_tag("capability:inverse_transform", False)
+    return True
