@@ -36,6 +36,7 @@ __all__ = [
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
+    load_from_tsfile_to_dataframe,
     make_multi_index_dataframe,
     write_dataframe_to_tsfile,
     write_ndarray_to_tsfile,

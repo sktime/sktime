@@ -14,6 +14,7 @@ __all__ = [
     "write_ndarray_to_tsfile",
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
+    "load_from_tsfile_to_dataframe",
 ]
 
 import itertools
