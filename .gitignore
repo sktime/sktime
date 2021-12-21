@@ -33,7 +33,7 @@ results/
 MANIFEST
 
 #downloaded datasets
-sktime/datasets/data/
+#sktime/datasets/data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
