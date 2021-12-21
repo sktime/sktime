@@ -21,7 +21,6 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_acsf1",
     "load_macroeconomic",
-    "load_from_tsfile_to_dataframe",
     "generate_example_long_table",
     "load_from_arff_to_dataframe",
     "load_from_long_to_dataframe",
@@ -36,8 +35,10 @@ __all__ = [
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
+    load_from_arff_to_dataframe,
     load_from_long_to_dataframe,
     load_from_tsfile_to_dataframe,
+    load_from_ucr_tsv_to_dataframe,
     make_multi_index_dataframe,
     write_dataframe_to_tsfile,
     write_ndarray_to_tsfile,
