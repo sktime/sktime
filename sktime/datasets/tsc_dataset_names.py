@@ -37,6 +37,7 @@ univariate = [
     "AllGestureWiimoteY",
     "AllGestureWiimoteZ",
     "ArrowHead",
+    "AsphaltObstacles",
     "Beef",
     "BeetleFly",
     "BirdChicken",

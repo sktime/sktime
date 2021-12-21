@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Lists of datasets provided in this directory"""
+"""Lists of datasets provided in this directory."""
 
-classification_data = ["ACSF1", "ArrowHead", "BasicMotions", "ItalyPowerDemand",
-                      "OSULeaf", "PLAID"]
+classification_data = [
+    "ACSF1",
+    "ArrowHead",
+    "BasicMotions",
+    "ItalyPowerDemand",
+    "OSULeaf",
+    "PLAID",
+]
