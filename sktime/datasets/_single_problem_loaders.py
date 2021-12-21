@@ -16,6 +16,7 @@ __author__ = [
 
 __all__ = [
     "load_airline",
+    "load_plaid",
     "load_arrow_head",
     "load_gunpoint",
     "load_osuleaf",
@@ -87,19 +88,44 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     return _load_dataset(name, split, return_X_y, extract_path)
 
 
-def load_gunpoint(split=None, return_X_y=False):
+def load_plaid(split=None, return_X_y=True):
     """
-    Load the GunPoint time series classification problem and returns X and y.
+    Load the PLAID time series classification problem and returns X and y.
+
+    Example of a univariate problem with unequal length series.
 
     Parameters
     ----------
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        dataframe with columns for features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array The class labels for each case in X
+
+    """
+    name = "PLAID"
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_gunpoint(split=None, return_X_y=True):
+    """
+    Load the GunPoint time series classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By default it
+        loads both.
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
 
     Returns
     -------
@@ -140,7 +166,7 @@ def load_gunpoint(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_osuleaf(split=None, return_X_y=False):
+def load_osuleaf(split=None, return_X_y=True):
     """
     Load the OSULeaf time series classification problem and returns X and y.
 
@@ -149,7 +175,7 @@ def load_osuleaf(split=None, return_X_y=False):
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
@@ -183,7 +209,7 @@ def load_osuleaf(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_italy_power_demand(split=None, return_X_y=False):
+def load_italy_power_demand(split=None, return_X_y=True):
     """
     Load ItalyPowerDemand time series classification problem.
 
@@ -192,7 +218,7 @@ def load_italy_power_demand(split=None, return_X_y=False):
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
@@ -235,7 +261,7 @@ def load_unit_test(split=None, return_X_y=True):
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
@@ -262,16 +288,18 @@ def load_unit_test(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_japanese_vowels(split=None, return_X_y=False):
+def load_japanese_vowels(split=None, return_X_y=True):
     """
     Load the JapaneseVowels time series classification problem.
+
+    Example of a multivariate problem with unequal length series.
 
     Parameters
     ----------
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
     default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a
         single dataframe with columns for features and the target.
 
@@ -312,7 +340,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=False):
+def load_arrow_head(split=None, return_X_y=True):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
@@ -321,7 +349,7 @@ def load_arrow_head(split=None, return_X_y=False):
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
@@ -360,7 +388,7 @@ def load_arrow_head(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_acsf1(split=None, return_X_y=False):
+def load_acsf1(split=None, return_X_y=True):
     """
     Load dataset on power consumption of typical appliances.
 
@@ -369,7 +397,7 @@ def load_acsf1(split=None, return_X_y=False):
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
@@ -405,7 +433,7 @@ def load_acsf1(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=False):
+def load_basic_motions(split=None, return_X_y=True):
     """
     Load the  BasicMotions time series classification problem and returns X and y.
 
@@ -414,7 +442,7 @@ def load_basic_motions(split=None, return_X_y=False):
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
         default it loads both.
-    return_X_y: bool, optional (default=False)
+    return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
         features and the target.
