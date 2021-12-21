@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Functions to load datasets included in sktime."""
+"""Functions to load and write datasets."""
 
 __all__ = [
     "load_airline",
@@ -36,15 +36,18 @@ __all__ = [
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
+    make_multi_index_dataframe,
+    write_dataframe_to_tsfile,
+    write_ndarray_to_tsfile,
+    write_results_to_uea_format,
+    write_tabular_transformation_to_arff,
+)
+from sktime.datasets._single_problem_loaders import (
     load_acsf1,
     load_airline,
     load_arrow_head,
     load_basic_motions,
     load_electric_devices_segmentation,
-    load_from_arff_to_dataframe,
-    load_from_long_to_dataframe,
-    load_from_tsfile_to_dataframe,
-    load_from_ucr_tsv_to_dataframe,
     load_gun_point_segmentation,
     load_gunpoint,
     load_italy_power_demand,
@@ -56,11 +59,5 @@ from sktime.datasets._data_io import (
     load_PBS_dataset,
     load_shampoo_sales,
     load_UCR_UEA_dataset,
-    load_unit_test,
     load_uschange,
-    make_multi_index_dataframe,
-    write_dataframe_to_tsfile,
-    write_ndarray_to_tsfile,
-    write_results_to_uea_format,
-    write_tabular_transformation_to_arff,
 )
