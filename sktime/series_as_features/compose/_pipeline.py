@@ -2,16 +2,18 @@
 
 import numpy as np
 import pandas as pd
-from scipy import sparse
+from copy import deepcopy
+
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.base import _HeterogenousMetaEstimator
+from sktime.transformations.base import BaseTransformer
 
 __all__ = ["FeatureUnion"]
-__author__ = ["Markus Löning"]
+__author__ = ["mloning, fkiraly"]
 
 
-class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
+class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -41,6 +43,22 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
 
     _required_parameters = ["transformer_list"]
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "scitype:transform-labels": "None",
+        "scitype:instancewise": False, # depends on components
+        "univariate-only": False,  # depends on components
+        "handles-missing-data": False,  # depends on components
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
+        "y_inner_mtype": "None",
+        "X-y-must-have-same-index": False,
+        "enforce_index_type": None,
+        "fit-in-transform": False,
+        "transform-returns-same-time-index": False,
+        "skip-inverse-transform": False,
+    }
+
     def __init__(
         self,
         transformer_list,
@@ -48,42 +66,72 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         transformer_weights=None,
         preserve_dataframe=True,
     ):
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
         self.preserve_dataframe = preserve_dataframe
-        super(FeatureUnion, self).__init__(
-            transformer_list, n_jobs=n_jobs, transformer_weights=transformer_weights
-        )
+        self.transformer_list = transformer_list
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        super(FeatureUnion, self).__init__()
 
-    def fit(self, X, y=None, **fit_params):
+    def _fit(self, X, y=None):
         """Fit parameters."""
-        super().fit(X, y, **fit_params)
-        self._is_fitted = True
+
         return self
 
-    def transform(self, X):
+    def _transform(self, X, y):
         """Transform X separately by each transformer, concatenate results."""
-        self.check_is_fitted()
-        return super().transform(X)
 
-    def fit_transform(self, X, y, **fit_params):
-        """Transform X separately by each transformer, concatenate results."""
-        return self.fit(X, y, **fit_params).transform(X)
 
-    def _hstack(self, Xs):
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `_forecasters`.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
         """
-        Stacks X horizontally.
+        return self._get_params("transformer_list", deep=deep)
 
-        Supports input types (X): list of
-            numpy arrays, sparse arrays and DataFrames.
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `_forecasters`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
         """
-        if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
+        self._set_params("transformer_list", **kwargs)
+        return self
 
-        types = {type(X) for X in Xs}
-        if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
-            return pd.concat(Xs, axis=1)
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for FeatureUnion."""
+        from sklearn.preprocessing import StandardScaler
 
-        else:
-            return np.hstack(Xs)
+        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
+
+        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+
+        TRANSFORMERS = [
+            (
+                "transformer1",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+            (
+                "transformer2",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+        ]
+
+        return {"transformer_list": TRANSFORMERS}
