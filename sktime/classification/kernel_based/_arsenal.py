@@ -175,7 +175,6 @@ class Arsenal(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
-
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0

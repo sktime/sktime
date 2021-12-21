@@ -16,7 +16,7 @@ import scipy.stats
 from numba import njit
 from numba.typed import List
 from sklearn.base import BaseEstimator
-from sklearn.utils import check_X_y, check_random_state
+from sklearn.utils import check_random_state, check_X_y
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.slope_and_trend import _slope
@@ -219,7 +219,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
         dists = np.zeros((n_instances, self.n_classes))
         for i in range(n_instances):
-            dists[i] = self.root._predict_proba_cif(
+            dists[i] = self.root.predict_proba_cif(
                 X[i].reshape((1, n_dims, series_length)),
                 c22,
                 intervals,
@@ -249,7 +249,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 X_p[i].reshape((1, n_dims, X_p.shape[2])),
                 X_d[i].reshape((1, n_dims, X_d.shape[2])),
             ]
-            dists[i] = self.root._predict_proba_drcif(
+            dists[i] = self.root.predict_proba_drcif(
                 r,
                 c22,
                 n_intervals,
@@ -468,15 +468,15 @@ class _TreeNode:
             value = np.nan_to_num(value, False, 0, 0, 0)
 
             if np.isnan(value):
-                return self.children[0]._predict_proba_cif(
+                return self.children[0].predict_proba_cif(
                     X, c22, intervals, dims, atts, n_classes, class_dictionary
                 )
             elif value <= self.best_threshold:
-                return self.children[1]._predict_proba_cif(
+                return self.children[1].predict_proba_cif(
                     X, c22, intervals, dims, atts, n_classes, class_dictionary
                 )
             else:
-                return self.children[2]._predict_proba_cif(
+                return self.children[2].predict_proba_cif(
                     X, c22, intervals, dims, atts, n_classes, class_dictionary
                 )
         else:
@@ -506,7 +506,7 @@ class _TreeNode:
             value = np.nan_to_num(value, False, 0, 0, 0)
 
             if np.isnan(value):
-                return self.children[0]._predict_proba_drcif(
+                return self.children[0].predict_proba_drcif(
                     X,
                     c22,
                     n_intervals,
@@ -517,7 +517,7 @@ class _TreeNode:
                     class_dictionary,
                 )
             elif value <= self.best_threshold:
-                return self.children[1]._predict_proba_drcif(
+                return self.children[1].predict_proba_drcif(
                     X,
                     c22,
                     n_intervals,
@@ -528,7 +528,7 @@ class _TreeNode:
                     class_dictionary,
                 )
             else:
-                return self.children[2]._predict_proba_drcif(
+                return self.children[2].predict_proba_drcif(
                     X,
                     c22,
                     n_intervals,
@@ -623,7 +623,7 @@ def _cif_feature(X, interval, dim, att, c22):
         # slope
         return _slope(X[:, dim, interval[0] : interval[1]], axis=1)
     else:
-        return c22._transform_single_feature(
+        return c22.transform_single_feature(
             X[:, dim, interval[0] : interval[1]],
             feature=att,
         )
@@ -652,7 +652,7 @@ def _drcif_feature(X, interval, dim, att, c22):
         # max
         return np.max(X[:, dim, interval[0] : interval[1]], axis=1)
     else:
-        return c22._transform_single_feature(
+        return c22.transform_single_feature(
             X[:, dim, interval[0] : interval[1]],
             feature=att,
         )

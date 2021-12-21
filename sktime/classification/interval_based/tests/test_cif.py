@@ -23,6 +23,21 @@ def test_cif_on_unit_test_data():
     testing.assert_array_equal(probas, cif_unit_test_probas)
 
 
+def test_cit_on_unit_test_data():
+    """Test of CanonicalIntervalForest on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+
+    # train CIF continuous interval tree
+    cif = CanonicalIntervalForest(n_estimators=10, base_estimator="CIT", random_state=0)
+    cif.fit(X_train, y_train)
+
+    # assert probabilities are the same
+    cif.predict_proba(X_test.iloc[indices])
+
+
 def test_cif_on_basic_motions():
     """Test of CanonicalIntervalForest on basic motions data."""
     # load basic motions data

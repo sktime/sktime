@@ -19,6 +19,7 @@ def test_tsfresh_classifier_on_unit_test_data():
     tsfc = TSFreshClassifier(
         random_state=0,
         default_fc_parameters="minimal",
+        relevant_feature_extractor=False,
         estimator=RandomForestClassifier(n_estimators=10),
     )
     tsfc.fit(X_train, y_train)
@@ -41,6 +42,7 @@ def test_tsfresh_classifier_on_basic_motions():
     tsfc = TSFreshClassifier(
         random_state=0,
         default_fc_parameters="minimal",
+        relevant_feature_extractor=False,
         estimator=RandomForestClassifier(n_estimators=10),
     )
     tsfc.fit(X_train.iloc[indices], y_train[indices])
@@ -180,6 +182,7 @@ tsfresh_classifier_basic_motions_probas = np.array(
 #     tsfc_u = TSFreshClassifier(
 #         random_state=0,
 #         default_fc_parameters="minimal",
+#         relevant_feature_extractor=False,
 #         estimator=RandomForestClassifier(n_estimators=10),
 #     )
 #
@@ -194,6 +197,7 @@ tsfresh_classifier_basic_motions_probas = np.array(
 #     tsfc_m = TSFreshClassifier(
 #         random_state=0,
 #         default_fc_parameters="minimal",
+#         relevant_feature_extractor=False,
 #         estimator=RandomForestClassifier(n_estimators=10),
 #     )
 #

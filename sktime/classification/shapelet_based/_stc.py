@@ -281,7 +281,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         if n_instances != self.n_instances_ or n_dims != self.n_dims_:
             raise ValueError(
-                "n_instances, n_dims, series_length mismatch. X should be "
+                "n_instances, n_dims mismatch. X should be "
                 "the same as the training data used in fit for generating train "
                 "probabilities."
             )
