@@ -151,6 +151,9 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
     elif isinstance(estimator, BasePairwiseTransformer):
@@ -195,6 +198,9 @@ def _make_transform_args(estimator, **kwargs):
         ),
     ):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
         return (X,)
     elif isinstance(estimator, BasePairwiseTransformer):
         d = {"col1": [1, 2], "col2": [3, 4]}
