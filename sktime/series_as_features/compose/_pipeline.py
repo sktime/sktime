@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from copy import deepcopy
+from sklearn import clone
 
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
 
@@ -37,8 +37,11 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
-    preserve_dataframe : bool
-        Save constructed dataframe.
+    preserve_dataframe : bool - deprecated
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "transformer__variablename"
+        if False, columns are MultiIndex (transformer, variablename)
+        has no effect if return mtypes is one without column names
     """
 
     _required_parameters = ["transformer_list"]
@@ -65,21 +68,46 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         n_jobs=None,
         transformer_weights=None,
         preserve_dataframe=True,
+        flatten_transform_index=True,
     ):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.preserve_dataframe = preserve_dataframe
         self.transformer_list = transformer_list
+        self.flatten_transform_index = flatten_transform_index
 
         super(FeatureUnion, self).__init__()
 
     def _fit(self, X, y=None):
         """Fit parameters."""
+        transformer_list = self.transformer_list
+
+        transformer_list_ = []
+        for x in transformer_list:
+            transformer_list_ += [(x[0], clone(x[1]))]
+
+        transformer_list_ = [trafo.fit(X, y) for trafo in transformer_list_]
+
+        self.transformer_list_ = transformer_list_
 
         return self
 
     def _transform(self, X, y):
         """Transform X separately by each transformer, concatenate results."""
+        transformer_list_ = self.transformer_list_
+        Xt_list = [trafo.transform(X, y) for trafo in transformer_list_]
+
+        transformer_names = [x[0] for x in transformer_list_]
+
+        Xt = pd.concat(
+            Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
+        )
+
+        if self.flatten_transform_index:
+            flat_index = pd.Index("__".join(x) for x in Xt.columns)
+            Xt.columns = flat_index
+
+        return Xt
 
 
     def get_params(self, deep=True):
