@@ -113,10 +113,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
+        X : 2D np.ndarray
             Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+        y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
