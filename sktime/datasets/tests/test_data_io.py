@@ -22,10 +22,26 @@ import sktime
 from sktime.datasets import (
     generate_example_long_table,
     load_from_long_to_dataframe,
+    load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_uschange,
     write_dataframe_to_tsfile,
 )
+from sktime.datasets._data_io import MODULE
+
+
+def test_load_from_tsfile():
+    """Test function for loading TS formats.
+
+    Test
+    1. Univariate equal length (UnitTest) returns 2D numpy X, 1D numpy y
+    2. Multivariate equal length (BasicMotions) returns 3D numpy X, 1D numpy y
+    3. Univariate and multivariate unequal length (PLAID) return X as DataFrame
+    4. If asked, y is not returned.
+    """
+    data_path = MODULE + "data/UnitTest/UnitTest_TRAIN.ts"
+    X, y = load_from_tsfile(data_path)
+
 
 _CHECKS = {
     "uschange": {
