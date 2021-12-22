@@ -10,6 +10,7 @@ __all__ = ["RocketClassifier"]
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import (
@@ -170,7 +171,8 @@ class RocketClassifier(BaseClassifier):
 
         self._pipeline = rocket_pipeline = make_pipeline(
             rocket,
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            StandardScaler(with_mean=False),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
         )
         rocket_pipeline.fit(X, y)
 
