@@ -62,9 +62,6 @@ def pytest_generate_tests(metafunc):
     """
     # get name of the test
     test_name = metafunc.function.__name__
-    # previously, the tests were called "check_", so temporarily we do this
-    #  (ultimately, entries in the "exclude" list should be renamed)
-    test_name = test_name.replace("test_", "check_")
 
     # tests can be tests for classes or instances
     # tests for classes use estimator_class fixture name
@@ -148,13 +145,13 @@ def test_estimator_tags(estimator_class):
     assert hasattr(Estimator, "get_class_tags")
     all_tags = Estimator.get_class_tags()
     assert isinstance(all_tags, dict)
-    assert all([isinstance(key, str) for key in all_tags.keys()])
+    assert all(isinstance(key, str) for key in all_tags.keys())
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
         assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
         assert len(tags) > 0, "_tags is empty"
         assert all(
-            [tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()]
+            tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()
         ), "Some tags in _tags are invalid"
 
     # Avoid ambiguous class attributes
@@ -168,23 +165,26 @@ def test_estimator_tags(estimator_class):
 
 def test_inheritance(estimator_class):
     """Check that estimator inherits from BaseEstimator."""
-    Estimator = estimator_class
-
-    assert issubclass(Estimator, BaseEstimator), (
-        f"Estimator: {Estimator} " f"is not a sub-class of " f"BaseEstimator."
+    assert issubclass(estimator_class, BaseEstimator), (
+        f"Estimator: {estimator_class} " f"is not a sub-class of " f"BaseEstimator."
     )
 
     # Usually estimators inherit only from one BaseEstimator type, but in some cases
     # they may be predictor and transformer at the same time (e.g. pipelines)
-    n_base_types = sum(
-        [issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES]
+    assert (
+        2
+        >= (
+            sum(
+                [issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES]
+            )
+        )
+        >= 1
     )
-    assert 2 >= n_base_types >= 1
 
     # If the estimator inherits from more than one base estimator type, we check if
     # one of them is a transformer base type
-    if n_base_types > 1:
-        assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
+    if sum(issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES) > 1:
+        assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES)
 
 
 def test_has_common_interface(estimator_class):
@@ -368,8 +368,8 @@ def test_fit_idempotent(estimator_instance):
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
 
-    results = dict()
-    args = dict()
+    results = {}
+    args = {}
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             args[method] = _make_args(estimator, method)
@@ -494,8 +494,8 @@ def test_persistence_via_pickle(estimator_instance):
     estimator.fit(*fit_args)
 
     # Generate results before pickling
-    results = dict()
-    args = dict()
+    results = {}
+    args = {}
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             args[method] = _make_args(estimator, method)
@@ -506,10 +506,10 @@ def test_persistence_via_pickle(estimator_instance):
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     # Compare against results after pickling
-    for method in results:
+    for method, value in results.items():
         unpickled_result = getattr(unpickled_estimator, method)(*args[method])
         _assert_array_almost_equal(
-            results[method],
+            value,
             unpickled_result,
             decimal=6,
             err_msg="Results are not the same after pickling",
@@ -528,8 +528,8 @@ def test_multiprocessing_idempotent(estimator_class):
     params = estimator.get_params()
 
     if "n_jobs" in params:
-        results = dict()
-        args = dict()
+        results = {}
+        args = {}
 
         # run on a single process
         estimator = estimator_class.create_test_instance()
@@ -551,11 +551,11 @@ def test_multiprocessing_idempotent(estimator_class):
         estimator.fit(*args["fit"])
 
         # compute and compare results
-        for method in results:
+        for method, value in results.items():
             if hasattr(estimator, method):
                 result = getattr(estimator, method)(*args[method])
                 _assert_array_equal(
-                    results[method],
+                    value,
                     result,
                     err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
                 )
