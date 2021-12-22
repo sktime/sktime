@@ -62,5 +62,6 @@ from sktime.datasets._single_problem_loaders import (
     load_PBS_dataset,
     load_shampoo_sales,
     load_UCR_UEA_dataset,
+    load_unit_test,
     load_uschange,
 )
