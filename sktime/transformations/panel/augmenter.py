@@ -5,6 +5,7 @@
 __author__ = ["MrPr3ntice", "MFehsenfeld", "iljamaurer"]
 __all__ = [
     "SeqAugPipeline",
+    "draw_random_samples",
     "plot_augmentation_example",
     "get_rand_input_params",
     "WhiteNoiseAugmenter",
@@ -393,24 +394,24 @@ class SeqAugPipeline(Pipeline):
         plot_augmentation_example(self, X, y)
 
 
-# static functions
+# standalone functions
 def draw_random_samples(
-        X,
-        y=None,
-        n=1.0,
-        shuffle_and_stratify=True,
-        without_replacement=True,
-        random_state=None,
+    X,
+    y=None,
+    n=1.0,
+    shuffle_and_stratify=True,
+    without_replacement=True,
+    random_state=None,
     ):
     """Draw random instances form panel data.
-    
+
     As the implemented augmenters work stochastically, it is best practice to
     draw random samples (instances) from the (train) set and try to enlarge
     the set by randomly executed and parameterized sequential augmentation
     steps. In contrast to known augmenters in more ANN-focused packages (e.g.
     `torchvision.transforms`) working batch-wise (augmented instances are
     recurrently drawn while training), `sklearn` demands to enlarge the
-    dataset before calling a fit() or transform() function. 
+    dataset before calling a fit() or transform() function.
 
     Parameters
     ----------
@@ -489,12 +490,12 @@ def draw_random_samples(
         return X_aug, idx_list
 
 
-def plot_augmentation_example(
+ def plot_augmentation_example(
     fitted_transformer,
     X,
     y=None,
     n_instances_per_variable=5,
-):
+    ):
     """Plot original and augmented instance examples for each variable.
 
     Parameters
@@ -519,7 +520,7 @@ def plot_augmentation_example(
     n_vars = X.shape[1]  # get number of variables of X
     # pick (stratified regarding categorical y) examples from the original input
     # data
-    X, y, idx = SeqAugPipeline.draw_random_samples(
+    X, y, idx = draw_random_samples(
         X,
         y,
         n=n_instances_per_variable,
