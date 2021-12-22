@@ -51,7 +51,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "univariate-only": True,
+        "univariate-only": False,
         "transform-returns-same-time-index": True,
         "fit-in-transform": False,
     }
@@ -103,19 +103,22 @@ class TabularToSeriesAdaptor(BaseTransformer):
         return Xt
 
     @if_delegate_has_method(delegate="transformer")
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
+
+        core logic
 
         Parameters
         ----------
-        Z : TimeSeries
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : TimeSeries
-            Inverse-transformed time series.
+        inverse transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        Zt = self.transformer_.inverse_transform(_from_series_to_2d_numpy(Z))
-        return _from_2d_numpy_to_series(Zt, index=Z.index)
+        Xt = self.transformer_.inverse_transform(X)
+        return Xt
