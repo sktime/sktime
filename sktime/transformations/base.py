@@ -464,6 +464,11 @@ class BaseTransformer(BaseEstimator):
         -------
         inverse transformed version of X
         """
+        if not self.get_tag("capability:inverse_transform"):
+            raise NotImplementedError(
+                f"{type(self)} does not implement inverse_transform"
+            )
+
         X = _handle_alias(X, Z)
 
         # check whether is fitted
