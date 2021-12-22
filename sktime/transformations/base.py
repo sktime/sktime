@@ -464,6 +464,11 @@ class BaseTransformer(BaseEstimator):
         -------
         inverse transformed version of X
         """
+        if not self.get_tag("capability:inverse_transform"):
+            raise NotImplementedError(
+                f"{type(self)} does not implement inverse_transform"
+            )
+
         X = _handle_alias(X, Z)
 
         # check whether is fitted
@@ -651,7 +656,7 @@ class BaseTransformer(BaseEstimator):
             store=self._converter_store_X,
         )
 
-        if y_inner_mtype != "None":
+        if y_inner_mtype != ["None"]:
             y_inner_mtype = [
                 mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
             ]
