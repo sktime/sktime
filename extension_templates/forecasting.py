@@ -20,12 +20,12 @@ How to use this implementation template to implement a new estimator:
 
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
-    forecasting     - _predict(self, fh=None, X=None, return_pred_int=False,
-                               alpha=DEFAULT_ALPHA)
+    forecasting     - _predict(self, fh=None, X=None)
 
 Optional implements:
     updating        - _update(self, y, X=None, update_params=True):
     fitted parameter inspection - get_fitted_params()
+    predicting quantiles - _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA)
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -44,7 +44,6 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 # todo: add any necessary imports here
 
@@ -90,8 +89,10 @@ class MyForecaster(BaseForecaster):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "capability:pred_int": False,  # does forecaster implement predict_quantiles?
+        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
     }
-    # in case of inheritance, concrete class should typically set tags
+    #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
@@ -153,7 +154,7 @@ class MyForecaster(BaseForecaster):
         #  the clones, not the originals shoudld be used or fitted if needed
 
     # todo: implement this, mandatory
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
             core logic
@@ -164,16 +165,11 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
 
         # implement here
@@ -192,16 +188,11 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
 
         State change
         ------------
@@ -215,15 +206,7 @@ class MyForecaster(BaseForecaster):
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
-    def _update_predict_single(
-        self,
-        y,
-        fh,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
 
         Implements default behaviour of calling update and predict
@@ -231,26 +214,38 @@ class MyForecaster(BaseForecaster):
         to implement more efficient updating algorithms when available.
         """
         self.update(y, X, update_params=update_params)
-        return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        return self.predict(fh, X)
 
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def _compute_pred_int(self, alphas):
-        """Calculate the prediction errors for each point.
+    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+        """
+        Compute/return prediction quantiles for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple quantiles will be calculated.
+
+        Users can implement _predict_interval if calling it makes this faster.
 
         Parameters
         ----------
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list of float, optional (default=0.5)
+            A probability or list of, at which quantile forecasts are computed.
 
         Returns
         -------
-        errors : list of pd.Series
-            Each series in the list will contain the errors for each point in
-            the forecast for the corresponding alpha.
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
         """
         # implement here
 
@@ -262,8 +257,6 @@ class MyForecaster(BaseForecaster):
         cv,
         X=None,
         update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
     ):
         """Make single-step or multi-step moving cutoff predictions.
 
@@ -273,8 +266,6 @@ class MyForecaster(BaseForecaster):
         cv : temporal cross-validation generator
         X : pd.DataFrame
         update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
