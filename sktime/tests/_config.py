@@ -403,8 +403,6 @@ ESTIMATOR_TEST_PARAMS = {
         "verbose": False,
     },
     UnobservedComponents: {"level": "local level"},
-    PartialAutoCorrelationTransformer: {"n_lags": 1},
-    AutoCorrelationTransformer: {"n_lags": 1},
     Imputer: {"method": "mean"},
     HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
@@ -413,7 +411,6 @@ ESTIMATOR_TEST_PARAMS = {
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
-    ClaSPTransformer: {"window_length": 5},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
