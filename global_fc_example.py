@@ -10,10 +10,13 @@ from sklearn.pipeline import make_pipeline
 from global_fc_helpers import MVTimeSeriesSplit, mvts_cv
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
     ForecastingGridSearchCV,
-    SlidingWindowSplitter,
 )
-from sktime.transformations.panel.mvtree import MVTreeFeatureExtractor, find_maxlag
+from sktime.transformations.panel.window_summarizer import (
+    LaggedWindowSummarizer,
+    find_maxlag,
+)
 
 pd.options.mode.chained_assignment = None
 pd.set_option("display.max_columns", None)
@@ -45,10 +48,9 @@ for i in encode_cols:
     data[i] = id_encoder.transform(data.loc[:, [i]])
 
 # Form subsets for faster training
-
-data = data[data["ts_id"].isin(data["ts_id"].unique()[:10])]
+data = data[data["ts_id"].isin(data["ts_id"].unique()[:1])]
 data.sort_values(["ts_id", "Period"], inplace=True)
-data = data.groupby("ts_id").tail(80)
+data = data.groupby("ts_id").tail(40)
 # %%
 
 # Build Multiindex format
@@ -69,22 +71,36 @@ X = pd.DataFrame(
 
 # %%
 
-tscv = MVTimeSeriesSplit(n_splits=3, test_size=5)
+tscv = MVTimeSeriesSplit(n_splits=3, test_size=3)
 
 X_train, X_test, y_train, y_test = mvts_cv(X, y, tscv)
 
 
 # %%
+# window argument: list of how many features we want
+# Item [1, 1] means: shift by one, window of one
+# Leonidas suggestion:
+# "lag": {["lag", [[1, 1], [5, 1], [7, 1]]]},
+
+# kwargs = {
+#     "functions": {
+#         "lag": {"func": "lag", "window": [[1, 1], [5, 1], [7, 1]]},
+#         "mean": {"func": "mean", "window": [[1, 2], [2, 2], [4, 2]]},
+#         "median": {"func": "median", "window": [[1, 2], [2, 2], [4, 2]]},
+#         "std": {"func": "std", "window": [[1, 3], [2, 3]]},
+#     }
+# }
+
 kwargs = {
     "functions": {
-        "lag": {"func": "lag", "window": [[1, 1], [5, 1], [7, 1]]},
-        "mean": {"func": "mean", "window": [[1, 2], [2, 2], [4, 2]]},
-        "median": {"func": "median", "window": [[1, 2], [2, 2], [4, 2]]},
-        "std": {"func": "std", "window": [[1, 3], [2, 3]]},
+        "lag": ["lag", [[1, 1], [4, 1], [7, 1]]],
+        "mean": ["mean", [[1, 1], [5, 1], [3, 2]]],
+        "median": ["median", [[1, 2], [2, 3]]],
+        "std": ["std", [[1, 2], [5, 2], [4, 2]]],
     }
 }
 
-
+# Should it really be 8 or is 7 enough
 window_length = find_maxlag(kwargs)
 
 # %%
@@ -93,11 +109,16 @@ regressor = make_pipeline(
     RandomForestRegressor(),
 )
 
+# Danbartl: Window Length is redundant
+# Leonidas: test and make it work for univariate even without multiindex
+# Test how it works with LaggedWindowSummarizer
+# > should be possible to use in a ForecastingPipeline for X arguments
+
 forecaster = make_reduction(
     regressor,
     scitype="tabular-regressor",
-    transformers=[MVTreeFeatureExtractor(**kwargs)],
-    window_length=window_length,
+    transformers=[LaggedWindowSummarizer(**kwargs)],
+    window_length=None,
 )
 
 forecaster.fit(X=X_train, y=y_train, fh=2)
@@ -105,40 +126,38 @@ forecaster.fit(X=X_train, y=y_train, fh=2)
 y_pred = forecaster.predict(X=X_test, fh=2)
 
 # %%
-# Window length is actually not relevant here
-# Need to figure out how to change dictionary
-
 # Cross Validation
-
 kwargs_cv = {
     "functions": {
-        "lag": {"func": "lag", "window": [[1, 1], [3, 1], [5, 1]]},
-        "mean": {"func": "mean", "window": [[1, 2], [2, 2], [4, 2]]},
-        "median": {"func": "median", "window": [[1, 2], [2, 2], [4, 2]]},
-        "std": {"func": "std", "window": [[1, 3], [2, 3]]},
+        "lag": ["lag", [[1, 1], [3, 1], [5, 1]]],
+        "mean": ["mean", [[1, 1], [5, 1], [3, 2]]],
+        "median": ["median", [[1, 2], [2, 3]]],
+        "std": ["std", [[1, 2], [5, 2], [4, 2]]],
     }
 }
 
 # Window length should correspond dynamically to transformer choices
 # How to implement that?
 
+# Ultimate goal: have a complexity argument taking account the frequency of time series
+# Automatically generate a dictionary
+
 forecaster_param_grid = {
     "window_length": [8],
     "transformers": [
-        MVTreeFeatureExtractor(**kwargs),
-        MVTreeFeatureExtractor(**kwargs_cv),
+        LaggedWindowSummarizer(**kwargs),
+        LaggedWindowSummarizer(**kwargs_cv),
     ],
 }
 
 regressor_param_grid = {"random_state": [8, 12]}
 
+# include get:wind
 y_length = len(
     y_train.xs(y_train.index.get_level_values("ts_id")[0], level="ts_id").index
 )
 
-cv = SlidingWindowSplitter(
-    initial_window=int(y_length * 0.8), window_length=window_length
-)
+cv = ExpandingWindowSplitter(initial_window=15)
 
 regressor = GridSearchCV(
     RandomForestRegressor(),
@@ -149,8 +168,8 @@ regressor = GridSearchCV(
 forecaster = make_reduction(
     regressor,
     scitype="tabular-regressor",
-    transformers=[MVTreeFeatureExtractor(**kwargs)],
-    window_length=window_length,
+    transformers=[LaggedWindowSummarizer(**kwargs)],
+    window_length=None,
 )
 
 gscv = ForecastingGridSearchCV(forecaster, cv=cv, param_grid=forecaster_param_grid)
@@ -160,6 +179,8 @@ gscv = ForecastingGridSearchCV(forecaster, cv=cv, param_grid=forecaster_param_gr
 gscv.fit(X=X_train, y=y_train, fh=2)
 y_pred_cv = gscv.predict(X=X_test, fh=2)
 
+# mean absolute precentage error: How is it calcualted.
+# Should we allow for a composite calculation
 # mean_absolute_percentage_error(y_pred, y_test)
 
 gscv.best_params_

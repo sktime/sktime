@@ -99,6 +99,8 @@ def evaluate(
 
     # Initialize dataframe.
     results = pd.DataFrame()
+
+    # danbartl ts_index
     if isinstance(y.index, pd.MultiIndex):
         y_to_split = y.xs(y.index.get_level_values("ts_id")[0], level="ts_id")
     else:

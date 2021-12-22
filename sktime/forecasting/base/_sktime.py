@@ -177,7 +177,7 @@ class _BaseWindowForecaster(BaseForecaster):
         """Select last window."""
         # Get the start and end points of the last window.
         cutoff = self.cutoff
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        start = _shift(cutoff, by=-self.window_length_)
 
         if isinstance(self._y.index, pd.MultiIndex):
 
@@ -196,7 +196,7 @@ class _BaseWindowForecaster(BaseForecaster):
             else:
                 X_from_y = self.transformers.fit().transform(y)
             X_from_y_cut = X_from_y.groupby(level=0).tail(1)
-            #    X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
+            #    X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
             # fix maxlag to take lag into account
             X_cut = X.groupby(level=0).tail(1)
 
@@ -253,11 +253,11 @@ class _BaseWindowForecaster(BaseForecaster):
         self.update(y, X, update_params=update_params)
         return self._predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _get_shifted_window(self, y_update, X_update, shift, X_last):
+    def _get_shifted_window(self, y_update, X_update, shift):
         """Select last window."""
         # Get the start and end points of the last window.
         cutoff = _shift(self.cutoff, by=shift)
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        start = _shift(cutoff, by=-self.window_length_)
 
         # danbartl: need to transform
 
@@ -292,11 +292,12 @@ class _BaseWindowForecaster(BaseForecaster):
                 X_from_y = self.transformers[0].fit().transform(y)
             else:
                 X_from_y = self.transformers.fit().transform(y)
+
             X_from_y_cut = X_from_y.groupby(level=0).tail(
-                n_timepoints - self.window_length + 1
+                n_timepoints - self.window_length
             )
-            # X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
-            X_cut = X.groupby(level=0).tail(n_timepoints - self.window_length + 1)
+            # X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
+            X_cut = X.groupby(level=0).tail(n_timepoints - self.window_length)
 
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
 

@@ -8,7 +8,7 @@ from sktime.transformations.base import _PanelToTabularTransformer
 
 def find_maxlag(kwargs):
     """Find maximum lag based on provided dictionary."""
-    lst = [v["window"] for v in kwargs["functions"].values()]
+    lst = [v[1] for v in kwargs["functions"].values()]
     max_lag = []
     for i in lst:
         for j in i:
@@ -16,7 +16,7 @@ def find_maxlag(kwargs):
     return max(max_lag)
 
 
-class _MVTreeExtractor(_PanelToTabularTransformer):
+class _LaggedWindowExtractor(_PanelToTabularTransformer):
     """Base adapter class for transformations."""
 
     def __init__(
@@ -28,7 +28,7 @@ class _MVTreeExtractor(_PanelToTabularTransformer):
         self.functions = functions
         self.n_jobs = n_jobs
 
-        super(_MVTreeExtractor, self).__init__()
+        super(_LaggedWindowExtractor, self).__init__()
 
     # Get extraction parameters
     def fit(self):
@@ -39,17 +39,22 @@ class _MVTreeExtractor(_PanelToTabularTransformer):
         self : an instance of self
         """
         # check_X(X, coerce_to_pandas=True)
-        func_dict = pd.DataFrame(self.functions).T.reset_index().explode("window")
-
-        func_dict.rename({"index": "name"}, axis="columns", inplace=True)
+        func_dict = pd.DataFrame(self.functions).T.reset_index()
+        func_dict.rename(
+            columns={"index": "name", 0: "func", 1: "window"}, inplace=True
+        )
+        func_dict = func_dict.explode("window")
 
         self._func_dict = func_dict
         self._is_fitted = True
+        self._truncate_start = (
+            func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
+        )
 
         return self
 
 
-class MVTreeFeatureExtractor(_MVTreeExtractor):
+class LaggedWindowSummarizer(_LaggedWindowExtractor):
     """Transformer for extracting time series features."""
 
     def transform(self, Z):
@@ -103,6 +108,7 @@ def _window_feature(
     window: list
         Contains values for window shift and window length.
     """
+    # List of native pandas rolling window function.
     pd_rolling = [
         "sum",
         "mean",

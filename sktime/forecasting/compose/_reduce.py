@@ -97,14 +97,18 @@ def _sliding_window_transform(
     if isinstance(y.index, pd.MultiIndex):
         # danbartl: how to implement iteration over all transformers?
         if isinstance(transformers, list):
-            X_from_y = transformers[0].fit().transform(y)
+            tf_fit = transformers[0].fit()
+            X_from_y = tf_fit.transform(y)
         else:
-            X_from_y = transformers.fit().transform(y)
+            tf_fit = transformers.fit()
+            X_from_y = tf_fit.transform(y)
 
-        X_from_y_cut = X_from_y.groupby(level=0).tail(n_timepoints - window_length + 1)
-        #    X_from_y = MVTreeFeatureExtractor(**model_kwargs,X)
+        X_from_y_cut = X_from_y.groupby(level=0).tail(
+            n_timepoints - tf_fit._truncate_start
+        )
+        #    X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
         # fix maxlag to take lag into account
-        X_cut = X.groupby(level=0).tail(n_timepoints - window_length + 1)
+        X_cut = X.groupby(level=0).tail(n_timepoints - tf_fit._truncate_start)
 
         z = pd.concat([X_from_y_cut, X_cut], axis=1)
         yt = z[["y"]]
@@ -406,6 +410,10 @@ class _RecursiveReducer(_Reducer):
         )
 
         self.transformers_ = self.transformers
+        if self.window_length is None:
+            truncate_start = self.transformers[0].fit()._truncate_start
+            self.window_length_ = truncate_start
+            self.window_length = truncate_start
 
         yt, Xt = self._transform(y, X)
 
@@ -417,6 +425,7 @@ class _RecursiveReducer(_Reducer):
 
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
+
         return self
 
     def _predict_last_window(
@@ -465,9 +474,10 @@ class _RecursiveReducer(_Reducer):
 
                 y_pred.update(y_pred_curr)
                 # danbartl: check for horizon larger than one
+                # danbartl should not take y_pred_curr but y_pred as input for fh > 2
 
                 X_last = self._get_shifted_window(
-                    y_update=y_pred_curr, X_update=X, shift=i + 1, X_last=X_last
+                    y_update=y_pred, X_update=X, shift=i + 1
                 )
 
                 # y_pred[i] = self.estimator_.predict(X_pred)
@@ -612,6 +622,7 @@ class _DirRecReducer(_Reducer):
 
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
+
         if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
