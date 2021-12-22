@@ -143,7 +143,7 @@ kwargs_cv = {
 # Automatically generate a dictionary
 
 forecaster_param_grid = {
-    "window_length": [8],
+    "window_length": [None],
     "transformers": [
         LaggedWindowSummarizer(**kwargs),
         LaggedWindowSummarizer(**kwargs_cv),

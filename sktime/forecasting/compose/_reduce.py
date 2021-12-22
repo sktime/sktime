@@ -411,9 +411,14 @@ class _RecursiveReducer(_Reducer):
 
         self.transformers_ = self.transformers
         if self.window_length is None:
-            truncate_start = self.transformers[0].fit()._truncate_start
-            self.window_length_ = truncate_start
-            self.window_length = truncate_start
+            if isinstance(self.transformers, list):
+                truncate_start = self.transformers[0].fit()._truncate_start
+                self.window_length_ = truncate_start
+                self.window_length = truncate_start
+            else:
+                truncate_start = self.transformers.fit()._truncate_start
+                self.window_length_ = truncate_start
+                self.window_length = truncate_start
 
         yt, Xt = self._transform(y, X)
 
