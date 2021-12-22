@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numba import njit
-from numba.typed import List
 
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import _PanelToTabularTransformer
@@ -56,6 +55,17 @@ class Catch22(_PanelToTabularTransformer):
         self.replace_nans = replace_nans
 
         self.n_jobs = n_jobs
+
+        self._case_id = None
+        self._st_n_instances = 0
+        self._st_series_length = 0
+        self._outlier_series = None
+        self._smin = None
+        self._smax = None
+        self._smean = None
+        self._fft = None
+        self._ac = None
+        self._acfz = None
 
         super(Catch22, self).__init__()
 
@@ -130,7 +140,7 @@ class Catch22(_PanelToTabularTransformer):
 
         return c22
 
-    def transform_single_feature(self, X, feature):
+    def transform_single_feature(self, X, feature, case_id=None):
         """Transform data into a specified catch22 feature.
 
         Parameters
@@ -138,6 +148,9 @@ class Catch22(_PanelToTabularTransformer):
         X : pandas DataFrame, input time series.
         feature : int, catch22 feature id or String, catch22 feature
                   name.
+        case_id : int, identifier for the current set of cases. If the case_id is not
+                  None and the same as the previously used case_id, calculations from
+                  previous features will be reused.
 
         Returns
         -------
@@ -161,11 +174,37 @@ class Catch22(_PanelToTabularTransformer):
 
         n_instances = X.shape[0]
         X = np.reshape(X, (n_instances, -1))
+        series_length = X.shape[1]
+
+        if case_id is not None:
+            if case_id != self._case_id:
+                self._case_id = case_id
+                self._st_n_instances = n_instances
+                self._st_series_length = series_length
+                self._outlier_series = [None] * n_instances
+                self._smin = [None] * n_instances
+                self._smax = [None] * n_instances
+                self._smean = [None] * n_instances
+                self._fft = [None] * n_instances
+                self._ac = [None] * n_instances
+                self._acfz = [None] * n_instances
+            else:
+                if (
+                    n_instances != self._st_n_instances
+                    or series_length != self._st_series_length
+                ):
+                    raise ValueError(
+                        "Catch22: case_is the same, but n_instances and "
+                        "series_length do not match last seen for single "
+                        "feature transform."
+                    )
 
         c22_list = Parallel(n_jobs=self.n_jobs)(
             delayed(self._transform_case_single)(
                 X[i],
                 feature,
+                case_id,
+                i,
             )
             for i in range(n_instances)
         )
@@ -175,40 +214,97 @@ class Catch22(_PanelToTabularTransformer):
 
         return np.asarray(c22_list)
 
-    def _transform_case_single(self, series, feature):
+    def _transform_case_single(self, series, feature, case_id, inst_idx):
         args = [series]
 
-        if feature == 0 or feature == 1 or feature == 11:
-            smin = np.min(series)
-            smax = np.max(series)
-            args = [series, smin, smax]
-        elif feature == 2:
-            smean = np.mean(series)
-            args = [series, smean]
-        elif feature == 3 or feature == 4:
-            if self.outlier_norm:
-                std = np.std(series)
-                if std > 0:
-                    series = (series - np.mean(series)) / std
-            args = [series]
-        elif feature == 7 or feature == 8:
-            smean = np.mean(series)
-            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-            fft = np.fft.fft(series - smean, n=nfft)
-            args = [series, fft]
-        elif feature == 5 or feature == 6 or feature == 12:
-            smean = np.mean(series)
-            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-            fft = np.fft.fft(series - smean, n=nfft)
-            ac = _autocorr(series, fft)
-            args = [ac]
-        elif feature == 16 or feature == 17 or feature == 20:
-            smean = np.mean(series)
-            nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
-            fft = np.fft.fft(series - smean, n=nfft)
-            ac = _autocorr(series, fft)
-            acfz = _ac_first_zero(ac)
-            args = [series, acfz]
+        if case_id is None:
+            if feature == 0 or feature == 1 or feature == 11:
+                smin = np.min(series)
+                smax = np.max(series)
+                args = [series, smin, smax]
+            elif feature == 2:
+                smean = np.mean(series)
+                args = [series, smean]
+            elif feature == 3 or feature == 4:
+                if self.outlier_norm:
+                    std = np.std(series)
+                    if std > 0:
+                        series = (series - np.mean(series)) / std  # todo numba
+                args = [series]
+            elif feature == 7 or feature == 8:
+                smean = np.mean(series)
+                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                fft = np.fft.fft(series - smean, n=nfft)
+                args = [series, fft]
+            elif feature == 5 or feature == 6 or feature == 12:
+                smean = np.mean(series)
+                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                fft = np.fft.fft(series - smean, n=nfft)
+                ac = _autocorr(series, fft)
+                args = [ac]
+            elif feature == 16 or feature == 17 or feature == 20:
+                smean = np.mean(series)
+                nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                fft = np.fft.fft(series - smean, n=nfft)
+                ac = _autocorr(series, fft)
+                acfz = _ac_first_zero(ac)
+                args = [series, acfz]
+        else:
+            if feature == 0 or feature == 1 or feature == 11:
+                if self._smin[inst_idx] is None:
+                    self._smin[inst_idx] = np.min(series)
+                if self._smax[inst_idx] is None:
+                    self._smax[inst_idx] = np.max(series)
+                args = [series, self._smin[inst_idx], self._smax[inst_idx]]
+            elif feature == 2:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                args = [series, self._smean[inst_idx]]
+            elif feature == 3 or feature == 4:
+                if self.outlier_norm:
+                    if self._outlier_series[inst_idx] is None:
+                        std = np.std(series)
+                        if std > 0:
+                            self._outlier_series[inst_idx] = (
+                                series - np.mean(series)
+                            ) / std
+                        else:
+                            self._outlier_series[inst_idx] = series
+                    series = self._outlier_series[inst_idx]
+                args = [series]
+            elif feature == 7 or feature == 8:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                if self._fft[inst_idx] is None:
+                    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
+                args = [series, self._fft[inst_idx]]
+            elif feature == 5 or feature == 6 or feature == 12:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                if self._fft[inst_idx] is None:
+                    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
+                if self._ac[inst_idx] is None:
+                    self._ac[inst_idx] = _autocorr(series, self._fft[inst_idx])
+                args = [self._ac[inst_idx]]
+            elif feature == 16 or feature == 17 or feature == 20:
+                if self._smean[inst_idx] is None:
+                    self._smean[inst_idx] = np.mean(series)
+                if self._fft[inst_idx] is None:
+                    nfft = int(np.power(2, np.ceil(np.log(len(series)) / np.log(2))))
+                    self._fft[inst_idx] = np.fft.fft(
+                        series - self._smean[inst_idx], n=nfft
+                    )
+                if self._ac[inst_idx] is None:
+                    self._ac[inst_idx] = _autocorr(series, self._fft[inst_idx])
+                if self._acfz[inst_idx] is None:
+                    self._acfz[inst_idx] = _ac_first_zero(self._ac[inst_idx])
+                args = [series, self._acfz[inst_idx]]
 
         return features[feature](*args)
 
@@ -372,30 +468,40 @@ class Catch22(_PanelToTabularTransformer):
         # Shannon entropy of two successive letters in equiprobable 3-letter
         # symbolization.
         indicies = np.argsort(X)
-        p = List()
         bins = np.zeros(len(X))
         q1 = int(len(X) / 3)
         q2 = q1 * 2
-        l1 = List()
-        for i in range(q1 + 1):
-            l1.append(indicies[i])
-        p.append(l1)
-        l2 = List()
-        for i in range(q1 + 1, q2 + 1):
+        l1 = np.zeros(q1, dtype=np.int_)
+        for i in range(q1):
+            l1[i] = indicies[i]
+        l2 = np.zeros(q1, dtype=np.int_)
+        c1 = 0
+        for i in range(q1, q2):
             bins[indicies[i]] = 1
-            l2.append(indicies[i])
-        p.append(l2)
-        l3 = List()
-        for i in range(q2 + 1, len(indicies)):
+            l2[c1] = indicies[i]
+            c1 += 1
+        l3 = np.zeros(len(indicies) - q2, dtype=np.int_)
+        c2 = 0
+        for i in range(q2, len(indicies)):
             bins[indicies[i]] = 2
-            l3.append(indicies[i])
-        p.append(l3)
+            l3[c2] = indicies[i]
+            c2 += 1
 
+        found_last = False
         nsum = 0
         for i in range(3):
-            o = p[i]
-            if len(X) - 1 in o:
-                o.remove(len(X) - 1)
+            if i == 0:
+                o = l1
+            elif i == 1:
+                o = l2
+            else:
+                o = l3
+
+            if not found_last:
+                for n in range(len(o)):
+                    if o[n] == len(X) - 1:
+                        o = np.delete(o, n)
+                        break
 
             for n in range(3):
                 nsum2 = 0
@@ -659,21 +765,23 @@ def _outlier_include(X):
     for i in range(num_thresholds):
         d = i * 0.01
 
-        r = List()
+        count = 0
+        r = np.zeros(len(X))
         for n in range(len(X)):
             if X[n] >= d:
-                r.append(n + 1)
+                r[count] = n + 1
+                count += 1
 
-        if len(r) == 0:
+        if count == 0:
             continue
 
-        diff = np.zeros(len(r) - 1)
+        diff = np.zeros(count - 1)
         for n in range(len(diff)):
             diff[n] = r[n + 1] - r[n]
 
         means[i] = np.mean(diff) if len(diff) > 0 else 9999999999
         dists[i] = len(diff) * 100 / total
-        medians[i] = _typed_list_median(r) / (len(X) / 2) - 1
+        medians[i] = np.median(r[:count]) / (len(X) / 2) - 1
 
     mj = 0
     fbi = num_thresholds - 1
@@ -686,15 +794,6 @@ def _outlier_include(X):
     trim_limit = max(mj, fbi)
 
     return np.median(medians[: trim_limit + 1])
-
-
-@njit(fastmath=True, cache=True)
-def _typed_list_median(X):
-    X.sort()
-    if len(X) % 2 == 1:
-        return X[int(len(X) / 2)]
-    else:
-        return (X[int(len(X) / 2) - 1] + X[int(len(X) / 2)]) / 2
 
 
 def _autocorr(X, X_fft):
@@ -748,7 +847,7 @@ def _summaries_welch_rect(X, centroid, X_fft):
                 return w[i]
         return np.nan
     else:
-        tau = np.floor(new_length / 5)
+        tau = int(np.floor(new_length / 5))
         nsum = 0
         for i in range(tau):
             nsum += p[i]
@@ -783,16 +882,17 @@ def _ac_first_zero(X_ac):
 
 @njit(fastmath=True, cache=True)
 def _fluct_prop(X, og_length, dfa):
-    a = List()
-    a.append(5)
+    a = np.zeros(50, dtype=np.int_)
+    a[0] = 5
+    n_tau = 1
     smin = 1.6094379124341003  # Math.log(5);
     smax = np.log(og_length / 2)
     inc = (smax - smin) / 49
     for i in range(1, 50):
         val = int(np.round(np.exp(smin + inc * i) + 0.000000000001))
-        if val != a[len(a) - 1]:
-            a.append(val)
-    n_tau = len(a)
+        if val != a[n_tau - 1]:
+            a[n_tau] = val
+            n_tau += 1
 
     if n_tau < 12:
         return np.nan

@@ -13,6 +13,8 @@ from itertools import compress
 
 import numpy as np
 from joblib import Parallel, delayed
+from numba import njit, types
+from numba.typed.typeddict import Dict
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -56,6 +58,11 @@ class BOSSEnsemble(BaseClassifier):
         Maximum window length as a proportion of the series length.
     min_window : int, default=10
         Minimum window size.
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets. As the Dict cannot be pickled currently, there
+        will be some overhead converting it to a python dict with multiple threads and
+        pickling.
     save_train_predictions : bool, default=False
         Save the ensemble member train predictions in fit for use in _get_train_probs
         leave-one-out cross-validation.
@@ -120,6 +127,7 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
+        typed_dict=True,
         save_train_predictions=False,
         n_jobs=1,
         random_state=None,
@@ -129,6 +137,7 @@ class BOSSEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.min_window = min_window
 
+        self.typed_dict = typed_dict
         self.save_train_predictions = save_train_predictions
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -198,6 +207,7 @@ class BOSSEnsemble(BaseClassifier):
                     normalise,
                     self._alphabet_size,
                     save_words=True,
+                    typed_dict=self.typed_dict,
                     n_jobs=self._threads_to_use,
                     random_state=self.random_state,
                 )
@@ -428,6 +438,9 @@ class IndividualBOSS(BaseClassifier):
         the dictionary of words is returned. If True, the array is saved, which
         can shorten the time to calculate dictionaries using a shorter
         `word_length` (since the last "n" letters can be removed).
+    typed_dict : bool, default=True
+        Use a numba TypedDict to store word counts. May increase memory usage, but will
+        be faster for larger datasets.
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
@@ -480,6 +493,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=4,
         save_words=False,
+        typed_dict=True,
         n_jobs=1,
         random_state=None,
     ):
@@ -489,6 +503,7 @@ class IndividualBOSS(BaseClassifier):
         self.alphabet_size = alphabet_size
 
         self.save_words = save_words
+        self.typed_dict = typed_dict
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -500,6 +515,31 @@ class IndividualBOSS(BaseClassifier):
         self._train_predictions = []
 
         super(IndividualBOSS, self).__init__()
+
+    def __getstate__(self):
+        """Return state as dictionary for pickling, required for typed Dict objects."""
+        state = self.__dict__.copy()
+        if self.typed_dict:
+            nl = [None] * len(self._transformed_data)
+            for i, ndict in enumerate(state["_transformed_data"]):
+                pdict = dict()
+                for key, val in ndict.items():
+                    pdict[key] = val
+                nl[i] = pdict
+            state["_transformed_data"] = nl
+        return state
+
+    def __setstate__(self, state):
+        """Set current state using input pickling, required for typed Dict objects."""
+        self.__dict__.update(state)
+        if self.typed_dict:
+            nl = [None] * len(self._transformed_data)
+            for i, pdict in enumerate(self._transformed_data):
+                ndict = Dict.empty(key_type=types.int64, value_type=types.uint32)
+                for key, val in pdict.items():
+                    ndict[key] = val
+                nl[i] = ndict
+            self._transformed_data = nl
 
     def _fit(self, X, y):
         """Fit a single boss classifier on n_instances cases (X,y).
@@ -529,6 +569,7 @@ class IndividualBOSS(BaseClassifier):
             remove_repeat_words=True,
             bigrams=False,
             save_words=self.save_words,
+            typed_dict=self.typed_dict,
             n_jobs=self._threads_to_use,
         )
 
@@ -602,6 +643,7 @@ class IndividualBOSS(BaseClassifier):
             self.norm,
             self.alphabet_size,
             save_words=self.save_words,
+            typed_dict=self.typed_dict,
             random_state=self.random_state,
             n_jobs=self.n_jobs,
         )
@@ -654,9 +696,8 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
     dist : float
         The boss distance between the first and second dictionaries.
     """
-    dist = 0
-
     if isinstance(first, dict):
+        dist = 0
         for word, val_a in first.items():
             val_b = second.get(word, 0)
             buf = val_a - val_b
@@ -664,12 +705,26 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
 
             if dist > best_dist:
                 return sys.float_info.max
+        return dist
+    elif isinstance(first, Dict):
+        return _boss_distance_dict(first, second, best_dist)
     else:
-        dist = np.sum(
+        return np.sum(
             [
                 0 if first[i] == 0 else (first[i] - second[i]) * (first[i] - second[i])
                 for i in range(len(first))
             ]
         )
 
+
+@njit(fastmath=True, cache=True)
+def _boss_distance_dict(first, second, best_dist):
+    dist = 0
+    for word, val_a in first.items():
+        val_b = second.get(word, types.uint32(0))
+        buf = val_a - val_b
+        dist += buf * buf
+
+        if dist > best_dist:
+            return 0x7FFFFFFFFFFFFFFF
     return dist
