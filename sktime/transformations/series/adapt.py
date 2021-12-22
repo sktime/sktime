@@ -6,12 +6,9 @@
 __author__ = ["mloning"]
 __all__ = ["TabularToSeriesAdaptor"]
 
-import pandas as pd
 from sklearn.base import clone
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.series import check_series
 
 
 class TabularToSeriesAdaptor(BaseTransformer):
@@ -124,3 +121,19 @@ class TabularToSeriesAdaptor(BaseTransformer):
         """
         Xt = self.transformer_.inverse_transform(X)
         return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.preprocessing import StandardScaler
+
+        return {"transformer": StandardScaler()}

@@ -110,10 +110,7 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformations.series.acf import (
-    AutoCorrelationTransformer,
-    PartialAutoCorrelationTransformer,
-)
+
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.clasp import ClaSPTransformer
@@ -229,7 +226,6 @@ ESTIMATOR_TEST_PARAMS = {
         "param_distributions": {"window_length": [2, 5]},
         "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
-    TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
         "estimators": [
             (name, estimator, 0) for (name, estimator) in TIME_SERIES_CLASSIFIERS
