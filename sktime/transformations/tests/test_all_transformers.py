@@ -22,6 +22,7 @@ from sktime.transformations.base import (
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _construct_instance,
+    _has_capability,
     _make_args,
 )
 
@@ -162,7 +163,7 @@ def check_transform_returns_same_time_index(Estimator):
         fit_args = _make_args(estimator, "fit")
         estimator.fit(*fit_args)
         for method in ["transform", "inverse_transform"]:
-            if hasattr(estimator, method):
+            if _has_capability(estimator, method):
                 X = _make_args(estimator, method)[0]
                 Xt = estimator.transform(X)
                 np.testing.assert_array_equal(X.index, Xt.index)
@@ -205,7 +206,7 @@ panel_to_panel_checks = [
 
 def _yield_transformer_checks(Estimator):
     yield from all_transformer_checks
-    if hasattr(Estimator, "inverse_transform"):
+    if _has_capability(Estimator, "inverse_transform"):
         yield check_transform_inverse_transform_equivalent
     if issubclass(Estimator, _SeriesToPrimitivesTransformer):
         yield from series_to_primitive_checks
