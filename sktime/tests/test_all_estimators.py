@@ -168,23 +168,17 @@ def test_inheritance(estimator_class):
     assert issubclass(estimator_class, BaseEstimator), (
         f"Estimator: {estimator_class} " f"is not a sub-class of " f"BaseEstimator."
     )
-
+    Estimator = estimator_class
     # Usually estimators inherit only from one BaseEstimator type, but in some cases
     # they may be predictor and transformer at the same time (e.g. pipelines)
-    assert (
-        2
-        >= (
-            sum(
-                [issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES]
-            )
-        )
-        >= 1
-    )
+    n_base_types = sum(issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES)
+
+    assert 2 >= n_base_types >= 1
 
     # If the estimator inherits from more than one base estimator type, we check if
     # one of them is a transformer base type
-    if sum(issubclass(estimator_class, cls) for cls in VALID_ESTIMATOR_BASE_TYPES) > 1:
-        assert issubclass(estimator_class, VALID_TRANSFORMER_TYPES)
+    if n_base_types > 1:
+        assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 
 def test_has_common_interface(estimator_class):
