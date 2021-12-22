@@ -158,7 +158,7 @@ def check_panel_to_panel_transform_multivariate(Estimator):
 def check_transform_returns_same_time_index(Estimator):
     estimator = _construct_instance(Estimator)
     if estimator.get_tag("transform-returns-same-time-index"):
-        assert issubclass(Estimator, _SeriesToSeriesTransformer)
+        assert issubclass(Estimator, (_SeriesToSeriesTransformer, BaseTransformer))
         estimator = _construct_instance(Estimator)
         fit_args = _make_args(estimator, "fit")
         estimator.fit(*fit_args)
