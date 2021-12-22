@@ -387,7 +387,17 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
     >>> profile = clasp.transform(X)
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "univariate-only": True,
+        "fit-in-transform": True,
+    }
 
     def __init__(self, window_length=10, scoring_metric="ROC_AUC"):
         self.window_length = int(window_length)
@@ -395,7 +405,7 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
         self.scoring_metric = scoring_metric
         super(ClaSPTransformer, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Compute ClaSP.
 
         Takes as input a single time series dataset and returns the
@@ -403,25 +413,24 @@ class ClaSPTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        X : pandas.Series
+        X : 2D numpy.ndarray
            A single pandas series or a 1d numpy array
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : pandas.Series
+        Xt : 1D numpy.ndarray
+            transformed version of X
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-        self.check_is_fitted()
-        X = check_series(X, enforce_univariate=True, allow_numpy=True)
         self._check_scoring_metric(self.scoring_metric)
 
-        if isinstance(X, pd.Series):
-            X = X.to_numpy()
-
+        X = X.flatten()
         Xt, self.knn_mask = clasp(X, self.window_length, score=self.scoring_metric_call)
 
-        return pd.Series(Xt)
+        return Xt
 
     def _check_scoring_metric(self, scoring_metric):
         """Check which scoring metric to use.
