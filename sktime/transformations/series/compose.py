@@ -142,7 +142,7 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
-            z = self.transformer_.inverse_transform(z, X=X)
+            z = self.transformer_.inverse_transform(z, X)
         return z
 
 

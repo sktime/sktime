@@ -59,7 +59,11 @@ class TabularToSeriesAdaptor(BaseTransformer):
     def __init__(self, transformer):
         self.transformer = transformer
         self.transformer_ = None
+
         super(TabularToSeriesAdaptor, self).__init__()
+
+        if hasattr(transformer, "inverse_transform"):
+            self.set_tags(**{"capability:inverse_transform": True})
 
     def _fit(self, X, y=None):
         """
@@ -102,7 +106,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Xt = self.transformer_.transform(X)
         return Xt
 
-    @if_delegate_has_method(delegate="transformer")
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
