@@ -656,7 +656,7 @@ class BaseTransformer(BaseEstimator):
             store=self._converter_store_X,
         )
 
-        if y_inner_mtype != "None":
+        if y_inner_mtype != ["None"]:
             y_inner_mtype = [
                 mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
             ]
