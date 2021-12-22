@@ -27,6 +27,7 @@ __all__ = [
     "load_longley",
     "load_lynx",
     "load_acsf1",
+    "load_unit_test",
     "load_uschange",
     "load_UCR_UEA_dataset",
     "load_PBS_dataset",
