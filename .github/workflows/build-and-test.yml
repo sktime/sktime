@@ -48,6 +48,7 @@ jobs:
     needs: code-quality
     runs-on: windows-2019
     strategy:
+      fail-fast: false   # TODO: remove this line before merging
       matrix:
         python-version: [3.7, 3.8, 3.9]
     steps:
@@ -90,7 +91,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime -vv --pyargs sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
@@ -127,7 +128,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime --pyargs sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
@@ -177,7 +178,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime --pyargs sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
