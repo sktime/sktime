@@ -46,10 +46,9 @@ jobs:
 
   test-windows:
     needs: code-quality
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2019
     strategy:
       matrix:
-        os: [windows-2019]
         python-version: [3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
@@ -69,6 +68,10 @@ jobs:
           conda-channels: anaconda, conda-forge
       - run: conda --version
       - run: which python
+
+      - name: Fix windows paths
+        if: ${{ matrix.os == 'windows-2019' }}
+        run: echo "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install sktime and dependencies (windows)
         run: |
