@@ -1,125 +1,151 @@
 # -*- coding: utf-8 -*-
+"""Test functions for data input and output."""
+
+__author__ = [
+    "SebasKoel",
+    "Emiliathewolf",
+    "TonyBagnall",
+    "jasonlines",
+]
+
+__all__ = []
+
 import os
 import tempfile
-import pytest
+
 import numpy as np
 import pandas as pd
-from sktime.utils.data_io import TsFileParseException
-from sktime.utils.data_io import load_from_tsfile_to_dataframe
-from sktime.utils.data_io import load_from_long_to_dataframe
-from sktime.utils.data_io import LongFormatDataParseException
-from sktime.utils.data_io import generate_example_long_table
+import pytest
+from pandas._testing import assert_frame_equal
+
+import sktime
+from sktime.datasets import (
+    generate_example_long_table,
+    load_from_long_to_dataframe,
+    load_from_tsfile_to_dataframe,
+    load_uschange,
+    write_dataframe_to_tsfile,
+)
+
+_CHECKS = {
+    "uschange": {
+        "columns": ["Income", "Production", "Savings", "Unemployment"],
+        "len_y": 187,
+        "len_X": 187,
+        "data_types_X": {
+            "Income": "float64",
+            "Production": "float64",
+            "Savings": "float64",
+            "Unemployment": "float64",
+        },
+        "data_type_y": "float64",
+        "data": load_uschange(),
+    },
+}
+
+
+@pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
+def test_data_loaders(dataset):
+    """
+    Assert if datasets are loaded correctly.
+
+    dataset: dictionary with values to assert against should contain:
+        'columns' : list with column names in correct order,
+        'len_y'   : lenght of the y series (int),
+        'len_X'   : lenght of the X series/dataframe (int),
+        'data_types_X' : dictionary with column name keys and dtype as value,
+        'data_type_y'  : dtype if y column (string)
+        'data'    : tuple with y series and X series/dataframe if one is not
+                    applicable fill with None value,
+    """
+    checks = _CHECKS[dataset]
+    y = checks["data"][0]
+    X = checks["data"][1]
+
+    if y is not None:
+        assert isinstance(y, pd.Series)
+        assert len(y) == checks["len_y"]
+        assert y.dtype == checks["data_type_y"]
+
+    if X is not None:
+        if len(checks["data_types_X"]) > 1:
+            assert isinstance(X, pd.DataFrame)
+        else:
+            assert isinstance(X, pd.Series)
+
+        assert X.columns.values.tolist() == checks["columns"]
+
+        for col, dt in checks["data_types_X"].items():
+            assert X[col].dtype == dt
+
+        assert len(X) == checks["len_X"]
 
 
 def test_load_from_tsfile_to_dataframe():
     """Test the load_from_tsfile_to_dataframe() function."""
-
     # Test that an empty file is classed an invalid
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = ""
-
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file and assert that it is invalid
-
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
-
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
-
     # Test that a file with an incomplete set of metadata is invalid
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = (
                 "@problemName Test Problem\n@timeStamps " "true\n@univariate true\n"
             )
-
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file and assert that it is invalid
-
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
-
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
-
     # Test that a file with a complete set of metadata but no data is invalid
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = (
                 "@problemName Test Problem\n@timeStamps "
                 "true\n@univariate true\n@classLabel false\n@data"
             )
-
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file and assert that it is invalid
-
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
-
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
-
     # Test that a file with a complete set of metadata and no data but
     # invalid metadata values is invalid
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = (
                 "@problemName\n@timeStamps\n@univariate "
                 "true\n@classLabel false\n@data"
             )
-
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file and assert that it is invalid
-
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
-
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
     finally:
         os.remove(path)
-
     # Test that a file with a complete set of metadata and a single
     # case/dimension parses correctly
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = (
                 "@problemName Test Problem\n@timeStamps "
                 "true\n@univariate true\n@classLabel "
@@ -129,36 +155,25 @@ def test_load_from_tsfile_to_dataframe():
 
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file
-
             df = load_from_tsfile_to_dataframe(path)
-
             # Test the DataFrame returned accurately reflects the data in
             # the file
-
             np.testing.assert_equal(len(df), 1)
             np.testing.assert_equal(len(df.columns), 1)
-
             series = df["dim_0"]
             np.testing.assert_equal(len(series), 1)
-
             series = df["dim_0"][0]
             np.testing.assert_equal(series[0], 1.0)
             np.testing.assert_equal(series[1], 2.0)
-
     finally:
         os.remove(path)
-
     # Test that a file with a complete set of metadata and 2 cases with 3
     # dimensions parses correctly
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = (
                 "@problemName Test Problem\n@timeStamps "
                 "true\n@univariate true\n@classLabel "
@@ -166,20 +181,14 @@ def test_load_from_tsfile_to_dataframe():
             )
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6)\n"
             file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)     \n"
-
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file
-
             df = load_from_tsfile_to_dataframe(path)
-
             # Test the DataFrame returned accurately reflects the data in
             # the file
-
             np.testing.assert_equal(len(df), 2)
             np.testing.assert_equal(len(df.columns), 3)
-
             series = df["dim_0"]
             np.testing.assert_equal(len(series), 2)
 
@@ -218,19 +227,14 @@ def test_load_from_tsfile_to_dataframe():
             np.testing.assert_equal(len(series), 2)
             np.testing.assert_equal(series[0], 15.0)
             np.testing.assert_equal(series[1], 16.0)
-
     finally:
         os.remove(path)
-
     # Test that a file with a complete set of metadata and time-series of
     # different length parses correctly
-
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, "w") as tmp_file:
-
             # Write the contents of the file
-
             file_contents = (
                 "@problemName Test Problem\n@timeStamps "
                 "true\n@univariate true\n@classLabel "
@@ -238,14 +242,10 @@ def test_load_from_tsfile_to_dataframe():
             )
             file_contents += "(0, 1), (1, 2):(0, 3):(0, 5), (1, 6)\n"
             file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15)\n"
-
             tmp_file.write(file_contents)
             tmp_file.flush()
-
             # Parse the file
-
             df = load_from_tsfile_to_dataframe(path)
-
             # Test the DataFrame returned accurately reflects the data in
             # the file
 
@@ -314,9 +314,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -342,9 +340,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -565,9 +561,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -594,9 +588,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -625,9 +617,7 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(
-                TsFileParseException, load_from_tsfile_to_dataframe, path
-            )
+            np.testing.assert_raises(IOError, load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -976,6 +966,7 @@ def test_load_from_tsfile_to_dataframe():
 
 
 def test_load_from_long_to_dataframe(tmpdir):
+    """Test for loading from long to dataframe."""
     # create and save a example long-format file to csv
     test_dataframe = generate_example_long_table()
     dataframe_path = tmpdir.join("data.csv")
@@ -986,9 +977,52 @@ def test_load_from_long_to_dataframe(tmpdir):
 
 
 def test_load_from_long_incorrect_format(tmpdir):
-    with pytest.raises(LongFormatDataParseException):
+    """Test for loading from long with incorrect format."""
+    with pytest.raises(ValueError):
         dataframe = generate_example_long_table()
         dataframe.drop(dataframe.columns[[3]], axis=1, inplace=True)
         dataframe_path = tmpdir.join("data.csv")
         dataframe.to_csv(dataframe_path, index=False)
         load_from_long_to_dataframe(dataframe_path)
+
+
+@pytest.mark.parametrize("dataset", ["ItalyPowerDemand", "BasicMotions"])
+def test_write_dataframe_to_ts_success(tmp_path, dataset):
+    """Tests whether a dataset can be written by the .ts writer then read in."""
+    # load an example dataset
+    path = os.path.join(
+        os.path.dirname(sktime.__file__),
+        f"datasets/data/{dataset}/{dataset}_TEST.ts",
+    )
+    test_X, test_y = load_from_tsfile_to_dataframe(path)
+    # output the dataframe in a ts file
+    write_dataframe_to_tsfile(
+        data=test_X,
+        path=tmp_path,
+        problem_name=dataset,
+        class_label=np.unique(test_y),
+        class_value_list=test_y,
+        comment="""
+          The data was derived from twelve monthly electrical power demand
+          time series from Italy and first used in the paper "Intelligent
+          Icons: Integrating Lite-Weight Data Mining and Visualization into
+          GUI Operating Systems". The classification task is to distinguish
+          days from Oct to March (inclusive) from April to September.
+        """,
+        fold="_transform",
+    )
+    # load data back from the ts file
+    result = f"{tmp_path}/{dataset}/{dataset}_transform.ts"
+    res_X, res_y = load_from_tsfile_to_dataframe(result)
+    # check if the dataframes are the same
+    assert_frame_equal(res_X, test_X)
+
+
+def test_write_dataframe_to_ts_fail(tmp_path):
+    """Tests if non-dataframes are handled correctly."""
+    with pytest.raises(ValueError, match="Data provided must be a DataFrame"):
+        write_dataframe_to_tsfile(
+            data=np.random.rand(3, 2),
+            path=str(tmp_path),
+            problem_name="GunPoint",
+        )
