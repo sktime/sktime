@@ -37,10 +37,42 @@ def test_load_from_tsfile():
     1. Univariate equal length (UnitTest) returns 2D numpy X, 1D numpy y
     2. Multivariate equal length (BasicMotions) returns 3D numpy X, 1D numpy y
     3. Univariate and multivariate unequal length (PLAID) return X as DataFrame
-    4. If asked, y is not returned.
     """
-    data_path = MODULE + "data/UnitTest/UnitTest_TRAIN.ts"
+    data_path = MODULE + "/data/UnitTest/UnitTest_TRAIN.ts"
     X, y = load_from_tsfile(data_path)
+    # Test 1.1: load univariate equal length (UnitTest), should return 2D array and 1D
+    # array, test first and last data
+    # Test 1.2: Load a problem without y values (UnitTest),  test first and last data.
+    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    X2 = load_from_tsfile(full_file_path_and_name=data_path, return_y=False)
+    assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
+    assert X.ndim == 2 and X2.ndim == 2
+    assert X.shape == (20, 24) and y.shape == (20,)
+    assert X[0][0] == 573.0
+    # Test 2: load multivare equal length (BasicMotions), should return 3D array and 1D
+    # array, test first and last data.
+    data_path = MODULE + "/data/BasicMotions/BasicMotions_TRAIN.ts"
+    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
+    assert X.ndim == 3
+    assert X.shape == (20, 24) and y.shape == (20,)
+    assert X[0][0] == 573.0
+    # Test 3.1: load univariate unequal length (PLAID), should return a one column
+    # dataframe,
+    data_path = MODULE + "/data/PLAID/PLAID.ts"
+    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.ndim == 3
+    assert X.shape == (20, 24) and y.shape == (20,)
+    assert X[0][0] == 573.0
+    # Test 3.2: load multivariate unequal length (JapaneseVowels), should return a X
+    # columns dataframe,
+    data_path = MODULE + "/data/JapaneseVowels/JapaneseVowels.ts"
+    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.ndim == 3
+    assert X.shape == (20, 24) and y.shape == (20,)
+    assert X[0][0] == 573.0
 
 
 _CHECKS = {
