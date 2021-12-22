@@ -16,7 +16,6 @@ from statsmodels.tsa.stattools import acf
 from statsmodels.tsa.stattools import pacf
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.series import check_series
 
 
 class AutoCorrelationTransformer(BaseTransformer):
