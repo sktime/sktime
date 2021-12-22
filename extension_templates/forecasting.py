@@ -188,16 +188,11 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
 
         State change
         ------------
@@ -247,10 +242,10 @@ class MyForecaster(BaseForecaster):
         -------
         pred_quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being quantile fractions for interval low-high.
-                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
             Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                at quantile probability in second-level col index, for each row index.
         """
         # implement here
 
