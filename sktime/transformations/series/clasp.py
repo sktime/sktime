@@ -23,9 +23,8 @@ import numpy as np
 import pandas as pd
 from numba import njit
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.matrix_profile import _sliding_dot_products
-from sktime.utils.validation.series import check_series
 
 
 def _sliding_window(X, m):
@@ -350,7 +349,7 @@ def clasp(
     return profile, knn_mask
 
 
-class ClaSPTransformer(_SeriesToSeriesTransformer):
+class ClaSPTransformer(BaseTransformer):
     """ClaSP (Classification Score Profile) Transformer.
 
     Implementation of the Classification Score Profile of a time series.
