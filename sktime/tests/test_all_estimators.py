@@ -381,7 +381,7 @@ def test_fit_idempotent(estimator_instance):
     estimator.fit(*fit_args)
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             new_result = getattr(estimator, method)(*args[method])
             _assert_array_almost_equal(
                 results[method],
