@@ -113,7 +113,7 @@ class DateTimeFeatures(BaseTransformer):
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         super(DateTimeFeatures, self).__init__()
 
-    def transform(self, Z, X=None):
+    def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
         core logic
