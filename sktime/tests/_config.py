@@ -113,7 +113,6 @@ from sktime.transformations.panel.tsfresh import (
 
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.transformations.series.compose import (
     ColumnwiseTransformer,
     OptionalPassthrough,
