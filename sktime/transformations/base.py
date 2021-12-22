@@ -120,6 +120,9 @@ class BaseTransformer(BaseEstimator):
     ]
 
     def __init__(self):
+
+        self._converter_store_X = dict()  # storage dictionary for in/output conversion
+
         super(BaseTransformer, self).__init__()
 
     def fit(self, X, y=None, Z=None):
@@ -211,7 +214,9 @@ class BaseTransformer(BaseEstimator):
                     "no default behaviour if _fit does not support Panel, "
                     " but X is Panel and y is not None"
                 )
-            X = convert_to(X, to_type="df-list", as_scitype="Panel")
+            X = convert_to(
+                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+            )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
             # recurse and leave function - recursion does input checks/conversion
@@ -561,7 +566,10 @@ class BaseTransformer(BaseEstimator):
                 "no default behaviour if _fit does not support Panel, "
                 " but X is Panel and y is not None"
             )
-        X = convert_to(X, to_type="df-list", as_scitype="Panel")
+
+        X = convert_to(
+            X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+        )
 
         # depending on whether fitting happens, apply fitted or unfitted instances
         if not self.get_tag("fit-in-transform"):
@@ -591,7 +599,12 @@ class BaseTransformer(BaseEstimator):
             output_scitype = self.get_tag("scitype:transform-output")
         # if the output is Series, Xt is a Panel and we convert back
         if output_scitype == "Series":
-            Xt = convert_to(Xt, to_type=X_input_mtype, as_scitype="Panel")
+            Xt = convert_to(
+                Xt,
+                to_type=X_input_mtype,
+                as_scitype="Panel",
+                store=self._converter_store_X,
+            )
 
         # if the output is Primitives, we have a list of one-row dataframes
         # we concatenate those and overwrite the index with that of X
@@ -635,6 +648,7 @@ class BaseTransformer(BaseEstimator):
             X,
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
+            store=self._converter_store_X,
         )
 
         if y_inner_mtype != "None":
@@ -680,6 +694,7 @@ class BaseTransformer(BaseEstimator):
                 Xt,
                 to_type=X_output_mtype,
                 as_scitype=X_input_scitype,
+                store=self._converter_store_X,
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
@@ -690,6 +705,7 @@ class BaseTransformer(BaseEstimator):
                 Xt,
                 to_type="pd.DataFrame",
                 as_scitype="Series",
+                # no converter store since this is not a "1:1 back-conversion"
             )
         else:
             # output_scitype is "Panel" and no need for conversion
