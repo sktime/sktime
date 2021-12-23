@@ -5,6 +5,7 @@
 __author__ = ["MrPr3ntice", "MFehsenfeld", "iljamaurer"]
 __all__ = [
     "SeqAugPipeline",
+    "draw_random_samples",
     "plot_augmentation_example",
     "get_rand_input_params",
     "WhiteNoiseAugmenter",
@@ -211,7 +212,6 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                 "data (" + str(Xt.shape[1]) + ") and the data "
                 "used for fitting (" + str(self._n_vars) + ")."
             )
-
         # fit-transform UNDER REVIEW: Really necessary? Seems to double
         # sklearn's fit_transform() call... (MrPr3ntice)
         if (
@@ -496,7 +496,7 @@ def plot_augmentation_example(
     X,
     y=None,
     n_instances_per_variable=5,
-):
+    ):
     """Plot original and augmented instance examples for each variable.
 
     Parameters
