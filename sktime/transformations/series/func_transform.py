@@ -104,6 +104,7 @@ class FunctionTransformer(BaseTransformer):
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
+        self.X_type = X_type
         super(FunctionTransformer, self).__init__()
 
         if X_type is not None:
