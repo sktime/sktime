@@ -79,6 +79,7 @@ class ExponentTransformer(BaseTransformer):
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "univariate-only": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, power=0.5, offset="auto"):

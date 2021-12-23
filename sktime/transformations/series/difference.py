@@ -118,6 +118,7 @@ class Differencer(BaseTransformer):
         "fit-in-transform": False,
         "transform-returns-same-time-index": False,
         "univariate-only": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, lags=1, drop_na=True):
