@@ -52,6 +52,7 @@ class Detrender(BaseTransformer):
     See Also
     --------
     Deseasonalizer
+    STLTransformer
 
     Examples
     --------
