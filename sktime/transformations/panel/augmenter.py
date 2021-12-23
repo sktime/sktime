@@ -455,16 +455,12 @@ def draw_random_samples(
     if shuffle_and_stratify and without_replacement and y is not None:
         idx_list = []
         sss = StratifiedShuffleSplit(
-            n_splits=int(np.floor(n / n_instances)),
-            test_size=0.5,
-            random_state=random_state,
+            n_splits=int(np.floor(n / n_instances)), test_size=0.5, random_state=random_state,
         )
         for idx_a, idx_b in sss.split(X, y):
             idx_list = idx_a.tolist() + idx_b.tolist()
         sss = StratifiedShuffleSplit(
-            n_splits=1,
-            test_size=np.mod(n, n_instances),
-            random_state=random_state
+            n_splits=1, test_size=np.mod(n, n_instances), random_state=random_state
         )
         for _, idx_b in sss.split(y, y):
             idx_list += idx_b.tolist()
@@ -496,7 +492,7 @@ def plot_augmentation_example(
     X,
     y=None,
     n_instances_per_variable=5,
-    ):
+):
     """Plot original and augmented instance examples for each variable.
 
     Parameters
@@ -1110,8 +1106,7 @@ class DriftAugmenter(_BasePanelAugmenter):
         else:
             help = rand_param_variate
         return X.add(
-            np.concatenate(([0.0],
-                            np.cumsum(np.random.normal(0.0, help, n - 1))))
+            np.concatenate(([0.0], np.cumsum(np.random.normal(0.0, help, n - 1))))
         )
 
 
