@@ -10,7 +10,6 @@ import math
 import pandas as pd
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
 from sktime.utils.validation.forecasting import check_regressor
 
 
@@ -19,7 +18,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
     Transformer to enable tuneable feauture selection of exogenous data. The
     FeatureSelection implements multiple methods to select features (columns).
-    In case Z is a pd.Series, then it is just passed through, unless method="none",
+    In case X is a pd.Series, then it is just passed through, unless method="none",
     then None is returned in transform().
 
     Parameters
@@ -71,6 +70,14 @@ class FeatureSelection(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
@@ -93,50 +100,50 @@ class FeatureSelection(_SeriesToSeriesTransformer):
 
         super(FeatureSelection, self).__init__()
 
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series `Z`.
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
+
+        core logic
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
-            A time series to apply the transformation on.
-        X : pd.DataFrame, default=None
-            Exogenous variables are usd in method="feature-importances"
-            to fit the meta-model (regressor).
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
-        Z = check_series(Z)
         self.n_columns_ = self.n_columns
         self.feature_importances_ = None
 
-        # multivariate Z
-        if not isinstance(Z, pd.Series):
+        # multivariate X
+        if not isinstance(X, pd.Series):
             if self.method == "feature-importances":
                 self.regressor_ = check_regressor(
                     regressor=self.regressor, random_state=self.random_state
                 )
-                self._check_n_columns(Z)
-                X = check_series(X)
-                # fit regressor with Z as exog data and X as endog data (target)
-                self.regressor_.fit(X=Z, y=X)
+                self._check_n_columns(X)
+                # fit regressor with X as exog data and y as endog data (target)
+                self.regressor_.fit(X=X, y=y)
                 if not hasattr(self.regressor_, "feature_importances_"):
                     raise ValueError(
                         """The given regressor must have an
                         attribute feature_importances_ after fitting."""
                     )
                 # create dict with columns name (key) and feauter importance (value)
-                d = dict(zip(Z.columns, self.regressor_.feature_importances_))
+                d = dict(zip(X.columns, self.regressor_.feature_importances_))
                 # sort d descending
                 d = {k: d[k] for k in sorted(d, key=d.get, reverse=True)}
                 self.feature_importances_ = d
                 self.columns_ = list(d.keys())[: self.n_columns_]
             elif self.method == "random":
-                self._check_n_columns(Z)
+                self._check_n_columns(X)
                 self.columns_ = list(
-                    Z.sample(
+                    X.sample(
                         n=self.n_columns_, random_state=self.random_state, axis=1
                     ).columns
                 )
@@ -147,44 +154,41 @@ class FeatureSelection(_SeriesToSeriesTransformer):
             elif self.method == "none":
                 self.columns_ = None
             elif self.method == "all":
-                self.columns_ = list(Z.columns)
+                self.columns_ = list(X.columns)
             else:
                 raise ValueError("Incorrect method given. Try another method.")
-
-        self._is_fitted = True
         return self
 
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        core logic
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
-            A time series to apply the transformation on.
-        X : pd.DataFrame, default=None
-            Exogenous data is ignored in transform.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
         # multivariate case
-        if not isinstance(Z, pd.Series):
+        if not isinstance(X, pd.Series):
             if self.method == "none":
-                Zt = None
+                Xt = None
             else:
-                Zt = Z[self.columns_]
+                Xt = X[self.columns_]
         # univariate case
         else:
             if self.method == "none":
-                Zt = None
+                Xt = None
             else:
-                Zt = Z
-        return Zt
+                Xt = X
+        return Xt
 
     def _check_n_columns(self, Z):
         if not isinstance(self.n_columns_, int):
