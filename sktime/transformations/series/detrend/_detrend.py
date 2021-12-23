@@ -200,7 +200,7 @@ class Detrender(BaseTransformer):
             z_pred = self.forecaster_.predict(fh, X)
             return z + z_pred
 
-    def update(self, X, y=None, update_params=True):
+    def _update(self, X, y=None, update_params=True):
         """Update the parameters of the detrending estimator with new data.
 
         Parameters
