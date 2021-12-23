@@ -139,22 +139,23 @@ EXCLUDE_ESTIMATORS = [
 
 # This is temporary until BaseObject is implemented
 DIST_KERNELS_IGNORE_TESTS = [
-    "check_fit_updates_state",
+    "test_fit_updates_state",
     "_make_fit_args",
-    "check_fit_returns_self",
-    "check_raises_not_fitted_error",
-    "check_fit_idempotent",
-    "check_fit_does_not_overwrite_hyper_params",
-    "check_methods_do_not_change_state",
-    "check_persistence_via_pickle",
+    "test_fit_returns_self",
+    "test_raises_not_fitted_error",
+    "test_fit_idempotent",
+    "test_fit_does_not_overwrite_hyper_params",
+    "test_methods_do_not_change_state",
+    "test_persistence_via_pickle",
 ]
 
 
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["check_fit_idempotent"],
+    "ContractedShapeletTransform": ["test_fit_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
     "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
+    "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
