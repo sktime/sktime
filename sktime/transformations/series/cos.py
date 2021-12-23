@@ -40,7 +40,8 @@ class CosineTransformer(BaseTransformer):
         "univariate-only": False,
         "fit-in-transform": True,
         "transform-returns-same-time-index": True,
-        "capability:inverse_transform": True,
+        "capability:inverse_transform": False,
+        # switching off, since cos is not invertible outside [-pi, pi], fails test
     }
 
     def _transform(self, X, y=None):
