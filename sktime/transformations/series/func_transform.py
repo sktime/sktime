@@ -164,7 +164,7 @@ class FunctionTransformer(BaseTransformer):
         Xt = self._apply_function(X, func=self.func, kw_args=self.kw_args)
         return Xt
 
-    def _inverse_transform(self, Xt, y=None):
+    def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
 
         core logic
