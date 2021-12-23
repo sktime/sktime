@@ -222,7 +222,6 @@ class MyForecaster(BaseForecaster):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
         """
         Compute/return prediction quantiles for a forecast.

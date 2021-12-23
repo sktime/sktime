@@ -295,7 +295,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
     ---------
     Forecaster: BaseEstimator class descendant, forecaster to test
     fh: ForecastingHorizon, fh at which to test prediction
-    alpha: float, alpha at which to make prediction intervals
+    alpha: float, coverage at which to make prediction intervals
 
     Raises
     ------
@@ -311,12 +311,18 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
-        y_pred = f.predict(alpha=alpha)
-        try:
-            pred_ints = f.predict_interval(fh)
+        if f.get_tag("capability:pred_int"):
+            if f._has_predict_quantiles_been_refactored():
+                y_pred = f.predict()
+                pred_ints = f.predict_interval(fh, coverage=alpha)
+                pred_ints = f._convert_new_to_old_pred_int(pred_ints, alpha)
+            else:
+                y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
             _check_pred_ints(pred_ints, y_train, y_pred, fh)
-        except NotImplementedError:
-            pass
+
+        else:
+            with pytest.raises(NotImplementedError, match="prediction intervals"):
+                f.predict(return_pred_int=True, alpha=alpha)
 
 
 def _check_predict_quantiles(
