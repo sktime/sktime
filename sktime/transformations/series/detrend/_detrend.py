@@ -200,39 +200,41 @@ class Detrender(BaseTransformer):
             z_pred = self.forecaster_.predict(fh, X)
             return z + z_pred
 
-    def update(self, Z, X=None, update_params=True):
+    def update(self, X, y=None, update_params=True):
         """Update the parameters of the detrending estimator with new data.
 
         Parameters
         ----------
-        y_new : pd.Series
-            New time series.
-        update_params : bool, optional (default=True)
-            Update the parameters of the detrender model.
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
+        update_params : bool, default=True
+            whether the model is updated. Yes if true, if false, simply skips call.
+            argument exists for compatibility with forecasting module.
 
         Returns
         -------
         self : an instance of self
         """
-        z = check_series(Z, allow_empty=True)
         # multivariate
-        if isinstance(z, pd.DataFrame):
+        if isinstance(X, pd.DataFrame):
             # check if all columns are known
-            Z_fit_keys = set(self.forecaster_.keys())
-            Z_new_keys = set(z.columns)
-            difference = Z_new_keys.difference(Z_fit_keys)
+            X_fit_keys = set(self.forecaster_.keys())
+            X_new_keys = set(X.columns)
+            difference = X_new_keys.difference(X_fit_keys)
             if len(difference) != 0:
                 raise ValueError(
                     "Z contains columns that have not been "
                     "seen in fit: " + str(difference)
                 )
-            for colname in z.columns:
+            for colname in X.columns:
                 self.forecaster_[colname].update(
-                    z[colname], X, update_params=update_params
+                    X[colname], y, update_params=update_params
                 )
         # univariate
         else:
-            self.forecaster_.update(z, X, update_params=update_params)
+            self.forecaster_.update(X, y, update_params=update_params)
         return self
 
     @classmethod
