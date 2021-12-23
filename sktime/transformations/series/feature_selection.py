@@ -77,7 +77,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
@@ -110,7 +110,7 @@ class FeatureSelection(_SeriesToSeriesTransformer):
         ----------
         X : pd.Series or pd.DataFrame
             Data to fit transform to
-        y : ignored argument for interface compatibility
+        y : pd.DataFrame, default=None
             Additional data, e.g., labels for transformation
 
         Returns
