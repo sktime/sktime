@@ -86,7 +86,7 @@ class FunctionTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": False,
         "handles-missing-data": True,
-        "fit-in-transform": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(
@@ -131,9 +131,9 @@ class FunctionTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.Series or pd.DataFrame
+        X : pd.Series or pd.DataFrame or 1D/2D np.ndarray
             Data to fit transform to
-        y : pd.DataFrame, default=None
+        y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
@@ -151,14 +151,14 @@ class FunctionTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.Series or pd.DataFrame
+        X : pd.Series or pd.DataFrame or 1D/2D np.ndarray
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : pd.Series or pd.DataFrame, same type as X
+        Xt : pd.Series or pd.DataFrame or 1D/2D np.ndarray, same type as X
             transformed version of X
         """
         Xt = self._apply_function(X, func=self.func, kw_args=self.kw_args)
@@ -171,14 +171,14 @@ class FunctionTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : 2D np.ndarray
+        X : pd.Series or pd.DataFrame or 1D/2D np.ndarray
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : 2D np.ndarray
+        Xt : pd.Series or pd.DataFrame or 1D/2D np.ndarray, same type as X
             inverse transformed version of X
         """
         Xt = self._apply_function(X, func=self.inverse_func, kw_args=self.inv_kw_args)
@@ -188,3 +188,23 @@ class FunctionTransformer(BaseTransformer):
         if func is None:
             func = _identity
         return func(Z, **(kw_args if kw_args else {}))
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # default params, identity transform
+        params1 = {}
+
+        # log-transformer, with exp inverse
+        params2 = {"func": np.log1p, "inverse_func": np.expm1}
+
+        return [params1, params2]
