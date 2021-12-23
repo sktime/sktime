@@ -82,5 +82,5 @@ class MatrixProfileTransformer(BaseTransformer):
         """
         X = X.flatten()
         Xt = stumpy.stump(X, self.window_length)
-        Xt = Xt[:, 0]
+        Xt = Xt[:, 0].astype("float")
         return Xt
