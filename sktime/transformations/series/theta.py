@@ -9,9 +9,9 @@ __all__ = ["ThetaLinesTransformer"]
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.transformations.base import BaseTransformer
 
 
 class ThetaLinesTransformer(BaseTransformer):
