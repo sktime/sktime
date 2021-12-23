@@ -141,8 +141,7 @@ class MyTransformer(BaseTransformer):
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         core logic
 
