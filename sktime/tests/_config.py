@@ -117,11 +117,10 @@ from sktime.transformations.series.compose import (
     OptionalPassthrough,
 )
 from sktime.transformations.series.detrend import Detrender
+from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
-from sktime.transformations.series.summarize import SummaryTransformer
-
 EXCLUDE_ESTIMATORS = [
     "ElasticEnsemble",
     "ProximityForest",
