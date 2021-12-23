@@ -11,8 +11,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import BaseTransformer
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.transformations.base import BaseTransformer
 
 
 class HampelFilter(BaseTransformer):

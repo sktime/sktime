@@ -182,6 +182,7 @@ class OptionalPassthrough(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.transformations.series.boxcox import BoxCoxTransformer
+
         return {"transformer": BoxCoxTransformer(), "passthrough": False}
 
 
@@ -395,6 +396,7 @@ class ColumnwiseTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.transformations.series.detrend import Detrender
+
         return {"transformer": Detrender()}
 
 
