@@ -111,11 +111,6 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshRelevantFeatureExtractor,
 )
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.compose import (
-    ColumnwiseTransformer,
-    OptionalPassthrough,
-)
 from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.summarize import SummaryTransformer
 
@@ -393,8 +388,6 @@ ESTIMATOR_TEST_PARAMS = {
         "verbose": False,
     },
     UnobservedComponents: {"level": "local level"},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
-    ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
