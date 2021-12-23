@@ -3,8 +3,10 @@
 
 import os.path
 
-from sktime.benchmarking.experiments import run_classification_experiment
-from sktime.benchmarking.experiments import run_clustering_experiment
+from sktime.benchmarking.experiments import (
+    run_classification_experiment,
+    run_clustering_experiment,
+)
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.clustering import TimeSeriesKMeans
 from sktime.datasets import load_unit_test
@@ -16,8 +18,8 @@ def test_run_clustering_experiment():
     Currently it just checks the files have been created, then deletes them.
     """
     dataset = "UnitTest"
-    train_X, train_Y = load_unit_test("TRAIN", return_X_y=True)
-    test_X, test_Y = load_unit_test("TEST", return_X_y=True)
+    train_X, train_Y = load_unit_test("TRAIN")
+    test_X, test_Y = load_unit_test("TEST")
     run_clustering_experiment(
         train_X,
         TimeSeriesKMeans(n_clusters=2),
@@ -43,8 +45,8 @@ def test_run_classification_experiment():
     Currently it just checks the files have been created, then deletes them.
     """
     dataset = "UnitTest"
-    train_X, train_Y = load_unit_test("TRAIN", return_X_y=True)
-    test_X, test_Y = load_unit_test("TEST", return_X_y=True)
+    train_X, train_Y = load_unit_test("TRAIN")
+    test_X, test_Y = load_unit_test("TEST")
     run_classification_experiment(
         train_X,
         train_Y,
