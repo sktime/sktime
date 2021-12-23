@@ -12,8 +12,7 @@ __author__ = ["afzal442"]
 __all__ = ["AutoCorrelationTransformer", "PartialAutoCorrelationTransformer"]
 
 import pandas as pd
-from statsmodels.tsa.stattools import acf
-from statsmodels.tsa.stattools import pacf
+from statsmodels.tsa.stattools import acf, pacf
 
 from sktime.transformations.base import BaseTransformer
 
