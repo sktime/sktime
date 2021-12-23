@@ -80,6 +80,7 @@ class OptionalPassthrough(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
         "fit-in-transform": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, transformer, passthrough=False):
@@ -145,7 +146,7 @@ class OptionalPassthrough(BaseTransformer):
         transformed version of X
         """
         if not self.passthrough:
-            X = self.transformer_.transform(X, y)
+            X = self.transformer_._transform(X, y)
         return X
 
     def _inverse_transform(self, X, y=None):
