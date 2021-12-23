@@ -212,8 +212,8 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                 "data (" + str(Xt.shape[1]) + ") and the data "
                 "used for fitting (" + str(self._n_vars) + ")."
             )
-
-        # fit-transform UNDER REVIEW: Really necessary? Seems to double sklearn's fit_transform() call... (MrPr3ntice)
+        # fit-transform UNDER REVIEW: Really necessary? Seems to double
+        # sklearn's fit_transform() call... (MrPr3ntice)
         if (
             self.use_relative_fit
             and self.relative_fit_type == "fit-transform"
@@ -402,7 +402,7 @@ def draw_random_samples(
     shuffle_and_stratify=True,
     without_replacement=True,
     random_state=None,
-    ):
+):
     """Draw random instances form panel data.
 
     As the implemented augmenters work stochastically, it is best practice to
@@ -462,7 +462,9 @@ def draw_random_samples(
         for idx_a, idx_b in sss.split(X, y):
             idx_list = idx_a.tolist() + idx_b.tolist()
         sss = StratifiedShuffleSplit(
-            n_splits=1, test_size=np.mod(n, n_instances), random_state=random_state
+            n_splits=1,
+            test_size=np.mod(n, n_instances),
+            random_state=random_state
         )
         for _, idx_b in sss.split(y, y):
             idx_list += idx_b.tolist()
@@ -477,7 +479,6 @@ def draw_random_samples(
             + str(len(idx_list))
             + " indices."
         )
-
     X_aug = X.iloc[idx_list]
     # Need to reset_index to pass index.is_monotonic of
     # check_pdDataFrame_Series() in datatypes/_series/_check.py
@@ -490,7 +491,7 @@ def draw_random_samples(
         return X_aug, idx_list
 
 
- def plot_augmentation_example(
+def plot_augmentation_example(
     fitted_transformer,
     X,
     y=None,
@@ -1109,7 +1110,8 @@ class DriftAugmenter(_BasePanelAugmenter):
         else:
             help = rand_param_variate
         return X.add(
-            np.concatenate(([0.0], np.cumsum(np.random.normal(0.0, help, n - 1))))
+            np.concatenate(([0.0],
+                            np.cumsum(np.random.normal(0.0, help, n - 1))))
         )
 
 
