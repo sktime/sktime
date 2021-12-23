@@ -106,9 +106,6 @@ class FunctionTransformer(BaseTransformer):
         self.inv_kw_args = inv_kw_args
         super(FunctionTransformer, self).__init__()
 
-        # this estimator has an inverse when it's provided
-        self.set_tags(**{"capability:inverse_transform": inverse_func is not None})
-
         if X_type is not None:
             self.set_tags(X_inner_mtype=X_type)
 
