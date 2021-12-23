@@ -219,7 +219,6 @@ class MyForecaster(BaseForecaster):
         """
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X)
-
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
