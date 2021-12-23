@@ -493,7 +493,9 @@ class STLTransformer(_SeriesToSeriesTransformer):
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
 
-        Returns a transformed version of y.
+        Returns a transformed version yt of y. The seasonal component is removed from y.
+        The trend and residual components can be accessed via
+        the attributes trend_ and resid_ for the fitted data.
 
         Parameters
         ----------
@@ -503,7 +505,6 @@ class STLTransformer(_SeriesToSeriesTransformer):
         Returns
         -------
         yt : pd.Series
-            Transformed time series.
         """
         self.check_is_fitted()
         z = check_series(Z, enforce_univariate=True)
