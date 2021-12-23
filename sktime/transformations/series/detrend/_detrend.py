@@ -10,12 +10,12 @@ from sklearn.base import clone
 import pandas as pd
 
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 from sktime.forecasting.trend import PolynomialTrendForecaster
 
 
-class Detrender(_SeriesToSeriesTransformer):
+class Detrender(BaseTransformer):
     """Remove a :term:`trend <Trend>` from a series.
 
     This transformer uses any forecaster and returns the in-sample residuals
@@ -64,29 +64,44 @@ class Detrender(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"transform-returns-same-time-index": True}
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": False,
+        "fit-in-transform": False,
+        "capability:inverse_transform": True,
+        "transform-returns-same-time-index": True
+    }
 
     def __init__(self, forecaster=None):
         self.forecaster = forecaster
         self.forecaster_ = None
         super(Detrender, self).__init__()
 
-    def fit(self, Z, X=None):
-        """Compute the trend in the series.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        core logic
 
         Parameters
         ----------
-        Y : pd.Series
-            Endogenous time series to fit a trend to.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables.
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        self._is_fitted = False
-        z = check_series(Z)
+        z = X
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
 
@@ -95,31 +110,31 @@ class Detrender(_SeriesToSeriesTransformer):
             self.forecaster_ = {}
             for colname in z.columns:
                 forecaster = clone(self.forecaster)
-                self.forecaster_[colname] = forecaster.fit(z[colname], X)
+                self.forecaster_[colname] = forecaster.fit(X[colname], y)
         # univariate
         else:
             forecaster = clone(self.forecaster)
             self.forecaster_ = forecaster.fit(z, X)
-        self._is_fitted = True
         return self
 
-    def transform(self, Z, X=None):
-        """Remove trend from the data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        core logic
 
         Parameters
         ----------
-        y : pd.Series
-            Time series to be detrended.
-        X : pd.DataFrame, optional (default=False)
-            Exogenous variables.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        y_hat : pd.Series
-            De-trended series.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X, detrended series
         """
-        self.check_is_fitted()
-        z = check_series(Z)
+        z = X
         fh = ForecastingHorizon(z.index, is_relative=False)
 
         # multivariate
@@ -135,31 +150,32 @@ class Detrender(_SeriesToSeriesTransformer):
                     "seen in fit: " + str(difference)
                 )
             for colname in z.columns:
-                z_pred = self.forecaster_[colname].predict(fh, X)
+                z_pred = self.forecaster_[colname].predict(fh, y)
                 z[colname] = z[colname] - z_pred
-            return z
+            Xt = z
         # univariate
         else:
-            z_pred = self.forecaster_.predict(fh, X)
-            return z - z_pred
+            z_pred = self.forecaster_.predict(fh, y)
+            Xt = z - z_pred
 
-    def inverse_transform(self, Z, X=None):
-        """Add trend back to a time series.
+        return Xt
+
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        y : pd.Series, list
-            Detrended time series to revert.
-        X : pd.DataFrame, optional (default=False)
-            Exogenous variables.
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : pd.DataFrame, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        y_hat : pd.Series
-            Series with the trend.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z)
+        z = X
         fh = ForecastingHorizon(z.index, is_relative=False)
 
         # multivariate
@@ -217,3 +233,19 @@ class Detrender(_SeriesToSeriesTransformer):
         else:
             self.forecaster_.update(z, X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
+        return {"forecaster": ExponentialSmoothing()}

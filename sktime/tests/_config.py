@@ -111,7 +111,6 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshRelevantFeatureExtractor,
 )
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
@@ -202,7 +201,6 @@ ESTIMATOR_TEST_PARAMS = {
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    Detrender: {"forecaster": ExponentialSmoothing()},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
