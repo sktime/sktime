@@ -7,6 +7,7 @@ __author__ = ["aiwalter"]
 __all__ = ["FeatureSelection"]
 
 import math
+
 import pandas as pd
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
