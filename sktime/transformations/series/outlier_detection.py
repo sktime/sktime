@@ -6,8 +6,7 @@
 __author__ = ["Martin Walter"]
 __all__ = ["HampelFilter"]
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 import numpy as np
@@ -15,7 +14,7 @@ import warnings
 import pandas as pd
 
 
-class HampelFilter(_SeriesToSeriesTransformer):
+class HampelFilter(BaseTransformer):
     """Use HampelFilter to detect outliers based on a sliding window.
 
     Correction of outliers is recommended by means of the sktime.Imputer,
@@ -53,9 +52,18 @@ class HampelFilter(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": True,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
+        "univariate_only": False,
     }
 
     def __init__(self, window_length=10, n_sigma=3, k=1.4826, return_bool=False):
@@ -66,23 +74,24 @@ class HampelFilter(_SeriesToSeriesTransformer):
         self.return_bool = return_bool
         super(HampelFilter, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of Z.
+        core logic
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Transformed time series(es).
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        Z = Z.copy()
+        Z = X.copy()
 
         # multivariate
         if isinstance(Z, pd.DataFrame):
@@ -91,7 +100,9 @@ class HampelFilter(_SeriesToSeriesTransformer):
         # univariate
         else:
             Z = self._transform_series(Z)
-        return Z
+
+        Xt = Z
+        return Xt
 
     def _transform_series(self, Z):
         """Logic internal to the algorithm for transforming the input series.
