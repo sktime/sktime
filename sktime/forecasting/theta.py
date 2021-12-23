@@ -197,7 +197,7 @@ class ThetaForecaster(ExponentialSmoothing):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=0.5)
+        alpha : float or list of float, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
         Returns

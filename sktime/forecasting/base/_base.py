@@ -328,7 +328,7 @@ class BaseForecaster(BaseEstimator):
             fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
         )
 
-    def predict_quantiles(self, fh=None, X=None, alpha=DEFAULT_ALPHA):
+    def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 
         If alpha is iterable, multiple quantiles will be calculated.
@@ -349,7 +349,7 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=0.5)
+        alpha : float or list of float, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
         Returns
@@ -1268,7 +1268,7 @@ class BaseForecaster(BaseEstimator):
             alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
         alphas = sorted(alphas)
         pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
-        # pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
+        pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):

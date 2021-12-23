@@ -15,6 +15,7 @@ __all__ = [
     "test_y_multivariate_raises_error",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
+    "test_predict_pred_interval",
     "test_update_predict_single",
     "test_y_invalid_type_raises_error",
     "test_predict_time_index_with_X",
@@ -303,11 +304,11 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
     AssertionError - if Forecaster test instance does not have "capability:pred_int"
             and no NotImplementedError is raised when asking predict for pred.int
     """
-    f = Forecaster.create_test_instance()
+    f = _construct_instance(Forecaster)
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = Forecaster.create_test_instance()
+        f = _construct_instance(Forecaster)
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
         y_pred = f.predict(alpha=alpha)
