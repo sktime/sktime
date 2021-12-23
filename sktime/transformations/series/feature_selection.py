@@ -10,11 +10,11 @@ import math
 
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.forecasting import check_regressor
 
 
-class FeatureSelection(_SeriesToSeriesTransformer):
+class FeatureSelection(BaseTransformer):
     """Select exogenous features.
 
     Transformer to enable tuneable feauture selection of exogenous data. The
