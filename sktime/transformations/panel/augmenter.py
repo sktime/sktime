@@ -212,7 +212,8 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                 "used for fitting (" + str(self._n_vars) + ")."
             )
 
-        # fit-transform
+        # fit-transform UNDER REVIEW: Really necessary? Seems to double
+        # sklearn's fit_transform() call... (MrPr3ntice)
         if (
             self.use_relative_fit
             and self.relative_fit_type == "fit-transform"
@@ -384,93 +385,6 @@ class SeqAugPipeline(Pipeline):
                 list_of_aug_info.append(aug[1]._last_aug_random_variate)
         return list_of_aug_info
 
-    @staticmethod
-    def draw_random_samples(
-        X,
-        y=None,
-        n=1.0,
-        shuffle_and_stratify=True,
-        without_replacement=True,
-        random_state=None,
-    ):
-        """Draw random instances form panel data.
-
-        Parameters
-        ----------
-        X: pd.DataFrame
-            Panel data to sample/draw from.
-        y: pd.Series, optional (default = None)
-            Target variable. Is Needed if shuffle_and_stratify is True.
-        n: int or float, optional (default = 1.0)
-            Number of instances to draw. If type of n is float,
-            it is interpreted as the proportion of instances to draw compared
-            to the number of instances in X. By default, the same number of
-            instances as given by X is returned.
-        shuffle_and_stratify: bool, optional (default = True)
-            Whether to shuffle and stratify the samples to draw.
-        without_replacement: bool, optional (default = True)
-            Whether to draw without replacement. If True, between two
-            subsequent draws of the same original instance, every other
-            instance of X appears once or twice.
-        random_state: int
-            Random state seed.
-
-        Returns
-        -------
-        pd.Dataframe: Drawn data.
-        pd.Series: Corresponding target values. This is only returned if
-            input y is given.
-        list of int: List with the drawn indices from the original data.
-        """
-        # check inputs
-        n_instances = X.shape[0]
-        if isinstance(n, float):
-            if n <= 0.0 or not np.isfinite(n):
-                raise ValueError("n must be a positive, finite number.")
-            n = np.ceil(n_instances * n)
-        elif isinstance(n, int):
-            if n < 1 or not np.isfinite(n):
-                raise ValueError("n must be a finite number >= 1.")
-        else:
-            raise ValueError("n must be int or float, not " + str(type(n))) + "."
-        # calculate indices
-        if shuffle_and_stratify and without_replacement and y is not None:
-            idx_list = []
-            sss = StratifiedShuffleSplit(
-                n_splits=int(np.floor(n / n_instances)),
-                test_size=0.5,
-                random_state=random_state,
-            )
-            for idx_a, idx_b in sss.split(X, y):
-                idx_list = idx_a.tolist() + idx_b.tolist()
-            sss = StratifiedShuffleSplit(
-                n_splits=1, test_size=np.mod(n, n_instances), random_state=random_state
-            )
-            for _, idx_b in sss.split(y, y):
-                idx_list += idx_b.tolist()
-        else:
-            raise NotImplementedError("Not implemented yet.")
-        # check number of indices
-        if n != len(idx_list):
-            raise ValueError(
-                "The index list must contain n = "
-                + str(n)
-                + "indices, but contains "
-                + str(len(idx_list))
-                + " indices."
-            )
-
-        X_aug = X.iloc[idx_list]
-        # Need to reset_index to pass index.is_monotonic of
-        # check_pdDataFrame_Series() in datatypes/_series/_check.py
-        X_aug.reset_index(inplace=True, drop=True)
-        if y is not None:
-            y_aug = y.iloc[idx_list]
-            y_aug.index = X_aug.index
-            return X_aug, y_aug, idx_list
-        else:
-            return X_aug, idx_list
-
     def _plot_augmentation_example(self, X, y):
         """Plot original and augmented instance examples for each variable.
 
@@ -480,7 +394,103 @@ class SeqAugPipeline(Pipeline):
         plot_augmentation_example(self, X, y)
 
 
-# static functions
+# standalone functions
+def draw_random_samples(
+    X,
+    y=None,
+    n=1.0,
+    shuffle_and_stratify=True,
+    without_replacement=True,
+    random_state=None,
+):
+    """Draw random instances form panel data.
+
+    As the implemented augmenters work stochastically, it is best practice to
+    draw random samples (instances) from the (train) set and try to enlarge
+    the set by randomly executed and parameterized sequential augmentation
+    steps. In contrast to known augmenters in more ANN-focused packages (e.g.
+    `torchvision.transforms`) working batch-wise (augmented instances are
+    recurrently drawn while training), `sklearn` demands to enlarge the
+    dataset before calling a fit() or transform() function.
+
+    Parameters
+    ----------
+    X: pd.DataFrame
+        Panel data to sample/draw from.
+    y: pd.Series, optional (default = None)
+        Target variable. Is Needed if shuffle_and_stratify is True.
+    n: int or float, optional (default = 1.0)
+        Number of instances to draw. If type of n is float,
+        it is interpreted as the proportion of instances to draw compared
+        to the number of instances in X. By default, the same number of
+        instances as given by X is returned.
+    shuffle_and_stratify: bool, optional (default = True)
+        Whether to shuffle and stratify the samples to draw.
+    without_replacement: bool, optional (default = True)
+        Whether to draw without replacement. If True, between two
+        subsequent draws of the same original instance, every other
+        instance of X appears once or twice.
+    random_state: int
+        Random state seed.
+
+    Returns
+    -------
+    pd.Dataframe: Drawn data.
+    pd.Series: Corresponding target values. This is only returned if
+        input y is given.
+    list of int: List with the drawn indices from the original data.
+    """
+    # check inputs
+    n_instances = X.shape[0]
+    if isinstance(n, float):
+        if n <= 0.0 or not np.isfinite(n):
+            raise ValueError("n must be a positive, finite number.")
+        n = np.ceil(n_instances * n)
+    elif isinstance(n, int):
+        if n < 1 or not np.isfinite(n):
+            raise ValueError("n must be a finite number >= 1.")
+    else:
+        raise ValueError("n must be int or float, not " + str(type(n))) + "."
+    # calculate indices
+    if shuffle_and_stratify and without_replacement and y is not None:
+        idx_list = []
+        sss = StratifiedShuffleSplit(
+            n_splits=int(np.floor(n / n_instances)),
+            test_size=0.5,
+            random_state=random_state,
+        )
+        for idx_a, idx_b in sss.split(X, y):
+            idx_list = idx_a.tolist() + idx_b.tolist()
+        sss = StratifiedShuffleSplit(
+            n_splits=1,
+            test_size=np.mod(n, n_instances),
+            random_state=random_state
+        )
+        for _, idx_b in sss.split(y, y):
+            idx_list += idx_b.tolist()
+    else:
+        raise NotImplementedError("Not implemented yet.")
+    # check number of indices
+    if n != len(idx_list):
+        raise ValueError(
+            "The index list must contain n = "
+            + str(n)
+            + "indices, but contains "
+            + str(len(idx_list))
+            + " indices."
+        )
+    X_aug = X.iloc[idx_list]
+    # Need to reset_index to pass index.is_monotonic of
+    # check_pdDataFrame_Series() in datatypes/_series/_check.py
+    X_aug.reset_index(inplace=True, drop=True)
+    if y is not None:
+        y_aug = y.iloc[idx_list]
+        y_aug.index = X_aug.index
+        return X_aug, y_aug, idx_list
+    else:
+        return X_aug, idx_list
+
+
 def plot_augmentation_example(
     fitted_transformer,
     X,
@@ -511,7 +521,7 @@ def plot_augmentation_example(
     n_vars = X.shape[1]  # get number of variables of X
     # pick (stratified regarding categorical y) examples from the original input
     # data
-    X, y, idx = SeqAugPipeline.draw_random_samples(
+    X, y, idx = draw_random_samples(
         X,
         y,
         n=n_instances_per_variable,
@@ -1100,7 +1110,8 @@ class DriftAugmenter(_BasePanelAugmenter):
         else:
             help = rand_param_variate
         return X.add(
-            np.concatenate(([0.0], np.cumsum(np.random.normal(0.0, help, n - 1))))
+            np.concatenate(([0.0],
+                            np.cumsum(np.random.normal(0.0, help, n - 1))))
         )
 
 
