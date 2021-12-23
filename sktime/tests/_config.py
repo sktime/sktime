@@ -117,9 +117,6 @@ from sktime.transformations.series.compose import (
     OptionalPassthrough,
 )
 from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.feature_selection import FeatureSelection
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.outlier_detection import HampelFilter
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
@@ -397,10 +394,7 @@ ESTIMATOR_TEST_PARAMS = {
         "verbose": False,
     },
     UnobservedComponents: {"level": "local level"},
-    Imputer: {"method": "mean"},
-    HampelFilter: {"window_length": 3},
     OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
-    FeatureSelection: {"method": "all"},
     ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
