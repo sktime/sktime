@@ -92,17 +92,18 @@ class MyTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "capability:inverse_transform": True,  # does transformer have inverse transform
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__
