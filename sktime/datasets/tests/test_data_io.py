@@ -54,25 +54,20 @@ def test_load_from_tsfile():
     data_path = MODULE + "/data/BasicMotions/BasicMotions_TRAIN.ts"
     X, y = load_from_tsfile(full_file_path_and_name=data_path)
     assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
-    assert X.ndim == 3
-    assert X.shape == (20, 24) and y.shape == (20,)
-    assert X[0][0] == 573.0
+    assert X.shape == (40, 6, 100) and y.shape == (40,)
+    assert X[1][2][3] == -1.898794
     # Test 3.1: load univariate unequal length (PLAID), should return a one column
     # dataframe,
-    data_path = MODULE + "/data/PLAID/PLAID.ts"
+    data_path = MODULE + "/data/PLAID/PLAID_TRAIN.ts"
     X, y = load_from_tsfile(full_file_path_and_name=data_path)
     assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
-    assert X.ndim == 3
-    assert X.shape == (20, 24) and y.shape == (20,)
-    assert X[0][0] == 573.0
+    assert X.shape == (537, 1) and y.shape == (537,)
     # Test 3.2: load multivariate unequal length (JapaneseVowels), should return a X
     # columns dataframe,
-    data_path = MODULE + "/data/JapaneseVowels/JapaneseVowels.ts"
+    data_path = MODULE + "/data/JapaneseVowels/JapaneseVowels_TRAIN.ts"
     X, y = load_from_tsfile(full_file_path_and_name=data_path)
     assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
-    assert X.ndim == 3
-    assert X.shape == (20, 24) and y.shape == (20,)
-    assert X[0][0] == 573.0
+    assert X.shape == (270, 12) and y.shape == (270,)
 
 
 _CHECKS = {

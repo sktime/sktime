@@ -75,7 +75,7 @@ def _download_and_extract(url, extract_path=None):
     urlretrieve(url, zip_file_name)
 
     if extract_path is None:
-        extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
+        extract_path = os.path.join(MODULE, "local_data/%s/" % file_name.split(".")[0])
     else:
         extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
 
