@@ -8,6 +8,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 
 from global_fc_helpers import MVTimeSeriesSplit, mvts_cv
+from sktime.datatypes._panel._convert import _get_time_index
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import (
     ExpandingWindowSplitter,
@@ -117,7 +118,7 @@ regressor = make_pipeline(
 forecaster = make_reduction(
     regressor,
     scitype="tabular-regressor",
-    transformers=[LaggedWindowSummarizer(**kwargs)],
+    transformers=LaggedWindowSummarizer(**kwargs),
     window_length=None,
 )
 
@@ -153,9 +154,7 @@ forecaster_param_grid = {
 regressor_param_grid = {"random_state": [8, 12]}
 
 # include get:wind
-y_length = len(
-    y_train.xs(y_train.index.get_level_values("ts_id")[0], level="ts_id").index
-)
+y_length = len(_get_time_index(y_train))
 
 cv = ExpandingWindowSplitter(initial_window=15)
 
@@ -168,7 +167,7 @@ regressor = GridSearchCV(
 forecaster = make_reduction(
     regressor,
     scitype="tabular-regressor",
-    transformers=[LaggedWindowSummarizer(**kwargs)],
+    transformers=LaggedWindowSummarizer(**kwargs),
     window_length=None,
 )
 

@@ -104,11 +104,11 @@ def _sliding_window_transform(
             X_from_y = tf_fit.transform(y)
 
         X_from_y_cut = X_from_y.groupby(level=0).tail(
-            n_timepoints - tf_fit._truncate_start
+            n_timepoints - tf_fit._truncate_start + 1
         )
         #    X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
         # fix maxlag to take lag into account
-        X_cut = X.groupby(level=0).tail(n_timepoints - tf_fit._truncate_start)
+        X_cut = X.groupby(level=0).tail(n_timepoints - tf_fit._truncate_start + 1)
 
         z = pd.concat([X_from_y_cut, X_cut], axis=1)
         yt = z[["y"]]

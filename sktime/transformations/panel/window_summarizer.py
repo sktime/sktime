@@ -47,9 +47,7 @@ class _LaggedWindowExtractor(_PanelToTabularTransformer):
 
         self._func_dict = func_dict
         self._is_fitted = True
-        self._truncate_start = (
-            func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
-        )
+        self._truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
 
         return self
 

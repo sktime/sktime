@@ -759,24 +759,25 @@ class BaseForecaster(BaseEstimator):
         # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
-        if not isinstance(X.index, pd.MultiIndex):
-            y_inner_mtype = self.get_tag("y_inner_mtype")
-            y_inner = convert_to(
-                y,
-                to_type=y_inner_mtype,
-                as_scitype="Series",  # we are dealing with series
-                store=self._converter_store_y,
-            )
+        if X is not None:
+            if not isinstance(X.index, pd.MultiIndex):
+                y_inner_mtype = self.get_tag("y_inner_mtype")
+                y_inner = convert_to(
+                    y,
+                    to_type=y_inner_mtype,
+                    as_scitype="Series",  # we are dealing with series
+                    store=self._converter_store_y,
+                )
 
-            X_inner_mtype = self.get_tag("X_inner_mtype")
-            X_inner = convert_to(
-                X,
-                to_type=X_inner_mtype,
-                as_scitype="Series",  # we are dealing with series
-            )
-        else:
-            y_inner = y
-            X_inner = X
+                X_inner_mtype = self.get_tag("X_inner_mtype")
+                X_inner = convert_to(
+                    X,
+                    to_type=X_inner_mtype,
+                    as_scitype="Series",  # we are dealing with series
+                )
+            else:
+                y_inner = y
+                X_inner = X
 
         return X_inner, y_inner
 

@@ -177,7 +177,7 @@ class _BaseWindowForecaster(BaseForecaster):
         """Select last window."""
         # Get the start and end points of the last window.
         cutoff = self.cutoff
-        start = _shift(cutoff, by=-self.window_length_)
+        start = _shift(cutoff, by=-self.window_length_ + 1)
 
         if isinstance(self._y.index, pd.MultiIndex):
 
@@ -190,11 +190,9 @@ class _BaseWindowForecaster(BaseForecaster):
                 if self._X is not None
                 else None
             )
-            # danbartl: for cross-validation, transformers is not list.... why?
-            if isinstance(self.transformers, list):
-                X_from_y = self.transformers[0].fit().transform(y)
-            else:
-                X_from_y = self.transformers.fit().transform(y)
+
+            X_from_y = self.transformers.fit().transform(y)
+
             X_from_y_cut = X_from_y.groupby(level=0).tail(1)
             #    X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
             # fix maxlag to take lag into account
@@ -257,7 +255,7 @@ class _BaseWindowForecaster(BaseForecaster):
         """Select last window."""
         # Get the start and end points of the last window.
         cutoff = _shift(self.cutoff, by=shift)
-        start = _shift(cutoff, by=-self.window_length_)
+        start = _shift(cutoff, by=-self.window_length_ + 1)
 
         # danbartl: need to transform
 
@@ -287,17 +285,13 @@ class _BaseWindowForecaster(BaseForecaster):
 
             ts_index = _get_time_index(y)
             n_timepoints = ts_index.shape[0]
-            # danbartl: distinction for cross validation.. why?
-            if isinstance(self.transformers, list):
-                X_from_y = self.transformers[0].fit().transform(y)
-            else:
-                X_from_y = self.transformers.fit().transform(y)
+            X_from_y = self.transformers.fit().transform(y)
 
             X_from_y_cut = X_from_y.groupby(level=0).tail(
-                n_timepoints - self.window_length
+                n_timepoints - self.window_length + 1
             )
             # X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
-            X_cut = X.groupby(level=0).tail(n_timepoints - self.window_length)
+            X_cut = X.groupby(level=0).tail(n_timepoints - self.window_length + 1)
 
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
 
