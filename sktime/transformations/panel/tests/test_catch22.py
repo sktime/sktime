@@ -15,10 +15,10 @@ def test_catch22_on_unit_test():
 
     # fit catch22
     c22 = Catch22(outlier_norm=True)
-    c22.fit(X_train.iloc[indices], y_train[indices])
+    c22.fit(X_train[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
+    data = c22.transform(X_train[indices])
     testing.assert_array_almost_equal(
         np.nan_to_num(data, False, 0, 0, 0), catch22_unit_test_data
     )
@@ -32,12 +32,12 @@ def test_catch22_single_feature_on_unit_test():
 
     # fit catch22
     c22 = Catch22(outlier_norm=True)
-    c22.fit(X_train.iloc[indices], y_train[indices])
+    c22.fit(X_train[indices], y_train[indices])
 
     # assert transformed data is the same
     data = []
     for i in range(22):
-        data.append(c22.transform_single_feature(X_train.iloc[indices], i))
+        data.append(c22.transform_single_feature(X_train[indices], i))
     testing.assert_array_almost_equal(
         np.nan_to_num(data, False, 0, 0, 0), catch22_single_feature_unit_test_data
     )
