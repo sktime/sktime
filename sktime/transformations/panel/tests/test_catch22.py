@@ -18,7 +18,7 @@ def test_catch22_on_unit_test():
     c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
+    data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
     testing.assert_array_almost_equal(data, catch22_unit_test_data)
 
 
@@ -35,9 +35,10 @@ def test_catch22_single_feature_on_unit_test():
     # assert transformed data is the same
     results = catch22_unit_test_data.transpose()
     for i in range(22):
-        testing.assert_array_almost_equal(
-            c22.transform_single_feature(X_train.iloc[indices], i), results[i][:2]
+        data = np.nan_to_num(
+            c22.transform_single_feature(X_train.iloc[indices], i), False, 0, 0, 0
         )
+        testing.assert_array_almost_equal(data, results[i][:2])
 
 
 def test_catch22_on_basic_motions():
@@ -51,7 +52,7 @@ def test_catch22_on_basic_motions():
     c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
+    data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
     testing.assert_array_almost_equal(data, catch22_basic_motions_data)
 
 

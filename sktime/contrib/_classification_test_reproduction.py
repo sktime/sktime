@@ -286,7 +286,6 @@ if __name__ == "__main__":
                     "estimator": RandomForestClassifier(n_estimators=3),
                     "n_shapelet_samples": 500,
                     "max_shapelets": 20,
-                    "batch_size": 100,
                 },
                 tsf_params={"n_estimators": 10},
                 rise_params={"n_estimators": 10},
