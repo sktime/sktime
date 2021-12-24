@@ -12,7 +12,6 @@ from sklearn.base import clone
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.series import check_series
 
 
 class Detrender(BaseTransformer):
