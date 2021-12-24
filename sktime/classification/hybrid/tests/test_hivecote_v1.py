@@ -28,10 +28,10 @@ def test_hivecote_v1_on_unit_test_data():
         rise_params={"n_estimators": 10},
         cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
     )
-    hc1.fit(X_train.iloc[indices], y_train[indices])
+    hc1.fit(X_train[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = hc1.predict_proba(X_test.iloc[indices])
+    probas = hc1.predict_proba(X_test[indices])
     testing.assert_array_almost_equal(probas, hivecote_v1_unit_test_probas, decimal=2)
 
 

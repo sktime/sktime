@@ -176,6 +176,39 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
+def _load_provided_dataset(name, split=None, return_X_y=True):
+    """Load baked in time series classification datasets (helper function)."""
+    if isinstance(split, str):
+        split = split.upper()
+
+    if split in ("TRAIN", "TEST"):
+        fname = name + "_" + split + ".ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X, y = load_from_tsfile(abspath)
+    # if split is None, load both train and test set
+    elif split is None:
+        fname = name + "_TRAIN.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_train, y_train = load_from_tsfile(abspath)
+        fname = name + "_TEST.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_test, y_test = load_from_tsfile(abspath)
+        if isinstance(X_train, np.ndarray):
+            X = np.concatenate(X_train, X_test)
+            y = np.concatenate(y_train, y_test)
+        elif isinstance(X_train, pd.DataFrame):
+            X = pd.concat([X_train, X_test])
+            y = pd.concat([y_train, y_test])
+        else:
+            raise IOError(
+                f"Invalid data structure type {type(X_train)} for loading "
+                f"classification problem "
+            )
+    else:
+        raise ValueError("Invalid `split` value =", split)
+    return X, y
+
+
 def load_from_tsfile(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",

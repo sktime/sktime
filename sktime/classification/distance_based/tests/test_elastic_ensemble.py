@@ -23,7 +23,7 @@ def test_ee_on_unit_test_data():
     ee.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = ee.predict_proba(X_test.iloc[indices])
+    probas = ee.predict_proba(X_test[indices])
     testing.assert_array_almost_equal(probas, ee_unit_test_probas, decimal=2)
 
 

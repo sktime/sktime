@@ -25,7 +25,7 @@ def test_tsfresh_classifier_on_unit_test_data():
     tsfc.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = tsfc.predict_proba(X_test.iloc[indices])
+    probas = tsfc.predict_proba(X_test[indices])
     testing.assert_array_almost_equal(
         probas, tsfresh_classifier_unit_test_probas, decimal=2
     )

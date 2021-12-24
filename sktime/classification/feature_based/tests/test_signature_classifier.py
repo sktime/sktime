@@ -22,7 +22,7 @@ def test_signatures_on_unit_test_data():
     sigc.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = sigc.predict_proba(X_test.iloc[indices])
+    probas = sigc.predict_proba(X_test[indices])
     testing.assert_array_almost_equal(
         probas, signature_classifier_unit_test_probas, decimal=2
     )

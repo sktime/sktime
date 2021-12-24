@@ -29,7 +29,7 @@ def test_random_interval_classifier_on_unit_test_data():
     ric.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = ric.predict_proba(X_test.iloc[indices])
+    probas = ric.predict_proba(X_test[indices])
     testing.assert_array_almost_equal(
         probas, random_interval_classifier_unit_test_probas, decimal=2
     )

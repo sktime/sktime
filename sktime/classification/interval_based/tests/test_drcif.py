@@ -20,7 +20,7 @@ def test_drcif_on_unit_test_data():
     drcif.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = drcif.predict_proba(X_test.iloc[indices])
+    probas = drcif.predict_proba(X_test[indices])
     testing.assert_array_equal(probas, drcif_unit_test_probas)
 
     # test train estimate
