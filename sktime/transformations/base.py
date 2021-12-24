@@ -905,7 +905,8 @@ class BaseTransformer(BaseEstimator):
         -------
         self: a fitted instance of the estimator
         """
-        raise NotImplementedError("abstract method")
+        # standard behaviour: no update takes place, new data is ignored
+        return self
 
 
 def _handle_alias(X, Z):
