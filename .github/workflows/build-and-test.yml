@@ -53,20 +53,19 @@ jobs:
         python-version: [3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+      # - name: Set up Python
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
+      # - name: Display Python version
+      #   run: python -c "import sys; print(sys.version)"
 
-      - uses: actions/checkout@v2
-      - name: Setup conda
-        uses: s-weigand/setup-conda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          update-conda: true
+          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          conda-channels: anaconda, conda-forge
+          channels: conda-forge,spyder-ide
+
       - run: conda --version
       - run: which python
 
@@ -79,7 +78,7 @@ jobs:
           conda install -c anaconda libpython
           conda install -c conda-forge "pystan>=2.14,<3.0"
           conda install -c conda-forge "fbprophet>=0.7.1"
-          conda install -c conda-forge scipy cython intel tcl
+          conda install -c conda-forge scipy cython matplotlib
           python -m pip install .[all_extras,dev]
 
       - name: Show dependecies
