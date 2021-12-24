@@ -11,8 +11,8 @@ from sktime.datasets import load_unit_test
 def test_boss_on_unit_test_data():
     """Test of BOSS on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train BOSS
@@ -34,8 +34,8 @@ def test_boss_on_unit_test_data():
 def test_individual_boss_on_unit_test():
     """Test of IndividualBOSS on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train IndividualBOSS

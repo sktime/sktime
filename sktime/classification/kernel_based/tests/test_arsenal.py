@@ -11,8 +11,8 @@ from sktime.datasets import load_basic_motions, load_unit_test
 def test_arsenal_on_unit_test_data():
     """Test of Arsenal on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train Arsenal
@@ -34,7 +34,7 @@ def test_arsenal_on_unit_test_data():
 def test_contracted_arsenal_on_unit_test_data():
     """Test of contracted Arsenal on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
 
     # train contracted Arsenal
     arsenal = Arsenal(
@@ -51,8 +51,8 @@ def test_contracted_arsenal_on_unit_test_data():
 def test_arsenal_on_basic_motions():
     """Test of Arsenal on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train Arsenal

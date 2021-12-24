@@ -12,8 +12,8 @@ from sktime.datasets import load_basic_motions, load_unit_test
 def test_hivecote_v2_on_unit_test_data():
     """Test of HIVECOTEV2 on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train HIVE-COTE v2
@@ -42,8 +42,7 @@ def test_hivecote_v2_on_unit_test_data():
 def test_contracted_hivecote_v2_on_unit_test_data():
     """Test of contracted HIVECOTEV2 on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
 
     # train contracted HIVE-COTE v2
     hc2 = HIVECOTEV2(
@@ -69,8 +68,8 @@ def test_contracted_hivecote_v2_on_unit_test_data():
 def test_hivecote_v2_on_basic_motions():
     """Test of HIVEVOTEV2 on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
 
     # train HIVE-COTE v2

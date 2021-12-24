@@ -11,8 +11,8 @@ from sktime.datasets import load_basic_motions, load_unit_test
 def test_tde_on_unit_test_data():
     """Test of TDE on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train TDE
@@ -43,7 +43,7 @@ def test_tde_on_unit_test_data():
 def test_contracted_tde_on_unit_test_data():
     """Test of contracted TDE on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
 
     # train contracted TDE
     tde = TemporalDictionaryEnsemble(
@@ -61,8 +61,8 @@ def test_contracted_tde_on_unit_test_data():
 def test_tde_on_basic_motions():
     """Test of TDE on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train TDE
