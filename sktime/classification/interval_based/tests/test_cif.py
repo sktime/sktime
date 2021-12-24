@@ -23,15 +23,15 @@ def test_cif_on_unit_test_data():
     testing.assert_array_equal(probas, cif_unit_test_probas)
 
 
-def test_cit_on_unit_test_data():
+def test_dtc_on_unit_test_data():
     """Test of CanonicalIntervalForest on unit test data."""
     # load unit test data
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
-    # train CIF continuous interval tree
-    cif = CanonicalIntervalForest(n_estimators=10, base_estimator="CIT", random_state=0)
+    # train CIF with the sklearn decision tree classifier
+    cif = CanonicalIntervalForest(n_estimators=10, base_estimator="dtc", random_state=0)
     cif.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -61,8 +61,8 @@ cif_unit_test_probas = np.array(
             1.0,
         ],
         [
-            0.9,
-            0.1,
+            1.0,
+            0.0,
         ],
         [
             0.1,
@@ -73,8 +73,8 @@ cif_unit_test_probas = np.array(
             0.0,
         ],
         [
-            0.7,
-            0.3,
+            0.8,
+            0.2,
         ],
         [
             1.0,
@@ -85,12 +85,12 @@ cif_unit_test_probas = np.array(
             0.0,
         ],
         [
-            0.3,
-            0.7,
-        ],
-        [
-            0.9,
             0.1,
+            0.9,
+        ],
+        [
+            1.0,
+            0.0,
         ],
         [
             0.9,
@@ -103,8 +103,8 @@ cif_basic_motions_probas = np.array(
         [
             0.0,
             0.0,
-            0.3,
-            0.7,
+            0.0,
+            1.0,
         ],
         [
             0.5,
@@ -115,48 +115,48 @@ cif_basic_motions_probas = np.array(
         [
             0.0,
             0.0,
-            0.8,
+            0.5,
+            0.5,
+        ],
+        [
+            0.3,
+            0.6,
+            0.0,
+            0.1,
+        ],
+        [
+            0.0,
+            0.0,
             0.2,
+            0.8,
+        ],
+        [
+            0.0,
+            0.0,
+            0.2,
+            0.8,
+        ],
+        [
+            0.7,
+            0.1,
+            0.1,
+            0.1,
+        ],
+        [
+            0.0,
+            0.0,
+            0.6,
+            0.4,
         ],
         [
             0.1,
+            0.7,
+            0.1,
+            0.1,
+        ],
+        [
+            0.0,
             0.9,
-            0.0,
-            0.0,
-        ],
-        [
-            0.0,
-            0.0,
-            0.3,
-            0.7,
-        ],
-        [
-            0.0,
-            0.0,
-            0.4,
-            0.6,
-        ],
-        [
-            0.3,
-            0.6,
-            0.0,
-            0.1,
-        ],
-        [
-            0.0,
-            0.1,
-            0.5,
-            0.4,
-        ],
-        [
-            0.2,
-            0.8,
-            0.0,
-            0.0,
-        ],
-        [
-            0.2,
-            0.7,
             0.0,
             0.1,
         ],
