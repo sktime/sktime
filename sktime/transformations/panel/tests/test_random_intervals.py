@@ -10,8 +10,8 @@ from sktime.transformations.panel.random_intervals import RandomIntervals
 def test_random_intervals_on_unit_test():
     """Test of RandomIntervals on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+    X_train, y_train = load_unit_test(split="train")
+    indices = np.random.RandomState(0).choice(len(y_train), 5, replace=False)
 
     # fit random intervals
     ri = RandomIntervals(random_state=0, n_intervals=3)
@@ -25,8 +25,8 @@ def test_random_intervals_on_unit_test():
 def test_random_intervals_on_basic_motions():
     """Test of RandomIntervals on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+    X_train, y_train = load_basic_motions(split="train")
+    indices = np.random.RandomState(4).choice(len(y_train), 5, replace=False)
 
     # fit random intervals
     ri = RandomIntervals(random_state=0, n_intervals=3)
@@ -154,121 +154,6 @@ random_intervals_unit_test_data = np.array(
             1269.0,
             1343.0,
         ],
-        [
-            63.0,
-            13.74772708486752,
-            51.0,
-            78.0,
-            55.5,
-            60.0,
-            69.0,
-            22.5,
-            19.226717521892983,
-            10.0,
-            51.0,
-            11.5,
-            14.5,
-            25.5,
-            1032.857142857143,
-            159.00569022462537,
-            846.0,
-            1276.0,
-            926.5,
-            1004.0,
-            1125.5,
-        ],
-        [
-            388.0,
-            208.00721141345076,
-            221.0,
-            621.0,
-            271.5,
-            322.0,
-            471.5,
-            119.0,
-            82.70832283795063,
-            40.0,
-            221.0,
-            58.75,
-            107.5,
-            167.75,
-            1376.5714285714287,
-            71.69113646483117,
-            1279.0,
-            1479.0,
-            1327.0,
-            1367.0,
-            1428.5,
-        ],
-        [
-            52.666666666666664,
-            17.03917055884274,
-            35.0,
-            69.0,
-            44.5,
-            54.0,
-            61.5,
-            15.75,
-            13.450526631573451,
-            6.0,
-            35.0,
-            6.75,
-            11.0,
-            20.0,
-            1066.5714285714287,
-            126.42502012768563,
-            929.0,
-            1275.0,
-            962.5,
-            1083.0,
-            1127.0,
-        ],
-        [
-            295.0,
-            85.492689745966,
-            203.0,
-            372.0,
-            256.5,
-            310.0,
-            341.0,
-            110.0,
-            73.58441864054284,
-            39.0,
-            203.0,
-            58.5,
-            99.0,
-            150.5,
-            980.5714285714286,
-            95.71286423962236,
-            844.0,
-            1104.0,
-            916.5,
-            1019.0,
-            1032.0,
-        ],
-        [
-            375.6666666666667,
-            214.84025072907855,
-            176.0,
-            603.0,
-            262.0,
-            348.0,
-            475.5,
-            107.5,
-            79.97708005005768,
-            30.0,
-            177.0,
-            42.75,
-            111.5,
-            176.25,
-            1164.857142857143,
-            182.55631877261746,
-            814.0,
-            1408.0,
-            1127.5,
-            1178.0,
-            1249.5,
-        ],
     ]
 )
 random_intervals_basic_motions_data = np.array(
@@ -388,150 +273,5 @@ random_intervals_basic_motions_data = np.array(
             0.413103,
             1.785761,
         ],
-        [
-            -0.0661405,
-            0.4299523473660139,
-            -0.870923,
-            0.300961,
-            -0.5293455,
-            0.143822,
-            0.274327,
-            -0.06904284615384616,
-            1.8617269074046428,
-            -2.49558,
-            2.679353,
-            -1.9256185,
-            0.0,
-            1.77846675,
-            0.7796854000000001,
-            1.5964689998223223,
-            -1.65164,
-            3.799607,
-            -0.6850915,
-            0.802671,
-            1.6439115,
-        ],
-        [
-            1.5906991666666668,
-            1.3440714455785474,
-            0.047941,
-            4.506426,
-            0.47408,
-            1.3649784999999999,
-            1.9435959999999999,
-            -1.7009731538461539,
-            3.852992097728784,
-            -14.581965,
-            2.572818,
-            -3.77000375,
-            -0.211738,
-            0.92818525,
-            1.6292319333333334,
-            5.101864310702098,
-            -1.743114,
-            16.492428,
-            -1.053179,
-            -0.500584,
-            1.0741304999999999,
-        ],
-        [
-            0.009987583333333336,
-            0.06284379298120978,
-            -0.090555,
-            0.103872,
-            -0.021307,
-            -0.0106535,
-            0.06125725,
-            -0.008399807692307693,
-            0.39370287999607206,
-            -0.532675,
-            0.676497,
-            -0.3615525,
-            0.0412825,
-            0.29363700000000004,
-            -0.14951213333333332,
-            0.09601109846996608,
-            -0.329693,
-            0.05362,
-            -0.19400699999999999,
-            -0.15235,
-            -0.1101145,
-        ],
-        [
-            -0.42347616666666665,
-            0.9398538782896795,
-            -1.664608,
-            1.507469,
-            -1.20717375,
-            -0.58461,
-            0.1345005,
-            -0.3538188076923078,
-            6.646780042592418,
-            -12.283474,
-            10.134132,
-            -5.1176705,
-            0.014648500000000009,
-            5.0391005,
-            5.466909733333333,
-            12.091126493273483,
-            -16.414906,
-            19.537025,
-            -5.087027,
-            12.582415,
-            14.738701500000001,
-        ],
-        [
-            -0.012429166666666684,
-            1.4177575227065666,
-            -1.79245,
-            3.193384,
-            -0.8103315,
-            -0.2197285,
-            0.6598505,
-            -0.24759115384615407,
-            4.764487010551081,
-            -7.686493,
-            7.590612,
-            -4.52973125,
-            0.06658449999999999,
-            2.632744,
-            5.840026533333333,
-            9.25275906428247,
-            -13.749985,
-            16.203773,
-            1.7894294999999998,
-            9.080939,
-            12.266754,
-        ],
     ]
 )
-
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     ri_u = RandomIntervals(random_state=0, n_intervals=3)
-#
-#     ri_u.fit(X_train.iloc[indices], y_train[indices])
-#     data = ri_u.transform(X_train.iloc[indices])
-#     print_array(data.to_numpy())
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-#
-#     ri_m = RandomIntervals(random_state=0, n_intervals=3)
-#
-#     ri_m.fit(X_train.iloc[indices], y_train[indices])
-#     data = ri_m.transform(X_train.iloc[indices])
-#     print_array(data.to_numpy())
