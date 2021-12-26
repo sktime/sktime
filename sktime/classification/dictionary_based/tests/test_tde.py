@@ -11,8 +11,8 @@ from sktime.datasets import load_basic_motions, load_unit_test
 def test_tde_on_unit_test_data():
     """Test of TDE on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train TDE
@@ -40,31 +40,29 @@ def test_tde_on_unit_test_data():
     assert accuracy_score(y_train, train_preds) >= 0.75
 
 
-# def test_contracted_tde_on_unit_test_data():
-#     """Test of contracted TDE on unit test data."""
-#     # load unit test data
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#
-#     # train contracted TDE
-#     tde = TemporalDictionaryEnsemble(
-#         time_limit_in_minutes=0.25,
-#         contract_max_n_parameter_samples=10,
-#         max_ensemble_size=5,
-#         randomly_selected_params=5,
-#         random_state=0,
-#     )
-#     tde.fit(X_train, y_train)
-#
-#     assert len(tde.estimators_) > 1
-#     assert accuracy_score(y_test, tde.predict(X_test)) >= 0.75
+def test_contracted_tde_on_unit_test_data():
+    """Test of contracted TDE on unit test data."""
+    # load unit test data
+    X_train, y_train = load_unit_test(split="train")
+
+    # train contracted TDE
+    tde = TemporalDictionaryEnsemble(
+        time_limit_in_minutes=0.25,
+        contract_max_n_parameter_samples=10,
+        max_ensemble_size=5,
+        randomly_selected_params=5,
+        random_state=0,
+    )
+    tde.fit(X_train, y_train)
+
+    assert len(tde.estimators_) > 1
 
 
 def test_tde_on_basic_motions():
     """Test of TDE on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train TDE
@@ -189,46 +187,3 @@ tde_basic_motions_probas = np.array(
         ],
     ]
 )
-
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     tde_u = TemporalDictionaryEnsemble(
-#         n_parameter_samples=10,
-#         max_ensemble_size=5,
-#         randomly_selected_params=5,
-#         random_state=0,
-#     )
-#
-#     tde_u.fit(X_train, y_train)
-#     probas = tde_u.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-#
-#     tde_m = TemporalDictionaryEnsemble(
-#         n_parameter_samples=10,
-#         max_ensemble_size=5,
-#         randomly_selected_params=5,
-#         random_state=0
-#     )
-#
-#     tde_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = tde_m.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
