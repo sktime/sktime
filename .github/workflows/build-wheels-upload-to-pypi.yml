@@ -101,28 +101,12 @@ jobs:
           #   bitness: 64
           #   platform_id: win_amd64
 
-          # Window 32 bit
-          # - os: windows-2019
-          #   python: 37
-          #   python-version: 3.7
-          #   bitness: 32
-          #   platform_id: win32
-          # - os: windows-2019
-          #   python: 38
-          #   python-version: 3.8
-          #   bitness: 32
-          #   platform_id: win32
-          # - os: windows-2019
-          #   python: 39
-          #   python-version: 3.9
-          #   bitness: 32
-          #   platform_id: win32
-
     steps:
       - uses: actions/checkout@v2
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
+          activate-environment: test
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           channels: anaconda, conda-forge,
@@ -135,31 +119,31 @@ jobs:
           name: wheels
           path: wheelhouse
 
+      - name: Install conda libpython
+        run: conda install -c anaconda libpython
+
+      - name: Install conda dependencies
+        run: |
+          conda install -c anaconda -n test "pystan==2.19.1.1"
+          conda install -c conda-forge -n test "fbprophet>=0.7.1"
+          conda install -c conda-forge -n test scipy cython
+
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
 
       - name: Get wheel filename
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $env:GITHUB_ENV
 
-      - name: Install conda libpython
-        run: conda install -c anaconda libpython
+      - name: Activate conda env
+        run: conda activate test
 
-      - name: Install conda dependencies
-        run: |
-          conda install -c anaconda "pystan==2.19.1.1"
-          conda install -c conda-forge "fbprophet>=0.7.1"
-          conda install -c conda-forge scipy cython
+      - run: conda info --envs
 
       - name: Install wheel and extras
         run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
 
-      - name: Show pip packages
-        run: python -m pip list
-
       - name: Show conda packages
-        run: conda list
-
-      - run: python -m platform
+        run: conda list -n test
 
       - name: Run tests
         run: python -m pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
