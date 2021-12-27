@@ -11,9 +11,6 @@ __all__ = [
     "WhiteNoiseAugmenter",
     "ReverseAugmenter",
     "InvertAugmenter",
-    "ScaleAugmenter",
-    "OffsetAugmenter",
-    "DriftAugmenter",
 ]
 
 import sys
@@ -22,7 +19,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from scipy.stats._distn_infrastructure import rv_frozen as random_Variable
+from scipy.stats._distn_infrastructure import rv_frozen as random_variable
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 
@@ -122,7 +119,8 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         self.n_jobs = n_jobs
         # ToDo: The following lines do not comply with [1].
         # Should be moved to _fit (?)
-        # [1]: https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
+        # [1]:
+        # https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
         if excluded_var_indices is None:
             self.excluded_var_indices = []
         else:
@@ -256,7 +254,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                     if self.relative_fit_type == "instance-wise" and self._is_fittable:
                         # (overwrite) statistics for certain instance
                         stats[col] = self.relative_fit_stat_fun(X.iloc[row, col])
-                    if isinstance(self.param, random_Variable):
+                    if isinstance(self.param, random_variable):
                         # if parameter is a distribution and not a constant
                         rand_param_variate = self.param.rv()
                         self._last_aug_random_variate.iloc[
@@ -324,12 +322,12 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         if self._param_desc is not None:
             if self.param is None:
                 self.param = self._param_desc["default"]
-            elif isinstance(self.param, random_Variable):
+            elif isinstance(self.param, random_variable):
                 pass
             elif not self._param_desc["min"] <= self.param <= self._param_desc["max"]:
                 raise ValueError("Input value for param is out of boundaries.")
         elif (
-            not isinstance(self.param, (int, float, random_Variable))
+            not isinstance(self.param, (int, float, random_variable))
             and self.param is not None
         ):
             raise TypeError(
@@ -562,7 +560,7 @@ def plot_augmentation_example(
             f"n_jobs={ft.n_jobs}.{nl}"
             f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
-    except Exception as e:
+    except Exception:
         param_str = "Unknown augmenter and parameterization"
 
     # plot and return figure
