@@ -48,11 +48,8 @@ jobs:
           path: wheelhouse/*.whl
 
   build_windows_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: windows-2019
+    name: Build wheels on windows-2019
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -65,7 +62,6 @@ jobs:
         run: python -m pip install cibuildwheel
 
       - name: Fix windows paths
-        if: ${{ matrix.os == 'windows-2019' }}
         run: echo "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Build wheels
@@ -85,39 +81,39 @@ jobs:
   test-windows-wheels:
     needs: build_windows_wheels
     name: Test windows wheels
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-latest
+          - os: windows-2019
             python: 37
             python-version: 3.7
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2019
             python: 38
             python-version: 3.8
             bitness: 64
             platform_id: win_amd64
-          - os: windows-latest
+          - os: windows-2019
             python: 39
             python-version: 3.9
             bitness: 64
             platform_id: win_amd64
 
           # Window 32 bit
-          # - os: windows-latest
+          # - os: windows-2019
           #   python: 37
           #   python-version: 3.7
           #   bitness: 32
           #   platform_id: win32
-          # - os: windows-latest
+          # - os: windows-2019
           #   python: 38
           #   python-version: 3.8
           #   bitness: 32
           #   platform_id: win32
-          # - os: windows-latest
+          # - os: windows-2019
           #   python: 39
           #   python-version: 3.9
           #   bitness: 32
