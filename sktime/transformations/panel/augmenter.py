@@ -106,7 +106,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_indices=None,
+        excluded_var_indices=[],
         n_jobs=1,
     ):
         # input parameters
@@ -148,11 +148,6 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         # Moved from init to _fit, according to [1]
         # [1]:
         # https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
-        if self.excluded_var_indices is None:
-            self.excluded_var_indices = []
-        # determine whether the augmenter can be fitted, if not done by subclass
-        if not hasattr(self, "_is_fittable"):
-            self._is_fittable = True
         # check augmentation parameters
         self._check_general_aug_parameter()
         self._check_specific_aug_parameter()
@@ -290,13 +285,13 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         if not 0.0 <= self.p <= 1.0:
             raise ValueError("Input value for p is not a valid probability.")
         if not isinstance(self.use_relative_fit, bool):
-            raise TypeError("Type of input value use_relative_fit must be" " bool.")
+            raise TypeError("Type of input value use_relative_fit must be bool.")
         if (
             not callable(self.relative_fit_stat_fun)
             and self.relative_fit_stat_fun is not None
         ):
             raise TypeError(
-                "Type of input value relative_fit_stat_fun must be" " function or None."
+                "Type of input value relative_fit_stat_fun must be function or None."
             )
         if self.relative_fit_type not in (
             "fit",
@@ -312,6 +307,8 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
             )
         if not isinstance(self.n_jobs, int):
             raise TypeError("Type of input value n_jobs must be int.")
+        if not isinstance(self._is_fittable, bool):
+            raise ValueError("Type of class variable _is_fittable must be bool.")
 
     def _check_specific_aug_parameter(self):
         """Check subclass-specific parameter (default method)."""
@@ -640,6 +637,7 @@ def progress_bar(count, total, status=""):
 #         be zero (i.e. no Noise will be added).
 #     """
 #
+#     _is_fittable = True
 #     _param_desc = {
 #         "name_absolute": "std",
 #         "name_relative": "scale_of_std",
@@ -711,6 +709,7 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         are used. Not implemented yet.
     """
 
+    _is_fittable = True
     _param_desc = {
         "name_absolute": "std",
         "name_relative": "scale_of_std",
@@ -728,7 +727,7 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_indices=None,
+        excluded_var_indices=[],
         n_jobs=1,
     ):
         super().__init__(
@@ -807,7 +806,7 @@ class ReverseAugmenter(_BasePanelAugmenter):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_indices=None,
+        excluded_var_indices=[],
         n_jobs=1,
     ):
         super().__init__(
@@ -882,7 +881,7 @@ class InvertAugmenter(_BasePanelAugmenter):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_indices=None,
+        excluded_var_indices=[],
         n_jobs=1,
     ):
         super().__init__(
