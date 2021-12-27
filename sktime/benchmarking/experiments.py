@@ -111,10 +111,7 @@ def run_clustering_experiment(
         second = "Para info too long!"
     else:
 
-        if "Composite" in cls_name:
-            second = "Para info too long!"
-        else:
-            second = str(clusterer.get_params())
+        second = str(clusterer.get_params())
         second.replace("\n", " ")
         second.replace("\r", " ")
         third = "FORMAT NOT FINALISED"
@@ -485,7 +482,7 @@ def load_and_run_classification_experiment(
             if os.path.exists(full_path):
                 build_train = False
 
-        if build_train is False and build_test is False:
+        if build_train is False and not build_test:
             return
 
     if predefined_resample:
