@@ -145,11 +145,10 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         -------
         self: a fitted instance of the transformer
         """
-
         # Moved from init to _fit, according to [1]
         # [1]:
         # https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
-        if excluded_var_indices is None:
+        if self.excluded_var_indices is None:
             self.excluded_var_indices = []
         # determine whether the augmenter can be fitted, if not done by subclass
         if not hasattr(self, "_is_fittable"):
@@ -317,9 +316,8 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
     def _check_specific_aug_parameter(self):
         """Check subclass-specific parameter (default method)."""
         if hasattr(self, "_param_desc"):
-            if (
-                self.param is None
-                or not isinstance(self.param, (int, float, random_variable))
+            if self.param is None or not isinstance(
+                self.param, (int, float, random_variable)
             ):
                 self.param = self._param_desc["default"]
             elif isinstance(self.param, random_variable):
