@@ -3,8 +3,6 @@
 
 __author__ = ["Hongyi Yang"]
 
-import sys
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -45,9 +43,7 @@ def test_airline_default():
     assert_array_equal(fit_result_R, fit_result)
 
 
-@pytest.mark.xfail(
-    sys.version_info[:2] == (3, 9), reason="flaky result under py3.9 on linux"
-)
+@pytest.mark.xfail(reason="flaky results on linux")
 def test_airline_allow_multiplicative_trend():
     """
     Allow multiplicative trend.
