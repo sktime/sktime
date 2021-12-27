@@ -117,14 +117,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         self.relative_fit_type = relative_fit_type
         self.random_state = random_state
         self.n_jobs = n_jobs
-        # ToDo: The following lines do not comply with [1].
-        # Should be moved to _fit (?)
-        # [1]:
-        # https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
-        if excluded_var_indices is None:
-            self.excluded_var_indices = []
-        else:
-            self.excluded_var_indices = excluded_var_indices
+        self.excluded_var_indices = excluded_var_indices
         # DataFrame of latest random variates of any random variable defined
         # by a single augmenter.
         self._last_aug_random_variate = None
@@ -132,15 +125,6 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         self._stats = [None]
         # number of vars/channels as defined by data passed to _fit() function.
         self._n_vars = None
-        # determine whether the augmenter can be fitted, if not done by subclass
-        if not hasattr(self, "_is_fittable"):
-            self._is_fittable = True
-        # add default param description, if not done by subclass
-        if not hasattr(self, "_param_desc"):
-            self._param_desc = None
-        # check augmentation parameters
-        self._check_general_aug_parameter()
-        self._check_specific_aug_parameter()
         # initialize super class
         super().__init__()
 
@@ -161,6 +145,19 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         -------
         self: a fitted instance of the transformer
         """
+
+        # Moved from init to _fit, according to [1]
+        # [1]:
+        # https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
+        if excluded_var_indices is None:
+            self.excluded_var_indices = []
+        # determine whether the augmenter can be fitted, if not done by subclass
+        if not hasattr(self, "_is_fittable"):
+            self._is_fittable = True
+        # check augmentation parameters
+        self._check_general_aug_parameter()
+        self._check_specific_aug_parameter()
+
         if not self._is_fittable:
             # nothing has to be fit here
             return self
@@ -319,8 +316,11 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
 
     def _check_specific_aug_parameter(self):
         """Check subclass-specific parameter (default method)."""
-        if self._param_desc is not None:
-            if self.param is None:
+        if hasattr(self, "_param_desc"):
+            if (
+                self.param is None
+                or not isinstance(self.param, (int, float, random_variable))
+            ):
                 self.param = self._param_desc["default"]
             elif isinstance(self.param, random_variable):
                 pass
@@ -642,13 +642,16 @@ def progress_bar(count, total, status=""):
 #         be zero (i.e. no Noise will be added).
 #     """
 #
+#     _param_desc = {
+#         "name_absolute": "std",
+#         "name_relative": "scale_of_std",
+#         "min": 0.0,
+#         "max": np.nan_to_num(np.inf),
+#         "default": 0.0,
+#         "abs_inc_strength": True
+#     }
+#
 #     def __init__(self, *args, **kwargs):
-#         self._param_desc = {"name_absolute": "std",
-#                             "name_relative": "scale_of_std",
-#                             "min": 0.0,
-#                             "max": np.nan_to_num(np.inf),
-#                             "default": 0.0,
-#                             "abs_inc_strength": True}
 #         super().__init__(*args, **kwargs)
 #
 #     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
@@ -710,6 +713,15 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         are used. Not implemented yet.
     """
 
+    _param_desc = {
+        "name_absolute": "std",
+        "name_relative": "scale_of_std",
+        "min": 0.0,
+        "max": np.nan_to_num(np.inf),
+        "default": 0.0,
+        "abs_inc_strength": True,
+    }
+
     def __init__(
         self,
         p: float = 1.0,
@@ -721,14 +733,6 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         excluded_var_indices=None,
         n_jobs=1,
     ):
-        self._param_desc = {
-            "name_absolute": "std",
-            "name_relative": "scale_of_std",
-            "min": 0.0,
-            "max": np.nan_to_num(np.inf),
-            "default": 0.0,
-            "abs_inc_strength": True,
-        }
         super().__init__(
             p,
             param,
@@ -795,6 +799,8 @@ class ReverseAugmenter(_BasePanelAugmenter):
         are used. Not implemented yet.
     """
 
+    _is_fittable = False
+
     def __init__(
         self,
         p: float = 1.0,
@@ -806,7 +812,6 @@ class ReverseAugmenter(_BasePanelAugmenter):
         excluded_var_indices=None,
         n_jobs=1,
     ):
-        self._is_fittable = False
         super().__init__(
             p,
             param,
@@ -869,6 +874,8 @@ class InvertAugmenter(_BasePanelAugmenter):
         are used. Not implemented yet.
     """
 
+    _is_fittable = False
+
     def __init__(
         self,
         p: float = 1.0,
@@ -880,7 +887,6 @@ class InvertAugmenter(_BasePanelAugmenter):
         excluded_var_indices=None,
         n_jobs=1,
     ):
-        self._is_fittable = False
         super().__init__(
             p,
             param,
@@ -911,8 +917,9 @@ class InvertAugmenter(_BasePanelAugmenter):
 #         Ignored, as well as use_use_relative_fit.
 #     """
 #
+#     _is_fittable = False
+#
 #     def __init__(self, *args, **kwargs):
-#         self._is_fittable = False
 #         super().__init__(*args, **kwargs)
 #
 #     def _univariate_ser_aug_fun(self, X, _, __):
@@ -934,15 +941,17 @@ class InvertAugmenter(_BasePanelAugmenter):
 #         parameter and this value.
 #     """
 #
+#
+#     _param_desc = {
+#         "name_absolute": "scale",
+#         "name_relative": "relative_scale",
+#         "min": np.nan_to_num(-np.inf),
+#         "max": np.nan_to_num(np.inf),
+#         "default": 1.0,
+#         "abs_inc_strength": True,
+#     }
+#
 #     def __init__(self, *args, **kwargs):
-#         self._param_desc = {
-#             "name_absolute": "scale",
-#             "name_relative": "relative_scale",
-#             "min": np.nan_to_num(-np.inf),
-#             "max": np.nan_to_num(np.inf),
-#             "default": 1.0,
-#             "abs_inc_strength": True,
-#         }
 #         super().__init__(*args, **kwargs)
 #
 #     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
@@ -967,15 +976,16 @@ class InvertAugmenter(_BasePanelAugmenter):
 #         parameter and this value.
 #     """
 #
+#     _param_desc = {
+#         "name_absolute": "offset",
+#         "name_relative": "relative_offset",
+#         "min": np.nan_to_num(-np.inf),
+#         "max": np.nan_to_num(np.inf),
+#         "default": 0.0,
+#         "abs_inc_strength": True,
+#     }
+#
 #     def __init__(self, *args, **kwargs):
-#         self._param_desc = {
-#             "name_absolute": "offset",
-#             "name_relative": "relative_offset",
-#             "min": np.nan_to_num(-np.inf),
-#             "max": np.nan_to_num(np.inf),
-#             "default": 0.0,
-#             "abs_inc_strength": True,
-#         }
 #         super().__init__(self, *args, **kwargs)
 #
 #     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
@@ -1000,15 +1010,16 @@ class InvertAugmenter(_BasePanelAugmenter):
 #         fitted statistical parameter and this value.
 #     """
 #
+#     _param_desc = {
+#         "name_absolute": "std_of_drift",
+#         "name_relative": "relative_std_of_drift",
+#         "min": 0.0,
+#         "max": np.nan_to_num(np.inf),
+#         "default": 0.0,
+#         "abs_inc_strength": True,
+#     }
+#
 #     def __init__(self, *args, **kwargs):
-#         self._param_desc = {
-#             "name_absolute": "std_of_drift",
-#             "name_relative": "relative_std_of_drift",
-#             "min": 0.0,
-#             "max": np.nan_to_num(np.inf),
-#             "default": 0.0,
-#             "abs_inc_strength": True,
-#         }
 #         super().__init__(*args, **kwargs)
 #
 #     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
