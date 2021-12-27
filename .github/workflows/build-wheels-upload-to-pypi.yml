@@ -154,8 +154,13 @@ jobs:
       - name: Install wheel and extras
         run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
 
-      - name: Show dependecies
+      - name: Show pip packages
         run: python -m pip list
+
+      - name: Show conda packages
+        run: conda list
+
+      - run: python -m platform
 
       - name: Run tests
         run: python -m pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
