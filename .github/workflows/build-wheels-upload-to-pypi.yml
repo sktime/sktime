@@ -66,9 +66,10 @@ jobs:
 
       - name: Build wheels
         env:
-          CIBW_BUILD_VERBOSITY: 1
+          CIBW_BUILD_VERBOSITY: 2
           CIBW_PLATFORM: windows
           CIBW_SKIP: cp36-* pp*
+          CIBW_BUILD_FRONTEND: "build"
           # Windows causes install problems due to fbprophet so it's tested separately
         run: python -m cibuildwheel --output-dir wheelhouse
 
