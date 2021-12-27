@@ -70,7 +70,7 @@ jobs:
       - name: Install sktime and dependencies (windows)
         run: |
           conda install -c anaconda libpython
-          conda install -c conda-forge "pystan>=2.14,<3.0"
+          conda install -c anaconda "pystan==2.19.1.1"
           conda install -c conda-forge "fbprophet>=0.7.1"
           conda install -c conda-forge scipy cython matplotlib
           python -m pip install .[all_extras,dev]
@@ -84,7 +84,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime -vv --pyargs sktime
+          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime -v --pyargs sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage

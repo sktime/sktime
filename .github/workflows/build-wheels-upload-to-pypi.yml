@@ -120,7 +120,7 @@ jobs:
 
       - name: Install conda dependencies
         run: |
-          conda install -c conda-forge "pystan>=2.14,<3.0"
+          conda install -c anaconda "pystan==2.19.1.1"
           conda install -c conda-forge "fbprophet>=0.7.1"
           conda install -c conda-forge scipy cython
 
