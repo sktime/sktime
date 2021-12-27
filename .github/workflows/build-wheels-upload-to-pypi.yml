@@ -145,6 +145,10 @@ jobs:
       - name: Show conda packages
         run: conda list -n test
 
+      - run: python --version
+
+      - run: python -c "import sys;pritn(sys.path);print(sys.executable)"
+
       - name: Run tests
         run: python -m pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
 
