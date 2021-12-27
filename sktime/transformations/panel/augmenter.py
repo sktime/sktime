@@ -119,11 +119,14 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         self.relative_fit_stat_fun = relative_fit_stat_fun
         self.relative_fit_type = relative_fit_type
         self.random_state = random_state
+        self.n_jobs = n_jobs
+        # ToDo: The following lines do not comply with [1].
+        # Should be moved to _fit (?)
+        # [1]: https://scikit-learn.org/stable/developers/develop.html#parameters-and-init
         if excluded_var_indices is None:
             self.excluded_var_indices = []
         else:
             self.excluded_var_indices = excluded_var_indices
-        self.n_jobs = n_jobs
         # DataFrame of latest random variates of any random variable defined
         # by a single augmenter.
         self._last_aug_random_variate = None
@@ -212,7 +215,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                 "data (" + str(Xt.shape[1]) + ") and the data "
                 "used for fitting (" + str(self._n_vars) + ")."
             )
-        # fit-transform UNDER REVIEW: Really necessary? Seems to double
+        # TODO: fit-transform UNDER REVIEW: Really necessary? Seems to double
         # sklearn's fit_transform() call... (MrPr3ntice)
         if (
             self.use_relative_fit
@@ -222,7 +225,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
             # calculate demanded statistical param over (a concatenation of)
             # all instances for each variable (like in case of "fit" but
             # directly on the data to be transformed).
-            self._stats = []
+            stats = []
             for col in range(X.shape[1]):  # loop over demanded variables
                 if col not in self.excluded_var_indices:
                     long_series = pd.Series(dtype="float64")
@@ -230,9 +233,9 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                         long_series = long_series.append(
                             X.iloc[row, col], ignore_index=True
                         )
-                    self._stats.append(self.relative_fit_stat_fun(long_series))
+                    stats.append(self.relative_fit_stat_fun(long_series))
                 else:
-                    self._stats.append(None)
+                    stats.append(None)
 
         # create dummy statistics list for instance-wise and use_relative_fit ==
         # False
@@ -241,7 +244,9 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
             or not self.use_relative_fit
             or not self._is_fittable
         ):
-            self._stats = [None] * X.shape[1]
+            stats = [None] * X.shape[1]
+        else:
+            stats = self._stats
         # loop over variables
         for col in range(X.shape[1]):
             # loop over instances (slow but consistent)
@@ -250,7 +255,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                 if np.random.rand() <= self.p and col not in self.excluded_var_indices:
                     if self.relative_fit_type == "instance-wise" and self._is_fittable:
                         # (overwrite) statistics for certain instance
-                        self._stats[col] = self.relative_fit_stat_fun(X.iloc[row, col])
+                        stats[col] = self.relative_fit_stat_fun(X.iloc[row, col])
                     if isinstance(self.param, random_Variable):
                         # if parameter is a distribution and not a constant
                         rand_param_variate = self.param.rv()
@@ -268,7 +273,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
                         self._last_aug_random_variate.iloc[row, col] = None
                     # perform augmentation
                     Xt.iat[row, col] = self._univariate_ser_aug_fun(
-                        X.iloc[row, col], rand_param_variate, self._stats[col]
+                        X.iloc[row, col], rand_param_variate, stats[col]
                     )
                 else:
                     # if no augmentation takes place -> keep original TS
@@ -277,6 +282,8 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
 
         # TODO: find a workaround to avoid modify self._last_aug_random_variate
         # Why is this variable necessary anyway? (dirty fix to pass test ;-) )
+        # -> We need this to save the random outcome (variates) of the augmentation...
+        # -> No good solution found so far... (MrPr3ntice)
         self._last_aug_random_variate = None
         return Xt
 
@@ -491,6 +498,7 @@ def draw_random_samples(
         return X_aug, idx_list
 
 
+# nice tool, but not mandatory - Should we move it to an exemplary notebook..?
 def plot_augmentation_example(
     fitted_transformer,
     X,
@@ -537,10 +545,10 @@ def plot_augmentation_example(
     # create description string (parameterization of the augmenter)
     try:
         ft = fitted_transformer
-        if isinstance(ft._param, (float, int)):
-            help_param = f"{ft._param:.4f}"
+        if isinstance(ft.param, (float, int)):
+            help_param = f"{ft.param:.4f}"
         else:
-            help_param = str(ft._param)
+            help_param = str(ft.param)
         nl = "\n"
         param_str = (
             f"{ft.__class__.__name__} with parameters{nl}"
@@ -555,8 +563,7 @@ def plot_augmentation_example(
             f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
     except Exception as e:
-        # param_str = "Unknown augmenter and parameterization"
-        raise ModuleNotFoundError(e)
+        param_str = "Unknown augmenter and parameterization"
 
     # plot and return figure
     fig, axs = plt.subplots(n_vars, 2, figsize=(12, 1.8 + 2.2 * n_vars))
@@ -612,6 +619,48 @@ def progress_bar(count, total, status=""):
 
 
 # INDIVIDUAL AUGMENTERS
+
+# In the following block comment, you see our proposed way of defining a new
+# augmenter. This fails the checks, as `*args, **kwargs` are not allowed.
+# The compliant version (see below) passes the checks but consists of
+# 90% boilerplate-code (compare `_BasePanelAugmenter`).
+# Is there any better way to do this? Parameterization and documentation gets
+# really annoying when switching to other wrapper structures as far as I know
+# (We would like to stick to the OOP-way with separate classes per augmenter)...
+
+# class WhiteNoiseAugmenter(_BasePanelAugmenter):
+#     """Augmenter adding Gaussian (i.e . white) noise to the time series.
+#
+#     This is a subclass inheriting its functionality from
+#     `_BasePanelAugmenter`. See there for more details.
+#
+#     Parameters
+#     ----------
+#     param: float or (scipy) distribution, optional (default = 0)
+#         Standard deviation (std) of the gaussian noise. Given a distribution, an
+#         i.i.d. random variate will be drawn for each TS augmentation. If
+#         use_relative_fit is True, the actual std will be the product of the
+#         fitted statistical parameter and this value. If set to None, std will
+#         be zero (i.e. no Noise will be added).
+#     """
+#
+#     def __init__(self, *args, **kwargs):
+#         self._param_desc = {"name_absolute": "std",
+#                             "name_relative": "scale_of_std",
+#                             "min": 0.0,
+#                             "max": np.nan_to_num(np.inf),
+#                             "default": 0.0,
+#                             "abs_inc_strength": True}
+#         super().__init__(*args, **kwargs)
+#
+#     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
+#         n = X.shape[0]  # length of the time series
+#         if self.use_relative_fit:
+#             return X + norm.rvs(0, rand_param_variate * stat_param, size=n)
+#         else:
+#             return X + norm.rvs(0, rand_param_variate, size=n)
+
+
 class WhiteNoiseAugmenter(_BasePanelAugmenter):
     """Augmenter adding Gaussian (i.e . white) noise to the time series.
 
@@ -849,379 +898,204 @@ class InvertAugmenter(_BasePanelAugmenter):
         return X.mul(-1)
 
 
-class ScaleAugmenter(_BasePanelAugmenter):
-    """Augmenter scales (multiplies) the time series with the given parameter.
-
-    This is a sub class inheriting its functionality from the superclass
-    `_BasePanelAugmenter`. See there for more details.
-
-    Parameters
-    ----------
-    p: float, optional (default = 1.0)
-        Probability, that a univariate time series (i.e.: defined by (instance,
-        variable) of a multivariate panel) is augmented.
-        Otherwise the original  time series is kept. In case of p=1.0,
-        every  time series in the panel is augmented. Notice, that in case of
-        multivariate time series the decision whether a certain variable of
-        an instance is augmented is stochastically independent from the
-        other variables of the same instance.
-    param: float or (scipy) distribution, optional (default = 1.0)
-        Scale factor. Given a distribution, an i.i.d. random variate will be
-        drawn for each TS augmentation. If use_relative_fit is True,
-        the actual scale factor will be the product of the fitted statistical
-        parameter and this value.
-    use_relative_fit: bool, optional (default = False)
-        Whether to a fit the augmenter regarding a statistical parameter of
-        the data. If True, relative_fit_stat_fun specifies the statistical
-        parameter and relative_fit_type specifies the fitting reference data.
-    relative_fit_stat_fun: a function, optional (default = np.std)
-        Specifies the statistical parameter to calculate. Any function
-        that satisfies the following syntax is allowed: stat = fun(X:
-        pd.Series). The only allowed input is a numeric pd.Series and output
-        has to be float or int. The default is the standard deviation np.std.
-    relative_fit_type: str, optional (default = "fit")
-        "fit": fit demanded statistics with a separate train set.
-        "fit-transform": fit statistics just before transformation
-        regarding the whole given panel.
-        "instance-wise": fit statistics just before transformation
-        individually per instance (and variable).
-    random_state: int, optional (default = None)
-        A random state seed for reproducibility.
-    excluded_var_indices: iterable of int optional (default = None)
-        Iterable (e.g. tuple or list) of int, containing the indices of those
-        variables to exclude from augmentation. Default is None and all
-        variables are used.
-    n_jobs: int, optional (default = 1)
-        Integer specifying the maximum number of concurrently running
-        workers on specific panel's instances. If 1 is given, no parallelism is
-        used. If set to -1, all CPUs are used. For n_jobs below -1, (n_cpus
-        + 1 + n_jobs) are used. For example with n_jobs=-2, all CPUs but one
-        are used. Not implemented yet.
-    """
-
-    def __init__(
-        self,
-        p: float = 1.0,
-        param=None,
-        use_relative_fit=False,
-        relative_fit_stat_fun=np.std,
-        relative_fit_type="fit",
-        random_state=None,
-        excluded_var_indices=None,
-        n_jobs=1,
-    ):
-        self._param_desc = {
-            "name_absolute": "scale",
-            "name_relative": "relative_scale",
-            "min": np.nan_to_num(-np.inf),
-            "max": np.nan_to_num(np.inf),
-            "default": 1.0,
-            "abs_inc_strength": True,
-        }
-        super().__init__(
-            p,
-            param,
-            use_relative_fit,
-            relative_fit_stat_fun,
-            relative_fit_type,
-            random_state,
-            excluded_var_indices,
-            n_jobs,
-        )
-
-    def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
-        if self.use_relative_fit:
-            return X.mul(rand_param_variate * stat_param)
-        else:
-            return X.mul(rand_param_variate)
-
-
-class OffsetAugmenter(_BasePanelAugmenter):
-    """Augmenter adds a scalar to the time series (shifting / offset).
-
-    This is a sub class inheriting its functionality from the superclass
-    `_BasePanelAugmenter`. See there for more details.
-
-    Parameters
-    ----------
-    p: float, optional (default = 1.0)
-        Probability, that a univariate time series (i.e.: defined by (instance,
-        variable) of a multivariate panel) is augmented.
-        Otherwise the original  time series is kept. In case of p=1.0,
-        every  time series in the panel is augmented. Notice, that in case of
-        multivariate time series the decision whether a certain variable of
-        an instance is augmented is stochastically independent from the
-        other variables of the same instance.
-    param: float or (scipy) distribution, optional (default = 0.0)
-        Offset value. Given a distribution, an i.i.d. random variate will be
-        drawn for each TS augmentation. If use_relative_fit is True,
-        the actual offset value will be the product of the fitted statistical
-        parameter and this value.
-    use_relative_fit: bool, optional (default = False)
-        Whether to a fit the augmenter regarding a statistical parameter of
-        the data. If True, relative_fit_stat_fun specifies the statistical
-        parameter and relative_fit_type specifies the fitting reference data.
-    relative_fit_stat_fun: a function, optional (default = np.std)
-        Specifies the statistical parameter to calculate. Any function
-        that satisfies the following syntax is allowed: stat = fun(X:
-        pd.Series). The only allowed input is a numeric pd.Series and output
-        has to be float or int. The default is the standard deviation np.std.
-    relative_fit_type: str, optional (default = "fit")
-        "fit": fit demanded statistics with a separate train set.
-        "fit-transform": fit statistics just before transformation
-        regarding the whole given panel.
-        "instance-wise": fit statistics just before transformation
-        individually per instance (and variable).
-    random_state: int, optional (default = None)
-        A random state seed for reproducibility.
-    excluded_var_indices: iterable of int optional (default = None)
-        Iterable (e.g. tuple or list) of int, containing the indices of those
-        variables to exclude from augmentation. Default is None and all
-        variables are used.
-    n_jobs: int, optional (default = 1)
-        Integer specifying the maximum number of concurrently running
-        workers on specific panel's instances. If 1 is given, no parallelism is
-        used. If set to -1, all CPUs are used. For n_jobs below -1, (n_cpus
-        + 1 + n_jobs) are used. For example with n_jobs=-2, all CPUs but one
-        are used. Not implemented yet.
-    """
-
-    def __init__(
-        self,
-        p: float = 1.0,
-        param=None,
-        use_relative_fit=False,
-        relative_fit_stat_fun=np.std,
-        relative_fit_type="fit",
-        random_state=None,
-        excluded_var_indices=None,
-        n_jobs=1,
-    ):
-        self._param_desc = {
-            "name_absolute": "offset",
-            "name_relative": "relative_offset",
-            "min": np.nan_to_num(-np.inf),
-            "max": np.nan_to_num(np.inf),
-            "default": 0.0,
-            "abs_inc_strength": True,
-        }
-        super().__init__(
-            p,
-            param,
-            use_relative_fit,
-            relative_fit_stat_fun,
-            relative_fit_type,
-            random_state,
-            excluded_var_indices,
-            n_jobs,
-        )
-
-    def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
-        if self.use_relative_fit:
-            return X.add(rand_param_variate * stat_param)
-        else:
-            return X.add(rand_param_variate)
-
-
-class DriftAugmenter(_BasePanelAugmenter):
-    """Augmenter adds a random walk (drift) to time series.
-
-    This is a sub class inheriting its functionality from the superclass
-    `_BasePanelAugmenter`. See there for more details.
-
-    Parameters
-    ----------
-    p: float, optional (default = 1.0)
-        Probability, that a univariate time series (i.e.: defined by (instance,
-        variable) of a multivariate panel) is augmented.
-        Otherwise the original  time series is kept. In case of p=1.0,
-        every  time series in the panel is augmented. Notice, that in case of
-        multivariate time series the decision whether a certain variable of
-        an instance is augmented is stochastically independent from the
-        other variables of the same instance.
-    param: float or (scipy) distribution, optional (default = 0.0)
-        Standard deviation (std) of the random walk. Given a distribution, an
-        i.i.d. random variate will be drawn for each TS augmentation. If
-        use_relative_fit is True, the actual std will be the product of the
-        fitted statistical parameter and this value.
-    use_relative_fit: bool, optional (default = False)
-        Whether to a fit the augmenter regarding a statistical parameter of
-        the data. If True, relative_fit_stat_fun specifies the statistical
-        parameter and relative_fit_type specifies the fitting reference data.
-    relative_fit_stat_fun: a function, optional (default = np.std)
-        Specifies the statistical parameter to calculate. Any function
-        that satisfies the following syntax is allowed: stat = fun(X:
-        pd.Series). The only allowed input is a numeric pd.Series and output
-        has to be float or int. The default is the standard deviation np.std.
-    relative_fit_type: str, optional (default = "fit")
-        "fit": fit demanded statistics with a separate train set.
-        "fit-transform": fit statistics just before transformation
-        regarding the whole given panel.
-        "instance-wise": fit statistics just before transformation
-        individually per instance (and variable).
-    random_state: int, optional (default = None)
-        A random state seed for reproducibility.
-    excluded_var_indices: iterable of int optional (default = None)
-        Iterable (e.g. tuple or list) of int, containing the indices of those
-        variables to exclude from augmentation. Default is None and all
-        variables are used.
-    n_jobs: int, optional (default = 1)
-        Integer specifying the maximum number of concurrently running
-        workers on specific panel's instances. If 1 is given, no parallelism is
-        used. If set to -1, all CPUs are used. For n_jobs below -1, (n_cpus
-        + 1 + n_jobs) are used. For example with n_jobs=-2, all CPUs but one
-        are used. Not implemented yet.
-    """
-
-    def __init__(
-        self,
-        p: float = 1.0,
-        param=None,
-        use_relative_fit=False,
-        relative_fit_stat_fun=np.std,
-        relative_fit_type="fit",
-        random_state=None,
-        excluded_var_indices=None,
-        n_jobs=1,
-    ):
-        self._param_desc = {
-            "name_absolute": "std_of_drift",
-            "name_relative": "relative_std_of_drift",
-            "min": 0.0,
-            "max": np.nan_to_num(np.inf),
-            "default": 0.0,
-            "abs_inc_strength": True,
-        }
-        super().__init__(
-            p,
-            param,
-            use_relative_fit,
-            relative_fit_stat_fun,
-            relative_fit_type,
-            random_state,
-            excluded_var_indices,
-            n_jobs,
-        )
-
-    def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
-        n = X.shape[0]  # length of the time series
-        if self.use_relative_fit:
-            help = rand_param_variate * stat_param
-        else:
-            help = rand_param_variate
-        return X.add(
-            np.concatenate(([0.0], np.cumsum(np.random.normal(0.0, help, n - 1))))
-        )
-
-
 # implemented but not necessary for first PR:
-"""
-class ClipAugmenter(_BasePanelAugmenter):
-    pass
 
 
-class ClipTimeAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class QuantizeAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class JitterAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class TSDropoutAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class SampleDropoutAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class DowntimeAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class ResampleAugmenter(_BasePanelAugmenter):
-    pass
-"""
+# class InvertAugmenter(_BasePanelAugmenter):
+#     """Augmenter inverting the time series (i.e. multiply each value with -1).
+#
+#     This is a sub class inheriting its functionality from the superclass
+#     `_BasePanelAugmenter`. See there for more details.
+#
+#     Parameters
+#     ----------
+#     param: any, optional (default = None)
+#         Ignored, as well as use_use_relative_fit.
+#     """
+#
+#     def __init__(self, *args, **kwargs):
+#         self._is_fittable = False
+#         super().__init__(*args, **kwargs)
+#
+#     def _univariate_ser_aug_fun(self, X, _, __):
+#         return X.mul(-1)
+#
+#
+# class ScaleAugmenter(_BasePanelAugmenter):
+#     """Augmenter scales (multiplies) the time series with the given parameter.
+#
+#     This is a sub class inheriting its functionality from the superclass
+#     `_BasePanelAugmenter`. See there for more details.
+#
+#     Parameters
+#     ----------
+#     param: float or (scipy) distribution, optional (default = 1.0)
+#         Scale factor. Given a distribution, an i.i.d. random variate will be
+#         drawn for each TS augmentation. If use_relative_fit is True,
+#         the actual scale factor will be the product of the fitted statistical
+#         parameter and this value.
+#     """
+#
+#     def __init__(self, *args, **kwargs):
+#         self._param_desc = {
+#             "name_absolute": "scale",
+#             "name_relative": "relative_scale",
+#             "min": np.nan_to_num(-np.inf),
+#             "max": np.nan_to_num(np.inf),
+#             "default": 1.0,
+#             "abs_inc_strength": True,
+#         }
+#         super().__init__(*args, **kwargs)
+#
+#     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
+#         if self.use_relative_fit:
+#             return X.mul(rand_param_variate * stat_param)
+#         else:
+#             return X.mul(rand_param_variate)
+#
+#
+# class OffsetAugmenter(_BasePanelAugmenter):
+#     """Augmenter adds a scalar to the time series (shifting / offset).
+#
+#     This is a sub class inheriting its functionality from the superclass
+#     `_BasePanelAugmenter`. See there for more details.
+#
+#     Parameters
+#     ----------
+#     param: float or (scipy) distribution, optional (default = 0.0)
+#         Offset value. Given a distribution, an i.i.d. random variate will be
+#         drawn for each TS augmentation. If use_relative_fit is True,
+#         the actual offset value will be the product of the fitted statistical
+#         parameter and this value.
+#     """
+#
+#     def __init__(self, *args, **kwargs):
+#         self._param_desc = {
+#             "name_absolute": "offset",
+#             "name_relative": "relative_offset",
+#             "min": np.nan_to_num(-np.inf),
+#             "max": np.nan_to_num(np.inf),
+#             "default": 0.0,
+#             "abs_inc_strength": True,
+#         }
+#         super().__init__(self, *args, **kwargs)
+#
+#     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
+#         if self.use_relative_fit:
+#             return X.add(rand_param_variate * stat_param)
+#         else:
+#             return X.add(rand_param_variate)
+#
+#
+# class DriftAugmenter(_BasePanelAugmenter):
+#     """Augmenter adds a random walk (drift) to time series.
+#
+#     This is a sub class inheriting its functionality from the superclass
+#     `_BasePanelAugmenter`. See there for more details.
+#
+#     Parameters
+#     ----------
+#     param: float or (scipy) distribution, optional (default = 0.0)
+#         Standard deviation (std) of the random walk. Given a distribution, an
+#         i.i.d. random variate will be drawn for each TS augmentation. If
+#         use_relative_fit is True, the actual std will be the product of the
+#         fitted statistical parameter and this value.
+#     """
+#
+#     def __init__(self, *args, **kwargs):
+#         self._param_desc = {
+#             "name_absolute": "std_of_drift",
+#             "name_relative": "relative_std_of_drift",
+#             "min": 0.0,
+#             "max": np.nan_to_num(np.inf),
+#             "default": 0.0,
+#             "abs_inc_strength": True,
+#         }
+#         super().__init__(*args, **kwargs)
+#
+#     def _univariate_ser_aug_fun(self, X, rand_param_variate, stat_param):
+#         n = X.shape[0]  # length of the time series
+#         if self.use_relative_fit:
+#             help = rand_param_variate * stat_param
+#         else:
+#             help = rand_param_variate
+#         return X.add(
+#             np.concatenate(([0.0], np.cumsum(np.random.normal(0.0, help, n - 1))))
+#         )
+#
+#
+# class ClipAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ClipTimeAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class QuantizeAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class JitterAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class TSDropoutAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class SampleDropoutAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class DowntimeAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ResampleAugmenter(_BasePanelAugmenter):
+#     pass
 
 
 # Not implemented yet
-"""
-class FilterAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class OutlierAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class GaussianProcessAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class ArbitraryAdditiveNoiseAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class ArbitraryAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class ShiftingTimeAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class ScalingTimeAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class ChopAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class JigsawAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class PoolingAugmenter(_BasePanelAugmenter):
-    pass
-
-
-class BlendAugmenter(_BasePanelAugmenter):
-    pass
-"""
-
-# Paper content, delete later
-"""
-from sklearn.model_selection import cross_validate
-
-
-def get_score_over_aug_weight(X, y, aug, est, scoring,
-                              weight_support=None,
-                              aug_strategy="train_test",
-                              n_jobs=1,
-                              n_cv=5):
-    if weight_support is None:
-        if aug._param_desc is None:  # in case the augmenter has no parameter
-            weight_support = 1
-        else:
-            weight_support = (aug._param_desc["min"], aug._param_desc["min"])
-    # calculate score for each weight through n_cv-fold CV
-    results = []
-    pipe = Pipeline([['augmenter', aug], ['estimator', est]])
-    for weight in weight_support:
-        pipe.steps
-        results.append(cross_validate(pipe, X, y=y,
-                                      scoring=scoring,
-                                      cv=n_cv,
-                                      n_jobs=n_jobs,
-                                      verbose=0,
-                                      pre_dispatch='2*n_jobs',
-                                      return_train_score=True,
-                                      return_estimator=False,
-                                      error_score=np.nan))
-"""
+# class FilterAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class OutlierAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class GaussianProcessAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ArbitraryAdditiveNoiseAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ArbitraryAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ShiftingTimeAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ScalingTimeAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class ChopAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class JigsawAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class PoolingAugmenter(_BasePanelAugmenter):
+#     pass
+#
+#
+# class BlendAugmenter(_BasePanelAugmenter):
+#     pass
