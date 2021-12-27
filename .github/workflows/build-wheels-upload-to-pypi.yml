@@ -96,11 +96,11 @@ jobs:
             python-version: 3.8
             bitness: 64
             platform_id: win_amd64
-          - os: windows-2019
-            python: 39
-            python-version: 3.9
-            bitness: 64
-            platform_id: win_amd64
+          # - os: windows-2019
+          #   python: 39
+          #   python-version: 3.9
+          #   bitness: 64
+          #   platform_id: win_amd64
 
           # Window 32 bit
           # - os: windows-2019
