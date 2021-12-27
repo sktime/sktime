@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false   # TODO: remove this line before merging
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
 
@@ -58,7 +58,7 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge,spyder-ide
+          channels: anaconda, conda-forge,
 
       - run: conda --version
       - run: which python
@@ -67,13 +67,17 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: echo "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Install sktime and dependencies (windows)
+      - name: Install conda libpython
+        run: conda install -c anaconda libpython
+
+      - name: Install conda dependencies
         run: |
-          conda install -c anaconda libpython
           conda install -c anaconda "pystan==2.19.1.1"
           conda install -c conda-forge "fbprophet>=0.7.1"
           conda install -c conda-forge scipy cython matplotlib
-          python -m pip install .[all_extras,dev]
+
+      - name: Install sktime and dependencies
+        run: python -m pip install .[all_extras,dev]
 
       - name: Show dependecies
         run: python -m pip list
@@ -84,7 +88,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime -v --pyargs sktime
+          python -m pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime -v --pyargs sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
