@@ -13,13 +13,46 @@ on:
 
 
 jobs:
-  build_wheels:
+  build_unix_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+        os: [ubuntu-20.04, macOS-10.15]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel
+
+      - name: Build wheels
+        env:
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
+          CIBW_TEST_EXTRAS_LINUX: "all_extras,dev"
+          CIBW_TEST_COMMAND_LINUX: pytest --showlocals --durations=20 -n 2 --pyargs sktime
+          CIBW_TEST_EXTRAS_MACOS: "all_extras,dev"
+          CIBW_TEST_COMMAND_MACOS: pytest --showlocals --durations=20 -n 2 --pyargs sktime
+        run: bash build_tools/github/build_wheels.sh
+
+      - name: Store wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: wheelhouse/*.whl
+
+  build_windows_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -38,13 +71,10 @@ jobs:
       - name: Build wheels
         env:
           CIBW_BUILD_VERBOSITY: 1
-          CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
+          CIBW_PLATFORM: windows
+          CIBW_SKIP: cp36-* pp*
           # Windows causes install problems due to fbprophet so it's tested separately
-          CIBW_TEST_EXTRAS_LINUX: "all_extras,dev"
-          CIBW_TEST_COMMAND_LINUX: pytest --showlocals --durations=20 -n 2 --pyargs sktime
-          CIBW_TEST_EXTRAS_MACOS: "all_extras,dev"
-          CIBW_TEST_COMMAND_MACOS: pytest --showlocals --durations=20 -n 2 --pyargs sktime
-        run: bash build_tools/github/build_wheels.sh
+        run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Store wheels
         uses: actions/upload-artifact@v2
@@ -53,7 +83,7 @@ jobs:
           path: wheelhouse/*.whl
 
   test-windows-wheels:
-    needs: build_wheels
+    needs: build_windows_wheels
     name: Test windows wheels
     runs-on: windows-latest
     strategy:
@@ -77,21 +107,21 @@ jobs:
             platform_id: win_amd64
 
           # Window 32 bit
-          - os: windows-latest
-            python: 37
-            python-version: 3.7
-            bitness: 32
-            platform_id: win32
-          - os: windows-latest
-            python: 38
-            python-version: 3.8
-            bitness: 32
-            platform_id: win32
-          - os: windows-latest
-            python: 39
-            python-version: 3.9
-            bitness: 32
-            platform_id: win32
+          # - os: windows-latest
+          #   python: 37
+          #   python-version: 3.7
+          #   bitness: 32
+          #   platform_id: win32
+          # - os: windows-latest
+          #   python: 38
+          #   python-version: 3.8
+          #   bitness: 32
+          #   platform_id: win32
+          # - os: windows-latest
+          #   python: 39
+          #   python-version: 3.9
+          #   bitness: 32
+          #   platform_id: win32
 
     steps:
       - uses: actions/checkout@v2
