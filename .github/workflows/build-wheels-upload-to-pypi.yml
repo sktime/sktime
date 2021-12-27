@@ -31,14 +31,12 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel
 
-      - name: Build wheels
+      - name: Build and test wheels
         env:
           CIBW_BUILD_VERBOSITY: 1
           CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
-          CIBW_TEST_EXTRAS_LINUX: "all_extras,dev"
-          CIBW_TEST_COMMAND_LINUX: pytest --showlocals --durations=20 -n 2 --pyargs sktime
-          CIBW_TEST_EXTRAS_MACOS: "all_extras,dev"
-          CIBW_TEST_COMMAND_MACOS: pytest --showlocals --durations=20 -n 2 --pyargs sktime
+          CIBW_TEST_EXTRAS: "all_extras,dev"
+          CIBW_TEST_COMMAND: pytest --showlocals --durations=20 -n 2 --pyargs sktime
         run: bash build_tools/github/build_wheels.sh
 
       - name: Store wheels
