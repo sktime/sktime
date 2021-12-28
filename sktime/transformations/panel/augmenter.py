@@ -726,7 +726,7 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
     def __init__(
         self,
         p: float = 1.0,
-        param=None,
+        param=_param_desc["default"],
         use_relative_fit=False,
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
