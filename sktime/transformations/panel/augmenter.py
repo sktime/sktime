@@ -70,7 +70,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         individually per instance (and variable).
     random_state: int, optional (default = None)
         A random state seed for reproducibility.
-    excluded_var_idx: iterable of int optional (default = None)
+    excluded_var_indices: iterable of int optional (default = None)
         Iterable (e.g. tuple or list) of int, containing the indices of those
         variables to exclude from augmentation. Default is None and all
         variables are used.
@@ -106,7 +106,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_idx=None,
+        excluded_var_indices=None,
         n_jobs=1,
     ):
         # input parameters
@@ -117,9 +117,9 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
         self.relative_fit_type = relative_fit_type
         self.random_state = random_state
         self.n_jobs = n_jobs
-        self.excluded_var_idx = excluded_var_idx
+        self.excluded_var_indices = excluded_var_indices
         # TODO: Protected var copy as short fix: Will be modified in _fit(), when None
-        self._excluded_var_idx = excluded_var_idx
+        self._excluded_var_idx = excluded_var_indices
         # DataFrame of latest random variates of any random variable defined
         # by a single augmenter.
         self._last_aug_random_variate = None
@@ -306,7 +306,7 @@ class _BasePanelAugmenter(_PanelToPanelTransformer):
             raise ValueError("Input value for relative_fit_type is invalid.")
         if not isinstance(self._excluded_var_idx, list):
             raise TypeError(
-                "Input value excluded_var_idx must be a list "
+                "Input value excluded_var_indices must be a list "
                 "of non-negative integers."
             )
         if not isinstance(self.n_jobs, int):
@@ -555,7 +555,7 @@ def plot_augmentation_example(
             f"relative_fit_stat_fun={ft.relative_fit_stat_fun.__name__}, "
             f"relative_fit_type='{ft.relative_fit_type}', "
             f"random_state={ft.random_state},{nl}"
-            f"excluded_var_idx={ft._excluded_var_idx}, "
+            f"excluded_var_indices={ft._excluded_var_idx}, "
             f"n_jobs={ft.n_jobs}.{nl}"
             f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
@@ -590,7 +590,7 @@ def get_rand_input_params(n_vars):
     shuffled_var_idx = list(range(n_vars))
     np.random.shuffle(shuffled_var_idx)
     n_excluded_vars = np.random.randint(n_vars)
-    excluded_var_idx = list(np.sort(shuffled_var_idx[:n_excluded_vars]))
+    excluded_var_indices = list(np.sort(shuffled_var_idx[:n_excluded_vars]))
     rtn_dict = {
         "p": np.random.rand(),
         "param": np.random.normal(5, 10),
@@ -598,7 +598,7 @@ def get_rand_input_params(n_vars):
         "relative_fit_stat_fun": np.std,
         "relative_fit_type": types[np.random.randint(0, 3)],
         "random_state": None,
-        "excluded_var_idx": excluded_var_idx,
+        "excluded_var_indices": excluded_var_indices,
         "n_jobs": 1,
     }
     return rtn_dict
@@ -701,7 +701,7 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         individually per instance (and variable).
     random_state: int, optional (default = None)
         A random state seed for reproducibility.
-    excluded_var_idx: iterable of int optional (default = None)
+    excluded_var_indices: iterable of int optional (default = None)
         Iterable (e.g. tuple or list) of int, containing the indices of those
         variables to exclude from augmentation. Default is None and all
         variables are used.
@@ -731,7 +731,7 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_idx=None,
+        excluded_var_indices=None,
         n_jobs=1,
     ):
         super().__init__(
@@ -741,7 +741,7 @@ class WhiteNoiseAugmenter(_BasePanelAugmenter):
             relative_fit_stat_fun,
             relative_fit_type,
             random_state,
-            excluded_var_idx,
+            excluded_var_indices,
             n_jobs,
         )
 
@@ -788,7 +788,7 @@ class ReverseAugmenter(_BasePanelAugmenter):
         individually per instance (and variable).
     random_state: int, optional (default = None)
         A random state seed for reproducibility.
-    excluded_var_idx: iterable of int optional (default = None)
+    excluded_var_indices: iterable of int optional (default = None)
         Iterable (e.g. tuple or list) of int, containing the indices of those
         variables to exclude from augmentation. Default is None and all
         variables are used.
@@ -810,7 +810,7 @@ class ReverseAugmenter(_BasePanelAugmenter):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_idx=None,
+        excluded_var_indices=None,
         n_jobs=1,
     ):
         super().__init__(
@@ -820,7 +820,7 @@ class ReverseAugmenter(_BasePanelAugmenter):
             relative_fit_stat_fun,
             relative_fit_type,
             random_state,
-            excluded_var_idx,
+            excluded_var_indices,
             n_jobs,
         )
 
@@ -863,7 +863,7 @@ class InvertAugmenter(_BasePanelAugmenter):
         individually per instance (and variable).
     random_state: int, optional (default = None)
         A random state seed for reproducibility.
-    excluded_var_idx: iterable of int optional (default = None)
+    excluded_var_indices: iterable of int optional (default = None)
         Iterable (e.g. tuple or list) of int, containing the indices of those
         variables to exclude from augmentation. Default is None and all
         variables are used.
@@ -885,7 +885,7 @@ class InvertAugmenter(_BasePanelAugmenter):
         relative_fit_stat_fun=np.std,
         relative_fit_type="fit",
         random_state=None,
-        excluded_var_idx=None,
+        excluded_var_indices=None,
         n_jobs=1,
     ):
         super().__init__(
@@ -895,7 +895,7 @@ class InvertAugmenter(_BasePanelAugmenter):
             relative_fit_stat_fun,
             relative_fit_type,
             random_state,
-            excluded_var_idx,
+            excluded_var_indices,
             n_jobs,
         )
 
