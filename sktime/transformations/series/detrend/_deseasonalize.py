@@ -397,7 +397,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
     _tags = {
         "transform-returns-same-time-index": True,
         "univariate-only": True,
-        "fit-in-transform": False
+        "fit-in-transform": False,
     }
 
     def __init__(
@@ -488,7 +488,7 @@ class STLTransformer(_SeriesToSeriesTransformer):
                 Use Deseasonalizer or Detrender directly to deal with other indices."""
             )
         return y + self.seasonal_
-        #return y + self.seasonal_ + self.trend_
+        # return y + self.seasonal_ + self.trend_
 
     def inverse_transform(self, Z, X=None):
         """Inverse transform data.
