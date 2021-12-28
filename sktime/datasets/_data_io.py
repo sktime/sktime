@@ -213,6 +213,7 @@ def load_from_tsfile(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     return_y=True,
+    return_data_type=None,
 ):
     """Load time series data into X and (optionally) y.
 
@@ -345,13 +346,16 @@ def load_from_tsfile(
         for dim in range(0, num_dimensions):
             data["dim_" + str(dim)] = instance_list[dim]
         # convert to numpy if we can.
-        if not timestamps and equal_length:
-            if univariate:  # otherwise put univariate in a 2D numpy.
+        if return_data_type == "np2d":
+            if not timestamps and equal_length and univariate:
                 data = from_nested_to_2d_np_array(data)
-            else:  # multivariate in a 3D numpy.
+            else:
+                raise ValueError(" Unable to convert to 2D")
+        elif return_data_type == "np3d":
+            if not timestamps and equal_length:
                 data = from_nested_to_3d_numpy(data)
-            # Check if we have and if we should return any associated class labels
-        # separately
+            else:
+                raise ValueError(" Unable to convert to 3D")
         if return_y and not class_labels:
             raise IOError(
                 f"class labels have been requested, but they "
@@ -388,7 +392,7 @@ def load_from_tsfile_to_dataframe(
 
     Returns
     -------
-    DataFrame, ndarray
+    DataFrame (default) or ndarray (i
         If return_separate_X_and_y then a tuple containing a DataFrame and a
         numpy array containing the relevant time-series and corresponding
         class values.
