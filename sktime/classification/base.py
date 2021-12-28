@@ -76,7 +76,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances,n_dimensions,series_length]
+                of shape [n_instances, n_dimensions, series_length]
             or 2D np.array (univariate, equal length series)
                 of shape [n_instances, series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
@@ -84,7 +84,7 @@ class BaseClassifier(BaseEstimator):
             or of any other supported Panel mtype
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
             indices correspond to instance indices in X
 
         Returns
@@ -133,7 +133,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances,n_dimensions, series_length]
+                of shape [n_instances, n_dimensions, series_length]
             or 2D np.array (univariate, equal length series)
                 of shape [n_instances, series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
@@ -160,7 +160,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances,n_dimensions, series_length]
+                of shape [n_instances, n_dimensions, series_length]
             or 2D np.array (univariate, equal length series)
                 of shape [n_instances, series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
@@ -189,7 +189,7 @@ class BaseClassifier(BaseEstimator):
         Parameters
         ----------
         X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances,n_dimensions, series_length]
+                of shape [n_instances, n_dimensions, series_length]
             or 2D np.array (univariate, equal length series)
                 of shape [n_instances, series_length]
             or pd.DataFrame with each column a dimension, each cell a pd.Series
@@ -249,12 +249,15 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-        y : array-like, shape = [n_instances] - the class labels
-
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances,n_dimensions,series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+            indices correspond to instance indices in X
         Returns
         -------
         self :
@@ -276,14 +279,18 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances,n_dimensions,series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : array-like, shape =  [n_instances] - predicted class labels
+        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+            indices correspond to instance indices in X
         """
         raise NotImplementedError(
             "_predict is a protected abstract method, it must be implemented."
@@ -298,15 +305,20 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances,n_dimensions,series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
-        of class membership.
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
