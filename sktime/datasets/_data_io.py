@@ -209,6 +209,74 @@ def _load_provided_dataset(name, split=None, return_X_y=True):
     return X, y
 
 
+def _read_header(file, full_file_path_and_name):
+    """Read the header information, returning the meta information."""
+    # Meta data for data information
+    meta_data = {
+        "is_univariate": True,
+        "is_equally_spaced": True,
+        "is_equal_length": True,
+        "has_nans": False,
+        "has_timestamps": False,
+        "has_class_labels": True,
+    }
+    # Read header until @data tag met
+    for line in file:
+        line = line.strip().lower()
+        if line:
+            if line.startswith("@problemname"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+            elif line.startswith("@timestamps"):
+                tokens = line.split(" ")
+                if tokens[1] == "true":
+                    meta_data["has_timestamps"] = True
+                elif tokens[1] != "false":
+                    raise IOError(
+                        f"invalid timestamps tag value {tokens[1]} value in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@univariate"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["is_univariate"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid univariate tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@equallength"):
+                tokens = line.split(" ")
+                if tokens[1] == "false":
+                    meta_data["is_equal_length"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid unequal tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@classlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                    )
+                if token_len == 2 and meta_data["class_labels"]:
+                    raise IOError(
+                        f"if the classlabel tag is true then class values must be "
+                        f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@data"):
+                return meta_data
+    raise IOError(
+        f"End of file reached for {full_file_path_and_name} but no indicated start of "
+        f"data with the tag @data"
+    )
+
+
 def load_from_tsfile(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
@@ -218,8 +286,8 @@ def load_from_tsfile(
     """Load time series data into X and (optionally) y.
 
     Data from a .ts file into a an 2D (univariate) or 3D (multivariate) if equal
-    length or Pandas DataFrame if unequal length.
-    If present, y is loaded into a 1D array.
+    length or Pandas DataFrame if unequal length. If present, y is loaded into a 1D
+    array.
 
     Parameters
     ----------
@@ -237,7 +305,6 @@ def load_from_tsfile(
     y (optional): ndarray.
     """
     # Initialize flags and variables used when parsing the file
-    data_started = False
     is_first_case = True
     instance_list = []
     class_val_list = []
@@ -246,129 +313,87 @@ def load_from_tsfile(
     num_cases = 0
     # equal_length = True
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip().lower()
-            if line:
-                if line.startswith("@problemname"):
-                    tokens = line.split(" ")
-                    token_len = len(tokens)
-                elif line.startswith("@timestamps"):
-                    tokens = line.split(" ")
-                    if tokens[1] == "true":
-                        timestamps = True
-                    elif tokens[1] == "false":
-                        timestamps = False
-                    else:
-                        raise IOError(
-                            f"invalid timestamps value in file "
-                            f"{full_file_path_and_name}"
-                        )
-                elif line.startswith("@univariate"):
-                    tokens = line.split(" ")
-                    token_len = len(tokens)
-                    if tokens[1] == "true":
-                        univariate = True
-                    elif tokens[1] == "false":
-                        univariate = False
-                    else:
-                        raise IOError(
-                            f"invalid univariate value in file "
-                            f"{full_file_path_and_name}"
-                        )
-                elif line.startswith("@equallength"):
-                    tokens = line.split(" ")
-                    if tokens[1] == "true":
-                        equal_length = True
-                    elif tokens[1] == "false":
-                        equal_length = False
-                    else:
-                        raise IOError(
-                            f"invalid unequal value in file "
-                            f"{full_file_path_and_name}"
-                        )
-                elif line.startswith("@classlabel"):
-                    tokens = line.split(" ")
-                    token_len = len(tokens)
-                    if tokens[1] == "true":
-                        class_labels = True
-                    elif tokens[1] == "false":
-                        class_labels = False
-                    else:
-                        raise IOError(
-                            "invalid classLabel value in file "
-                            f"{full_file_path_and_name}"
-                        )
-                    if token_len == 2 and class_labels:
-                        raise IOError(
-                            f"if the classlabel tag is true "
-                            f"then class values must be "
-                            f"supplied in file"
-                            f" {full_file_path_and_name} but read {tokens}"
-                        )
-                    # not currently used
-                    # class_label_list = [token.strip() for token in tokens[2:]]
-                elif line.startswith("@data"):
-                    data_started = True
-                elif data_started:
-                    num_cases = num_cases + 1
-                    line = line.replace("?", replace_missing_vals_with)
-                    dimensions = line.split(":")
-                    # If first row then note the number of dimensions (
-                    # that must be the same for all cases)
-                    if is_first_case:
-                        num_dimensions = len(dimensions)
-                        if class_labels:
-                            num_dimensions -= 1
-                        for _dim in range(0, num_dimensions):
-                            instance_list.append([])
-                        is_first_case = False
-                    # See how many dimensions that the case whose data
-                    # in represented in this line has
-                    this_line_num_dim = len(dimensions)
-                    if class_labels:
-                        this_line_num_dim -= 1
-                    # Process the data for each dimension
-                    for dim in range(0, num_dimensions):
-                        dimension = dimensions[dim].strip()
-                        if dimension:
-                            data_series = dimension.split(",")
-                            data_series = [float(i) for i in data_series]
-                            instance_list[dim].append(pd.Series(data_series))
-                        else:
-                            instance_list[dim].append(pd.Series(dtype="object"))
-                    if class_labels:
-                        class_val_list.append(dimensions[num_dimensions].strip())
-            line_num += 1
+        _meta_data = _read_header(file, full_file_path_and_name)
+        for line in file:  # Will this work?
+            num_cases = num_cases + 1
+            line = line.replace("?", replace_missing_vals_with)
+            dimensions = line.split(":")
+            # If first instance then note the number of dimensions.
+            # This must be the same for all cases.
+            if is_first_case:
+                num_dimensions = len(dimensions)
+                if _meta_data["has_class_labels"]:
+                    num_dimensions -= 1
+                for _dim in range(0, num_dimensions):
+                    instance_list.append([])
+                is_first_case = False
+                _meta_data["num_dimensions"] = num_dimensions
+            # See how many dimensions a case has
+            this_line_num_dim = len(dimensions)
+            if _meta_data["has_class_labels"]:
+                this_line_num_dim -= 1
+            if this_line_num_dim != _meta_data["num_dimensions"]:
+                raise IOError(
+                    f"Error input {full_file_path_and_name} all cases must "
+                    f"have the {num_dimensions} dimensions. Case "
+                    f"{num_cases} has {this_line_num_dim}"
+                )
+            # Process the data for each dimension
+            for dim in range(0, _meta_data["num_dimensions"]):
+                dimension = dimensions[dim].strip()
+                if dimension:
+                    data_series = dimension.split(",")
+                    data_series = [float(i) for i in data_series]
+                    instance_list[dim].append(pd.Series(data_series))
+                else:
+                    instance_list[dim].append(pd.Series(dtype="object"))
+            if _meta_data["has_class_labels"]:
+                class_val_list.append(dimensions[_meta_data["num_dimensions"]].strip())
+                line_num += 1
     # Check that the file was not empty
     if line_num:
         # Create a DataFrame from the data parsed
         data = pd.DataFrame(dtype=np.float32)
-        for dim in range(0, num_dimensions):
+        for dim in range(0, _meta_data["num_dimensions"]):
             data["dim_" + str(dim)] = instance_list[dim]
-        # convert to numpy if we can.
-        if return_data_type == "np2d":
-            if not timestamps and equal_length and univariate:
+        # convert to numpy if the user requests it.
+        return_data_type = return_data_type.strip().lower()
+        if return_data_type == "numpy2d" or return_data_type == "np2d":
+            if (
+                not _meta_data["has_timestamps"]
+                and _meta_data["is_equal_length"]
+                and _meta_data["is_univariate"]
+            ):
                 data = from_nested_to_2d_np_array(data)
             else:
-                raise ValueError(" Unable to convert to 2D")
-        elif return_data_type == "np3d":
-            if not timestamps and equal_length:
+                raise ValueError(
+                    "Unable to convert to 2d numpy as requested, "
+                    "because at least one flag means the data structure "
+                    f"cannot be used {_meta_data}"
+                )
+        elif return_data_type == "numpy3d" or return_data_type == "np3d":
+            if _meta_data["has_timestamps"] and _meta_data["is_equal_length"]:
                 data = from_nested_to_3d_numpy(data)
             else:
-                raise ValueError(" Unable to convert to 3D")
-        if return_y and not class_labels:
+                raise ValueError(
+                    " Unable to convert to 3d numpy as requested, "
+                    "because at least one flag means the data structure "
+                    f"cannot be used {_meta_data}"
+                )
+        if return_y and not _meta_data["has_class_labels"]:
             raise IOError(
                 f"class labels have been requested, but they "
                 f"are not present in the file "
                 f"{full_file_path_and_name}"
             )
-        if class_labels and return_y:
+        if _meta_data["has_class_labels"] and return_y:
             return data, np.asarray(class_val_list)
         else:
             return data
-
     else:
-        raise IOError("empty file")
+        raise IOError(
+            f"Empty file {full_file_path_and_name} with header info but no " f"cases"
+        )
 
 
 def load_from_tsfile_to_dataframe(
