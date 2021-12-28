@@ -205,6 +205,7 @@ class BaseClassifier(BaseEstimator):
         float, accuracy score of predict(X) vs y
         """
         from sklearn.metrics import accuracy_score
+
         self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
