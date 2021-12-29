@@ -27,9 +27,9 @@ Tag inspection and setter methods
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
 Testing with default parameters methods
-    getting default parameters           - get_test_params()
-    get instance with default parameters - create_test_instance()
-
+    getting default parameters (all sets)         - get_test_params()
+    get one test instance with default parameters - create_test_instance()
+    get list of all test instances plus name list - create_test_instances_and_names()
 ---
 
     class name: BaseEstimator
