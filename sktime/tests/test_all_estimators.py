@@ -82,11 +82,11 @@ def _create_all_test_instances(cls):
             )
         objs += [cls(**params)]
 
-        num_instances = len(param_list)
-        if num_instances > 1:
-            names = [cls.__name__ + "-" + str(i) for i in range(num_instances)]
-        else:
-            names = [cls.__name__]
+    num_instances = len(param_list)
+    if num_instances > 1:
+        names = [cls.__name__ + "-" + str(i) for i in range(num_instances)]
+    else:
+        names = [cls.__name__]
 
     return objs, names
 
