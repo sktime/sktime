@@ -15,7 +15,8 @@ from sktime.datatypes._hierarchical._examples import (
     example_dict_metadata as example_dict_metadata_Hierarchical,
 )
 from sktime.datatypes._hierarchical._registry import (
-    MTYPE_LIST_HIERARCHICAL, MTYPE_REGISTER_HIERARCHICAL,
+    MTYPE_LIST_HIERARCHICAL,
+    MTYPE_REGISTER_HIERARCHICAL,
 )
 
 __all__ = [

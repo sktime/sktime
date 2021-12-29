@@ -23,9 +23,9 @@ __all__ = [
 
 from sktime.datatypes._alignment import example_dict_Alignment
 from sktime.datatypes._hierarchical import (
+    example_dict_Hierarchical,
     example_dict_lossy_Hierarchical,
     example_dict_metadata_Hierarchical,
-    example_dict_Hierarchical,
 )
 from sktime.datatypes._panel import (
     example_dict_lossy_Panel,

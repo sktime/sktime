@@ -34,12 +34,24 @@ example_dict_metadata = dict()
 cols = ["foo", "bar", "timepoints"] + [f"var_{i}" for i in range(2)]
 
 Xlist = [
-    pd.DataFrame([["a", 0, 0, 1, 4], ["a", 0, 1, 2, 5], ["a", 0, 2, 3, 6]], columns=cols),
-    pd.DataFrame([["a", 1, 0, 1, 4], ["a", 1, 1, 2, 55], ["a", 1, 2, 3, 6]], columns=cols),
-    pd.DataFrame([["a", 2, 0, 1, 42], ["a", 2, 1, 2, 5], ["a", 2, 2, 3, 6]], columns=cols),
-    pd.DataFrame([["b", 0, 0, 1, 4], ["b", 0, 1, 2, 5], ["b", 0, 2, 3, 6]], columns=cols),
-    pd.DataFrame([["b", 1, 0, 1, 4], ["b", 1, 1, 2, 55], ["b", 1, 2, 3, 6]], columns=cols),
-    pd.DataFrame([["b", 2, 0, 1, 42], ["b", 2, 1, 2, 5], ["b", 2, 2, 3, 6]], columns=cols),
+    pd.DataFrame(
+        [["a", 0, 0, 1, 4], ["a", 0, 1, 2, 5], ["a", 0, 2, 3, 6]], columns=cols
+    ),
+    pd.DataFrame(
+        [["a", 1, 0, 1, 4], ["a", 1, 1, 2, 55], ["a", 1, 2, 3, 6]], columns=cols
+    ),
+    pd.DataFrame(
+        [["a", 2, 0, 1, 42], ["a", 2, 1, 2, 5], ["a", 2, 2, 3, 6]], columns=cols
+    ),
+    pd.DataFrame(
+        [["b", 0, 0, 1, 4], ["b", 0, 1, 2, 5], ["b", 0, 2, 3, 6]], columns=cols
+    ),
+    pd.DataFrame(
+        [["b", 1, 0, 1, 4], ["b", 1, 1, 2, 55], ["b", 1, 2, 3, 6]], columns=cols
+    ),
+    pd.DataFrame(
+        [["b", 2, 0, 1, 42], ["b", 2, 1, 2, 5], ["b", 2, 2, 3, 6]], columns=cols
+    ),
 ]
 X = pd.concat(Xlist)
 X = X.set_index(["foo", "bar", "timepoints"])
