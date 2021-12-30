@@ -25,6 +25,7 @@ class VectorizedDF:
     is_scitype : str ("Panel", "Hierarchical") or None, default = "Panel"
         scitype of X, if known; if None, will be inferred
         provide to constructor if known to avoid superfluous checks
+            Caution: will not conduct checks if provided, assumes checks done
     iterate_as : str ("Series", "Panel")
         scitype of the iteration
         for instance, if X is Panel and iterate_as is "Series"
@@ -61,15 +62,24 @@ class VectorizedDF:
         else:
             X_orig_mtype = None
 
+        if is_scitype not in ["Hierarchical", "Panel"]:
+            raise ValueError(
+                'is_scitype must be None, "Hierarchical" or "Panel", ',
+                f"found {is_scitype}",
+            )
+        self.iterate_as = iterate_as
+
         self.is_scitype = is_scitype
         self.X_orig_mtype = X_orig_mtype
 
         if iterate_as not in ["Series", "Panel"]:
-            raise TypeError('iterate_as must be "Series" or "Panel"')
+            raise ValueError(
+                f'iterate_as must be "Series" or "Panel", found {iterate_as}'
+            )
         self.iterate_as = iterate_as
 
         if iterate_as == "Panel" and is_scitype == "Panel":
-            raise TypeError(
+            raise ValueError(
                 'If is_scitype is "Panel", then iterate_as must be "Series"'
             )
 
@@ -93,7 +103,7 @@ class VectorizedDF:
             return convert_to(
                 X,
                 to_type="pd_multiindex_hier",
-                as_scitype="Panel",
+                as_scitype="Hierarchical",
                 store=self.converter_store,
             )
         else:
