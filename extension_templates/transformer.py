@@ -190,7 +190,6 @@ class MyTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
         # IMPORTANT: avoid side effects to X, y
@@ -235,6 +234,16 @@ class MyTransformer(BaseTransformer):
         # IMPORTANT: avoid side effects to X, y
         #
         # type conventions are exactly those in _transform, reversed
+        #
+        # for example: if transform-output is "Series":
+        #  return should be of same mtype as input, X_inner_mtype
+        #  if multiple X_inner_mtype are supported, ensure same input/output
+        #
+        # todo: add the return mtype/scitype to the docstring, e.g.,
+        #  Returns
+        #  -------
+        #  X_inv_transformed : Series of mtype pd.DataFrame
+        #       inverse transformed version of X
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method

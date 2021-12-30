@@ -439,6 +439,10 @@ class BaseTransformer(BaseEstimator):
     def inverse_transform(self, X, y=None, Z=None):
         """Inverse transform X and return an inverse transformed version.
 
+        Currently it is assumed that only transformers with tags
+            "scitype:transform-input"="Series", "scitype:transform-output"="Series",
+        have an inverse_transform.
+
         State required:
             Requires state to be "fitted".
 
@@ -463,6 +467,7 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         inverse transformed version of X
+            of the same type as X, and conforming to mtype format specifications
         """
         if not self.get_tag("capability:inverse_transform"):
             raise NotImplementedError(
@@ -835,6 +840,8 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         self: a fitted instance of the estimator
+
+        See extension_templates/transformer.py for implementation details.
         """
         # default fit is "no fitting happens"
         return self
@@ -866,6 +873,8 @@ class BaseTransformer(BaseEstimator):
             | `Series` | `Panel`      | `Panel`                |
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
+
+        See extension_templates/transformer.py for implementation details.
         """
         raise NotImplementedError("abstract method")
 
@@ -885,6 +894,9 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         inverse transformed version of X
+            of the same type as X, and conforming to mtype format specifications
+
+        See extension_templates/transformer.py for implementation details.
         """
         raise NotImplementedError("abstract method")
 
@@ -904,6 +916,8 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         self: a fitted instance of the estimator
+
+        See extension_templates/transformer.py for implementation details.
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
