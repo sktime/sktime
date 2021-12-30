@@ -149,8 +149,9 @@ class VectorizedDF:
         X = self.X_multiindex
         ind = self.get_iter_indices()[i]
         item = X.loc[ind]
-        # pd-multiindex type expects these index names:
-        item.index.set_names(["instances", "timepoints"], inplace=True)
+        # pd-multiindex type (Panel case) expects these index names:
+        if self.iterate_as == "Panel":
+            item.index.set_names(["instances", "timepoints"], inplace=True)
         return item
 
     def as_list(self):
@@ -183,10 +184,10 @@ class VectorizedDF:
                 X_orig_mtype = mtype(self.X, as_scitype=self.is_scitype)
 
             X_reconstructed_orig_format = convert_to(
-                X=X_mi_reconstructed,
+                X_mi_reconstructed,
                 to_type=X_orig_mtype,
                 as_scitype=is_scitype,
-                converter_store=self.converter_store,
+                store=self.converter_store,
             )
 
             return X_reconstructed_orig_format

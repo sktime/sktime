@@ -268,6 +268,7 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as):
     # construct VectorizedDF - we've tested above that this works
     X_vect = VectorizedDF(X=fixture, iterate_as=iterate_as, is_scitype=None)
 
+    # get list of iterated elements - we've tested above that this works
     X_list = list(X_vect)
 
     # right mtype depends on scitype
@@ -287,7 +288,7 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as):
     )
 
 
-def test_reconstruct(scitype, mtype, fixture_index):
+def test_reconstruct(scitype, mtype, fixture_index, iterate_as):
     """Tests that check_is_mtype correctly confirms the mtype of examples.
 
     Parameters
@@ -300,7 +301,22 @@ def test_reconstruct(scitype, mtype, fixture_index):
     AssertionError if examples are not correctly identified
     error if check itself raises an error
     """
+    # escape for the invalid Panel/Panel combination, see above
+    if iterate_as == "Panel" and scitype == "Panel":
+        return None
+
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
-    return None
+    # construct VectorizedDF - we've tested above that this works
+    X_vect = VectorizedDF(X=fixture, iterate_as=iterate_as, is_scitype=None)
+
+    # get list of iterated elements - we've tested above that this yields correct result
+    X_list = list(X_vect)
+
+    # reconstructed fixture should equal multiindex fixture if not convert_back
+    assert deep_equals(X_vect.reconstruct(X_list), X_vect.X_multiindex)
+
+    # reconstructed fixture should equal original fixture if convert_back
+    assert deep_equals(X_vect.reconstruct(X_list, convert_back=True), fixture)
+
