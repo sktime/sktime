@@ -81,15 +81,15 @@ def test_inf_ic_true():
     )
 
 
+@pytest.mark.xfail
 def test_inf_ic_false():
     """Don't ignore infinite IC models when ignore_inf_ic is False."""
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, ignore_inf_ic=False)
     forecaster.fit(inf_ic_ts)
     fitted_forecaster = forecaster._fitted_forecaster
     # check that all of the information criteria are infinite
-    assert np.isinf(fitted_forecaster.bic)
-    # (
-    # np.isinf(fitted_forecaster.aic)
-    # and np.isinf(fitted_forecaster.bic)
-    # and np.isinf(fitted_forecaster.aicc)
-    # )
+    assert (
+        np.isinf(fitted_forecaster.aic)
+        and np.isinf(fitted_forecaster.bic)
+        and np.isinf(fitted_forecaster.aicc)
+    )
