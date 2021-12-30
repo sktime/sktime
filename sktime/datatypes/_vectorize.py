@@ -125,7 +125,7 @@ class VectorizedDF:
             return ix
         else:
             raise RuntimeError(
-                f"unexpected value found for attribute self.iterate_as: {iterate_as}",
+                f"unexpected value found for attribute self.iterate_as: {iterate_as}"
                 'must be "Series" or "Panel"'
             )
 

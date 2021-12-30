@@ -3,8 +3,8 @@
 
 __author__ = ["fkiraly"]
 
-import pytest
 import numpy as np
+import pytest
 
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import check_is_mtype
@@ -207,7 +207,7 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as):
     # check length against n_instances metadata field
     assert len(X_vect) == true_length, (
         "X_vect.__len__ returns incorrect length.",
-        f"True={true_length}, returned={len(X_vect)}"
+        f"True={true_length}, returned={len(X_vect)}",
     )
 
 
@@ -283,9 +283,9 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as):
         check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
     ]
 
-    assert np.all(X_list_valid), (
-        f"iteration elements do not conform with expected mtype {correct_mtype}"
-    )
+    assert np.all(
+        X_list_valid
+    ), f"iteration elements do not conform with expected mtype {correct_mtype}"
 
 
 def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as):
