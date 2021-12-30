@@ -840,6 +840,8 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         self: a fitted instance of the estimator
+
+        See extension_templates/transformer.py for implementation details.
         """
         # default fit is "no fitting happens"
         return self
@@ -871,6 +873,8 @@ class BaseTransformer(BaseEstimator):
             | `Series` | `Panel`      | `Panel`                |
         instances in return correspond to instances in `X`
         combinations not in the table are currently not supported
+
+        See extension_templates/transformer.py for implementation details.
         """
         raise NotImplementedError("abstract method")
 
@@ -890,6 +894,9 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         inverse transformed version of X
+            of the same type as X, and conforming to mtype format specifications
+
+        See extension_templates/transformer.py for implementation details.
         """
         raise NotImplementedError("abstract method")
 
@@ -909,6 +916,8 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         self: a fitted instance of the estimator
+
+        See extension_templates/transformer.py for implementation details.
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
