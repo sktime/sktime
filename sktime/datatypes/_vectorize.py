@@ -62,7 +62,7 @@ class VectorizedDF:
         else:
             X_orig_mtype = None
 
-        if is_scitype not in ["Hierarchical", "Panel"]:
+        if is_scitype is not None and is_scitype not in ["Hierarchical", "Panel"]:
             raise ValueError(
                 'is_scitype must be None, "Hierarchical" or "Panel", ',
                 f"found {is_scitype}",

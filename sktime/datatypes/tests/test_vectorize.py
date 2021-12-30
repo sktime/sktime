@@ -7,6 +7,7 @@ import pytest
 
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import check_dict, check_is_mtype
+from sktime.datatypes._convert import convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF
 
@@ -164,6 +165,83 @@ def test_construct_VectorizedDF_errors(scitype, mtype, fixture_index):
     with pytest.raises(ValueError, match=r"is_scitype must be"):
         VectorizedDF(X=fixture, iterate_as="Panel", is_scitype="Pumuckl")
     # we may have to change this if we introduce a "Pumuckl" scitype, but seems unlikely
+
+
+def test_series_item_len(scitype, mtype, fixture_index):
+    """Tests __len__ returns correct length if iterate_as="Series".
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+    """
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    # get number of instances
+    _, _, metadata = check_is_mtype(
+        fixture, mtype=mtype, scitype=scitype, return_metadata=True
+    )
+    n_instances = metadata["n_instances"]
+
+    # construct VectorizedDF - we've tested above that this works
+    X_vect = VectorizedDF(X=fixture, iterate_as="Series", is_scitype=None)
+
+    # check length against n_instances metadata field
+    assert len(X_vect) == n_instances, (
+        "X_vect.__len__ returns incorrect number of instances.",
+        f"True={n_instances}, returned={len(X_vect)}"
+    )
+
+def test_panel_item_len(scitype, mtype, fixture_index):
+    """Tests __len__ returns correct length if iterate_as="Series".
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+    """
+    # escape if scitype is Panel, then we cannot iterate over Panel
+    if scitype == "Panel":
+        return None
+
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    # no elegant way to get number of Panels currently
+    # so we do this: convert to pd-multiindex, count unique indices
+    fixture_mi = convert_to(
+        fixture,
+        to_type="pd-multiindex",
+        as_scitype="Panel",
+    )
+    # construct VectorizedDF - we've tested above that this works
+    X_vect = VectorizedDF(X=fixture, iterate_as="Series", is_scitype=None)
+
+    # check length against n_instances metadata field
+    assert len(X_vect) == n_instances, (
+        "X_vect.__len__ returns incorrect number of instances.",
+        f"True={n_instances}, returned={len(X_vect)}"
+    )
+
+def test_series_item_mtype(scitype, mtype, fixture_index):
+    """Tests __getitem__ returns pd-multiindex mtype if iterate_as="Series".
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+    """
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    # construct VectorizedDF - we've tested above that this works
+    X_vect = VectorizedDF(X=fixture, iterate_as="Series", is_scitype=None)
+
+    return None
 
 
 def test_iterate_panel_over_series(scitype, mtype, fixture_index):
