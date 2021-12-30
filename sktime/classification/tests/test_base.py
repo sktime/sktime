@@ -109,7 +109,7 @@ def test_base_classifier_fit():
     with pytest.raises(ValueError, match=multivariate_message):
         result = dummy.fit(test_X4, test_y1)
     assert result is dummy
-    # Raise a specific error if y is in a 2D matrix (1,cases)?
+    # Raise a specific error if y is in a 2D matrix (1,cases)
     test_y2 = np.array([test_y1])
     # What if y is in a 2D matrix (cases,1)?
     test_y2 = np.array([test_y1]).transpose()
@@ -124,8 +124,8 @@ def test_check_capabilities():
     """Test the checking of capabilities.
 
     There are eight different combinations to be tested with a classifier that can
-    handle it and that cannot. I need to rewrite this to stop setting the tags
-    directly.
+    handle it and that cannot. Obvs could loop, but I think its clearer to just
+    explicitly test;
     """
     handles_none = _DummyClassifier()
 
