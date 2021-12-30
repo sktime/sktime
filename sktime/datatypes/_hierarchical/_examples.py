@@ -61,10 +61,12 @@ example_dict_lossy[("pd_multiindex_hier", "Hierarchical", 0)] = False
 
 example_dict_metadata[("Hierarchical", 0)] = {
     "is_univariate": False,
+    "is_one_panel": False,
     "is_one_series": False,
     "is_equally_spaced": True,
     "is_equal_length": True,
     "is_empty": False,
     "has_nans": False,
     "n_instances": 6,
+    "n_panels": 2,
 }

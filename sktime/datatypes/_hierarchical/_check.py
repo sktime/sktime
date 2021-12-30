@@ -27,13 +27,15 @@ msg: str - error message if object is not valid, otherwise None
 metadata: dict - metadata about obj if valid, otherwise None
         returned only if return_metadata is True
     fields:
-        "is_univariate": bool, True iff all series in panel have one variable
+        "is_univariate": bool, True iff all series in hier.panel have one variable
         "is_equally_spaced": bool, True iff all series indices are equally spaced
         "is_equal_length": bool, True iff all series in panel are of equal length
         "is_empty": bool, True iff one or more of the series in the panel are empty
-        "is_one_series": bool, True iff there is only one series in the panel
+        "is_one_series": bool, True iff there is only one series in the hier.panel
+        "is_one_panel": bool, True iff there is only one flat panel in the hier.panel
         "has_nans": bool, True iff the panel contains NaN values
-        "n_instances": int, number of instances in the panel
+        "n_instances": int, number of instances in the hierarchical panel
+        "n_panels": int, number of flat panels in the hierarchical panel
 """
 
 __author__ = ["fkiraly"]
@@ -92,6 +94,7 @@ def check_pdmultiindex_Hierarchical(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     inst_inds = obj.index.droplevel(-1).unique()
+    panel_inds = inst_inds.droplevel(-1).unique()
 
     check_res = [
         check_pdDataFrame_Series(obj.loc[i], return_metadata=True) for i in inst_inds
@@ -112,7 +115,9 @@ def check_pdmultiindex_Hierarchical(obj, return_metadata=False, var_name="obj"):
     )
     metadata["is_empty"] = np.any([res[2]["is_empty"] for res in check_res])
     metadata["n_instances"] = len(inst_inds)
+    metadata["n_panels"] = len(panel_inds)
     metadata["is_one_series"] = len(inst_inds) == 1
+    metadata["is_one_panel"] = len(panel_inds) == 1
     metadata["has_nans"] = obj.isna().values.any()
     metadata["is_equal_length"] = _list_all_equal([len(obj.loc[i]) for i in inst_inds])
 
