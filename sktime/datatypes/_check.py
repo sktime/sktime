@@ -459,7 +459,7 @@ def check_is_scitype(
 
         if check_passed:
             final_result = res
-            found_mtype.append([0])
+            found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
             msg.append(res[1])
