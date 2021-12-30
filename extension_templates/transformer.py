@@ -25,6 +25,7 @@ Mandatory implements:
 
 Optional implements:
     inverse transformation      - _inverse_transform(self, X, y=None)
+    update                      - _update(self, X, y=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime transformer (not needed locally):
