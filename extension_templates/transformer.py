@@ -27,14 +27,8 @@ Optional implements:
     inverse transformation      - _inverse_transform(self, X, y=None)
     fitted parameter inspection - get_fitted_params()
 
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
-
-Testing:
+Testing - implement if sktime transformer (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 """
 
 # todo: uncomment the following line, enter authors' GitHub IDs
@@ -241,3 +235,42 @@ class MyTransformer(BaseTransformer):
         # IMPORTANT: avoid side effects to X, y
         #
         # type conventions are exactly those in _transform, reversed
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete the method
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        # implement here
+
+    # todo: return default parameters, so that a test instance can be created
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params
