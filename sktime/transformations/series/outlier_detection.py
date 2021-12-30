@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformers for detecting outliers in a time series."""
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["HampelFilter"]
 
 import warnings
