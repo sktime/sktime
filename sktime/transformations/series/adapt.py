@@ -63,10 +63,9 @@ class TabularToSeriesAdaptor(BaseTransformer):
             self.set_tags(**{"capability:inverse_transform": True})
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -86,7 +85,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------

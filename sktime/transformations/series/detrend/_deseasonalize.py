@@ -108,7 +108,7 @@ class Deseasonalizer(BaseTransformer):
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -150,7 +150,7 @@ class Deseasonalizer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
@@ -190,7 +190,7 @@ class Deseasonalizer(BaseTransformer):
     def _update(self, X, y=None, update_params=False):
         """Update transformer with X and y.
 
-        core logic
+        private _update containing the core logic, called from update
 
         Parameters
         ----------

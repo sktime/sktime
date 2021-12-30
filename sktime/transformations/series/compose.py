@@ -109,7 +109,7 @@ class OptionalPassthrough(BaseTransformer):
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -131,7 +131,7 @@ class OptionalPassthrough(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
@@ -254,10 +254,9 @@ class ColumnwiseTransformer(BaseTransformer):
         self.clone_tags(transformer, tag_names=tags_to_clone)
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -297,7 +296,7 @@ class ColumnwiseTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Returns a transformed version of X by iterating over specified
         columns and applying the wrapped transformer to them.

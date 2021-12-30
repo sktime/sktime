@@ -104,7 +104,7 @@ class BoxCoxTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "fit-in-transform": False,
-        "univariate-only": False,
+        "univariate-only": True,
         "capability:inverse_transform": True,
     }
 
@@ -119,11 +119,11 @@ class BoxCoxTransformer(BaseTransformer):
         """
         Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        X : 2D np.ndarray
+        X : 2D np.ndarray (n x 1)
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
@@ -143,11 +143,11 @@ class BoxCoxTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        X : 2D np.ndarray
+        X : 2D np.ndarray (n x 1)
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
@@ -169,7 +169,7 @@ class BoxCoxTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : 2D np.ndarray
+        X : 2D np.ndarray (n x 1)
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
@@ -233,7 +233,7 @@ class LogTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
