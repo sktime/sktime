@@ -439,6 +439,10 @@ class BaseTransformer(BaseEstimator):
     def inverse_transform(self, X, y=None, Z=None):
         """Inverse transform X and return an inverse transformed version.
 
+        Currently it is assumed that only transformers with tags
+            "scitype:transform-input"="Series", "scitype:transform-output"="Series",
+        have an inverse_transform.
+
         State required:
             Requires state to be "fitted".
 
@@ -463,6 +467,7 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         inverse transformed version of X
+            of the same type as X, and conforming to mtype format specifications
         """
         if not self.get_tag("capability:inverse_transform"):
             raise NotImplementedError(
