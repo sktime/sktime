@@ -234,6 +234,7 @@ def check_is_mtype(
     #  for each check we remember whether it passed and what it returned
     msg = []
     found_mtype = []
+    found_scitype = []
 
     for m in mtype:
         if scitype is None:
@@ -254,6 +255,7 @@ def check_is_mtype(
 
         if check_passed:
             found_mtype.append(m)
+            found_scitype.append(scitype_of_m)
             final_result = res
         elif return_metadata:
             msg.append(res[1])
@@ -269,6 +271,7 @@ def check_is_mtype(
         if return_metadata:
             # add the mtype return to the metadata
             final_result[2]["mtype"] = found_mtype[0]
+            final_result[2]["scitype"] = found_scitype[0]
             # final_result already has right shape and dependency on return_metadata
             return final_result
         else:

@@ -10,6 +10,8 @@ __author__ = ["TonyBagnall"]
 import os
 import sys
 
+from sktime.contrib.set_classifier import set_classifier
+
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -17,7 +19,7 @@ os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import load_and_run_classification_experiment
 from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
@@ -88,6 +90,7 @@ if __name__ == "__main__":
         load_and_run_classification_experiment(
             problem_path=data_dir,
             results_path=results_dir,
+            classifier=set_classifier(classifier, resample, tf),
             cls_name=classifier,
             dataset=dataset,
             resample_id=resample,
