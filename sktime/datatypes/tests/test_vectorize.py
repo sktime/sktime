@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Testing machine type checkers for scitypes."""
+"""Testing vectorization via VectorizedDF."""
 
 __author__ = ["fkiraly"]
 
@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
-from sktime.datatypes._check import check_dict, check_is_mtype
+from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF
 from sktime.utils._testing.deep_equals import deep_equals
@@ -288,8 +288,8 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as):
     )
 
 
-def test_reconstruct(scitype, mtype, fixture_index, iterate_as):
-    """Tests that check_is_mtype correctly confirms the mtype of examples.
+def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as):
+    """Tests that reconstruct recreates the original input X.
 
     Parameters
     ----------
@@ -319,4 +319,3 @@ def test_reconstruct(scitype, mtype, fixture_index, iterate_as):
 
     # reconstructed fixture should equal original fixture if convert_back
     assert deep_equals(X_vect.reconstruct(X_list, convert_back=True), fixture)
-
