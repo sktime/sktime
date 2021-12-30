@@ -158,7 +158,7 @@ class VectorizedDF:
         """Shorthand to retrieve self (iterator) as list."""
         return list(self)
 
-    def reconstruct(self, df_list, convert_back=False):
+    def reconstruct(self, df_list, convert_back=False, overwrite_index=True):
         """Reconstruct original format from iterable of vectorization instances.
 
         Parameters
@@ -170,10 +170,26 @@ class VectorizedDF:
             whether to convert output back to mtype of X in __init__
             if False, the return will be a pandas.DataFrame with Index or multiIndex
             if True, the return is converted to the mtype of X in __init__
+        overwrite_index : bool, default = True
+            if True, the resulting return will have index overwritten by that of X
+                only if applies, i.e., overwrite is possible and X had an index
+            if False, no index overwrite will happen
+
+        Returns
+        -------
+        X_reconstructed_orig_format : row-concatenation of df-list,
+            with keys and additional level from self.get_iter_indices
+            if convert_back=False, always a pd.DataFrame in a sktime MultiIndex format
+                (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
+            if convert_back=True, will have same format and mtype as X input to __init__
         """
         ix = self.get_iter_indices()
         X_mi_reconstructed = pd.concat(df_list, keys=ix)
-        X_mi_reconstructed.index.set_names(self.X_multiindex.index.names)
+
+        X_mi_index = X_mi_reconstructed.index
+        X_orig_index = self.X_multiindex.index
+        if overwrite_index and len(X_mi_index.names) == len(X_orig_index.names):
+            X_mi_reconstructed.index.set_names(X_orig_index.names)
 
         if not convert_back:
             return X_mi_reconstructed
