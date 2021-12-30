@@ -817,9 +817,7 @@ class BaseTransformer(BaseEstimator):
                 as_scitype="Series",
                 # no converter store since this is not a "1:1 back-conversion"
             )
-        else:
-            # output_scitype is "Panel" and no need for conversion
-            pass
+        # else output_scitype is "Panel" and no need for conversion
 
         return Xt
 
