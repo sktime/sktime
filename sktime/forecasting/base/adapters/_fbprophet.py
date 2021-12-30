@@ -63,8 +63,7 @@ class _ProphetAdapter(BaseForecaster):
 
         # Add regressor (multivariate)
         if X is not None:
-            X = X.copy()
-            df, X = _merge_X(df, X)
+            df, X = _merge_X(df, X.copy())
             for col in X.columns:
                 self._forecaster.add_regressor(col)
 
@@ -111,8 +110,7 @@ class _ProphetAdapter(BaseForecaster):
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
-            X = X.copy()
-            df, X = _merge_X(df, X)
+            df, X = _merge_X(df, X.copy())
 
         # don't compute confidence intervals if not asked for
         with self._return_pred_int(return_pred_int):
@@ -197,12 +195,14 @@ def _merge_X(df, X):
     """
     # Merging on the index is unreliable, possibly due to loss of freq information in fh
     X.columns = X.columns.astype(str)
-    if "ds" in X.columns:
-        raise ValueError("Column name 'ds' is reserved in fbprophet")
+    if "ds" in X.columns and pd.api.types.is_numeric_dtype(X["ds"]):
+        longest_column_name = max(X.columns, key=len)
+        X.loc[:, str(longest_column_name) + "_"] = X.loc[:, "ds"]
+        # raise ValueError("Column name 'ds' is reserved in fbprophet")
     X.loc[:, "ds"] = X.index
-    # df = df.merge(X, how="inner", on="ds", copy=False)
-    df = df.merge(X, how="inner", on="ds")
-    return df, X.drop(columns="ds")
+    df = df.merge(X, how="inner", on="ds", copy=True)
+    X = X.drop(columns="ds")
+    return df, X
 
 
 class _suppress_stdout_stderr(object):
