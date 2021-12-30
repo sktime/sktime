@@ -131,6 +131,39 @@ class _Pipeline(
         self._set_params("steps", **kwargs)
         return self
 
+    # both children use the same step params for testing, so putting it here
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.preprocessing import StandardScaler
+
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+
+        STEPS1 = [
+            ("transformer", TabularToSeriesAdaptor(StandardScaler())),
+            ("forecaster", NaiveForecaster()),
+        ]
+        params1 = {"steps": STEPS1}
+
+        STEPS2 = [
+            ("transformer", BoxCoxTransformer()),
+            ("forecaster", NaiveForecaster()),
+        ]
+        params2 = {"steps": STEPS2}
+
+        return [params1, params2]
+
 
 class ForecastingPipeline(_Pipeline):
     """Pipeline for forecasting with exogenous data.
