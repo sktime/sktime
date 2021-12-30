@@ -144,7 +144,7 @@ class MyTransformer(BaseTransformer):
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -176,7 +176,7 @@ class MyTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
@@ -216,7 +216,7 @@ class MyTransformer(BaseTransformer):
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
@@ -244,6 +244,36 @@ class MyTransformer(BaseTransformer):
         #  -------
         #  X_inv_transformed : Series of mtype pd.DataFrame
         #       inverse transformed version of X
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete the _update method
+    # standard behaviour is "no update"
+    # also delete in the case where there is no fitting
+    def _update(self, X, y=None):
+        """Update transformer with X and y.
+
+        private _update containing the core logic, called from update
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _update must support all types in it
+            Data to update transformer with
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for tarnsformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        # implement here
+        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
+        # IMPORTANT: avoid side effects to X, y
+        #
+        # any model parameters should be written to attributes ending in "_"
+        #  attributes set by the constructor must not be overwritten
+        #  if used, estimators should be cloned to attributes ending in "_"
+        #  the clones, not the originals, should be used or fitted if needed
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method

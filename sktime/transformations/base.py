@@ -827,7 +827,7 @@ class BaseTransformer(BaseEstimator):
         """
         Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -849,7 +849,7 @@ class BaseTransformer(BaseEstimator):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
@@ -881,7 +881,7 @@ class BaseTransformer(BaseEstimator):
     def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
 
-        core logic
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
@@ -903,7 +903,7 @@ class BaseTransformer(BaseEstimator):
     def _update(self, X, y=None):
         """Update transformer with X and y.
 
-        core logic
+        private _update containing the core logic, called from update
 
         Parameters
         ----------
