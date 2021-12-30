@@ -149,6 +149,8 @@ class VectorizedDF:
         X = self.X_multiindex
         ind = self.get_iter_indices()[i]
         item = X.loc[ind]
+        # pd-multiindex type expects these index names:
+        item.index.set_names(["instances", "timepoints"], inplace=True)
         return item
 
     def as_list(self):
@@ -170,6 +172,7 @@ class VectorizedDF:
         """
         ix = self.get_iter_indices()
         X_mi_reconstructed = pd.concat(df_list, keys=ix)
+        X_mi_reconstructed.index.set_names(self.X_multiindex.index.names)
 
         if not convert_back:
             return X_mi_reconstructed

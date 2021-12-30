@@ -4,12 +4,13 @@
 __author__ = ["fkiraly"]
 
 import pytest
+import numpy as np
 
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import check_dict, check_is_mtype
-from sktime.datatypes._convert import convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._vectorize import VectorizedDF
+from sktime.utils._testing.deep_equals import deep_equals
 
 SCITYPES = ["Panel", "Hierarchical"]
 
@@ -92,6 +93,7 @@ def pytest_generate_tests(metafunc):
     scitype : str - scitype of fixture
     mtype : str - mtype of fixture
     fixture_index : int - index of fixture tuple with that scitype and mtype
+    iterate_as : str - level on which to iterate over
     """
     # we assume all four arguments are present in the test below
 
@@ -116,6 +118,9 @@ def pytest_generate_tests(metafunc):
 
         # parameterize test with from-mtpes
         metafunc.parametrize("scitype,mtype", keys, ids=ids)
+
+    if "iterate_as" in fixturenames:
+        metafunc.parametrize("iterate_as", ["Panel", "Series"])
 
 
 def test_construct_VectorizedDF(scitype, mtype, fixture_index):
@@ -167,66 +172,46 @@ def test_construct_VectorizedDF_errors(scitype, mtype, fixture_index):
     # we may have to change this if we introduce a "Pumuckl" scitype, but seems unlikely
 
 
-def test_series_item_len(scitype, mtype, fixture_index):
-    """Tests __len__ returns correct length if iterate_as="Series".
+def test_item_len(scitype, mtype, fixture_index, iterate_as):
+    """Tests __len__ returns correct length.
 
     Fixtures parameterized
     ----------------------
     scitype : str - scitype of fixture
     mtype : str - mtype of fixture
     fixture_index : int - index of fixture tuple with that scitype and mtype
+    iterate_as : str - level on which to iterate over
     """
-    # retrieve fixture for checking
-    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
-
-    # get number of instances
-    _, _, metadata = check_is_mtype(
-        fixture, mtype=mtype, scitype=scitype, return_metadata=True
-    )
-    n_instances = metadata["n_instances"]
-
-    # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(X=fixture, iterate_as="Series", is_scitype=None)
-
-    # check length against n_instances metadata field
-    assert len(X_vect) == n_instances, (
-        "X_vect.__len__ returns incorrect number of instances.",
-        f"True={n_instances}, returned={len(X_vect)}"
-    )
-
-def test_panel_item_len(scitype, mtype, fixture_index):
-    """Tests __len__ returns correct length if iterate_as="Series".
-
-    Fixtures parameterized
-    ----------------------
-    scitype : str - scitype of fixture
-    mtype : str - mtype of fixture
-    fixture_index : int - index of fixture tuple with that scitype and mtype
-    """
-    # escape if scitype is Panel, then we cannot iterate over Panel
-    if scitype == "Panel":
+    # escape for the invalid Panel/Panel combination, see above
+    if iterate_as == "Panel" and scitype == "Panel":
         return None
 
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
-    # no elegant way to get number of Panels currently
-    # so we do this: convert to pd-multiindex, count unique indices
-    fixture_mi = convert_to(
-        fixture,
-        to_type="pd-multiindex",
-        as_scitype="Panel",
-    )
+    # get true length
+    if iterate_as == "Series":
+        _, _, metadata = check_is_mtype(
+            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+        )
+        true_length = metadata["n_instances"]
+    elif iterate_as == "Panel":
+        _, _, metadata = check_is_mtype(
+            fixture, mtype=mtype, scitype=scitype, return_metadata=True
+        )
+        true_length = metadata["n_panels"]
+
     # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(X=fixture, iterate_as="Series", is_scitype=None)
+    X_vect = VectorizedDF(X=fixture, iterate_as=iterate_as, is_scitype=None)
 
     # check length against n_instances metadata field
-    assert len(X_vect) == n_instances, (
-        "X_vect.__len__ returns incorrect number of instances.",
-        f"True={n_instances}, returned={len(X_vect)}"
+    assert len(X_vect) == true_length, (
+        "X_vect.__len__ returns incorrect length.",
+        f"True={true_length}, returned={len(X_vect)}"
     )
 
-def test_series_item_mtype(scitype, mtype, fixture_index):
+
+def test_iteration(scitype, mtype, fixture_index, iterate_as):
     """Tests __getitem__ returns pd-multiindex mtype if iterate_as="Series".
 
     Fixtures parameterized
@@ -234,17 +219,75 @@ def test_series_item_mtype(scitype, mtype, fixture_index):
     scitype : str - scitype of fixture
     mtype : str - mtype of fixture
     fixture_index : int - index of fixture tuple with that scitype and mtype
+    iterate_as : str - level on which to iterate over
     """
+    # escape for the invalid Panel/Panel combination, see above
+    if iterate_as == "Panel" and scitype == "Panel":
+        return None
+
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(X=fixture, iterate_as="Series", is_scitype=None)
+    X_vect = VectorizedDF(X=fixture, iterate_as=iterate_as, is_scitype=None)
 
-    return None
+    # testing list comprehension works with indexing
+    X_iter1 = [X_vect[i] for i in range(len(X_vect))]
+    assert isinstance(X_iter1, list)
+
+    # testing that iterator comprehension works
+    X_iter2 = [X_idx for X_idx in X_vect]
+    assert isinstance(X_iter2, list)
+
+    # testing that as_list method works
+    X_iter3 = X_vect.as_list()
+    assert isinstance(X_iter3, list)
+
+    # check that these are all the same
+    assert deep_equals(X_iter1, X_iter2)
+    assert deep_equals(X_iter2, X_iter3)
 
 
-def test_iterate_panel_over_series(scitype, mtype, fixture_index):
+def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as):
+    """Tests __getitem__ returns correct pd-multiindex mtype.
+
+    Fixtures parameterized
+    ----------------------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+    iterate_as : str - level on which to iterate over
+    """
+    # escape for the invalid Panel/Panel combination, see above
+    if iterate_as == "Panel" and scitype == "Panel":
+        return None
+
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    # construct VectorizedDF - we've tested above that this works
+    X_vect = VectorizedDF(X=fixture, iterate_as=iterate_as, is_scitype=None)
+
+    X_list = list(X_vect)
+
+    # right mtype depends on scitype
+    if iterate_as == "Series":
+        correct_mtype = "pd.DataFrame"
+    elif iterate_as == "Panel":
+        correct_mtype = "pd-multiindex"
+    else:
+        RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
+
+    X_list_valid = [
+        check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
+    ]
+
+    assert np.all(X_list_valid), (
+        f"iteration elements do not conform with expected mtype {correct_mtype}"
+    )
+
+
+def test_reconstruct(scitype, mtype, fixture_index):
     """Tests that check_is_mtype correctly confirms the mtype of examples.
 
     Parameters
