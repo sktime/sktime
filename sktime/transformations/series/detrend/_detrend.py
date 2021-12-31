@@ -20,33 +20,30 @@ class Detrender(BaseTransformer):
     This transformer uses any forecaster and returns the in-sample residuals
     of the forecaster's predicted values.
 
-    The Detrender works by first fitting the forecaster to the input data.
-    To transform data, it uses the fitted forecaster to generate
-    forecasts for the time points of the passed data and returns the residuals
-    of the forecasts.
-    Depending on the passed data, this will require it to generate in-sample
-    or out-of-sample forecasts.
-
-    The detrender also works in a pipeline as a form of boosting,
-    by first detrending a time series and then fitting another forecaster on
-    the residuals.
+    The Detrender works as follows:
+    in "fit", the forecaster is fit to the input data.
+    in "transform", the forecast residuals are computed and return.
+    Depending on time indices, this can generate in-sample or out-of-sample residuals.
 
     For example, to remove the linear trend of a time series:
-    forecaster = PolynomialTrendForecaster(degree=1)
-    transformer = Detrender(forecaster=forecaster)
-    yt = transformer.fit_transform(y_train)
+        forecaster = PolynomialTrendForecaster(degree=1)
+        transformer = Detrender(forecaster=forecaster)
+        yt = transformer.fit_transform(y_train)
+
+    The detrender can also be used in a pipeline for residual boosting,
+    by first detrending and then fitting another forecaster on residuals.
 
     Parameters
     ----------
-    forecaster : estimator object, default=None
-        If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
+    forecaster : sktime forecaster, follows BaseForecaster, default = None.
         The forecasting model to remove the trend with
-        (e.g. PolynomialTrendForecaster).
+            (e.g. PolynomialTrendForecaster).
+        If forecaster is None, PolynomialTrendForecaster(degree=1) is used.
 
     Attributes
     ----------
-    forecaster_ : estimator object
-        Model that defines the trend in the series.
+    forecaster_ : Fitted forecaster
+        Forecaster that defines the trend in the series.
 
     See Also
     --------

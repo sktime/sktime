@@ -255,13 +255,12 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     Seasonal decomposition is computed using `statsmodels
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
-
     Examples
     --------
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.detrend import ConditionalDeseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = ConditionalDeseasonalizer()
+    >>> transformer = ConditionalDeseasonalizer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
     """
 
