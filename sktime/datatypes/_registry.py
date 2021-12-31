@@ -72,26 +72,46 @@ SCITYPE_REGISTER = [
 ]
 
 
-def mtype_to_scitype(mtype: str):
+def mtype_to_scitype(mtype: str, return_unique=False):
     """Infer scitype belonging to mtype.
 
     Parameters
     ----------
-    mtype: str, mtype to find scitype of; or, None
+    mtype : str, or list of str, or nested list/str object, or None
+        mtype(s) to find scitype of
 
     Returns
     -------
-    scitype: str, unique scitype belonging to mtype
-            or, None if mtype is None
+    scitype : str, or list of str, or nested list/str object, or None
+        if str, returns scitype belonging to mtype, if mtype is str
+        if list, returns this function element-wise applied
+        if nested list/str object, replaces mtype str by scitype str
+        if None, returns None
+    return_unique : bool, default=False
+        if True, makes
 
     Raises
     ------
-    ValueError, if there are two scitypes with that mtype
-        (this should not happen in general)
-    ValueError, if there is no scitype with that mtype
+    TypeError, if input is not of the type specified
+    ValueError, if there are two scitypes for the/some mtype string
+        (this should not happen in general, it means there is a bug)
+    ValueError, if there is no scitype for the/some mtype string
     """
+    # handle the "None" case first
     if mtype is None or mtype == "None":
         return None
+    # recurse if mtype is a list
+    if isinstance(mtype, list):
+        scitype_list = [mtype_to_scitype(x) for x in mtype]
+        if return_unique:
+            scitype_list = list(set(scitype_list))
+        return scitype_list
+
+    # checking for type. Checking str is enough, recursion above will do the rest.
+    if not isinstance(mtype, str):
+        raise TypeError(
+            "mtype must be str, or list of str, nested list/str object, or None"
+        )
 
     scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
 
