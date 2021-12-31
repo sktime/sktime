@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements Prophet forecaster by wrapping fbprophet."""
+"""Implements Prophet forecaster by wrapping prophet."""
 
 __author__ = ["aiwalter"]
 __all__ = ["Prophet"]
@@ -10,7 +10,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("fbprophet")
+_check_soft_dependencies("prophet")
 
 
 class Prophet(_ProphetAdapter):
@@ -164,7 +164,7 @@ class Prophet(_ProphetAdapter):
         self.verbose = verbose
 
         # import inside method to avoid hard dependency
-        from fbprophet.forecaster import Prophet as _Prophet
+        from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
 

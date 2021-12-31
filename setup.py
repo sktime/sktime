@@ -22,7 +22,7 @@ from pkg_resources import parse_version
 MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
     "numpy": "1.19.3",
-    "pandas": "1.1.0",
+    "pandas": "1.1.5",
     "scikit-learn": "0.24.0",
     "statsmodels": "0.12.1",
     "numba": "0.53",
@@ -43,7 +43,7 @@ EXTRAS_REQUIRE = {
         "hcrystalball>=0.1.9",
         "stumpy>=1.5.1,<=1.9.2",
         "tbats>=1.1.0",
-        "fbprophet>=0.7.1",
+        "prophet>=1.0.0",
         "pyod>=0.8.0",
         "dtw_python>=1.1.5",
     ],
