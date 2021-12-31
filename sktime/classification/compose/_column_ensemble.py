@@ -19,6 +19,9 @@ from sktime.classification.base import BaseClassifier
 
 
 class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+
+    _tags = {"capability:multivariate": True}
+
     def __init__(self, estimators, verbose=False):
         self.verbose = verbose
         self.estimators = estimators
