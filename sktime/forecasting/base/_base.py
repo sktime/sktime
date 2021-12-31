@@ -57,18 +57,6 @@ def _coerce_to_list(obj):
         return obj
 
 
-def _most_complex_scitype(scitypes):
-    """Return most complex scitype in a list of str."""
-    if "Hierarchical" in scitypes:
-        return "Hierarchical"
-    elif "Panel" in scitypes:
-        return "Panel"
-    elif "Series" in scitypes:
-        return "Series"
-    else:
-        raise ValueError("no series scitypes supported, bug in estimator")
-
-
 class BaseForecaster(BaseEstimator):
     """Base forecaster template class.
 
@@ -742,6 +730,18 @@ class BaseForecaster(BaseEstimator):
         _y_mtype_last_seen : str, mtype of y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
+
+        def _most_complex_scitype(scitypes):
+            """Return most complex scitype in a list of str."""
+            if "Hierarchical" in scitypes:
+                return "Hierarchical"
+            elif "Panel" in scitypes:
+                return "Panel"
+            elif "Series" in scitypes:
+                return "Series"
+            else:
+                raise ValueError("no series scitypes supported, bug in estimator")
+
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
