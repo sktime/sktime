@@ -728,7 +728,7 @@ class BaseTransformer(BaseEstimator):
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
-        y_inner_mtype = self.get_tag(self.get_tag("y_inner_mtype"))
+        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
 
         X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
