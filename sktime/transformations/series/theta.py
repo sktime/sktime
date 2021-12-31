@@ -93,8 +93,9 @@ class ThetaLinesTransformer(BaseTransformer):
         Returns
         -------
         theta_lines: pd.Series or pd.DataFrame
-            Transformed series: single Theta-line or a pd.DataFrame of
-            shape: len(Z)*len(self.theta).
+            Transformed series
+            pd.Series, with single Theta-line, if self.theta is float
+            pd.DataFrame of shape: [len(X), len(self.theta)], if self.theta is tuple
         """
         z = X
         theta = _check_theta(self.theta)
