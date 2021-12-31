@@ -16,12 +16,8 @@ How to use this:
 Mandatory implements:
     transforming    - _transform(self, X, X2=None)
 
-State:
-    none, this is a state-free scitype
-
-Testing:
+Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """

@@ -348,15 +348,17 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        self.check_is_fitted()
+        # input checks
         if alpha is None:
             alpha = [0.05, 0.95]
-
-        self.check_is_fitted()
         self._set_fh(fh)
         alpha = check_alpha(alpha)
+
         # input check and conversion for X
         X_inner = self._check_X(X=X)
-        quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+
+        quantiles = self._predict_quantiles(fh=self.fh, X=X_inner, alpha=alpha)
         return quantiles
 
     def predict_interval(
@@ -396,14 +398,15 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        # input check for X
-
-        self._set_fh(fh)
-        X_inner = self._check_X(X=X)
         self.check_is_fitted()
-
+        # input checks
+        self._set_fh(fh)
         coverage = check_alpha(coverage)
-        pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+
+        # check and convert X
+        X_inner = self._check_X(X=X)
+
+        pred_int = self._predict_interval(fh=self.fh, X=X_inner, coverage=coverage)
         return pred_int
 
     def update(self, y, X=None, update_params=True):
