@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
 import pandas as pd
 from sklearn import clone
-
-from sklearn.pipeline import FeatureUnion as _FeatureUnion
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -50,7 +47,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
-        "scitype:instancewise": False, # depends on components
+        "scitype:instancewise": False,  # depends on components
         "univariate-only": False,  # depends on components
         "handles-missing-data": False,  # depends on components
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
@@ -105,7 +102,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
             Xt.columns = flat_index
 
         return Xt
-
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.
