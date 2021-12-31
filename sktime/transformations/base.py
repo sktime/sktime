@@ -725,14 +725,10 @@ class BaseTransformer(BaseEstimator):
 
     def _convert_X_y(self, X, y):
         """Convert X, y to inner type."""
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        if not isinstance(X_inner_mtype, list):
-            X_inner_mtype = [X_inner_mtype]
+        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
 
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        if not isinstance(y_inner_mtype, list):
-            y_inner_mtype = [y_inner_mtype]
+        y_inner_mtype = self.get_tag(self.get_tag("y_inner_mtype"))
 
         X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
