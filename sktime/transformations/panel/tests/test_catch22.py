@@ -10,7 +10,7 @@ from sktime.transformations.panel.catch22 import Catch22
 def test_catch22_on_unit_test():
     """Test of Catch22 on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
     indices = np.random.RandomState(0).choice(len(y_train), 5, replace=False)
 
     # fit catch22
@@ -18,43 +18,41 @@ def test_catch22_on_unit_test():
     c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
-    testing.assert_array_almost_equal(
-        np.nan_to_num(data, False, 0, 0, 0), catch22_unit_test_data
-    )
+    data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
+    testing.assert_array_almost_equal(data, catch22_unit_test_data)
 
 
 def test_catch22_single_feature_on_unit_test():
     """Test of Catch22 on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    indices = np.random.RandomState(1).choice(len(y_train), 5, replace=False)
+    X_train, y_train = load_unit_test(split="train")
+    indices = np.random.RandomState(0).choice(len(y_train), 2, replace=False)
 
     # fit catch22
     c22 = Catch22(outlier_norm=True)
     c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = []
+    results = catch22_unit_test_data.transpose()
     for i in range(22):
-        data.append(c22.transform_single_feature(X_train.iloc[indices], i))
-    testing.assert_array_almost_equal(
-        np.nan_to_num(data, False, 0, 0, 0), catch22_single_feature_unit_test_data
-    )
+        data = np.nan_to_num(
+            c22.transform_single_feature(X_train.iloc[indices], i), False, 0, 0, 0
+        )
+        testing.assert_array_almost_equal(data, results[i][:2])
 
 
 def test_catch22_on_basic_motions():
     """Test of Catch22 on basic motions data."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+    X_train, y_train = load_basic_motions(split="train")
+    indices = np.random.RandomState(4).choice(len(y_train), 5, replace=False)
 
     # fit catch22
     c22 = Catch22()
     c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform(X_train.iloc[indices])
+    data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
     testing.assert_array_almost_equal(data, catch22_basic_motions_data)
 
 
@@ -76,7 +74,7 @@ catch22_unit_test_data = np.array(
             6.0,
             1.0,
             4.0,
-            1.591907251580477,
+            1.4836116549664229,
             1.1428571428571428,
             0.33206729175825095,
             0.0,
@@ -100,7 +98,7 @@ catch22_unit_test_data = np.array(
             5.0,
             0.9565217391304348,
             5.0,
-            1.7006903871322572,
+            1.601149361627198,
             0.5714285714285714,
             0.33199585882480837,
             0.0,
@@ -124,7 +122,7 @@ catch22_unit_test_data = np.array(
             5.0,
             1.0,
             5.0,
-            1.7229577424522813,
+            1.4836116549664229,
             0.42857142857142855,
             0.33170445599629694,
             0.0,
@@ -148,7 +146,7 @@ catch22_unit_test_data = np.array(
             7.0,
             1.0,
             6.0,
-            1.7412237648017046,
+            1.714203171343286,
             0.375,
             0.2487030955256314,
             0.0,
@@ -172,170 +170,12 @@ catch22_unit_test_data = np.array(
             6.0,
             1.0,
             4.0,
-            1.591907251580477,
+            1.4836116549664229,
             1.0,
             0.3320445278536131,
             0.0,
             0.0,
             0.1111111111111111,
-            0.0,
-        ],
-    ]
-)
-catch22_single_feature_unit_test_data = np.array(
-    [
-        [
-            201.3000030517578,
-            144.3000030517578,
-            759.4999847412109,
-            155.10000610351562,
-            184.3000030517578,
-        ],
-        [
-            112.6500015258789,
-            77.1500015258789,
-            1407.050048828125,
-            82.55000305175781,
-            107.1500015258789,
-        ],
-        [
-            12.0,
-            12.0,
-            12.0,
-            11.0,
-            12.0,
-        ],
-        [
-            0.45833333333333326,
-            0.37499999999999994,
-            0.4999999999999999,
-            0.37499999999999994,
-            0.37499999999999994,
-        ],
-        [
-            -0.45833333333333337,
-            -0.5416666666666667,
-            -0.45833333333333337,
-            -0.5208333333333334,
-            -0.4166666666666667,
-        ],
-        [
-            5.0,
-            5.0,
-            5.0,
-            5.0,
-            4.0,
-        ],
-        [
-            15.0,
-            12.0,
-            16.0,
-            12.0,
-            10.0,
-        ],
-        [
-            369035.03929434944,
-            197312.13026857024,
-            291398.0307527108,
-            276289.15137908916,
-            238227.26454654246,
-        ],
-        [
-            0.19634954084936207,
-            0.19634954084936207,
-            0.19634954084936207,
-            0.19634954084936207,
-            0.39269908169872414,
-        ],
-        [
-            365.31902278717826,
-            298.24676913348765,
-            292.5875000752806,
-            317.8343938909621,
-            363.7193903417259,
-        ],
-        [
-            2966377.652173913,
-            8571126.260869564,
-            3809454.347826087,
-            11863211.826086957,
-            6572745.782608695,
-        ],
-        [
-            0.7062826705628229,
-            0.7457297577055669,
-            0.6875544116264114,
-            0.7449158910995153,
-            0.6672710106732629,
-        ],
-        [
-            6.0,
-            6.0,
-            6.0,
-            6.0,
-            5.0,
-        ],
-        [
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-        ],
-        [
-            6.0,
-            4.0,
-            5.0,
-            4.0,
-            5.0,
-        ],
-        [
-            1.7006903871322572,
-            1.591907251580477,
-            1.7006903871322572,
-            1.591907251580477,
-            1.6656937036662838,
-        ],
-        [
-            0.42857142857142855,
-            0.42857142857142855,
-            0.5,
-            1.0,
-            0.6666666666666666,
-        ],
-        [
-            0.3318824995440967,
-            0.3320722100456072,
-            0.33178850638141766,
-            0.3320445278536131,
-            0.33193571058810883,
-        ],
-        [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ],
-        [
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ],
-        [
-            0.1111111111111111,
-            0.1111111111111111,
-            0.16666666666666666,
-            0.1111111111111111,
-            0.1111111111111111,
-        ],
-        [
-            6.0,
-            6.0,
-            0.0,
-            0.0,
             0.0,
         ],
     ]
@@ -358,9 +198,9 @@ catch22_basic_motions_data = np.array(
             2.0,
             0.8881469115191987,
             8.0,
-            1.9015446611056497,
+            1.901868147180096,
             0.75,
-            0.0820074488404886,
+            0.08200744884048863,
             0.6595744680851063,
             0.1276595744680851,
             0.0009308889989940398,
@@ -382,7 +222,7 @@ catch22_basic_motions_data = np.array(
             6.0,
             0.8981636060100167,
             8.0,
-            1.9549130041219889,
+            1.955336853414402,
             0.025,
             0.032731703385230154,
             0.5957446808510638,
@@ -406,12 +246,12 @@ catch22_basic_motions_data = np.array(
             2.0,
             0.5893155258764607,
             7.0,
-            1.8693323843465879,
+            1.869523066150523,
             0.75,
-            0.6017013946518414,
+            0.6017013946518415,
             0.6170212765957447,
             0.7872340425531915,
-            0.011035538939687402,
+            0.0110355389396874,
             10.0,
         ],
         [
@@ -422,7 +262,7 @@ catch22_basic_motions_data = np.array(
             -0.5266666666666666,
             2.0,
             4.0,
-            12.810612264646405,
+            12.810612264646402,
             0.7485826244881929,
             9.58698290213626,
             -9.650884858956239,
@@ -430,9 +270,9 @@ catch22_basic_motions_data = np.array(
             1.0,
             0.8547579298831386,
             7.0,
-            1.9947038119311238,
+            1.9909316131550139,
             0.6666666666666666,
-            0.05532697113711143,
+            0.055326971137111436,
             0.6382978723404256,
             0.7872340425531915,
             0.005277644503926668,
@@ -454,172 +294,13 @@ catch22_basic_motions_data = np.array(
             3.0,
             0.8614357262103506,
             8.0,
-            1.874427352232739,
+            1.8781561049178759,
             0.75,
-            0.11342130090695092,
+            0.11342130090695095,
             0.6382978723404256,
             0.1276595744680851,
             0.0020719787396964104,
             13.0,
         ],
-        [
-            0.5821229815483093,
-            -0.03836891055107117,
-            11.0,
-            -0.5533333333333333,
-            -0.4733333333333333,
-            3.0,
-            6.0,
-            3.087462074664418,
-            0.5031456984264903,
-            1.7943188731017647,
-            -0.28950635654567963,
-            0.11378049000438666,
-            2.0,
-            0.8664440734557596,
-            9.0,
-            1.9014371018198746,
-            0.75,
-            0.07904777344202722,
-            0.5319148936170213,
-            0.1276595744680851,
-            0.002867738690449379,
-            12.0,
-        ],
-        [
-            0.7705550193786621,
-            -2.0887045860290527,
-            15.0,
-            -0.75,
-            -0.22499999999999995,
-            2.0,
-            7.0,
-            15.75238562091137,
-            0.5890486225480862,
-            5.513417808492016,
-            -131.06877280743743,
-            0.032545418865148716,
-            6.0,
-            0.8731218697829716,
-            8.0,
-            1.9752413891957963,
-            0.027777777777777776,
-            0.032012521012129445,
-            0.7021276595744681,
-            0.7872340425531915,
-            0.0013020833333333333,
-            9.0,
-        ],
-        [
-            0.11512099951505661,
-            -0.04020300135016441,
-            9.0,
-            -0.5008333333333332,
-            -0.43166666666666664,
-            2.0,
-            5.0,
-            0.09303334283664481,
-            0.6258641614573416,
-            0.4734833608912293,
-            0.01856395183142546,
-            0.09946307958242893,
-            2.0,
-            0.7161936560934892,
-            7.0,
-            1.9556657265785635,
-            1.0,
-            0.5542142375560684,
-            0.5957446808510638,
-            0.7872340425531915,
-            0.0015235305505753222,
-            9.0,
-        ],
-        [
-            0.8463379144668579,
-            -1.3739063739776611,
-            9.0,
-            -0.79,
-            -0.5316666666666666,
-            2.0,
-            4.0,
-            13.734430536255998,
-            0.760854470791278,
-            8.757506343251935,
-            -41.19763367749615,
-            0.13857012217820144,
-            1.0,
-            0.8948247078464107,
-            6.0,
-            1.9943038788906615,
-            0.6666666666666666,
-            0.04893213662658496,
-            0.6170212765957447,
-            0.7872340425531915,
-            0.004680016497899885,
-            7.0,
-        ],
-        [
-            0.3560640811920166,
-            -1.3956140279769897,
-            10.0,
-            -0.74,
-            -0.5125,
-            2.0,
-            5.0,
-            8.532538115865874,
-            0.6994952392758523,
-            7.3608275274022255,
-            -19.73833840623707,
-            0.18602289172468586,
-            1.0,
-            0.8497495826377296,
-            6.0,
-            1.9358304058211278,
-            0.6666666666666666,
-            0.047316129017023874,
-            0.5957446808510638,
-            0.7872340425531915,
-            0.006270885415351464,
-            8.0,
-        ],
     ]
 )
-
-
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ')
-#         print('],')
-#     print(']')
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 5, replace=False)
-#
-#     c22_u = Catch22(outlier_norm=True)
-#
-#     c22_u.fit(X_train.iloc[indices], y_train[indices])
-#     data = c22_u.transform(X_train.iloc[indices])
-#     print_array(np.nan_to_num(data, False, 0, 0, 0))
-#
-#     indices = np.random.RandomState(1).choice(len(y_train), 5, replace=False)
-#
-#     c22_s = Catch22(outlier_norm=True)
-#
-#     data = []
-#     for i in range(22):
-#         data.append(c22_s._transform_single_feature(X_train.iloc[indices], i))
-#     print_array(np.nan_to_num(data, False, 0, 0, 0))
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-#
-#     c22_m = Catch22()
-#
-#     c22_m.fit(X_train.iloc[indices], y_train[indices])
-#     data = c22_m.transform(X_train.iloc[indices])
-#     print_array(data.to_numpy())

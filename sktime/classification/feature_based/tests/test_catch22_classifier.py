@@ -11,8 +11,8 @@ from sktime.datasets import load_basic_motions, load_unit_test
 def test_catch22_classifier_on_unit_test_data():
     """Test of Catch22Classifier on unit test data."""
     # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train catch22 classifier
@@ -33,8 +33,8 @@ def test_catch22_classifier_on_unit_test_data():
 def test_catch22_classifier_on_basic_motions():
     """Test of Catch22Classifier on basic motions."""
     # load basic motions data
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train catch22 classifier
@@ -57,36 +57,36 @@ catch22_classifier_unit_test_probas = np.array(
             1.0,
         ],
         [
-            0.9,
+            1.0,
+            0.0,
+        ],
+        [
             0.1,
-        ],
-        [
-            0.3,
-            0.7,
-        ],
-        [
             0.9,
-            0.1,
         ],
         [
-            0.9,
-            0.1,
+            0.8,
+            0.2,
         ],
         [
-            0.9,
-            0.1,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.4,
             0.6,
+            0.4,
         ],
         [
-            0.7,
-            0.3,
+            0.9,
+            0.1,
+        ],
+        [
+            0.6,
+            0.4,
+        ],
+        [
+            0.2,
+            0.8,
+        ],
+        [
+            0.8,
+            0.2,
         ],
         [
             0.8,
@@ -158,43 +158,3 @@ catch22_classifier_basic_motions_probas = np.array(
         ],
     ]
 )
-
-
-# def print_array(array):
-#     print("[")
-#     for sub_array in array:
-#         print("[")
-#         for value in sub_array:
-#             print(value.astype(str), end="")
-#             print(", ")
-#         print("],")
-#     print("]")
-#
-#
-# if __name__ == "__main__":
-#     X_train, y_train = load_unit_test(split="train", return_X_y=True)
-#     X_test, y_test = load_unit_test(split="test", return_X_y=True)
-#     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-#
-#     c22c_u = Catch22Classifier(
-#         random_state=0,
-#         estimator=RandomForestClassifier(n_estimators=10),
-#         outlier_norm=True,
-#     )
-#
-#     c22c_u.fit(X_train, y_train)
-#     probas = c22c_u.predict_proba(X_test.iloc[indices])
-#     print_array(probas)
-#
-#     X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-#     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
-#     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
-#
-#     c22c_m = Catch22Classifier(
-#         random_state=0,
-#         estimator=RandomForestClassifier(n_estimators=10),
-#     )
-#
-#     c22c_m.fit(X_train.iloc[indices], y_train[indices])
-#     probas = c22c_m.predict_proba(X_test.iloc[indices])
-#     print_array(probas)

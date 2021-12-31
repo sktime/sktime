@@ -403,7 +403,7 @@ class RotationForest(BaseEstimator):
 
             sample_ind = rng.choice(
                 X_t.shape[0],
-                int(X_t.shape[0] * self.remove_proportion),
+                max(1, int(X_t.shape[0] * self.remove_proportion)),
                 replace=False,
             )
             X_t = X_t[sample_ind]
