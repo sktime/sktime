@@ -25,6 +25,7 @@ Mandatory implements:
 
 Optional implements:
     inverse transformation      - _inverse_transform(self, X, y=None)
+    update                      - _update(self, X, y=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime transformer (not needed locally):
@@ -92,17 +93,18 @@ class MyTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "capability:inverse_transform": True,  # does transformer have inverse transform
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__
@@ -141,10 +143,9 @@ class MyTransformer(BaseTransformer):
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
-        core logic
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -176,7 +177,7 @@ class MyTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        core logic
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
@@ -190,7 +191,6 @@ class MyTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
         # IMPORTANT: avoid side effects to X, y
@@ -217,7 +217,7 @@ class MyTransformer(BaseTransformer):
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
-        core logic
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
@@ -235,6 +235,46 @@ class MyTransformer(BaseTransformer):
         # IMPORTANT: avoid side effects to X, y
         #
         # type conventions are exactly those in _transform, reversed
+        #
+        # for example: if transform-output is "Series":
+        #  return should be of same mtype as input, X_inner_mtype
+        #  if multiple X_inner_mtype are supported, ensure same input/output
+        #
+        # todo: add the return mtype/scitype to the docstring, e.g.,
+        #  Returns
+        #  -------
+        #  X_inv_transformed : Series of mtype pd.DataFrame
+        #       inverse transformed version of X
+
+    # todo: consider implementing this, optional
+    # if not implementing, delete the _update method
+    # standard behaviour is "no update"
+    # also delete in the case where there is no fitting
+    def _update(self, X, y=None):
+        """Update transformer with X and y.
+
+        private _update containing the core logic, called from update
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _update must support all types in it
+            Data to update transformer with
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for tarnsformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        # implement here
+        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
+        # IMPORTANT: avoid side effects to X, y
+        #
+        # any model parameters should be written to attributes ending in "_"
+        #  attributes set by the constructor must not be overwritten
+        #  if used, estimators should be cloned to attributes ending in "_"
+        #  the clones, not the originals, should be used or fitted if needed
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
