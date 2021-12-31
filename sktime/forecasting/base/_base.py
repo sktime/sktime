@@ -35,12 +35,38 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import convert_to, mtype, VectorizedDF
+from sktime.datatypes import (
+    check_is_scitype,
+    convert_to,
+    mtype,
+    mtype_to_scitype,
+    VectorizedDF,
+)
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
 DEFAULT_ALPHA = 0.05
+
+
+def _coerce_to_list(obj):
+    """Return [obj] if obj is not a list, otherwise obj."""
+    if not isinstance(obj, list):
+        return [obj]
+    else:
+        return obj
+
+
+def _most_complex_scitype(scitypes):
+    """Return most complex scitype in a list of str."""
+    if "Hierarchical" in scitypes:
+        return "Hierarchical"
+    elif "Panel" in scitypes:
+        return "Panel"
+    elif "Series" in scitypes:
+        return "Series"
+    else:
+        raise ValueError("no series scitypes supported, bug in estimator")
 
 
 class BaseForecaster(BaseEstimator):
@@ -716,6 +742,35 @@ class BaseForecaster(BaseEstimator):
         _y_mtype_last_seen : str, mtype of y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
+        # retrieve supported mtypes
+        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
+        y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
+        X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
+
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+
+        y_valid, y_msg, y_metadata = check_is_scitype(
+            y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+        )
+        X_valid, X_msg, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+        )
+
+        y_scitype = y_metadata["scitype"]
+        X_scitype = X_metadata["scitype"]
+
+        if y_scitype != X_scitype:
+            raise TypeError("X and y must have the same scitype")
+
+        # todo: add tests that :
+        #   y_inner_scitype are same as X_inner_scitype
+        #   y_inner_scitype always includes "less index" scitypes
+
+        requires_vectorization = y_scitype not in y_inner_scitype
+        if requires_vectorization:
+            iterate_as = _most_complex_scitype(y_inner_scitype)
+
         # input checks and minor coercions on X, y
         ###########################################
 
@@ -748,25 +803,26 @@ class BaseForecaster(BaseEstimator):
         # convert X & y to supported inner type, if necessary
         #####################################################
 
-        # retrieve supported mtypes
-
         # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=self._converter_store_y,
-        )
+        #  if vectorization is required, we wrap in Vect
+        if not requires_vectorization:
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype="Series",  # we are dealing with series
+                store=self._converter_store_y,
+            )
 
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-        )
+            X_inner = convert_to(
+                X,
+                to_type=X_inner_mtype,
+                as_scitype="Series",  # we are dealing with series
+            )
+        else:
+            y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+            y_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
 
         return X_inner, y_inner
 
