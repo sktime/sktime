@@ -69,7 +69,7 @@ jobs:
           CIBW_SKIP: cp36-* pp* *-win32
           CIBW_BUILD_FRONTEND: "build"
           # Windows causes install problems due to fbprophet so it's tested separately
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --platform windows --output-dir wheelhouse
 
       - name: Store wheels
         uses: actions/upload-artifact@v2
@@ -120,19 +120,19 @@ jobs:
           path: wheelhouse
 
       - name: Install conda libpython
-        run: conda install -c anaconda libpython
+        run: conda install -c anaconda -n test -y libpython
 
       - name: Install conda dependencies
         run: |
-          conda install -c anaconda -n test "pystan==2.19.1.1"
-          conda install -c conda-forge -n test "fbprophet>=0.7.1"
-          conda install -c conda-forge -n test scipy cython
+          conda install -c anaconda -n test -y "pystan==2.19.1.1"
+          conda install -c conda-forge -n test -y "fbprophet>=0.7.1"
+          conda install -c conda-forge -n test -y scipy cython
 
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
 
-      - name: Get wheel filename
-        run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $env:GITHUB_ENV
+      # - name: Get wheel filename
+      #   run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $env:GITHUB_ENV
 
       - name: Activate conda env
         run: conda activate test
@@ -140,7 +140,8 @@ jobs:
       - run: conda info --envs
 
       - name: Install wheel and extras
-        run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
+        # run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
+        run: python -m pip install --no-index --find-links=./wheelhouse sktime[all_extras,dev]
 
       - name: Show conda packages
         run: conda list -n test
