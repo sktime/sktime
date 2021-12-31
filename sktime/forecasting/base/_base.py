@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import convert_to, mtype
+from sktime.datatypes import convert_to, mtype, VectorizedDF
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index, check_series
