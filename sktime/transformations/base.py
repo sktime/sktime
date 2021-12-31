@@ -190,7 +190,7 @@ class BaseTransformer(BaseEstimator):
         X_input_scitype = X_metadata["scitype"]
 
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         # treating Series vs Panel conversion for X
         ###########################################
@@ -316,7 +316,7 @@ class BaseTransformer(BaseEstimator):
         X_input_scitype = X_metadata["scitype"]
 
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         # treating Series vs Panel conversion for X
         ###########################################
@@ -500,7 +500,7 @@ class BaseTransformer(BaseEstimator):
         X_input_scitype = X_metadata["scitype"]
 
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         # treating Series vs Panel conversion for X
         ###########################################
@@ -623,7 +623,7 @@ class BaseTransformer(BaseEstimator):
         X_input_scitype = X_metadata["scitype"]
 
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         # treating Series vs Panel conversion for X
         ###########################################
@@ -726,7 +726,7 @@ class BaseTransformer(BaseEstimator):
     def _convert_X_y(self, X, y):
         """Convert X, y to inner type."""
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = list(set([mtype_to_scitype(mt) for mt in X_inner_mtype]))
+        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         y_inner_mtype = self.get_tag(self.get_tag("y_inner_mtype"))
 
