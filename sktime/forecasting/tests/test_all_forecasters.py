@@ -54,8 +54,8 @@ from sktime.utils.validation.forecasting import check_fh
 # get all forecasters
 FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
 FH0 = 1
-INVALID_X_INPUT_TYPES = [list(), tuple()]
-INVALID_y_INPUT_TYPES = [list(), tuple()]
+INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
+INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
 # testing data
 y = make_forecasting_problem()
@@ -112,7 +112,7 @@ def test_y_multivariate_raises_error(Forecaster):
 
     if f.get_tag("scitype:y") == "multivariate":
         y = _make_series(n_columns=1)
-        with pytest.raises(ValueError, match=r"2 or more variables"):
+        with pytest.raises(ValueError, match=r"two or more variables"):
             f.fit(y, fh=FH0)
 
     if f.get_tag("scitype:y") == "both":

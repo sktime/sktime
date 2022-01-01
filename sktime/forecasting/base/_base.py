@@ -796,18 +796,19 @@ class BaseForecaster(BaseEstimator):
                 )
             if not y_valid:
                 raise TypeError(msg)
+
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
 
             requires_vectorization = y_scitype not in y_inner_scitype
 
-            if self.get_tag("scitype:y") == "univariate":
-                assert y_metadata["is_univariate"], (
+            if self.get_tag("scitype:y") == "univariate" and not y_metadata["is_univariate"]:
+                raise ValueError(
                     "y must be univariate, but found more than one variable"
                 )
-            if self.get_tag("scitype:y") == "multivariate":
-                assert not y_metadata["is_univariate"], (
-                    "y must have two or more variable, but found only one"
+            if self.get_tag("scitype:y") == "multivariate" and y_metadata["is_univariate"]:
+                raise ValueError(
+                    "y must have two or more variables, but found only one"
                 )
         # end checking y
 
@@ -816,9 +817,6 @@ class BaseForecaster(BaseEstimator):
             X_valid, _, X_metadata = check_is_scitype(
                 X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
             )
-            X_scitype = X_metadata["scitype"]
-
-            requires_vectorization = X_scitype not in X_inner_scitype
 
             msg = (
                 "X must be either None, or in an sktime compatible format, "
@@ -831,12 +829,18 @@ class BaseForecaster(BaseEstimator):
             if not X_valid:
                 raise TypeError(msg)
 
+            X_scitype = X_metadata["scitype"]
+            requires_vectorization = X_scitype not in X_inner_scitype
+        # end checking X
+
+        # compatibility checks between X and y
+        if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
                 check_equal_time_index(X, y)
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
-        # end checking X
+        # end compatibility checking X and y
 
         # todo: add tests that :
         #   y_inner_scitype are same as X_inner_scitype
