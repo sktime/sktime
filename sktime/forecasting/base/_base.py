@@ -33,6 +33,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from sklearn import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -44,7 +45,7 @@ from sktime.datatypes import (
 )
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
-from sktime.utils.validation.series import check_equal_time_index, check_series
+from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_ALPHA = 0.05
 
@@ -141,8 +142,14 @@ class BaseForecaster(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-
-        self._fit(y=y_inner, X=X_inner, fh=fh)
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not vectorization_needed:
+            self._fit(y=y_inner, X=X_inner, fh=fh)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         # this should happen last
         self._is_fitted = True
@@ -208,10 +215,12 @@ class BaseForecaster(BaseEstimator):
 
         # this is how it is supposed to be after the refactor is complete and effective
         if not return_pred_int:
-            y_pred = self._predict(
-                self.fh,
-                X=X_inner,
-            )
+            # we call the ordinary _predict if no looping/vectorization needed
+            if not self._is_vectorized:
+                y_pred = self._predict(fh=self.fh, X=X_inner)
+            else:
+                # otherwise we call the vectorized version of predict
+                self._vectorize("predict", X=X_inner, fh=self.fh)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -322,7 +331,15 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
-        self._fit(y=y_inner, X=X_inner, fh=fh)
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not vectorization_needed:
+            self._fit(y=y_inner, X=X_inner, fh=fh)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+
         self._is_fitted = True
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
@@ -755,7 +772,7 @@ class BaseForecaster(BaseEstimator):
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
-        X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
+        # X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -1088,14 +1105,41 @@ class BaseForecaster(BaseEstimator):
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseForecaster.
 
-        Uses forecasters_ attribute to store one forecaster per loop index.        
+        Uses forecasters_ attribute to store one forecaster per loop index.
         """
+        PREDICT_METHODS = ["predict", "predict_quantiles"]
 
         if methodname == "fit":
-            y = kwargs["y"]
+            # create container for clones
+            y = kwargs.pop("y")
+            X = kwargs.pop("X", None)
+
             idx = y.get_iter_indices()
-            ys = y.
-            self.forecasters_ = pd.DataFrame
+            ys = y.as_list()
+            if X is None:
+                Xs = [None]*len(ys)
+            else:
+                Xs = X.as_list()
+
+            self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
+            for i in range(len(idx)):
+                self.forecasters_.iloc[i, 0] = self.clone()
+                self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
+
+            return self
+        elif methodname in PREDICT_METHODS:
+            n = len(self.forecasters_.index)
+            X = kwargs.pop("X", None)
+            if X is None:
+                Xs = [None]*n
+            else:
+                Xs = X.as_list()
+            y_preds = []
+            for i in range(n):
+                method = getattr(self.forecasters_.iloc[i, 0], methodname)
+                y_preds += [method(X=Xs[i], **kwargs)]
+            y_pred = self._ys.reconstruct(y_preds, overwrite_index=False)
+            return y_pred
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
