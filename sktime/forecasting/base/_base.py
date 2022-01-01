@@ -708,12 +708,21 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
-            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
-            None if y was None
-        X_inner : Series compatible with self.get_tag("X_inner_mtype") format
-            converted/coerced version of y, mtype determined by "X_inner_mtype" tag
-            None if X was None
+        y_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("y_inner_mtype") format
+            Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
+                converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            Case 2: self.get_tag("y_inner_mtype") does not support scitype of y, then
+                VectorizedDF of y, iterated as the most complex supported scitype
+                    (complexity order: Hierarchical > Panel > Series)
+            Case 3: None if y was None
+        X_inner :  Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("X_inner_mtype") format
+            Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
+                converted/coerced version of X, mtype determined by "X_inner_mtype" tag
+            Case 2: self.get_tag("X_inner_mtype") does not support scitype of X, then
+                VectorizedDF of X, iterated as the most complex supported scitype
+            Case 3: None if X was None
 
         Raises
         ------
@@ -742,8 +751,6 @@ class BaseForecaster(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
-        assert y is not None, "y cannot be None, but found None"
-
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
@@ -752,32 +759,28 @@ class BaseForecaster(BaseEstimator):
 
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
-        y_valid, y_msg, y_metadata = check_is_scitype(
+        # checking y
+        assert y is not None, "y cannot be None, but found None"
+
+        y_valid, _, y_metadata = check_is_scitype(
             y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
         )
-        X_valid, X_msg, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
-        )
-
+        if not y_valid:
+            raise TypeError(
+                "y must be in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
         y_scitype = y_metadata["scitype"]
-        X_scitype = X_metadata["scitype"]
-
         self._y_mtype_last_seen = y_metadata["mtype"]
-
-        if y_scitype != X_scitype:
-            raise TypeError("X and y must have the same scitype")
-
-        # todo: add tests that :
-        #   y_inner_scitype are same as X_inner_scitype
-        #   y_inner_scitype always includes "less index" scitypes
 
         requires_vectorization = y_scitype not in y_inner_scitype
         if requires_vectorization:
             iterate_as = _most_complex_scitype(y_inner_scitype)
 
-        # input checks and minor coercions on X, y
-        ###########################################
-        # checking y
         if self.get_tag("scitype:y") == "univariate":
             assert y_metadata["is_univariate"], (
                 "y must be univariate, but found more than one variable"
@@ -789,9 +792,33 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
-        if X is not None and self.get_tag("X-y-must-have-same-index"):
-            check_equal_time_index(X, y)
+        if X is not None:
+            X_valid, _, X_metadata = check_is_scitype(
+                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+            )
+            X_scitype = X_metadata["scitype"]
+
+            msg = (
+                "X must be either None, or in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not X_valid:
+                raise TypeError(msg)
+
+            if self.get_tag("X-y-must-have-same-index"):
+                check_equal_time_index(X, y)
+
+            if y_scitype != X_scitype:
+                raise TypeError("X and y must have the same scitype")
         # end checking X
+
+        # todo: add tests that :
+        #   y_inner_scitype are same as X_inner_scitype
+        #   y_inner_scitype always includes "less index" scitypes
 
         # convert X & y to supported inner type, if necessary
         #####################################################
@@ -801,6 +828,7 @@ class BaseForecaster(BaseEstimator):
         #  if X/y is None, then no conversion takes place (returns None)
         #  if vectorization is required, we wrap in Vect
         if not requires_vectorization:
+            # converts y, skips conversion if already of right type
             y_inner = convert_to(
                 y,
                 to_type=y_inner_mtype,
@@ -808,6 +836,7 @@ class BaseForecaster(BaseEstimator):
                 store=self._converter_store_y,
             )
 
+            # converts X, converts None to None if X is None
             X_inner = convert_to(
                 X,
                 to_type=X_inner_mtype,
@@ -815,7 +844,10 @@ class BaseForecaster(BaseEstimator):
             )
         else:
             y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
-            y_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
+            if X is not None:
+                X_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
+            else:
+                X_inner = None
 
         return X_inner, y_inner
 
@@ -1052,6 +1084,18 @@ class BaseForecaster(BaseEstimator):
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseForecaster.
+
+        Uses forecasters_ attribute to store one forecaster per loop index.        
+        """
+
+        if methodname == "fit":
+            y = kwargs["y"]
+            idx = y.get_iter_indices()
+            ys = y.
+            self.forecasters_ = pd.DataFrame
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
