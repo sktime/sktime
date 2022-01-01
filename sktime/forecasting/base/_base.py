@@ -128,6 +128,9 @@ class BaseForecaster(BaseEstimator):
         -------
         self : Reference to self.
         """
+        # check y is not None
+        assert y is not None, "y cannot be None, but found None"
+
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -777,35 +780,35 @@ class BaseForecaster(BaseEstimator):
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
         # checking y
-        assert y is not None, "y cannot be None, but found None"
-
-        y_valid, _, y_metadata = check_is_scitype(
-            y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
-        )
-        if not y_valid:
-            raise TypeError(
-                "y must be in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
-                "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+        if y is not None:
+            y_valid, _, y_metadata = check_is_scitype(
+                y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
             )
-        y_scitype = y_metadata["scitype"]
-        self._y_mtype_last_seen = y_metadata["mtype"]
+            msg = (
+                    "y must be in an sktime compatible format, "
+                    "of scitype Series, Panel or Hierarchical, "
+                    "for instance a pandas.DataFrame with sktime compatible time indices, "
+                    "or with MultiIndex and lowest level a sktime compatible time index. "
+                    "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                    " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                )
+            if not y_valid:
+                raise TypeError(msg)
+            y_scitype = y_metadata["scitype"]
+            self._y_mtype_last_seen = y_metadata["mtype"]
 
-        requires_vectorization = y_scitype not in y_inner_scitype
-        if requires_vectorization:
-            iterate_as = _most_complex_scitype(y_inner_scitype)
+            requires_vectorization = y_scitype not in y_inner_scitype
+            if requires_vectorization:
+                iterate_as = _most_complex_scitype(y_inner_scitype)
 
-        if self.get_tag("scitype:y") == "univariate":
-            assert y_metadata["is_univariate"], (
-                "y must be univariate, but found more than one variable"
-            )
-        if self.get_tag("scitype:y") == "multivariate":
-            assert not y_metadata["is_univariate"], (
-                "y must have two or more variable, but found only one"
-            )
+            if self.get_tag("scitype:y") == "univariate":
+                assert y_metadata["is_univariate"], (
+                    "y must be univariate, but found more than one variable"
+                )
+            if self.get_tag("scitype:y") == "multivariate":
+                assert not y_metadata["is_univariate"], (
+                    "y must have two or more variable, but found only one"
+                )
         # end checking y
 
         # checking X
@@ -860,7 +863,10 @@ class BaseForecaster(BaseEstimator):
                 as_scitype="Series",  # we are dealing with series
             )
         else:
-            y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+            if y is not None:
+                y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+            else:
+                y_inner = None
             if X is not None:
                 X_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
             else:
