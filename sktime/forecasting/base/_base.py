@@ -759,6 +759,8 @@ class BaseForecaster(BaseEstimator):
         _y_mtype_last_seen : str, mtype of y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
+        if X is None and y is None:
+            return None, None
 
         def _most_complex_scitype(scitypes):
             """Return most complex scitype in a list of str."""
