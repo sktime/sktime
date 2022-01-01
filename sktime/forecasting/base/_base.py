@@ -775,7 +775,7 @@ class BaseForecaster(BaseEstimator):
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
-        # X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
+        X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
@@ -798,8 +798,6 @@ class BaseForecaster(BaseEstimator):
             self._y_mtype_last_seen = y_metadata["mtype"]
 
             requires_vectorization = y_scitype not in y_inner_scitype
-            if requires_vectorization:
-                iterate_as = _most_complex_scitype(y_inner_scitype)
 
             if self.get_tag("scitype:y") == "univariate":
                 assert y_metadata["is_univariate"], (
@@ -817,6 +815,8 @@ class BaseForecaster(BaseEstimator):
                 X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
             )
             X_scitype = X_metadata["scitype"]
+
+            requires_vectorization = X_scitype not in X_inner_scitype
 
             msg = (
                 "X must be either None, or in an sktime compatible format, "
@@ -847,6 +847,7 @@ class BaseForecaster(BaseEstimator):
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
         #  if vectorization is required, we wrap in Vect
+
         if not requires_vectorization:
             # converts y, skips conversion if already of right type
             y_inner = convert_to(
@@ -863,6 +864,7 @@ class BaseForecaster(BaseEstimator):
                 as_scitype="Series",  # we are dealing with series
             )
         else:
+            iterate_as = _most_complex_scitype(y_inner_scitype)
             if y is not None:
                 y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
             else:
