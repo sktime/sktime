@@ -141,7 +141,7 @@ jobs:
 
       - name: Install wheel and extras
         # run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
-        run: python -m pip install --no-index --find-links=./wheelhouse sktime[all_extras,dev]
+        run: python -m pip install --no-deps --no-index --find-links=./wheelhouse sktime[all_extras,dev]
 
       - name: Show conda packages
         run: conda list -n test
