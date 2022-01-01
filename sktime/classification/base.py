@@ -208,9 +208,6 @@ class BaseClassifier(BaseEstimator):
 
         self.check_is_fitted()
 
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
         return accuracy_score(y, self.predict(X), normalize=True)
 
     def _check_convert_X_for_predict(self, X):
