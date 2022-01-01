@@ -37,11 +37,11 @@ from sklearn import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
+    VectorizedDF,
     check_is_scitype,
     convert_to,
     mtype,
     mtype_to_scitype,
-    VectorizedDF,
 )
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
@@ -787,13 +787,13 @@ class BaseForecaster(BaseEstimator):
                 y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
             )
             msg = (
-                    "y must be in an sktime compatible format, "
-                    "of scitype Series, Panel or Hierarchical, "
-                    "for instance a pandas.DataFrame with sktime compatible time indices, "
-                    "or with MultiIndex and lowest level a sktime compatible time index. "
-                    "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                    " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
-                )
+                "y must be in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
             if not y_valid:
                 raise TypeError(msg)
 
@@ -802,11 +802,17 @@ class BaseForecaster(BaseEstimator):
 
             requires_vectorization = y_scitype not in y_inner_scitype
 
-            if self.get_tag("scitype:y") == "univariate" and not y_metadata["is_univariate"]:
+            if (
+                self.get_tag("scitype:y") == "univariate"
+                and not y_metadata["is_univariate"]
+            ):
                 raise ValueError(
                     "y must be univariate, but found more than one variable"
                 )
-            if self.get_tag("scitype:y") == "multivariate" and y_metadata["is_univariate"]:
+            if (
+                self.get_tag("scitype:y") == "multivariate"
+                and y_metadata["is_univariate"]
+            ):
                 raise ValueError(
                     "y must have two or more variables, but found only one"
                 )
@@ -1131,13 +1137,13 @@ class BaseForecaster(BaseEstimator):
             idx = y.get_iter_indices()
             ys = y.as_list()
             if X is None:
-                Xs = [None]*len(ys)
+                Xs = [None] * len(ys)
             else:
                 Xs = X.as_list()
 
             self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
             for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = self.clone()
+                self.forecasters_.iloc[i, 0] = clone(self)
                 self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
 
             return self
@@ -1145,7 +1151,7 @@ class BaseForecaster(BaseEstimator):
             n = len(self.forecasters_.index)
             X = kwargs.pop("X", None)
             if X is None:
-                Xs = [None]*n
+                Xs = [None] * n
             else:
                 Xs = X.as_list()
             y_preds = []
