@@ -742,6 +742,8 @@ class BaseForecaster(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
+        assert y is not None, "y cannot be None, but found None"
+
         # retrieve supported mtypes
         y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
         X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
@@ -760,6 +762,8 @@ class BaseForecaster(BaseEstimator):
         y_scitype = y_metadata["scitype"]
         X_scitype = X_metadata["scitype"]
 
+        self._y_mtype_last_seen = y_metadata["mtype"]
+
         if y_scitype != X_scitype:
             raise TypeError("X and y must have the same scitype")
 
@@ -773,31 +777,20 @@ class BaseForecaster(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
-
-        enforce_univariate = self.get_tag("scitype:y") == "univariate"
-        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
-        enforce_index_type = self.get_tag("enforce_index_type")
-
         # checking y
-        if y is not None:
-            check_y_args = {
-                "enforce_univariate": enforce_univariate,
-                "enforce_multivariate": enforce_multivariate,
-                "enforce_index_type": enforce_index_type,
-                "allow_None": False,
-                "allow_empty": True,
-            }
-
-            y = check_series(y, **check_y_args, var_name="y")
-
-            self._y_mtype_last_seen = mtype(y, as_scitype="Series")
+        if self.get_tag("scitype:y") == "univariate":
+            assert y_metadata["is_univariate"], (
+                "y must be univariate, but found more than one variable"
+            )
+        if self.get_tag("scitype:y") == "multivariate":
+            assert not y_metadata["is_univariate"], (
+                "y must have two or more variable, but found only one"
+            )
         # end checking y
 
         # checking X
-        if X is not None:
-            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
-            if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+        if X is not None and self.get_tag("X-y-must-have-same-index"):
+            check_equal_time_index(X, y)
         # end checking X
 
         # convert X & y to supported inner type, if necessary
