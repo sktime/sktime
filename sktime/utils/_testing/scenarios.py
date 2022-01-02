@@ -82,7 +82,7 @@ class TestScenario:
         return_all : bool, default = False
             whether all or only the last result should be returned
             if False, only the last result is returned
-            if True, deepcopy of all intermediate results is returned
+            if True, list of deepcopies of intermediate results is returned
 
         Returns
         -------
