@@ -72,11 +72,11 @@ class TestScenario:
         Parameters
         ----------
         obj : class or object with methods in method_sequence
-        method_sequence : list of str, default = self.default_method_sequence if exists
-                 if self.default_arg_sequence does not exist, default = arg_sequence
+        method_sequence : list of str, default = arg_sequence if passed
+            if arg_sequence is also None, then default = self.default_method_sequence
             sequence of method names to be run
-        arg_sequence : list of str, default = self.default_arg_sequence if exists
-                 if self.default_arg_sequence does not exist, default = method_sequence
+        arg_sequence : list of str, default = method_sequence if passed
+            if arg_sequence is also None, then default = self.default_arg_sequence
             sequence of keys for keyword argument dicts to be used
             names for keys need not equal names of methods
         return_all : bool, default = False
@@ -89,13 +89,13 @@ class TestScenario:
         results: output of the last method call, if return_all = False
             list of deepcopies of all outputs, if return_all = True
         """
-        # first fill Nones with defaults if exist
-        if method_sequence is None:
+        # if both None, fill with defaults if exist
+        if method_sequence is None and arg_sequence is None:
             method_sequence = getattr(self, "default_method_sequence", None)
-        if arg_sequence is None:
             arg_sequence = getattr(self, "default_arg_sequence", None)
 
-        # if still None, fill one with the other
+        # if only one is None, fill one with the other
+        # this will also raise an error if both are still None
         if method_sequence is None:
             method_sequence = _check_list_of_str(arg_sequence)
         else:
