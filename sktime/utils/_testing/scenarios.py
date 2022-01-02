@@ -24,7 +24,7 @@ class TestScenario:
         dict of argument dicts to be used in methods
         names for keys need not equal names of methods these are used in
             but scripted method will look at key with same name as default
-        must be passed to construtor, or set in a child class
+        must be passed to constructor, or set in a child class
     default_method_sequence : list of str, default = None
         optional, if given, default method sequence to use in "run"
         if not provided, "run" must alwayss be passed a method_sequence
@@ -63,7 +63,7 @@ class TestScenario:
             res_1 = obj.method_1(**args_1)
             res_2 = obj.method_2(**args_2)
             etc, where method_i is method_sequence[i],
-                and args_i is arg_sequence[i]
+                and args_i is self.args[arg_sequence[i]]
         and returns results.
 
         if method_i is __init__ (a constructor),
@@ -94,8 +94,14 @@ class TestScenario:
             method_sequence = getattr(self, "default_method_sequence", None)
             arg_sequence = getattr(self, "default_arg_sequence", None)
 
+        # if both are still None, raise an error
+        if method_sequence is None and arg_sequence is None:
+            raise ValueError(
+                "at least one of method_sequence, arg_sequence must be not None "
+                "if no defaults are set in the class"
+            )
+
         # if only one is None, fill one with the other
-        # this will also raise an error if both are still None
         if method_sequence is None:
             method_sequence = _check_list_of_str(arg_sequence)
         else:
