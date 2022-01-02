@@ -26,6 +26,9 @@ class TestScenario:
     default_method_sequence : list of str, default = None
         optional, if given, default method sequence to use in "run"
         if not provided, "run" must alwayss be passed a method_sequence
+    default_arg_sequence : list of str, default = None
+        sequence of keys for keyword argument dicts to be used
+        names for keys need not equal names of methods
 
     Methods
     -------
@@ -33,10 +36,13 @@ class TestScenario:
         Run a call(args) scenario on obj, and retrieve method outputs.
     """
 
-    def __init__(self, args=None, default_method_sequence=None):
-
+    def __init__(
+        self, args=None, default_method_sequence=None, default_arg_sequence=None
+    ):
         if default_method_sequence is not None:
             self.default_method_sequence = _check_list_of_str(default_method_sequence)
+        if default_arg_sequence is not None:
+            self.default_arg_sequence = _check_list_of_str(default_arg_sequence)
         if args is not None:
             self.args = _check_dict_of_dict(args)
         else:
@@ -64,7 +70,8 @@ class TestScenario:
         obj : class or object with methods in method_sequence
         method_sequence : list of str, default = method_sequence
             sequence of method names to be run
-        arg_sequence : list of str, default = self.default_method_sequence
+        arg_sequence : list of str, default = self.default_arg_sequence if exists
+                 if self.default_arg_sequence does not exist, default = method_sequence
             sequence of keys for keyword argument dicts to be used
             names for keys need not equal names of methods
         return_all : bool, default = False
@@ -82,7 +89,10 @@ class TestScenario:
         else:
             method_sequence = _check_list_of_str(method_sequence)
         if arg_sequence is None:
-            arg_sequence = method_sequence
+            if hasattr(self, "default_arg_sequence"):
+                arg_sequence = self.default_arg_sequence
+            else:
+                arg_sequence = method_sequence
         else:
             arg_sequence = _check_list_of_str(arg_sequence)
 
