@@ -8,9 +8,12 @@ __author__ = ["Markus Löning", "Taiwo Owoseni"]
 
 import os
 from datetime import timedelta
+from typing import Union
 
 import numpy as np
 import pandas as pd
+
+ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
 
 
 def is_int(x) -> bool:
@@ -26,7 +29,7 @@ def is_float(x) -> bool:
 
 def is_timedelta(x) -> bool:
     """Check if x is of timedelta type."""
-    return isinstance(x, (pd.Timedelta, timedelta, np.timedelta64))
+    return isinstance(x, ACCEPTED_TIMEDELTA_TYPES)
 
 
 def check_n_jobs(n_jobs) -> int:
@@ -54,7 +57,11 @@ def check_n_jobs(n_jobs) -> int:
         return n_jobs
 
 
-def check_window_length(window_length, n_timepoints=None, name="window_length"):
+def check_window_length(
+    window_length: Union[int, float, Union[ACCEPTED_TIMEDELTA_TYPES]],
+    n_timepoints: int = None,
+    name: str = "window_length",
+):
     """Validate window length.
 
     Parameters
