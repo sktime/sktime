@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Tests for sktime annotators."""
+
 import pandas as pd
 
 import pytest
-from sktime.utils._testing.estimator_checks import _make_args
 from sktime.registry import all_estimators
+from sktime.utils._testing.estimator_checks import _make_args
 
 ALL_ANNOTATORS = all_estimators(estimator_types="series-annotator", return_names=False)
 

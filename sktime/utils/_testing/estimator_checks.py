@@ -31,8 +31,6 @@ from sktime.transformations.base import (
     _SeriesToSeriesTransformer,
 )
 from sktime.utils._testing.annotation import make_annotation_problem
-from sktime.utils._testing.deep_equals import deep_equals
-
 from sktime.utils._testing.forecasting import (
     _get_n_columns,
     _make_series,
