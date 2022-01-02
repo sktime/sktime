@@ -61,7 +61,7 @@ def check_window_length(
     window_length: Union[int, float, Union[ACCEPTED_TIMEDELTA_TYPES]],
     n_timepoints: int = None,
     name: str = "window_length",
-):
+) -> Union[int, Union[ACCEPTED_TIMEDELTA_TYPES]]:
     """Validate window length.
 
     Parameters
