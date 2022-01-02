@@ -554,23 +554,14 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         """Generate sliding windows."""
         for split_point in range(start, end, step_length):
             if is_timedelta(x=window_length):
-                if split_point < len(y):
-                    train = np.arange(
-                        y.get_loc(
-                            max(y[min(split_point, len(y) - 1)] - window_length, min(y))
-                        ),
-                        split_point,
-                    )
-                else:
-                    train = np.arange(
-                        y.get_loc(
-                            max(y[min(split_point, len(y) - 1)] - window_length, min(y))
-                        )
-                        + 1,
-                        split_point,
-                    )
+                arange_start = y.get_loc(
+                    max(y[min(split_point, len(y) - 1)] - window_length, min(y))
+                )
+                if split_point >= len(y):
+                    arange_start += 1
             else:
-                train = np.arange(split_point - window_length, split_point)
+                arange_start = split_point - window_length
+            train = np.arange(arange_start, split_point)
             test = split_point + fh - 1
             yield train, test
 
@@ -630,23 +621,14 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         """Generate expanding windows."""
         for split_point in range(start, end, step_length):
             if is_timedelta(x=window_length):
-                if start < len(y):
-                    train = np.arange(
-                        y.get_loc(
-                            max(y[min(start, len(y) - 1)] - window_length, min(y))
-                        ),
-                        split_point,
-                    )
-                else:
-                    train = np.arange(
-                        y.get_loc(
-                            max(y[min(start, len(y) - 1)] - window_length, min(y))
-                        )
-                        + 1,
-                        split_point,
-                    )
+                arange_start = y.get_loc(
+                    max(y[min(start, len(y) - 1)] - window_length, min(y))
+                )
+                if start >= len(y):
+                    arange_start += 1
             else:
-                train = np.arange(start - window_length, split_point)
+                arange_start = start - window_length
+            train = np.arange(arange_start, split_point)
             test = split_point + fh - 1
             yield train, test
 
