@@ -26,14 +26,8 @@ Optional implements:
     fitted parameter inspection           - get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
 
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
-
-Testing:
+Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -70,8 +64,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
     # optional todo: override base class estimator default tags here if necessary
     _tags = {
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
