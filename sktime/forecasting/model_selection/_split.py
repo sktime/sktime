@@ -374,20 +374,16 @@ class BaseWindowSplitter(BaseSplitter):
             if self.initial_window <= self.window_length:
                 raise ValueError("`initial_window` must greater than `window_length`")
 
+            if is_timedelta(x=self.initial_window):
+                initial_window_threshold = y.get_loc(y[0] + self.initial_window)
+            else:
+                initial_window_threshold = self.initial_window
             # For in-sample forecasting horizons, the first split must ensure that
             # in-sample test set is still within the data.
-            if is_timedelta(x=self.initial_window):
-                if not fh.is_all_out_of_sample() and abs(fh[0]) >= y.get_loc(
-                    y[0] + self.initial_window
-                ):
-                    initial_start = abs(fh[0]) - self.initial_window + 1
-                else:
-                    initial_start = 0
+            if not fh.is_all_out_of_sample() and abs(fh[0]) >= initial_window_threshold:
+                initial_start = abs(fh[0]) - self.initial_window + 1
             else:
-                if not fh.is_all_out_of_sample() and abs(fh[0]) >= self.initial_window:
-                    initial_start = abs(fh[0]) - self.initial_window + 1
-                else:
-                    initial_start = 0
+                initial_start = 0
 
             if is_timedelta(x=initial_window):
                 initial_end = y.get_loc(y[initial_start] + initial_window)
