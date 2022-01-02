@@ -212,7 +212,7 @@ class BaseSplitter:
 
     Parameters
     ----------
-    window_length : int
+    window_length : int or timedelta
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
@@ -531,11 +531,11 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     ----------
     fh : int, list or np.array
         Forecasting horizon
-    window_length : int
+    window_length : int or timedelta
         Window length
     step_length : int, optional (default=1)
         Step length between windows
-    initial_window : int, optional (default=None)
+    initial_window : int or timedelta, optional (default=None)
         Window length of first window
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
@@ -591,7 +591,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     ----------
     fh : int, list or np.array, optional (default=1)
         Forecasting horizon
-    initial_window : int, optional (default=10)
+    initial_window : int or timedelta, optional (default=10)
         Window length
     step_length : int, optional (default=1)
         Step length between windows
@@ -637,7 +637,7 @@ class SingleWindowSplitter(BaseSplitter):
     ----------
     fh : int, list or np.array
         Forecasting horizon
-    window_length : int
+    window_length : int or timedelta
         Window length
     """
 
