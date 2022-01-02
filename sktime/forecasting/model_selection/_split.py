@@ -554,14 +554,14 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         """Generate sliding windows."""
         for split_point in range(start, end, step_length):
             if is_timedelta(x=window_length):
-                arange_start = y.get_loc(
+                train_start = y.get_loc(
                     max(y[min(split_point, len(y) - 1)] - window_length, min(y))
                 )
                 if split_point >= len(y):
-                    arange_start += 1
+                    train_start += 1
             else:
-                arange_start = split_point - window_length
-            train = np.arange(arange_start, split_point)
+                train_start = split_point - window_length
+            train = np.arange(train_start, split_point)
             test = split_point + fh - 1
             yield train, test
 
@@ -621,14 +621,14 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         """Generate expanding windows."""
         for split_point in range(start, end, step_length):
             if is_timedelta(x=window_length):
-                arange_start = y.get_loc(
+                train_start = y.get_loc(
                     max(y[min(start, len(y) - 1)] - window_length, min(y))
                 )
                 if start >= len(y):
-                    arange_start += 1
+                    train_start += 1
             else:
-                arange_start = start - window_length
-            train = np.arange(arange_start, split_point)
+                train_start = start - window_length
+            train = np.arange(train_start, split_point)
             test = split_point + fh - 1
             yield train, test
 
