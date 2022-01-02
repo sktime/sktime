@@ -175,6 +175,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "capability:inverse_transform",
+        "transformer",
+        "bool",
+        "is the transformer capable of carrying out an inverse transform?",
+    ),
+    (
         "capability:pred_int",
         "forecaster",
         "bool",

@@ -101,10 +101,10 @@ class BaseClassifier(BaseEstimator):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = _internal_convert(X, y)
-        self.metadata_ = _check_classifier_input(X, y)
-        missing = self.metadata_["has_nans"]
-        multivariate = not self.metadata_["is_univariate"]
-        unequal = not self.metadata_["is_equal_length"]
+        X_metadata = _check_classifier_input(X, y)
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
@@ -210,9 +210,6 @@ class BaseClassifier(BaseEstimator):
 
         self.check_is_fitted()
 
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
         return accuracy_score(y, self.predict(X), normalize=True)
 
     def _check_convert_X_for_predict(self, X):
@@ -233,10 +230,10 @@ class BaseClassifier(BaseEstimator):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         X = _internal_convert(X)
-        self.metadata_ = _check_classifier_input(X)
-        missing = self.metadata_["has_nans"]
-        multivariate = not self.metadata_["is_univariate"]
-        unequal = not self.metadata_["is_equal_length"]
+        X_metadata = _check_classifier_input(X)
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
