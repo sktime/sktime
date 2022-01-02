@@ -59,10 +59,11 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
 
     Parameters
     ----------
-    window_length: positive int, positive float in (0, 1), or None
+    window_length: positive int, positive float in (0, 1), positive timedelta, or None
         The window length:
         - If int, the total number of time points.
         - If float, the fraction of time points relative to `n_timepoints`.
+        - If timedelta, length in corresponding time units
     n_timepoints: positive int, optional (default=None)
         The number of time points to which to apply `window_length` when
         passed as a float (fraction). Will be ignored if `window_length` is
@@ -72,7 +73,7 @@ def check_window_length(window_length, n_timepoints=None, name="window_length"):
 
     Returns
     -------
-    window_length: int
+    window_length: int or timedelta
     """
     if window_length is None:
         return window_length
