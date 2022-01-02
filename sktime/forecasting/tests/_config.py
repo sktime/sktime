@@ -23,7 +23,9 @@ import pandas as pd
 from sktime.utils._testing.series import _make_series
 
 # We here define the parameter values for unit testing.
-TEST_WINDOW_LENGTHS = [1, 5, pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
+TEST_WINDOW_LENGTHS_INT = [1, 5]
+TEST_WINDOW_LENGTHS_TIMEDELTA = [pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
+TEST_WINDOW_LENGTHS = [*TEST_WINDOW_LENGTHS_INT, *TEST_WINDOW_LENGTHS_TIMEDELTA]
 TEST_INITIAL_WINDOW = [7, 10, pd.Timedelta(7, unit="D"), pd.Timedelta(10, unit="D")]
 TEST_STEP_LENGTHS = [1, 5]
 TEST_OOS_FHS = [1, np.array([2, 5])]  # out-of-sample
