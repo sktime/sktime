@@ -54,3 +54,4 @@ sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
 
 sktime/annotation/clasp.py @patrickzib @ermshaua
 sktime/transformations/series/clasp.py @patrickzib @ermshaua
+sktime/channel_selection/distance_based/cs.py @haskarb

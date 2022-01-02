@@ -1448,6 +1448,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "haskarb",
+      "name": "Bhaskar Dhariyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20501023?v=4",
+      "profile": "haskarb.github.io",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "projectName": "sktime",
