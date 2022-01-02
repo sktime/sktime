@@ -3,10 +3,7 @@
 
 """Test splitters."""
 
-__author__ = [
-    "Markus Löning",
-    "Kutay Koralturk",
-]
+__author__ = ["Markus Löning", "Kutay Koralturk", "khrapovs"]
 
 import numpy as np
 import pandas as pd
@@ -197,6 +194,12 @@ def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
 ):
     """Test SlidingWindowSplitter."""
+    if (is_timedelta(x=initial_window) and not is_timedelta(x=window_length)) or (
+        is_timedelta(x=window_length) and not is_timedelta(x=initial_window)
+    ):
+        pytest.skip(
+            "Incompatible initial_window and window_length are tested elsewhere."
+        )
     cv = SlidingWindowSplitter(
         fh=fh,
         window_length=window_length,
@@ -215,6 +218,31 @@ def test_sliding_window_splitter_with_initial_window(
     else:
         assert np.vstack(train_windows[1:]).shape == (n_splits - 1, window_length)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+
+
+@pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
+def test_sliding_window_splitter_with_incompatible_initial_window_and_window_length(
+    y, fh, window_length, step_length, initial_window
+):
+    """Test SlidingWindowSplitter with incompatible initial_window and window_length."""
+    if (is_timedelta(x=initial_window) and is_timedelta(x=window_length)) or (
+        not is_timedelta(x=window_length) and not is_timedelta(x=initial_window)
+    ):
+        pytest.skip("Compatible initial_window and window_length are tested elsewhere.")
+    cv = SlidingWindowSplitter(
+        fh=fh,
+        window_length=window_length,
+        step_length=step_length,
+        initial_window=initial_window,
+        start_with_window=True,
+    )
+    match = "The `initial_window` and `window_length` units are incompatible"
+    with pytest.raises(ValueError, match=match):
+        _check_cv(cv, y)
 
 
 def _get_n_incomplete_windows(window_length, step_length):

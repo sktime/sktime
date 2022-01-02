@@ -10,7 +10,7 @@ __all__ = [
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["mloning", "kkoralturk"]
+__author__ = ["mloning", "kkoralturk", "khrapovs"]
 
 import inspect
 import numbers
@@ -187,6 +187,11 @@ def _check_window_lengths(y, fh, window_length, initial_window):
                     f"with the length of `y`. Found `initial_window`={initial_window}, "
                     f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
                 )
+            if not is_timedelta(x=window_length):
+                raise ValueError(
+                    "The `initial_window` and `window_length` units are incompatible. "
+                    "They are pd.Timedelta and int, respectively."
+                )
         else:
             if initial_window + fh_max > n_timepoints:
                 raise ValueError(
@@ -194,6 +199,11 @@ def _check_window_lengths(y, fh, window_length, initial_window):
                     f"incompatible "
                     f"with the length of `y`. Found `initial_window`={initial_window}, "
                     f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
+                )
+            if is_timedelta(x=window_length):
+                raise ValueError(
+                    "The `initial_window` and `window_length` units are incompatible. "
+                    "They are int and pd.Timedelta, respectively."
                 )
 
 
