@@ -68,6 +68,19 @@ def test_testscenario_object_default_arg_sequence():
     assert result == "supercalifragilistic"
 
 
+def test_testscenario_object_return_all():
+    """Test basic workflow: construct with args and default arg sequence."""
+    obj = TestedMockClass(a="super")
+    scenario = TestScenario(
+        args={"foo": {"b": "cali"}, "bar": {"c": "fragi", "d": "listic"}},
+        default_arg_sequence=["foo", "bar"],
+    )
+
+    result = scenario.run(obj, return_all=True)
+
+    assert result == ["supercali", "supercalifragilistic"]
+
+
 def test_testscenario_object_multi_call_defaults():
     """Test basic workflow: default args where methods are called multiple times."""
     obj = TestedMockClass(a="super")
@@ -87,7 +100,7 @@ def test_testscenario_object_multi_call_defaults():
     assert result == "supercalifragilisticexpialidocious"
 
 
-def test_testscenario_object_multi_call_in_rin():
+def test_testscenario_object_multi_call_in_run():
     """Test basic workflow: run args where methods are called multiple times."""
     obj = TestedMockClass(a="super")
     scenario = TestScenario(
@@ -106,3 +119,44 @@ def test_testscenario_object_multi_call_in_rin():
     )
 
     assert result == "supercalifragilisticexpialidocious"
+
+
+def test_testscenario_class_full_options():
+    """Test basic workflow: run args where methods are called multiple times."""
+    obj = TestedMockClass
+    scenario = TestScenario(
+        args={
+            "__init__": {"a": "super"},
+            "foo": {"b": "cali"},
+            "bar": {"c": "fragi", "d": "listic"},
+            "foo-2nd": {"b": "expi"},
+            "bar-2nd": {"c": "ali", "d": "docious"},
+        },
+    )
+
+    result = scenario.run(
+        obj,
+        arg_sequence=["__init__", "foo", "bar", "foo-2nd", "bar-2nd"],
+        method_sequence=["__init__", "foo", "bar", "foo", "bar"],
+    )
+
+    assert result == "supercalifragilisticexpialidocious"
+
+
+def test_testscenario_class_simple():
+    """Test basic workflow: run args where methods are called multiple times."""
+    obj = TestedMockClass
+    scenario = TestScenario(
+        args={
+            "__init__": {"a": "super"},
+            "foo": {"b": "cali"},
+            "bar": {"c": "fragi", "d": "listic"},
+        },
+    )
+
+    result = scenario.run(
+        obj,
+        method_sequence=["__init__", "foo", "bar"],
+    )
+
+    assert result == "supercalifragilistic"
