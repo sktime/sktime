@@ -20,7 +20,6 @@ from sktime.transformations.base import (
     _PanelToTabularTransformer,
 )
 from sktime.utils._testing.estimator_checks import (
-    _construct_instance,
     _has_capability,
     _make_args,
 )
@@ -47,7 +46,7 @@ N_CLASSES = 3
 @pytest.mark.parametrize("Estimator", PANEL_ESTIMATORS)
 def test_3d_numpy_input(Estimator):
     """Test classifiers handle 3D numpy input correctly."""
-    estimator = _construct_instance(Estimator)
+    estimator = Estimator.create_test_instance()
     fit_args = _make_args(estimator, "fit", return_numpy=True)
     estimator.fit(*fit_args)
 
@@ -75,7 +74,7 @@ def test_multivariate_input(Estimator):
     n_columns = 2
     error_msg = "X must be univariate"
 
-    estimator = _construct_instance(Estimator)
+    estimator = Estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit", n_columns=n_columns)
 
     # check if estimator can handle multivariate data
@@ -101,7 +100,7 @@ def test_classifier_output(Estimator):
     Test predict produces a np.array or pd.Series with only values seen in the train
     data, and that predict_proba probability estimates add up to one.
     """
-    estimator = _construct_instance(Estimator)
+    estimator = Estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit", n_classes=N_CLASSES)
     estimator.fit(X_train, y_train)
 
@@ -124,7 +123,7 @@ def test_classifier_output(Estimator):
 @pytest.mark.parametrize("Estimator", REGRESSORS)
 def test_regressor_output(Estimator):
     """Test regressors output correctly."""
-    estimator = _construct_instance(Estimator)
+    estimator = Estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit")
     estimator.fit(X_train, y_train)
 

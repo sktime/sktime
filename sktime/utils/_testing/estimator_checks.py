@@ -31,6 +31,8 @@ from sktime.transformations.base import (
     _SeriesToSeriesTransformer,
 )
 from sktime.utils._testing.annotation import make_annotation_problem
+from sktime.utils._testing.deep_equals import deep_equals
+
 from sktime.utils._testing.forecasting import (
     _get_n_columns,
     _make_series,
@@ -49,12 +51,6 @@ def _get_err_msg(estimator):
         f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
         f"{VALID_ESTIMATOR_TYPES}"
     )
-
-
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    # return the instance of the class with default parameters
-    return Estimator.create_test_instance()
 
 
 def _list_required_methods(estimator):
