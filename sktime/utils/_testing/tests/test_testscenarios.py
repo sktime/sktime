@@ -101,7 +101,7 @@ def test_testscenario_object_multi_call_defaults():
 
 
 def test_testscenario_object_multi_call_in_run():
-    """Test basic workflow: run args where methods are called multiple times."""
+    """Test advanced workflow: run args where methods are called multiple times."""
     obj = TestedMockClass(a="super")
     scenario = TestScenario(
         args={
@@ -122,7 +122,7 @@ def test_testscenario_object_multi_call_in_run():
 
 
 def test_testscenario_class_full_options():
-    """Test basic workflow: run args where methods are called multiple times."""
+    """Test advanced workflow: constructor and methods called multiple times."""
     obj = TestedMockClass
     scenario = TestScenario(
         args={
@@ -144,7 +144,7 @@ def test_testscenario_class_full_options():
 
 
 def test_testscenario_class_simple():
-    """Test basic workflow: run args where methods are called multiple times."""
+    """Test advanced workflow: constructor, but only simple function calls."""
     obj = TestedMockClass
     scenario = TestScenario(
         args={
