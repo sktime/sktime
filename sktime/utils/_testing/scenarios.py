@@ -76,7 +76,7 @@ class TestScenario:
             if arg_sequence is also None, then default = self.default_method_sequence
             sequence of method names to be run
         arg_sequence : list of str, default = method_sequence if passed
-            if arg_sequence is also None, then default = self.default_arg_sequence
+            if method_sequence is also None, then default = self.default_arg_sequence
             sequence of keys for keyword argument dicts to be used
             names for keys need not equal names of methods
         return_all : bool, default = False
