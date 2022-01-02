@@ -10,6 +10,7 @@ __all__ = ["TestScenario"]
 
 
 from copy import deepcopy
+from inspect import isclass
 import numpy as np
 
 
@@ -111,8 +112,14 @@ class TestScenario:
         for i in range(num_calls):
             methodname = method_sequence[i]
             args = self.args[arg_sequence[i]]
-            res = getattr(obj, methodname)(**args)
-            if methodname == "__init__":
+            if methodname != "__init__":
+                res = getattr(obj, methodname)(**args)
+            # if constructor is called, run directly and replace obj
+            else:
+                if isclass(obj):
+                    res = obj(**args)
+                else:
+                    res = type(obj)(**args)
                 obj = res
             if return_all:
                 results += [deepcopy(res)]
