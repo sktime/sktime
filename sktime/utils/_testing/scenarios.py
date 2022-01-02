@@ -11,6 +11,7 @@ __all__ = ["TestScenario"]
 
 from copy import deepcopy
 from inspect import isclass
+
 import numpy as np
 
 
