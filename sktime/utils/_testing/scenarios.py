@@ -94,8 +94,14 @@ class TestScenario:
             method_sequence = getattr(self, "default_method_sequence", None)
             arg_sequence = getattr(self, "default_arg_sequence", None)
 
+        # if both are still None, raise an error
+        if method_sequence is None and arg_sequence is None:
+            raise ValueError(
+                "at least one of method_sequence, arg_sequence must be not None "
+                "if no defaults are set in the class"
+            )
+
         # if only one is None, fill one with the other
-        # this will also raise an error if both are still None
         if method_sequence is None:
             method_sequence = _check_list_of_str(arg_sequence)
         else:
