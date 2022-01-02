@@ -321,12 +321,10 @@ class CutoffSplitter(BaseSplitter):
         window_length = check_window_length(self.window_length, n_timepoints)
         for cutoff in cutoffs:
             if is_timedelta(x=window_length):
-                training_window = (
-                    np.arange(y.get_loc(max(y[0], y[cutoff] - window_length)), cutoff)
-                    + 1
-                )
+                train_start = y.get_loc(max(y[0], y[cutoff] - window_length))
             else:
-                training_window = np.arange(cutoff - window_length, cutoff) + 1
+                train_start = cutoff - window_length
+            training_window = np.arange(train_start, cutoff) + 1
             test_window = cutoff + fh
             yield training_window, test_window
 
