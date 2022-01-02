@@ -5,46 +5,36 @@ import itertools
 
 import numpy as np
 import pandas as pd
-from scripts.utils import eu_dist
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestCentroid
 from sklearn.preprocessing import normalize
 
-from sktime.utils.data_processing import (
+from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_nested,
     from_nested_to_3d_numpy,
 )
 
-# from scripts.calc_distance import distance_matrix
-# from scripts.shrunk_cent import shrunk_centroid
-# from scripts.utils import detect_knee_point
+
+def eu_dist(x, y):
+    """Calculate the euclidean distance."""
+    return np.sqrt(np.sum((x - y) ** 2))
 
 
 def detect_knee_point(values, indices):
     """Find elbow point."""
-    # get coordinates of all the points
-    # print(values)
-    # print(indices)
     n_points = len(values)
-    # print(n_points)
     all_coords = np.vstack((range(n_points), values)).T
-    # get the first point
     first_point = all_coords[0]
-    # get vector between first and last point - this is the line
     line_vec = all_coords[-1] - all_coords[0]
     line_vec_norm = line_vec / np.sqrt(np.sum(line_vec ** 2))
     vec_from_first = all_coords - first_point
     scalar_prod = np.sum(vec_from_first * np.tile(line_vec_norm, (n_points, 1)), axis=1)
     vec_from_first_parallel = np.outer(scalar_prod, line_vec_norm)
     vec_to_line = vec_from_first - vec_from_first_parallel
-    # distance to line is the norm of vec_to_line
     dist_to_line = np.sqrt(np.sum(vec_to_line ** 2, axis=1))
-    # knee/elbow is the point with max distance value
     knee_idx = np.argmax(dist_to_line)
     knee = values[knee_idx]
-    # print(f"Knee Value: {values[knee_idx]}, {knee_idx}")
-
     best_dims = [idx for (elem, idx) in zip(values, indices) if elem > knee]
     if len(best_dims) == 0:
         return [knee_idx], knee_idx
@@ -174,7 +164,7 @@ class ecp(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y):
         """Convert training data."""
-        centroid_obj = shrunk_centroid(self.shrinkage)
+        centroid_obj = shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
         obj = distance_matrix()
         self.distance_frame = obj.distance(df)
