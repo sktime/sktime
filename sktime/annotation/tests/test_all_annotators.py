@@ -2,8 +2,8 @@
 """Tests for sktime annotators."""
 
 import pandas as pd
-
 import pytest
+
 from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _make_args
 
