@@ -357,7 +357,8 @@ def load_from_tsfile(
         for dim in range(0, _meta_data["num_dimensions"]):
             data["dim_" + str(dim)] = instance_list[dim]
         # convert to numpy if the user requests it.
-        return_data_type = return_data_type.strip().lower()
+        if isinstance(return_data_type, str):
+            return_data_type = return_data_type.strip().lower()
         if return_data_type == "numpy2d" or return_data_type == "np2d":
             if (
                 not _meta_data["has_timestamps"]
@@ -372,13 +373,13 @@ def load_from_tsfile(
                     f"cannot be used {_meta_data}"
                 )
         elif return_data_type == "numpy3d" or return_data_type == "np3d":
-            if _meta_data["has_timestamps"] and _meta_data["is_equal_length"]:
+            if not _meta_data["has_timestamps"] and _meta_data["is_equal_length"]:
                 data = from_nested_to_3d_numpy(data)
             else:
                 raise ValueError(
                     " Unable to convert to 3d numpy as requested, "
                     "because at least one flag means the data structure "
-                    f"cannot be used {_meta_data}"
+                    f"cannot be used, meta data = {_meta_data}"
                 )
         if return_y and not _meta_data["has_class_labels"]:
             raise IOError(

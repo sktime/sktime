@@ -39,23 +39,34 @@ def test_load_from_tsfile():
     3. Univariate and multivariate unequal length (PLAID) return X as DataFrame
     """
     data_path = MODULE + "/data/UnitTest/UnitTest_TRAIN.ts"
-    X, y = load_from_tsfile(data_path)
     # Test 1.1: load univariate equal length (UnitTest), should return 2D array and 1D
     # array, test first and last data
     # Test 1.2: Load a problem without y values (UnitTest),  test first and last data.
-    X, y = load_from_tsfile(full_file_path_and_name=data_path)
-    X2 = load_from_tsfile(full_file_path_and_name=data_path, return_y=False)
+    X, y = load_from_tsfile(data_path, return_data_type="np2D")
+    X2 = load_from_tsfile(data_path, return_y=False, return_data_type="np2D")
     assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
     assert X.ndim == 2 and X2.ndim == 2
     assert X.shape == (20, 24) and y.shape == (20,)
     assert X[0][0] == 573.0
+    X2 = load_from_tsfile(data_path, return_y=False, return_data_type="numpy3D")
+    assert isinstance(X2, np.ndarray)
+    assert X2.ndim == 3
+    assert X2.shape == (20, 1, 24)
+    assert X2[0][0][0] == 573.0
+
     # Test 2: load multivare equal length (BasicMotions), should return 3D array and 1D
     # array, test first and last data.
     data_path = MODULE + "/data/BasicMotions/BasicMotions_TRAIN.ts"
-    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    X, y = load_from_tsfile(data_path, return_data_type="numpy3d")
     assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
     assert X.shape == (40, 6, 100) and y.shape == (40,)
     assert X[1][2][3] == -1.898794
+    X, y = load_from_tsfile(data_path)
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (40, 6) and y.shape == (40,)
+    assert isinstance(X.iloc[1, 2], pd.Series)
+    assert X.iloc[1, 2].iloc[3] == -1.898794
+
     # Test 3.1: load univariate unequal length (PLAID), should return a one column
     # dataframe,
     data_path = MODULE + "/data/PLAID/PLAID_TRAIN.ts"
