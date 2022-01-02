@@ -52,7 +52,7 @@ class TestScenario:
                 )
             _check_dict_of_dict(self.args)
 
-    def run(self, obj, arg_sequence=None, method_sequence=None, return_all=False):
+    def run(self, obj, method_sequence=None, arg_sequence=None, return_all=False):
         """Run a call(args) scenario on obj, and retrieve method outputs.
 
         Runs a sequence of commands
@@ -68,7 +68,8 @@ class TestScenario:
         Parameters
         ----------
         obj : class or object with methods in method_sequence
-        method_sequence : list of str, default = method_sequence
+        method_sequence : list of str, default = self.default_method_sequence if exists
+                 if self.default_arg_sequence does not exist, default = arg_sequence
             sequence of method names to be run
         arg_sequence : list of str, default = self.default_arg_sequence if exists
                  if self.default_arg_sequence does not exist, default = method_sequence
@@ -84,22 +85,28 @@ class TestScenario:
         output of the last method call, if return_all = False
         list of deepcopies of all outputs, if return_all = True
         """
+        # first fill Nones with defaults if exist
         if method_sequence is None:
-            method_sequence = self.default_method_sequence
+            method_sequence = getattr(self, "default_method_sequence", None)
+        if arg_sequence is None:
+            arg_sequence = getattr(self, "default_arg_sequence", None)
+
+        # if still None, fill one with the other
+        if method_sequence is None:
+            method_sequence = _check_list_of_str(arg_sequence)
         else:
             method_sequence = _check_list_of_str(method_sequence)
         if arg_sequence is None:
-            if hasattr(self, "default_arg_sequence"):
-                arg_sequence = self.default_arg_sequence
-            else:
-                arg_sequence = method_sequence
+            arg_sequence = _check_list_of_str(method_sequence)
         else:
             arg_sequence = _check_list_of_str(arg_sequence)
 
+        # check that length of sequences is the same
         num_calls = len(arg_sequence)
         if not num_calls == len(method_sequence):
             raise ValueError("arg_sequence and method_sequence must have same length")
 
+        # execute the commands in sequence, report result(s)
         results = []
         for i in range(num_calls):
             methodname = method_sequence[i]
