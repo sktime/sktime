@@ -35,6 +35,8 @@ class TestScenario:
     -------
     run(obj, args=None, default_method_sequence=None)
         Run a call(args) scenario on obj, and retrieve method outputs.
+    is_applicable(obj)
+        Check whether scenario is applicable to obj.
     """
 
     def __init__(
@@ -83,8 +85,8 @@ class TestScenario:
 
         Returns
         -------
-        output of the last method call, if return_all = False
-        list of deepcopies of all outputs, if return_all = True
+        results: output of the last method call, if return_all = False
+            list of deepcopies of all outputs, if return_all = True
         """
         # first fill Nones with defaults if exist
         if method_sequence is None:
@@ -127,6 +129,27 @@ class TestScenario:
                 results = res
 
         return results
+
+    def is_applicable(self, obj):
+        """Check whether scenario is applicable to obj.
+
+        Abstract method, children should implement. This just returns "true".
+
+        Example for child class: scenario is univariate time series forecasting.
+            Then, this returns False on multivariate, True on univariate forecasters.
+
+        Parameters
+        ----------
+        obj : class or object to check against scenario
+
+        Returns
+        -------
+        applicable: bool
+            True if self is applicable to obj, False if not
+            "applicable" is defined as the implementer chooses, as output of this method
+                False is typically used as a "skip" flag in unit or integration testing
+        """
+        return True
 
 
 def _check_list_of_str(obj, name="obj"):
