@@ -19,7 +19,11 @@ from sktime.transformations.base import (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
 )
-from sktime.utils._testing.estimator_checks import _construct_instance, _make_args
+from sktime.utils._testing.estimator_checks import (
+    _construct_instance,
+    _has_capability,
+    _make_args,
+)
 
 CLASSIFIERS = all_estimators(
     "classifier", return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
@@ -48,7 +52,7 @@ def test_3d_numpy_input(Estimator):
     estimator.fit(*fit_args)
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
 
             # try if methods can handle 3d numpy input data
             try:

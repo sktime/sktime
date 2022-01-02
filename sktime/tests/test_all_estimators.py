@@ -40,6 +40,7 @@ from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
     _get_args,
+    _has_capability,
     _list_required_methods,
     _make_args,
 )
@@ -87,14 +88,20 @@ def pytest_generate_tests(metafunc):
         estimator_classes_to_test = [
             est for est in ALL_ESTIMATORS if not is_excluded(est)
         ]
-        estimator_class_names = [est.__name__ for est in estimator_classes_to_test]
         # create instances from the classes
-        estimator_instances_to_test = [
-            est.create_test_instance() for est in estimator_classes_to_test
-        ]
+        estimator_instances_to_test = []
+        estimator_instance_names = []
+        # retrieve all estimator parameters if multiple, construct instances
+        for est in estimator_classes_to_test:
+            all_instances_of_est, instance_names = est.create_test_instances_and_names()
+            estimator_instances_to_test += all_instances_of_est
+            estimator_instance_names += instance_names
+
         # parameterize test with the list of instances
         metafunc.parametrize(
-            "estimator_instance", estimator_instances_to_test, ids=estimator_class_names
+            "estimator_instance",
+            estimator_instances_to_test,
+            ids=estimator_instance_names,
         )
 
 
@@ -346,7 +353,7 @@ def test_raises_not_fitted_error(estimator_instance):
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args = _make_args(estimator, method)
             with pytest.raises(NotFittedError, match=r"has not been fitted"):
                 getattr(estimator, method)(*args)
@@ -365,7 +372,7 @@ def test_fit_idempotent(estimator_instance):
     results = {}
     args = {}
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args[method] = _make_args(estimator, method)
             results[method] = getattr(estimator, method)(*args[method])
 
@@ -374,7 +381,7 @@ def test_fit_idempotent(estimator_instance):
     estimator.fit(*fit_args)
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             new_result = getattr(estimator, method)(*args[method])
             _assert_array_almost_equal(
                 results[method],
@@ -429,7 +436,7 @@ def test_methods_do_not_change_state(estimator_instance):
     dict_before = estimator.__dict__.copy()
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
@@ -470,7 +477,7 @@ def test_methods_have_no_side_effects(estimator_instance):
     ), f"Estimator: {estimator} has side effects on arguments of fit"
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             new_args = _make_args(estimator, method)
             old_args = deepcopy(new_args)
             getattr(estimator, method)(*new_args)
@@ -491,7 +498,7 @@ def test_persistence_via_pickle(estimator_instance):
     results = {}
     args = {}
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args[method] = _make_args(estimator, method)
             results[method] = getattr(estimator, method)(*args[method])
 
@@ -534,7 +541,7 @@ def test_multiprocessing_idempotent(estimator_class):
 
         # compute and store results
         for method in NON_STATE_CHANGING_METHODS:
-            if hasattr(estimator, method):
+            if _has_capability(estimator, method):
                 args[method] = _make_args(estimator, method)
                 results[method] = getattr(estimator, method)(*args[method])
 
