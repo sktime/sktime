@@ -121,6 +121,7 @@ class TestScenario:
         for i in range(num_calls):
             methodname = method_sequence[i]
             args = self.args[arg_sequence[i]]
+
             if methodname != "__init__":
                 res = getattr(obj, methodname)(**args)
             # if constructor is called, run directly and replace obj
@@ -130,6 +131,7 @@ class TestScenario:
                 else:
                     res = type(obj)(**args)
                 obj = res
+
             if return_all:
                 results += [deepcopy(res)]
             else:
