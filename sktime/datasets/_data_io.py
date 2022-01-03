@@ -94,7 +94,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_downloaded_datasets(extract_path):
+def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
     Modified version of
@@ -108,7 +108,7 @@ def _list_downloaded_datasets(extract_path):
 
     """
     if extract_path is None:
-        data_dir = os.path.join(MODULE, DIRNAME)
+        data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
     datasets = [
@@ -127,26 +127,34 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         local_dirname = extract_path
     else:
         local_module = MODULE
-        local_dirname = DIRNAME
+        local_dirname = "data"
 
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_downloaded_datasets(extract_path):
-        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-        # This also tests the validitiy of the URL, can't rely on the html
-        # status code as it always returns 200
-        try:
-            _download_and_extract(
-                url,
-                extract_path=extract_path,
-            )
-        except zipfile.BadZipFile as e:
-            raise ValueError(
-                "Invalid dataset name. ",
-                extract_path,
-                "Please make sure the dataset "
-                + "is available on http://timeseriesclassification.com/.",
-            ) from e
+    if name not in _list_available_datasets(extract_path):
+        local_dirname = "local_data"
+        if not os.path.exists(os.path.join(local_module, local_dirname)):
+            os.makedirs(os.path.join(local_module, local_dirname))
+        if name not in _list_available_datasets(
+            os.path.join(local_module, local_dirname)
+        ):
+            # Dataset is not baked in the datasets directory, look in local_data,
+            # if it is not there, download and install it.
+            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+            # This also tests the validitiy of the URL, can't rely on the html
+            # status code as it always returns 200
+            try:
+                _download_and_extract(
+                    url,
+                    extract_path=extract_path,
+                )
+            except zipfile.BadZipFile as e:
+                raise ValueError(
+                    "Invalid dataset name. ",
+                    extract_path,
+                    "Please make sure the dataset "
+                    + "is available on http://timeseriesclassification.com/.",
+                ) from e
     if isinstance(split, str):
         split = split.upper()
 
