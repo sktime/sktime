@@ -3,7 +3,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Validation functions."""
 
-__all__ = ["is_int", "is_float", "is_timedelta", "check_n_jobs", "check_window_length"]
+__all__ = [
+    "is_int",
+    "is_float",
+    "is_timedelta",
+    "is_date_offset",
+    "check_n_jobs",
+    "check_window_length",
+]
 __author__ = ["Markus Löning", "Taiwo Owoseni"]
 
 import os
@@ -14,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
+ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
 
 
 def is_int(x) -> bool:
@@ -30,6 +38,11 @@ def is_float(x) -> bool:
 def is_timedelta(x) -> bool:
     """Check if x is of timedelta type."""
     return isinstance(x, ACCEPTED_TIMEDELTA_TYPES)
+
+
+def is_date_offset(x) -> bool:
+    """Check if x is of pd.DateOffset type."""
+    return isinstance(x, ACCEPTED_DATEOFFSET_TYPES)
 
 
 def check_n_jobs(n_jobs) -> int:
@@ -58,10 +71,12 @@ def check_n_jobs(n_jobs) -> int:
 
 
 def check_window_length(
-    window_length: Union[int, float, Union[ACCEPTED_TIMEDELTA_TYPES]],
+    window_length: Union[
+        int, float, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
+    ],
     n_timepoints: int = None,
     name: str = "window_length",
-) -> Union[int, Union[ACCEPTED_TIMEDELTA_TYPES]]:
+) -> Union[int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]]:
     """Validate window length.
 
     Parameters
@@ -100,6 +115,11 @@ def check_window_length(
         return int(np.ceil(window_length * n_timepoints))
 
     elif is_timedelta(window_length) and window_length > timedelta(0):
+        return window_length
+
+    elif is_date_offset(window_length) and pd.Timestamp(
+        0
+    ) + window_length > pd.Timestamp(0):
         return window_length
 
     else:

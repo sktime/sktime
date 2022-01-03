@@ -23,7 +23,7 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.utils.validation import check_window_length, is_timedelta
+from sktime.utils.validation import check_window_length, is_date_offset, is_timedelta
 from sktime.utils.validation.forecasting import (
     check_cutoffs,
     check_fh,
@@ -163,7 +163,7 @@ def _check_window_lengths(y, fh, window_length, initial_window):
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
-    if is_timedelta(x=window_length):
+    if is_timedelta(x=window_length) or is_date_offset(x=window_length):
         if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
             raise ValueError(
                 f"The `window_length` and the forecasting horizon are incompatible "
@@ -300,7 +300,7 @@ class CutoffSplitter(BaseSplitter):
         cutoff points, positive and integer-index like, usable with pandas
         .iloc[] indexing
     fh : int, list or np.array
-    window_length : int or timedelta
+    window_length : int or timedelta or pd.DateOffset
     """
 
     def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
@@ -320,7 +320,7 @@ class CutoffSplitter(BaseSplitter):
             raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length, n_timepoints)
         for cutoff in cutoffs:
-            if is_timedelta(x=window_length):
+            if is_timedelta(x=window_length) or is_date_offset(x=window_length):
                 train_start = y.get_loc(max(y[0], y[cutoff] - window_length))
             else:
                 train_start = cutoff - window_length
@@ -407,7 +407,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     @staticmethod
     def _get_train_start(start, window_length, y) -> int:
-        if is_timedelta(x=window_length):
+        if is_timedelta(x=window_length) or is_date_offset(x=window_length):
             train_start = y.get_loc(
                 max(y[min(start, len(y) - 1)] - window_length, min(y))
             )
@@ -435,12 +435,16 @@ class BaseWindowSplitter(BaseSplitter):
                 else:
                     step_length = 1
 
-                if is_timedelta(x=self.initial_window):
+                if is_timedelta(x=self.initial_window) or is_date_offset(
+                    x=self.window_length
+                ):
                     start = y.get_loc(y[start] + self.initial_window) + step_length
                 else:
                     start += self.initial_window + step_length
             else:
-                if is_timedelta(x=self.window_length):
+                if is_timedelta(x=self.window_length) or is_date_offset(
+                    x=self.window_length
+                ):
                     start = y.get_loc(y[start] + self.window_length)
                 else:
                     start += self.window_length
@@ -527,11 +531,11 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     ----------
     fh : int, list or np.array
         Forecasting horizon
-    window_length : int or timedelta
+    window_length : int or timedelta or pd.DateOffset
         Window length
     step_length : int, optional (default=1)
         Step length between windows
-    initial_window : int or timedelta, optional (default=None)
+    initial_window : int or timedelta or pd.DateOffset, optional (default=None)
         Window length of first window
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
@@ -587,7 +591,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     ----------
     fh : int, list or np.array, optional (default=1)
         Forecasting horizon
-    initial_window : int or timedelta, optional (default=10)
+    initial_window : int or timedelta or pd.DateOffset, optional (default=10)
         Window length
     step_length : int, optional (default=1)
         Step length between windows
@@ -633,7 +637,7 @@ class SingleWindowSplitter(BaseSplitter):
     ----------
     fh : int, list or np.array
         Forecasting horizon
-    window_length : int or timedelta
+    window_length : int or timedelta or pd.DateOffset
         Window length
     """
 
@@ -648,7 +652,7 @@ class SingleWindowSplitter(BaseSplitter):
         end = _get_end(y, fh) - 1
         if window_length is None:
             start = 0
-        elif is_timedelta(x=window_length):
+        elif is_timedelta(x=window_length) or is_date_offset(x=window_length):
             start = y.get_loc(y[end - 1] - window_length) + 1
         else:
             start = end - window_length
