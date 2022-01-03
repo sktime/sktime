@@ -27,6 +27,9 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
+from sktime.classification.early_classification import (
+    ProbabilityThresholdEarlyClassifier,
+)
 from sktime.classification.feature_based import (
     Catch22Classifier,
     FreshPRINCE,
@@ -108,26 +111,11 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformations.series.acf import (
-    AutoCorrelationTransformer,
-    PartialAutoCorrelationTransformer,
-)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.clasp import ClaSPTransformer
-from sktime.transformations.series.compose import (
-    ColumnwiseTransformer,
-    OptionalPassthrough,
-)
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.feature_selection import FeatureSelection
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
-from sktime.transformations.series.summarize import SummaryTransformer
-
 EXCLUDE_ESTIMATORS = [
     "ElasticEnsemble",
     "ProximityForest",
@@ -212,7 +200,6 @@ ESTIMATOR_TEST_PARAMS = {
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    Detrender: {"forecaster": ExponentialSmoothing()},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
@@ -225,7 +212,6 @@ ESTIMATOR_TEST_PARAMS = {
         "param_distributions": {"window_length": [2, 5]},
         "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
-    TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
         "estimators": [
             (name, estimator, 0) for (name, estimator) in TIME_SERIES_CLASSIFIERS
@@ -344,6 +330,12 @@ ESTIMATOR_TEST_PARAMS = {
             "randomly_selected_params": 2,
         },
     },
+    ProbabilityThresholdEarlyClassifier: {
+        "classification_points": [3],
+        "estimator": Catch22Classifier(
+            estimator=RandomForestClassifier(n_estimators=2)
+        ),
+    },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,
@@ -399,17 +391,9 @@ ESTIMATOR_TEST_PARAMS = {
         "verbose": False,
     },
     UnobservedComponents: {"level": "local level"},
-    PartialAutoCorrelationTransformer: {"n_lags": 1},
-    AutoCorrelationTransformer: {"n_lags": 1},
-    Imputer: {"method": "mean"},
-    HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": False},
-    FeatureSelection: {"method": "all"},
-    ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
-    ClaSPTransformer: {"window_length": 5},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish

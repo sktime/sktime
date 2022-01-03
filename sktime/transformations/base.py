@@ -302,12 +302,12 @@ class BaseTransformer(BaseEstimator):
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
-            ValueError(msg)
+            raise ValueError(msg)
 
         # checking X
         enforce_univariate = self.get_tag("univariate-only")
         if enforce_univariate and not X_metadata["is_univariate"]:
-            ValueError("X must be univariate but is not")
+            raise ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
@@ -486,12 +486,12 @@ class BaseTransformer(BaseEstimator):
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
-            ValueError(msg)
+            raise ValueError(msg)
 
         # checking X
         enforce_univariate = self.get_tag("univariate-only")
         if enforce_univariate and not X_metadata["is_univariate"]:
-            ValueError("X must be univariate but is not")
+            raise ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
@@ -813,15 +813,12 @@ class BaseTransformer(BaseEstimator):
                 as_scitype="Series",
                 # no converter store since this is not a "1:1 back-conversion"
             )
-        else:
-            # output_scitype is "Panel" and no need for conversion
-            pass
+        # else output_scitype is "Panel" and no need for conversion
 
         return Xt
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 

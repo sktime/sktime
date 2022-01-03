@@ -288,6 +288,7 @@ class MyTransformer(BaseTransformer):
         # implement here
 
     # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -303,6 +304,12 @@ class MyTransformer(BaseTransformer):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
