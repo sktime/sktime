@@ -24,7 +24,7 @@ def test_catch22_classifier_on_unit_test_data():
     c22c.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = c22c.predict_proba(X_test[indices])
+    probas = c22c.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(
         probas, catch22_classifier_unit_test_probas, decimal=2
     )

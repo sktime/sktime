@@ -19,7 +19,7 @@ def test_cif_on_unit_test_data():
     cif.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = cif.predict_proba(X_test[indices])
+    probas = cif.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, cif_unit_test_probas)
 
 

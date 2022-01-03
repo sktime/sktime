@@ -19,7 +19,7 @@ def test_weasel_on_unit_test_data():
     weasel.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = weasel.predict_proba(X_test[indices])
+    probas = weasel.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, weasel_unit_test_probas, decimal=2)
 
 

@@ -26,7 +26,7 @@ def test_tde_on_unit_test_data():
     tde.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = tde.predict_proba(X_test[indices])
+    probas = tde.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, tde_unit_test_probas, decimal=2)
 
     # test loocv train estimate

@@ -19,7 +19,7 @@ def test_tsf_on_unit_test_data():
     tsf.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = tsf.predict_proba(X_test[indices])
+    probas = tsf.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, tsf_unit_test_probas)
 
 

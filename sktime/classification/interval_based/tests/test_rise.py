@@ -19,7 +19,7 @@ def test_rise_on_unit_test_data():
     rise.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = rise.predict_proba(X_test[indices])
+    probas = rise.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, rise_unit_test_probas)
 
 

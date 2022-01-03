@@ -22,7 +22,7 @@ def test_arsenal_on_unit_test_data():
     arsenal.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = arsenal.predict_proba(X_test[indices])
+    probas = arsenal.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, arsenal_unit_test_probas, decimal=2)
 
     # test train estimate

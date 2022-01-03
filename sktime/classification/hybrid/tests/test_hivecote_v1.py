@@ -30,7 +30,7 @@ def test_hivecote_v1_on_unit_test_data():
     hc1.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = hc1.predict_proba(X_test[indices])
+    probas = hc1.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, hivecote_v1_unit_test_probas, decimal=2)
 
 

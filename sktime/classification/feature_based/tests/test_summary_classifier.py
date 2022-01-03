@@ -22,7 +22,7 @@ def test_summary_classifier_on_unit_test_data():
     sc.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = sc.predict_proba(X_test[indices])
+    probas = sc.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(
         probas, summary_classifier_unit_test_probas, decimal=2
     )

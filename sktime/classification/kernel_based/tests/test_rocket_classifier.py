@@ -19,7 +19,7 @@ def test_rocket_on_unit_test_data():
     rocket.fit(X_train, y_train)
 
     # assert probabilities are the same
-    probas = rocket.predict_proba(X_test[indices])
+    probas = rocket.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, rocket_unit_test_probas, decimal=2)
 
 
