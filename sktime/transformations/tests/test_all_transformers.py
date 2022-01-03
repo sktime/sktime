@@ -108,7 +108,7 @@ def check_series_to_series_transform_multivariate(Estimator):
         )
         assert isinstance(out, (pd.DataFrame, np.ndarray))
         if estimator.get_tag("transform-returns-same-time-index"):
-            assert out.shape == (n_timepoints, n_columns)
+            assert out.shape[0] == n_timepoints
 
 
 def check_panel_to_tabular_transform_univariate(Estimator):
@@ -203,6 +203,13 @@ panel_to_panel_checks = [
     check_panel_to_panel_transform_multivariate,
 ]
 
+OLD_TRAFO_CLASSES = (
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+    _PanelToTabularTransformer,
+    _PanelToPanelTransformer,
+)
+
 
 def _yield_transformer_checks(Estimator):
     yield from all_transformer_checks
@@ -216,7 +223,13 @@ def _yield_transformer_checks(Estimator):
         yield from panel_to_tabular_checks
     if issubclass(Estimator, _PanelToPanelTransformer):
         yield from panel_to_panel_checks
-    if _construct_instance(Estimator).get_tag(
-        "transform-returns-same-time-index", False
-    ):
+    if not issubclass(Estimator, OLD_TRAFO_CLASSES):
+        if Estimator.get_class_tag("scitype:transform-output") == "Primitives":
+            yield from series_to_primitive_checks
+            # yield from panel_to_tabular_checks
+        if Estimator.get_class_tag("scitype:transform-output") == "Series":
+            yield from series_to_series_checks
+            # yield from panel_to_panel_checks
+
+    if Estimator.get_class_tag("transform-returns-same-time-index", False):
         yield check_transform_returns_same_time_index
