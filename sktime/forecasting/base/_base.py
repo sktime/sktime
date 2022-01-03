@@ -17,6 +17,7 @@ Scitype defining methods:
 Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
+    current ForecastingHorizon  - fh
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -116,7 +117,7 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -178,7 +179,7 @@ class BaseForecaster(BaseEstimator):
         # handle inputs
 
         self.check_is_fitted()
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
 
         # todo deprecate NotImplementedError in v 10.0.1
         if return_pred_int and not self.get_tag("capability:pred_int"):
@@ -194,10 +195,7 @@ class BaseForecaster(BaseEstimator):
 
         # this is how it is supposed to be after the refactor is complete and effective
         if not return_pred_int:
-            y_pred = self._predict(
-                self.fh,
-                X=X_inner,
-            )
+            y_pred = self._predict(fh=fh, X=X_inner)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -298,7 +296,7 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -352,13 +350,13 @@ class BaseForecaster(BaseEstimator):
         # input checks
         if alpha is None:
             alpha = [0.05, 0.95]
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
         alpha = check_alpha(alpha)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
-        quantiles = self._predict_quantiles(fh=self.fh, X=X_inner, alpha=alpha)
+        quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
         return quantiles
 
     def predict_interval(
@@ -400,13 +398,13 @@ class BaseForecaster(BaseEstimator):
         """
         self.check_is_fitted()
         # input checks
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
         coverage = check_alpha(coverage)
 
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_int = self._predict_interval(fh=self.fh, X=X_inner, coverage=coverage)
+        pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
         return pred_int
 
     def update(self, y, X=None, update_params=True):
@@ -607,7 +605,7 @@ class BaseForecaster(BaseEstimator):
         """
         # todo deprecate return_pred_int in v 0.10.1
         self.check_is_fitted()
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
 
         # handle input alias, deprecate in v 0.10.1
         if y is None:
@@ -616,7 +614,7 @@ class BaseForecaster(BaseEstimator):
             raise ValueError("y must be of Series type and cannot be None")
 
         self.check_is_fitted()
-        self._set_fh(fh)
+        fh = self._check_fh(fh)
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -627,7 +625,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._update_predict_single(
             y=y_inner,
-            fh=self.fh,
+            fh=fh,
             X=X_inner,
             update_params=update_params,
             return_pred_int=return_pred_int,
@@ -930,12 +928,31 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _set_fh(self, fh):
+    def _check_fh(self, fh):
         """Check, set and update the forecasting horizon.
+
+        Called from all methods where fh can be passed:
+            fit, predict-like, update-like
+
+        Reads and writes to self._fh
+        Writes fh to self._fh if does not exist
+        Checks equality of fh with self._fh if exists, raises error if not equal
 
         Parameters
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
+
+        Returns
+        -------
+        self._fh : ForecastingHorizon or None
+            if ForecastingHorizon, last passed fh coerced to ForecastingHorizon
+
+        Raises
+        ------
+        ValueError if self._fh exists and is inconsistent with fh
+        ValueError if fh is not passed (None) in a case where it must be:
+            - in fit, if self has the tag "requires-fh-in-fit" (value True)
+            - in predict, if it has not been passed in fit
         """
         requires_fh = self.get_tag("requires-fh-in-fit")
 
@@ -1003,6 +1020,8 @@ class BaseForecaster(BaseEstimator):
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
+
+        return self._fh
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
