@@ -27,6 +27,9 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
+from sktime.classification.early_classification import (
+    ProbabilityThresholdEarlyClassifier,
+)
 from sktime.classification.feature_based import (
     Catch22Classifier,
     FreshPRINCE,
@@ -326,6 +329,12 @@ ESTIMATOR_TEST_PARAMS = {
             "max_ensemble_size": 2,
             "randomly_selected_params": 2,
         },
+    },
+    ProbabilityThresholdEarlyClassifier: {
+        "classification_points": [3],
+        "estimator": Catch22Classifier(
+            estimator=RandomForestClassifier(n_estimators=2)
+        ),
     },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
