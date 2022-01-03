@@ -17,10 +17,10 @@ def test_st_on_unit_test():
     st = RandomShapeletTransform(
         max_shapelets=10, n_shapelet_samples=500, random_state=0
     )
-    st.fit(X_train[indices], y_train[indices])
+    st.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = st.transform(X_train[indices])
+    data = st.transform(X_train.iloc[indices])
     testing.assert_array_almost_equal(data, shapelet_transform_unit_test_data)
 
 

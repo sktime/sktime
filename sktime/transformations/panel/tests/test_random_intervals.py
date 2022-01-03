@@ -15,10 +15,10 @@ def test_random_intervals_on_unit_test():
 
     # fit random intervals
     ri = RandomIntervals(random_state=0, n_intervals=3)
-    ri.fit(X_train[indices], y_train[indices])
+    ri.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = ri.transform(X_train[indices])
+    data = ri.transform(X_train.iloc[indices])
     testing.assert_array_almost_equal(data, random_intervals_unit_test_data)
 
 

@@ -15,7 +15,7 @@ def test_catch22_on_unit_test():
 
     # fit catch22
     c22 = Catch22(outlier_norm=True)
-    c22.fit(X_train[indices], y_train[indices])
+    c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
     data = np.nan_to_num(c22.transform(X_train.iloc[indices]), False, 0, 0, 0)
@@ -30,7 +30,7 @@ def test_catch22_single_feature_on_unit_test():
 
     # fit catch22
     c22 = Catch22(outlier_norm=True)
-    c22.fit(X_train[indices], y_train[indices])
+    c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
     results = catch22_unit_test_data.transpose()
