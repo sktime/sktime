@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Validation functions."""
 
-__all__ = ["is_int", "is_float", "check_n_jobs", "check_window_length"]
+__all__ = ["is_int", "is_float", "is_timedelta", "check_n_jobs", "check_window_length"]
 __author__ = ["Markus Löning", "Taiwo Owoseni"]
 
 import os
