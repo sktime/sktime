@@ -21,8 +21,11 @@ from sktime.classification.distance_based import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
+    FreshPRINCE,
     MatrixProfileClassifier,
+    RandomIntervalClassifier,
     SignatureClassifier,
+    SummaryClassifier,
     TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
@@ -35,6 +38,7 @@ from sktime.classification.interval_based import (
 )
 from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.transformations.series.summarize import SummaryTransformer
 
 
 def set_classifier(cls, resample_id=None, train_file=False):
@@ -91,6 +95,23 @@ def set_classifier(cls, resample_id=None, train_file=False):
     elif name == "shapedtw":
         return ShapeDTW()
     # Feature based
+    elif name == "summary":
+        return SummaryClassifier(
+            random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
+        )
+    elif name == "summary-intervals":
+        return RandomIntervalClassifier(
+            random_state=resample_id,
+            interval_transformers=SummaryTransformer(
+                summary_function=("mean", "std", "min", "max"),
+                quantiles=(0.25, 0.5, 0.75),
+            ),
+            estimator=RandomForestClassifier(n_estimators=500),
+        )
+    elif name == "summary-catch22":
+        return RandomIntervalClassifier(
+            random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
+        )
     elif name == "catch22":
         return Catch22Classifier(
             random_state=resample_id, estimator=RandomForestClassifier(n_estimators=500)
@@ -100,7 +121,7 @@ def set_classifier(cls, resample_id=None, train_file=False):
     elif name == "signature":
         return SignatureClassifier(
             random_state=resample_id,
-            classifier=RandomForestClassifier(n_estimators=500),
+            estimator=RandomForestClassifier(n_estimators=500),
         )
     elif name == "tsfresh":
         return TSFreshClassifier(
@@ -112,6 +133,8 @@ def set_classifier(cls, resample_id=None, train_file=False):
             estimator=RandomForestClassifier(n_estimators=500),
             relevant_feature_extractor=True,
         )
+    elif name == "freshprince":
+        return FreshPRINCE(random_state=resample_id, save_transformed_data=train_file)
     # Hybrid
     elif name == "hc1" or name == "hivecotev1":
         return HIVECOTEV1(random_state=resample_id)
@@ -133,12 +156,32 @@ def set_classifier(cls, resample_id=None, train_file=False):
     # Kernel based
     elif name == "rocket":
         return RocketClassifier(random_state=resample_id)
+    elif name == "mini-rocket":
+        return RocketClassifier(random_state=resample_id, rocket_transform="minirocket")
+    elif name == "multi-rocket":
+        return RocketClassifier(
+            random_state=resample_id, rocket_transform="multirocket"
+        )
     elif name == "arsenal":
         return Arsenal(random_state=resample_id, save_transformed_data=train_file)
+    elif name == "mini-arsenal":
+        return Arsenal(
+            random_state=resample_id,
+            save_transformed_data=train_file,
+            rocket_transform="minirocket",
+        )
+    elif name == "multi-arsenal":
+        return Arsenal(
+            random_state=resample_id,
+            save_transformed_data=train_file,
+            rocket_transform="multirocket",
+        )
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
-            random_state=resample_id, save_transformed_data=train_file
+            transform_limit_in_minutes=120,
+            random_state=resample_id,
+            save_transformed_data=train_file,
         )
     else:
         raise Exception("UNKNOWN CLASSIFIER")

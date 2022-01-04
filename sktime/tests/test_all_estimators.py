@@ -40,6 +40,7 @@ from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
     _get_args,
+    _has_capability,
     _list_required_methods,
     _make_args,
 )
@@ -62,9 +63,6 @@ def pytest_generate_tests(metafunc):
     """
     # get name of the test
     test_name = metafunc.function.__name__
-    # previously, the tests were called "check_", so temporarily we do this
-    #  (ultimately, entries in the "exclude" list should be renamed)
-    test_name = test_name.replace("test_", "check_")
 
     # tests can be tests for classes or instances
     # tests for classes use estimator_class fixture name
@@ -90,14 +88,20 @@ def pytest_generate_tests(metafunc):
         estimator_classes_to_test = [
             est for est in ALL_ESTIMATORS if not is_excluded(est)
         ]
-        estimator_class_names = [est.__name__ for est in estimator_classes_to_test]
         # create instances from the classes
-        estimator_instances_to_test = [
-            est.create_test_instance() for est in estimator_classes_to_test
-        ]
+        estimator_instances_to_test = []
+        estimator_instance_names = []
+        # retrieve all estimator parameters if multiple, construct instances
+        for est in estimator_classes_to_test:
+            all_instances_of_est, instance_names = est.create_test_instances_and_names()
+            estimator_instances_to_test += all_instances_of_est
+            estimator_instance_names += instance_names
+
         # parameterize test with the list of instances
         metafunc.parametrize(
-            "estimator_instance", estimator_instances_to_test, ids=estimator_class_names
+            "estimator_instance",
+            estimator_instances_to_test,
+            ids=estimator_instance_names,
         )
 
 
@@ -148,13 +152,13 @@ def test_estimator_tags(estimator_class):
     assert hasattr(Estimator, "get_class_tags")
     all_tags = Estimator.get_class_tags()
     assert isinstance(all_tags, dict)
-    assert all([isinstance(key, str) for key in all_tags.keys()])
+    assert all(isinstance(key, str) for key in all_tags.keys())
     if hasattr(Estimator, "_tags"):
         tags = Estimator._tags
         assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
         assert len(tags) > 0, "_tags is empty"
         assert all(
-            [tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()]
+            tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()
         ), "Some tags in _tags are invalid"
 
     # Avoid ambiguous class attributes
@@ -168,17 +172,14 @@ def test_estimator_tags(estimator_class):
 
 def test_inheritance(estimator_class):
     """Check that estimator inherits from BaseEstimator."""
-    Estimator = estimator_class
-
-    assert issubclass(Estimator, BaseEstimator), (
-        f"Estimator: {Estimator} " f"is not a sub-class of " f"BaseEstimator."
+    assert issubclass(estimator_class, BaseEstimator), (
+        f"Estimator: {estimator_class} " f"is not a sub-class of " f"BaseEstimator."
     )
-
+    Estimator = estimator_class
     # Usually estimators inherit only from one BaseEstimator type, but in some cases
     # they may be predictor and transformer at the same time (e.g. pipelines)
-    n_base_types = sum(
-        [issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES]
-    )
+    n_base_types = sum(issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES)
+
     assert 2 >= n_base_types >= 1
 
     # If the estimator inherits from more than one base estimator type, we check if
@@ -352,7 +353,7 @@ def test_raises_not_fitted_error(estimator_instance):
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args = _make_args(estimator, method)
             with pytest.raises(NotFittedError, match=r"has not been fitted"):
                 getattr(estimator, method)(*args)
@@ -368,10 +369,10 @@ def test_fit_idempotent(estimator_instance):
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
 
-    results = dict()
-    args = dict()
+    results = {}
+    args = {}
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args[method] = _make_args(estimator, method)
             results[method] = getattr(estimator, method)(*args[method])
 
@@ -380,7 +381,7 @@ def test_fit_idempotent(estimator_instance):
     estimator.fit(*fit_args)
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             new_result = getattr(estimator, method)(*args[method])
             _assert_array_almost_equal(
                 results[method],
@@ -435,7 +436,7 @@ def test_methods_do_not_change_state(estimator_instance):
     dict_before = estimator.__dict__.copy()
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
@@ -451,9 +452,13 @@ def test_methods_do_not_change_state(estimator_instance):
                 # so predict will actually change the state of these annotators.
                 continue
 
-            assert (
-                estimator.__dict__ == dict_before
-            ), f"Estimator: {estimator} changes __dict__ during {method}"
+            assert estimator.__dict__ == dict_before, (
+                f"Estimator: {estimator} changes __dict__ during {method} \n before ="
+                f"\n********************************************\n "
+                f"{dict_before}  \n after "
+                f"=\n*****************************************\n "
+                f" {estimator.__dict__}"
+            )
 
 
 def test_methods_have_no_side_effects(estimator_instance):
@@ -472,7 +477,7 @@ def test_methods_have_no_side_effects(estimator_instance):
     ), f"Estimator: {estimator} has side effects on arguments of fit"
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             new_args = _make_args(estimator, method)
             old_args = deepcopy(new_args)
             getattr(estimator, method)(*new_args)
@@ -490,10 +495,10 @@ def test_persistence_via_pickle(estimator_instance):
     estimator.fit(*fit_args)
 
     # Generate results before pickling
-    results = dict()
-    args = dict()
+    results = {}
+    args = {}
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
             args[method] = _make_args(estimator, method)
             results[method] = getattr(estimator, method)(*args[method])
 
@@ -502,10 +507,10 @@ def test_persistence_via_pickle(estimator_instance):
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     # Compare against results after pickling
-    for method in results:
+    for method, value in results.items():
         unpickled_result = getattr(unpickled_estimator, method)(*args[method])
         _assert_array_almost_equal(
-            results[method],
+            value,
             unpickled_result,
             decimal=6,
             err_msg="Results are not the same after pickling",
@@ -524,8 +529,8 @@ def test_multiprocessing_idempotent(estimator_class):
     params = estimator.get_params()
 
     if "n_jobs" in params:
-        results = dict()
-        args = dict()
+        results = {}
+        args = {}
 
         # run on a single process
         estimator = estimator_class.create_test_instance()
@@ -536,7 +541,7 @@ def test_multiprocessing_idempotent(estimator_class):
 
         # compute and store results
         for method in NON_STATE_CHANGING_METHODS:
-            if hasattr(estimator, method):
+            if _has_capability(estimator, method):
                 args[method] = _make_args(estimator, method)
                 results[method] = getattr(estimator, method)(*args[method])
 
@@ -547,11 +552,11 @@ def test_multiprocessing_idempotent(estimator_class):
         estimator.fit(*args["fit"])
 
         # compute and compare results
-        for method in results:
+        for method, value in results.items():
             if hasattr(estimator, method):
                 result = getattr(estimator, method)(*args[method])
                 _assert_array_equal(
-                    results[method],
+                    value,
                     result,
                     err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
                 )
