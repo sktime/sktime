@@ -197,6 +197,16 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
 
+def _windows_are_incompatible(initial_window, window_length) -> bool:
+    return (
+        is_timedelta_or_date_offset(x=initial_window)
+        and not is_timedelta_or_date_offset(x=window_length)
+    ) or (
+        is_timedelta_or_date_offset(x=window_length)
+        and not is_timedelta_or_date_offset(x=initial_window)
+    )
+
+
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
@@ -206,13 +216,7 @@ def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
 ):
     """Test SlidingWindowSplitter."""
-    if (
-        is_timedelta_or_date_offset(x=initial_window)
-        and not is_timedelta_or_date_offset(x=window_length)
-    ) or (
-        is_timedelta_or_date_offset(x=window_length)
-        and not is_timedelta_or_date_offset(x=initial_window)
-    ):
+    if _windows_are_incompatible(initial_window, window_length):
         pytest.skip(
             "Incompatible initial_window and window_length are tested elsewhere."
         )
@@ -242,13 +246,7 @@ def test_sliding_window_splitter_with_incompatible_initial_window_and_window_len
     y, fh, window_length, step_length, initial_window
 ):
     """Test SlidingWindowSplitter with incompatible initial_window and window_length."""
-    if (
-        is_timedelta_or_date_offset(x=initial_window)
-        and is_timedelta_or_date_offset(x=window_length)
-    ) or (
-        not is_timedelta_or_date_offset(x=window_length)
-        and not is_timedelta_or_date_offset(x=initial_window)
-    ):
+    if not _windows_are_incompatible(initial_window, window_length):
         pytest.skip("Compatible initial_window and window_length are tested elsewhere.")
     cv = SlidingWindowSplitter(
         fh=fh,
