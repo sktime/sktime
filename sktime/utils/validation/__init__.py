@@ -26,6 +26,9 @@ ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
 ACCEPTED_WINDOW_LENGTH_TYPES = Union[
     int, float, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
 ]
+NON_FLOAT_WINDOW_LENGTH_TYPES = Union[
+    int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
+]
 
 
 def is_int(x) -> bool:
@@ -83,7 +86,7 @@ def check_window_length(
     window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
     n_timepoints: int = None,
     name: str = "window_length",
-) -> Union[int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]]:
+) -> NON_FLOAT_WINDOW_LENGTH_TYPES:
     """Validate window length.
 
     Parameters

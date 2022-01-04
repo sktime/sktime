@@ -16,14 +16,19 @@ import inspect
 import numbers
 import warnings
 from inspect import signature
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.utils.validation import check_window_length, is_timedelta_or_date_offset
+from sktime.utils.validation import (
+    ACCEPTED_WINDOW_LENGTH_TYPES,
+    NON_FLOAT_WINDOW_LENGTH_TYPES,
+    check_window_length,
+    is_timedelta_or_date_offset,
+)
 from sktime.utils.validation.forecasting import (
     check_cutoffs,
     check_fh,
@@ -34,9 +39,10 @@ from sktime.utils.validation.series import check_equal_time_index, check_time_in
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
+ACCEPTED_Y_TYPES = Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]
 
 
-def _repr(self):
+def _repr(self) -> str:
     """Build repr for splitters similar to estimator objects."""
     # This is copied from scikit-learn's BaseEstimator get_params method
     cls = self.__class__
@@ -98,7 +104,7 @@ def _repr(self):
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
 
 
-def _check_y(y: Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]) -> pd.Index:
+def _check_y(y: ACCEPTED_Y_TYPES) -> pd.Index:
     """Coerce input to `split` function.
 
     Parameters
@@ -140,7 +146,7 @@ def _check_fh(fh):
     return check_fh(fh, enforce_relative=True)
 
 
-def _get_end(y, fh):
+def _get_end(y: ACCEPTED_Y_TYPES, fh) -> int:
     """Compute the end of the last training window for a forecasting horizon."""
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
@@ -159,7 +165,12 @@ def _get_end(y, fh):
     return end
 
 
-def _check_window_lengths(y, fh, window_length, initial_window):
+def _check_window_lengths(
+    y: ACCEPTED_Y_TYPES,
+    fh,
+    window_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
+    initial_window: NON_FLOAT_WINDOW_LENGTH_TYPES,
+) -> None:
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
@@ -218,11 +229,15 @@ class BaseSplitter:
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
+    def __init__(
+        self,
+        fh=DEFAULT_FH,
+        window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
+    ) -> None:
         self.window_length = window_length
         self.fh = fh
 
-    def split(self, y):
+    def split(self, y: ACCEPTED_Y_TYPES):
         """Split `y` into training and test windows.
 
         Parameters
@@ -241,11 +256,11 @@ class BaseSplitter:
         for train, test in self._split(y):
             yield train[train >= 0], test[test >= 0]
 
-    def _split(self, y):
+    def _split(self, y: ACCEPTED_Y_TYPES):
         """Split method containing internal logic implemented by concrete classes."""
         raise NotImplementedError("abstract method")
 
-    def get_n_splits(self, y=None):
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -260,7 +275,7 @@ class BaseSplitter:
         """
         raise NotImplementedError("abstract method")
 
-    def get_cutoffs(self, y=None):
+    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points.
 
         Parameters
@@ -285,7 +300,7 @@ class BaseSplitter:
         """
         return check_fh(self.fh)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return _repr(self)
 
 
@@ -296,18 +311,23 @@ class CutoffSplitter(BaseSplitter):
 
     Parameters
     ----------
-    cutoffs : np.array
+    cutoffs : np.array or pd.Index
         cutoff points, positive and integer-index like, usable with pandas
         .iloc[] indexing
     fh : int, list or np.array
     window_length : int or timedelta or pd.DateOffset
     """
 
-    def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
+    def __init__(
+        self,
+        cutoffs: Union[np.ndarray, pd.Index],
+        fh=DEFAULT_FH,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
+    ) -> None:
         self.cutoffs = cutoffs
         super(CutoffSplitter, self).__init__(fh, window_length)
 
-    def _split(self, y):
+    def _split(self, y: ACCEPTED_Y_TYPES):
         # cutoffs
         cutoffs = check_cutoffs(self.cutoffs)
         if np.max(cutoffs) >= y.shape[0]:
@@ -328,11 +348,11 @@ class CutoffSplitter(BaseSplitter):
             test_window = cutoff + fh
             yield training_window, test_window
 
-    def get_n_splits(self, y=None):
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits."""
         return len(self.cutoffs)
 
-    def get_cutoffs(self, y=None):
+    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points."""
         return check_cutoffs(self.cutoffs)
 
@@ -343,17 +363,17 @@ class BaseWindowSplitter(BaseSplitter):
     def __init__(
         self,
         fh,
-        initial_window,
-        window_length,
-        step_length,
-        start_with_window,
-    ):
+        initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+        step_length: int,
+        start_with_window: bool,
+    ) -> None:
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
-    def _split(self, y):
+    def _split(self, y: Optional[ACCEPTED_Y_TYPES]):
         n_timepoints = y.shape[0]
         step_length = check_step_length(self.step_length)
         window_length = check_window_length(
@@ -401,12 +421,22 @@ class BaseWindowSplitter(BaseSplitter):
         ):
             yield train, test
 
-    def _split_windows(self, start, end, step_length, window_length, y, fh):
+    def _split_windows(
+        self,
+        start: int,
+        end: int,
+        step_length: int,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+        y: ACCEPTED_Y_TYPES,
+        fh,
+    ):
         """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
 
     @staticmethod
-    def _get_train_start(start, window_length, y) -> int:
+    def _get_train_start(
+        start, window_length: ACCEPTED_WINDOW_LENGTH_TYPES, y: ACCEPTED_Y_TYPES
+    ) -> int:
         if is_timedelta_or_date_offset(x=window_length):
             train_start = y.get_loc(
                 max(y[min(start, len(y) - 1)] - window_length, min(y))
@@ -417,7 +447,7 @@ class BaseWindowSplitter(BaseSplitter):
             train_start = start - window_length
         return train_start
 
-    def _get_start(self, y, fh):
+    def _get_start(self, y: ACCEPTED_Y_TYPES, fh) -> int:
         """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
@@ -454,7 +484,7 @@ class BaseWindowSplitter(BaseSplitter):
 
         return start
 
-    def get_n_splits(self, y=None):
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return number of splits.
 
         Parameters
@@ -472,7 +502,7 @@ class BaseWindowSplitter(BaseSplitter):
             )
         return len(self.get_cutoffs(y))
 
-    def get_cutoffs(self, y=None):
+    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Get the cutoff time points.
 
         Parameters
@@ -541,11 +571,11 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     def __init__(
         self,
         fh=DEFAULT_FH,
-        window_length=DEFAULT_WINDOW_LENGTH,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length=DEFAULT_STEP_LENGTH,
-        initial_window=None,
-        start_with_window=True,
-    ):
+        initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
+        start_with_window: bool = True,
+    ) -> None:
         super(SlidingWindowSplitter, self).__init__(
             fh=fh,
             window_length=window_length,
@@ -554,7 +584,15 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             start_with_window=start_with_window,
         )
 
-    def _split_windows(self, start, end, step_length, window_length, y, fh):
+    def _split_windows(
+        self,
+        start: int,
+        end: int,
+        step_length: int,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+        y: ACCEPTED_Y_TYPES,
+        fh,
+    ):
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
@@ -599,10 +637,10 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     def __init__(
         self,
         fh=DEFAULT_FH,
-        initial_window=DEFAULT_WINDOW_LENGTH,
+        initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length=DEFAULT_STEP_LENGTH,
-        start_with_window=True,
-    ):
+        start_with_window: bool = True,
+    ) -> None:
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
@@ -614,7 +652,15 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             start_with_window=start_with_window,
         )
 
-    def _split_windows(self, start, end, step_length, window_length, y, fh):
+    def _split_windows(
+        self,
+        start: int,
+        end: int,
+        step_length: int,
+        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+        y: ACCEPTED_Y_TYPES,
+        fh,
+    ):
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
@@ -637,10 +683,12 @@ class SingleWindowSplitter(BaseSplitter):
         Window length
     """
 
-    def __init__(self, fh, window_length=None):
+    def __init__(
+        self, fh, window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None
+    ) -> None:
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
-    def _split(self, y):
+    def _split(self, y: ACCEPTED_Y_TYPES):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
@@ -656,7 +704,7 @@ class SingleWindowSplitter(BaseSplitter):
         test = end + fh.to_numpy() - 1
         yield train, test
 
-    def get_n_splits(self, y=None):
+    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -669,7 +717,7 @@ class SingleWindowSplitter(BaseSplitter):
         """
         return 1
 
-    def get_cutoffs(self, y=None):
+    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff time points.
 
         Parameters
@@ -689,7 +737,13 @@ class SingleWindowSplitter(BaseSplitter):
         return np.array([cutoff])
 
 
-def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=None):
+def temporal_train_test_split(
+    y: ACCEPTED_Y_TYPES,
+    X: Optional[pd.DataFrame] = None,
+    test_size: Optional[Union[int, float]] = None,
+    train_size: Optional[Union[int, float]] = None,
+    fh=None,
+):
     """Split arrays or matrices into sequential train and test subsets.
 
     Creates train/test splits over endogenous arrays an optional exogenous
@@ -744,7 +798,7 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
         )
 
 
-def _split_by_fh(y, fh, X=None):
+def _split_by_fh(y: ACCEPTED_Y_TYPES, fh, X: Optional[pd.DataFrame] = None):
     """Split time series with forecasting horizon.
 
     Handles both relative and absolute horizons.

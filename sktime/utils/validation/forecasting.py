@@ -17,6 +17,8 @@ __all__ = [
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
+from typing import Union
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone, is_regressor
@@ -291,7 +293,7 @@ def check_alpha(alpha):
     return alpha
 
 
-def check_cutoffs(cutoffs):
+def check_cutoffs(cutoffs: Union[np.ndarray, pd.Index]) -> np.ndarray:
     """Validate the cutoff.
 
     Parameters
