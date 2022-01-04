@@ -42,6 +42,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index, check_series
@@ -637,18 +638,19 @@ class BaseForecaster(BaseEstimator):
             alpha=alpha,
         )
 
-    def predict_residuals(self, y=None, X=None, fh=None):
+    def predict_residuals(self, y=None, X=None):
         """Return residuals of time series forecasts.
 
         State required:
             Requires state to be "fitted".
+            If fh has been set, must correspond to index of y (pandas or integer)
 
         Accesses in self:
             Fitted model attributes ending in "_".
             self.cutoff, self._is_fitted
 
         Writes to self:
-            Stores fh to self.fh if fh is passed and has not been passed previously.
+            Stores y.index to self.fh if has not been passed previously.
 
         Parameters
         ----------
@@ -660,8 +662,6 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogeneous time series to predict from
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
-        fh : int, list, np.ndarray or ForecastingHorizon
-            Forecasting horizon
 
         Returns
         -------
@@ -680,6 +680,11 @@ class BaseForecaster(BaseEstimator):
             fh = range(y.shape[0])
         else:
             raise TypeError("y must be a supported Series mtype")
+
+        # internal fh could be relative, so we need to convert for check
+        fh = ForecastingHorizon(fh, is_relative=False)
+        if self.fh.is_relative:
+            fh = fh.to_relative(self.cutoff)
         self._set_fh(fh)
 
         y_pred = self.predict(fh=self.fh, X=X)
