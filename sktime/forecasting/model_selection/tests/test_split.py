@@ -22,7 +22,7 @@ from sktime.forecasting.tests._config import (
     TEST_FHS,
     TEST_INITIAL_WINDOW,
     TEST_OOS_FHS,
-    TEST_STEP_LENGTHS,
+    TEST_STEP_LENGTHS_INT,
     TEST_WINDOW_LENGTHS,
     TEST_YS,
     VALID_INDEX_FH_COMBINATIONS,
@@ -179,7 +179,7 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
     """Test SlidingWindowSplitter."""
     cv = SlidingWindowSplitter(
@@ -210,7 +210,7 @@ def _windows_are_incompatible(initial_window, window_length) -> bool:
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
@@ -240,7 +240,7 @@ def test_sliding_window_splitter_with_initial_window(
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_incompatible_initial_window_and_window_length(
     y, fh, window_length, step_length, initial_window
@@ -272,7 +272,7 @@ def _get_n_incomplete_windows(window_length, step_length) -> int:
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 def test_sliding_window_splitter_start_with_empty_window(
     y, fh, window_length, step_length
 ):
@@ -336,7 +336,7 @@ def _check_expanding_windows(windows):
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 def test_expanding_window_splitter_start_with_empty_window(
     y, fh, initial_window, step_length
 ):
@@ -358,7 +358,7 @@ def test_expanding_window_splitter_start_with_empty_window(
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):
     """Test ExpandingWindowSplitter."""
     cv = ExpandingWindowSplitter(
