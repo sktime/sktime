@@ -137,7 +137,6 @@ def test_single_window_splitter(y, fh, window_length):
     test_window = test_windows[0]
 
     assert n_splits == 1
-
     assert train_window.shape[0] == _get_window_length_in_days(x=window_length)
     assert test_window.shape[0] == len(check_fh(fh))
 
