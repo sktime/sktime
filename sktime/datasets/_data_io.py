@@ -291,26 +291,42 @@ def load_from_tsfile(
     return_y=True,
     return_data_type=None,
 ):
-    """Load time series data into X and (optionally) y.
+    """Load time series .ts file into X and (optionally) y.
 
-    Data from a .ts file into a an 2D (univariate) or 3D (multivariate) if equal
-    length or Pandas DataFrame if unequal length. If present, y is loaded into a 1D
-    array.
+    Data from a .ts file is loaded into a nested pd.DataFrame, or optionally into a
+    2d np.ndarray (equal length, univariate problem) or 3d np.ndarray (eqal length,
+    multivariate problem) if requested. If present, y is loaded into a 1d .
 
     Parameters
     ----------
     full_file_path_and_name: str
-        The full pathname of the .ts file to read.
+        The full pathname and file name of the .ts file to read.
     replace_missing_vals_with: str, default NaN
-       The value that missing values in the text file should be replaced
-       with prior to parsing.
-    return_y: boolean default True
+       The value that missing values in the text file should be replaced with prior
+       to parsing.
+    return_y: boolean, default True
        whether to return the y variable, if it is present.
+    return_data_type: default, None
+        what data structure to return X in. Valid alternatives to None (default
+        pd.DataFrame are numpy2d/np2d or numpy3d/np3d. These arguments will raise an
+        error if the data cannot be stored in the requested type.
 
     Returns
     -------
-    X: DataFrame or ndarray
+    X:  If return_data_type = None retuns X in a nested pd.dataframe
+        If return_data_type = numpy3d/np3ddefault DataFrame or ndarray
     y (optional): ndarray.
+
+    Raises
+    ------
+    IOError if the requested file does not exist
+    IOError if input series are not all the same dimension (not supported)
+    IOError if class labels have been requested but are not present in the file
+    IOError if the input file has no cases
+    ValueError if return_data_type = numpy3d but the data are unequal length series
+    ValueError if return_data_type = numpy2d but the data are multivariate and/
+    or unequal length series
+
     """
     # Initialize flags and variables used when parsing the file
     is_first_case = True
@@ -319,7 +335,6 @@ def load_from_tsfile(
     line_num = 0
     num_dimensions = 0
     num_cases = 0
-    # equal_length = True
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         _meta_data = _read_header(file, full_file_path_and_name)
         for line in file:  # Will this work?
