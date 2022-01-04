@@ -56,15 +56,22 @@ class TestScenario:
                 )
             _check_dict_of_dict(self.args)
 
-    def run(self, obj, method_sequence=None, arg_sequence=None, return_all=False):
+    def run(
+        self,
+        obj,
+        method_sequence=None,
+        arg_sequence=None,
+        return_all=False,
+        return_args=False,
+    ):
         """Run a call(args) scenario on obj, and retrieve method outputs.
 
         Runs a sequence of commands
             res_1 = obj.method_1(**args_1)
             res_2 = obj.method_2(**args_2)
             etc, where method_i is method_sequence[i],
-                and args_i is self.args[arg_sequence[i]]
-        and returns results.
+                and args_i is self.args[arg_sequence[i]] 
+        and returns results. Args are passed as deepcopy to avoid side effects.
 
         if method_i is __init__ (a constructor),
         obj is changed to obj.__init__(**args_i) from the next line on
@@ -83,11 +90,18 @@ class TestScenario:
             whether all or only the last result should be returned
             if False, only the last result is returned
             if True, list of deepcopies of intermediate results is returned
+        return_args : bool, default = False
+            whether arguments should also be returned
+            if False, there is no second return argument
+            if True, "args_after_call" return argument is returned
 
         Returns
         -------
-        results: output of the last method call, if return_all = False
+        results : output of the last method call, if return_all = False
             list of deepcopies of all outputs, if return_all = True
+        args_after_call : list of args after method call, only if return_args = True
+            i-th element is deepcopy of args of i-th method call, after method call
+                this is possibly subject to side effects by the method
         """
         # if both None, fill with defaults if exist
         if method_sequence is None and arg_sequence is None:
@@ -118,9 +132,11 @@ class TestScenario:
 
         # execute the commands in sequence, report result(s)
         results = []
+        args_after_call = []
         for i in range(num_calls):
             methodname = method_sequence[i]
-            args = self.args[arg_sequence[i]]
+            args = deepcopy(self.args[arg_sequence[i]])
+
             if methodname != "__init__":
                 res = getattr(obj, methodname)(**args)
             # if constructor is called, run directly and replace obj
@@ -130,12 +146,18 @@ class TestScenario:
                 else:
                     res = type(obj)(**args)
                 obj = res
+
+            args_after_call += [args]
+
             if return_all:
                 results += [deepcopy(res)]
             else:
                 results = res
 
-        return results
+        if return_args:
+            return results, args_after_call
+        else:
+            return results
 
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
