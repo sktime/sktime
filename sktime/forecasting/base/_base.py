@@ -668,6 +668,7 @@ class BaseForecaster(BaseEstimator):
             Must have same type, dimension, and indices as expected return of predict.
             if None, the y seen so far (self._y) are used, in particular:
                 if preceded by a single fit call, then in-sample residuals are produced
+                if fit requires fh, it must have pointed to index of y in fit
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogeneous time series to predict from
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
