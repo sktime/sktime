@@ -9,13 +9,12 @@ __all__ = ["ThetaLinesTransformer"]
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 
-class ThetaLinesTransformer(_SeriesToSeriesTransformer):
+class ThetaLinesTransformer(BaseTransformer):
     """Decompose the original data into two or more Theta-lines.
 
     Implementation of decomposition for Theta-method [1]_ as described in [2]_.
@@ -62,6 +61,14 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
         "univariate-only": True,
         "fit-in-transform": True,
@@ -71,24 +78,26 @@ class ThetaLinesTransformer(_SeriesToSeriesTransformer):
         self.theta = theta
         super(ThetaLinesTransformer, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        theta_lines: ndarray or pd.DataFrame
-            Transformed series: single Theta-line or a pd.DataFrame of
-            shape: len(Z)*len(self.theta).
+        theta_lines: pd.Series or pd.DataFrame
+            Transformed series
+            pd.Series, with single Theta-line, if self.theta is float
+            pd.DataFrame of shape: [len(X), len(self.theta)], if self.theta is tuple
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
+        z = X
         theta = _check_theta(self.theta)
 
         forecaster = PolynomialTrendForecaster()
