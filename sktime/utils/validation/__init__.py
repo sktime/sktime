@@ -57,7 +57,7 @@ def is_timedelta_or_date_offset(x) -> bool:
     return is_timedelta(x=x) or is_date_offset(x=x)
 
 
-def check_n_jobs(n_jobs) -> int:
+def check_n_jobs(n_jobs: int) -> int:
     """Check `n_jobs` parameter according to the scikit-learn convention.
 
     Parameters
