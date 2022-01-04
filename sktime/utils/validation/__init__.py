@@ -23,6 +23,9 @@ import pandas as pd
 
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
 ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
+ACCEPTED_WINDOW_LENGTH_TYPES = Union[
+    int, float, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
+]
 
 
 def is_int(x) -> bool:
@@ -77,9 +80,7 @@ def check_n_jobs(n_jobs) -> int:
 
 
 def check_window_length(
-    window_length: Union[
-        int, float, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
-    ],
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
     n_timepoints: int = None,
     name: str = "window_length",
 ) -> Union[int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]]:
@@ -92,6 +93,7 @@ def check_window_length(
         - If int, the total number of time points.
         - If float, the fraction of time points relative to `n_timepoints`.
         - If timedelta, length in corresponding time units
+        - If pd.DateOffset, length in corresponding time units following calendar rules
     n_timepoints: positive int, optional (default=None)
         The number of time points to which to apply `window_length` when
         passed as a float (fraction). Will be ignored if `window_length` is
@@ -101,7 +103,7 @@ def check_window_length(
 
     Returns
     -------
-    window_length: int or timedelta
+    window_length: int or timedelta or pd.DateOffset
     """
     if window_length is None:
         return window_length
