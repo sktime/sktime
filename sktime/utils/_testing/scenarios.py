@@ -70,7 +70,7 @@ class TestScenario:
             res_1 = obj.method_1(**args_1)
             res_2 = obj.method_2(**args_2)
             etc, where method_i is method_sequence[i],
-                and args_i is self.args[arg_sequence[i]] 
+                and args_i is self.args[arg_sequence[i]]
         and returns results. Args are passed as deepcopy to avoid side effects.
 
         if method_i is __init__ (a constructor),
