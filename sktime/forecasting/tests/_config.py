@@ -51,9 +51,7 @@ TEST_INS_FHS = [
 TEST_FHS = TEST_OOS_FHS + TEST_INS_FHS
 TEST_SPS = [3, 12]
 TEST_ALPHAS = [0.05, 0.1]
-TEST_YS = [
-    _make_series(all_positive=True),
-]
+TEST_YS = [_make_series(all_positive=True)]
 TEST_RANDOM_SEEDS = [1, 42]
 TEST_N_ITERS = [1, 4]
 
