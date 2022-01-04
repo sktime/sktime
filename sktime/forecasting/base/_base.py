@@ -641,6 +641,12 @@ class BaseForecaster(BaseEstimator):
     def predict_residuals(self, y=None, X=None):
         """Return residuals of time series forecasts.
 
+        Residuals will be computed for forecasts at y.index.
+
+        If fh must be passed in fit, must agree with y.index.
+        If y is an np.ndarray, and no fh has been passed in fit,
+        the residuals will be computed at a fh of range(len(y.shape[0]))
+
         State required:
             Requires state to be "fitted".
             If fh has been set, must correspond to index of y (pandas or integer)
@@ -674,18 +680,22 @@ class BaseForecaster(BaseEstimator):
             y = self._y
 
         # we want residuals, so fh must be the index of y
+        # if data frame: take directly from y
+        # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = y.index
+            fh = ForecastingHorizon(y.index, is_relative=False)
+            if self._fh is not None and self.fh.is_relative:
+                fh = fh.to_relative(self.cutoff)
+            self._set_fh(fh)
+        # if np.ndarray, rows are not indexed
+        # so will be interpreted as range(len), or existing fh if it is stored
         elif isinstance(y, np.ndarray):
-            fh = range(y.shape[0])
+            if self._fh is None:
+                fh = range(y.shape[0])
+            else:
+                fh = self.fh
         else:
             raise TypeError("y must be a supported Series mtype")
-
-        # internal fh could be relative, so we need to convert for check
-        fh = ForecastingHorizon(fh, is_relative=False)
-        if self.fh.is_relative:
-            fh = fh.to_relative(self.cutoff)
-        self._set_fh(fh)
 
         y_pred = self.predict(fh=self.fh, X=X)
 
