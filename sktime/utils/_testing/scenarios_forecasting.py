@@ -6,7 +6,10 @@ Contains TestScenario concrete children to run in tests for forecasters.
 
 __author__ = ["fkiraly"]
 
-__all__ = ["TestScenario"]
+__all__ = [
+    "forecasting_scenarios_simple",
+    "forecasting_scenarios_extended",
+]
 
 
 from sktime.base import BaseObject
@@ -128,6 +131,20 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
         "predict": {"X": X_test.copy()}}
     default_method_sequence = ["fit", "predict"]
 
+
+forecasting_scenarios_simple = [
+    ForecasterFitPredictUnivariateNoX, ForecasterFitPredictMultivariateWithX
+]
+
+forecasting_scenarios_extended = [
+        ForecasterFitPredictUnivariateNoX,
+        ForecasterFitPredictUnivariateNoXEarlyFh,
+        ForecasterFitPredictUnivariateNoXLateFh,
+        ForecasterFitPredictUnivariateWithX,
+        ForecasterFitPredictUnivariateWithXLongFh,
+        ForecasterFitPredictMultivariateNoX,
+        ForecasterFitPredictMultivariateWithX,
+]
 
 # def _make_args(estimator, method, **kwargs):
 #     """Generate testing arguments for estimator methods."""
