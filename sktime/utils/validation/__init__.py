@@ -12,7 +12,7 @@ __all__ = [
     "check_n_jobs",
     "check_window_length",
 ]
-__author__ = ["Markus Löning", "Taiwo Owoseni"]
+__author__ = ["Markus Löning", "Taiwo Owoseni", "khrapovs"]
 
 import os
 from datetime import timedelta
@@ -91,7 +91,8 @@ def check_window_length(
 
     Parameters
     ----------
-    window_length: positive int, positive float in (0, 1), positive timedelta, or None
+    window_length: positive int, positive float in (0, 1), positive timedelta,
+        positive pd.DateOffset, or None
         The window length:
         - If int, the total number of time points.
         - If float, the fraction of time points relative to `n_timepoints`.
