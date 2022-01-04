@@ -23,7 +23,12 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.utils.validation import check_window_length, is_date_offset, is_timedelta
+from sktime.utils.validation import (
+    check_window_length,
+    is_date_offset,
+    is_timedelta,
+    is_timedelta_or_date_offset,
+)
 from sktime.utils.validation.forecasting import (
     check_cutoffs,
     check_fh,
@@ -163,7 +168,7 @@ def _check_window_lengths(y, fh, window_length, initial_window):
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
-    if is_timedelta(x=window_length) or is_date_offset(x=window_length):
+    if is_timedelta_or_date_offset(x=window_length):
         if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
             raise ValueError(
                 f"The `window_length` and the forecasting horizon are incompatible "
@@ -179,7 +184,7 @@ def _check_window_lengths(y, fh, window_length, initial_window):
             )
 
     if initial_window is not None:
-        if is_timedelta(x=initial_window):
+        if is_timedelta_or_date_offset(x=initial_window):
             if y.get_loc(min(y[-1], y[0] + initial_window)) + fh_max > n_timepoints:
                 raise ValueError(
                     f"The `initial_window` and the forecasting horizon are "
@@ -187,7 +192,7 @@ def _check_window_lengths(y, fh, window_length, initial_window):
                     f"with the length of `y`. Found `initial_window`={initial_window}, "
                     f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
                 )
-            if not is_timedelta(x=window_length):
+            if not is_timedelta_or_date_offset(x=window_length):
                 raise ValueError(
                     "The `initial_window` and `window_length` units are incompatible. "
                     "They are pd.Timedelta and int, respectively."
@@ -200,7 +205,7 @@ def _check_window_lengths(y, fh, window_length, initial_window):
                     f"with the length of `y`. Found `initial_window`={initial_window}, "
                     f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
                 )
-            if is_timedelta(x=window_length):
+            if is_timedelta_or_date_offset(x=window_length):
                 raise ValueError(
                     "The `initial_window` and `window_length` units are incompatible. "
                     "They are int and pd.Timedelta, respectively."
@@ -374,7 +379,7 @@ class BaseWindowSplitter(BaseSplitter):
             if self.initial_window <= self.window_length:
                 raise ValueError("`initial_window` must greater than `window_length`")
 
-            if is_timedelta(x=self.initial_window):
+            if is_timedelta_or_date_offset(x=self.initial_window):
                 initial_window_threshold = y.get_loc(y[0] + self.initial_window)
             else:
                 initial_window_threshold = self.initial_window
@@ -385,7 +390,7 @@ class BaseWindowSplitter(BaseSplitter):
             else:
                 initial_start = 0
 
-            if is_timedelta(x=initial_window):
+            if is_timedelta_or_date_offset(x=initial_window):
                 initial_end = y.get_loc(y[initial_start] + initial_window)
             else:
                 initial_end = initial_start + initial_window
@@ -435,16 +440,12 @@ class BaseWindowSplitter(BaseSplitter):
                 else:
                     step_length = 1
 
-                if is_timedelta(x=self.initial_window) or is_date_offset(
-                    x=self.window_length
-                ):
+                if is_timedelta_or_date_offset(x=self.initial_window):
                     start = y.get_loc(y[start] + self.initial_window) + step_length
                 else:
                     start += self.initial_window + step_length
             else:
-                if is_timedelta(x=self.window_length) or is_date_offset(
-                    x=self.window_length
-                ):
+                if is_timedelta_or_date_offset(x=self.window_length):
                     start = y.get_loc(y[start] + self.window_length)
                 else:
                     start += self.window_length
@@ -496,7 +497,7 @@ class BaseWindowSplitter(BaseSplitter):
         step_length = check_step_length(self.step_length)
 
         if hasattr(self, "initial_window") and self.initial_window is not None:
-            if is_timedelta(x=self.initial_window):
+            if is_timedelta_or_date_offset(x=self.initial_window):
                 start = y.get_loc(y[0] + self.initial_window)
             else:
                 start = self.initial_window

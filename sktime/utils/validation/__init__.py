@@ -8,6 +8,7 @@ __all__ = [
     "is_float",
     "is_timedelta",
     "is_date_offset",
+    "is_timedelta_or_date_offset",
     "check_n_jobs",
     "check_window_length",
 ]
@@ -43,6 +44,11 @@ def is_timedelta(x) -> bool:
 def is_date_offset(x) -> bool:
     """Check if x is of pd.DateOffset type."""
     return isinstance(x, ACCEPTED_DATEOFFSET_TYPES)
+
+
+def is_timedelta_or_date_offset(x) -> bool:
+    """Check if x is of timedelta or pd.DateOffset type."""
+    return is_timedelta(x=x) or is_date_offset(x=x)
 
 
 def check_n_jobs(n_jobs) -> int:
