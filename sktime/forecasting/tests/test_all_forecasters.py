@@ -178,11 +178,11 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 @pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
 def test_predict_residuals(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predict_residuals method works as expected."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
