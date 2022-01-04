@@ -23,12 +23,7 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.utils.validation import (
-    check_window_length,
-    is_date_offset,
-    is_timedelta,
-    is_timedelta_or_date_offset,
-)
+from sktime.utils.validation import check_window_length, is_timedelta_or_date_offset
 from sktime.utils.validation.forecasting import (
     check_cutoffs,
     check_fh,
@@ -325,7 +320,7 @@ class CutoffSplitter(BaseSplitter):
             raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length, n_timepoints)
         for cutoff in cutoffs:
-            if is_timedelta(x=window_length) or is_date_offset(x=window_length):
+            if is_timedelta_or_date_offset(x=window_length):
                 train_start = y.get_loc(max(y[0], y[cutoff] - window_length))
             else:
                 train_start = cutoff - window_length
@@ -412,7 +407,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     @staticmethod
     def _get_train_start(start, window_length, y) -> int:
-        if is_timedelta(x=window_length) or is_date_offset(x=window_length):
+        if is_timedelta_or_date_offset(x=window_length):
             train_start = y.get_loc(
                 max(y[min(start, len(y) - 1)] - window_length, min(y))
             )
@@ -653,7 +648,7 @@ class SingleWindowSplitter(BaseSplitter):
         end = _get_end(y, fh) - 1
         if window_length is None:
             start = 0
-        elif is_timedelta(x=window_length) or is_date_offset(x=window_length):
+        elif is_timedelta_or_date_offset(x=window_length):
             start = y.get_loc(y[end - 1] - window_length) + 1
         else:
             start = end - window_length
