@@ -16,13 +16,14 @@ import inspect
 import numbers
 import warnings
 from inspect import signature
-from typing import Optional, Union
+from typing import Generator, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
+from sktime.forecasting.base import VALID_FORECASTING_HORIZON_TYPES, ForecastingHorizon
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
@@ -40,6 +41,13 @@ DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
 ACCEPTED_Y_TYPES = Union[pd.Series, pd.DataFrame, np.ndarray, pd.Index]
+FORECASTING_HORIZON_TYPES = Union[
+    Union[VALID_FORECASTING_HORIZON_TYPES], ForecastingHorizon
+]
+SPLIT_TYPE = Union[
+    Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
+]
+SPLIT_GENERATOR_TYPE = Generator[Tuple[np.ndarray, np.ndarray], None, None]
 
 
 def _repr(self) -> str:
@@ -141,12 +149,12 @@ def _check_y(y: ACCEPTED_Y_TYPES) -> pd.Index:
     return check_time_index(index=y_index)
 
 
-def _check_fh(fh):
+def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
     """Check and convert fh to format expected by CV splitters."""
     return check_fh(fh, enforce_relative=True)
 
 
-def _get_end(y: ACCEPTED_Y_TYPES, fh) -> int:
+def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
     """Compute the end of the last training window for a forecasting horizon."""
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
@@ -167,7 +175,7 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh) -> int:
 
 def _check_window_lengths(
     y: ACCEPTED_Y_TYPES,
-    fh,
+    fh: ForecastingHorizon,
     window_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
     initial_window: NON_FLOAT_WINDOW_LENGTH_TYPES,
 ) -> None:
@@ -231,13 +239,13 @@ class BaseSplitter:
 
     def __init__(
         self,
-        fh=DEFAULT_FH,
+        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         self.window_length = window_length
         self.fh = fh
 
-    def split(self, y: ACCEPTED_Y_TYPES):
+    def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Split `y` into training and test windows.
 
         Parameters
@@ -256,7 +264,7 @@ class BaseSplitter:
         for train, test in self._split(y):
             yield train[train >= 0], test[test >= 0]
 
-    def _split(self, y: ACCEPTED_Y_TYPES):
+    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Split method containing internal logic implemented by concrete classes."""
         raise NotImplementedError("abstract method")
 
@@ -290,7 +298,7 @@ class BaseSplitter:
         """
         raise NotImplementedError("abstract method")
 
-    def get_fh(self):
+    def get_fh(self) -> ForecastingHorizon:
         """Return the forecasting horizon.
 
         Returns
@@ -321,13 +329,13 @@ class CutoffSplitter(BaseSplitter):
     def __init__(
         self,
         cutoffs: Union[np.ndarray, pd.Index],
-        fh=DEFAULT_FH,
+        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         self.cutoffs = cutoffs
         super(CutoffSplitter, self).__init__(fh, window_length)
 
-    def _split(self, y: ACCEPTED_Y_TYPES):
+    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         # cutoffs
         cutoffs = check_cutoffs(self.cutoffs)
         if np.max(cutoffs) >= y.shape[0]:
@@ -362,7 +370,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     def __init__(
         self,
-        fh,
+        fh: FORECASTING_HORIZON_TYPES,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         step_length: int,
@@ -373,7 +381,7 @@ class BaseWindowSplitter(BaseSplitter):
         self.initial_window = initial_window
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
-    def _split(self, y: Optional[ACCEPTED_Y_TYPES]):
+    def _split(self, y: Optional[ACCEPTED_Y_TYPES]) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         step_length = check_step_length(self.step_length)
         window_length = check_window_length(
@@ -428,8 +436,8 @@ class BaseWindowSplitter(BaseSplitter):
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: ACCEPTED_Y_TYPES,
-        fh,
-    ):
+        fh: np.ndarray,
+    ) -> SPLIT_GENERATOR_TYPE:
         """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
 
@@ -447,7 +455,7 @@ class BaseWindowSplitter(BaseSplitter):
             train_start = start - window_length
         return train_start
 
-    def _get_start(self, y: ACCEPTED_Y_TYPES, fh) -> int:
+    def _get_start(self, y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
         """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
@@ -570,7 +578,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
     def __init__(
         self,
-        fh=DEFAULT_FH,
+        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length=DEFAULT_STEP_LENGTH,
         initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
@@ -591,8 +599,8 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: ACCEPTED_Y_TYPES,
-        fh,
-    ):
+        fh: np.ndarray,
+    ) -> SPLIT_GENERATOR_TYPE:
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
@@ -636,7 +644,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     def __init__(
         self,
-        fh=DEFAULT_FH,
+        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length=DEFAULT_STEP_LENGTH,
         start_with_window: bool = True,
@@ -659,8 +667,8 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: ACCEPTED_Y_TYPES,
-        fh,
-    ):
+        fh: np.ndarray,
+    ) -> SPLIT_GENERATOR_TYPE:
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
@@ -684,11 +692,13 @@ class SingleWindowSplitter(BaseSplitter):
     """
 
     def __init__(
-        self, fh, window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None
+        self,
+        fh: FORECASTING_HORIZON_TYPES,
+        window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
-    def _split(self, y: ACCEPTED_Y_TYPES):
+    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
@@ -742,8 +752,8 @@ def temporal_train_test_split(
     X: Optional[pd.DataFrame] = None,
     test_size: Optional[Union[int, float]] = None,
     train_size: Optional[Union[int, float]] = None,
-    fh=None,
-):
+    fh: Optional[FORECASTING_HORIZON_TYPES] = None,
+) -> SPLIT_TYPE:
     """Split arrays or matrices into sequential train and test subsets.
 
     Creates train/test splits over endogenous arrays an optional exogenous
@@ -773,7 +783,7 @@ def temporal_train_test_split(
 
     Returns
     -------
-    splitting : tuple
+    splitting : tuple, length=2 * len(arrays)
         List containing train-test split of `y` and `X` if given.
 
     References
@@ -798,7 +808,9 @@ def temporal_train_test_split(
         )
 
 
-def _split_by_fh(y: ACCEPTED_Y_TYPES, fh, X: Optional[pd.DataFrame] = None):
+def _split_by_fh(
+    y: ACCEPTED_Y_TYPES, fh: FORECASTING_HORIZON_TYPES, X: Optional[pd.DataFrame] = None
+) -> SPLIT_TYPE:
     """Split time series with forecasting horizon.
 
     Handles both relative and absolute horizons.
