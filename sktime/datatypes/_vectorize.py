@@ -20,7 +20,8 @@ class VectorizedDF:
 
     Parameters
     ----------
-    X : Panel or Hierarchical data container, to vectorize over
+    X : object in sktime compatible Panel or Hierarchical format
+        the data container to vectorize over
     y : placeholder argument, not used currently
     is_scitype : str ("Panel", "Hierarchical") or None, default = "Panel"
         scitype of X, if known; if None, will be inferred
