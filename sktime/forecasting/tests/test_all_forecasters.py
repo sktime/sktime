@@ -171,6 +171,7 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
         except NotImplementedError:
             pass
 
+
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
@@ -200,6 +201,7 @@ def test_predict_residuals(Forecaster, index_type, fh_type, is_relative, steps):
             _assert_correct_pred_time_index(y_res.index, y_train.index[-1], fh=fh)
         except NotImplementedError:
             pass
+
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize(
