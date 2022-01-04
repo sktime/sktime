@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Utilities to impute series with missing values."""
 
-__author__ = ["Martin Walter"]
+__author__ = ["aiwalter"]
 __all__ = ["Imputer"]
 
 
@@ -14,11 +14,10 @@ from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 
-class Imputer(_SeriesToSeriesTransformer):
+class Imputer(BaseTransformer):
     """Missing value imputation.
 
     The Imputer transforms input series by replacing missing values according
@@ -62,6 +61,14 @@ class Imputer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": True,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
@@ -84,24 +91,25 @@ class Imputer(_SeriesToSeriesTransformer):
         self.random_state = random_state
         super(Imputer, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of Z.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Transformed time series(es).
+        Z : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        self.check_is_fitted()
         self._check_method()
-        Z = check_series(Z)
-        Z = Z.copy()
+        Z = X.copy()
 
         # replace missing_values with np.nan
         if self.missing_values:
@@ -179,6 +187,20 @@ class Imputer(_SeriesToSeriesTransformer):
             return rng.randint(Z.min(), Z.max())
         else:
             return rng.uniform(Z.min(), Z.max())
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"method": "mean"}
 
 
 def _impute_with_forecaster(forecaster, Z):

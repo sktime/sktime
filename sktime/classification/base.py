@@ -59,6 +59,7 @@ class BaseClassifier(BaseEstimator):
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
+        "capability:early_prediction": False,
         "capability:multithreading": False,
     }
 
@@ -119,8 +120,9 @@ class BaseClassifier(BaseEstimator):
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
-        for index, classVal in enumerate(self.classes_):
-            self._class_dictionary[classVal] = index
+        self._class_dictionary = {}
+        for index, class_val in enumerate(self.classes_):
+            self._class_dictionary[class_val] = index
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last

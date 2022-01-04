@@ -10,8 +10,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 _RAW_DUMMIES = [
     ["child", "parent", "dummy_func", "feature_scope"],
@@ -33,7 +32,7 @@ _RAW_DUMMIES = [
 ]
 
 
-class DateTimeFeatures(_SeriesToSeriesTransformer):
+class DateTimeFeatures(BaseTransformer):
     """DateTime Feature  Extraction for use in e.g. tree based models.
 
     DateTimeFeatures uses a date index column and generates date features
@@ -91,10 +90,19 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": False,
         "fit-in-transform": True,
+        "transform-returns-same-time-index": True,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "skip-inverse-transform": True,
-        "univariate-only": False,
     }
 
     def __init__(self, ts_freq=None, feature_scope="minimal", manual_selection=None):
@@ -105,28 +113,28 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         self.dummies = _prep_dummies(_RAW_DUMMIES)
         super(DateTimeFeatures, self).__init__()
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of Z.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Transformed time series(es).
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        self.check_is_fitted()
-
         _check_ts_freq(self.ts_freq, self.dummies)
         _check_feature_scope(self.feature_scope)
         _check_manual_selection(self.manual_selection, self.dummies)
 
-        Z = check_series(Z)
-        Z = Z.copy()
+        Z = X.copy()
 
         x_df = pd.DataFrame(index=Z.index)
         if isinstance(x_df.index, pd.PeriodIndex):
@@ -167,9 +175,9 @@ class DateTimeFeatures(_SeriesToSeriesTransformer):
         df = [_calendar_dummies(x_df, dummy) for dummy in calendar_dummies]
         df = pd.concat(df, axis=1)
 
-        Z = pd.concat([Z, df], axis=1)
+        Xt = pd.concat([Z, df], axis=1)
 
-        return Z
+        return Xt
 
 
 def _check_manual_selection(manual_selection, DUMMIES):
