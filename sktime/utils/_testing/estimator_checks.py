@@ -51,12 +51,6 @@ def _get_err_msg(estimator):
     )
 
 
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    # return the instance of the class with default parameters
-    return Estimator.create_test_instance()
-
-
 def _list_required_methods(estimator):
     """Return list of required method names (beyond BaseEstimator ones)."""
     # all BaseEstimator children must implement these
