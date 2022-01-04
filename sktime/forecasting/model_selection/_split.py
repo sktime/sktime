@@ -580,7 +580,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        step_length=DEFAULT_STEP_LENGTH,
+        step_length: int = DEFAULT_STEP_LENGTH,
         initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
         start_with_window: bool = True,
     ) -> None:
@@ -646,7 +646,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        step_length=DEFAULT_STEP_LENGTH,
+        step_length: int = DEFAULT_STEP_LENGTH,
         start_with_window: bool = True,
     ) -> None:
         # Note that we pass the initial window as the window_length below. This
