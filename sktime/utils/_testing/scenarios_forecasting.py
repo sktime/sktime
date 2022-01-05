@@ -13,6 +13,7 @@ __all__ = [
 
 
 from inspect import isclass
+
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.forecasting import _make_series
@@ -32,6 +33,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         applicable: bool
             True if self is applicable to obj, False if not
         """
+
         def get_tag(obj, tag_name):
             if isclass(obj):
                 return obj.get_class_tag(obj, tag_name)
