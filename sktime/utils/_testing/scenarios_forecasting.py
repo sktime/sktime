@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 
+from inspect import isclass
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.forecasting import _make_series
@@ -31,17 +32,21 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         applicable: bool
             True if self is applicable to obj, False if not
         """
-        applicable = True
+        def get_tag(obj, tag_name):
+            if isclass(obj):
+                return obj.get_class_tag(obj, tag_name)
+            else:
+                return obj.get_tag(obj, tag_name)
 
         # applicable only if obj inherits from BaseForecaster
-        applicable = applicable and isinstance(obj, BaseForecaster)
+        applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
 
         is_univariate = self.get_tag("univariate_y")
 
-        if is_univariate and obj.get_tag("scitype:y") == "multivariate":
+        if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
             applicable = False
 
-        if not is_univariate and obj.get_tag("scitype:y") == "univariate":
+        if not is_univariate and get_tag(obj, "scitype:y") == "univariate":
             applicable = False
 
         return applicable
