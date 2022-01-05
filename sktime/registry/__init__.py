@@ -20,11 +20,13 @@ from sktime.registry._base_classes import (
 
 from sktime.registry._lookup import all_estimators, all_tags
 
+from sktime.registry._scitype import scitype
 
 __all__ = [
     "all_estimators",
     "all_tags",
     "check_tag_is_valid",
+    "scitype",
     "ESTIMATOR_TAG_LIST",
     "ESTIMATOR_TAG_REGISTER",
     "BASE_CLASS_REGISTER",
