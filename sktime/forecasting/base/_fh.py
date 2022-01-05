@@ -11,8 +11,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.datetime import _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
@@ -306,14 +305,16 @@ class ForecastingHorizon:
             if is_timestamp:
                 # coerce to pd.Period for reliable arithmetic operations and
                 # computations of time deltas
-                cutoff = _coerce_to_period(cutoff)
+                cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
 
             absolute = cutoff + relative
 
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
-                freq = _get_freq(cutoff)
-                absolute = absolute.to_timestamp(freq)
+                freq = cutoff.freqstr
+                absolute = absolute.to_timestamp(
+                    freq,
+                )
 
             return self._new(absolute, is_relative=False)
 
