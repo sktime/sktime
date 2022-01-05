@@ -23,7 +23,7 @@ def test_get_scenarios_for_class(estimator_class):
     ), "return of retrieve_scenarios is not a list of scenarios"
 
 
-@pytest.mark.parametrize("estimator_class", BASE_CLASS_SCITYPE_LIST)
+@pytest.mark.parametrize("scitype_string", BASE_CLASS_SCITYPE_LIST)
 def test_get_scenarios_for_string(scitype_string):
     """Test retrieval of scenarios by string."""
     scenarios = retrieve_scenarios(estimator_type=scitype_string)
