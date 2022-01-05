@@ -60,6 +60,8 @@ Core Developers
      - :user:`freddyaboulton`
    * - George Oastler
      - :user:`goastler`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
    * - Markus Löning
      - :user:`mloning`
    * - James Large
