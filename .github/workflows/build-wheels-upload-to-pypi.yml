@@ -126,7 +126,7 @@ jobs:
         run: |
           conda install -c anaconda -n test -y "pystan==2.19.1.1"
           conda install -c conda-forge -n test -y "fbprophet>=0.7.1"
-          conda install -c conda-forge -n test -y scipy cython
+          conda install -c conda-forge -n test -y scipy cython matplotlib
 
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
