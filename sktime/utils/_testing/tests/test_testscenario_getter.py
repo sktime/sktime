@@ -42,8 +42,8 @@ def test_get_scenarios_errors():
     with pytest.raises(ValueError):
         retrieve_scenarios(1, 2)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         retrieve_scenarios(obj=1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         retrieve_scenarios(estimator_type=1)
