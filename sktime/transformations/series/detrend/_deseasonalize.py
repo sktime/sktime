@@ -11,14 +11,14 @@ import pandas as pd
 from statsmodels.tsa.seasonal import STL as _STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
 from sktime.utils.datetime import _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
 
 
-class Deseasonalizer(_SeriesToSeriesTransformer):
+class Deseasonalizer(BaseTransformer):
     """Remove seasonal components from a time series.
 
     Fit computes :term:`seasonal components <Seasonality>` and
@@ -44,7 +44,6 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     See Also
     --------
     ConditionalDeseasonalizer
-    STLTransformer
 
     Notes
     -----
@@ -63,7 +62,20 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.Series",
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "fit-in-transform": False,
+        "capability:inverse_transform": True,
+        "transform-returns-same-time-index": True,
+        "univariate-only": True,
+    }
 
     def __init__(self, sp=1, model="additive"):
         self.sp = check_sp(sp)
@@ -73,121 +85,125 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
                 f"`model` must be one of {allowed_models}, " f"but found: {model}"
             )
         self.model = model
-        self._Z_index = None
+        self._y_index = None
         self.seasonal_ = None
         super(Deseasonalizer, self).__init__()
+
+    def _set_y_index(self, y):
+        self._y_index = y.index
 
     def _align_seasonal(self, y):
         """Align seasonal components with y's time index."""
         shift = (
             -_get_duration(
                 y.index[0],
-                self._Z_index[0],
+                self._y_index[0],
                 coerce_to_int=True,
-                unit=_get_freq(self._Z_index),
+                unit=_get_freq(self._y_index),
             )
             % self.sp
         )
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
-    def fit(self, Z, X=None):
-        """Fit to data.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series
-        X : pd.DataFrame
+        X : pd.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        self._is_fitted = False
-        z = check_series(Z, enforce_univariate=True)
-        self._Z_index = z.index
+        self._set_y_index(X)
         sp = check_sp(self.sp)
 
         # apply seasonal decomposition
         self.seasonal_ = seasonal_decompose(
-            z,
+            X,
             model=self.model,
             period=sp,
             filt=None,
             two_sided=True,
             extrapolate_trend=0,
         ).seasonal.iloc[:sp]
-
-        self._is_fitted = True
         return self
 
-    def _transform(self, y, seasonal):
+    def _private_transform(self, y, seasonal):
         if self.model == "additive":
             return y - seasonal
         else:
             return y / seasonal
 
-    def _inverse_transform(self, y, seasonal):
+    def _private_inverse_transform(self, y, seasonal):
         if self.model == "additive":
             return y + seasonal
         else:
             return y * seasonal
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of y.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-
-        Returns
-        -------
-        yt : pd.Series
-            Transformed time series.
-        """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        seasonal = self._align_seasonal(z)
-        return self._transform(z, seasonal)
-
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
-
-        Returns a transformed version of y.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        y : pd.Series
-        X : pd.DataFrame
+        X : pd.Series
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        yt : pd.Series
-            Transformed time series.
+        Xt : pd.Series
+            transformed version of X, detrended series
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        seasonal = self._align_seasonal(z)
-        return self._inverse_transform(z, seasonal)
+        seasonal = self._align_seasonal(X)
+        Xt = self._private_transform(X, seasonal)
+        return Xt
 
-    def update(self, Z, X=None, update_params=False):
-        """Update fitted parameters.
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, default=False
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self : an instance of self
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        self._set_y_index(z)
+        seasonal = self._align_seasonal(X)
+        Xt = self._private_inverse_transform(X, seasonal)
+        return Xt
+
+    def _update(self, X, y=None, update_params=False):
+        """Update transformer with X and y.
+
+        private _update containing the core logic, called from update
+
+        Parameters
+        ----------
+        X : pd.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        self._set_y_index(X)
         return self
 
 
@@ -239,13 +255,12 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     Seasonal decomposition is computed using `statsmodels
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
-
     Examples
     --------
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.detrend import ConditionalDeseasonalizer
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> transformer = ConditionalDeseasonalizer()
+    >>> transformer = ConditionalDeseasonalizer(sp=12)
     >>> y_hat = transformer.fit_transform(y)
     """
 
@@ -282,7 +297,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         self : an instance of self
         """
         z = check_series(Z, enforce_univariate=True)
-        self._Z_index = z.index
+        self._set_y_index(z)
         sp = check_sp(self.sp)
 
         # set default condition

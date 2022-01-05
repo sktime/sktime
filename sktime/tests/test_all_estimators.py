@@ -110,7 +110,39 @@ def test_create_test_instance(estimator_class):
     estimator = estimator_class.create_test_instance()
 
     # Check that init does not construct object of other class than itself
-    assert isinstance(estimator, estimator_class)
+    assert isinstance(estimator, estimator_class), (
+        "object returned by create_test_instance must be an instance of the class, "
+        f"found {type(estimator)}"
+    )
+
+
+def test_create_test_instances_and_names(estimator_class):
+    """Check that create_test_instances_and_names works."""
+    estimators, names = estimator_class.create_test_instances_and_names()
+
+    assert isinstance(estimators, list), (
+        "first return of create_test_instances_and_names must be a list, "
+        f"found {type(estimators)}"
+    )
+    assert isinstance(names, list), (
+        "second return of create_test_instances_and_names must be a list, "
+        f"found {type(names)}"
+    )
+
+    assert np.all(isinstance(est, estimator_class) for est in estimators), (
+        "list elements of first return returned by create_test_instances_and_names "
+        "all must be an instance of the class"
+    )
+
+    assert np.all(isinstance(name, names) for name in names), (
+        "list elements of second return returned by create_test_instances_and_names "
+        "all must be strings"
+    )
+
+    assert len(estimators) == len(names), (
+        "the two lists returned by create_test_instances_and_names must have "
+        "equal length"
+    )
 
 
 def test_required_params(estimator_class):
