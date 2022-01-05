@@ -33,6 +33,7 @@ from sktime.distances._distance import (
     wddtw_distance,
     wdtw_distance,
 )
+
 # todo: replace these or remove these (placeholders for C removal)
 from sktime.distances.elastic import msm_distance
 from sktime.distances.elastic import msm_distance as twe_distance
