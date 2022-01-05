@@ -24,7 +24,6 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.registry import all_estimators
-from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import _get_n_columns, make_forecasting_problem
 from sktime.utils._testing.series import _make_series
 
@@ -53,11 +52,11 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 def test_oh_setting(Forecaster):
     """Check cuttoff and _y."""
     # check _y and cutoff is None after construction
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
@@ -100,7 +99,7 @@ FORECASTERS_OPTIONAL = [
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_no_fh_in_fit_req(Forecaster):
     """Check if fh is required in fit."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     # fh required in fit, raises error if not passed
     with pytest.raises(ValueError):
         f.fit(y_train)
@@ -109,7 +108,7 @@ def test_no_fh_in_fit_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_fh_in_fit_req(Forecaster):
     """Checks if fh is requred in fit."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     f.predict()
@@ -119,7 +118,7 @@ def test_fh_in_fit_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_same_fh_in_fit_and_predict_req(Forecaster):
     """Check if fh is the same in fit and predict."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     f.predict(FH0)
@@ -129,7 +128,7 @@ def test_same_fh_in_fit_and_predict_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_different_fh_in_fit_and_predict_req(Forecaster):
     """Check if fh is different in fit and predict."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     # updating fh during predict raises error as fitted model depends on fh
@@ -142,11 +141,11 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_no_fh_opt(Forecaster):
     """Check if fh is optional in fit."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train)
         # not passing fh to either fit or predict raises error
@@ -157,11 +156,11 @@ def test_no_fh_opt(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_fit_opt(Forecaster):
     """Check if fh is optional in fit."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=FH0)
         np.testing.assert_array_equal(f.fh, FH0)
@@ -172,11 +171,11 @@ def test_fh_in_fit_opt(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_predict_opt(Forecaster):
     """Check if fh is optional in predict."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train)
         f.predict(FH0)
@@ -186,11 +185,11 @@ def test_fh_in_predict_opt(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_same_fh_in_fit_and_predict_opt(Forecaster):
     """Check if fh is the same in fit and predict."""
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
 
         # passing the same fh to both fit and predict works
@@ -202,11 +201,11 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
 
 @pytest.mark.parametrize("Forecaster", WINDOW_FORECASTERS)
 def test_last_window(Forecaster):
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         # passing the same fh to both fit and predict works
         f.fit(y_train, fh=FH0)
