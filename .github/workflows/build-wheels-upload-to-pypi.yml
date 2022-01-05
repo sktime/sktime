@@ -140,8 +140,8 @@ jobs:
       - run: conda info --envs
 
       - name: Install wheel and extras
-        # run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
-        run: python -m pip install --no-deps --no-index --find-links=./wheelhouse sktime[all_extras,dev]
+        run: python -m pip install "${env:WHEELNAME}[all_extras,dev]"
+        # run: python -m pip install --no-deps --no-index --find-links=./wheelhouse sktime[all_extras,dev]
 
       - name: Show conda packages
         run: conda list -n test
@@ -151,7 +151,13 @@ jobs:
       - run: python -c "import sys;print(sys.path);print(sys.executable)"
 
       - name: Run tests
-        run: python -m pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          cd testdir/
+          python -m pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime --pyargs sktime
+        # run: python -m pytest --showlocals --durations=10 --pyargs --cov-report=xml -n 2 --cov=sktime sktime
 
   # Build the source distribution under Linux
   build_sdist:
