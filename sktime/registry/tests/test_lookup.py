@@ -160,7 +160,6 @@ def test_all_estimators_exclude_estimators(exclude_estimators):
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""
-
     base_class = _check_estimator_types(estimator_scitype)[0]
     inferred_scitype = scitype(base_class)
 
