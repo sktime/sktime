@@ -163,6 +163,6 @@ def test_scitype_inference(estimator_scitype):
     base_class = _check_estimator_types(estimator_scitype)[0]
     inferred_scitype = scitype(base_class)
 
-    assert inferred_scitype == estimator_scitype, (
-        "one of scitype, _check_estimator_types is incorrect, these should be inverses"
-    )
+    assert (
+        inferred_scitype == estimator_scitype
+    ), "one of scitype, _check_estimator_types is incorrect, these should be inverses"
