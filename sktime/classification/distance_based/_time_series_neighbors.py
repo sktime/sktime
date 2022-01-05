@@ -121,9 +121,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit(self, X, y):
+    def fit(self, X, y, **kwargs):
         """Override fit is required to sort out the multiple inheritance."""
-        return BaseClassifier.fit(self, X, y)
+        return BaseClassifier.fit(self, X, y, **kwargs)
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
@@ -305,9 +305,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 return dist, neigh_ind
             return neigh_ind
 
-    def predict(self, X):
+    def predict(self, X, **kwargs):
         """Predict wrapper."""
-        return BaseClassifier.predict(self, X)
+        return BaseClassifier.predict(self, X, **kwargs)
 
     def _predict(self, X):
         """Predict the class labels for the provided data.
@@ -361,9 +361,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = temp
         return y_pred
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, **kwargs):
         """Predict proba wrapper."""
-        return BaseClassifier.predict_proba(self, X)
+        return BaseClassifier.predict_proba(self, X, **kwargs)
 
     def _predict_proba(self, X):
         """Return probability estimates for the test data X.
