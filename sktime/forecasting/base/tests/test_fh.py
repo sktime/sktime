@@ -214,3 +214,12 @@ def test_get_duration(n_timepoints, index_type):
     duration = _get_duration(index, coerce_to_int=True)
     assert isinstance(duration, (int, np.integer))
     assert duration == n_timepoints - 1
+
+
+@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+def test_to_absolute_freq(freqstr):
+    """Test conversion when anchorings included in frequency."""
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    fh = ForecastingHorizon([1, 2, 3])
+    abs_fh = fh.to_absolute(train.index[-1])
+    assert abs_fh._values.freqstr == freqstr
