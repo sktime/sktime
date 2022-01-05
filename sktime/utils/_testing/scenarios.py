@@ -50,7 +50,7 @@ class TestScenario:
         if args is not None:
             self.args = _check_dict_of_dict(args)
         else:
-            if not hasattr(self, args):
+            if not hasattr(self, "args"):
                 raise RuntimeError(
                     "args must either be given to __init__ or set in a child class"
                 )
