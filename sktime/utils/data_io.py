@@ -977,9 +977,9 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     rows_per_case = series_len * num_dims
     total_rows = num_cases * series_len * num_dims
 
-    case_ids = np.empty(total_rows, dtype=np.int)
-    idxs = np.empty(total_rows, dtype=np.int)
-    dims = np.empty(total_rows, dtype=np.int)
+    case_ids = np.empty(total_rows, dtype=int)
+    idxs = np.empty(total_rows, dtype=int)
+    dims = np.empty(total_rows, dtype=int)
     vals = np.random.rand(total_rows)
 
     for i in range(total_rows):
@@ -1069,7 +1069,7 @@ def write_results_to_uea_format(
     split : str, default = "TEST"
         Either TRAIN or TEST, depending on the results, influences file name.
     resample_seed : int, default = 0
-        Indicates what data
+        Indicates what data resample the results are for
     timing_type : str or None, default = None
         The format used for timings in the file, i.e. Seconds, Milliseconds, Nanoseconds
     first_line_comment : str or None, default = None
@@ -1123,9 +1123,15 @@ def write_results_to_uea_format(
     )
 
     # the first line of the output file is in the form of:
-    # <classifierName>,<datasetName>,<train/test>
+    # <estimator_name>,<dataset_name>,<train/test>,<resample_seed>
     first_line = (
-        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test)
+        str(estimator_name)
+        + ","
+        + str(dataset_name)
+        + ","
+        + str(train_or_test)
+        + ","
+        + str(resample_seed)
     )
     if timing_type is not None:
         first_line += "," + timing_type

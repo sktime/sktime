@@ -12,14 +12,13 @@ import math
 import sys
 
 import numpy as np
-import scipy.stats
 from numba import njit
-from numba.typed import List
+from sklearn import preprocessing
 from sklearn.base import BaseEstimator
-from sklearn.utils import check_X_y, check_random_state
+from sklearn.utils import check_random_state, check_X_y
 
 from sktime.exceptions import NotFittedError
-from sktime.utils.slope_and_trend import _slope
+from sktime.utils.numba.stats import iqr, mean, median, numba_max, numba_min, slope, std
 from sktime.utils.validation.panel import check_X
 
 
@@ -37,6 +36,8 @@ class ContinuousIntervalTree(BaseEstimator):
     ----------
     max_depth : int, default=sys.maxsize
         Maximum depth for the tree.
+    thresholds : int, default=20
+        Number of thresholds to split attributes on at tree nodes.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -82,9 +83,11 @@ class ContinuousIntervalTree(BaseEstimator):
     def __init__(
         self,
         max_depth=sys.maxsize,
+        thresholds=20,
         random_state=None,
     ):
         self.max_depth = max_depth
+        self.thresholds = thresholds
 
         self.random_state = random_state
 
@@ -124,30 +127,34 @@ class ContinuousIntervalTree(BaseEstimator):
             )
         X, y = check_X_y(X, y)
 
-        # replace missing and infinite values with 0
-        X = np.nan_to_num(X, False, 0, 0, 0)
-
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
+        le = preprocessing.LabelEncoder()
+        y = le.fit_transform(y)
+
         rng = check_random_state(self.random_state)
         self.root = _TreeNode(random_state=rng)
 
-        thresholds = np.linspace(np.min(X, axis=0), np.max(X, axis=0), 20)
-        distribution_cls, distribution = unique_count(y)
-        e = _entropy(distribution, distribution.sum())
+        thresholds = np.linspace(np.min(X, axis=0), np.max(X, axis=0), self.thresholds)
+
+        distribution = np.zeros(self.n_classes)
+        for i in range(len(y)):
+            distribution[y[i]] += 1
+
+        entropy = _entropy(distribution, distribution.sum())
 
         self.root.build_tree(
             X,
             y,
             thresholds,
-            e,
-            distribution_cls,
+            entropy,
             distribution,
             0,
             self.max_depth,
+            self.n_classes,
             False,
         )
 
@@ -202,9 +209,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
         dists = np.zeros((X.shape[0], self.n_classes))
         for i in range(X.shape[0]):
-            dists[i] = self.root.predict_proba(
-                X[i], self.n_classes, self._class_dictionary
-            )
+            dists[i] = self.root.predict_proba(X[i], self.n_classes)
         return dists
 
     def _predict_proba_cif(self, X, c22, intervals, dims, atts):
@@ -219,14 +224,13 @@ class ContinuousIntervalTree(BaseEstimator):
 
         dists = np.zeros((n_instances, self.n_classes))
         for i in range(n_instances):
-            dists[i] = self.root._predict_proba_cif(
+            dists[i] = self.root.predict_proba_cif(
                 X[i].reshape((1, n_dims, series_length)),
                 c22,
                 intervals,
                 dims,
                 atts,
                 self.n_classes,
-                self._class_dictionary,
             )
         return dists
 
@@ -249,7 +253,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 X_p[i].reshape((1, n_dims, X_p.shape[2])),
                 X_d[i].reshape((1, n_dims, X_d.shape[2])),
             ]
-            dists[i] = self.root._predict_proba_drcif(
+            dists[i] = self.root.predict_proba_drcif(
                 r,
                 c22,
                 n_intervals,
@@ -257,7 +261,6 @@ class ContinuousIntervalTree(BaseEstimator):
                 dims,
                 atts,
                 self.n_classes,
-                self._class_dictionary,
             )
         return dists
 
@@ -295,7 +298,6 @@ class _TreeNode:
         self.best_gain = 0.000001
         self.best_margin = -1
         self.children = []
-        self.leaf_distribution_cls = []
         self.leaf_distribution = []
         self.depth = -1
 
@@ -305,35 +307,29 @@ class _TreeNode:
         y,
         thresholds,
         entropy,
-        distribution_cls,
         distribution,
         depth,
         max_depth,
+        n_classes,
         leaf,
     ):
         self.depth = depth
-        best_splits = []
-        best_distributions_cls = []
         best_distributions = []
         best_entropies = []
 
-        if leaf is False and depth < max_depth:
+        if leaf is False and self.remaining_classes(distribution) and depth < max_depth:
             for (_, att), threshold in np.ndenumerate(thresholds):
                 (
                     info_gain,
-                    splits,
-                    distributions_cls,
                     distributions,
                     entropies,
-                ) = self.information_gain(X, y, att, threshold, entropy)
+                ) = self.information_gain(X, y, att, threshold, entropy, n_classes)
 
                 if info_gain > self.best_gain:
                     self.best_split = att
                     self.best_threshold = threshold
                     self.best_gain = info_gain
                     self.best_margin = -1
-                    best_splits = splits
-                    best_distributions_cls = distributions_cls
                     best_distributions = distributions
                     best_entropies = entropies
                 elif info_gain == self.best_gain and info_gain > 0.000001:
@@ -350,26 +346,28 @@ class _TreeNode:
                         self.best_split = att
                         self.best_threshold = threshold
                         self.best_margin = margin
-                        best_splits = splits
-                        best_distributions_cls = distributions_cls
                         best_distributions = distributions
                         best_entropies = entropies
 
         if self.best_split > -1:
             self.children = [None, None, None]
 
-            if sum(best_splits[0]) > 0:
+            left_idx, right_idx, missing_idx = self.split_data(
+                X, self.best_split, self.best_threshold
+            )
+
+            if len(left_idx) > 0:
                 self.children[0] = _TreeNode(random_state=self.random_state)
                 self.children[0].build_tree(
-                    X[best_splits[0]],
-                    y[best_splits[0]],
+                    X[left_idx],
+                    y[left_idx],
                     thresholds,
                     best_entropies[0],
-                    best_distributions_cls[0],
                     best_distributions[0],
                     depth + 1,
                     max_depth,
-                    len(best_distributions[0]) == 1,
+                    n_classes,
+                    False,
                 )
             else:
                 self.children[0] = _TreeNode(random_state=self.random_state)
@@ -378,25 +376,25 @@ class _TreeNode:
                     y,
                     thresholds,
                     entropy,
-                    distribution_cls,
                     distribution,
                     depth + 1,
                     max_depth,
+                    n_classes,
                     True,
                 )
 
-            if sum(best_splits[1]) > 0:
+            if len(right_idx) > 0:
                 self.children[1] = _TreeNode(random_state=self.random_state)
                 self.children[1].build_tree(
-                    X[best_splits[1]],
-                    y[best_splits[1]],
+                    X[right_idx],
+                    y[right_idx],
                     thresholds,
                     best_entropies[1],
-                    best_distributions_cls[1],
                     best_distributions[1],
                     depth + 1,
                     max_depth,
-                    len(best_distributions[1]) == 1,
+                    n_classes,
+                    False,
                 )
             else:
                 self.children[1] = _TreeNode(random_state=self.random_state)
@@ -405,25 +403,25 @@ class _TreeNode:
                     y,
                     thresholds,
                     entropy,
-                    distribution_cls,
                     distribution,
                     depth + 1,
                     max_depth,
+                    n_classes,
                     True,
                 )
 
-            if sum(best_splits[2]) > 0:
+            if len(missing_idx) > 0:
                 self.children[2] = _TreeNode(random_state=self.random_state)
                 self.children[2].build_tree(
-                    X[best_splits[2]],
-                    y[best_splits[2]],
+                    X[missing_idx],
+                    y[missing_idx],
                     thresholds,
                     best_entropies[2],
-                    best_distributions_cls[2],
                     best_distributions[2],
                     depth + 1,
                     max_depth,
-                    len(best_distributions[2]) == 1,
+                    n_classes,
+                    False,
                 )
             else:
                 self.children[2] = _TreeNode(random_state=self.random_state)
@@ -432,61 +430,77 @@ class _TreeNode:
                     y,
                     thresholds,
                     entropy,
-                    distribution_cls,
                     distribution,
                     depth + 1,
                     max_depth,
+                    n_classes,
                     True,
                 )
         else:
-            self.leaf_distribution_cls = list(distribution_cls)
-            self.leaf_distribution = list(distribution / distribution.sum())
+            self.leaf_distribution = distribution / np.sum(distribution)
 
         return self
 
-    def predict_proba(self, X, n_classes, class_dictionary):
+    def predict_proba(self, X, n_classes):
         if self.best_split > -1:
-            if np.isnan(X[self.best_split]):
-                return self.children[0].predict_proba(X, n_classes, class_dictionary)
-            elif X[self.best_split] <= self.best_threshold:
-                return self.children[1].predict_proba(X, n_classes, class_dictionary)
+            if X[self.best_split] <= self.best_threshold:
+                return self.children[0].predict_proba(X, n_classes)
+            elif X[self.best_split] > self.best_threshold:
+                return self.children[1].predict_proba(X, n_classes)
             else:
-                return self.children[2].predict_proba(X, n_classes, class_dictionary)
+                return self.children[2].predict_proba(X, n_classes)
         else:
-            dist = np.zeros(n_classes)
-            for i, prob in enumerate(self.leaf_distribution):
-                dist[class_dictionary[self.leaf_distribution_cls[i]]] = prob
-            return dist
+            return self.leaf_distribution
 
-    def predict_proba_cif(
-        self, X, c22, intervals, dims, atts, n_classes, class_dictionary
-    ):
+    def predict_proba_cif(self, X, c22, intervals, dims, atts, n_classes):
         if self.best_split > -1:
             interval = int(self.best_split / len(atts))
             att = self.best_split % len(atts)
-            value = _cif_feature(X, intervals[interval], dims[interval], atts[att], c22)
-            value = np.nan_to_num(value, False, 0, 0, 0)
+            value = _drcif_feature(
+                X, intervals[interval], dims[interval], atts[att], c22
+            )
+            value = value.round(8)
+            value = np.nan_to_num(value, False, posinf=np.nan, neginf=np.nan)
 
-            if np.isnan(value):
-                return self.children[0]._predict_proba_cif(
-                    X, c22, intervals, dims, atts, n_classes, class_dictionary
+            if value <= self.best_threshold:
+                return self.children[0].predict_proba_cif(
+                    X,
+                    c22,
+                    intervals,
+                    dims,
+                    atts,
+                    n_classes,
                 )
-            elif value <= self.best_threshold:
-                return self.children[1]._predict_proba_cif(
-                    X, c22, intervals, dims, atts, n_classes, class_dictionary
+            elif value > self.best_threshold:
+                return self.children[1].predict_proba_cif(
+                    X,
+                    c22,
+                    intervals,
+                    dims,
+                    atts,
+                    n_classes,
                 )
             else:
-                return self.children[2]._predict_proba_cif(
-                    X, c22, intervals, dims, atts, n_classes, class_dictionary
+                return self.children[2].predict_proba_cif(
+                    X,
+                    c22,
+                    intervals,
+                    dims,
+                    atts,
+                    n_classes,
                 )
         else:
-            dist = np.zeros(n_classes)
-            for i, prob in enumerate(self.leaf_distribution):
-                dist[class_dictionary[self.leaf_distribution_cls[i]]] = prob
-            return dist
+            return self.leaf_distribution
 
     def predict_proba_drcif(
-        self, X, c22, n_intervals, intervals, dims, atts, n_classes, class_dictionary
+        self,
+        X,
+        c22,
+        n_intervals,
+        intervals,
+        dims,
+        atts,
+        n_classes,
     ):
         if self.best_split > -1:
             rep = -1
@@ -503,10 +517,11 @@ class _TreeNode:
             value = _drcif_feature(
                 X[rep], intervals[interval], dims[interval], atts[att], c22
             )
-            value = np.nan_to_num(value, False, 0, 0, 0)
+            value = value.round(8)
+            value = np.nan_to_num(value, False, posinf=np.nan, neginf=np.nan)
 
-            if np.isnan(value):
-                return self.children[0]._predict_proba_drcif(
+            if value <= self.best_threshold:
+                return self.children[0].predict_proba_drcif(
                     X,
                     c22,
                     n_intervals,
@@ -514,10 +529,9 @@ class _TreeNode:
                     dims,
                     atts,
                     n_classes,
-                    class_dictionary,
                 )
-            elif value <= self.best_threshold:
-                return self.children[1]._predict_proba_drcif(
+            elif value > self.best_threshold:
+                return self.children[1].predict_proba_drcif(
                     X,
                     c22,
                     n_intervals,
@@ -525,10 +539,9 @@ class _TreeNode:
                     dims,
                     atts,
                     n_classes,
-                    class_dictionary,
                 )
             else:
-                return self.children[2]._predict_proba_drcif(
+                return self.children[2].predict_proba_drcif(
                     X,
                     c22,
                     n_intervals,
@@ -536,46 +549,50 @@ class _TreeNode:
                     dims,
                     atts,
                     n_classes,
-                    class_dictionary,
                 )
         else:
-            dist = np.zeros(n_classes)
-            for i, prob in enumerate(self.leaf_distribution):
-                dist[class_dictionary[self.leaf_distribution_cls[i]]] = prob
-            return dist
+            return self.leaf_distribution
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def information_gain(X, y, attribute, threshold, parent_entropy):
-        missing = np.isnan(X[:, attribute])
-        dist_missing_cls, dist_missing = unique_count(y[missing])
-        left = X[:, attribute] <= threshold
-        dist_left_cls, dist_left = unique_count(y[left])
-        right = X[:, attribute] > threshold
-        dist_right_cls, dist_right = unique_count(y[right])
+    def information_gain(X, y, attribute, threshold, parent_entropy, n_classes):
+        dist_left = np.zeros(n_classes)
+        dist_right = np.zeros(n_classes)
+        dist_missing = np.zeros(n_classes)
+        for i, case in enumerate(X):
+            if case[attribute] <= threshold:
+                dist_left[y[i]] += 1
+            elif case[attribute] > threshold:
+                dist_right[y[i]] += 1
+            else:
+                dist_missing[y[i]] += 1
 
-        sum_missing = dist_missing.sum()
-        sum_left = dist_left.sum()
-        sum_right = dist_right.sum()
+        sum_missing = 0
+        for v in dist_missing:
+            sum_missing += v
+        sum_left = 0
+        for v in dist_left:
+            sum_left += v
+        sum_right = 0
+        for v in dist_right:
+            sum_right += v
 
-        entropy_missing = _entropy(dist_missing, sum_missing)
         entropy_left = _entropy(dist_left, sum_left)
         entropy_right = _entropy(dist_right, sum_right)
+        entropy_missing = _entropy(dist_missing, sum_missing)
 
         num_cases = X.shape[0]
         info_gain = (
             parent_entropy
-            - sum_missing / num_cases * entropy_missing
             - sum_left / num_cases * entropy_left
             - sum_right / num_cases * entropy_right
+            - sum_missing / num_cases * entropy_missing
         )
 
         return (
             info_gain,
-            [missing, left, right],
-            [dist_missing_cls, dist_left_cls, dist_right_cls],
-            [dist_missing, dist_left, dist_right],
-            [entropy_missing, entropy_left, entropy_right],
+            [dist_left, dist_right, dist_missing],
+            [entropy_left, entropy_right, entropy_missing],
         )
 
     @staticmethod
@@ -584,23 +601,40 @@ class _TreeNode:
         margins = np.abs(X[:, attribute] - threshold)
         return np.min(margins)
 
-
-@njit(fastmath=True, cache=True)
-def unique_count(x):
-    if len(x) > 0:
-        x = np.sort(x)
-        unique = List()
-        unique.append(x[0])
-        counts = np.zeros(1, dtype=np.int64)
-        counts[0] = 1
-        for i in x[1:]:
-            if i != unique[-1]:
-                unique.append(i)
-                counts = np.append(counts, 1)
+    @staticmethod
+    @njit(fastmath=True, cache=True)
+    def split_data(X, best_split, best_threshold):
+        left_idx = np.zeros(len(X), dtype=np.int_)
+        left_count = 0
+        right_idx = np.zeros(len(X), dtype=np.int_)
+        right_count = 0
+        missing_idx = np.zeros(len(X), dtype=np.int_)
+        missing_count = 0
+        for i, case in enumerate(X):
+            if case[best_split] <= best_threshold:
+                left_idx[left_count] = i
+                left_count += 1
+            elif case[best_split] > best_threshold:
+                right_idx[right_count] = i
+                right_count += 1
             else:
-                counts[-1] += 1
-        return unique, counts
-    return None, np.zeros(0, dtype=np.int64)
+                missing_idx[missing_count] = i
+                missing_count += 1
+
+        return (
+            left_idx[:left_count],
+            right_idx[:right_count],
+            missing_idx[:missing_count],
+        )
+
+    @staticmethod
+    @njit(fastmath=True, cache=True)
+    def remaining_classes(distribution):
+        remaining_classes = 0
+        for d in distribution:
+            if d > 0:
+                remaining_classes += 1
+        return remaining_classes > 1
 
 
 @njit(fastmath=True, cache=True)
@@ -612,47 +646,31 @@ def _entropy(x, s):
     return e
 
 
-def _cif_feature(X, interval, dim, att, c22):
+def _drcif_feature(X, interval, dim, att, c22, case_id=None):
+    if att > 21:
+        return _summary_stat(X[:, dim, interval[0] : interval[1]], att)
+    else:
+        return c22.transform_single_feature(
+            X[:, dim, interval[0] : interval[1]], att, case_id=case_id
+        )
+
+
+def _summary_stat(X, att):
     if att == 22:
-        # mean
-        return np.mean(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = mean
     elif att == 23:
-        # std_dev
-        return np.std(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = std
     elif att == 24:
-        # slope
-        return _slope(X[:, dim, interval[0] : interval[1]], axis=1)
-    else:
-        return c22._transform_single_feature(
-            X[:, dim, interval[0] : interval[1]],
-            feature=att,
-        )
-
-
-def _drcif_feature(X, interval, dim, att, c22):
-    if att == 22:
-        # mean
-        return np.mean(X[:, dim, interval[0] : interval[1]], axis=1)
-    if att == 23:
-        # median
-        return np.median(X[:, dim, interval[0] : interval[1]], axis=1)
-    elif att == 24:
-        # std_dev
-        return np.std(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = slope
     elif att == 25:
-        # slope
-        return _slope(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = median
     elif att == 26:
-        # iqr
-        return scipy.stats.iqr(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = iqr
     elif att == 27:
-        # min
-        return np.min(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = numba_min
     elif att == 28:
-        # max
-        return np.max(X[:, dim, interval[0] : interval[1]], axis=1)
+        function = numba_max
     else:
-        return c22._transform_single_feature(
-            X[:, dim, interval[0] : interval[1]],
-            feature=att,
-        )
+        raise ValueError("Invalid summary stat ID.")
+
+    return np.array([function(i) for i in X])

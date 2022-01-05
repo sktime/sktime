@@ -10,7 +10,7 @@ from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -38,7 +38,7 @@ class _Pipeline(
         transformers = estimators[:-1]
         forecaster = estimators[-1]
 
-        valid_transformer_type = _SeriesToSeriesTransformer
+        valid_transformer_type = BaseTransformer
         for transformer in transformers:
             if not isinstance(transformer, valid_transformer_type):
                 raise TypeError(
@@ -130,6 +130,39 @@ class _Pipeline(
         """
         self._set_params("steps", **kwargs)
         return self
+
+    # both children use the same step params for testing, so putting it here
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.preprocessing import StandardScaler
+
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+
+        STEPS1 = [
+            ("transformer", TabularToSeriesAdaptor(StandardScaler())),
+            ("forecaster", NaiveForecaster()),
+        ]
+        params1 = {"steps": STEPS1}
+
+        STEPS2 = [
+            ("transformer", BoxCoxTransformer()),
+            ("forecaster", NaiveForecaster()),
+        ]
+        params2 = {"steps": STEPS2}
+
+        return [params1, params2]
 
 
 class ForecastingPipeline(_Pipeline):
@@ -240,7 +273,9 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                X = transformer.transform(Z=X)
+                # todo: deprecation in 0.10.0
+                # add kwarg X= after deprecation of old trafo interface
+                X = transformer.transform(X)
 
         return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 

@@ -19,8 +19,6 @@ Community Council
      - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
-   * - Markus Löning
-     - :user:`mloning`
    * - Martin Walter
      - :user:`aiwalter`
 
@@ -37,8 +35,6 @@ Code of Conduct Committee
      - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
-   * - Markus Löning
-     - :user:`mloning`
    * - Martina Vilas
      - :user:`martinagvilas`
 

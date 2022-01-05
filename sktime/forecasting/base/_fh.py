@@ -91,11 +91,11 @@ def _check_values(values):
 
     # convert single integer to pandas index, no further checks needed
     elif isinstance(values, (int, np.integer)):
-        return pd.Int64Index([values], dtype=np.int)
+        return pd.Int64Index([values], dtype=int)
 
     # convert np.array or list to pandas index
     elif isinstance(values, (list, np.ndarray)):
-        values = pd.Int64Index(values, dtype=np.int)
+        values = pd.Int64Index(values, dtype=int)
 
     # otherwise, raise type error
     else:
