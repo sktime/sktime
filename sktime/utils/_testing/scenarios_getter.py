@@ -9,7 +9,7 @@ __all__ = ["retrieve_scenarios"]
 from inspect import isclass
 
 from sktime.base import BaseObject
-from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST
+from sktime.registry import scitype, BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST
 from sktime.utils._testing.scenarios_forecasting import scenarios_forecasting
 
 scenarios = dict()
@@ -33,7 +33,7 @@ def retrieve_scenarios(obj):
     -------
     scenarios : list of objects, instances of BaseScenario
     """
-    if not isinstance(obj, (str, BaseObject)):
+    if not isinstance(obj, (str, BaseObject)) and not issubclass(obj, BaseObject):
         raise TypeError("obj must be a str or inherit from BaseObject")
     if isinstance(obj, str) and obj not in BASE_CLASS_SCITYPE_LIST:
         raise ValueError(
@@ -42,14 +42,27 @@ def retrieve_scenarios(obj):
         )
 
     if not isinstance(obj, str):
-        estimator_type = _scitype_from_class(obj)
+        estimator_type = scitype(obj)
+    else:
+        estimator_type = obj
 
-    scenarios_for_type = scenarios.get(estimator_type)
+    if isinstance(obj, list):
+        scenarios_for_type = []
+        for est_type in estimator_type:
+            scens = scenarios.get(est_type)
+            if scens is not None:
+                scenarios_for_type += scenarios.get(est_type)
+    else:
+        scenarios_for_type = scenarios.get(estimator_type)
+        if scenarios_for_type is None:
+            scenarios_for_type = []
 
-    scenarios_for_type = [x() for x in scenarios_for_type if x.isapplicable(obj)]
+    scenarios_for_type = [x() for x in scenarios_for_type]
 
-    if scenarios_for_type is None:
-        return []
+    if not isinstance(obj, str):
+        scenarios_for_type = [x for x in scenarios_for_type if x.is_applicable(obj)]
+
+    return scenarios_for_type
 
 
 def _scitype_from_class(obj):

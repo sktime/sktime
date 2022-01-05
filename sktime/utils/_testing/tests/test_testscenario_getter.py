@@ -22,28 +22,26 @@ def test_get_scenarios_for_class(estimator_class):
         isinstance(x, TestScenario) for x in scenarios
     ), "return of retrieve_scenarios is not a list of scenarios"
 
+    # todo: remove once fully refactored to scenarios
+    # assert len(scenarios) > 0
 
 @pytest.mark.parametrize("scitype_string", BASE_CLASS_SCITYPE_LIST)
 def test_get_scenarios_for_string(scitype_string):
     """Test retrieval of scenarios by string."""
-    scenarios = retrieve_scenarios(estimator_type=scitype_string)
+    scenarios = retrieve_scenarios(obj=scitype_string)
 
     assert isinstance(scenarios, list), "return of retrieve_scenarios is not a list"
     assert np.all(
         isinstance(x, TestScenario) for x in scenarios
     ), "return of retrieve_scenarios is not a list of scenarios"
 
+    # todo: remove once fully refactored to scenarios
+    # assert len(scenarios) > 0
 
 def test_get_scenarios_errors():
     """Test that errors are raised for bad input args."""
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         retrieve_scenarios()
-
-    with pytest.raises(ValueError):
-        retrieve_scenarios(1, 2)
 
     with pytest.raises(TypeError):
         retrieve_scenarios(obj=1)
-
-    with pytest.raises(TypeError):
-        retrieve_scenarios(estimator_type=1)
