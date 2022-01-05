@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST
-
 from sktime.utils._testing.scenarios import TestScenario
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
@@ -19,9 +18,9 @@ def test_get_scenarios_for_class(estimator_class):
     scenarios = retrieve_scenarios(obj=estimator_class)
 
     assert isinstance(scenarios, list), "return of retrieve_scenarios is not a list"
-    assert np.all(isinstance(x, TestScenario) for x in scenarios), (
-        "return of retrieve_scenarios is not a list of scenarios"
-    )
+    assert np.all(
+        isinstance(x, TestScenario) for x in scenarios
+    ), "return of retrieve_scenarios is not a list of scenarios"
 
 
 @pytest.mark.parametrize("estimator_class", BASE_CLASS_SCITYPE_LIST)
@@ -30,9 +29,9 @@ def test_get_scenarios_for_string(scitype_string):
     scenarios = retrieve_scenarios(estimator_type=scitype_string)
 
     assert isinstance(scenarios, list), "return of retrieve_scenarios is not a list"
-    assert np.all(isinstance(x, TestScenario) for x in scenarios), (
-        "return of retrieve_scenarios is not a list of scenarios"
-    )
+    assert np.all(
+        isinstance(x, TestScenario) for x in scenarios
+    ), "return of retrieve_scenarios is not a list of scenarios"
 
 
 def test_get_scenarios_errors():

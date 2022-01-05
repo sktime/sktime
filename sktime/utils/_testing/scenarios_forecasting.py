@@ -51,7 +51,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X."""
 
-    _tags = {"univariate_y" : True}
+    _tags = {"univariate_y": True}
 
     args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {"fh": 1}}
     default_method_sequence = ["fit", "predict"]
@@ -60,7 +60,7 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, no fh in predict."""
 
-    _tags = {"univariate_y" : True}
+    _tags = {"univariate_y": True}
 
     args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
@@ -69,7 +69,7 @@ class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, no fh in predict."""
 
-    _tags = {"univariate_y" : True}
+    _tags = {"univariate_y": True}
 
     args = {"fit": {"y": _make_series()}, "predict": {"fh": 1}}
     default_method_sequence = ["fit", "predict"]
@@ -78,7 +78,7 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, longer fh."""
 
-    _tags = {"univariate_y" : True}
+    _tags = {"univariate_y": True}
 
     args = {"fit": {"y": _make_series(), "fh": [1, 2, 3]}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
@@ -93,7 +93,7 @@ X_test_short = LONG_X.iloc[50:51]
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X."""
 
-    _tags = {"univariate_y" : True}
+    _tags = {"univariate_y": True}
 
     args = {
         "fit": {"y": _make_series(), "X": X.copy(), "fh": 1},
@@ -104,7 +104,7 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X, and longer fh."""
 
-    _tags = {"univariate_y" : True}
+    _tags = {"univariate_y": True}
 
     args = {
         "fit": {"y": _make_series(), "X": X.copy(), "fh": [1, 2, 3]},
@@ -115,7 +115,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
     """Fit/predict only, multivariate y, no X."""
 
-    _tags = {"univariate_y" : False}
+    _tags = {"univariate_y": False}
 
     args = {"fit": {"y": _make_series(n_columns=2), "fh": 1}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
@@ -124,7 +124,7 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
 class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
     """Fit/predict only, multivariate y, with X, and longer fh."""
 
-    _tags = {"univariate_y" : False}
+    _tags = {"univariate_y": False}
 
     args = {
         "fit": {"y": _make_series(n_columns=2), "X": X.copy(), "fh": [1, 2, 3]},
@@ -137,13 +137,13 @@ forecasting_scenarios_simple = [
 ]
 
 forecasting_scenarios_extended = [
-        ForecasterFitPredictUnivariateNoX,
-        ForecasterFitPredictUnivariateNoXEarlyFh,
-        ForecasterFitPredictUnivariateNoXLateFh,
-        ForecasterFitPredictUnivariateWithX,
-        ForecasterFitPredictUnivariateWithXLongFh,
-        ForecasterFitPredictMultivariateNoX,
-        ForecasterFitPredictMultivariateWithX,
+    ForecasterFitPredictUnivariateNoX,
+    ForecasterFitPredictUnivariateNoXEarlyFh,
+    ForecasterFitPredictUnivariateNoXLateFh,
+    ForecasterFitPredictUnivariateWithX,
+    ForecasterFitPredictUnivariateWithXLongFh,
+    ForecasterFitPredictMultivariateNoX,
+    ForecasterFitPredictMultivariateWithX,
 ]
 
 # def _make_args(estimator, method, **kwargs):
