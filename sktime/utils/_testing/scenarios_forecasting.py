@@ -19,7 +19,6 @@ from sktime.utils._testing.scenarios import TestScenario
 
 
 class ForecasterTestScenario(TestScenario, BaseObject):
-
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
 
@@ -136,7 +135,8 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 
 
 forecasting_scenarios_simple = [
-    ForecasterFitPredictUnivariateNoX, ForecasterFitPredictMultivariateWithX
+    ForecasterFitPredictUnivariateNoX,
+    ForecasterFitPredictMultivariateWithX,
 ]
 
 forecasting_scenarios_extended = [
