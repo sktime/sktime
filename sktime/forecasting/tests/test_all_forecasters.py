@@ -175,6 +175,37 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
+@pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
+def test_predict_residuals(Forecaster, index_type, fh_type, is_relative, steps):
+    """Check that predict_residuals method works as expected."""
+    f = Forecaster.create_test_instance()
+    n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
+
+    for n_columns in n_columns_list:
+        f = Forecaster.create_test_instance()
+        y_train = _make_series(
+            n_columns=n_columns, index_type=index_type, n_timepoints=50
+        )
+        cutoff = y_train.index[-1]
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        try:
+            f.fit(y_train, fh=fh)
+            y_pred = f.predict()
+
+            y_test = _make_series(
+                n_columns=n_columns, index_type=index_type, n_timepoints=len(y_pred)
+            )
+            y_test.index = y_pred.index
+            y_res = f.predict_residuals(y_test)
+            _assert_correct_pred_time_index(y_res.index, y_train.index[-1], fh=fh)
+        except NotImplementedError:
+            pass
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize(
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
+)
 @pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
 def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative, steps):
     """Check that predicted time index matches forecasting horizon."""
