@@ -131,8 +131,8 @@ jobs:
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
 
-      # - name: Get wheel filename
-      #   run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $env:GITHUB_ENV
+      - name: Get wheel filename
+        run: echo "WHEELNAME=$(ls ./wheelhouse/sktime*-cp${{ matrix.python }}*-${{ matrix.platform_id }}*.whl)" >> $env:GITHUB_ENV
 
       - name: Activate conda env
         run: conda activate test
