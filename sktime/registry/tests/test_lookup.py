@@ -7,12 +7,13 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.base import BaseEstimator
-from sktime.registry import all_estimators, all_tags
+from sktime.registry import all_estimators, all_tags, scitype
 from sktime.registry._base_classes import (
     BASE_CLASS_LOOKUP,
     BASE_CLASS_SCITYPE_LIST,
     TRANSFORMER_MIXIN_SCITYPE_LIST,
 )
+from sktime.registry._lookup import _check_estimator_types
 
 VALID_SCITYPES_SET = set(
     BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
@@ -154,3 +155,15 @@ def test_all_estimators_exclude_estimators(exclude_estimators):
         exclude_estimators = [exclude_estimators]
     for estimator in exclude_estimators:
         assert estimator not in names
+
+
+@pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
+def test_scitype_inference(estimator_scitype):
+    """Check that scitype inverts _check_estimator_types."""
+
+    base_class = _check_estimator_types(estimator_scitype)[0]
+    inferred_scitype = scitype(base_class)
+
+    assert inferred_scitype == estimator_scitype, (
+        "one of scitype, _check_estimator_types is incorrect, these should be inverses"
+    )
