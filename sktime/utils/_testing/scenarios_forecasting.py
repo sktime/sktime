@@ -97,7 +97,8 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 
     args = {
         "fit": {"y": _make_series(), "X": X.copy(), "fh": 1},
-        "predict": {"X": X_test_short.copy()}}
+        "predict": {"X": X_test_short.copy()},
+    }
     default_method_sequence = ["fit", "predict"]
 
 
@@ -108,7 +109,8 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 
     args = {
         "fit": {"y": _make_series(), "X": X.copy(), "fh": [1, 2, 3]},
-        "predict": {"X": X_test.copy()}}
+        "predict": {"X": X_test.copy()},
+    }
     default_method_sequence = ["fit", "predict"]
 
 
@@ -128,7 +130,8 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 
     args = {
         "fit": {"y": _make_series(n_columns=2), "X": X.copy(), "fh": [1, 2, 3]},
-        "predict": {"X": X_test.copy()}}
+        "predict": {"X": X_test.copy()},
+    }
     default_method_sequence = ["fit", "predict"]
 
 
