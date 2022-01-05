@@ -312,9 +312,7 @@ class ForecastingHorizon:
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
                 freq = cutoff.freqstr
-                absolute = absolute.to_timestamp(
-                    freq,
-                )
+                absolute = absolute.to_timestamp(freq)
 
             return self._new(absolute, is_relative=False)
 
