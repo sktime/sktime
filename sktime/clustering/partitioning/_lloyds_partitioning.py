@@ -21,7 +21,7 @@ from sktime.clustering.base._typing import (
 from sktime.clustering.base import (
     BaseClusterer,
 )
-from sktime.distances.elastic_cython import (
+from sktime.distances import (
     ddtw_distance,
     dtw_distance,
     erp_distance,

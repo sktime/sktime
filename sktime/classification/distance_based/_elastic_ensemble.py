@@ -27,13 +27,13 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
-from sktime.distances.elastic_cython import ddtw_distance as ddtw_c
-from sktime.distances.elastic_cython import dtw_distance as dtw_c
-from sktime.distances.elastic_cython import erp_distance as erp_c
-from sktime.distances.elastic_cython import lcss_distance as lcss_c
-from sktime.distances.elastic_cython import msm_distance as msm_c
-from sktime.distances.elastic_cython import wddtw_distance as wddtw_c
-from sktime.distances.elastic_cython import wdtw_distance as wdtw_c
+from sktime.distances import ddtw_distance as ddtw_c
+from sktime.distances import dtw_distance as dtw_c
+from sktime.distances import erp_distance as erp_c
+from sktime.distances import lcss_distance as lcss_c
+from sktime.distances import msm_distance as msm_c
+from sktime.distances import wddtw_distance as wddtw_c
+from sktime.distances import wdtw_distance as wdtw_c
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 
 

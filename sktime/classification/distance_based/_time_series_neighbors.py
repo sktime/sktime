@@ -3,7 +3,7 @@
 
  Built on sklearn KNeighborsClassifier, this class supports a range of distance
  measure specifically for time series. These distance functions are defined in cython
- in sktime.distances.elastic_cython. Python versions are in sktime.distances.elastic
+ in sktime.distances. Python versions are in sktime.distances.elastic
  but these are orders of magnitude slower.
 
 Please note that many aspects of this class are taken from scikit-learn's
@@ -39,7 +39,7 @@ from sklearn.utils.validation import check_array
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.elastic import euclidean_distance
-from sktime.distances.elastic_cython import (
+from sktime.distances import (
     ddtw_distance,
     dtw_distance,
     erp_distance,
