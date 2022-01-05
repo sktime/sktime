@@ -44,7 +44,7 @@ def retrieve_scenarios(obj=None, estimator_type=None):
         raise ValueError(
             "estimator_type must be a valid scitype string, "
             "see registry.BASE_CLASS_SCITYPE_LIST for valid scitype strings"
-            )
+        )
 
     if obj is not None:
         estimator_type = _scitype_from_class(obj)
