@@ -80,10 +80,12 @@ def deep_equals(x, y, return_msg=False):
             values_equal, values_msg = deep_equals(
                 list(x.values), list(y.values), return_msg=True
             )
-            if not index_equal:
-                msg = f".index, x.index: {x.index}, y.index: {y.index}"
-            elif not values_equal:
+            if not values_equal:
                 msg = ".values" + values_msg
+            elif not index_equal:
+                msg = f".index, x.index: {x.index}, y.index: {y.index}"
+            else:
+                msg = ""
             return ret(index_equal and values_equal, msg)
         else:
             return ret(x.equals(y), f".series_equals, x = {x} != y = {y}")
