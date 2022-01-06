@@ -46,34 +46,34 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Aaron Bostrom
-     - :user:`abostrom`
    * - Anthony Bagnall
      - :user:`TonyBagnall`
+   * - Aaron Bostrom
+     - :user:`abostrom`
    * - Chris Holder
      - :user:`chrisholder`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
-   * - Franz Kiraly
-     - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
+   * - Franz Kiraly
+     - :user:`fkiraly`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - George Oastler
      - :user:`goastler`
-   * - Łukasz Mentel
-     - :user:`lmmentel`
-   * - Markus Löning
-     - :user:`mloning`
    * - James Large
      - :user:`james-large`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Martin Walter
-     - :user:`aiwalter`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
+   * - Markus Löning
+     - :user:`mloning`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
+   * - Martin Walter
+     - :user:`aiwalter`
+   * - Patrick Schäfer
+     - :user:`patrickzib`   
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 
@@ -95,5 +95,7 @@ Former Core Developers (inactive)
      - :user:`matteogales`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * -
      - :user:`big-o`
