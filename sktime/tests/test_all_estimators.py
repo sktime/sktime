@@ -429,7 +429,7 @@ def test_fit_returns_self(estimator_instance, scenario):
     ), f"Estimator: {estimator_instance} does not return self when calling fit"
 
 
-def test_raises_not_fitted_error(estimator_instance):
+def test_raises_not_fitted_error(estimator_instance, scenario):
     """Check that we raise appropriate error for unfitted estimators."""
     estimator = estimator_instance
 
@@ -437,38 +437,36 @@ def test_raises_not_fitted_error(estimator_instance):
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
-            args = _make_args(estimator, method)
             with pytest.raises(NotFittedError, match=r"has not been fitted"):
-                getattr(estimator, method)(*args)
+                scenario.run(estimator_instance, method_sequence=[method])
 
 
-def test_fit_idempotent(estimator_instance):
+def test_fit_idempotent(estimator_instance, scenario):
     """Check that calling fit twice is equivalent to calling it once."""
     estimator = estimator_instance
 
-    set_random_state(estimator)
-
-    # Fit for the first time
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
-
-    results = {}
-    args = {}
+    # todo: may have to rework this, due to "if estimator has param"
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
-            args[method] = _make_args(estimator, method)
-            results[method] = getattr(estimator, method)(*args[method])
+            set_random_state(estimator)
+            results = scenario.run(
+                estimator,
+                method_sequence=["fit", method],
+                return_all=True,
+            )
 
-    # Fit again
-    set_random_state(estimator)
-    estimator.fit(*fit_args)
+            estimator = results[0]
+            set_random_state(estimator)
 
-    for method in NON_STATE_CHANGING_METHODS:
-        if _has_capability(estimator, method):
-            new_result = getattr(estimator, method)(*args[method])
+            results_2nd = scenario.run(
+                estimator,
+                method_sequence=["fit", method],
+                return_all=True,
+            )
+
             _assert_array_almost_equal(
-                results[method],
-                new_result,
+                results[1],
+                results_2nd[1],
                 # err_msg=f"Idempotency check failed for method {method}",
             )
 
