@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """Testing utility for easy generation of conditional fixtures in pytest_generate_tests.
 
-Exports create_fixtures_and_names utility
+Exports conditional_fixtures_and_names utility
 """
 
 __author__ = ["fkiraly"]
 
-__all__ = ["create_fixtures_and_names"]
+__all__ = ["conditional_fixtures_and_names"]
 
 import numpy as np
 
 
-def create_fixtures_and_names(
+def conditional_fixtures_and_names(
     test_name, fixture_vars, generator_dict, fixture_sequence=None
 ):
     """Create conditional fixtures for pytest_generate_tests.
