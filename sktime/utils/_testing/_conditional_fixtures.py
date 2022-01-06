@@ -60,7 +60,7 @@ def conditional_fixtures_and_names(
             let fixture_vars = [fixture_var1, fixture_var2, ..., fixture_varN]
             all fixtures are obtained as following:
                 for i in 1 to N
-                    pick fixture[i] any element of generator_dict(
+                    pick fixture[i] any element of generator_dict[fixture_vari](
                         test_name,
                         fixture_var1 = fixture[1], ...,
                         fixture_var(i-1) = fixture[i-1],
@@ -70,12 +70,12 @@ def conditional_fixtures_and_names(
             let fixture_vars = [fixture_var1, fixture_var2, ..., fixture_varN]
             all fixtures names are obtained as following:
                 for i in 1 to N
-                    pick fixture_str_part[i] any element of generator_dict(
+                    pick fixture_str_pt[i] any element of generator_dict[fixture_vari](
                         test_name,
                         fixture_var1 = fixture[1], ...,
                         fixture_var(i-1) = fixture[i-1],
                     ), second return is exists; otherwise str(first return)
-            return "fixture_str_part[1]-fixture_str_part[2]-...-fixture_str_part[N]"
+            return "fixture_str_pt[1]-fixture_str_pt[2]-...-fixture_str_pt[N]"
         fixture names correspond to fixtures with the same indices at picks (from lists)
     """
     fixture_vars = _check_list_of_str(fixture_vars, name="fixture_vars")
@@ -161,7 +161,7 @@ def _remove_single(x):
 
     Parameters
     ----------
-    x: tuple
+    x : tuple
 
     Returns
     -------
