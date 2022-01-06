@@ -73,7 +73,7 @@ Core Developers
    * - Martin Walter
      - :user:`aiwalter`
    * - Patrick Schäfer
-     - :user:`patrickzib`   
+     - :user:`patrickzib`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 
