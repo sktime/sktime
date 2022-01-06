@@ -540,29 +540,28 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
             )
 
 
-def test_methods_have_no_side_effects(estimator_instance):
+def test_methods_have_no_side_effects(estimator_instance, scenario):
     """Check that calling methods has no side effects on args."""
     estimator = estimator_instance
 
     set_random_state(estimator)
 
-    # Fit for the first time
-    fit_args = _make_args(estimator, "fit")
-    old_fit_args = deepcopy(fit_args)
-    estimator.fit(*fit_args)
+    # Fit the model, get args before and after
+    fitted_est, fit_args_after = scenario.run(estimator, method_sequence=["fit"])
+    fit_args_before = scenario.args["fit"]
 
     assert deep_equals(
-        old_fit_args, fit_args
+        fit_args_before, fit_args_after
     ), f"Estimator: {estimator} has side effects on arguments of fit"
 
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
-            new_args = _make_args(estimator, method)
-            old_args = deepcopy(new_args)
-            getattr(estimator, method)(*new_args)
+            # Fit the model, get args before and after
+            _, method_args_after = scenario.run(estimator, method_sequence=[method])
+            method_args_before = scenario.args[method]
 
             assert deep_equals(
-                old_args, new_args
+                method_args_after, method_args_before
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
