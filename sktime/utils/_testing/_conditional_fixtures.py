@@ -8,9 +8,9 @@ __author__ = ["fkiraly"]
 
 __all__ = ["conditional_fixtures_and_names"]
 
-import numpy as np
-
 from copy import deepcopy
+
+import numpy as np
 
 
 def conditional_fixtures_and_names(
