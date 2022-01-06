@@ -27,9 +27,6 @@ test: ## Run unit tests
 
 tests: test
 
-lint:  ## Run linting
-	$(BUILD_TOOLS)/linting.sh
-
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
 	rm -rf ./build
