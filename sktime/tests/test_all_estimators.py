@@ -470,7 +470,7 @@ def test_fit_idempotent(estimator_instance, scenario):
             )
 
 
-def test_fit_does_not_overwrite_hyper_params(estimator_instance):
+def test_fit_does_not_overwrite_hyper_params(estimator_instance, scenario):
     """Check that we do not overwrite hyper-parameters in fit."""
     estimator = estimator_instance
     set_random_state(estimator)
@@ -480,11 +480,10 @@ def test_fit_does_not_overwrite_hyper_params(estimator_instance):
     original_params = deepcopy(params)
 
     # Fit the model
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
+    fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
 
     # Compare the state of the model parameters with the original parameters
-    new_params = estimator.get_params()
+    new_params = fitted_est.get_params()
     for param_name, original_value in original_params.items():
         new_value = new_params[param_name]
 
@@ -501,7 +500,7 @@ def test_fit_does_not_overwrite_hyper_params(estimator_instance):
         )
 
 
-def test_methods_do_not_change_state(estimator_instance):
+def test_methods_do_not_change_state(estimator_instance, scenario):
     """Check that non-state-changing methods do not change state.
 
     Check that methods that are not supposed to change attributes of the
@@ -511,14 +510,14 @@ def test_methods_do_not_change_state(estimator_instance):
     estimator = estimator_instance
     set_random_state(estimator)
 
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
-    dict_before = estimator.__dict__.copy()
-
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
-            args = _make_args(estimator, method)
-            getattr(estimator, method)(*args)
+
+            results = scenario.run(
+                estimator, method_sequence=["fit", method], return_all=True
+            )
+            dict_before = results[0].__dict__
+            dict_after = results[1].__dict__
 
             if method == "transform" and estimator.get_class_tag("fit-in-transform"):
                 # Some transformations fit during transform, as they apply
@@ -532,12 +531,12 @@ def test_methods_do_not_change_state(estimator_instance):
                 # so predict will actually change the state of these annotators.
                 continue
 
-            assert estimator.__dict__ == dict_before, (
+            assert dict_after == dict_before, (
                 f"Estimator: {estimator} changes __dict__ during {method} \n before ="
                 f"\n********************************************\n "
                 f"{dict_before}  \n after "
                 f"=\n*****************************************\n "
-                f" {estimator.__dict__}"
+                f" {dict_after}"
             )
 
 
