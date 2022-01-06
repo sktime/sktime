@@ -8,6 +8,8 @@ __author__ = ["fkiraly"]
 
 __all__ = ["conditional_fixtures_and_names"]
 
+from copy import deepcopy
+
 import numpy as np
 
 
@@ -117,9 +119,11 @@ def conditional_fixtures_and_names(
             else:
                 kwargs = dict(zip(old_fixture_vars, fixture))
 
-            new_fixtures, new_fixture_names_r = get_fixtures(fixture_var, **kwargs)
+            new_fixtures, new_fixture_names_r = deepcopy(
+                get_fixtures(fixture_var, **kwargs)
+            )
             new_fixture_prod += [
-                fixture + (new_fixture,) for new_fixture in new_fixtures
+                deepcopy(fixture) + (new_fixture,) for new_fixture in new_fixtures
             ]
             new_fixture_names += [f"{fixture_name}-{x}" for x in new_fixture_names_r]
 
