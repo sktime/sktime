@@ -132,8 +132,7 @@ def load_from_tsfile(
                 num_dimensions = len(dimensions)
                 if _meta_data["has_class_labels"]:
                     num_dimensions -= 1
-                for _dim in range(0, num_dimensions):
-                    instance_list.append([])
+                instance_list = [[] for _ in range(num_dimensions)]
                 is_first_case = False
                 _meta_data["num_dimensions"] = num_dimensions
             # See how many dimensions a case has
