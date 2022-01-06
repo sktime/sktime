@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Class to iteratively apply differences to a time series."""
-__author__ = ["Ryan Kuhns"]
+__author__ = ["RNKuhns"]
 __all__ = ["Differencer"]
 
 from typing import Union
@@ -12,9 +12,8 @@ import pandas as pd
 from sklearn.utils import check_array
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_series
 
 
 def _check_lags(lags):
@@ -61,7 +60,7 @@ def _inverse_diff(Z, lag):
     return Z
 
 
-class Differencer(_SeriesToSeriesTransformer):
+class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
     The transformation works for univariate and multivariate timeseries. However,
@@ -108,9 +107,18 @@ class Differencer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": False,
         "transform-returns-same-time-index": False,
         "univariate-only": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, lags=1, drop_na=True):
@@ -161,17 +169,22 @@ class Differencer(_SeriesToSeriesTransformer):
 
         return is_contained_by_fitted_z, pad_z_inv
 
-    def _fit(self, Z, X=None):
-        """Logic used by fit method on `Z`.
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A timeseries to apply the specified transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
         self._lags = _check_lags(self.lags)
         self._prior_lags = np.roll(self._lags, shift=1)
@@ -179,42 +192,47 @@ class Differencer(_SeriesToSeriesTransformer):
         self._cumulative_lags = self._lags.cumsum()
         self._prior_cum_lags = np.zeros_like(self._cumulative_lags)
         self._prior_cum_lags[1:] = self._cumulative_lags[:-1]
-        self._Z = Z.copy()
+        self._Z = X.copy()
         return self
 
-    def _transform(self, Z, X=None):
-        """Logic used by `transform` to apply transformation to `Z`.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Differences are applied at lags specified in `lags`.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            The timeseries to apply the specified transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series or pd.DataFrame
-            The transformed timeseries.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        Zt = _diff_transform(Z, self._lags)
+        Xt = _diff_transform(X, self._lags)
         if self.drop_na:
-            Zt = Zt.iloc[self._cumulative_lags[-1] :]
-        return Zt
+            Xt = Xt.iloc[self._cumulative_lags[-1] :]
+        return Xt
 
-    def _inverse_transform(self, Z, X=None):
-        """Logic used by `inverse_transform` to reverse transformation on  `Z`.
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to reverse the transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
+        Z = X
         is_df = isinstance(Z, pd.DataFrame)
         is_contained_by_fit_z, pad_z_inv = self._check_inverse_transform_index(Z)
 
@@ -255,59 +273,6 @@ class Differencer(_SeriesToSeriesTransformer):
         if pad_z_inv:
             Z_inv = Z_inv.loc[Z.index, :] if is_df else Z_inv.loc[Z.index]
 
-        return Z_inv
+        Xt = Z_inv
 
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the specified transformation on.
-
-        Returns
-        -------
-        self
-        """
-        Z = check_series(Z)
-
-        self._fit(Z, X=X)
-
-        self._is_fitted = True
-        return self
-
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the specified transformation on.
-
-        Returns
-        -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        return self._transform(Z, X=X)
-
-    def inverse_transform(self, Z, X=None):
-        """Reverse transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to reverse the transformation on.
-
-        Returns
-        -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        return self._inverse_transform(Z, X=X)
+        return Xt
