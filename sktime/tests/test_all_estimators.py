@@ -123,7 +123,7 @@ def _generate_scenario(test_name, **kwargs):
         return []
 
     scenarios = retrieve_scenarios(obj)
-    scenario_names = [scen.__name__ for scen in scenarios]
+    scenario_names = [type(scen).__name__ for scen in scenarios]
 
     return scenarios, scenario_names
 
@@ -394,7 +394,7 @@ def check_constructor(estimator_class):
                 assert param_value == param.default, param.name
 
 
-def test_fit_updates_state(estimator_instance):
+def test_fit_updates_state(estimator_instance, scenario):
     """Check fit/update state change."""
     # Check that fit updates the is-fitted states
     attrs = ["_is_fitted", "is_fitted"]
@@ -405,29 +405,27 @@ def test_fit_updates_state(estimator_instance):
         estimator, "_is_fitted"
     ), f"Estimator: {estimator.__name__} does not set_is_fitted in construction"
 
-    # Check it's not fitted before calling fit
+    # Check is_fitted attribute is set correctly to False before fit, at construction
     for attr in attrs:
         assert not getattr(
             estimator, attr
         ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
 
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
+    fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
 
-    # Check states are updated after calling fit
+    # Check 0s_fitted attribute is updated correctly to False after calling fit
     for attr in attrs:
         assert getattr(
-            estimator, attr
+            fitted_estimator, attr
         ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
 
-def test_fit_returns_self(estimator_instance):
+def test_fit_returns_self(estimator_instance, scenario):
     """Check that fit returns self."""
-    estimator = estimator_instance
-    fit_args = _make_args(estimator, "fit")
+    fit_return = scenario.run(estimator_instance, method_sequence=["fit"])
     assert (
-        estimator.fit(*fit_args) is estimator
-    ), f"Estimator: {estimator} does not return self when calling fit"
+        fit_return is estimator_instance
+    ), f"Estimator: {estimator_instance} does not return self when calling fit"
 
 
 def test_raises_not_fitted_error(estimator_instance):
