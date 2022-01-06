@@ -97,7 +97,7 @@ def deep_equals(x, y, return_msg=False):
         # if columns are equal and at least one is object, recurse over Series
         if sum(x.dtypes == "object") > 0:
             for c in x.columns:
-                is_equal, msg = deep_equals(x[c], y[c])
+                is_equal, msg = deep_equals(x[c], y[c], return_msg=True)
                 if not is_equal:
                     return ret(False, f'["{c}"]' + msg)
             return ret(True, "")
