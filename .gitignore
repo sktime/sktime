@@ -157,4 +157,3 @@ build_doc_site/
 envs/
 *.html
 sktime/contrib/debug.py
-/sktime/datasets/local_data/
