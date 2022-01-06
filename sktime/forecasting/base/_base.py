@@ -688,7 +688,7 @@ class BaseForecaster(BaseEstimator):
             fh = ForecastingHorizon(y.index, is_relative=False)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self.cutoff)
-            self._set_fh(fh)
+            fh = self._check_fh(fh)
         # if np.ndarray, rows are not indexed
         # so will be interpreted as range(len), or existing fh if it is stored
         elif isinstance(y, np.ndarray):
@@ -699,7 +699,7 @@ class BaseForecaster(BaseEstimator):
         else:
             raise TypeError("y must be a supported Series mtype")
 
-        y_pred = self.predict(fh=self.fh, X=X)
+        y_pred = self.predict(fh=fh, X=X)
 
         if not type(y_pred) == type(y):
             raise TypeError(
