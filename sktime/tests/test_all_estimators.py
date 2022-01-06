@@ -547,7 +547,7 @@ def test_methods_have_no_side_effects(estimator_instance, scenario):
     set_random_state(estimator)
 
     # Fit the model, get args before and after
-    fitted_est, fit_args_after = scenario.run(estimator, method_sequence=["fit"])
+    _, fit_args_after = scenario.run(estimator, method_sequence=["fit"])
     fit_args_before = scenario.args["fit"]
 
     assert deep_equals(
