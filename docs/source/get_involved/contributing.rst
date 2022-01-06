@@ -374,20 +374,6 @@ integration services we use.
 +---------------+----------------+-------------------------------------+
 | Platform      | Operation      | Configuration                       |
 +===============+================+=====================================+
-| `Appveyor     | Build/t        | `.appveyor.yml <https               |
-|  <https://ci. | est/distribute | ://github.com/alan-turing-institute |
-| appveyor.com/ | on Windows     | /sktime/blob/main/.appveyor.yml>`__ |
-| project/mloni |                |                                     |
-| ng/sktime>`__ |                |                                     |
-+---------------+----------------+-------------------------------------+
-| `Azure        | Build/t        | `azure-pipelines.yml <https://git   |
-| Pipelines <h  | est/distribute | hub.com/alan-turing-institute/sktim |
-| ttps://dev.az | on Linux       | e/blob/main/azure-pipelines.yml>`__ |
-| ure.com/mloni | (`manylin      |                                     |
-| ng/sktime>`__ | ux <https://gi |                                     |
-|               | thub.com/pypa/ |                                     |
-|               | manylinux>`__) |                                     |
-+---------------+----------------+-------------------------------------+
 | `GitHub       | Build/t        | `.github/workflows/ <https://gi     |
 | Act           | est/distribute | thub.com/alan-turing-institute/skti |
 | ions <https:/ | on MacOS; Code | me/blob/main/.github/workflows/>`__ |
