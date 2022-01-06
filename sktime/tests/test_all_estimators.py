@@ -35,6 +35,7 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
+from sktime.utils._testing._conditional_fixtures import conditional_fixtures_and_names
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
@@ -44,7 +45,6 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
     _make_args,
 )
-from sktime.utils._testing._conditional_fixtures import conditional_fixtures_and_names
 
 ALL_ESTIMATORS = all_estimators(
     return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
