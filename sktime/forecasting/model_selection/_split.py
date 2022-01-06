@@ -23,7 +23,8 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.forecasting.base import VALID_FORECASTING_HORIZON_TYPES, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,

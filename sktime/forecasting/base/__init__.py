@@ -3,10 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base classes for forecasting in sktime."""
 
-__all__ = ["ForecastingHorizon", "BaseForecaster", "VALID_FORECASTING_HORIZON_TYPES"]
+__all__ = ["ForecastingHorizon", "BaseForecaster"]
 
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._fh import (
-    VALID_FORECASTING_HORIZON_TYPES,
-    ForecastingHorizon,
-)
+from sktime.forecasting.base._fh import ForecastingHorizon

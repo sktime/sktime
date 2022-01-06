@@ -4,7 +4,7 @@
 """Implements functionality for specifying forecast horizons in sktime."""
 
 __author__ = ["mloning", "fkiraly"]
-__all__ = ["VALID_FORECASTING_HORIZON_TYPES", "ForecastingHorizon"]
+__all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
 from typing import Optional, Union
