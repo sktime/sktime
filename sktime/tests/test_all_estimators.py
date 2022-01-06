@@ -531,12 +531,10 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
                 # so predict will actually change the state of these annotators.
                 continue
 
-            assert dict_after == dict_before, (
-                f"Estimator: {estimator} changes __dict__ during {method} \n before ="
-                f"\n********************************************\n "
-                f"{dict_before}  \n after "
-                f"=\n*****************************************\n "
-                f" {dict_after}"
+            is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
+            assert is_equal, (
+                f"Estimator: {estimator} changes __dict__ during {method}, "
+                f"reason/location of discrepancy: {msg}"
             )
 
 
