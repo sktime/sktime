@@ -41,6 +41,18 @@ def deep_equals(x, y, return_msg=False):
         x and y do not need to be equal in reference
     msg : str, only returned if return_msg = True
         indication of what is the reason for not being equal
+            concatenation of the following strings:
+            .type - type is not equal
+            .len - length is not equal
+            .value - value is not equal
+            .keys - keys of dict are not equal
+            .dtype - dtype of pandas or numpy object is not equal
+            .index - index of pandas object is not equal
+            .series_equals, .df_equals - .equals call on pandas objects returns False
+            [i] - if tuple/list: i-th element not equal
+            [key] - if dict: value at key is not equal
+            [colname] - if pandas.DataFrame: column with name colname is not equal
+            != - call to generic != returns False
     """
 
     def ret(is_equal, msg):
@@ -52,13 +64,13 @@ def deep_equals(x, y, return_msg=False):
             return is_equal
 
     if type(x) != type(y):
-        return ret(False, "type")
+        return ret(False, ".type")
 
     # we now know all types are the same
     # so now we compare values
     if isinstance(x, pd.Series):
         if x.dtype != y.dtype:
-            return ret(False, "dtype")
+            return ret(False, ".dtype")
         # if columns are object, recurse over entries and index
         if x.dtype == "object":
             index_equal = x.index.equals(y.index)
@@ -111,11 +123,18 @@ def _tuple_equals(x, y, return_msg=False):
     ----------
     x: tuple or list
     y: tuple or list
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
 
     Returns
     -------
-    bool - True if x and y are equal in value
+    is_equal: bool - True if x and y are equal in value
         x and y do not need to be equal in reference
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+            concatenation of the following elements:
+            .len - length is not equal
+            [i] - i-th element not equal
     """
 
     def ret(is_equal, msg):
@@ -156,10 +175,18 @@ def _dict_equals(x, y, return_msg=False):
     ----------
     x: dict
     y: dict
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
 
     Returns
     -------
-    bool - True if x and y have equal keys and values
+    is_equal: bool - True if x and y are equal in value
+        x and y do not need to be equal in reference
+    msg : str, only returned if return_msg = True
+        indication of what is the reason for not being equal
+            concatenation of the following strings:
+            .keys - keys are not equal
+            [key] - values at key is not equal
     """
 
     def ret(is_equal, msg):
