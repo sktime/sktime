@@ -125,7 +125,12 @@ def conditional_fixtures_and_names(
         fixture_names = new_fixture_names
         fixture_names = [x[1:] for x in fixture_names]
 
+    # in pytest convention, variable strings are separated by comma
     fixture_param_str = ",".join(fixture_vars)
+
+    # we need to remove the tuple bracket from singleton
+    #   in pytest convention, only multiple variables (2 or more) are tuples
+    fixture_prod = [_remove_single(x) for x in fixture_prod]
 
     return fixture_param_str, fixture_prod, fixture_names
 
@@ -149,3 +154,20 @@ def _check_list_of_str(obj, name="obj"):
     if not isinstance(obj, list) or not np.all(isinstance(x, str) for x in obj):
         raise TypeError(f"{obj} must be a list of str")
     return obj
+
+
+def _remove_single(x):
+    """Remove tuple wrapping from singleton.
+
+    Parameters
+    ----------
+    x: tuple
+
+    Returns
+    -------
+    x[0] if x is a singleton, otherwise x
+    """
+    if len(x) == 1:
+        return x[0]
+    else:
+        return x
