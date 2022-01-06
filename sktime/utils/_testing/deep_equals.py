@@ -109,14 +109,6 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
-    elif hasattr(x, "__dir__") and hasattr(y, "__dir__"):
-        xkeys = dir(x)
-        ykeys = dir(y)
-        xattrs = [getattr(x, key) for key in xkeys]
-        yattrs = [getattr(y, key) for key in ykeys]
-        xdict = dict(zip(xkeys, xattrs))
-        ydict = dict(zip(ykeys, yattrs))
-        return ret(*_dict_equals(xdict, ydict, return_msg=True))
     elif x != y:
         return ret(False, f" !=, {x} != {y}")
 
