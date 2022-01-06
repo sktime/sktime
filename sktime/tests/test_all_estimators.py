@@ -596,7 +596,7 @@ def test_persistence_via_pickle(estimator_instance):
         )
 
 
-def test_multiprocessing_idempotent(estimator_class):
+def test_multiprocessing_idempotent(estimator_class, scenario):
     """Test that single and multi-process run results are identical.
 
     Check that running an estimator on a single process is no different to running
@@ -608,35 +608,28 @@ def test_multiprocessing_idempotent(estimator_class):
     params = estimator.get_params()
 
     if "n_jobs" in params:
-        results = {}
-        args = {}
-
-        # run on a single process
-        estimator = estimator_class.create_test_instance()
-        estimator.set_params(n_jobs=1)
-        set_random_state(estimator)
-        args["fit"] = _make_args(estimator, "fit")
-        estimator.fit(*args["fit"])
-
-        # compute and store results
         for method in NON_STATE_CHANGING_METHODS:
             if _has_capability(estimator, method):
-                args[method] = _make_args(estimator, method)
-                results[method] = getattr(estimator, method)(*args[method])
+                # run on a single process
+                # -----------------------
+                estimator = estimator_class.create_test_instance()
+                estimator.set_params(n_jobs=1)
+                set_random_state(estimator)
+                result_single_process = scenario.run(
+                    estimator, method_sequence=["fit", method]
+                )
 
-        # run on multiple processes, reusing the same input arguments
-        estimator = estimator_class.create_test_instance()
-        estimator.set_params(n_jobs=-1)
-        set_random_state(estimator)
-        estimator.fit(*args["fit"])
-
-        # compute and compare results
-        for method, value in results.items():
-            if hasattr(estimator, method):
-                result = getattr(estimator, method)(*args[method])
+                # run on multiple processes
+                # -------------------------
+                estimator = estimator_class.create_test_instance()
+                estimator.set_params(n_jobs=-1)
+                set_random_state(estimator)
+                result_multiple_process = scenario.run(
+                    estimator, method_sequence=["fit", method]
+                )
                 _assert_array_equal(
-                    value,
-                    result,
+                    result_single_process,
+                    result_multiple_process,
                     err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
                 )
 
