@@ -550,7 +550,7 @@ def test_methods_have_no_side_effects(estimator_instance, scenario):
     set_random_state(estimator)
 
     # Fit the model, get args before and after
-    _, args_after = scenario.run(estimator, method_sequence=["fit"])
+    _, args_after = scenario.run(estimator, method_sequence=["fit"], return_args=True)
     fit_args_after = args_after[0]
     fit_args_before = scenario.args["fit"]
 
@@ -561,7 +561,9 @@ def test_methods_have_no_side_effects(estimator_instance, scenario):
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
             # Fit the model, get args before and after
-            _, args_after = scenario.run(estimator, method_sequence=[method])
+            _, args_after = scenario.run(
+                estimator, method_sequence=[method], return_args=True
+            )
             method_args_after = args_after[0]
             method_args_before = scenario.args[method]
 
