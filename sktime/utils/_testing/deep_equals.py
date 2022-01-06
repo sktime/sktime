@@ -15,6 +15,8 @@ __all__ = ["deep_equals"]
 import numpy as np
 import pandas as pd
 
+# from sktime.base import BaseObject
+
 
 def deep_equals(x, y, return_msg=False):
     """Test two objects for equality in value.
@@ -53,7 +55,6 @@ def deep_equals(x, y, return_msg=False):
             [i] - if tuple/list: i-th element not equal
             [key] - if dict: value at key is not equal
             [colname] - if pandas.DataFrame: column with name colname is not equal
-            [attr] - if class or object: entry at field attr is not equal
             != - call to generic != returns False
     """
 
@@ -109,10 +110,6 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
-    elif hasattr(x, "__dict__") and hasattr(y, "__dict__"):
-        xdict = x.__dict__
-        ydict = y.__dict__
-        return ret(*_dict_equals(xdict, ydict, return_msg=True))
     elif x != y:
         return ret(False, f" !=, {x} != {y}")
 
