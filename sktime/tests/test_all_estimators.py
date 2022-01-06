@@ -534,8 +534,9 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
 
             is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
             assert is_equal, (
-                f"Estimator: {estimator} changes __dict__ during {method}, "
-                f"reason/location of discrepancy: {msg}"
+                f"Estimator: {type(estimator).__name__} changes __dict__ "
+                f"during {method}, "
+                f"reason/location of discrepancy (x=after, y=before): {msg}"
             )
 
 
