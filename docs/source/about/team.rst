@@ -56,10 +56,10 @@ Core Developers
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
    * - George Oastler
      - :user:`goastler`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - James Large
      - :user:`james-large`
    * - Lovkush Agarwal
