@@ -46,16 +46,16 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
    * - Aaron Bostrom
      - :user:`abostrom`
+   * - Anthony Bagnall
+     - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
-   * - Freddy A Boulton
-     - :user:`freddyaboulton`
    * - Franz Kiraly
      - :user:`fkiraly`
+   * - Freddy A Boulton
+     - :user:`freddyaboulton`
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
    * - George Oastler
