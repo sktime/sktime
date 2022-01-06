@@ -36,9 +36,9 @@ class ForecasterTestScenario(TestScenario, BaseObject):
 
         def get_tag(obj, tag_name):
             if isclass(obj):
-                return obj.get_class_tag(obj, tag_name)
+                return obj.get_class_tag(tag_name)
             else:
-                return obj.get_tag(obj, tag_name)
+                return obj.get_tag(tag_name)
 
         # applicable only if obj inherits from BaseForecaster
         applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
