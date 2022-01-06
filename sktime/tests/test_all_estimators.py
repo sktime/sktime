@@ -147,7 +147,7 @@ def pytest_generate_tests(metafunc):
 
     fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
 
-    fixture_param_str, fixture_prod, fixture_names = _create_fixtures_and_names(
+    fixture_param_str, fixture_prod, fixture_names = create_fixtures_and_names(
         test_name=test_name,
         fixture_vars=metafunc.fixturenames,
         generator_dict=generator_dict,
