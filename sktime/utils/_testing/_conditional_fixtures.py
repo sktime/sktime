@@ -99,22 +99,24 @@ def conditional_fixtures_and_names(
             fixture_names = [str(x) for x in res]
         return fixture_prod, fixture_names
 
+    fixture_prod = [()]
+    fixture_names = [""]
+
+    # we loop over fixture_vars, incrementally going through conditionals
     for i, fixture_var in enumerate(fixture_vars):
         old_fixture_vars = fixture_vars[0:i]
-
-        fixture_prod = [()]
-        fixture_names = [""]
 
         # then take successive left products
         new_fixture_prod = []
         new_fixture_names = []
 
-        for i, fixture in enumerate(fixture_prod):
-            fixture_name = fixture_names[i]
+        for j, fixture in enumerate(fixture_prod):
+            fixture_name = fixture_names[j]
             if i == 0:
                 kwargs = dict()
             else:
-                kwargs = zip(old_fixture_vars, fixture)
+                kwargs = dict(zip(old_fixture_vars, fixture))
+
             new_fixtures, new_fixture_names_r = get_fixtures(fixture_var, **kwargs)
             new_fixture_prod += [
                 fixture + (new_fixture,) for new_fixture in new_fixtures
@@ -123,7 +125,9 @@ def conditional_fixtures_and_names(
 
         fixture_prod = new_fixture_prod
         fixture_names = new_fixture_names
-        fixture_names = [x[1:] for x in fixture_names]
+
+    # due to the concatenation, fixture names all start leading "-" which is removed
+    fixture_names = [x[1:] for x in fixture_names]
 
     # in pytest convention, variable strings are separated by comma
     fixture_param_str = ",".join(fixture_vars)
