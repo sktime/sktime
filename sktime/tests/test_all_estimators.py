@@ -518,7 +518,7 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
                 estimator, method_sequence=["fit", method], return_all=True
             )
             dict_before = results[0].__dict__
-            dict_after = results[1].__dict__
+            dict_after = estimator.__dict__
 
             if method == "transform" and estimator.get_class_tag("fit-in-transform"):
                 # Some transformations fit during transform, as they apply
