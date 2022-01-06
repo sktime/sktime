@@ -45,13 +45,15 @@ def deep_equals(x, y, return_msg=False):
             .type - type is not equal
             .len - length is not equal
             .value - value is not equal
-            .keys - keys of dict are not equal
+            .keys - if dict, keys of dict are not equal
+                    if class/object, names of attributes and methods are not equal
             .dtype - dtype of pandas or numpy object is not equal
             .index - index of pandas object is not equal
             .series_equals, .df_equals - .equals call on pandas objects returns False
             [i] - if tuple/list: i-th element not equal
             [key] - if dict: value at key is not equal
             [colname] - if pandas.DataFrame: column with name colname is not equal
+            [attr] - if class or object: entry at field attr is not equal
             != - call to generic != returns False
     """
 
@@ -107,8 +109,16 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
+    elif hasattr(x, "__dir__") and hasattr(y, "__dir__"):
+        xkeys = dir(x)
+        ykeys = dir(y)
+        xattrs = [getattr(x, key) for key in xkeys]
+        yattrs = [getattr(y, key) for key in ykeys]
+        xdict = dict(zip(xkeys, xattrs))
+        ydict = dict(zip(ykeys, yattrs))
+        return ret(*_dict_equals(xdict, ydict, return_msg=True))
     elif x != y:
-        return ret(False, " !=")
+        return ret(False, f" !=, {x} != {y}")
 
     return ret(True, "")
 
