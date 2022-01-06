@@ -243,11 +243,14 @@ class BaseForecaster(BaseEstimator):
             else:
                 # it's already refactored
                 # opposite definition previously vs. now
-                coverage = [1 - a for a in alpha]
+                alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
+                coverage = [1 - a for a in alphas]
                 pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
 
                 if keep_old_return_type:
                     pred_int = _convert_new_to_old_pred_int(pred_int, alpha)
+
+                y_pred = self._predict(self.fh, X=X_inner)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -786,7 +789,7 @@ class BaseForecaster(BaseEstimator):
         TypeError if y is not compatible with self.get_tag("scitype:y")
             if tag value is "univariate", y must be univariate
             if tag value is "multivariate", y must be bi- or higher-variate
-            if tag vaule is "both", y can be either
+            if tag value is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
 
@@ -877,7 +880,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or nd.nparray (1D or 2D)
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
@@ -1330,10 +1333,11 @@ class BaseForecaster(BaseEstimator):
 
     # TODO: remove in v0.10.0
     def _has_predict_quantiles_been_refactored(self):
-        if "_predict_quantiles" in type(self).__dict__.keys():
-            return True
-        else:
-            return False
+        """Check if specific forecaster implements _predict_quantiles()."""
+        base_pq = BaseForecaster._predict_quantiles
+        this_pq = self.__class__._predict_quantiles
+        # true if self's _predict_quantiles is new implementation
+        return base_pq != this_pq
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
@@ -1390,18 +1394,28 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
 def _convert_new_to_old_pred_int(pred_int_new, alpha):
     name = pred_int_new.columns.get_level_values(0).unique()[0]
     alpha = check_alpha(alpha)
+
+    alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
+    coverage = [1 - a for a in alphas]
+
+    alpha_quantiles = []
+    for c in coverage:
+        aq_pair = ((1 - c) / 2, 0.5 + (c / 2))
+        alpha_quantiles.append(aq_pair)
+    alpha_quantiles.sort()
+
     pred_int_old_format = [
         pd.DataFrame(
             {
-                "lower": pred_int_new[name, a / 2],
-                "upper": pred_int_new[name, 1 - (a / 2)],
+                "lower": pred_int_new[(name, al)],
+                "upper": pred_int_new[(name, au)],
             }
         )
-        for a in alpha
+        for al, au in alpha_quantiles
     ]
 
     # for a single alpha, return single pd.DataFrame
-    if len(alpha) == 1:
+    if len(alphas) == 1:
         return pred_int_old_format[0]
 
     # otherwise return list of pd.DataFrames
