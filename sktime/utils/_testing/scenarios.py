@@ -45,8 +45,12 @@ class TestScenario:
     ):
         if default_method_sequence is not None:
             self.default_method_sequence = _check_list_of_str(default_method_sequence)
+        else:
+            self.default_method_sequence = None
         if default_arg_sequence is not None:
             self.default_arg_sequence = _check_list_of_str(default_arg_sequence)
+        else:
+            self.default_arg_sequence = None
         if args is not None:
             self.args = _check_dict_of_dict(args)
         else:
