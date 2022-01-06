@@ -109,6 +109,10 @@ def deep_equals(x, y, return_msg=False):
         return ret(*_tuple_equals(x, y, return_msg=True))
     elif isinstance(x, dict):
         return ret(*_dict_equals(x, y, return_msg=True))
+    elif hasattr(x, "__dict__") and hasattr(y, "__dict__"):
+        xdict = x.__dict__
+        ydict = y.__dict__
+        return ret(*_dict_equals(xdict, ydict, return_msg=True))
     elif x != y:
         return ret(False, f" !=, {x} != {y}")
 
