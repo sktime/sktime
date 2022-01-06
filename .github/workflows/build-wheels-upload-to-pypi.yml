@@ -1,15 +1,8 @@
 name: Build Wheels and Push to PyPI
 
 on:
-  # TODO: uncomment the release trigger
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  # release:
-  #   types: [published]
+  release:
+    types: [published]
 
 
 jobs:
@@ -95,11 +88,6 @@ jobs:
             python-version: 3.8
             bitness: 64
             platform_id: win_amd64
-          # - os: windows-2019
-          #   python: 39
-          #   python-version: 3.9
-          #   bitness: 64
-          #   platform_id: win_amd64
 
     steps:
       - uses: actions/checkout@v2

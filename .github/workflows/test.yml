@@ -48,7 +48,6 @@ jobs:
     needs: code-quality
     runs-on: windows-2019
     strategy:
-      fail-fast: false   # TODO: remove this line before merging
       matrix:
         python-version: [3.7, 3.8]
     steps:
