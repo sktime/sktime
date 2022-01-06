@@ -44,6 +44,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
     _make_args,
 )
+from sktime.utils._testing._conditional_fixtures import create_fixtures_and_names
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
 ALL_ESTIMATORS = all_estimators(
@@ -70,7 +71,9 @@ def _generate_estimator_class(test_name, **kwargs):
     estimator_classes_to_test = [
         est for est in ALL_ESTIMATORS if not is_excluded(test_name, est)
     ]
-    return estimator_classes_to_test
+    estimator_names = [est.__name__ for est in estimator_classes_to_test]
+
+    return estimator_classes_to_test, estimator_names
 
 
 generator_dict["estimator_class"] = _generate_estimator_class
@@ -120,63 +123,12 @@ def _generate_scenario(test_name, **kwargs):
         return []
 
     scenarios = retrieve_scenarios(obj)
+    scenario_names = [scen.__name__ for scen in scenarios]
 
-    return scenarios
+    return scenarios, scenario_names
 
 
 generator_dict["scenario"] = _generate_scenario
-
-
-def _create_fixtures_and_names(
-    test_name, fixture_vars, generator_dict, fixture_sequence=None
-):
-    """Create fix."""
-    # order fixture_vars according to fixture_sequence if provided
-    if fixture_sequence is not None:
-        ordered_fixture_vars = []
-        for fixture_var_name in fixture_sequence:
-            if fixture_var_name in fixture_vars:
-                ordered_fixture_vars += [fixture_var_name]
-        fixture_vars = ordered_fixture_vars
-
-    def get_fixtures(fixture_var, **kwargs):
-        res = generator_dict[fixture_var](test_name, **kwargs)
-        if len(res) == 2:
-            fixture_prod = res[0]
-            fixture_names = res[1]
-        else:
-            fixture_prod = res
-            fixture_names = [str(x) for x in res]
-        return fixture_prod, fixture_names
-
-    for i, fixture_var in enumerate(fixture_vars):
-        old_fixture_vars = fixture_vars[0:i]
-
-        fixture_prod = [()]
-        fixture_names = [""]
-
-        # then take successive left products
-        new_fixture_prod = []
-        new_fixture_names = []
-
-        for i, fixture in enumerate(fixture_prod):
-            fixture_name = fixture_names[i]
-            if i == 0:
-                kwargs = dict()
-            else:
-                kwargs = zip(old_fixture_vars, fixture)
-            new_fixtures, new_fixture_names = get_fixtures(fixture_var, **kwargs)
-            new_fixture_prod += [
-                fixture + (new_fixture,) for new_fixture in new_fixtures
-            ]
-            new_fixture_names += [
-                f"{fixture_name}-{x}" for x in new_fixture_names
-            ]
-
-        fixture_prod = new_fixture_prod
-        fixture_names = new_fixture_names
-
-    return fixture_prod, fixture_names
 
 
 def pytest_generate_tests(metafunc):
@@ -193,47 +145,16 @@ def pytest_generate_tests(metafunc):
     # get name of the test
     test_name = metafunc.function.__name__
 
-    def is_excluded(est):
-        """Shorthand to check whether test test_name is excluded for estimator est."""
-        return test_name in EXCLUDED_TESTS.get(est.__name__, [])
+    fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
 
-    # tests can be tests for classes or instances
-    # tests for classes use estimator_class fixture name
-    # tests for instances use estimator_instance fixture name
+    fixture_param_str, fixture_prod, fixture_names = _create_fixtures_and_names(
+        test_name=test_name,
+        fixture_vars=metafunc.fixturenames,
+        generator_dict=generator_dict,
+        fixture_sequence=fixture_sequence,
+    )
 
-    # if a class test, get all classes for the test
-    if "estimator_class" in metafunc.fixturenames:
-        # we need to exclude classes in the exclude list
-        estimator_classes_to_test = [
-            est for est in ALL_ESTIMATORS if not is_excluded(est)
-        ]
-        # parameterize test with the list of classes
-        metafunc.parametrize("estimator_class", estimator_classes_to_test)
-
-    # if estimator test, construct all instances for the test
-    if "estimator_instance" in metafunc.fixturenames:
-        # we need to exclude instances from classes on the exclude list
-        estimator_classes_to_test = [
-            est for est in ALL_ESTIMATORS if not is_excluded(est)
-        ]
-        # create instances from the classes
-        estimator_instances_to_test = []
-        estimator_instance_names = []
-        # retrieve all estimator parameters if multiple, construct instances
-        for est in estimator_classes_to_test:
-            all_instances_of_est, instance_names = est.create_test_instances_and_names()
-            estimator_instances_to_test += all_instances_of_est
-            estimator_instance_names += instance_names
-
-        # parameterize test with the list of instances
-        metafunc.parametrize(
-            "estimator_instance",
-            estimator_instances_to_test,
-            ids=estimator_instance_names,
-        )
-
-    # loop over scenarios
-    # if "estimator" in metafunc.fixturenames and "scenario" in metafunc.fixturenames:
+    metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
 
 
 def test_create_test_instance(estimator_class):
