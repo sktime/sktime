@@ -122,8 +122,8 @@ def load_from_tsfile(
     # equal_length = True
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         _meta_data = _read_header(file, full_file_path_and_name)
-        for line in file:  # Will this work?
-            num_cases = num_cases + 1
+        for line in file:
+            num_cases += 1
             line = line.replace("?", replace_missing_vals_with)
             dimensions = line.split(":")
             # If first instance then note the number of dimensions.
