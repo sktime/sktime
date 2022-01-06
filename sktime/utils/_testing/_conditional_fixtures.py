@@ -119,9 +119,7 @@ def conditional_fixtures_and_names(
             new_fixture_prod += [
                 fixture + (new_fixture,) for new_fixture in new_fixtures
             ]
-            new_fixture_names += [
-                f"{fixture_name}-{x}" for x in new_fixture_names_r
-            ]
+            new_fixture_names += [f"{fixture_name}-{x}" for x in new_fixture_names_r]
 
         fixture_prod = new_fixture_prod
         fixture_names = new_fixture_names
