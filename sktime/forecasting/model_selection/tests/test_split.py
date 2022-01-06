@@ -22,26 +22,19 @@ from sktime.forecasting.tests._config import (
     TEST_FHS,
     TEST_INITIAL_WINDOW,
     TEST_OOS_FHS,
-    TEST_STEP_LENGTHS_INT,
+    TEST_STEP_LENGTHS,
     TEST_WINDOW_LENGTHS,
     TEST_YS,
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation import (
-    is_date_offset,
-    is_int,
-    is_timedelta,
-    is_timedelta_or_date_offset,
-)
+from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.validation import is_int, is_timedelta_or_date_offset
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
-CUTOFFS = [
-    np.array([21, 22]),
-    np.array([3, 7, 10]),
-]
+CUTOFFS = [np.array([21, 22]), np.array([3, 7, 10])]
 
 
 def _get_windows(cv, y):
@@ -116,15 +109,6 @@ def _check_cv(cv, y, allow_empty_window=False):
     return train_windows, test_windows, cutoffs, n_splits
 
 
-def _get_window_length_in_days(x) -> int:
-    if is_timedelta(x=x):
-        return x.days
-    elif is_date_offset(x=x):
-        return x.delta.days
-    else:
-        return x
-
-
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
@@ -135,9 +119,10 @@ def test_single_window_splitter(y, fh, window_length):
 
     train_window = train_windows[0]
     test_window = test_windows[0]
-
     assert n_splits == 1
-    assert train_window.shape[0] == _get_window_length_in_days(x=window_length)
+    assert train_window.shape[0] == _coerce_duration_to_int(
+        duration=window_length, freq="D"
+    )
     assert test_window.shape[0] == len(check_fh(fh))
 
     np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
@@ -179,7 +164,7 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
     """Test SlidingWindowSplitter."""
     cv = SlidingWindowSplitter(
@@ -192,9 +177,13 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
 
     assert np.vstack(train_windows).shape == (
         n_splits,
-        _get_window_length_in_days(x=window_length),
+        _coerce_duration_to_int(duration=window_length, freq="D"),
     )
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+
+
+def _args_are_all_of_the_same_type(*args) -> bool:
+    return all([type(args[0]) == type(arg) for arg in args])
 
 
 def _windows_are_incompatible(initial_window, window_length) -> bool:
@@ -210,7 +199,7 @@ def _windows_are_incompatible(initial_window, window_length) -> bool:
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
@@ -229,10 +218,12 @@ def test_sliding_window_splitter_with_initial_window(
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert train_windows[0].shape[0] == _get_window_length_in_days(x=initial_window)
+    assert train_windows[0].shape[0] == _coerce_duration_to_int(
+        duration=initial_window, freq="D"
+    )
     assert np.vstack(train_windows[1:]).shape == (
         n_splits - 1,
-        _get_window_length_in_days(x=window_length),
+        _coerce_duration_to_int(duration=window_length, freq="D"),
     )
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
@@ -240,7 +231,7 @@ def test_sliding_window_splitter_with_initial_window(
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_incompatible_initial_window_and_window_length(
     y, fh, window_length, step_length, initial_window
@@ -261,18 +252,18 @@ def test_sliding_window_splitter_with_incompatible_initial_window_and_window_len
 
 
 def _get_n_incomplete_windows(window_length, step_length) -> int:
-    if is_timedelta(x=window_length):
-        return int(np.ceil(window_length.days / step_length))
-    elif is_date_offset(x=window_length):
-        return int(np.ceil(window_length.delta.days / step_length))
-    else:
-        return int(np.ceil(window_length / step_length))
+    return int(
+        np.ceil(
+            _coerce_duration_to_int(duration=window_length, freq="D")
+            / _coerce_duration_to_int(duration=step_length, freq="D")
+        )
+    )
 
 
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter_start_with_empty_window(
     y, fh, window_length, step_length
 ):
@@ -292,7 +283,7 @@ def test_sliding_window_splitter_start_with_empty_window(
 
     assert np.vstack(train_windows).shape == (
         n_splits - n_incomplete,
-        _get_window_length_in_days(x=window_length),
+        _coerce_duration_to_int(duration=window_length, freq="D"),
     )
 
 
@@ -336,7 +327,7 @@ def _check_expanding_windows(windows):
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter_start_with_empty_window(
     y, fh, initial_window, step_length
 ):
@@ -358,7 +349,7 @@ def test_expanding_window_splitter_start_with_empty_window(
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):
     """Test ExpandingWindowSplitter."""
     cv = ExpandingWindowSplitter(
@@ -369,7 +360,9 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-    assert train_windows[0].shape[0] == _get_window_length_in_days(x=initial_window)
+    assert train_windows[0].shape[0] == _coerce_duration_to_int(
+        duration=initial_window, freq="D"
+    )
     _check_expanding_windows(train_windows)
 
 

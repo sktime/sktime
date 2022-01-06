@@ -8,6 +8,7 @@ __all__ = [
     "TEST_ALPHAS",
     "TEST_FHS",
     "TEST_STEP_LENGTHS_INT",
+    "TEST_STEP_LENGTHS",
     "TEST_INS_FHS",
     "TEST_OOS_FHS",
     "TEST_WINDOW_LENGTHS_INT",
@@ -43,7 +44,16 @@ TEST_INITIAL_WINDOW = [
     *TEST_INITIAL_WINDOW_TIMEDELTA,
     *TEST_INITIAL_WINDOW_DATEOFFSET,
 ]
+
 TEST_STEP_LENGTHS_INT = [1, 5]
+TEST_STEP_LENGTHS_TIMEDELTA = [pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
+TEST_STEP_LENGTHS_DATEOFFSET = [pd.offsets.Day(1), pd.offsets.Day(5)]
+TEST_STEP_LENGTHS = [
+    *TEST_STEP_LENGTHS_INT,
+    *TEST_STEP_LENGTHS_TIMEDELTA,
+    *TEST_STEP_LENGTHS_DATEOFFSET,
+]
+
 TEST_OOS_FHS = [1, np.array([2, 5])]  # out-of-sample
 TEST_INS_FHS = [
     -3,  # single in-sample

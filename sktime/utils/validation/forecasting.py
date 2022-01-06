@@ -17,14 +17,15 @@ __all__ = [
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
-from typing import Union
+from datetime import timedelta
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sktime.utils.validation import is_int
+from sktime.utils.validation import is_date_offset, is_int, is_timedelta
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
 
@@ -171,7 +172,7 @@ def check_cv(cv, enforce_start_with_window=False):
     return cv
 
 
-def check_step_length(step_length):
+def check_step_length(step_length) -> Optional[int]:
     """Validate window length.
 
     Parameters
@@ -188,13 +189,40 @@ def check_step_length(step_length):
     ValueError
         if step_length is negative or not an integer or is None.
     """
-    if step_length is not None:
-        if not is_int(step_length) or step_length < 1:
+    if step_length is None:
+        return None
+
+    elif is_int(step_length):
+        if step_length < 1:
             raise ValueError(
-                f"`step_length` must be a positive integer >= 1 or None, "
+                f"`step_length` must be a integer >= 1, " f"but found: {step_length}"
+            )
+        else:
+            return step_length
+
+    elif is_timedelta(step_length):
+        if step_length <= timedelta(0):
+            raise ValueError(
+                f"`step_length` must be a positive timedelta, "
                 f"but found: {step_length}"
             )
-    return step_length
+        else:
+            return step_length
+
+    elif is_date_offset(step_length):
+        if step_length + pd.Timestamp(0) <= pd.Timestamp(0):
+            raise ValueError(
+                f"`step_length` must be a positive pd.DateOffset, "
+                f"but found: {step_length}"
+            )
+        else:
+            return step_length
+
+    else:
+        raise ValueError(
+            f"`step_length` must be an integer, timedelta, pd.DateOffset, or None, "
+            f"but found: {type(step_length)}"
+        )
 
 
 def check_sp(sp, enforce_list=False):

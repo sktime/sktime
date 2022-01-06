@@ -24,6 +24,7 @@ from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.forecasting.base import VALID_FORECASTING_HORIZON_TYPES, ForecastingHorizon
+from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
@@ -373,7 +374,7 @@ class BaseWindowSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        step_length: int,
+        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
     ) -> None:
         self.step_length = step_length
@@ -422,7 +423,8 @@ class BaseWindowSplitter(BaseSplitter):
             yield train, test
 
         start = self._get_start(y=y, fh=fh)
-        end = _get_end(y, fh)
+        end = _get_end(y=y, fh=fh)
+        step_length = self._get_step_length(x=step_length)
 
         for train, test in self._split_windows(
             start, end, step_length, window_length, y, fh.to_numpy()
@@ -469,7 +471,7 @@ class BaseWindowSplitter(BaseSplitter):
             if hasattr(self, "initial_window") and self.initial_window is not None:
 
                 if hasattr(self, "step_length"):
-                    step_length = self.step_length
+                    step_length = self._get_step_length(x=self.step_length)
                 else:
                     step_length = 1
 
@@ -491,6 +493,10 @@ class BaseWindowSplitter(BaseSplitter):
                 start = fh_min + 1
 
         return start
+
+    @staticmethod
+    def _get_step_length(x: NON_FLOAT_WINDOW_LENGTH_TYPES) -> int:
+        return _coerce_duration_to_int(duration=x, freq="D")
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return number of splits.
@@ -538,6 +544,7 @@ class BaseWindowSplitter(BaseSplitter):
             start = self._get_start(y=y, fh=fh)
 
         end = _get_end(y, fh)
+        step_length = self._get_step_length(x=step_length)
 
         return np.arange(start, end, step_length) - 1
 
@@ -567,7 +574,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         Forecasting horizon
     window_length : int or timedelta or pd.DateOffset
         Window length
-    step_length : int, optional (default=1)
+    step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
     initial_window : int or timedelta or pd.DateOffset, optional (default=None)
         Window length of first window
@@ -580,7 +587,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        step_length: int = DEFAULT_STEP_LENGTH,
+        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
         initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
         start_with_window: bool = True,
     ) -> None:
@@ -635,7 +642,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         Forecasting horizon
     initial_window : int or timedelta or pd.DateOffset, optional (default=10)
         Window length
-    step_length : int, optional (default=1)
+    step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
@@ -646,7 +653,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        step_length: int = DEFAULT_STEP_LENGTH,
+        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
         start_with_window: bool = True,
     ) -> None:
         # Note that we pass the initial window as the window_length below. This
