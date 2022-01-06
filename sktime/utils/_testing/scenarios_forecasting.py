@@ -43,6 +43,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         # applicable only if obj inherits from BaseForecaster
         applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
 
+        # applicable only if number of variables in y complies with scitype:y
         is_univariate = self.get_tag("univariate_y")
 
         if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
@@ -51,13 +52,19 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         if not is_univariate and get_tag(obj, "scitype:y") == "univariate":
             applicable = False
 
+        # applicable only if fh is not passed later than it needs to be
+        fh_in_fit = self.get_tag("fh_passed_in_fit")
+
+        if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
+            applicable = False
+
         return applicable
 
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X."""
 
-    _tags = {"univariate_y": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {"fh": 1}}
     default_method_sequence = ["fit", "predict"]
@@ -66,7 +73,7 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, no fh in predict."""
 
-    _tags = {"univariate_y": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
@@ -75,7 +82,7 @@ class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, no fh in predict."""
 
-    _tags = {"univariate_y": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": False}
 
     args = {"fit": {"y": _make_series()}, "predict": {"fh": 1}}
     default_method_sequence = ["fit", "predict"]
@@ -84,7 +91,7 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, longer fh."""
 
-    _tags = {"univariate_y": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {"fit": {"y": _make_series(), "fh": [1, 2, 3]}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
@@ -99,7 +106,7 @@ X_test_short = LONG_X.iloc[50:51]
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X."""
 
-    _tags = {"univariate_y": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {
         "fit": {"y": _make_series(), "X": X.copy(), "fh": 1},
@@ -111,7 +118,7 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X, and longer fh."""
 
-    _tags = {"univariate_y": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {
         "fit": {"y": _make_series(), "X": X.copy(), "fh": [1, 2, 3]},
@@ -123,7 +130,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
     """Fit/predict only, multivariate y, no X."""
 
-    _tags = {"univariate_y": False}
+    _tags = {"univariate_y": False, "fh_passed_in_fit": True}
 
     args = {"fit": {"y": _make_series(n_columns=2), "fh": 1}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
@@ -132,7 +139,7 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
 class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
     """Fit/predict only, multivariate y, with X, and longer fh."""
 
-    _tags = {"univariate_y": False}
+    _tags = {"univariate_y": False, "fh_passed_in_fit": True}
 
     args = {
         "fit": {"y": _make_series(n_columns=2), "X": X.copy(), "fh": [1, 2, 3]},
