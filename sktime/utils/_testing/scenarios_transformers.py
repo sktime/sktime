@@ -39,7 +39,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
         return True
 
         # # applicable only if obj inherits from BaseForecaster
-        # applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
+        # applicable = isinstance(obj, BaseForecaster) or issubclass(obj,BaseForecaster)
 
         # # applicable only if number of variables in y complies with scitype:y
         # is_univariate = self.get_tag("univariate_y")
@@ -133,7 +133,6 @@ scenarios_transformers = [TransformerFitTransform]
 #         return (X,)
 #     else:
 #         raise ValueError(_get_err_msg(estimator))
-
 
 
 # def _make_transform_args(estimator, **kwargs):
