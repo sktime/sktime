@@ -175,8 +175,8 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
     """
     if not isinstance(x, np.ndarray):
         raise ValueError(
-            f"The value {x} is an invalid timeseries. To perform a "
-            f"distance computation a numpy arrays must be provided."
+            f"The value {x} is an invalid time series. To perform a"
+            f"distance computation a numpy array must be provided."
         )
 
     _x = np.array(x, copy=True, dtype=np.float)
