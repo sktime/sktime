@@ -12,17 +12,16 @@ __all__ = ["scenarios_transformers"]
 from inspect import isclass
 
 from sktime.base import BaseObject
-from sktime.utils._testing.forecasting import _make_series
-from sktime.utils._testing.panel import _make_panel_X
-from sktime.utils._testing.scenarios import TestScenario
-
 from sktime.transformations.base import (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
-    BaseTransformer,
 )
+from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.scenarios import TestScenario
+
 
 OLD_MIXINS = (
     _PanelToPanelTransformer,
