@@ -41,12 +41,12 @@ class _WdtwDistance(NumbaDistance):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        window: int, defaults = None
+        window: float, defaults = None
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-            lower bounding).
+            lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
-            Parallelogram lower bounding).
+            Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None)
             Custom bounding matrix to use. If defined then other lower_bounding params
@@ -84,20 +84,25 @@ class _WdtwDistance(NumbaDistance):
                 f"The value of g must be a float. The current value is {g}"
             )
 
+        global_g = g
+
         @njit(cache=True)
         def numba_wdtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
-            _window: int = -1,
-            _itakura_max_slope: float = None,
-            _bounding_matrix: np.ndarray = _resolved_bounding_matrix,
+            window: float = None,
+            itakura_max_slope: float = None,
+            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
+            g: float = None,
         ) -> float:
-            if window != -1:
-                _bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope != -1.0:
-                _bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
+            if g is None:
+                g = global_g
+            if window is not None:
+                bounding_matrix = sakoe_chiba(x, y, window)
+            elif itakura_max_slope is not None:
+                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
 
-            cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
+            cost_matrix = _weighted_cost_matrix(_x, _y, bounding_matrix, g)
             return cost_matrix[-1, -1]
 
         return numba_wdtw_distance

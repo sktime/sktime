@@ -3,12 +3,18 @@
 from typing import Callable, Dict, List
 
 import numpy as np
+import pytest
+from numba import njit
 
-from sktime.distances import distance, distance_factory, dtw_distance
+from sktime.distances import distance, distance_factory
+from sktime.distances._distance import _METRIC_INFOS
+from sktime.distances.base import MetricInfo
+from sktime.distances.tests._expected_results import _expected_distance_results_params
 from sktime.distances.tests._utils import create_test_distance_numpy
 
-
 # TODO: Change defaults in distance for itakura and sakoe
+
+
 def _test_distance_params(
     param_list: List[Dict], distance_func: Callable, distance_str: str
 ):
@@ -34,25 +40,49 @@ def _test_distance_params(
             results.append(dist_func(x, y))
             results.append(dist_func(x, y, **param_dict))
 
-            # if _expected_distance_results_params[distance_str][i][j] is not None:
-            #     for result in results:
-            #         assert result == pytest.approx(
-            #             _expected_distance_results_params[distance_str][i][j]
-            #         )
+            if distance_str in _expected_distance_results_params:
+                if _expected_distance_results_params[distance_str][i][j] is not None:
+                    for result in results:
+                        assert result == pytest.approx(
+                            _expected_distance_results_params[distance_str][i][j]
+                        )
             curr_results.append(results[0])
             j += 1
         i += 1
         results_to_fill.append(curr_results)
 
 
-def test_distance_params():
-    """Test distance params."""
-    _test_distance_params(
-        [
-            {"window": 0.2},
-            {"itakura_max_slope": 0.5},
-            {"bounding_matrix": np.zeros((10, 10))},
-        ],
-        dtw_distance,
-        "dtw",
-    )
+BASIC_BOUNDING_PARAMS = [
+    {"window": 0.2},
+    {"itakura_max_slope": 0.5},
+    {"bounding_matrix": np.zeros((10, 10))},
+]
+
+
+@njit(cache=True)
+def _test_derviative(q: np.ndarray):
+    return q
+
+
+DIST_PARAMS = {
+    "dtw": BASIC_BOUNDING_PARAMS,
+    "erp": BASIC_BOUNDING_PARAMS + [{"g": 0.5}],
+    "edr": BASIC_BOUNDING_PARAMS + [{"epsilon": 0.5}],
+    "lcss": BASIC_BOUNDING_PARAMS + [{"epsilon": 0.5}],
+    "ddtw": BASIC_BOUNDING_PARAMS + [{"compute_derivative": _test_derviative}],
+    "wdtw": BASIC_BOUNDING_PARAMS + [{"g": 0.5}],
+    "wddtw": BASIC_BOUNDING_PARAMS
+    + [{"compute_derivative": _test_derviative}]
+    + [{"g": 0.5}],
+}
+
+
+@pytest.mark.parametrize("dist", _METRIC_INFOS)
+def test_distance_params(dist: MetricInfo):
+    """Test parametisation of distance callables."""
+    if dist.canonical_name in DIST_PARAMS:
+        _test_distance_params(
+            DIST_PARAMS[dist.canonical_name],
+            dist.dist_func,
+            dist.canonical_name,
+        )
