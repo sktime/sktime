@@ -68,7 +68,7 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
-    args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {"fh": 1}}
+    args = {"fit": {"y": _make_series(n_timepoints=20), "fh": 1}, "predict": {"fh": 1}}
     default_method_sequence = ["fit", "predict"]
 
 
@@ -77,7 +77,7 @@ class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
-    args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {}}
+    args = {"fit": {"y": _make_series(n_timepoints=20), "fh": 1}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
 
 
@@ -86,7 +86,7 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": False}
 
-    args = {"fit": {"y": _make_series()}, "predict": {"fh": 1}}
+    args = {"fit": {"y": _make_series(n_timepoints=20)}, "predict": {"fh": 1}}
     default_method_sequence = ["fit", "predict"]
 
 
@@ -95,14 +95,14 @@ class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
-    args = {"fit": {"y": _make_series(), "fh": [1, 2, 3]}, "predict": {}}
+    args = {"fit": {"y": _make_series(n_timepoints=20), "fh": [1, 2, 3]}, "predict": {}}
     default_method_sequence = ["fit", "predict"]
 
 
-LONG_X = _make_series(n_columns=2, n_timepoints=60)
-X = LONG_X.iloc[0:50]
-X_test = LONG_X.iloc[50:53]
-X_test_short = LONG_X.iloc[50:51]
+LONG_X = _make_series(n_columns=2, n_timepoints=30)
+X = LONG_X.iloc[0:20]
+X_test = LONG_X.iloc[20:23]
+X_test_short = LONG_X.iloc[20:21]
 
 
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
@@ -111,7 +111,7 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {
-        "fit": {"y": _make_series(), "X": X.copy(), "fh": 1},
+        "fit": {"y": _make_series(n_timepoints=20), "X": X.copy(), "fh": 1},
         "predict": {"X": X_test_short.copy()},
     }
     default_method_sequence = ["fit", "predict"]
@@ -123,7 +123,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {
-        "fit": {"y": _make_series(), "X": X.copy(), "fh": [1, 2, 3]},
+        "fit": {"y": _make_series(n_timepoints=20), "X": X.copy(), "fh": [1, 2, 3]},
         "predict": {"X": X_test.copy()},
     }
     default_method_sequence = ["fit", "predict"]
@@ -134,7 +134,9 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
 
     _tags = {"univariate_y": False, "fh_passed_in_fit": True}
 
-    args = {"fit": {"y": _make_series(n_columns=2), "fh": 1}, "predict": {}}
+    args = {
+        "fit": {"y": _make_series(n_timepoints=20, n_columns=2), "fh": 1}, "predict": {}
+    }
     default_method_sequence = ["fit", "predict"]
 
 
@@ -144,7 +146,11 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
     _tags = {"univariate_y": False, "fh_passed_in_fit": True}
 
     args = {
-        "fit": {"y": _make_series(n_columns=2), "X": X.copy(), "fh": [1, 2, 3]},
+        "fit": {
+            "y": _make_series(n_timepoints=20, n_columns=2),
+            "X": X.copy(),
+            "fh": [1, 2, 3]
+        },
         "predict": {"X": X_test.copy()},
     }
     default_method_sequence = ["fit", "predict"]
