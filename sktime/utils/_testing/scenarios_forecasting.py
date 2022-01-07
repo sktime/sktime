@@ -9,6 +9,7 @@ __author__ = ["fkiraly"]
 __all__ = [
     "forecasting_scenarios_simple",
     "forecasting_scenarios_extended",
+    "scenarios_forecasting",
 ]
 
 
