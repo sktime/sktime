@@ -11,6 +11,7 @@ import warnings
 from itertools import product
 
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
@@ -378,49 +379,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def compute_pred_int(self, valid_indices, alpha, **simulate_kwargs):
-        """Compute/return prediction intervals for AutoETS.
-
-        Must be run *after* the forecaster has been fitted.
-        If alpha is iterable, multiple intervals will be calculated.
-
-        Parameters
-        ----------
-        valid_indices : pd.PeriodIndex
-            indices to compute the prediction intervals for
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
-        simulate_kwargs : see statsmodels ETSResults.get_prediction
-
-        Returns
-        -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
-        """
-        self.check_is_fitted()
-        alphas = check_alpha(alpha)
-
-        start, end = valid_indices[[0, -1]]
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, **simulate_kwargs
-        )
-
-        pred_ints = []
-        for alpha_iter in alphas:
-            pred_int = prediction_results.pred_int(alpha_iter)
-            pred_int.columns = ["lower", "upper"]
-            pred_ints.append(pred_int.loc[valid_indices])
-
-        if isinstance(alpha, float):
-            pred_ints = pred_ints[0]
-
-        return pred_ints
-
-    def _predict(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, **simulate_kwargs
-    ):
+    def _predict(self, fh, X=None, **simulate_kwargs):
         """Make forecasts.
 
         Parameters
@@ -431,8 +390,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
         **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
@@ -447,15 +404,63 @@ class AutoETS(_StatsModelsAdapter):
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        return y_pred.loc[valid_indices]
 
-        if return_pred_int:
-            pred_int = self.compute_pred_int(
-                valid_indices, alpha=alpha, **simulate_kwargs
-            )
+    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction quantiles for a forecast.
 
-            return y_pred.loc[valid_indices], pred_int
-        else:
-            return y_pred.loc[valid_indices]
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple quantiles will be calculated.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list of float, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        self.check_is_fitted()
+        alpha = check_alpha(alpha)
+        # convert alpha to the one needed for predict intervals
+        alphas = []
+        for a in alpha:
+            if a < 0.5:
+                alphas.append((0.5 - a) * 2)
+            elif a > 0.5:
+                alphas.append((a - 0.5) * 2)
+            else:
+                alphas.append(0)
+
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end
+        )
+
+        pred_quantiles = pd.DataFrame()
+        for a, coverage in zip(alpha, alphas):
+            pred_int = prediction_results.pred_int(1 - coverage)
+            pred_int.columns = ["lower", "upper"]
+            if a < 0.5:
+                pred_quantiles[a] = pred_int["lower"].loc[valid_indices]
+            else:
+                pred_quantiles[a] = pred_int["upper"].loc[valid_indices]
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles.columns = index
+        return pred_quantiles
 
     def summary(self):
         """Get a summary of the fitted forecaster.
