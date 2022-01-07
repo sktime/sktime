@@ -11,9 +11,11 @@ from inspect import isclass
 from sktime.base import BaseObject
 from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST, scitype
 from sktime.utils._testing.scenarios_forecasting import scenarios_forecasting
+from sktime.utils._testing.scenarios_transformers import scenarios_transformers
 
 scenarios = dict()
 scenarios["forecaster"] = scenarios_forecasting
+scenarios["transformer"] = scenarios_transformers
 
 
 def retrieve_scenarios(obj):
