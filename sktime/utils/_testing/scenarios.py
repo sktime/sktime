@@ -67,6 +67,7 @@ class TestScenario:
         arg_sequence=None,
         return_all=False,
         return_args=False,
+        deepcopy_return=True,
     ):
         """Run a call(args) scenario on obj, and retrieve method outputs.
 
@@ -98,6 +99,9 @@ class TestScenario:
             whether arguments should also be returned
             if False, there is no second return argument
             if True, "args_after_call" return argument is returned
+        deepcopy_return : bool, default = True
+            whether returns are deepcopied before returned
+            if False, returns are references/assignments, not deepcopies
 
         Returns
         -------
@@ -153,8 +157,11 @@ class TestScenario:
 
             args_after_call += [args]
 
+            if deepcopy_return:
+                res = deepcopy(res)
+
             if return_all:
-                results += [deepcopy(res)]
+                results += [res]
             else:
                 results = res
 
