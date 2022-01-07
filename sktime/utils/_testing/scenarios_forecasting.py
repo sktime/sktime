@@ -135,7 +135,8 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
     _tags = {"univariate_y": False, "fh_passed_in_fit": True}
 
     args = {
-        "fit": {"y": _make_series(n_timepoints=20, n_columns=2), "fh": 1}, "predict": {}
+        "fit": {"y": _make_series(n_timepoints=20, n_columns=2), "fh": 1},
+        "predict": {},
     }
     default_method_sequence = ["fit", "predict"]
 
@@ -149,7 +150,7 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
         "fit": {
             "y": _make_series(n_timepoints=20, n_columns=2),
             "X": X.copy(),
-            "fh": [1, 2, 3]
+            "fh": [1, 2, 3],
         },
         "predict": {"X": X_test.copy()},
     }
