@@ -14,3 +14,21 @@ _expected_distance_results = {
     "edr": [1.0, 0.6, 1.0],
     "erp": [5.0, 5.03767, 20.78718],
 }
+
+_expected_distance_results_params = {
+    # Result structure:
+    # [univariate series, multivariate series]
+    "squared": [25.0, 6.93261],
+    "euclidean": [5.0, 2.63298],
+    "dtw": [
+        [3.088712375990371, 46.68062114164414],
+        [3.2313355792547123, 46.68062114164414],
+        [2.180365495972097, 46.68062114164414],
+    ],
+    "ddtw": [0.0, 2.08848],
+    "wdtw": [12.5, 1.09018],
+    "wddtw": [0.0, 1.04424],
+    "lcss": [1.0, 0.1],
+    "edr": [1.0, 0.6],
+    "erp": [5.0, 5.03767],
+}

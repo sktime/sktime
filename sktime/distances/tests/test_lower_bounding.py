@@ -88,7 +88,6 @@ def _validate_bounding(
     y: np.ndarray (1d, 2d, or 3d)
         Second timeseries
     """
-    x_y_max = max(len(x), len(y))
     no_bounding = LowerBounding.NO_BOUNDING
     no_bounding_result = no_bounding.create_bounding_matrix(x, y)
     _validate_bounding_result(no_bounding_result, x, y, all_finite=True)
@@ -120,26 +119,26 @@ def _validate_bounding(
     itakura_parallelogram = LowerBounding.ITAKURA_PARALLELOGRAM
 
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=2.0),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.2),
         x,
         y,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=3),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.3),
         x,
         y,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=x_y_max),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=1.0),
         x,
         y,
         all_finite=True,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.0),
         x,
         y,
         all_infinite=True,
@@ -191,26 +190,26 @@ def _validate_numba_bounding(
     )
 
     _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=2.0),
+        numba_create_bounding_matrix(x, y, itakura_max_slope=0.2),
         x,
         y,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=3),
+        numba_create_bounding_matrix(x, y, itakura_max_slope=0.3),
         x,
         y,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=x_y_max),
+        numba_create_bounding_matrix(x, y, itakura_max_slope=1.0),
         x,
         y,
         all_finite=True,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=0),
+        numba_create_bounding_matrix(x, y, itakura_max_slope=0.0),
         x,
         y,
         all_infinite=True,

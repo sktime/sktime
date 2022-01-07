@@ -88,7 +88,7 @@ def _check_line_steps(line: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     line: np.ndarray
-        line to check steps
+        line to check steps.
 
     Returns
     -------
@@ -137,7 +137,7 @@ def sakoe_chiba(x: np.ndarray, y: np.ndarray, window: float) -> np.ndarray:
     y: np.ndarray (2d array)
         Second timeseries.
     window: float
-        Float that is the size of the window
+        Float that is the size of the window. Must be between 0 and 1.
 
     Returns
     -------
@@ -189,7 +189,7 @@ def itakura_parallelogram(
     y: np.ndarray (2d array)
         Second timeseries.
     itakura_max_slope: float or int
-        Gradient of the slope.
+        Gradient of the slope must be between 0 and 1.
 
     Returns
     -------
@@ -202,7 +202,10 @@ def itakura_parallelogram(
     ValueError
         If the itakura_max_slope is not a float or int.
     """
+    if itakura_max_slope < 0 or itakura_max_slope > 1:
+        raise ValueError("Window must between 0 and 1")
     bounding_matrix = np.full((y.shape[0], x.shape[0]), np.inf)
+    itakura_max_slope = math.floor(((x.shape[0] / 100) * itakura_max_slope) * 100) / 2
 
     x_size = x.shape[0]
     y_size = y.shape[0]
@@ -245,7 +248,22 @@ def numba_create_bounding_matrix(
     window: float = -1.0,
     itakura_max_slope: Union[float, int] = -1.0,
 ) -> np.ndarray:
-    if window != -1:
+    """Numba compiled way of creating bounding matrix.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First timeseries.
+    y: np.ndarray (2d array)
+        Second timeseries.
+    window: float, defaults = -1.
+        Float that is the % radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Must be between 0 and 1.
+    itakura_max_slope: float, defaults = -1.
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Must be between 0 and 1.
+    """
+    if window != -1.0:
         bounding_matrix = sakoe_chiba(x, y, window)
     elif itakura_max_slope != -1.0:
         bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
@@ -344,10 +362,11 @@ class LowerBounding(Enum):
             First timeseries.
         y: np.ndarray (1d, 2d or 3d array)
             Second timeseries.
-        sakoe_chiba_window_radius: int, defaults = 2
-            Integer that is the radius of the sakoe chiba window.
-        itakura_max_slope: float or int, defaults = 2.
-            Gradient of the slope for itakura parallelogram.
+        sakoe_chiba_window_radius: int, defaults = None
+            Integer that is the radius of the sakoe chiba window. Must be between 0
+            and 1.
+        itakura_max_slope: float or int, defaults = None
+            Gradient of the slope for itakura parallelogram. Must be between 0 and 1.
 
         Returns
         -------
@@ -373,10 +392,7 @@ class LowerBounding(Enum):
             bounding_matrix = sakoe_chiba(_x, _y, sakoe_chiba_window_radius)
         elif self.int_val == 3:
             if not isinstance(itakura_max_slope, float):
-                if isinstance(itakura_max_slope, int):
-                    itakura_max_slope = float(itakura_max_slope)
-                else:
-                    raise ValueError("The itakura max slope must be a float or int.")
+                raise ValueError("The itakura max slope must be a float or int.")
             bounding_matrix = itakura_parallelogram(_x, _y, itakura_max_slope)
         else:
             bounding_matrix = no_bounding(_x, _y)
@@ -430,12 +446,12 @@ def resolve_bounding_matrix(
         First timeseries.
     y: np.ndarray (2d array)
         Second timeseries.
-    window: float, defaults = 2
+    window: float, defaults = None
         Float that is the % radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
-    itakura_max_slope: float, defaults = 2.
+        lower bounding). Must be between 0 and 1.
+    itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Must be between 0 and 1.
     bounding_matrix: np.ndarray (2d array)
         Custom bounding matrix to use. If defined then this matrix will be returned.
         Other lower_bounding params and creation will be ignored. The matrix should be

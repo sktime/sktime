@@ -5,21 +5,14 @@ from typing import Any, Callable, Union
 
 import numpy as np
 
-from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
+from sktime.distances._ddtw import DerivativeCallable, _average_of_slope
 from sktime.distances._dtw import _DtwDistance
-from sktime.distances._edr import _EdrDistance
-from sktime.distances._erp import _ErpDistance
-from sktime.distances._euclidean import _EuclideanDistance
-from sktime.distances._lcss import _LcssDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
 from sktime.distances._resolve_metric import _resolve_metric
-from sktime.distances._squared import _SquaredDistance
-from sktime.distances._wddtw import _WddtwDistance
-from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
 
@@ -601,14 +594,14 @@ def ddtw_distance(
 def dtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
-    itakura_max_slope: Union[float, None] = None,
+    window: float = 0.5,
+    itakura_max_slope: float = 0.5,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
-    Originally proposedin [1]_ DTW computes the distance between two time series by
+    Originally proposed in [1]_ DTW computes the distance between two time series by
     considering their alignments during the calculation. This is done by measuring
     the pointwise distance (normally using Euclidean) between all elements of the two
     time series and then using dynamic programming to find the warping path
@@ -625,12 +618,12 @@ def dtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
-    itakura_max_slope: float, defaults = None
+    window: float, defaults = 0.5
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = 0.5
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -648,8 +641,8 @@ def dtw_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -1034,60 +1027,60 @@ def pairwise_distance(
 
 
 _METRIC_INFOS = [
-    MetricInfo(
-        canonical_name="euclidean",
-        aka={"euclidean", "ed", "euclid", "pythagorean"},
-        dist_func=euclidean_distance,
-        dist_instance=_EuclideanDistance(),
-    ),
-    MetricInfo(
-        canonical_name="erp",
-        aka={"erp", "edit distance with real penalty"},
-        dist_func=erp_distance,
-        dist_instance=_ErpDistance(),
-    ),
-    MetricInfo(
-        canonical_name="edr",
-        aka={"edr", "edit distance for real sequences"},
-        dist_func=edr_distance,
-        dist_instance=_EdrDistance(),
-    ),
-    MetricInfo(
-        canonical_name="lcss",
-        aka={"lcss", "longest common subsequence"},
-        dist_func=lcss_distance,
-        dist_instance=_LcssDistance(),
-    ),
-    MetricInfo(
-        canonical_name="squared",
-        aka={"squared"},
-        dist_func=squared_distance,
-        dist_instance=_SquaredDistance(),
-    ),
+    # MetricInfo(
+    #     canonical_name="euclidean",
+    #     aka={"euclidean", "ed", "euclid", "pythagorean"},
+    #     dist_func=euclidean_distance,
+    #     dist_instance=_EuclideanDistance(),
+    # ),
+    # MetricInfo(
+    #     canonical_name="erp",
+    #     aka={"erp", "edit distance with real penalty"},
+    #     dist_func=erp_distance,
+    #     dist_instance=_ErpDistance(),
+    # ),
+    # MetricInfo(
+    #     canonical_name="edr",
+    #     aka={"edr", "edit distance for real sequences"},
+    #     dist_func=edr_distance,
+    #     dist_instance=_EdrDistance(),
+    # ),
+    # MetricInfo(
+    #     canonical_name="lcss",
+    #     aka={"lcss", "longest common subsequence"},
+    #     dist_func=lcss_distance,
+    #     dist_instance=_LcssDistance(),
+    # ),
+    # MetricInfo(
+    #     canonical_name="squared",
+    #     aka={"squared"},
+    #     dist_func=squared_distance,
+    #     dist_instance=_SquaredDistance(),
+    # ),
     MetricInfo(
         canonical_name="dtw",
         aka={"dtw", "dynamic time warping"},
         dist_func=dtw_distance,
         dist_instance=_DtwDistance(),
     ),
-    MetricInfo(
-        canonical_name="ddtw",
-        aka={"ddtw", "derivative dynamic time warping"},
-        dist_func=ddtw_distance,
-        dist_instance=_DdtwDistance(),
-    ),
-    MetricInfo(
-        canonical_name="wdtw",
-        aka={"wdtw", "weighted dynamic time warping"},
-        dist_func=wdtw_distance,
-        dist_instance=_WdtwDistance(),
-    ),
-    MetricInfo(
-        canonical_name="wddtw",
-        aka={"wddtw", "weighted derivative dynamic time warping"},
-        dist_func=wddtw_distance,
-        dist_instance=_WddtwDistance(),
-    ),
+    # MetricInfo(
+    #     canonical_name="ddtw",
+    #     aka={"ddtw", "derivative dynamic time warping"},
+    #     dist_func=ddtw_distance,
+    #     dist_instance=_DdtwDistance(),
+    # ),
+    # MetricInfo(
+    #     canonical_name="wdtw",
+    #     aka={"wdtw", "weighted dynamic time warping"},
+    #     dist_func=wdtw_distance,
+    #     dist_instance=_WdtwDistance(),
+    # ),
+    # MetricInfo(
+    #     canonical_name="wddtw",
+    #     aka={"wddtw", "weighted derivative dynamic time warping"},
+    #     dist_func=wddtw_distance,
+    #     dist_instance=_WddtwDistance(),
+    # ),
 ]
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
