@@ -4,47 +4,48 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["BaseClusterer"]
 
+import time
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Any, List, Union
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.utils.validation.panel import check_X
+from sktime.datatypes import check_is_scitype, convert_to
+from sktime.utils.validation import check_n_jobs
 
 # Types
-TimeSeriesPanel = Union[pd.DataFrame, np.ndarray]
+TimeSeriesPanel = Union[pd.DataFrame, np.ndarray, List[pd.DataFrame]]
 
 
 class BaseClusterer(BaseEstimator, ABC):
     """Abstract base class for time series clusterer."""
 
     _tags = {
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
-        "capability:contractable": False,
         "capability:multithreading": False,
     }
 
     def __init__(self):
+        self.fit_time_ = 0
+        self._class_dictionary = {}
         self._threads_to_use = 1
-        self._is_fitted = False
         super(BaseClusterer, self).__init__()
 
-    def fit(self, X: TimeSeriesPanel, y=None) -> None:
+    def fit(self, X: TimeSeriesPanel, y=None) -> BaseEstimator:
         """Fit time series clusterer to training data.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each column
-            is a dimension, each cell is a pd.Series (any number of dimensions, equal or
-            unequal length series)) or List[pd.Dataframe].
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series)) or List[pd.Dataframe].
             Training time series instances to cluster.
         y: ignored, exists for API consistency reasons.
 
@@ -53,12 +54,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self:
             Fitted estimator.
         """
-        X = check_X(
-            X,
-            coerce_to_numpy=self.get_tag("coerce-X-to-numpy"),
-            coerce_to_pandas=self.get_tag("coerce-X-to-pandas"),
-            enforce_univariate=not self.get_tag("capability:multivariate"),
-        )
+        X = self._check_clusterer_input(X)
 
         multithread = self.get_tag("capability:multithreading")
         if multithread:
@@ -69,8 +65,9 @@ class BaseClusterer(BaseEstimator, ABC):
                     "self.n_jobs must be set if capability:multithreading is True"
                 )
 
-        self._fit(X, y)
-
+        start = int(round(time.time() * 1000))
+        self._fit(X)
+        self.fit_time_ = int(round(time.time() * 1000)) - start
         self._is_fitted = True
         return self
 
@@ -80,9 +77,9 @@ class BaseClusterer(BaseEstimator, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each column
-            is a dimension, each cell is a pd.Series (any number of dimensions, equal or
-            unequal length series)) or List[pd.Dataframe].
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series)) or List[pd.Dataframe].
             Time series instances to predict their cluster indexes.
         y: ignored, exists for API consistency reasons.
 
@@ -91,14 +88,7 @@ class BaseClusterer(BaseEstimator, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        self.check_is_fitted()
-        X = check_X(
-            X,
-            coerce_to_numpy=self.get_tag("coerce-X-to-numpy"),
-            coerce_to_pandas=self.get_tag("coerce-X-to-pandas"),
-            enforce_univariate=not self.get_tag("capability:multivariate"),
-        )
-
+        X = self._check_clusterer_input(X)
         return self._predict(X)
 
     def fit_predict(self, X: TimeSeriesPanel, y=None) -> np.ndarray:
@@ -109,11 +99,11 @@ class BaseClusterer(BaseEstimator, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each column
-            is a dimension, each cell is a pd.Series (any number of dimensions, equal or
-            unequal length series)) or List[pd.Dataframe].
-            Time series instances to train clusterer and then have indexes each belong to
-            returned.
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series)) or List[pd.Dataframe].
+            Time series instances to train clusterer and then have indexes each belong
+            to return.
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -151,7 +141,6 @@ class BaseClusterer(BaseEstimator, ABC):
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
             (n_instances,n_dimensions,series_length))
             Training time series instances to cluster.
-        y: ignored, exists for API consistency reasons.
 
         Returns
         -------
@@ -159,3 +148,109 @@ class BaseClusterer(BaseEstimator, ABC):
             Fitted estimator.
         """
         ...
+
+    def _check_capabilities(self, missing: bool, multivariate: bool, unequal: bool):
+        """Check the capabilities of the clusterer matches input data requirements.
+
+        Parameters
+        ----------
+        missing : boolean
+            Defines if the data has missing value. True if data has missing values,
+            False if no missing.
+        multivariate : boolean
+            Defines if the data is multivariate. True if data is multivariate, False
+            if the data is univariate
+        unequal : boolean
+            Defines if the data is unequal length. True if data is unequal length,
+            False if the data is equal length.
+
+        Raises
+        ------
+        ValueError
+            if the capabilities in self._tags do not handle the data.
+        """
+        allow_multivariate = self.get_tag("capability:multivariate")
+        allow_missing = self.get_tag("capability:missing_values")
+        allow_unequal = self.get_tag("capability:unequal_length")
+        if missing and not allow_missing:
+            raise ValueError(
+                "The data has missing values, this clusterer cannot handle missing "
+                "values"
+            )
+        if multivariate and not allow_multivariate:
+            raise ValueError(
+                "X must be univariate, this clusterer cannot deal with "
+                "multivariate input."
+            )
+        if unequal and not allow_unequal:
+            raise ValueError(
+                "The data has unequal length series, this clusterer cannot handle "
+                "unequal length series"
+            )
+
+    @staticmethod
+    def _initial_conversion(X: Any) -> TimeSeriesPanel:
+        """Format data as valid panel mtype of the data.
+
+        This should be overwritten to format the data as a valid panel mtype if working
+        with data not in the correct format.
+
+        Parameters
+        ----------
+        X: Any
+            Data to convert to panel mtype.
+
+        Returns
+        -------
+        X: np.ndarray (at least 2d) or pd.Dataframe or List[pd.Dataframe]
+            Converted X.
+        """
+        if isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                X = X.reshape(X.shape[0], 1, X.shape[1])
+        return X
+
+    def _check_clusterer_input(
+        self, X: TimeSeriesPanel, enforce_min_instances: int = 1
+    ) -> np.ndarray:
+        """Validate the input and prepare for _fit.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances,n_dimensions,series_length))
+            Training time series instances to cluster.
+
+        Returns
+        -------
+        X : np.ndarray (3d array)
+            Converted X ready for _fit.
+
+        Raises
+        ------
+        ValueError
+            If y or X is invalid input data type, or there is not enough data.
+        """
+        X = self._initial_conversion(X)
+
+        X_valid, _, X_metadata = check_is_scitype(
+            X, scitype="Panel", return_metadata=True
+        )
+        if not X_valid:
+            raise TypeError(
+                f"X is not of a supported input data type."
+                f"X must be in a supported mtype format for Panel, found {type(X)}"
+                f"Use datatypes.check_is_mtype to check conformance with "
+                f"specifications."
+            )
+        n_cases = X_metadata["n_instances"]
+        if n_cases < enforce_min_instances:
+            raise ValueError(
+                f"Minimum number of cases required is {enforce_min_instances} but X "
+                f"has : {n_cases}"
+            )
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
+        self._check_capabilities(missing, multivariate, unequal)
+        return convert_to(X, to_type="numpy3D", as_scitype="Panel")
