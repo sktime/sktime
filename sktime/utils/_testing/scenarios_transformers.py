@@ -22,7 +22,6 @@ from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
-
 OLD_MIXINS = (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
