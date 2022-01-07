@@ -139,7 +139,8 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
 scenarios_transformers = [
     TransformerFitTransformSeriesUnivariate,
     TransformerFitTransformSeriesMultivariate,
-    TransformerFitTransformPanel,
+    TransformerFitTransformPanelUnivariate,
+    TransformerFitTransformPanelMultivariate,
 ]
 
 # old code for easy refactor
