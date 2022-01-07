@@ -42,24 +42,25 @@ class ForecasterTestScenario(TestScenario, BaseObject):
                 return obj.get_tag(tag_name)
 
         # applicable only if obj inherits from BaseForecaster
-        applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
+        if not isinstance(obj, BaseForecaster) and not issubclass(obj, BaseForecaster):
+            return False
 
         # applicable only if number of variables in y complies with scitype:y
         is_univariate = self.get_tag("univariate_y")
 
         if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
-            applicable = False
+            return False
 
         if not is_univariate and get_tag(obj, "scitype:y") == "univariate":
-            applicable = False
+            return False
 
         # applicable only if fh is not passed later than it needs to be
         fh_in_fit = self.get_tag("fh_passed_in_fit")
 
         if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
-            applicable = False
+            return False
 
-        return applicable
+        return True
 
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
