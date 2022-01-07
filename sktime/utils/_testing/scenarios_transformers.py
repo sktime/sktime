@@ -102,7 +102,7 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
 class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Series X."""
 
-    _tags = {"X_scitype": "Series", "X_univariate": True}
+    _tags = {"X_scitype": "Series", "X_univariate": False}
 
     args = {
         "fit": {"X": _make_series(n_columns=2, n_timepoints=20)},
