@@ -476,7 +476,7 @@ def test_fit_idempotent(estimator_instance, scenario):
                 estimator,
                 method_sequence=["fit", method],
                 return_all=True,
-                deepcopy_args=True,
+                deepcopy_return=True,
             )
 
             estimator = results[0]
@@ -486,7 +486,7 @@ def test_fit_idempotent(estimator_instance, scenario):
                 estimator,
                 method_sequence=["fit", method],
                 return_all=True,
-                deepcopy_args=True,
+                deepcopy_return=True,
             )
 
             _assert_array_almost_equal(
