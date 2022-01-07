@@ -8,11 +8,17 @@ Base class template for forecaster scitype.
 Scitype defining methods:
     fitting            - fit(y, X=None, fh=None)
     forecasting        - predict(fh=None, X=None)
+    updating           - update(y, X=None, update_params=True)
+
+Convenience methods:
     fit&forecast       - fit_predict(y, X=None, fh=None)
+    update&forecast    - update_predict(cv=None, X=None, update_params=True)
+    forecast residuals - predict_residuals(y, X=None, fh=None)
+    forecast scores    - score(y, X=None, fh=None)
+
+Optional, special capability methods (check capability tags if available):
     forecast intervals - predict_interval(fh=None, X=None, coverage=0.90)
     forecast quantiles - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
-    updating           - update(y, X=None, update_params=True)
-    update&forecast    - update_predict(cv=None, X=None, update_params=True)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -36,6 +42,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import convert_to, mtype
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index, check_series
@@ -348,15 +355,17 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        self.check_is_fitted()
+        # input checks
         if alpha is None:
             alpha = [0.05, 0.95]
-
-        self.check_is_fitted()
         self._set_fh(fh)
         alpha = check_alpha(alpha)
+
         # input check and conversion for X
         X_inner = self._check_X(X=X)
-        quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+
+        quantiles = self._predict_quantiles(fh=self.fh, X=X_inner, alpha=alpha)
         return quantiles
 
     def predict_interval(
@@ -396,14 +405,15 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        # input check for X
-
-        self._set_fh(fh)
-        X_inner = self._check_X(X=X)
         self.check_is_fitted()
-
+        # input checks
+        self._set_fh(fh)
         coverage = check_alpha(coverage)
-        pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+
+        # check and convert X
+        X_inner = self._check_X(X=X)
+
+        pred_int = self._predict_interval(fh=self.fh, X=X_inner, coverage=coverage)
         return pred_int
 
     def update(self, y, X=None, update_params=True):
@@ -631,6 +641,78 @@ class BaseForecaster(BaseEstimator):
             alpha=alpha,
         )
 
+    def predict_residuals(self, y=None, X=None):
+        """Return residuals of time series forecasts.
+
+        Residuals will be computed for forecasts at y.index.
+
+        If fh must be passed in fit, must agree with y.index.
+        If y is an np.ndarray, and no fh has been passed in fit,
+        the residuals will be computed at a fh of range(len(y.shape[0]))
+
+        State required:
+            Requires state to be "fitted".
+            If fh has been set, must correspond to index of y (pandas or integer)
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores y.index to self.fh if has not been passed previously.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, np.ndarray (1D or 2D), or None
+            Time series with ground truth observations, to compute residuals to.
+            Must have same type, dimension, and indices as expected return of predict.
+            if None, the y seen so far (self._y) are used, in particular:
+                if preceded by a single fit call, then in-sample residuals are produced
+                if fit requires fh, it must have pointed to index of y in fit
+        X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
+            Exogeneous time series to predict from
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+
+        Returns
+        -------
+        y_res : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+            Forecast residuals at fh, with same index as fh
+            y_pred has same type as y passed in fit (most recently)
+        """
+        # if no y is passed, the so far observed y is used
+        if y is None:
+            y = self._y
+
+        # we want residuals, so fh must be the index of y
+        # if data frame: take directly from y
+        # to avoid issues with _set_fh, we convert to relative if self.fh is
+        if isinstance(y, (pd.DataFrame, pd.Series)):
+            fh = ForecastingHorizon(y.index, is_relative=False)
+            if self._fh is not None and self.fh.is_relative:
+                fh = fh.to_relative(self.cutoff)
+            self._set_fh(fh)
+        # if np.ndarray, rows are not indexed
+        # so will be interpreted as range(len), or existing fh if it is stored
+        elif isinstance(y, np.ndarray):
+            if self._fh is None:
+                fh = range(y.shape[0])
+            else:
+                fh = self.fh
+        else:
+            raise TypeError("y must be a supported Series mtype")
+
+        y_pred = self.predict(fh=self.fh, X=X)
+
+        if not type(y_pred) == type(y):
+            raise TypeError(
+                "y must have same type, dims, index as expected predict return. "
+                f"expected type {type(y_pred)}, but found {type(y)}"
+            )
+
+        y_res = y - y_pred
+
+        return y_res
+
     def score(self, y, X=None, fh=None):
         """Scores forecast against ground truth, using MAPE.
 
@@ -732,7 +814,7 @@ class BaseForecaster(BaseEstimator):
 
             y = check_series(y, **check_y_args, var_name="y")
 
-            self._y_mtype_last_seen = mtype(y)
+            self._y_mtype_last_seen = mtype(y, as_scitype="Series")
         # end checking y
 
         # checking X
@@ -803,7 +885,7 @@ class BaseForecaster(BaseEstimator):
         # we only need to modify _y if y is not None
         if y is not None:
             # if _y does not exist yet, initialize it with y
-            if not hasattr(self, "_y") or self._y is None:
+            if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
             # otherwise, update _y with the new rows in y
             #  if y is np.ndarray, we assume all rows are new
@@ -819,7 +901,7 @@ class BaseForecaster(BaseEstimator):
         # we only need to modify _X if X is not None
         if X is not None:
             # if _X does not exist yet, initialize it with X
-            if not hasattr(self, "_X") or self._X is None:
+            if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
             # otherwise, update _X with the new rows in X
             #  if X is np.ndarray, we assume all rows are new

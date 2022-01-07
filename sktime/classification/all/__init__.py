@@ -5,7 +5,7 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "ShapeletTransformClassifier",
     "MrSEQLClassifier",
-    "ROCKETClassifier",
+    "RocketClassifier",
     "BOSSEnsemble",
     "IndividualBOSS",
     "TemporalDictionaryEnsemble",
@@ -53,7 +53,7 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
     TimeSeriesForestClassifier,
 )
-from sktime.classification.kernel_based import ROCKETClassifier
+from sktime.classification.kernel_based import RocketClassifier
 from sktime.classification.shapelet_based import (
     MrSEQLClassifier,
     ShapeletTransformClassifier,

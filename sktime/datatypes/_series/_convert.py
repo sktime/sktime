@@ -34,7 +34,6 @@ __all__ = ["convert_dict"]
 import numpy as np
 import pandas as pd
 
-
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
@@ -78,7 +77,7 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
         raise TypeError("input is not a pd.DataFrame")
 
     if len(obj.columns) != 1:
-        raise ValueError("pd.DataFrame must be pd.DataFrame with one column")
+        raise ValueError("input must be univariate pd.DataFrame, with one column")
 
     if isinstance(store, dict):
         store["columns"] = obj.columns[[0]]
@@ -99,6 +98,7 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
 
     if isinstance(store, dict):
         store["columns"] = obj.columns
+        store["index"] = obj.index
 
     return obj.to_numpy()
 
@@ -111,6 +111,9 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
+    if isinstance(store, dict):
+        store["index"] = obj.index
+
     return pd.DataFrame(obj).to_numpy()
 
 
@@ -119,17 +122,27 @@ convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Serie
 
 def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
 
-    if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
-        raise TypeError("input must be a np.ndarray of dim 2")
+    if not isinstance(obj, np.ndarray) and len(obj.shape) > 2:
+        raise TypeError("input must be a np.ndarray of dim 1 or 2")
 
+    if len(obj.shape) == 1:
+        obj = np.reshape(obj, (-1, 1))
+
+    res = pd.DataFrame(obj)
+
+    # add column names or index from store if stored and length fits
     if (
         isinstance(store, dict)
         and "columns" in store.keys()
         and len(store["columns"]) == obj.shape[1]
     ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
+        res.columns = store["columns"]
+    if (
+        isinstance(store, dict)
+        and "index" in store.keys()
+        and len(store["index"]) == obj.shape[0]
+    ):
+        res.index = store["index"]
 
     return res
 
@@ -139,10 +152,23 @@ convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Se
 
 def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
 
-    if not isinstance(obj, np.ndarray) and len(obj.shape) < 3:
-        raise TypeError("input must be a np.ndarray of dim 1 or 2")
+    if not isinstance(obj, np.ndarray) or obj.ndim > 2:
+        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
-    return pd.Series(obj)
+    if obj.ndim == 2 and obj.shape[1] != 1:
+        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
+
+    res = pd.Series(obj.flatten())
+
+    # add index from store if stored and length fits
+    if (
+        isinstance(store, dict)
+        and "index" in store.keys()
+        and len(store["index"]) == obj.shape[0]
+    ):
+        res.index = store["index"]
+
+    return res
 
 
 convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series

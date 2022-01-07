@@ -152,7 +152,7 @@ class DrCIF(BaseClassifier):
         att_subsample_size=10,
         min_interval=4,
         max_interval=None,
-        base_estimator="DTC",
+        base_estimator="CIT",
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=500,
         save_transformed_data=False,
@@ -200,9 +200,9 @@ class DrCIF(BaseClassifier):
         start_time = time.time()
         train_time = 0
 
-        if self.base_estimator == "DTC":
+        if self.base_estimator.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator == "CIT":
+        elif self.base_estimator.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator
@@ -446,7 +446,11 @@ class DrCIF(BaseClassifier):
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
@@ -497,7 +501,7 @@ class DrCIF(BaseClassifier):
 
                 for a in range(0, self._att_subsample_size):
                     transformed_x[p] = _drcif_feature(
-                        T[r], intervals[j], dims[j], atts[a], c22
+                        T[r], intervals[j], dims[j], atts[a], c22, case_id=j
                     )
                     p += 1
 
@@ -506,7 +510,12 @@ class DrCIF(BaseClassifier):
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
+        if self.base_estimator == "CIT":
+            transformed_x = np.nan_to_num(
+                transformed_x, False, posinf=np.nan, neginf=np.nan
+            )
+        else:
+            transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
         return [
@@ -539,7 +548,7 @@ class DrCIF(BaseClassifier):
                 for _ in range(0, self._n_intervals[r]):
                     for a in range(0, self._att_subsample_size):
                         transformed_x[p] = _drcif_feature(
-                            T[r], intervals[j], dims[j], atts[a], c22
+                            T[r], intervals[j], dims[j], atts[a], c22, case_id=j
                         )
                         p += 1
                     j += 1
@@ -552,7 +561,11 @@ class DrCIF(BaseClassifier):
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         indices = range(self.n_instances_)

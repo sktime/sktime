@@ -30,6 +30,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_univariate": bool, True iff series has one variable
         "is_equally_spaced": bool, True iff series index is equally spaced
         "is_empty": bool, True iff series has no variables or no instances
+        "has_nans": bool, True iff the series contains NaN values
 """
 
 __author__ = ["fkiraly"]
@@ -38,7 +39,6 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
-
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
@@ -76,6 +76,11 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
         )
         return ret(False, msg, None, return_metadata)
 
+    # check that no dtype is object
+    if "object" in obj.dtypes.values:
+        msg = f"{var_name} should not have column of 'object' dtype"
+        return ret(False, msg, None, return_metadata)
+
     # Check time index is ordered in time
     if not index.is_monotonic:
         msg = (
@@ -89,9 +94,11 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced, compute only if needed
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
     if return_metadata:
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
+        metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -118,6 +125,11 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
     metadata["is_empty"] = len(index) < 1
     metadata["is_univariate"] = True
 
+    # check that dtype is not object
+    if "object" == obj.dtypes:
+        msg = f"{var_name} should not be of 'object' dtype"
+        return ret(False, msg, None, return_metadata)
+
     # check whether the time index is of valid type
     if not type(index) in VALID_INDEX_TYPES:
         msg = (
@@ -139,9 +151,11 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
             msg = f"{var_name} has DatetimeIndex, but no freq attribute set."
             return ret(False, msg, None, return_metadata)
 
-    # check whether index is equally spaced, compute only if needed
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
     if return_metadata:
         metadata["is_equally_spaced"] = _index_equally_spaced(index)
+        metadata["has_nans"] = obj.isna().values.any()
 
     return ret(True, None, metadata, return_metadata)
 
@@ -163,15 +177,24 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} must be a numpy.ndarray, found {type(obj)}"
         return ret(False, msg, None, return_metadata)
 
-    if not len(obj.shape) == 2:
-        msg = f"{var_name} must be a 2D numpy.ndarray, but found {len(obj.shape)}D"
+    if len(obj.shape) == 2:
+        # we now know obj is a 2D np.ndarray
+        metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
+        metadata["is_univariate"] = obj.shape[1] < 2
+    elif len(obj.shape) == 1:
+        # we now know obj is a 1D np.ndarray
+        metadata["is_empty"] = len(obj) < 1
+        metadata["is_univariate"] = True
+    else:
+        msg = f"{var_name} must be 1D or 2D numpy.ndarray, but found {len(obj.shape)}D"
         return ret(False, msg, None, return_metadata)
 
-    # we now know obj is a 2D np.ndarray
-    metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
-    metadata["is_univariate"] = obj.shape[1] < 2
     # np.arrays are considered equally spaced by assumption
     metadata["is_equally_spaced"] = True
+
+    # check whether there any nans; compute only if requested
+    if return_metadata:
+        metadata["has_nans"] = np.isnan(obj).any()
 
     return ret(True, None, metadata, return_metadata)
 

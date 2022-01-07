@@ -87,8 +87,8 @@ class LowerBounding(Enum):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        sakoe_chiba_window_radius: int = 2,
-        itakura_max_slope: Union[float, int] = 2.0,
+        sakoe_chiba_window_radius: Union[int, None] = None,
+        itakura_max_slope: Union[float, int, None] = None,
     ) -> np.ndarray:
         """Create a bounding matrix.
 
@@ -395,9 +395,8 @@ class LowerBounding(Enum):
 def resolve_bounding_matrix(
     x: np.ndarray,
     y: np.ndarray,
-    lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-    window: int = 2,
-    itakura_max_slope: float = 2.0,
+    window: Union[int, None] = None,
+    itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
 ) -> np.ndarray:
     """Resolve the bounding matrix parameters.
@@ -408,8 +407,6 @@ def resolve_bounding_matrix(
         First timeseries.
     y: np.ndarray (2d array)
         Second timeseries.
-    lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-        Lower bounding technique to use.
     window: int, defaults = 2
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
@@ -436,12 +433,23 @@ def resolve_bounding_matrix(
         If the input timeseries doesn't have exactly 2 dimensions.
         If the sakoe_chiba_window_radius is not an integer.
         If the itakura_max_slope is not a float or int.
+        If both window and itakura_max_slope are set
     """
     if bounding_matrix is None:
-        if isinstance(lower_bounding, int):
-            lower_bounding = LowerBounding(lower_bounding)
+        if itakura_max_slope is not None and window is not None:
+            raise ValueError(
+                "You can only use one bounding matrix at once. You"
+                "have set both window and itakura_max_slope parameter."
+            )
+        if window is not None:
+            # Sakoe-chiba
+            lower_bounding = LowerBounding(2)
+        elif itakura_max_slope is not None:
+            # Itakura parallelogram
+            lower_bounding = LowerBounding(3)
         else:
-            lower_bounding = lower_bounding
+            # No bounding
+            lower_bounding = LowerBounding(1)
 
         return lower_bounding.create_bounding_matrix(
             x,
