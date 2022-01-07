@@ -146,7 +146,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         self.initial_level = initial_level
         self.initial_trend = initial_trend
         self.initial_seasonal = initial_seasonal
-        self.initialization_method = initialization_method
+        self.initialization_method = initialization_method,
         self.smoothing_level = smoothing_level,
         self.smoothing_trend = smoothing_trend,
         self.smoothing_seasonal = smoothing_seasonal,
