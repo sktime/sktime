@@ -519,7 +519,9 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
             results = scenario.run(
                 estimator, method_sequence=["fit", method], return_all=True
             )
+            # dict_before = copy of dictionary of estimator before predict, after fit
             dict_before = results[0].__dict__
+            # dict_after = dictionary of estimator after predict and fit
             dict_after = estimator.__dict__
 
             if method == "transform" and estimator.get_class_tag("fit-in-transform"):
