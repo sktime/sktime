@@ -13,7 +13,38 @@ from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
+
+from sktime.transformations.base import (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+    BaseTransformer,
+)
+
+OLD_MIXINS = (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
+
+OLD_PANEL_MIXINS = (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+)
+
+OLD_SERIES_MIXINS = (
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
+
+
+def _is_child_of(obj, class_or_tuple):
+    """Shorthand for 'inherits from', obj can be class or object."""
+    return isinstance(obj, class_or_tuple) or issubclass(obj, class_or_tuple)
 
 
 class TransformerTestScenario(TestScenario, BaseObject):
@@ -36,7 +67,14 @@ class TransformerTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        return True
+        # pre-refactor classes can't deal with Series *and* Panel both
+        X_scitype = self.get_tag("X_scitype")
+
+        if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
+            return False
+
+        if _is_child_of(obj, OLD_SERIES_MIXINS) and X_scitype != "Series":
+            return False
 
         # # applicable only if obj inherits from BaseForecaster
         # applicable = isinstance(obj, BaseForecaster) or issubclass(obj,BaseForecaster)
@@ -56,19 +94,52 @@ class TransformerTestScenario(TestScenario, BaseObject):
         # if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
         #     applicable = False
 
-        # return applicable
+        return True
 
 
-class TransformerFitTransform(TransformerTestScenario):
-    """Fit/predict only, univariate y, no X."""
+class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
+    """Fit/transform, univariate Series X."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+    _tags = {"X_scitype": "Series", "X_univariate": True}
 
-    args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {"fh": 1}}
-    default_method_sequence = ["fit", "predict"]
+    args = {
+        "fit": {"X": _make_series(n_timepoints=20)},
+        "transform": {"X": _make_series(n_timepoints=10)},
+        # "inverse_transform": {"X": _make_series(n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
 
 
-scenarios_transformers = [TransformerFitTransform]
+class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
+    """Fit/transform, multivariate Series X."""
+
+    _tags = {"X_scitype": "Series", "X_univariate": True}
+
+    args = {
+        "fit": {"X": _make_series(n_columns=2, n_timepoints=20)},
+        "transform": {"X": _make_series(n_columns=2, n_timepoints=10)},
+        # "inverse_transform": {"X": _make_series(n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformPanel(TransformerTestScenario):
+    """Fit/transform, multivariate Panel X."""
+
+    _tags = {"X_scitype": "Panel", "X_univariate": False}
+
+    args = {
+        "fit": {"X": _make_panel_X(n_instance=7, n_columns=2, n_timepoints=20)},
+        "transform": {"X": _make_panel_X(n_instance=3, n_columns=2, n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+scenarios_transformers = [
+    TransformerFitTransformSeriesUnivariate,
+    TransformerFitTransformSeriesMultivariate,
+    TransformerFitTransformPanel,
+]
 
 
 # def _make_args(estimator, method, **kwargs):

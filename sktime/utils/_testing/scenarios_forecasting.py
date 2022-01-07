@@ -173,6 +173,9 @@ forecasting_scenarios_extended = [
 
 scenarios_forecasting = forecasting_scenarios_extended
 
+
+# old code for easy refactor
+
 # def _make_args(estimator, method, **kwargs):
 #     """Generate testing arguments for estimator methods."""
 #     if method == "fit":
