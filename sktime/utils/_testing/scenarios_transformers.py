@@ -44,7 +44,10 @@ OLD_SERIES_MIXINS = (
 
 def _is_child_of(obj, class_or_tuple):
     """Shorthand for 'inherits from', obj can be class or object."""
-    return isinstance(obj, class_or_tuple) or issubclass(obj, class_or_tuple)
+    if isclass(obj):
+        return issubclass(obj, class_or_tuple)
+    else:
+        return isinstance(obj, class_or_tuple)
 
 
 class TransformerTestScenario(TestScenario, BaseObject):
@@ -129,8 +132,8 @@ class TransformerFitTransformPanel(TransformerTestScenario):
     _tags = {"X_scitype": "Panel", "X_univariate": False}
 
     args = {
-        "fit": {"X": _make_panel_X(n_instance=7, n_columns=2, n_timepoints=20)},
-        "transform": {"X": _make_panel_X(n_instance=3, n_columns=2, n_timepoints=10)},
+        "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
+        "transform": {"X": _make_panel_X(n_instances=3, n_columns=2, n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -141,6 +144,7 @@ scenarios_transformers = [
     TransformerFitTransformPanel,
 ]
 
+# old code for easy refactor
 
 # def _make_args(estimator, method, **kwargs):
 #     """Generate testing arguments for estimator methods."""

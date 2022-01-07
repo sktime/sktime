@@ -147,7 +147,7 @@ def _excluded_scenario(test_name, scenario):
     #   as there are scenarios which pass it early and everything else is the same
     #   we skip those scenarios
     if test_name == "test_methods_do_not_change_state":
-        if not scenario.get_tag("fh_passed_in_fit", True):
+        if not scenario.get_tag("fh_passed_in_fit", True, raise_error=False):
             return True
     return False
 
