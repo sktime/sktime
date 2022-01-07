@@ -99,9 +99,12 @@ class TestScenario:
             whether arguments should also be returned
             if False, there is no second return argument
             if True, "args_after_call" return argument is returned
-        deepcopy_return : bool, default = True
+        deepcopy_return : bool, default = False
             whether returns are deepcopied before returned
+            if True, returns are deepcopies of return
             if False, returns are references/assignments, not deepcopies
+                NOTE: if self is returned (e.g., in fit), and deepcopy_return=False
+                    method calls may continue to have side effects on that return
 
         Returns
         -------
