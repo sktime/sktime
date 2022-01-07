@@ -67,7 +67,7 @@ class TestScenario:
         arg_sequence=None,
         return_all=False,
         return_args=False,
-        deepcopy_return=True,
+        deepcopy_return=False,
     ):
         """Run a call(args) scenario on obj, and retrieve method outputs.
 
