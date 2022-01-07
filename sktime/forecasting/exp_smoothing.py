@@ -146,17 +146,17 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         self.initial_level = initial_level
         self.initial_trend = initial_trend
         self.initial_seasonal = initial_seasonal
-        self.initialization_method = initialization_method,
-        self.smoothing_level = smoothing_level,
-        self.smoothing_trend = smoothing_trend,
-        self.smoothing_seasonal = smoothing_seasonal,
-        self.damping_trend = damping_trend,
-        self.optimized = optimized,
-        self.remove_bias = remove_bias,
-        self.start_params = start_params,
-        self.method = method,
-        self.minimize_kwargs = minimize_kwargs,
-        self.use_brute = use_brute,
+        self.initialization_method = initialization_method
+        self.smoothing_level = smoothing_level
+        self.smoothing_trend = smoothing_trend
+        self.smoothing_seasonal = smoothing_seasonal
+        self.damping_trend = damping_trend
+        self.optimized = optimized
+        self.remove_bias = remove_bias
+        self.start_params = start_params
+        self.method = method
+        self.minimize_kwargs = minimize_kwargs
+        self.use_brute = use_brute
 
         super(ExponentialSmoothing, self).__init__()
 
