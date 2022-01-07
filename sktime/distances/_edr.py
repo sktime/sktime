@@ -10,11 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import (
-    itakura_parallelogram,
-    resolve_bounding_matrix,
-    sakoe_chiba,
-)
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -74,38 +70,22 @@ class _EdrDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        _resolved_bounding_matrix = resolve_bounding_matrix(
+        _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
         if epsilon is not None and not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-        global_epsilon = epsilon
-        if epsilon is None:
-            global_epsilon = max(np.std(x), np.std(y)) / 4
-
         @njit(cache=True)
-        def numba_edr_distance(
-            _x: np.ndarray,
-            _y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
-            epsilon: float = None,
-        ) -> float:
+        def numba_edr_distance(_x: np.ndarray, _y: np.ndarray) -> float:
             if np.array_equal(_x, _y):
                 return 0.0
-
-            if window is not None:
-                bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope is not None:
-                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
-
             if epsilon is None:
-                epsilon = global_epsilon
-
-            cost_matrix = _edr_cost_matrix(x, y, bounding_matrix, epsilon)
+                _epsilon = max(np.std(x), np.std(y)) / 4
+            else:
+                _epsilon = epsilon
+            cost_matrix = _edr_cost_matrix(x, y, _bounding_matrix, _epsilon)
             return float(cost_matrix[-1, -1] / max(x.shape[0], y.shape[0]))
 
         return numba_edr_distance

@@ -11,11 +11,7 @@ from numba.core.errors import NumbaWarning
 from sktime.distances._dtw import _cost_matrix
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import (
-    itakura_parallelogram,
-    resolve_bounding_matrix,
-    sakoe_chiba,
-)
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -108,7 +104,7 @@ class _DdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
         """
-        _resolved_bounding_matrix = resolve_bounding_matrix(
+        _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
@@ -119,31 +115,14 @@ class _DdtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        global_compute_derivative = compute_derivative
-
         @njit(cache=True)
         def numba_ddtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
-            compute_derivative: DerivativeCallable = None,
         ) -> float:
-            if compute_derivative is None:
-                _compute_derivative = global_compute_derivative
-            else:
-                _compute_derivative = compute_derivative
-
-            _x = _compute_derivative(_x)
-            _y = _compute_derivative(_y)
-
-            if window is not None:
-                bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope is not None:
-                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
-
-            cost_matrix = _cost_matrix(_x, _y, bounding_matrix)
+            _x = compute_derivative(_x)
+            _y = compute_derivative(_y)
+            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
             return cost_matrix[-1, -1]
 
         return numba_ddtw_distance

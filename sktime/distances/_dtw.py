@@ -10,11 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import (
-    itakura_parallelogram,
-    resolve_bounding_matrix,
-    sakoe_chiba,
-)
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -68,7 +64,7 @@ class _DtwDistance(NumbaDistance):
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
-        _resolved_bounding_matrix = resolve_bounding_matrix(
+        _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
@@ -76,16 +72,8 @@ class _DtwDistance(NumbaDistance):
         def numba_dtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
         ) -> float:
-            if window is not None:
-                bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope is not None:
-                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
-
-            cost_matrix = _cost_matrix(_x, _y, bounding_matrix)
+            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
             return cost_matrix[-1, -1]
 
         return numba_dtw_distance

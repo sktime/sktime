@@ -10,11 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import (
-    itakura_parallelogram,
-    resolve_bounding_matrix,
-    sakoe_chiba,
-)
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -75,7 +71,7 @@ class _WdtwDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If the value of g is not a float
         """
-        _resolved_bounding_matrix = resolve_bounding_matrix(
+        _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
@@ -84,25 +80,12 @@ class _WdtwDistance(NumbaDistance):
                 f"The value of g must be a float. The current value is {g}"
             )
 
-        global_g = g
-
         @njit(cache=True)
         def numba_wdtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
-            g: float = None,
         ) -> float:
-            if g is None:
-                g = global_g
-            if window is not None:
-                bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope is not None:
-                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
-
-            cost_matrix = _weighted_cost_matrix(_x, _y, bounding_matrix, g)
+            cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
             return cost_matrix[-1, -1]
 
         return numba_wdtw_distance

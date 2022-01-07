@@ -10,11 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import (
-    itakura_parallelogram,
-    resolve_bounding_matrix,
-    sakoe_chiba,
-)
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -73,36 +69,21 @@ class _LcssDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        _resolved_bounding_matrix = resolve_bounding_matrix(
+        _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
         if not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-        global_epsilon = epsilon
-
         @njit(cache=True)
         def numba_lcss_distance(
             _x: np.ndarray,
             _y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
-            epsilon: float = None,
         ) -> float:
             x_size = _x.shape[0]
             y_size = _y.shape[0]
-
-            if window is not None:
-                bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope is not None:
-                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
-
-            if epsilon is None:
-                epsilon = global_epsilon
-
-            cost_matrix = _sequence_cost_matrix(_x, _y, bounding_matrix, epsilon)
+            cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
             return 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
 
         return numba_lcss_distance

@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from numba import njit
 
-from sktime.distances import distance, distance_factory
+from sktime.distances import distance
 from sktime.distances._distance import _METRIC_INFOS
 from sktime.distances.base import MetricInfo
 from sktime.distances.tests._expected_results import _expected_distance_results_params
@@ -34,11 +34,8 @@ def _test_distance_params(
         curr_results = []
         for x, y in test_ts:
             results = []
-            dist_func = distance_factory(x, y, metric=distance_str, **param_dict)
             results.append(distance_func(x, y, **param_dict))
             results.append(distance(x, y, metric=distance_str, **param_dict))
-            results.append(dist_func(x, y))
-            results.append(dist_func(x, y, **param_dict))
 
             if distance_str in _expected_distance_results_params:
                 if _expected_distance_results_params[distance_str][i][j] is not None:

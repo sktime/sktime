@@ -10,11 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import (
-    itakura_parallelogram,
-    resolve_bounding_matrix,
-    sakoe_chiba,
-)
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -72,33 +68,16 @@ class _ErpDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If g is not a float.
         """
-        _resolved_bounding_matrix = resolve_bounding_matrix(
+        _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
-        global_g = g
-
         @njit(cache=True)
-        def numba_erp_distance(
-            _x: np.ndarray,
-            _y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = _resolved_bounding_matrix,
-            g: float = None,
-        ) -> float:
-            if window is not None:
-                bounding_matrix = sakoe_chiba(x, y, window)
-            elif itakura_max_slope is not None:
-                bounding_matrix = itakura_parallelogram(x, y, itakura_max_slope)
-
-            if g is None:
-                g = global_g
-
-            cost_matrix = _erp_cost_matrix(x, y, bounding_matrix, g)
+        def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
+            cost_matrix = _erp_cost_matrix(x, y, _bounding_matrix, g)
 
             return cost_matrix[-1, -1]
 
