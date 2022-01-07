@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Test scenarios for forecasters.
+"""Test scenarios for transformers.
 
-Contains TestScenario concrete children to run in tests for forecasters.
+Contains TestScenario concrete children to run in tests for transformers.
 """
 
 __author__ = ["fkiraly"]
 
-__all__ = [
-    "forecasting_scenarios_simple",
-    "forecasting_scenarios_extended",
-]
+__all__ = ["scenarios_transformers"]
 
 
 from inspect import isclass
@@ -39,28 +36,30 @@ class TransformerTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        # applicable only if obj inherits from BaseForecaster
-        applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
+        return True
 
-        # applicable only if number of variables in y complies with scitype:y
-        is_univariate = self.get_tag("univariate_y")
+        # # applicable only if obj inherits from BaseForecaster
+        # applicable = isinstance(obj, BaseForecaster) or issubclass(obj, BaseForecaster)
 
-        if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
-            applicable = False
+        # # applicable only if number of variables in y complies with scitype:y
+        # is_univariate = self.get_tag("univariate_y")
 
-        if not is_univariate and get_tag(obj, "scitype:y") == "univariate":
-            applicable = False
+        # if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
+        #     applicable = False
 
-        # applicable only if fh is not passed later than it needs to be
-        fh_in_fit = self.get_tag("fh_passed_in_fit")
+        # if not is_univariate and get_tag(obj, "scitype:y") == "univariate":
+        #     applicable = False
 
-        if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
-            applicable = False
+        # # applicable only if fh is not passed later than it needs to be
+        # fh_in_fit = self.get_tag("fh_passed_in_fit")
 
-        return applicable
+        # if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
+        #     applicable = False
+
+        # return applicable
 
 
-class TransformerFitTransform(ForecasterTestScenario):
+class TransformerFitTransform(TransformerTestScenario):
     """Fit/predict only, univariate y, no X."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
@@ -69,20 +68,8 @@ class TransformerFitTransform(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
-    """Fit/predict only, univariate y, no X, no fh in predict."""
+scenarios_transformers = [TransformerFitTransform]
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
-
-    args = {"fit": {"y": _make_series(), "fh": 1}, "predict": {}}
-    default_method_sequence = ["fit", "predict"]
-
-
-
-transformer_scenarios = [
-]
-
-scenarios_forecasting = forecasting_scenarios_extended
 
 # def _make_args(estimator, method, **kwargs):
 #     """Generate testing arguments for estimator methods."""
