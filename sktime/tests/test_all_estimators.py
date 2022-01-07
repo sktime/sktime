@@ -501,9 +501,6 @@ def test_fit_does_not_overwrite_hyper_params(estimator_instance, scenario):
         )
 
 
-# xfail for now, need to diagnose what is going on.
-#  was the old test incorrect? used copy, not deepcopy
-@pytest.mark.xfail
 def test_methods_do_not_change_state(estimator_instance, scenario):
     """Check that non-state-changing methods do not change state.
 
@@ -517,12 +514,12 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
 
-            results = scenario.run(
-                estimator, method_sequence=["fit", method], return_all=True
-            )
             # dict_before = copy of dictionary of estimator before predict, after fit
-            dict_before = results[0].__dict__
+            _ = scenario.run(estimator, method_sequence=["fit"])
+            dict_before = estimator.__dict__.copy()
+
             # dict_after = dictionary of estimator after predict and fit
+            _ = scenario.run(estimator, method_sequence=[method])
             dict_after = estimator.__dict__
 
             if method == "transform" and estimator.get_class_tag("fit-in-transform"):
@@ -537,6 +534,8 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
                 # so predict will actually change the state of these annotators.
                 continue
 
+            # old logic uses equality without auto-msg, keep comment until refactor
+            # is_equal = dict_after == dict_before
             is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
             assert is_equal, (
                 f"Estimator: {type(estimator).__name__} changes __dict__ "
