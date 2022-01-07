@@ -508,6 +508,15 @@ def test_methods_do_not_change_state(estimator_instance, scenario):
     estimators do not change anything (including hyper-parameters and
     fitted parameters)
     """
+    # for forecasters, if fh is not passed in fit, then this test would fail
+    #   since fh will be stored in predict through fh handling
+    #   as there are scenarios which pass it early and everything else is the same
+    #   we skip those scenarios
+    # todo: maybe add a "skip list" functionality to the tests and/or scenarios
+    #   this test should not show up in pytest test collection (now it does)
+    if not scenario.get_tag("fh_passed_in_fit", True):
+        return None
+
     estimator = estimator_instance
     set_random_state(estimator)
 
