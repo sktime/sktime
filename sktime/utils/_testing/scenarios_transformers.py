@@ -77,23 +77,11 @@ class TransformerTestScenario(TestScenario, BaseObject):
         if _is_child_of(obj, OLD_SERIES_MIXINS) and X_scitype != "Series":
             return False
 
-        # # applicable only if obj inherits from BaseForecaster
-        # applicable = isinstance(obj, BaseForecaster) or issubclass(obj,BaseForecaster)
+        # applicable only if number of variables in y complies with scitype:y
+        is_univariate = self.get_tag("X_univariate")
 
-        # # applicable only if number of variables in y complies with scitype:y
-        # is_univariate = self.get_tag("univariate_y")
-
-        # if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
-        #     applicable = False
-
-        # if not is_univariate and get_tag(obj, "scitype:y") == "univariate":
-        #     applicable = False
-
-        # # applicable only if fh is not passed later than it needs to be
-        # fh_in_fit = self.get_tag("fh_passed_in_fit")
-
-        # if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
-        #     applicable = False
+        if not is_univariate and get_tag(obj, "univariate-only"):
+            return False
 
         return True
 
@@ -124,7 +112,19 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     default_method_sequence = ["fit", "transform"]
 
 
-class TransformerFitTransformPanel(TransformerTestScenario):
+class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
+    """Fit/transform, univariate Panel X."""
+
+    _tags = {"X_scitype": "Panel", "X_univariate": True}
+
+    args = {
+        "fit": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20)},
+        "transform": {"X": _make_panel_X(n_instances=3, n_columns=1, n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Panel X."""
 
     _tags = {"X_scitype": "Panel", "X_univariate": False}
