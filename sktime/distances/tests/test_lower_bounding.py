@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.distances.lower_bounding import LowerBounding, numba_create_bounding_matrix
+from sktime.distances.lower_bounding import LowerBounding
 from sktime.distances.tests._utils import create_test_distance_numpy
 
 
@@ -139,77 +139,6 @@ def _validate_bounding(
     )
     _validate_bounding_result(
         itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.0),
-        x,
-        y,
-        all_infinite=True,
-        is_gradient_bounding=True,
-    )
-
-
-def _validate_numba_bounding(
-    x: np.ndarray,
-    y: np.ndarray,
-) -> None:
-    """Test each lower bounding with different parameters.
-
-    The amount of finite vs infinite values are estimated and are checked that many
-    is around the amount in the matrix.
-
-    Parameters
-    ----------
-    x: np.ndarray (1d, 2d or 3d)
-        First timeseries
-    y: np.ndarray (1d, 2d, or 3d)
-        Second timeseries
-    """
-    x_y_max = max(len(x), len(y))
-    no_bounding_result = numba_create_bounding_matrix(x, y)
-    _validate_bounding_result(no_bounding_result, x, y, all_finite=True)
-
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, sakoe_chiba_window_radius=2),
-        x,
-        y,
-    )
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, sakoe_chiba_window_radius=3),
-        x,
-        y,
-    )
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, sakoe_chiba_window_radius=x_y_max),
-        x,
-        y,
-        all_finite=True,
-    )
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, sakoe_chiba_window_radius=0),
-        x,
-        y,
-        all_infinite=True,
-    )
-
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=0.2),
-        x,
-        y,
-        is_gradient_bounding=True,
-    )
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=0.3),
-        x,
-        y,
-        is_gradient_bounding=True,
-    )
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=1.0),
-        x,
-        y,
-        all_finite=True,
-        is_gradient_bounding=True,
-    )
-    _validate_bounding_result(
-        numba_create_bounding_matrix(x, y, itakura_max_slope=0.0),
         x,
         y,
         all_infinite=True,
