@@ -75,7 +75,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         This is a temporary measure prior to the BaseRegressor refactor.
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
-        BaseTimeSeriesForest._fit(self, X, y, **kwargs)
+        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
 
     def predict(self, X):
         """Predict.
