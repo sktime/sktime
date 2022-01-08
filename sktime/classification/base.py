@@ -182,7 +182,6 @@ class BaseClassifier(BaseEstimator):
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
-
         return self._predict_proba(X)
 
     def score(self, X, y) -> float:
