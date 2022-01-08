@@ -19,7 +19,7 @@ from sktime.transformations.base import (
     _SeriesToSeriesTransformer,
 )
 from sktime.utils._testing.forecasting import _make_series
-from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
 OLD_MIXINS = (
@@ -127,10 +127,31 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
 class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": False, "pre-refactor": True}
+    _tags = {"X_scitype": "Panel", "X_univariate": False}
 
     args = {
         "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
+        "transform": {"X": _make_panel_X(n_instances=3, n_columns=2, n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
+    """Fit/transform, multivariate Panel X."""
+
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "pre-refactor": True,
+        "has_y": True,
+        "y_scitype": "classes",
+    }
+
+    args = {
+        "fit": {
+            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20),
+            "y": _make_classification_y(n_instances=7, n_classes=2),
+        },
         "transform": {"X": _make_panel_X(n_instances=3, n_columns=2, n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]
@@ -141,6 +162,7 @@ scenarios_transformers = [
     TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelMultivariate,
+    TransformerFitTransformPanelUnivariateWithClassY,
 ]
 
 # old code for easy refactor
