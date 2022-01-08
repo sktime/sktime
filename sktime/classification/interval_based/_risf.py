@@ -21,7 +21,6 @@ from sktime.classification.interval_based._rise import (
     _predict_proba_for_estimator,
     _select_interval,
 )
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 @deprecated(
@@ -114,7 +113,25 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             "RandomIntervalSpectralForest is currently not supported."
         )
 
-    def fit(self, X, y):
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseClassifier.fit.
+
+        This is a fix to get around the problem with multiple inheritance. The
+        problem is that if we just override _fit, this class inherits the fit from
+        the sklearn class ForestClassifier. This is the simplest solution,
+        albeit a little hacky.
+        """
+        BaseClassifier.fit(self, X, y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseClassifier.predict."""
+        BaseClassifier.predict(self, X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseClassifier.predict_proba."""
+        return BaseClassifier.predict_proba(self, X, **kwargs)
+
+    def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
 
         using random intervals and spectral features.
@@ -133,7 +150,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         n_instances, self.series_length = X.shape
@@ -148,13 +164,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.estimators_ = []
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        # self.intervals = _produce_intervals(
-        #     self.n_estimators,
-        #     self.min_interval,
-        #     self.max_interval,
-        #     self.series_length,
-        #     rng
-        # )
         self.intervals = np.empty((self.n_estimators, 2), dtype=int)
         self.intervals[:] = [
             _select_interval(
@@ -199,7 +208,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self._is_fitted = True
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """Find predictions for all cases in X.
 
         Built on top of `predict_proba`.
@@ -219,7 +228,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         proba = self.predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -242,18 +251,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_instances, n_classes]
             The class probabilities of all cases.
         """
-        # Check data
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
-
-        n_instances, n_columns = X.shape
-        if n_columns != self.series_length:
-            raise TypeError(
-                "ERROR number of attributes in the train does not match "
-                "that in the test data."
-            )
-
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
