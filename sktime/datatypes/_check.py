@@ -30,6 +30,7 @@ import numpy as np
 from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
+from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
@@ -39,6 +40,7 @@ from sktime.datatypes._table import check_dict_Table
 check_dict = dict()
 check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
 
