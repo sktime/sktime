@@ -148,7 +148,7 @@ class _Pipeline(
 
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
 
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
@@ -157,7 +157,7 @@ class _Pipeline(
         params1 = {"steps": STEPS1}
 
         STEPS2 = [
-            ("transformer", BoxCoxTransformer()),
+            ("transformer", ExponentTransformer()),
             ("forecaster", NaiveForecaster()),
         ]
         params2 = {"steps": STEPS2}
