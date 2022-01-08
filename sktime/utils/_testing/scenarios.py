@@ -35,7 +35,7 @@ class TestScenario:
         default sequence of keys for keyword argument dicts to be used
         names for keys need not equal names of methods
         if not provided, at least one of the sequence arguments must be passed in `run`
-            or default_method_sequence must be provided        
+            or default_method_sequence must be provided
 
     Methods
     -------
@@ -43,6 +43,9 @@ class TestScenario:
         Run a call(args) scenario on obj, and retrieve method outputs.
     is_applicable(obj)
         Check whether scenario is applicable to obj.
+    get_args(key, obj)
+        Dynamically create args for call defined by key and obj.
+        Defaults to self.args[key] if not overridden.
     """
 
     def __init__(
@@ -83,7 +86,7 @@ class TestScenario:
             but scripted method will look at key with same name as default
         """
         return self.args[key]
-        
+
     def run(
         self,
         obj,
