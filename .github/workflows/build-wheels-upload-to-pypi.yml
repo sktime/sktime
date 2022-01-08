@@ -1,8 +1,11 @@
 name: Build Wheels and Push to PyPI
 
 on:
-  release:
-    types: [published]
+  pull_request:
+    branches:
+      - main
+  # release:
+  #   types: [published]
 
 
 jobs:
