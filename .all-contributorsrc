@@ -1448,6 +1448,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ishannangia001",
+      "name": "Ishan Nangia",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29480389?v=4",
+      "profile": "https://github.com/ishannangia001",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "projectName": "sktime",
