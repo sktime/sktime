@@ -54,15 +54,14 @@ class PCATransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
+        X : Panel data in 3D np.ndarray format [n_instances, n_variables, n_timepoints]
             Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
         N, num_var, num_time = X.shape
         X = X.reshape(N, num_time*num_var)
@@ -80,15 +79,15 @@ class PCATransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
+        X : Panel data in 3D np.ndarray format [n_instances, n_variables, n_timepoints]
             Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
+        y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        transformed version of X
+        Xt : Panel data in 3D np.ndarray format [n_instances, n_variables, n_timepoints]
+            transformed version of X
         """
         N, num_var, num_time = X.shape
         X = X.reshape(N, num_time*num_var)
