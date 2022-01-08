@@ -22,6 +22,11 @@ __all__ = [
 ]
 
 from sktime.datatypes._alignment import example_dict_Alignment
+from sktime.datatypes._hierarchical import (
+    example_dict_Hierarchical,
+    example_dict_lossy_Hierarchical,
+    example_dict_metadata_Hierarchical,
+)
 from sktime.datatypes._panel import (
     example_dict_lossy_Panel,
     example_dict_metadata_Panel,
@@ -43,16 +48,19 @@ example_dict = dict()
 example_dict.update(example_dict_Alignment)
 example_dict.update(example_dict_Series)
 example_dict.update(example_dict_Panel)
+example_dict.update(example_dict_Hierarchical)
 example_dict.update(example_dict_Table)
 
 example_dict_lossy = dict()
 example_dict_lossy.update(example_dict_lossy_Series)
 example_dict_lossy.update(example_dict_lossy_Panel)
+example_dict_lossy.update(example_dict_lossy_Hierarchical)
 example_dict_lossy.update(example_dict_lossy_Table)
 
 example_dict_metadata = dict()
 example_dict_metadata.update(example_dict_metadata_Series)
 example_dict_metadata.update(example_dict_metadata_Panel)
+example_dict_metadata.update(example_dict_metadata_Hierarchical)
 example_dict_metadata.update(example_dict_metadata_Table)
 
 
