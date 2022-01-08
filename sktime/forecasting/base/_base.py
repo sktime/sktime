@@ -821,7 +821,7 @@ class BaseForecaster(BaseEstimator):
         if X is not None:
             X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+                check_equal_time_index(X, y, mode="contains")
         # end checking X
 
         # convert X & y to supported inner type, if necessary
