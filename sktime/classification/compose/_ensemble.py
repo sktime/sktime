@@ -234,6 +234,27 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseClassifier.fit.
+
+        This is a fix to get around the problem with multiple inheritance. The
+        problem is that if we just override _fit, this class inherits the fit from
+        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
+        albeit a little hacky.
+        """
+        BaseClassifier.fit(self, X=X, y=y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseClassifier.predict."""
+        return BaseClassifier.predict(self, X=X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseClassifier.predict_proba."""
+        return BaseClassifier.predict_proba(self, X=X, **kwargs)
+
+    def _fit(self, X, y):
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
+
     def _validate_estimator(self):
 
         if not isinstance(self.n_estimators, numbers.Integral):
@@ -296,7 +317,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class for X.
 
         The predicted class of an input sample is a vote by the trees in
@@ -366,7 +387,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
             return proba
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample are computed as
