@@ -11,34 +11,6 @@ from sktime.distances import distance_factory, pairwise_distance
 from sktime.transformations.base import BaseTransformer
 
 
-def _numba_lloyds(
-    X: np.ndarray, distance: Callable, initial_center_indexes: np.ndarray
-):
-    cluster_assignment_indexes = _assign_clusters(X, distance, initial_center_indexes)
-    print(cluster_assignment_indexes)
-
-    new_centers = _compute_new_cluster_centers(X, cluster_assignment_indexes)
-
-
-def _assign_clusters(X: np.ndarray, distance: Callable, center_indexes: np.ndarray):
-    """Assign each instance to a cluster.
-
-    This is done by computing the distance between each instance and
-    each cluster. For each instance an index is returned that indicates
-    which center had the smallest distance to it.
-
-    Returns
-    -------
-    np.ndarray (1d array of shape (n_instance,))
-        Array of indexes of each instances closest cluster.
-    """
-    return pairwise_distance(X, X[center_indexes, :], metric=distance).argmin(axis=1)
-
-
-def _compute_new_cluster_centers(X: np.ndarray, cluster_assignment_indexes: np.ndarray):
-    pass
-
-
 def _forgy_center_initializer(
     X: np.ndarray, n_centers: int, random_state: np.random.RandomState
 ):
@@ -60,7 +32,7 @@ def _forgy_center_initializer(
     np.ndarray (1d array of shape (n_clusters,))
         Indexes of the cluster centers.
     """
-    return random_state.choice(X.shape[0], n_centers)
+    return random_state.choice(X.shape[0], n_centers, replace=False)
 
 
 class _Lloyds(BaseClusterer, BaseTransformer, ABC):
@@ -93,9 +65,10 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
 
     Attributes
     ----------
-    cluster_centers_: np.ndarray (3d array of shape (n_clusters, n_dimensions, series_length))
-        Time series that represent each of the cluster centers. If the algorithm stops before
-        fully converging these will not be consistent with labels_.
+    cluster_centers_: np.ndarray (3d array of shape (n_clusters, n_dimensions,
+        series_length))
+        Time series that represent each of the cluster centers. If the algorithm stops
+        before fully converging these will not be consistent with labels_.
     labels_: np.ndarray (1d array of shape (n_instance,))
         Labels that is the index each time series belongs to.
     inertia_: float
@@ -155,7 +128,7 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length))
+            (n_instances, n_dimensions, series_length))
             Time series instances to cluster.
 
         Raises
@@ -173,14 +146,10 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         else:
             self._init_algorithm = self.init_algorithm
 
-        print(self._init_algorithms)
-        print(self.init_algorithm)
-
         if not isinstance(self._init_algorithm, Callable):
-            print(self._init_algorithm)
             raise ValueError(
-                f"The value provided for init_algorim: {self.init_algorithm} is invalid. "
-                f"The following are a list of valid init algorithms strings: "
+                f"The value provided for init_algorim: {self.init_algorithm} is "
+                f"invalid. The following are a list of valid init algorithms strings: "
                 f"{list(self._init_algorithms.keys())}"
             )
 
@@ -190,7 +159,7 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length))
+            (n_instances, n_dimensions, series_length))
             Training time series instances to cluster.
         y: ignored, exists for API consistency reasons.
 
@@ -200,11 +169,10 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
             Fitted estimator.
         """
         self._check_params(X)
-        self.cluster_centers_ = self._init_algorithm(
-            X, self.n_clusters, self._random_state
-        )
-        _numba_lloyds(X, self._distance_metric, self.cluster_centers_)
-        pass
+        self.cluster_centers_ = X[
+            self._init_algorithm(X, self.n_clusters, self._random_state), :
+        ]
+        self._lloyds(X)
 
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
@@ -212,7 +180,7 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length))
+            (n_instances, n_dimensions, series_length))
             Time series instances to predict their cluster indexes.
         y: ignored, exists for API consistency reasons.
 
@@ -222,3 +190,67 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
             Index of the cluster each time series in X belongs to.
         """
         pass
+
+    def _lloyds(self, X: np.ndarray) -> None:
+        """Compute cluster center using Lloyds.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+        """
+        for _ in range(self.max_iter):
+            cluster_assignment_indexes = self._assign_clusters(X)
+            self.cluster_centers_ = self._compute_new_cluster_centers(
+                X, cluster_assignment_indexes
+            )
+
+    def _assign_clusters(
+        self,
+        X: np.ndarray,
+    ):
+        """Assign each instance to a cluster.
+
+        This is done by computing the distance between each instance and
+        each cluster. For each instance an index is returned that indicates
+        which center had the smallest distance to it.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+
+        Returns
+        -------
+        np.ndarray (1d array of shape (n_instance,))
+            Array of indexes of each instance closest cluster.
+        """
+        return pairwise_distance(
+            X, self.cluster_centers_, metric=self._distance_metric
+        ).argmin(axis=1)
+
+    def _compute_new_cluster_centers(
+        self, X: np.ndarray, assignment_indexes: np.ndarray
+    ) -> np.ndarray:
+        """Compute new centers.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+        assignment_indexes: np.ndarray
+            Indexes that each time series in X belongs to.
+
+        Returns
+        -------
+        np.ndarray (3d of shape (n_clusters, n_dimensions, series_length)
+            New cluster center values.
+        """
+        new_centers = np.zeros((8, X.shape[1], X.shape[2]))
+        for i in range(self.n_clusters):
+            curr_indexes = np.where((assignment_indexes == i))
+            new_centers[i, :] = X[curr_indexes].mean(axis=0)
+        return new_centers
