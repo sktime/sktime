@@ -6,6 +6,7 @@
 PACKAGE=sktime
 DOC_DIR=./docs
 BUILD_TOOLS=./build_tools
+TEST_DIR=testdir
 
 .PHONY: help release install test lint clean dist doc docs
 
@@ -23,7 +24,10 @@ install: ## Install for the current user using the default python command
 	python3 setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
-	pytest --cov-report html --cov=sktime --showlocals --durations=20 -n 4 --pyargs $(PACKAGE)
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp -t ${TEST_DIR} .coveragerc setup.cfg
+	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime --showlocals --durations=20 -n 2 --pyargs $(PACKAGE)
 
 tests: test
 

@@ -101,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9, 3.10]
+        python-version: [3.7, 3.8, 3.9, '3.10']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -119,12 +119,8 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          cd testdir/
-          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime --pyargs sktime
+        run: make tests
+
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
@@ -138,7 +134,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, '3.10']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
