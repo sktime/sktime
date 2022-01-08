@@ -104,7 +104,7 @@ class TimeSeriesForestClassifier(
         return BaseClassifier.predict_proba(self, X=X, **kwargs)
 
     def _fit(self, X, y):
-        BaseTimeSeriesForest._fit(self, X=X, Y=y)
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
