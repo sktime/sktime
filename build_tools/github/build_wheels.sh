@@ -20,7 +20,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         # Currently, the oldest supported macos version is: High Sierra / 10.13.
         # Note that Darwin_17 == High Sierra / 10.13.
         export MACOSX_DEPLOYMENT_TARGET=10.13
-        wget https://packages.macports.org/libomp/libomp-11.0.1_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
+        wget https://packages.macports.org/libomp/libomp-12.0.1_0+universal.darwin_17.i386-x86_64.tbz2 -O libomp.tbz2
     fi
     sudo tar -C / -xvjf libomp.tbz2 opt
 
