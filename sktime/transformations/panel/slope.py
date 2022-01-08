@@ -41,7 +41,7 @@ class SlopeTransformer(BaseTransformer):
         self.num_intervals = num_intervals
         super(SlopeTransformer, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
         private _transform containing core logic, called from transform
