@@ -104,14 +104,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    @property
-    def feature_importances_(self):
-        """Feature importance not supported for the RISE classifier."""
-        raise NotImplementedError(
-            "The impurity-based feature importances of "
-            "RandomIntervalSpectralForest is currently not supported."
-        )
-
     def fit(self, X, y, **kwargs):
         """Wrap fit to call BaseClassifier.fit.
 
