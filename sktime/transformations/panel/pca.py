@@ -11,8 +11,7 @@ from sktime.utils.validation.panel import check_X
 
 
 class PCATransformer(_PanelToPanelTransformer):
-    """Transformer that applies Principle Components Analysis to a
-    univariate time series.
+    """Principal Components Analysis applied to panel of time seires.
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
 
@@ -29,60 +28,72 @@ class PCATransformer(_PanelToPanelTransformer):
         documentation for a detailed description of all options.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "univariate-only": True,
+        "fit-in-transform": False,
+    }
 
     def __init__(self, n_components=None, **kwargs):
         self.n_components = n_components
         self.pca = PCA(self.n_components, **kwargs)
         super(PCATransformer, self).__init__()
 
-    def fit(self, X, y=None):
-        """
-        Fit transformer, finding all principal components.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_samples, 1]
-            Nested dataframe with univariate time-series in cells.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for tarnsformation
 
         Returns
         -------
-        self : an instance of self.
+        self: a fitted instance of the estimator
         """
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-        X = X.squeeze(1)
+        N, _, n = X.shape
+        X = X.reshape(N, n)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
         self.pca.fit(X)
-        self._is_fitted = True
+
         return self
 
-    def transform(self, X, y=None):
-        """
-        Transform X, transforms univariate time-series using sklearn's PCA
-        class
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_samples, 1]
-            Nested dataframe with univariate time-series in cells.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame with the same number of rows and the
-          (potentially reduced) PCA transformed
-          column. Time indices of the original column are replaced with 0:(
-          n_components - 1).
+        transformed version of X
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
-        X = X.squeeze(1)
+        N, _, n = X.shape
+        X = X.reshape(N, n)
 
         # Transform X using the fitted PCA
-        Xpca = pd.DataFrame(data=self.pca.transform(X))
+        Xt = self.pca.transform(X)
+        N, n = Xt.shape
+        Xt = Xt.reshape(N, 1, n)
 
-        # Back-transform into time series data format
-        Xt = from_2d_array_to_nested(Xpca)
         return Xt
