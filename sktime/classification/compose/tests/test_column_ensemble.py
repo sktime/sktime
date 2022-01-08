@@ -17,7 +17,7 @@ def test_col_ens_on_unit_test_data():
     X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
-    # train TDE
+    # train Column ensemble with a single
     col_ens = ColumnEnsembleClassifier()
     col_ens.fit(X_train, y_train)
     preds = col_ens.predict(X_test.iloc[indices])
@@ -35,7 +35,7 @@ def test_col_ens_on_basic_motions():
     X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
-    # train TDE
+    # train column ensemble
     col_ens = ColumnEnsembleClassifier()
     col_ens.fit(X_train.iloc[indices], y_train[indices])
     preds = col_ens.predict(X_test.iloc[indices])
