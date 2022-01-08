@@ -89,7 +89,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Series X."""
 
-    _tags = {"X_scitype": "Series", "X_univariate": True}
+    _tags = {"X_scitype": "Series", "X_univariate": True, "pre-refactor": True}
 
     args = {
         "fit": {"X": _make_series(n_timepoints=20)},
@@ -127,7 +127,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
 class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": False}
+    _tags = {"X_scitype": "Panel", "X_univariate": False, "pre-refactor": True}
 
     args = {
         "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},

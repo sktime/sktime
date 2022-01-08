@@ -150,6 +150,13 @@ def _excluded_scenario(test_name, scenario):
     if test_name == "test_methods_do_not_change_state":
         if not scenario.get_tag("fh_passed_in_fit", True, raise_error=False):
             return True
+
+    # this line excludes all scenarios that are not 1:1 to the "pre-scenario" state
+    #   pre-refactor, all tests pass, so all post-refactor tests should with these lines
+    # comment out to run the full test suite with new scenarios
+    if not scenario.get_tag("pre-refactor", False, raise_error=False):
+        return True
+
     return False
 
 
