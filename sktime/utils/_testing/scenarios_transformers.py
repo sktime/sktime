@@ -126,11 +126,11 @@ class TransformerTestScenario(TestScenario, BaseObject):
             if s2p:
                 return {"X": _make_primitives()}
             elif s2s:
-                return {"X": _make_series()}
+                return {"X": _make_series(n_timepoints=10)}
             elif p2t:
-                return {"X": _make_tabular_X()}
+                return {"X": _make_tabular_X(n_instances=10)}
             elif p2p:
-                return {"X": _make_panel_X()}
+                return {"X": _make_panel_X(n_timepoints=10)}
 
         else:
             # default behaviour, happens except when key = "inverse_transform"
