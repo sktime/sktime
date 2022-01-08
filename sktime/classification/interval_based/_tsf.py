@@ -93,18 +93,18 @@ class TimeSeriesForestClassifier(
         the sklearn class BaseTimeSeriesForest. This is the simplest solution,
         albeit a little hacky.
         """
-        BaseClassifier.fit(self, X, y, **kwargs)
+        BaseClassifier.fit(self, X=X, y=y, **kwargs)
 
     def predict(self, X, **kwargs) -> np.ndarray:
         """Wrap predict to call BaseClassifier.predict."""
-        return BaseClassifier.predict(self, X, **kwargs)
+        return BaseClassifier.predict(self, X=X, **kwargs)
 
     def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Wrap predict_proba to call BaseClassifier.predict_proba."""
-        return BaseClassifier.predict_proba(self, X, **kwargs)
+        return BaseClassifier.predict_proba(self, X=X, **kwargs)
 
     def _fit(self, X, y):
-        BaseTimeSeriesForest._fit(self, X, y)
+        BaseTimeSeriesForest._fit(self, X=X, Y=y)
 
     def _predict(self, X):
         """Find predictions for all cases in X. Built on top of predict_proba.
