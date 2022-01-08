@@ -18,6 +18,7 @@ from sktime.transformations.base import (
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
 )
+from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
@@ -48,7 +49,16 @@ def _is_child_of(obj, class_or_tuple):
         return isinstance(obj, class_or_tuple)
 
 
+def get_tag(obj, tag_name):
+    """Shorthand for get_tag vs get_class_tag, obj can be class or object."""
+    if isclass(obj):
+        return obj.get_class_tag(tag_name)
+    else:
+        return obj.get_tag(tag_name)
+
+
 class TransformerTestScenario(TestScenario, BaseObject):
+
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
 
@@ -61,13 +71,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
         applicable: bool
             True if self is applicable to obj, False if not
         """
-
-        def get_tag(obj, tag_name):
-            if isclass(obj):
-                return obj.get_class_tag(tag_name)
-            else:
-                return obj.get_tag(tag_name)
-
         # pre-refactor classes can't deal with Series *and* Panel both
         X_scitype = self.get_tag("X_scitype")
 
@@ -84,6 +87,54 @@ class TransformerTestScenario(TestScenario, BaseObject):
             return False
 
         return True
+
+    def get_args(self, key, obj=None):
+        """Return args for key. Can be overridden for dynamic arg generation.
+
+        If overridden, must not have any side effects on self.args
+            e.g., avoid assignments args[key] = x without deepcopying self.args first
+
+        Parameters
+        ----------
+        key : str, argument key to construct/retrieve args for
+        obj : obj, optional, default=None. Object to construct args for.
+
+        Returns
+        -------
+        argument dict to be used for a method, keyed by `key`
+        names for keys need not equal names of methods these are used in
+            but scripted method will look at key with same name as default
+        """
+        if key == "inverse_transform":
+            X_scitype = self.get_tag("X_scitype")
+            X_out_scitype = get_tag(obj, "scitype:transform-output")
+
+            # determine output by X_out_scitype
+            #   until transformer refactor is complete, use the old classes, too
+            if _is_child_of(obj, OLD_MIXINS):
+                s2s = _is_child_of(obj, _SeriesToSeriesTransformer)
+                s2p = _is_child_of(obj, _SeriesToPrimitivesTransformer)
+                p2t = _is_child_of(obj, _PanelToTabularTransformer)
+                p2p = _is_child_of(obj, _PanelToPanelTransformer)
+            else:
+                s2s = X_scitype == "Series" and X_out_scitype == "Series"
+                s2p = X_scitype == "Series" and X_out_scitype == "Primitives"
+                p2t = X_scitype == "Panel" and X_out_scitype == "Primitives"
+                p2p = X_scitype == "Panel" and X_out_scitype == "Panel"
+
+            # expected input type of inverse_transform is expected output of transform
+            if s2p:
+                return {"X": _make_primitives()}
+            elif s2s:
+                return {"X": _make_series()}
+            elif p2t:
+                return {"X": _make_tabular_X()}
+            elif p2p:
+                return {"X": _make_panel_X()}
+
+        else:
+            # default behaviour, happens except when key = "inverse_transform"
+            return self.args[key]
 
 
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
