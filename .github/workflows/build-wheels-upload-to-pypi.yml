@@ -29,6 +29,8 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
           CIBW_SKIP: cp36-* pp* *-manylinux_i686 *-musllinux_i686 *-musllinux_x86_64
           CIBW_TEST_EXTRAS: "all_extras,dev"
+          CIBW_ARCHS_MACOS: 'x86_64 arm64'
+          CIBW_TEST_SKIP: '*-macosx_arm64'  # see https://cibuildwheel.readthedocs.io/en/stable/faq/#universal2
           CIBW_TEST_COMMAND: pytest --showlocals --durations=20 -n 2 --pyargs sktime
         run: bash build_tools/github/build_wheels.sh
 
