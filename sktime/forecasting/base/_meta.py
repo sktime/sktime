@@ -75,9 +75,6 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         """Collect results from forecaster.predict() calls."""
-        if return_pred_int:
-            raise NotImplementedError()
-
         return [
             forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
             for forecaster in self.forecasters_
