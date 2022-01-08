@@ -189,7 +189,7 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        pass
+        return self._assign_clusters(X)
 
     def _lloyds(self, X: np.ndarray) -> None:
         """Compute cluster center using Lloyds.
