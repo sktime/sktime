@@ -157,7 +157,7 @@ class MyTransformer(BaseTransformer):
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
 
         # implement here
@@ -265,7 +265,7 @@ class MyTransformer(BaseTransformer):
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
