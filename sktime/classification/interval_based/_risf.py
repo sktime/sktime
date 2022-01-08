@@ -124,7 +124,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     def predict(self, X, **kwargs) -> np.ndarray:
         """Wrap predict to call BaseClassifier.predict."""
-        BaseClassifier.predict(self, X, **kwargs)
+        return BaseClassifier.predict(self, X, **kwargs)
 
     def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Wrap predict_proba to call BaseClassifier.predict_proba."""
