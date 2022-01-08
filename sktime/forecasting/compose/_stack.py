@@ -102,7 +102,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         train_window, test_window = next(cv.split(y))
         y_fcst = y.iloc[train_window]
         y_meta = y.iloc[test_window].values
-        X_meta = X.iloc[test_window]
+        if X is not None:
+            X_meta = X.iloc[test_window]
+        else:
+            X_meta = None
 
         # fit forecasters on training window
         self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X)
