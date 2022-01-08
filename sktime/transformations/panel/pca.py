@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Patrick Rockenschaub"]
+"""sklearn PCA applied after flattening series."""
+__author__ = ["prockenschaub", "fkiraly"]
 __all__ = ["PCATransformer"]
 
-import pandas as pd
 from sklearn.decomposition import PCA
 
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 
-class PCATransformer(_PanelToPanelTransformer):
+class PCATransformer(BaseTransformer):
     """Principal Components Analysis applied to panel of time seires.
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
 
+    Applies PCA to flattened panel [num_instances, num_time_points*num_variables],
+        pronects on first N_components principal components,
+        then re-formats back to [num_instances, num_variables, num_time_points]
+
     Parameters
     ----------
     n_components : int, float, str or None (default None)
-        Number of principle components to retain. By default, all components
+        Number of principal components to retain. By default, all components
         are retained. See
         ``sklearn.decomposition.PCA`` documentation for a detailed
         description of all options.
@@ -36,7 +38,7 @@ class PCATransformer(_PanelToPanelTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "univariate-only": True,
+        "univariate-only": False,
         "fit-in-transform": False,
     }
 
@@ -62,8 +64,8 @@ class PCATransformer(_PanelToPanelTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        N, _, n = X.shape
-        X = X.reshape(N, n)
+        N, num_var, num_time = X.shape
+        X = X.reshape(N, num_time*num_var)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
@@ -88,12 +90,12 @@ class PCATransformer(_PanelToPanelTransformer):
         -------
         transformed version of X
         """
-        N, _, n = X.shape
-        X = X.reshape(N, n)
+        N, num_var, num_time = X.shape
+        X = X.reshape(N, num_time*num_var)
 
         # Transform X using the fitted PCA
         Xt = self.pca.transform(X)
-        N, n = Xt.shape
-        Xt = Xt.reshape(N, 1, n)
+        N, num_time_t = Xt.shape
+        Xt = Xt.reshape(N, num_var, num_time_t/num_var)
 
         return Xt
