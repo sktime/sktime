@@ -20,7 +20,6 @@ class PaddingTransformer(BaseTransformer):
     Parameters
     ----------
     pad_length  : int, optional (default=None) length to pad the series too.
-
                 if None, will find the longest sequence and use instead.
     """
 
