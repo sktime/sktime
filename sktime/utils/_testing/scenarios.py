@@ -24,13 +24,18 @@ class TestScenario:
         dict of argument dicts to be used in methods
         names for keys need not equal names of methods these are used in
             but scripted method will look at key with same name as default
-        must be passed to constructor, or set in a child class
+        must be passed to constructor, set in a child class
+            or dynamically created in get_args
     default_method_sequence : list of str, default = None
-        optional, if given, default method sequence to use in "run"
-        if not provided, "run" must alwayss be passed a method_sequence
+        default sequence for methods to be called
+        optional, if given, default method sequence to use in `run`
+        if not provided, at least one of the sequence arguments must be passed in `run`
+            or default_arg_sequence must be provided
     default_arg_sequence : list of str, default = None
-        sequence of keys for keyword argument dicts to be used
+        default sequence of keys for keyword argument dicts to be used
         names for keys need not equal names of methods
+        if not provided, at least one of the sequence arguments must be passed in `run`
+            or default_method_sequence must be provided        
 
     Methods
     -------
@@ -60,6 +65,25 @@ class TestScenario:
                 )
             _check_dict_of_dict(self.args)
 
+    def get_args(self, key, obj=None):
+        """Return args for key. Can be overridden for dynamic arg generation.
+
+        If overridden, must not have any side effects on self.args
+            e.g., avoid assignments args[key] = x without deepcopying self.args first
+
+        Parameters
+        ----------
+        key : str, argument key to construct/retrieve args for
+        obj : obj, optional, default=None. Object to construct args for.
+
+        Returns
+        -------
+        argument dict to be used for a method, keyed by `key`
+        names for keys need not equal names of methods these are used in
+            but scripted method will look at key with same name as default
+        """
+        return self.args[key]
+        
     def run(
         self,
         obj,
@@ -143,7 +167,7 @@ class TestScenario:
         args_after_call = []
         for i in range(num_calls):
             methodname = method_sequence[i]
-            args = deepcopy(self.args[arg_sequence[i]])
+            args = deepcopy(self.get_args(key=arg_sequence[i], obj=obj))
 
             if methodname != "__init__":
                 res = getattr(obj, methodname)(**args)
