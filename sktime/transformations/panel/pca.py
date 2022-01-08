@@ -75,7 +75,7 @@ class PCATransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        private _inverse_transform containing core logic, called from inverse_transform
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------

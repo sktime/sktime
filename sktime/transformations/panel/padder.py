@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+"""Padding transformer, pad unequal length panel to max length or fixed length."""
 import numpy as np
 import pandas as pd
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.utils.validation.panel import check_X
+
+from sktime.transformations.base import BaseTransformer
 
 __all__ = ["PaddingTransformer"]
-__author__ = ["Aaron Bostrom"]
+__author__ = ["abostrom"]
 
 
 class PaddingTransformer(BaseTransformer):
-    """Padding unequal length time series to equal, fixed length.
+    """Padding panel of unequal length time series to equal, fixed length.
 
     Pads the input dataset to either a optional fixed length
     (longer than the longest series).
@@ -40,8 +41,9 @@ class PaddingTransformer(BaseTransformer):
         super(PaddingTransformer, self).__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer.
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -69,9 +71,10 @@ class PaddingTransformer(BaseTransformer):
         out[: len(series)] = series.iloc[: len(series)]
         return out
 
-    def transform(self, X, y=None):
-        """
-        Transform X.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
