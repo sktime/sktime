@@ -58,6 +58,7 @@ def get_tag(obj, tag_name):
 
 
 class TransformerTestScenario(TestScenario, BaseObject):
+    """Generic test scenario for transformers."""
 
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
