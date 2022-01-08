@@ -25,8 +25,7 @@ from sktime.classification.interval_based._rise import (
 
 @deprecated(
     version="0.8.1",
-    reason="RandomIntervalSpectralForest will be moved or removed in v0.10.0, "
-    "to be replaced by the correctly named RandomIntervalSpectralEnsemble",
+    reason="RandomIntervalSpectralForest will be removed in v0.10.0",
     category=FutureWarning,
 )
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
