@@ -183,9 +183,7 @@ class GGS(BaseEstimator):
             thisPass[i] = 1
         for _ in range(self.max_shuffles):
             lastPass = dict(thisPass)
-            thisPass = {}
-            for b in bp:
-                thisPass[b] = 0
+            thisPass = {b: 0 for b in bp}
             switchAny = False
             ordering = list(range(1, len(bp) - 1))
             random.shuffle(ordering)
