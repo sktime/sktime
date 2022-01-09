@@ -246,9 +246,9 @@ class BaseForecaster(BaseEstimator):
                 pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
 
                 if keep_old_return_type:
-                    pred_int = _convert_new_to_old_pred_int(pred_int, alpha)
+                    pred_int = self._convert_new_to_old_pred_int(pred_int, alpha)
 
-                y_pred = self._predict(self.fh, X=X_inner)
+                y_pred = self._predict(fh=fh, X=X_inner)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -361,6 +361,7 @@ class BaseForecaster(BaseEstimator):
         if alpha is None:
             alpha = [0.05, 0.95]
         fh = self._check_fh(fh)
+
         alpha = check_alpha(alpha)
 
         # input check and conversion for X
@@ -1134,7 +1135,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X=None, alpha=0.95):
         """Forecast time series at future horizon.
 
             core logic
@@ -1230,7 +1231,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _predict_interval(self, fh, X, coverage):
+    def _predict_interval(self, fh=fh, X=None, coverage=0.95):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.
@@ -1260,9 +1261,11 @@ class BaseForecaster(BaseEstimator):
         """
         alphas = []
         for c in coverage:
-            alphas.extend([(1 - c) / 2, 0.5 + (c / 2)])
-        alphas.sort()
+            alphas.extend([((1 - float(c)) / 2), 0.5 + (float(c) / 2)])
+        alphas = sorted(alphas)
         pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+        pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
+        # pred_int = self._convert_new_to_old_pred_int(pred_int, coverage)
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1357,6 +1360,27 @@ class BaseForecaster(BaseEstimator):
         this_pq = self.__class__._predict_quantiles
         # true if self's _predict_quantiles is new implementation
         return base_pq != this_pq
+
+    # TODO: remove in v0.10.0
+    def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
+        name = pred_int_new.columns.get_level_values(0).unique()[0]
+        alpha = check_alpha(alpha)
+        pred_int_old_format = [
+            pd.DataFrame(
+                {
+                    "lower": pred_int_new[(name, 0.5 - (float(a) / 2))],
+                    "upper": pred_int_new[(name, 0.5 + (float(a) / 2))],
+                }
+            )
+            for a in alpha
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if len(alpha) == 1:
+            return pred_int_old_format[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int_old_format
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
