@@ -26,7 +26,8 @@ install: ## Install for the current user using the default python command
 test: ## Run unit tests
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
-	cp -t ${TEST_DIR} .coveragerc setup.cfg
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
 	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime --showlocals --durations=20 -n 2 --pyargs $(PACKAGE)
 
 tests: test
