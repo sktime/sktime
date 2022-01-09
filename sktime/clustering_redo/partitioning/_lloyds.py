@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Callable, Union
 
 import numpy as np
@@ -172,7 +172,11 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         self.cluster_centers_ = X[
             self._init_algorithm(X, self.n_clusters, self._random_state), :
         ]
-        self._lloyds(X)
+        for _ in range(self.max_iter):
+            cluster_assignment_indexes = self._assign_clusters(X)
+            self.cluster_centers_ = self._compute_new_cluster_centers(
+                X, cluster_assignment_indexes
+            )
 
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
@@ -190,21 +194,6 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
             Index of the cluster each time series in X belongs to.
         """
         return self._assign_clusters(X)
-
-    def _lloyds(self, X: np.ndarray) -> None:
-        """Compute cluster center using Lloyds.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
-        """
-        for _ in range(self.max_iter):
-            cluster_assignment_indexes = self._assign_clusters(X)
-            self.cluster_centers_ = self._compute_new_cluster_centers(
-                X, cluster_assignment_indexes
-            )
 
     def _assign_clusters(
         self,
@@ -231,6 +220,7 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
             X, self.cluster_centers_, metric=self._distance_metric
         ).argmin(axis=1)
 
+    @abstractmethod
     def _compute_new_cluster_centers(
         self, X: np.ndarray, assignment_indexes: np.ndarray
     ) -> np.ndarray:
@@ -249,8 +239,4 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         np.ndarray (3d of shape (n_clusters, n_dimensions, series_length)
             New cluster center values.
         """
-        new_centers = np.zeros((8, X.shape[1], X.shape[2]))
-        for i in range(self.n_clusters):
-            curr_indexes = np.where((assignment_indexes == i))
-            new_centers[i, :] = X[curr_indexes].mean(axis=0)
-        return new_centers
+        ...
