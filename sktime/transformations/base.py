@@ -684,11 +684,13 @@ class BaseTransformer(BaseEstimator):
 
         # depending on whether fitting happens, apply fitted or unfitted instances
         if not self.get_tag("fit-in-transform"):
-            # these are the transformers-per-instanced, fitted in fit
+            # these are the transformers-per-instance, fitted in fit
             transformers = self.transformers_
             if len(transformers) != len(X):
                 raise RuntimeError(
-                    "found different number of instances in transform than in fit"
+                    "found different number of instances in transform than in fit. "
+                    f"number of instances seen in fit: {len(transformers)}; "
+                    f"number of instances seen in transform: {len(X)}"
                 )
             if inverse:
                 Xt = [transformers[i].inverse_transform(X[i]) for i in range(len(X))]
