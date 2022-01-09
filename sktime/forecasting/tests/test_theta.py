@@ -4,7 +4,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["@big-o"]
+__author__ = ["@big-o", "kejsitake"]
 
 import numpy as np
 import pytest

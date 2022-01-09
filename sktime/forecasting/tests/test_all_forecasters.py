@@ -304,11 +304,11 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
     AssertionError - if Forecaster test instance does not have "capability:pred_int"
             and no NotImplementedError is raised when asking predict for pred.int
     """
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
 
     for n_columns in n_columns_list:
-        f = _construct_instance(Forecaster)
+        f = Forecaster.create_test_instance()
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=fh)
         if f.get_tag("capability:pred_int"):
@@ -372,7 +372,7 @@ def test_predict_quantiles(Forecaster, fh, alpha):
     AssertionError - if Forecaster test instance does not have "capability:pred_int"
             and no NotImplementedError is raised when asking predict for pred.int
     """
-    f = _construct_instance(Forecaster)
+    f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
     for n_columns in n_columns_list:
         f = Forecaster.create_test_instance()
