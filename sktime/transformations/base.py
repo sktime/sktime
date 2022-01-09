@@ -784,6 +784,9 @@ class BaseTransformer(BaseEstimator):
 
         # if we converted Series to "one-instance-Panel", revert that
         if X_was_Series and output_scitype == "Series":
+            Xt = convert_to(
+                Xt, to_type=["pd-multiindex", "numpy3D", "df-list"], as_scitype="Panel"
+            )
             Xt = convert_Panel_to_Series(Xt)
 
         if output_scitype == "Series":
