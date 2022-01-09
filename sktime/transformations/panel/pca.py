@@ -94,7 +94,7 @@ class PCATransformer(BaseTransformer):
 
         # Transform X using the fitted PCA
         Xt = self.pca.transform(X)
-        N, num_time_t = Xt.shape
-        Xt = Xt.reshape(N, num_var, num_time_t / num_var)
+        N, n_pca = Xt.shape
+        Xt = Xt.reshape(N, n_pca / num_time, num_time)
 
         return Xt
