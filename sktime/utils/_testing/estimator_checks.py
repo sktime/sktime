@@ -51,12 +51,6 @@ def _get_err_msg(estimator):
     )
 
 
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    # return the instance of the class with default parameters
-    return Estimator.create_test_instance()
-
-
 def _list_required_methods(estimator):
     """Return list of required method names (beyond BaseEstimator ones)."""
     # all BaseEstimator children must implement these
@@ -151,6 +145,9 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
     elif isinstance(estimator, BasePairwiseTransformer):
@@ -196,6 +193,9 @@ def _make_transform_args(estimator, **kwargs):
     ):
         X = _make_panel_X(**kwargs)
         return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BasePairwiseTransformer):
         d = {"col1": [1, 2], "col2": [3, 4]}
         return pd.DataFrame(d), pd.DataFrame(d)
@@ -219,6 +219,9 @@ def _make_inverse_transform_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, _PanelToPanelTransformer):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -325,3 +328,12 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
+
+
+def _has_capability(est, method: str) -> bool:
+    """Check whether estimator has capability of method."""
+    if not hasattr(est, method):
+        return False
+    if method == "inverse_transform":
+        return est.get_class_tag("capability:inverse_transform", False)
+    return True
