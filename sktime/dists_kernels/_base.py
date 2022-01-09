@@ -135,7 +135,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
-            Core logic
+        private _transform containing core logic, called from transform
 
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
@@ -156,6 +156,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self._is_fitted = True
         return self
 
 
@@ -187,9 +188,22 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
-            default X2 = X
+        X : Series or Panel, any supported mtype, of n instances
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+        X2 : Series or Panel, any supported mtype, of m instances
+                optional, default: X = X2
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+            X and X2 need not have the same mtype
 
         Returns
         -------
@@ -213,9 +227,22 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
-            default X2 = X
+        X : Series or Panel, any supported mtype, of n instances
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+        X2 : Series or Panel, any supported mtype, of m instances
+                optional, default: X = X2
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+            X and X2 need not have the same mtype
 
         Returns
         -------
@@ -243,15 +270,19 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
-            Core logic
+        private _transform containing core logic, called from transform
 
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
+        X : guaranteed to be Series or Panel of mtype X_inner_mtype, n instances
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        X2 : guaranteed to be Series or Panel of mtype X_inner_mtype, m instances
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
             default X2 = X
 
         Returns
@@ -264,6 +295,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self._is_fitted = True
         return self
 
     def _pairwise_panel_x_check(self, X, var_name="X"):
