@@ -135,7 +135,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer"],
+        ["forecaster", "transformer", "transformer-pairwise-panel"],
         (
             "list",
             [
