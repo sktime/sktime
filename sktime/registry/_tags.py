@@ -58,7 +58,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "fit-in-transform",
-        "transformer",
+        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "does fit contain no logic and can be skipped? yes/no",
     ),
