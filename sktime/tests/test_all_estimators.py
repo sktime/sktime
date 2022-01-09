@@ -598,7 +598,7 @@ def test_methods_have_no_side_effects(estimator_instance, scenario):
                 estimator, method_sequence=[method], return_args=True
             )
             method_args_after = args_after[0]
-            method_args_before = scenario.args[method]
+            method_args_before = scenario.get_args(method, estimator)
 
             assert deep_equals(
                 method_args_after, method_args_before
