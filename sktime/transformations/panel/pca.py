@@ -3,6 +3,8 @@
 __author__ = ["prockenschaub", "fkiraly"]
 __all__ = ["PCATransformer"]
 
+import numpy as np
+
 from sklearn.decomposition import PCA
 
 from sktime.transformations.base import BaseTransformer
@@ -93,8 +95,7 @@ class PCATransformer(BaseTransformer):
         X = X.reshape(N, num_time * num_var)
 
         # Transform X using the fitted PCA
-        Xt = self.pca.transform(X)
-        N, n_pca = Xt.shape
-        Xt = Xt.reshape(N, n_pca / num_time, num_time)
+        Xt = np.matmul(self.pca.transform(X), self.pca.components_)
+        Xt = Xt.reshape(N, num_var, num_time)
 
         return Xt
