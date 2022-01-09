@@ -40,6 +40,7 @@ OLD_SERIES_MIXINS = (
     _SeriesToSeriesTransformer,
 )
 
+# random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
 
 
@@ -192,7 +193,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
         "transform": {
             "X": _make_panel_X(
                 n_instances=3, n_columns=1, n_timepoints=10, random_state=RAND_SEED
-                )
+            )
         },
     }
     default_method_sequence = ["fit", "transform"]
