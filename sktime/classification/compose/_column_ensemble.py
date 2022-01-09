@@ -19,6 +19,12 @@ from sktime.classification.base import BaseClassifier
 
 
 class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+    """Base Class for column ensemble."""
+
+    _tags = {
+        "capability:multivariate": True,
+    }
+
     def __init__(self, estimators, verbose=False):
         self.verbose = verbose
         self.estimators = estimators
@@ -114,7 +120,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
             yield name, estimator, column
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         # the data passed in could be an array of dataframes?
         """Fit all estimators, fit the data.
 
@@ -163,13 +169,13 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for X using 'soft' voting."""
         self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def predict(self, X):
+    def _predict(self, X):
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 
