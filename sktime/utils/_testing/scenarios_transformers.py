@@ -139,11 +139,15 @@ class TransformerTestScenario(TestScenario, BaseObject):
             if s2p:
                 args = {"X": _make_primitives(random_state=RAND_SEED)}
             elif s2s:
-                args = {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)}
+                args = {"X": _make_series(n_timepoints=20, random_state=RAND_SEED)}
             elif p2t:
-                args = {"X": _make_tabular_X(n_instances=10, random_state=RAND_SEED)}
+                args = {"X": _make_tabular_X(n_instances=7, random_state=RAND_SEED)}
             elif p2p:
-                args = {"X": _make_panel_X(n_timepoints=10, random_state=RAND_SEED)}
+                args = {
+                    "X": _make_panel_X(
+                        n_instances=7, n_timepoints=20, random_state=RAND_SEED
+                        )
+                    }
             else:
                 raise RuntimeError(
                     "transformer with unexpected combination of tags: "
