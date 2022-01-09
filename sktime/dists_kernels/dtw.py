@@ -63,7 +63,7 @@ class DtwDist(BasePairwiseTransformerPanel):
     derivative : bool, optional, default=False
         whether the distance or the derivative distance is computed
         False = unmodified distance, i.e., dtw distance or weighted dtw distance
-        True = derivative distance, i.e., derivative dtw distane or derivative wdtw
+        True = derivative distance, i.e., derivative dtw distance or derivative wdtw
     window: int, defaults = None
         Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding).
