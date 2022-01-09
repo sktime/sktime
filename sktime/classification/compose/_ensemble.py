@@ -182,6 +182,10 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         `oob_decision_function_` might contain NaN.
     """
 
+    _tags = {
+        "X_inner_mtype": "nested_univ",  # (nested pd.DataFrame)
+    }
+
     def __init__(
         self,
         estimator=None,
