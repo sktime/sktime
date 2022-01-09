@@ -165,12 +165,8 @@ jobs:
           python -m pip install .[all_extras,dev]
 
       - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          cd testdir/
-          pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime --pyargs sktime
+        run: make tests
+
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
