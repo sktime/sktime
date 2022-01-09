@@ -246,7 +246,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         the sklearn class BaseTimeSeriesForest. This is the simplest solution,
         albeit a little hacky.
         """
-        BaseClassifier.fit(self, X=X, y=y, **kwargs)
+        return BaseClassifier.fit(self, X=X, y=y, **kwargs)
 
     def predict(self, X, **kwargs) -> np.ndarray:
         """Wrap predict to call BaseClassifier.predict."""
