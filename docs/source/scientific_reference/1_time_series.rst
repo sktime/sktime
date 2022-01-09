@@ -162,4 +162,4 @@ For `Panel` typed random variables, a typical assumption is that the time series
 in the panel are i.i.d. (independent and identically distributed). This assumption
 extends to length, value domain, and index set.
 
-If the i.i.d. assumption is not made, we explicitly refer to non-i.i.d. `Panel` data.
+If the i.i.d. assumption is not made, we explicitly refer to "non-i.i.d. `Panel`" objects.
