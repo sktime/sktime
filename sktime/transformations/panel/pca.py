@@ -24,7 +24,7 @@ class PCATransformer(BaseTransformer):
     ----------
     n_components : int, float, str or None (default None)
         Number principal components in projection
-        Default = min(num_instances, num_variables * num_time_points) 
+        Default = min(num_instances, num_variables * num_time_points)
         See ``sklearn.decomposition.PCA`` documentation for further documentation.
     **kwargs
         Additional parameters passed on to ``sklearn.decomposition.PCA``.
