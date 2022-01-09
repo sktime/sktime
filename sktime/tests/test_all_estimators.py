@@ -25,7 +25,8 @@ from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 
 from sktime.base import BaseEstimator
 from sktime.dists_kernels._base import (
-    BasePairwiseTransformer, BasePairwiseTransformerPanel
+    BasePairwiseTransformer,
+    BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
 from sktime.registry import all_estimators
