@@ -15,17 +15,18 @@ class PCATransformer(BaseTransformer):
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
 
-    Applies PCA to flattened panel [num_instances, num_time_points*num_variables],
-        pronects on first N_components principal components,
-        then re-formats back to [num_instances, num_variables, num_time_points]
+    Applies PCA to a panel [num_instances, num_variables, num_time_points] as follows:
+        1. flattens panel to [num_instances, num_time_points*num_variables]
+        2. if fit: fits sklearn.pca to flattened panel
+           in transform: projects on first n_components principal components,
+                then re-formats back to [num_instances, num_variables, num_time_points]
 
     Parameters
     ----------
     n_components : int, float, str or None (default None)
-        Number of principal components to retain. By default, all components
-        are retained. See
-        ``sklearn.decomposition.PCA`` documentation for a detailed
-        description of all options.
+        Number principal components in projection
+        Default = min(num_instances, num_variables * num_time_points) 
+        See ``sklearn.decomposition.PCA`` documentation for further documentation.
     **kwargs
         Additional parameters passed on to ``sklearn.decomposition.PCA``.
         See ``sklearn.decomposition.PCA``
