@@ -56,9 +56,3 @@ _expected_distance_results_params = {
         [0.39934168049275554, 3.8217269294140355],
     ],
 }
-
-# "erp": [
-#     [None, None],
-#     [None, None],
-#     [None, None]
-# ],
