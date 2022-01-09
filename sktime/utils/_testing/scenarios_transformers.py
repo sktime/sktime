@@ -246,7 +246,7 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
     default_method_sequence = ["fit", "transform"]
 
 
-# todo: scenario for Panel x 
+# todo: scenario for Panel X
 #   where test and training set has different n_instances or n_timepoints
 #   may need a tag that tells us whethe transformer can cope with this
 
