@@ -102,8 +102,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         distance_params=None,
         **kwargs
     ):
+        self._distance_params = distance_params
         if distance_params is None:
-            distance_params = {}
+            self._distance_params = {}
         self.distance = distance
         self.distance_params = distance_params
 
@@ -143,7 +144,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         if isinstance(self.distance, str):
             self.metric = distance_factory(
-                X[0], X[0], metric=self.distance, **self.distance_params
+                X[0], X[0], metric=self.distance, **self._distance_params
             )
 
         y = np.asarray(y)
