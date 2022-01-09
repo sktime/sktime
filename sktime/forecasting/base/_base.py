@@ -1135,7 +1135,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None, alpha=0.95):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
             core logic
@@ -1231,7 +1231,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _predict_interval(self, fh=fh, X=None, coverage=0.95):
+    def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.
@@ -1264,7 +1264,6 @@ class BaseForecaster(BaseEstimator):
             alphas.extend([((1 - float(c)) / 2), 0.5 + (float(c) / 2)])
         alphas = sorted(alphas)
         pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
-        pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
         # pred_int = self._convert_new_to_old_pred_int(pred_int, coverage)
         return pred_int
 
@@ -1431,35 +1430,3 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
 
     return y_pred
-
-
-# TODO: remove in v0.10.0
-def _convert_new_to_old_pred_int(pred_int_new, alpha):
-    name = pred_int_new.columns.get_level_values(0).unique()[0]
-    alpha = check_alpha(alpha)
-
-    alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-    coverage = [1 - a for a in alphas]
-
-    alpha_quantiles = []
-    for c in coverage:
-        aq_pair = ((1 - c) / 2, 0.5 + (c / 2))
-        alpha_quantiles.append(aq_pair)
-    alpha_quantiles.sort()
-
-    pred_int_old_format = [
-        pd.DataFrame(
-            {
-                "lower": pred_int_new[(name, al)],
-                "upper": pred_int_new[(name, au)],
-            }
-        )
-        for al, au in alpha_quantiles
-    ]
-
-    # for a single alpha, return single pd.DataFrame
-    if len(alphas) == 1:
-        return pred_int_old_format[0]
-
-    # otherwise return list of pd.DataFrames
-    return pred_int_old_format
