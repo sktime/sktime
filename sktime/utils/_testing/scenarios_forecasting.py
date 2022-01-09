@@ -20,7 +20,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.scenarios import TestScenario
 
-
+# random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
 
 
@@ -109,7 +109,8 @@ class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": [1, 2, 3]
+            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "fh": [1, 2, 3],
         },
         "predict": {},
     }
@@ -131,8 +132,8 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
         "fit": {
             "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
             "X": X.copy(),
-            "fh": 1}
-        ,
+            "fh": 1,
+        },
         "predict": {"X": X_test_short.copy()},
     }
     default_method_sequence = ["fit", "predict"]
@@ -147,7 +148,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
         "fit": {
             "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
             "X": X.copy(),
-            "fh": [1, 2, 3]
+            "fh": [1, 2, 3],
         },
         "predict": {"X": X_test.copy()},
     }
@@ -162,7 +163,7 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
     args = {
         "fit": {
             "y": _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
-            "fh": 1
+            "fh": 1,
         },
         "predict": {},
     }
