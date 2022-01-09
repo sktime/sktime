@@ -211,10 +211,11 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    "no default behaviour if _fit does not support Panel and "
+                    'self.get_tag("y_inner_mtype") is not "None",'
+                    " but found X of Panel type, and y not None"
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -644,10 +645,11 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    "no default behaviour if _fit does not support Panel and "
+                    'self.get_tag("y_inner_mtype") is not "None",'
+                    " but found X of Panel type, and y not None"
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -671,10 +673,11 @@ class BaseTransformer(BaseEstimator):
         """Vectorized application of transform or inverse, and convert back."""
         if X_input_mtype is None:
             X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        if y is not None:
-            ValueError(
-                "no default behaviour if _fit does not support Panel, "
-                " but X is Panel and y is not None"
+        if y is not None and self.get_tag("y_inner_mtype") != "None":
+            raise ValueError(
+                "no default behaviour if _fit does not support Panel and "
+                'self.get_tag("y_inner_mtype") is not "None",'
+                " but found X of Panel type, and y not None"
             )
 
         X = convert_to(
