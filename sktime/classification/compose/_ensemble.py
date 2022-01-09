@@ -183,7 +183,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
     """
 
     _tags = {
-        "X_inner_mtype": "nested_univ",  # (nested pd.DataFrame)
+        "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
     }
 
     def __init__(
