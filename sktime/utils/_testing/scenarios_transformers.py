@@ -8,7 +8,7 @@ __author__ = ["fkiraly"]
 
 __all__ = ["scenarios_transformers"]
 
-
+from copy import deepcopy
 from inspect import isclass
 
 from sktime.base import BaseObject
@@ -39,6 +39,8 @@ OLD_SERIES_MIXINS = (
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
 )
+
+RAND_SEED = 42
 
 
 def _is_child_of(obj, class_or_tuple):
@@ -89,7 +91,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
         return True
 
-    def get_args(self, key, obj=None):
+    def get_args(self, key, obj=None, deepcopy_args=False):
         """Return args for key. Can be overridden for dynamic arg generation.
 
         If overridden, must not have any side effects on self.args
@@ -99,14 +101,18 @@ class TransformerTestScenario(TestScenario, BaseObject):
         ----------
         key : str, argument key to construct/retrieve args for
         obj : obj, optional, default=None. Object to construct args for.
+        deepcopy_args : bool, optional, default=True. Whether to deepcopy return.
 
         Returns
         -------
-        argument dict to be used for a method, keyed by `key`
-        names for keys need not equal names of methods these are used in
-            but scripted method will look at key with same name as default
+        args : argument dict to be used for a method, keyed by `key`
+            names for keys need not equal names of methods these are used in
+                but scripted method will look at key with same name as default
         """
         if key == "inverse_transform":
+            if obj is None:
+                raise ValueError('if key="inverse_transform", obj must be provided')
+
             X_scitype = self.get_tag("X_scitype")
             X_out_scitype = get_tag(obj, "scitype:transform-output")
 
@@ -125,17 +131,22 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
             # expected input type of inverse_transform is expected output of transform
             if s2p:
-                return {"X": _make_primitives()}
+                args = {"X": _make_primitives(random_state=RAND_SEED)}
             elif s2s:
-                return {"X": _make_series(n_timepoints=10)}
+                args = {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)}
             elif p2t:
-                return {"X": _make_tabular_X(n_instances=10)}
+                args = {"X": _make_tabular_X(n_instances=10, random_state=RAND_SEED)}
             elif p2p:
-                return {"X": _make_panel_X(n_timepoints=10)}
+                args = {"X": _make_panel_X(n_timepoints=10, random_state=RAND_SEED)}
 
         else:
             # default behaviour, happens except when key = "inverse_transform"
-            return self.args[key]
+            args = self.args[key]
+
+        if deepcopy_args:
+            args = deepcopy(args)
+
+        return args
 
 
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
@@ -144,8 +155,8 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     _tags = {"X_scitype": "Series", "X_univariate": True, "pre-refactor": True}
 
     args = {
-        "fit": {"X": _make_series(n_timepoints=20)},
-        "transform": {"X": _make_series(n_timepoints=10)},
+        "fit": {"X": _make_series(n_timepoints=20, random_state=RAND_SEED)},
+        "transform": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
         # "inverse_transform": {"X": _make_series(n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]
@@ -157,9 +168,12 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     _tags = {"X_scitype": "Series", "X_univariate": False}
 
     args = {
-        "fit": {"X": _make_series(n_columns=2, n_timepoints=20)},
-        "transform": {"X": _make_series(n_columns=2, n_timepoints=10)},
-        # "inverse_transform": {"X": _make_series(n_timepoints=10)},
+        "fit": {
+            "X": _make_series(n_columns=2, n_timepoints=20, random_state=RAND_SEED)
+        },
+        "transform": {
+            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
+        },
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -170,8 +184,16 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
     _tags = {"X_scitype": "Panel", "X_univariate": True}
 
     args = {
-        "fit": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20)},
-        "transform": {"X": _make_panel_X(n_instances=3, n_columns=1, n_timepoints=10)},
+        "fit": {
+            "X": _make_panel_X(
+                n_instances=7, n_columns=1, n_timepoints=20, random_state=RAND_SEED
+            )
+        },
+        "transform": {
+            "X": _make_panel_X(
+                n_instances=3, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+                )
+        },
     }
     default_method_sequence = ["fit", "transform"]
 
