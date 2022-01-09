@@ -64,7 +64,7 @@ class PCATransformer(BaseTransformer):
         self: reference to self
         """
         N, num_var, num_time = X.shape
-        X = X.reshape(N, num_time*num_var)
+        X = X.reshape(N, num_time * num_var)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
@@ -90,11 +90,11 @@ class PCATransformer(BaseTransformer):
             transformed version of X
         """
         N, num_var, num_time = X.shape
-        X = X.reshape(N, num_time*num_var)
+        X = X.reshape(N, num_time * num_var)
 
         # Transform X using the fitted PCA
         Xt = self.pca.transform(X)
         N, num_time_t = Xt.shape
-        Xt = Xt.reshape(N, num_var, num_time_t/num_var)
+        Xt = Xt.reshape(N, num_var, num_time_t / num_var)
 
         return Xt

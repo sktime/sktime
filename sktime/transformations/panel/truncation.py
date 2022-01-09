@@ -2,6 +2,7 @@
 """Truncation transformer - truncate unequal length panels to lower/upper bounds."""
 import numpy as np
 import pandas as pd
+
 from sktime.transformations.base import BaseTransformer
 
 __all__ = ["TruncationTransformer"]

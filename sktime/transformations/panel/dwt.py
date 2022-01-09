@@ -67,7 +67,7 @@ class DWTTransformer(BaseTransformer):
                 pd.DataFrame(X[x]),
                 from_type="nested_univ",
                 to_type="numpyflat",
-                as_scitype="Panel"
+                as_scitype="Panel",
             )
 
             transformedData = self._extract_wavelet_coefficients(arr)

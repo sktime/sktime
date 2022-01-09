@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Slope transformer."""
-import numpy as np
-import pandas as pd
 import math
 import statistics
+
+import numpy as np
+import pandas as pd
 
 from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
@@ -75,7 +76,7 @@ class SlopeTransformer(BaseTransformer):
                 pd.DataFrame(X[x]),
                 from_type="nested_univ",
                 to_type="numpyflat",
-                as_scitype="Panel"
+                as_scitype="Panel",
             )
 
             # Calculate gradients
