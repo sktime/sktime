@@ -86,7 +86,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
     >>> classifier = KNeighborsTimeSeriesClassifier()
     >>> classifier.fit(X_train, y_train)
-    KNeighborsTimeSeriesClassifier(...)
+    KNeighborsTimeSeriesClassifier()
     >>> y_pred = classifier.predict(X_test)
     """
 
@@ -102,6 +102,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         distance_params=None,
         **kwargs
     ):
+        if distance_params is None:
+            distance_params = {}
         self.distance = distance
         self.distance_params = distance_params
 
@@ -112,7 +114,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             n_neighbors=n_neighbors,
             algorithm="brute",
             metric=distance,
-            metric_params=distance_params,
+            metric_params=None,  # Extra distance params handled in _fit
             **kwargs
         )
         BaseClassifier.__init__(self)
@@ -140,7 +142,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         X = X.transpose((0, 2, 1))
 
         if isinstance(self.distance, str):
-            self.metric = distance_factory(X[0], X[0], metric=self.distance, window=10)
+            self.metric = distance_factory(
+                X[0], X[0], metric=self.distance, **self.distance_params
+            )
 
         y = np.asarray(y)
         check_classification_targets(y)

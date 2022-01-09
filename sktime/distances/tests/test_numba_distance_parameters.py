@@ -6,13 +6,11 @@ import numpy as np
 import pytest
 from numba import njit
 
-from sktime.distances import distance
+from sktime.distances import distance, distance_factory
 from sktime.distances._distance import _METRIC_INFOS
 from sktime.distances.base import MetricInfo
 from sktime.distances.tests._expected_results import _expected_distance_results_params
 from sktime.distances.tests._utils import create_test_distance_numpy
-
-# TODO: Change defaults in distance for itakura and sakoe
 
 
 def _test_distance_params(
@@ -25,7 +23,6 @@ def _test_distance_params(
     y_multi = create_test_distance_numpy(10, 10, random_state=2)
 
     test_ts = [[x_univ, y_univ], [x_multi, y_multi]]
-
     results_to_fill = []
 
     i = 0
@@ -34,8 +31,10 @@ def _test_distance_params(
         curr_results = []
         for x, y in test_ts:
             results = []
+            curr_dist_fact = distance_factory(x, y, metric=distance_str, **param_dict)
             results.append(distance_func(x, y, **param_dict))
             results.append(distance(x, y, metric=distance_str, **param_dict))
+            results.append(curr_dist_fact(x, y))
 
             if distance_str in _expected_distance_results_params:
                 if _expected_distance_results_params[distance_str][i][j] is not None:
