@@ -204,7 +204,7 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
             "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
-        "transform": {"X": _make_panel_X(n_instances=3, n_columns=2, n_timepoints=10)},
+        "transform": {"X": _make_panel_X(n_instances=3, n_columns=1, n_timepoints=20)},
     }
     default_method_sequence = ["fit", "transform"]
 
