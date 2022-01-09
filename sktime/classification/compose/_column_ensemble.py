@@ -219,6 +219,19 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
+
+    Examples
+    --------
+    >>> from sktime.classification.interval_based import DrCIF
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> clf = DrCIF(n_estimators=10)
+    >>> estimators = [("DrCIF", fclf, [0, 1, 2, 3, 4, 5]),
+    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
+    >>> col_ens.fit(X_train, y_train)
+    ColumnEnsembleClassifier(...)
+    >>> y_pred = col_ens.predict(X_test)
     """
 
     _required_parameters = ["estimators"]
