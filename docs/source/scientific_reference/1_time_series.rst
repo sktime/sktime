@@ -126,7 +126,7 @@ For a panel of indexed series :math:`p`, consisting of
 indexed series :math:`s_1, \dots, s_N`, we:
 
 * write :math:`\ell(p) := N`, and call `\ell(p)` the "number of instances in :math:`p`"
-* write :math:`p_i := s_i`, and call :math:`p_i` the "":math:`i`-th instance of :math:`p`""
+* write :math:`p_i := s_i`, and call :math:`p_i` the ":math:`i`-th instance of :math:`p`"
 * call :math:`p_i` a "series in the panel :math:`p`"
 * write :math:`\mbox{panel}(\mathcal{X}, \mathcal{T})` for the set of all panels
 whose series all have (the same) value domain :math:`\mathcal{X}`, and index domain :math:`\mathcal{T}`
