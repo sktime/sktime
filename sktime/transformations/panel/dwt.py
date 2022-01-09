@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Discrete wavelet transform."""
+import math
+
 import numpy as np
 import pandas as pd
-import math
-from sktime.transformations.base import BaseTransformer
 
 from sktime.datatypes import convert
+from sktime.transformations.base import BaseTransformer
 
 __author__ = "Vincent Nicholson"
 

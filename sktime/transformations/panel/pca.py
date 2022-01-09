@@ -4,7 +4,6 @@ __author__ = ["prockenschaub", "fkiraly"]
 __all__ = ["PCATransformer"]
 
 import numpy as np
-
 from sklearn.decomposition import PCA
 
 from sktime.transformations.base import BaseTransformer
