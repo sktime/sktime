@@ -29,7 +29,7 @@ The following sets/domains are called basic primitive domains:
 * the real numbers, i.e., the set :math:`\mathbb{R}`
 * the set of boolean truth value, i.e., the two-element set containing `True` or `False`
 * the set of all finite length strings of ASCII characters
-* any other finite set :math:`\mathcal{C}`, called "categories" in this context
+* any other finite set :math:`\mathcal{C}`, called "categoriy set" in this context
 
 A set/domain is called primitive domain if it is a basic primitive domain, or 
 finite Cartesian products of basic primitive domains.
@@ -51,56 +51,113 @@ For an indexed series :math:`s`, with value domain :math:`\mathcal{X}`, index do
 with time points :math:`x_1, \dots x_T` and index points :math:`t_1, \dots, t_T`, we:
 
 * write :math:`\ell(s) := T`, and call `\ell(s)` the "length of :math:`s`"
+* write :math:`\mbox{values}(s) := (x_1, \dots, x_T)`
+* write :math:`\mbox{index}(s) := (t_1, \dots, t_T)`
+* write :math:`\tau \in \mbox{index}(s)` if :math:`\tau = t_i` for some :math:`i`
 * write :math:`s(\tau) := x_i` if :math:`\tau = t_i` and if 
 there is a unique :math:`i` such that :math:`\tau = t_i`
-* write :math:`\mbox{index}(s) := (t_1, \dots, t_T)`
-* write :math:`\mbox{values}(s) := (x_1, \dots, x_T)`
 * may choose to say that :math:`s` is a time series if :math:`\mathcal{T}` 
 is totally ordered and (order)-isomorphic to a sub-set of :math:`\mathbb{R}`,
 in a context where elements of :math:`\mathcal{T}` are interpreted as time stamps
 * write :math:`\mbox{series}(\mathcal{X}, \mathcal{T})` for the set of all index series
 with value domain :math:`\mathcal{X}`, index domain :math:`\mathcal{T}`
 
+Key operations for the above indexed series :math:`s` are:
 
-For frequent issues with installation, consult the `Release versions - troubleshooting`_ section.
+* inspecting :math:`\ell(s)`
+* inspecting :math:`\mbox{index}(s)` or :math:`\mbox{values}(s)`
+* for a :math:`\tau \in \mbox{index}(s)`, retrieve :math:`s(\tau)`
+* inspect the value domain :math:`\mathcal{X}` or index domain :math:`\mathcal{T}` of :math:`s`
+* sub-setting and selection operations
 
-Installing sktime from PyPI
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For an indexed series :math:`s\in \mbox{series}(\mathcal{X}, \mathcal{T})`, we say that
+:math:`s` is:
 
-``sktime`` releases are available via PyPI and can be installed via ``pip`` using:
+* univariate, if :math:`\mathcal{X}` is a basic primitive domain
+* multivariate, if :math:`s` is a primitive domain but not a basic primitive domain
+* of non-primitive value domain, if :math:`s` is not a primitive domain
 
-.. code-block:: bash
+For a time series :math:`s\in \mbox{series}(\mathcal{X}, \mathcal{T})`, we say that
+:math:`s` is:
 
-    pip install sktime
+* equally spaced, if :math:`t_{i+1} - t_i = c` for some :math:`c\in\mathbb{R}` and all
+    :math:`i\in 1,\dots, T-1`
+* unequally spaced, if :math:`s` is not equally spaced.
 
-This will install ``sktime`` with core dependencies, excluding soft dependencies.
+We use the scitype `Series` to type univariate and multivariate time series.
 
-To install ``sktime`` with maximum dependencies, including soft dependencies, install with the ``all_extras`` modifier:
-
-.. code-block:: bash
-
-    pip install sktime[all_extras]
+For `Series` typed,
+:math:`\mbox{series}(\mathcal{X}, \mathcal{T})`-valued random variables,
+we make no additional assumptions about the law (e.g., stationarity).
 
 
-Installing sktime from conda
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Notes on the `Series` scitype
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``sktime`` releases are available via ``conda`` from ``conda-forge``.
-They can be installed via ``conda`` using:
+The ``sktime`` conceptual model differs in some points from
+occasionally found conceptualization approaches in mathematical textbooks:
 
-.. code-block:: bash
+* defining time series only over a finite index set :math:`t_1,\dots, t_T`, 
+instead of, say, defining :math:`s(t)` for all :math:`t` in an infinite or even
+uncountably infinite set (e.g., the reals). This is because, in a computer,
+time series observations are always finite. 
+Some books do not make this distinction and conflate "generative" knowledge
+in mathematical assumptions with observed information.
+We made this decisions since real observations, including those that ``python`` can handle, are always finite.
+* considering the index set as part of the time series and crucial, inspectable information.
+Some sources conceptualize the index set as "external" to the time series, or irrelevant.
+We think that considering the index set as part of the time series is conceptually natural for any user of ``pandas``.
+* allowing the value domain to range over primitives, not over :math:`\mathbb{R}` or a subset thereof.
+Again, having "data frame row" typed observations, and not just float arrays, is conceptually natural for any user of ``pandas``.
 
-    conda install -c conda-forge sktime
 
-This will install ``sktime`` with core dependencies, excluding soft dependencies.
+Time Series panels - the `Panel` scitype
+----------------------------------------
 
-To install ``sktime`` with maximum dependencies, including soft dependencies, install with the ``all-extras`` recipe:
+An indexed series, with value domain :math:`\mathcal{X}`, index domain :math:`\mathcal{T}`,
+of length :math:`T`, is a collection of index points :math:`t_1, \dots, t_T` and observations
+:math:`x_1, \dots x_T`. We say (and interpret) that :math:`x_i` is the value observed at index
+:math:`t_i`.
 
-.. code-block:: bash
+For an indexed series :math:`s`, with value domain :math:`\mathcal{X}`, index domain :math:`\mathcal{T}`,
+with time points :math:`x_1, \dots x_T` and index points :math:`t_1, \dots, t_T`, we:
 
-    conda install -c conda-forge sktime-all-extras
+* write :math:`\ell(s) := T`, and call `\ell(s)` the "length of :math:`s`"
+* write :math:`\mbox{values}(s) := (x_1, \dots, x_T)`
+* write :math:`\mbox{index}(s) := (t_1, \dots, t_T)`
+* write :math:`\tau \in \mbox{index}(s)` if :math:`\tau = t_i` for some :math:`i`
+* write :math:`s(\tau) := x_i` if :math:`\tau = t_i` and if 
+there is a unique :math:`i` such that :math:`\tau = t_i`
+* may choose to say that :math:`s` is a time series if :math:`\mathcal{T}` 
+is totally ordered and (order)-isomorphic to a sub-set of :math:`\mathbb{R}`,
+in a context where elements of :math:`\mathcal{T}` are interpreted as time stamps
+* write :math:`\mbox{series}(\mathcal{X}, \mathcal{T})` for the set of all index series
+with value domain :math:`\mathcal{X}`, index domain :math:`\mathcal{T}`
 
-Note: currently this does not include dependencies ``catch-22``, ``pmdarima``, and ``tbats``.
-As these packages are not available on ``conda-forge``, they must be installed via ``pip`` if desired.
-Contributions to remedy this situation are appreciated.
+Key operations for the above indexed series :math:`s` are:
 
+* inspecting :math:`\ell(s)`
+* inspecting :math:`\mbox{index}(s)` or :math:`\mbox{values}(s)`
+* for a :math:`\tau \in \mbox{index}(s)`, retrieve :math:`s(\tau)`
+* inspect the value domain :math:`\mathcal{X}` or index domain :math:`\mathcal{T}` of :math:`s`
+* sub-setting and selection operations
+
+For an indexed series :math:`s\in \mbox{series}(\mathcal{X}, \mathcal{T})`, we say that
+:math:`s` is:
+
+* univariate, if :math:`\mathcal{X}` is a basic primitive domain
+* multivariate, if :math:`s` is a primitive domain but not a basic primitive domain
+* of non-primitive value domain, if :math:`s` is not a primitive domain
+
+For a time series :math:`s\in \mbox{series}(\mathcal{X}, \mathcal{T})`, we say that
+:math:`s` is:
+
+* equally spaced, if :math:`t_{i+1} - t_i = c` for some :math:`c\in\mathbb{R}` and all
+    :math:`i\in 1,\dots, T-1`
+* unequally spaced, if :math:`s` is not equally spaced.
+
+We use the scitype `Series` to type univariate and multivariate time series.
+
+For `Series` typed,
+:math:`\mbox{series}(\mathcal{X}, \mathcal{T})`-valued random variables,
+we make no additional assumptions about the law (e.g., stationarity).
