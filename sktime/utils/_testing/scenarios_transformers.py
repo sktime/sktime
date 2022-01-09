@@ -115,7 +115,12 @@ class TransformerTestScenario(TestScenario, BaseObject):
                 raise ValueError('if key="inverse_transform", obj must be provided')
 
             X_scitype = self.get_tag("X_scitype")
+
             X_out_scitype = get_tag(obj, "scitype:transform-output")
+            X_panel = get_tag(obj, "scitype:instancewise")
+
+            X_out_series = X_out_scitype == "Series"
+            X_out_prim = X_out_scitype == "Primitives"
 
             # determine output by X_out_scitype
             #   until transformer refactor is complete, use the old classes, too
@@ -125,10 +130,10 @@ class TransformerTestScenario(TestScenario, BaseObject):
                 p2t = _is_child_of(obj, _PanelToTabularTransformer)
                 p2p = _is_child_of(obj, _PanelToPanelTransformer)
             else:
-                s2s = X_scitype == "Series" and X_out_scitype == "Series"
-                s2p = X_scitype == "Series" and X_out_scitype == "Primitives"
-                p2t = X_scitype == "Panel" and X_out_scitype == "Primitives"
-                p2p = X_scitype == "Panel" and X_out_scitype == "Panel"
+                s2s = X_scitype == "Series" and X_out_series and not X_panel
+                s2p = X_scitype == "Series" and X_out_prim and not X_panel
+                p2t = X_scitype == "Panel" and X_out_prim and X_panel
+                p2p = X_scitype == "Panel" and X_out_series and X_panel
 
             # expected input type of inverse_transform is expected output of transform
             if s2p:
@@ -139,6 +144,11 @@ class TransformerTestScenario(TestScenario, BaseObject):
                 args = {"X": _make_tabular_X(n_instances=10, random_state=RAND_SEED)}
             elif p2p:
                 args = {"X": _make_panel_X(n_timepoints=10, random_state=RAND_SEED)}
+            else:
+                raise RuntimeError(
+                    "transformer with unexpected combination of tags: "
+                    f"X_out_scitype = {X_out_series}, scitype:instancewise = {X_panel}"
+                )
 
         else:
             # default behaviour, happens except when key = "inverse_transform"
@@ -206,7 +216,7 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
 
     args = {
         "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
-        "transform": {"X": _make_panel_X(n_instances=3, n_columns=2, n_timepoints=10)},
+        "transform": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -227,9 +237,14 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
             "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
-        "transform": {"X": _make_panel_X(n_instances=3, n_columns=1, n_timepoints=20)},
+        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20)},
     }
     default_method_sequence = ["fit", "transform"]
+
+
+# todo: scenario for Panel x 
+#   where test and training set has different n_instances or n_timepoints
+#   may need a tag that tells us whethe transformer can cope with this
 
 
 scenarios_transformers = [
