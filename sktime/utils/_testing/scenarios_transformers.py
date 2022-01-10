@@ -146,8 +146,8 @@ class TransformerTestScenario(TestScenario, BaseObject):
                 args = {
                     "X": _make_panel_X(
                         n_instances=7, n_timepoints=20, random_state=RAND_SEED
-                        )
-                    }
+                    )
+                }
             else:
                 raise RuntimeError(
                     "transformer with unexpected combination of tags: "
