@@ -37,7 +37,7 @@ class TransformerPairwiseTestScenario(TestScenario, BaseObject):
 
 
 class TransformerPairwisePanelTestScenario(TestScenario, BaseObject):
-    """Generic test scenario for pairwise transformers."""
+    """Generic test scenario for pairwise panel transformers."""
 
     pass
 
