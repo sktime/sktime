@@ -63,8 +63,6 @@ def _validate_distance_result(
     )
     global _ran_once
 
-    _ran_once = False
-
     if _ran_once is False:
         _ran_once = True
         metric_factory_result = distance(x, y, metric=distance_factory, **kwargs_dict)
