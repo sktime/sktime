@@ -12,9 +12,9 @@ def test_kmeans():
     )
     X_test, y_test = load_UCR_UEA_dataset(dataset_name, split="test", return_X_y=True)
 
-    kmeans = KMedoids(random_state=1)
-    kmeans.fit(X_train)
-    # test = kmeans.predict(X_test)
+    kmedoids = KMedoids(random_state=1)
+    kmedoids.fit(X_train)
+    # test = kmedoids .predict(X_test)
     # from sklearn import metrics
     #
     # score = metrics.rand_score(y_test, test)
