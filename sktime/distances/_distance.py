@@ -941,7 +941,7 @@ def distance_factory(
 
 def pairwise_distance(
     x: np.ndarray,
-    y: np.ndarray,
+    y: np.ndarray = None,
     metric: Union[
         str,
         Callable[
@@ -949,7 +949,7 @@ def pairwise_distance(
         ],
         Callable[[np.ndarray, np.ndarray], float],
         NumbaDistance,
-    ],
+    ] = "euclidean",
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two time series.
@@ -963,9 +963,9 @@ def pairwise_distance(
     ----------
     x: np.ndarray (1d, 2d or 3d array)
         First time series.
-    y: np.ndarray (1d, 2d or 3d array)
-        Second time series.
-    metric: str or Callable
+    y: np.ndarray (1d, 2d or 3d array), defaults = None
+        Second time series. If not specified then y is set to the value of x.
+    metric: str or Callable, defaults = 'euclidean'
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -1026,6 +1026,8 @@ def pairwise_distance(
            [ 58., 256.]])
     """
     _x = to_numba_pairwise_timeseries(x)
+    if y is None:
+        y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
 
