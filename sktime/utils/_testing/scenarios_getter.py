@@ -12,10 +12,16 @@ from sktime.base import BaseObject
 from sktime.registry import BASE_CLASS_LIST, BASE_CLASS_SCITYPE_LIST, scitype
 from sktime.utils._testing.scenarios_forecasting import scenarios_forecasting
 from sktime.utils._testing.scenarios_transformers import scenarios_transformers
+from sktime.utils._testing.scenarios_transformers_pairwise import (
+    scenarios_transformers_pairwise,
+    scenarios_transformers_pairwise_panel,
+)
 
 scenarios = dict()
 scenarios["forecaster"] = scenarios_forecasting
 scenarios["transformer"] = scenarios_transformers
+scenarios["transformer-pairwise"] = scenarios_transformers_pairwise
+scenarios["transformer-pairwise-panel"] = scenarios_transformers_pairwise_panel
 
 
 def retrieve_scenarios(obj):
