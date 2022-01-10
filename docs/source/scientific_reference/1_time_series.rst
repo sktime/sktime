@@ -18,7 +18,7 @@ This document provides a formal reference for the above.
 The objects are defined in terms of:
 
 * abstract data types (ADT) - defines domain, type and common operations
-* scientific types (scitype) - ADT plus statistical assumptions 
+* scientific types (scitype) - ADT plus statistical assumptions
 
 
 Primitive values - the `Primitives` scitype
@@ -31,7 +31,7 @@ The following sets/domains are called basic primitive domains:
 * the set of all finite length strings of ASCII characters
 * any other finite set :math:`\mathcal{C}`, called "categoriy set" in this context
 
-A set/domain is called primitive domain if it is a basic primitive domain, or 
+A set/domain is called primitive domain if it is a basic primitive domain, or
 finite Cartesian products of basic primitive domains.
 
 An object is said to be of primitive type if it is an element of a primitive domain.
@@ -54,10 +54,10 @@ with time points :math:`x_1, \dots x_T` and index points :math:`t_1, \dots, t_T`
 * write :math:`\mbox{values}(s) := (x_1, \dots, x_T)`, and call :math:`\mbox{values}(s)` the "value sequence of:math:`s`"
 * write :math:`\mbox{index}(s) := (t_1, \dots, t_T)`, and call :math:`\mbox{values}(s)` the "index sequence of:math:`s`"
 * write :math:`\tau \in \mbox{index}(s)` if :math:`\tau = t_i` for some :math:`i`
-* write :math:`s(\tau) := x_i` if :math:`\tau = t_i` and if 
+* write :math:`s(\tau) := x_i` if :math:`\tau = t_i` and if
 there is a unique :math:`i` such that :math:`\tau = t_i`
 * call :math:`s(\tau)` the "value of :math:`s` at index :math:`\tau`"
-* may choose to say that :math:`s` is a time series if :math:`\mathcal{T}` 
+* may choose to say that :math:`s` is a time series if :math:`\mathcal{T}`
 is totally ordered and (order)-isomorphic to a sub-set of :math:`\mathbb{R}`,
 in a context where elements of :math:`\mathcal{T}` are interpreted as time stamps
 * write :math:`\mbox{series}(\mathcal{X}, \mathcal{T})` for the set of all index series
@@ -99,10 +99,10 @@ Notes on the `Series` scitype
 The ``sktime`` conceptual model differs in some points from
 occasionally found conceptualization approaches in mathematical textbooks:
 
-* defining time series only over a finite index set :math:`t_1,\dots, t_T`, 
+* defining time series only over a finite index set :math:`t_1,\dots, t_T`,
 instead of, say, defining :math:`s(t)` for all :math:`t` in an infinite or even
 uncountably infinite set (e.g., the reals). This is because, in a computer,
-time series observations are always finite. 
+time series observations are always finite.
 Some books do not make this distinction and conflate "generative" knowledge
 in mathematical assumptions with observed information.
 We made this decisions since real observations, including those that ``python`` can handle, are always finite.
@@ -152,7 +152,7 @@ that is, there is :math:`L` such that :math:`\ell(p_i) = L` for all :math:`i = 1
 * (un-)equally spaced, all series in the panel :math:`p` are (un)-equally spaced
 * grid-like, if :math:`p` is of equal length, and equally spaced
 * of equal index, if all series in the panel :math:`p` have the same index sequence;
-that is, there is :math:`L` and :math:`I\in \mathcal{T}^L` 
+that is, there is :math:`L` and :math:`I\in \mathcal{T}^L`
 such that :math:`\mbox{index}(p_i) = I` for all :math:`i = 1, \dots, N`.
 * degenerate, if :math:`N=0` or at least one of the series in the panel :math:`p` is degenerate
 
