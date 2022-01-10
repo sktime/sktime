@@ -13,6 +13,15 @@ from copy import deepcopy
 import numpy as np
 
 
+class FixtureGenerationError(Exception):
+    """Raised when a fixture fails to generate."""
+
+    def __init__(self, fixture_name=""):
+        self.fixture_name = fixture_name
+        fixture_name = fixture_name + " "
+        super().__init__(f"fixture {fixture_name}failed to generate")
+
+
 def conditional_fixtures_and_names(
     test_name, fixture_vars, generator_dict, fixture_sequence=None
 ):
@@ -67,6 +76,7 @@ def conditional_fixtures_and_names(
                         fixture_var1 = fixture[1], ...,
                         fixture_var(i-1) = fixture[i-1],
                     )
+            return (fixture[1], fixture[2], ..., fixture[N])
     fixture_names : list of str, fixture ids to use in pytest.fixture.parameterize
         fixture names, generated according to the following conditional rule:
             let fixture_vars = [fixture_var1, fixture_var2, ..., fixture_varN]
@@ -92,13 +102,39 @@ def conditional_fixtures_and_names(
         fixture_vars = ordered_fixture_vars
 
     def get_fixtures(fixture_var, **kwargs):
-        res = generator_dict[fixture_var](test_name, **kwargs)
-        if len(res) == 2:
-            fixture_prod = res[0]
-            fixture_names = res[1]
-        else:
-            fixture_prod = res
-            fixture_names = [str(x) for x in res]
+        """Call fixture generator from generator_dict, return fixture list.
+
+        Parameters
+        ----------
+        fixture_var : str, name of fixture variable
+        kwargs : key-value pairs, keys = names of previous fixture variables
+        test_name : str, from local scope
+            name of test for which fixtures are generated
+
+        Returns
+        -------
+        fixture_prod : list of objects or one-element list with FixtureGenerationError
+            fixtures for fixture_var for test_name, conditional on fixtures in kwargs
+            if call to generator_dict[fixture_var] fails, returns list with error
+        fixture_names : list of string, same length as fixture_prod
+            i-th element is a string name for i-th element of fixture_prod
+            if 2nd arg is returned by generator_dict, then 1:1 copy of that argument
+            if no 2nd arg is returned by generator_dict, then str(fixture_prod[i])
+            if fixture_prod is list with error, then string is Error:fixture_var
+        """
+        try:
+            res = generator_dict[fixture_var](test_name, **kwargs)
+            if len(res) == 2:
+                fixture_prod = res[0]
+                fixture_names = res[1]
+            else:
+                fixture_prod = res
+                fixture_names = [str(x) for x in res]
+        except Exception:
+            error = FixtureGenerationError(fixture_name=fixture_var)
+            fixture_prod = [error]
+            fixture_names = [f"Error:{fixture_var}"]
+
         return fixture_prod, fixture_names
 
     fixture_prod = [()]
