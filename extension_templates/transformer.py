@@ -217,7 +217,7 @@ class MyTransformer(BaseTransformer):
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
-        private ?inverse_transform containing core logic, called from inverse_transform
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
