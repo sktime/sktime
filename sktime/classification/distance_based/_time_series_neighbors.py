@@ -86,7 +86,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
     >>> classifier = KNeighborsTimeSeriesClassifier()
     >>> classifier.fit(X_train, y_train)
-    KNeighborsTimeSeriesClassifier()
+    KNeighborsTimeSeriesClassifier(...)
     >>> y_pred = classifier.predict(X_test)
     """
 
