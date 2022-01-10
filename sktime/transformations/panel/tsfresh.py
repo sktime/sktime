@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 -u
+"""TSFresh feature extractors."""
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -18,7 +19,7 @@ _check_soft_dependencies("tsfresh")
 
 
 class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
-    """Base adapter class for tsfresh transformations"""
+    """Base adapter class for tsfresh transformations."""
 
     def __init__(
         self,
@@ -70,7 +71,7 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
         return self
 
     def _get_extraction_params(self):
-        """Helper function to set default parameters from tsfresh"""
+        """Set default parameters from tsfresh."""
         # make n_jobs compatible with scikit-learn
         self.n_jobs = check_n_jobs(self.n_jobs)
 
@@ -132,7 +133,7 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
 
 
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features
+    """Transformer for extracting TSFresh time series features.
 
     References
     ----------
@@ -186,6 +187,26 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # here we make sure we return the dataframe in the sort order as the
         # input data
         return Xt.reindex(X.index)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+        }
+
+        return params
 
 
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
@@ -242,7 +263,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         self.ml_task = ml_task
 
     def _get_selection_params(self):
-        """Helper function to set default values from tsfresh"""
+        """Set default values from tsfresh."""
         # lazy imports to avoid hard dependency
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
@@ -337,3 +358,24 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt = self.extractor_.transform(X)
         Xt = self.selector_.transform(Xt)
         return Xt.reindex(X.index)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+            "fdr_level": 0.01,
+        }
+
+        return params

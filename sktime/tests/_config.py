@@ -37,7 +37,6 @@ from sktime.classification.feature_based import (
     RandomIntervalClassifier,
     SignatureClassifier,
     SummaryClassifier,
-    TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
@@ -107,10 +106,6 @@ from sktime.transformations.panel.shapelets import (
 )
 from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.panel.tsfresh import (
-    TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor,
-)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.summarize import SummaryTransformer
 
@@ -280,10 +275,6 @@ ESTIMATOR_TEST_PARAMS = {
     MatrixProfileClassifier: {
         "subsequence_length": 4,
     },
-    TSFreshClassifier: {
-        "estimator": RandomForestClassifier(n_estimators=3),
-        "default_fc_parameters": "minimal",
-    },
     FreshPRINCE: {
         "n_estimators": 3,
         "default_fc_parameters": "minimal",
@@ -335,12 +326,6 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": Catch22Classifier(
             estimator=RandomForestClassifier(n_estimators=2)
         ),
-    },
-    TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
-    TSFreshRelevantFeatureExtractor: {
-        "disable_progressbar": True,
-        "show_warnings": False,
-        "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
