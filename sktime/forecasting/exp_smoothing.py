@@ -158,7 +158,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         self.minimize_kwargs = minimize_kwargs
         self.use_brute = use_brute
 
-        super(ExponentialSmoothing, self).__init__()
+        super().__init__()
 
     def _fit_forecaster(self, y, X=None):
         self._forecaster = _ExponentialSmoothing(
