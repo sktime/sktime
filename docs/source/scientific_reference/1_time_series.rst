@@ -29,7 +29,7 @@ The following sets/domains are called basic primitive domains:
 * the real numbers, i.e., the set :math:`\mathbb{R}`
 * the set of boolean truth value, i.e., the two-element set containing `True` or `False`
 * the set of all finite length strings of ASCII characters
-* any other finite set :math:`\mathcal{C}`, called "categoriy set" in this context
+* any other finite set :math:`\mathcal{C}`, called "category set" in this context
 
 A set/domain is called primitive domain if it is a basic primitive domain, or
 finite Cartesian products of basic primitive domains.
