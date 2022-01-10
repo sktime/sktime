@@ -71,7 +71,7 @@ class _DdtwDistance(NumbaDistance):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        window: flaot, defaults = None
+        window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
