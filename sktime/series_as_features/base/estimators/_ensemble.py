@@ -26,7 +26,6 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
-from sktime.utils.validation.panel import check_X_y
 
 
 def _parallel_build_trees(
@@ -124,7 +123,7 @@ class BaseTimeSeriesForest(BaseForest):
 
         return estimator
 
-    def fit(self, X, y, sample_weight=None):
+    def _fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -147,7 +146,7 @@ class BaseTimeSeriesForest(BaseForest):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        #        X, y = check_X_y(X, y, enforce_univariate=True)
 
         # Validate or convert input data
         if sample_weight is not None:
