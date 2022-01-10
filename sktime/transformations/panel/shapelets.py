@@ -959,7 +959,7 @@ class ShapeletTransform(_PanelToTabularTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"max_shapelet_length" : 5, "max_shapelets_to_store_per_class" : 3}
+        params = {"max_shapelet_length": 5, "max_shapelets_to_store_per_class": 3}
         return params
 
 

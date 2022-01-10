@@ -1,6 +1,5 @@
-#!/usr/bin/env python3 -u
-"""TSFresh feature extractors."""
 # -*- coding: utf-8 -*-
+"""TSFresh feature extractors."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
@@ -8,12 +7,12 @@ __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+
 from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation.panel import check_X, check_X_y
 
 _check_soft_dependencies("tsfresh")
 
@@ -76,17 +75,21 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
         self.n_jobs = check_n_jobs(self.n_jobs)
 
         # lazy imports to avoid hard dependency
-        from tsfresh.defaults import CHUNKSIZE
-        from tsfresh.defaults import DISABLE_PROGRESSBAR
+        from tsfresh.defaults import (
+            CHUNKSIZE,
+            DISABLE_PROGRESSBAR,
+            N_PROCESSES,
+            PROFILING,
+            PROFILING_FILENAME,
+            PROFILING_SORTING,
+            SHOW_WARNINGS,
+        )
+        from tsfresh.feature_extraction.settings import (
+            ComprehensiveFCParameters,
+            EfficientFCParameters,
+            MinimalFCParameters,
+        )
         from tsfresh.utilities.dataframe_functions import impute
-        from tsfresh.defaults import N_PROCESSES
-        from tsfresh.defaults import PROFILING
-        from tsfresh.defaults import PROFILING_FILENAME
-        from tsfresh.defaults import PROFILING_SORTING
-        from tsfresh.defaults import SHOW_WARNINGS
-        from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
-        from tsfresh.feature_extraction.settings import EfficientFCParameters
-        from tsfresh.feature_extraction.settings import MinimalFCParameters
 
         # Set defaults from tsfresh
         extraction_params = {
@@ -265,12 +268,14 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     def _get_selection_params(self):
         """Set default values from tsfresh."""
         # lazy imports to avoid hard dependency
-        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
-        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
-        from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
-        from tsfresh.defaults import TEST_FOR_REAL_TARGET_REAL_FEATURE
-        from tsfresh.defaults import FDR_LEVEL
-        from tsfresh.defaults import HYPOTHESES_INDEPENDENT
+        from tsfresh.defaults import (
+            FDR_LEVEL,
+            HYPOTHESES_INDEPENDENT,
+            TEST_FOR_BINARY_TARGET_BINARY_FEATURE,
+            TEST_FOR_BINARY_TARGET_REAL_FEATURE,
+            TEST_FOR_REAL_TARGET_BINARY_FEATURE,
+            TEST_FOR_REAL_TARGET_REAL_FEATURE,
+        )
 
         # Set defaults
         selection_params = {

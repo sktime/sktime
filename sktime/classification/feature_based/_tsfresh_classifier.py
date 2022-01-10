@@ -217,6 +217,6 @@ class TSFreshClassifier(BaseClassifier):
         params = {
             "estimator": DummyClassifier(),
             "default_fc_parameters": "minimal",
-        },
+        }
 
         return params
