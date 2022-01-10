@@ -213,9 +213,12 @@ class BaseTransformer(BaseEstimator):
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel and "
-                    'self.get_tag("y_inner_mtype") is not "None",'
-                    " but found X of Panel type, and y not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -647,9 +650,12 @@ class BaseTransformer(BaseEstimator):
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel and "
-                    'self.get_tag("y_inner_mtype") is not "None",'
-                    " but found X of Panel type, and y not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -675,9 +681,12 @@ class BaseTransformer(BaseEstimator):
             X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
         if y is not None and self.get_tag("y_inner_mtype") != "None":
             raise ValueError(
-                "no default behaviour if _fit does not support Panel and "
-                'self.get_tag("y_inner_mtype") is not "None",'
-                " but found X of Panel type, and y not None"
+                f"{type(self).__name__} does not support Panel X if y is not None, "
+                f"since {type(self).__name__} supports only Series. "
+                "Auto-vectorization to extend Series X to Panel X can only be "
+                'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                "Consider extending _fit and _transform to handle the following "
+                "input types natively: Panel X and non-None y."
             )
 
         X = convert_to(
