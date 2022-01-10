@@ -107,7 +107,7 @@ class TransformerPairwisePanelTransformAsymm(TransformerPairwisePanelTestScenari
 
 
 scenarios_transformers_pairwise_panel = [
-    TransformerPairwisePanelTransformAsymm,
+    TransformerPairwisePanelTransformSymm,
     TransformerPairwisePanelTransformAsymm,
 ]
 
