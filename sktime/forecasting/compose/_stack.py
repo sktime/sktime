@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecasters for combining forecasts via stacking."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["StackingForecaster"]
 
 from warnings import warn
@@ -64,7 +64,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": True,
         "handles-missing-data": False,
         "scitype:y": "univariate",
@@ -98,14 +98,18 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
-        cv = SingleWindowSplitter(fh=self.fh.to_relative(self.cutoff))
+        cv = SingleWindowSplitter(fh=fh.to_relative(self.cutoff))
         train_window, test_window = next(cv.split(y))
         y_fcst = y.iloc[train_window]
         y_meta = y.iloc[test_window].values
+        if X is not None:
+            X_meta = X.iloc[test_window]
+        else:
+            X_meta = None
 
         # fit forecasters on training window
-        self._fit_forecasters(forecasters, y_fcst, fh=self.fh, X=X)
-        X_meta = np.column_stack(self._predict_forecasters(X))
+        self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X)
+        X_meta = np.column_stack(self._predict_forecasters(fh=fh, X=X_meta))
 
         # fit final regressor on on validation window
         self.regressor_.fit(X_meta, y_meta)
@@ -154,9 +158,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_pred_int : pd.DataFrame - only if return_pred_int=True
             Prediction intervals
         """
-        if return_pred_int:
-            raise NotImplementedError()
-        y_preds = np.column_stack(self._predict_forecasters(X))
+        y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
         y_pred = self.regressor_.predict(y_preds)
+        # index = y_preds.index
         index = self.fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
