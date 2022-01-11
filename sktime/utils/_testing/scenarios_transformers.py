@@ -12,6 +12,7 @@ from copy import deepcopy
 from inspect import isclass
 
 from sktime.base import BaseObject
+from sktime.datatypes import mtype_to_scitype
 from sktime.transformations.base import (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
@@ -90,6 +91,18 @@ class TransformerTestScenario(TestScenario, BaseObject):
         if not is_univariate and get_tag(obj, "univariate-only"):
             return False
 
+        # the case that we would need to vectorize with y, skip
+        X_inner_mtype = get_tag(obj, "X_inner_mtype")
+        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
+        if not isinstance(X_inner_scitypes, list):
+            X_inner_scitypes = [X_inner_scitypes]
+        # we require vectorization from of a Series trafo to Panel data ...
+        if X_scitype == "Panel" and "Panel" not in X_inner_scitypes:
+            # ... but y is passed and y is not ignored internally ...
+            if self.get_tag("has_y") and get_tag(obj, "y_inner_mtype") != "None":
+                # ... this would raise an error since vectorization is not defined
+                return False
+
         return True
 
     def get_args(self, key, obj=None, deepcopy_args=False):
@@ -167,7 +180,12 @@ class TransformerTestScenario(TestScenario, BaseObject):
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Series X."""
 
-    _tags = {"X_scitype": "Series", "X_univariate": True, "pre-refactor": True}
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": True,
+        "has_y": False,
+        "pre-refactor": True,
+    }
 
     args = {
         "fit": {"X": _make_series(n_timepoints=20, random_state=RAND_SEED)},
@@ -180,7 +198,7 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
 class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Series X."""
 
-    _tags = {"X_scitype": "Series", "X_univariate": False}
+    _tags = {"X_scitype": "Series", "X_univariate": False, "has_y": False}
 
     args = {
         "fit": {
@@ -196,7 +214,7 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": True}
+    _tags = {"X_scitype": "Panel", "X_univariate": True, "has_y": False}
 
     args = {
         "fit": {
@@ -216,7 +234,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
 class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": False}
+    _tags = {"X_scitype": "Panel", "X_univariate": False, "has_y": False}
 
     args = {
         "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
