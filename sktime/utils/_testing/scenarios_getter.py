@@ -15,6 +15,7 @@ from sktime.utils._testing.scenarios_classification import (
     scenarios_classification,
     scenarios_regression,
 )
+from sktime.utils._testing.scenarios_clustering import scenarios_clustering
 from sktime.utils._testing.scenarios_forecasting import scenarios_forecasting
 from sktime.utils._testing.scenarios_transformers import scenarios_transformers
 from sktime.utils._testing.scenarios_transformers_pairwise import (
@@ -25,6 +26,7 @@ from sktime.utils._testing.scenarios_transformers_pairwise import (
 scenarios = dict()
 scenarios["aligner"] = scenarios_aligners
 scenarios["classifier"] = scenarios_classification
+scenarios["clusterer"] = scenarios_clustering
 scenarios["forecaster"] = scenarios_forecasting
 scenarios["regressor"] = scenarios_regression
 scenarios["transformer"] = scenarios_transformers
