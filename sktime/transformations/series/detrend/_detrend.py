@@ -104,13 +104,13 @@ class Detrender(BaseTransformer):
         # univariate: X is pd.Series
         if isinstance(X, pd.Series):
             forecaster = clone(self.forecaster)
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
             self.forecaster_ = forecaster.fit(y=X, X=y)
         # multivariate
         elif isinstance(X, pd.DataFrame):
             self.forecaster_ = {}
             for colname in X.columns:
                 forecaster = clone(self.forecaster)
-            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
                 self.forecaster_[colname] = forecaster.fit(y=X[colname], X=y)
         else:
             raise TypeError("X must be pd.Series or pd.DataFrame")
