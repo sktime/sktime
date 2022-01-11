@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Test scenarios for aligners.
+"""Test scenarios for classification and regression.
 
-Contains TestScenario concrete children to run in tests for alignment algorithms.
+Contains TestScenario concrete children to run in tests for classifiers/regressirs.
 """
 
 __author__ = ["fkiraly"]
 
-__all__ = ["scenarios_aligners"]
+__all__ = [
+    "scenarios_classification",
+    "scenarios_regression"
+]
+
 
 from sktime.base import BaseObject
+from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 
-from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible
@@ -18,80 +22,37 @@ RAND_SEED = 42
 
 
 # no logic in scenario classes, but placeholder and for pattern homogeneity
-class AlignerTestScenario(TestScenario, BaseObject):
-    """Generic test scenario for aligners."""
+class ClassifierTestScenario(TestScenario, BaseObject):
+    """Generic test scenario for classifiers."""
 
     pass
 
 
-class AlignerPairwiseMultivariateEqual(AlignerTestScenario):
-    """Align multivariate series, pairwise alignment, equal length."""
-
-    _tags = {
-        "X_univariate": False,
-        "pairwise": True,
-        "equal_length": True,
-        "pre-refactor": True,
-    }
-
-    args = {
-        "fit": {
-            "X": [
-                _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
-                _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
-            ],
-        },
-    }
-    default_method_sequence = ["fit"]
+y = _make_classification_y(random_state=RAND_SEED)
+X = _make_panel_X(n_instances=10, n_timepoints=10, random_state=RAND_SEED, y=y)
+X_test = _make_panel_X(n_instances=5, n_timepoints=10, random_state=RAND_SEED)
 
 
-class AlignerPairwiseUnivariateUnequal(AlignerTestScenario):
-    """Align univariate series, pairwise alignment, unequal length."""
+class ClassifierFitPredict(ClassifierTestScenario):
+    """Fit/predict with panel X and labels y."""
 
-    _tags = {
-        "X_univariate": True,
-        "pairwise": True,
-        "equal_length": False,
-        "pre-refactor": False,
-    }
+    _tags = {"X_univariate": True, "pre-refactor": True}
 
     args = {
-        "fit": {
-            "X": [
-                _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
-                _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
-            ],
-        },
+        "fit": {"y": y, "X": X},
+        "predict": {"X": X_test},
     }
-    default_method_sequence = ["fit"]
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
-class AlignerMultipleUnivariateUnequal(AlignerTestScenario):
-    """Align univariate series, multiple alignment, unequal length."""
+scenarios_classification = [
+    ClassifierFitPredict,
+]
 
-    _tags = {
-        "X_univariate": True,
-        "pairwise": False,
-        "equal_length": False,
-        "pre-refactor": False,
-    }
-
-    args = {
-        "fit": {
-            "X": [
-                _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
-                _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
-                _make_series(n_timepoints=25, n_columns=1, random_state=RAND_SEED),
-            ],
-        },
-    }
-    default_method_sequence = ["fit"]
-
-
-scenarios_aligners = [
-    AlignerPairwiseMultivariateEqual,
-    AlignerPairwiseUnivariateUnequal,
-    AlignerMultipleUnivariateUnequal,
+# we use the same scenarios for regression, as in the old test suite
+scenarios_regression = [
+    ClassifierFitPredict,
 ]
 
 
@@ -156,6 +117,23 @@ scenarios_aligners = [
 #         return None, None
 #     elif isinstance(estimator, BaseAligner):
 #         X = [_make_series(n_columns=2, **kwargs), _make_series(n_columns=2, **kwargs)]
+#         return (X,)
+#     else:
+#         raise ValueError(_get_err_msg(estimator))
+
+
+# def _make_predict_args(estimator, **kwargs):
+#     if isinstance(estimator, BaseForecaster):
+#         fh = 1
+#         return (fh,)
+#     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+#         X = _make_panel_X(**kwargs)
+#         return (X,)
+#     elif isinstance(estimator, BaseSeriesAnnotator):
+#         X = make_annotation_problem(n_timepoints=10, **kwargs)
+#         return (X,)
+#     elif isinstance(estimator, BaseClusterer):
+#         X = _make_panel_X(**kwargs)
 #         return (X,)
 #     else:
 #         raise ValueError(_get_err_msg(estimator))
