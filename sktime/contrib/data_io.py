@@ -10,13 +10,80 @@ __author__ = [
 import numpy as np
 import pandas as pd
 
-from sktime.datasets._data_io import _read_header
 from sktime.datatypes._panel._convert import (
     _make_column_names,
     from_long_to_nested,
     from_nested_to_2d_np_array,
     from_nested_to_3d_numpy,
 )
+
+
+def _read_header(file, full_file_path_and_name):
+    """Read the header information, returning the meta information."""
+    # Meta data for data information
+    meta_data = {
+        "is_univariate": True,
+        "is_equally_spaced": True,
+        "is_equal_length": True,
+        "has_nans": False,
+        "has_timestamps": False,
+        "has_class_labels": True,
+    }
+    # Read header until @data tag met
+    for line in file:
+        line = line.strip().lower()
+        if line:
+            if line.startswith("@problemname"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+            elif line.startswith("@timestamps"):
+                tokens = line.split(" ")
+                if tokens[1] == "true":
+                    meta_data["has_timestamps"] = True
+                elif tokens[1] != "false":
+                    raise IOError(
+                        f"invalid timestamps tag value {tokens[1]} value in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@univariate"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["is_univariate"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid univariate tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@equallength"):
+                tokens = line.split(" ")
+                if tokens[1] == "false":
+                    meta_data["is_equal_length"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid unequal tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@classlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                    )
+                if token_len == 2 and meta_data["class_labels"]:
+                    raise IOError(
+                        f"if the classlabel tag is true then class values must be "
+                        f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@data"):
+                return meta_data
+    raise IOError(
+        f"End of file reached for {full_file_path_and_name} but no indicated start of "
+        f"data with the tag @data"
+    )
 
 
 def load_from_tsfile(
@@ -55,8 +122,8 @@ def load_from_tsfile(
     # equal_length = True
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         _meta_data = _read_header(file, full_file_path_and_name)
-        for line in file:  # Will this work?
-            num_cases = num_cases + 1
+        for line in file:
+            num_cases += 1
             line = line.replace("?", replace_missing_vals_with)
             dimensions = line.split(":")
             # If first instance then note the number of dimensions.
@@ -65,8 +132,7 @@ def load_from_tsfile(
                 num_dimensions = len(dimensions)
                 if _meta_data["has_class_labels"]:
                     num_dimensions -= 1
-                for _dim in range(0, num_dimensions):
-                    instance_list.append([])
+                instance_list = [[] for _ in range(num_dimensions)]
                 is_first_case = False
                 _meta_data["num_dimensions"] = num_dimensions
             # See how many dimensions a case has
