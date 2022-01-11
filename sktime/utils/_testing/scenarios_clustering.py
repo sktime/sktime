@@ -10,8 +10,7 @@ __all__ = ["scenarios_clustering"]
 
 
 from sktime.base import BaseObject
-from sktime.utils._testing.panel import make_clustering_problem, _make_panel_X
-
+from sktime.utils._testing.panel import _make_panel_X, make_clustering_problem
 from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible

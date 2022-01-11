@@ -6,15 +6,11 @@ Contains TestScenario concrete children to run in tests for classifiers/regressi
 
 __author__ = ["fkiraly"]
 
-__all__ = [
-    "scenarios_classification",
-    "scenarios_regression"
-]
+__all__ = ["scenarios_classification", "scenarios_regression"]
 
 
 from sktime.base import BaseObject
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
-
 from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible

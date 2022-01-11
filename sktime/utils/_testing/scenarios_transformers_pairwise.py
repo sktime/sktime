@@ -13,7 +13,6 @@ from inspect import isclass
 import pandas as pd
 
 from sktime.base import BaseObject
-
 from sktime.utils._testing.scenarios import TestScenario
 
 # random seed for generating data to keep scenarios exactly reproducible
@@ -27,9 +26,8 @@ def get_tag(obj, tag_name):
     else:
         return obj.get_tag(tag_name)
 
+
 # no logic in scenario classes, but placeholder and for pattern homogeneity
-
-
 class TransformerPairwiseTestScenario(TestScenario, BaseObject):
     """Generic test scenario for pairwise transformers."""
 
