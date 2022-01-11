@@ -54,6 +54,7 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
