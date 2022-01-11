@@ -87,6 +87,7 @@ class BaseClusterer(BaseEstimator, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
+        self.check_is_fitted()
         X = self._check_clusterer_input(X)
         return self._predict(X)
 

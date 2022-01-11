@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
+from sktime.datatypes import convert_to
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 
 
@@ -127,9 +128,9 @@ def make_clustering_problem(
     )
 
     if return_numpy:
-        return X
+        return convert_to(X, "numpy3D")
     else:
-        return pd.Series(X)
+        return X
 
 
 def make_transformer_problem(

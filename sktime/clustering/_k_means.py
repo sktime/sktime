@@ -72,8 +72,8 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         random_state: Union[int, RandomState] = None,
         averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "mean",
     ):
-        self.averaging_technique = averaging_method
-        self._average_technique = resolve_average_callable(averaging_method)
+        self.averaging_method = averaging_method
+        self._averaging_method = resolve_average_callable(averaging_method)
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,
@@ -106,5 +106,5 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
             curr_indexes = np.where((assignment_indexes == i))
-            new_centers[i, :] = self._average_technique(X[curr_indexes])
+            new_centers[i, :] = self._averaging_method(X[curr_indexes])
         return new_centers

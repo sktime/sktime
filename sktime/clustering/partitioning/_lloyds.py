@@ -10,7 +10,6 @@ from sklearn.utils import check_random_state
 
 from sktime.clustering.base import BaseClusterer
 from sktime.distances import distance_factory, pairwise_distance
-from sktime.transformations.base import BaseTransformer
 
 
 def _forgy_center_initializer(
@@ -37,7 +36,7 @@ def _forgy_center_initializer(
     return random_state.choice(X.shape[0], n_centers, replace=False)
 
 
-class TimeSeriesLloyds(BaseClusterer, BaseTransformer, ABC):
+class TimeSeriesLloyds(BaseClusterer, ABC):
     """Abstact class that implements time series Lloyds algorithm.
 
     Parameters
@@ -84,14 +83,7 @@ class TimeSeriesLloyds(BaseClusterer, BaseTransformer, ABC):
     """
 
     _tags = {
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
-        "capability:multithreading": False,
     }
 
     _init_algorithms = {"forgy": _forgy_center_initializer, "random": None}
@@ -121,8 +113,6 @@ class TimeSeriesLloyds(BaseClusterer, BaseTransformer, ABC):
         self.inertia_ = None
         self.n_iter_ = 0
 
-        self._init_algorithm = None
-        self._distance_metric = None
         self._random_state = None
 
         super(TimeSeriesLloyds, self).__init__()
@@ -223,9 +213,9 @@ class TimeSeriesLloyds(BaseClusterer, BaseTransformer, ABC):
         np.ndarray (1d array of shape (n_instance,))
             Array of indexes of each instance closest cluster.
         """
-        return pairwise_distance(
-            X, self.cluster_centers_, metric=self._distance_metric
-        ).argmin(axis=1)
+        return pairwise_distance(X, self.cluster_centers_, metric=self.metric).argmin(
+            axis=1
+        )
 
     @abstractmethod
     def _compute_new_cluster_centers(
