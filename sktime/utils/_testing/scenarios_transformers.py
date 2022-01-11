@@ -130,10 +130,10 @@ class TransformerTestScenario(TestScenario, BaseObject):
                 p2t = _is_child_of(obj, _PanelToTabularTransformer)
                 p2p = _is_child_of(obj, _PanelToPanelTransformer)
             else:
-                s2s = X_scitype == "Series" and X_out_series and not X_panel
-                s2p = X_scitype == "Series" and X_out_prim and not X_panel
-                p2t = X_scitype == "Panel" and X_out_prim and X_panel
-                p2p = X_scitype == "Panel" and X_out_series and X_panel
+                s2s = X_scitype == "Series" and X_out_series
+                s2p = X_scitype == "Series" and X_out_prim
+                p2t = X_scitype == "Panel" and X_out_prim
+                p2p = X_scitype == "Panel" and X_out_series
 
             # expected input type of inverse_transform is expected output of transform
             if s2p:
@@ -151,7 +151,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
             else:
                 raise RuntimeError(
                     "transformer with unexpected combination of tags: "
-                    f"X_out_scitype = {X_out_series}, scitype:instancewise = {X_panel}"
+                    f"X_out_scitype = {X_out_scitype}, scitype:instancewise = {X_panel}"
                 )
 
         else:
