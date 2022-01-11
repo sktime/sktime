@@ -11,6 +11,8 @@ __all__ = ["scenarios_transformers"]
 from copy import deepcopy
 from inspect import isclass
 
+import pandas as pd
+
 from sktime.base import BaseObject
 from sktime.datatypes import mtype_to_scitype
 from sktime.transformations.base import (
@@ -101,6 +103,13 @@ class TransformerTestScenario(TestScenario, BaseObject):
             # ... but y is passed and y is not ignored internally ...
             if self.get_tag("has_y") and get_tag(obj, "y_inner_mtype") != "None":
                 # ... this would raise an error since vectorization is not defined
+                return False
+
+        # only applicable if X of supported index type
+        X = self.args["fit"]["X"]
+        supported_idx_types = get_tag(obj, "enforce_index_type")
+        if isinstance(X, (pd.Series, pd.DataFrame)) and supported_idx_types is not None:
+            if type(X.index) not in get_tag(obj, "enforce_index_type"):
                 return False
 
         return True
