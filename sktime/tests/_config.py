@@ -121,6 +121,9 @@ EXCLUDE_ESTIMATORS = [
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
+    # ConditionalDeseasonalizer and STLforecaster still need refactoring
+    "ConditionalDeseasonalizer",
+    "STLforecaster",
 ]
 
 
