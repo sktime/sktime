@@ -9,7 +9,6 @@ __author__ = ["fkiraly"]
 __all__ = ["scenarios_aligners"]
 
 from sktime.base import BaseObject
-
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.scenarios import TestScenario
 
