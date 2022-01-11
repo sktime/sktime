@@ -18,7 +18,6 @@ from sktime.utils._testing.scenarios import TestScenario
 RAND_SEED = 42
 
 
-# no logic in scenario classes, but placeholder and for pattern homogeneity
 class ClassifierTestScenario(TestScenario, BaseObject):
     """Generic test scenario for classifiers."""
 
