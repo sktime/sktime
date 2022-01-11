@@ -51,12 +51,14 @@ def deep_equals(x, y, return_msg=False):
                     if class/object, names of attributes and methods are not equal
             .dtype - dtype of pandas or numpy object is not equal
             .index - index of pandas object is not equal
-            .series_equals, .df_equals - .equals call on pandas objects returns False
+            .series_equals, .df_equals, .index_equals - .equals of pd returns False
             [i] - if tuple/list: i-th element not equal
             [key] - if dict: value at key is not equal
             [colname] - if pandas.DataFrame: column with name colname is not equal
             != - call to generic != returns False
     """
+
+    print(type(x))
 
     def ret(is_equal, msg):
         if return_msg:
@@ -103,6 +105,8 @@ def deep_equals(x, y, return_msg=False):
             return ret(True, "")
         else:
             return ret(x.equals(y), f".df_equals, x = {x} != y = {y}")
+    elif isinstance(x, pd.Index):
+        return ret(x.equals(y), f".index_equals, x = {x} != y = {y}")
     elif isinstance(x, np.ndarray):
         if x.dtype != y.dtype:
             return ret(False, f".dtype, x.dtype = {x.dtype} != y.dtype = {y.dtype}")
