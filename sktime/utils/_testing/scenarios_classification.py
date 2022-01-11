@@ -50,7 +50,6 @@ class ClassifierTestScenario(TestScenario, BaseObject):
             args = deepcopy(args)
 
         return args
-    pass
 
 
 y = _make_classification_y(random_state=RAND_SEED)
