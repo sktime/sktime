@@ -62,6 +62,7 @@ def _validate_distance_result(
         f"type {type(metric_str_result)}"
     )
     global _ran_once
+    _ran_once = False
 
     if _ran_once is False:
         _ran_once = True
