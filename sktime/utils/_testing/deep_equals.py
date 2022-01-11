@@ -58,8 +58,6 @@ def deep_equals(x, y, return_msg=False):
             != - call to generic != returns False
     """
 
-    print(type(x))
-
     def ret(is_equal, msg):
         if return_msg:
             if is_equal:
