@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["chrisholder", "TonyBagnall"]
+
 from abc import ABC, abstractmethod
 from typing import Callable, Union
 
@@ -35,8 +37,8 @@ def _forgy_center_initializer(
     return random_state.choice(X.shape[0], n_centers, replace=False)
 
 
-class _Lloyds(BaseClusterer, BaseTransformer, ABC):
-    """Abstact class that implement time series Lloyds algorithm.
+class TimeSeriesLloyds(BaseClusterer, BaseTransformer, ABC):
+    """Abstact class that implements time series Lloyds algorithm.
 
     Parameters
     ----------
@@ -44,9 +46,12 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         The number of clusters to form as well as the number of
         centroids to generate.
     init_algorithm: str, defaults = 'forgy'
-        Method for initializing cluster centers. TODO: Add specific strings
+        Method for initializing cluster centers. Any of the following are valid:
+        ['kmeans++', 'random', 'forgy']
     metric: str or Callable, defaults = 'dtw'
-        Distance metric to compute similarity between time series.
+        Distance metric to compute similarity between time series. Any of the following
+        are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
+        'wddtw']
     n_init: int, defaults = 10
         Number of times the k-means algorithm will be run with different
         centroid seeds. The final result will be the best output of n_init
@@ -113,14 +118,14 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
 
         self.cluster_centers_ = None
         self.labels_ = None
-        self.intertia_ = None
-        self.n_iter = 0
+        self.inertia_ = None
+        self.n_iter_ = 0
 
         self._init_algorithm = None
         self._distance_metric = None
         self._random_state = None
 
-        super(_Lloyds, self).__init__()
+        super(TimeSeriesLloyds, self).__init__()
 
     def _check_params(self, X: np.ndarray) -> None:
         """Check parameters are valid and initialized.
@@ -136,8 +141,7 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
         ValueError
             If the init_algorithm value is invalid.
         """
-        if self._random_state is None:
-            self._random_state = check_random_state(self.random_state)
+        self._random_state = check_random_state(self.random_state)
 
         self._distance_metric = distance_factory(X[0], X[1], metric=self.metric)
 
@@ -177,6 +181,9 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
             self.cluster_centers_ = self._compute_new_cluster_centers(
                 X, cluster_assignment_indexes
             )
+            self.n_iter_ += 1
+
+        self.labels_ = self._assign_clusters(X)
 
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
@@ -224,12 +231,11 @@ class _Lloyds(BaseClusterer, BaseTransformer, ABC):
     def _compute_new_cluster_centers(
         self, X: np.ndarray, assignment_indexes: np.ndarray
     ) -> np.ndarray:
-        """Compute new centers.
+        """Abstract method to compute new centers.
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
+        X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
             Time series instances to predict their cluster indexes.
         assignment_indexes: np.ndarray
             Indexes that each time series in X belongs to.
