@@ -2,7 +2,7 @@
 """Tests for time series Lloyds partitioning."""
 import numpy as np
 
-from sktime.clustering_redo.partitioning._lloyds import TimeSeriesLloyds
+from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
 from sktime.distances.tests._utils import create_test_distance_numpy
 
 dataset_name = "Beef"

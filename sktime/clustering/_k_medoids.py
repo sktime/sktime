@@ -1,130 +1,127 @@
 # -*- coding: utf-8 -*-
-"""Time series K-medoids clusterer"""
+__author__ = ["chrisholder", "TonyBagnall"]
 
-__author__ = ["Christopher Holder", "Tony Bagnall"]
-__all__ = ["TimeSeriesKMedoids"]
+from typing import Callable, Union
 
-from sktime.clustering.base._typing import (
-    MetricParameter,
-    NumpyArray,
-    NumpyOrDF,
-    InitAlgo,
-    NumpyRandomState,
-)
-from sktime.clustering.partitioning._lloyds_partitioning import (
-    TimeSeriesLloydsPartitioning,
-)
-from sktime.clustering.partitioning._cluster_approximations import Medoids
-from sktime.clustering.base import BaseClusterer
+import numpy as np
+from numpy.random import RandomState
+
+from sktime.clustering.metrics.medoids import medoids
+from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
+from sktime.distances import pairwise_distance
 
 
-class TimeSeriesKMedoids(TimeSeriesLloydsPartitioning):
-    """Time Series K-Medoids Clusterer
+class TimeSeriesKMedoids(TimeSeriesLloyds):
+    """Time series K-medoids implementation.
 
     Parameters
     ----------
-    n_clusters: int, default = 8
-        The number of clusters to form as the number of
+    n_clusters: int, defaults = 8
+        The number of clusters to form as well as the number of
         centroids to generate.
-
-    init_algorithm: Init_Algo or str, default = forgy
-        Algorithm that is used to initialise the cluster
-        centers. str options are "forgy", "random" or
-        "k-means++". If using custom center init algorithm
-        then must be of type Init_Algo
-
-    max_iter: int, default = 300
-        Maximum number of iterations of time series k means
-        for a single run.
-
-    verbose: bool, default = False
+    init_algorithm: str, defaults = 'forgy'
+        Method for initializing cluster centers. Any of the following are valid:
+        ['kmeans++', 'random', 'forgy']
+    metric: str or Callable, defaults = 'dtw'
+        Distance metric to compute similarity between time series. Any of the following
+        are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
+        'wddtw']
+    n_init: int, defaults = 10
+        Number of times the k-means algorithm will be run with different
+        centroid seeds. The final result will be the best output of n_init
+        consecutive runs in terms of inertia.
+    max_iter: int, defaults = 30
+        Maximum number of iterations of the k-means algorithm for a single
+        run.
+    tol: float, defaults = 1e-4
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
+    verbose: bool, defaults = False
         Verbosity mode.
+    random_state: int or np.random.RandomState instance or None, defaults = None
+        Determines random number generation for centroid initialization.
 
-    metric: Metric_Parameter, default = None
-        The distance metric that is used to calculate the
-        distance between points.
-
-    random_state: NumpyRandomState, default = np.random.RandomState(1)
-        Generator used to initialise the centers.
+    Attributes
+    ----------
+    cluster_centers_: np.ndarray (3d array of shape (n_clusters, n_dimensions,
+        series_length))
+        Time series that represent each of the cluster centers. If the algorithm stops
+        before fully converging these will not be consistent with labels_.
+    labels_: np.ndarray (1d array of shape (n_instance,))
+        Labels that is the index each time series belongs to.
+    inertia_: float
+        Sum of squared distances of samples to their closest cluster center, weighted by
+        the sample weights if provided.
+    n_iter_: int
+        Number of iterations run.
     """
 
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: InitAlgo = "forgy",
+        init_algorithm: Union[str, Callable] = "forgy",
+        metric: Union[str, Callable] = "dtw",
+        n_init: int = 10,
         max_iter: int = 300,
+        tol: float = 1e-4,
         verbose: bool = False,
-        metric: MetricParameter = "dtw",
-        random_state: NumpyRandomState = None,
+        random_state: Union[int, RandomState] = None,
     ):
+        self._precomputed_pairwise = None
+
         super(TimeSeriesKMedoids, self).__init__(
-            n_clusters=n_clusters,
-            init_algorithm=init_algorithm,
-            max_iter=max_iter,
-            verbose=verbose,
-            metric=metric,
-            random_state=random_state,
+            n_clusters,
+            init_algorithm,
+            metric,
+            n_init,
+            max_iter,
+            tol,
+            verbose,
+            random_state,
         )
 
-    def fit(self, X: NumpyOrDF, y: NumpyOrDF = None) -> BaseClusterer:
-        """
-        Method that is used to fit the clustering algorithm
-        on the dataset X
+    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+        """Fit time series clusterer to training data.
 
         Parameters
         ----------
-        X: Numpy array or Dataframe
-            sktime data_frame or numpy array to train the model on
-
-        y: Numpy array of Dataframe, default = None
-            sktime data_frame or numpy array that is the labels for training.
-            Unlikely to be used for clustering but kept for consistency
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Training time series instances to cluster.
+        y: ignored, exists for API consistency reasons.
 
         Returns
         -------
-        self
-            Fitted estimator
+        self:
+            Fitted estimator.
         """
+        self._precomputed_pairwise = pairwise_distance(X, metric=self.metric)
+        return super()._fit(X, y)
 
-        return super(TimeSeriesKMedoids, self).fit(X)
-
-    def predict(self, X: NumpyOrDF) -> NumpyArray:
-        """
-        Method used to perform a prediction from the already
-        trained clustering algorithm
+    def _compute_new_cluster_centers(
+        self, X: np.ndarray, assignment_indexes: np.ndarray
+    ) -> np.ndarray:
+        """Compute new centers.
 
         Parameters
         ----------
-        X: Numpy array or Dataframe
-            sktime data_frame or numpy array to predict
-            cluster for
+        X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
+            Time series instances to predict their cluster indexes.
+        assignment_indexes: np.ndarray
+            Indexes that each time series in X belongs to.
 
         Returns
         -------
-        Numpy_Array: np.array
-            Index of the cluster each sample belongs to
+        np.ndarray (3d of shape (n_clusters, n_dimensions, series_length)
+            New cluster center values.
         """
-
-        return super(TimeSeriesKMedoids, self).predict(X)
-
-    def calculate_new_centers(self, cluster_values: NumpyArray) -> NumpyArray:
-        """
-        Method used to define how the centers are calculated
-
-        Parameters
-        ----------
-        cluster_values: Numpy_Array
-            Values to derive a center from (values in a cluster)
-
-        Returns
-        -------
-        Numpy_Array
-            Single value that is determined to be the center of
-            the series
-        """
-        if self._metric is None:
-            self._check_params(cluster_values)
-
-        medoid = Medoids(cluster_values, self._metric)
-        medoid_index = medoid.approximate()
-        return cluster_values[medoid_index]
+        new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
+        for i in range(self.n_clusters):
+            curr_indexes = np.where(assignment_indexes == i)[0]
+            distance_matrix = np.zeros((len(curr_indexes), len(curr_indexes)))
+            for j in range(len(curr_indexes)):
+                for k in range(len(curr_indexes)):
+                    distance_matrix[j, k] = self._precomputed_pairwise[j, k]
+            new_centers[i, :] = medoids(X[curr_indexes], self._precomputed_pairwise)
+        return new_centers

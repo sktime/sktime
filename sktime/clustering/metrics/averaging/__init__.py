@@ -3,4 +3,4 @@
 __all__ = ["mean_average"]
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from sktime.clustering_redo.metrics.averaging._averaging import mean_average
+from sktime.clustering.metrics.averaging._averaging import mean_average

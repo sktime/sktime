@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
-__all__ = [
-    "BaseClusterer",
-    "BaseClusterCenterInitializer",
-    "BaseClusterAverage",
-    "BaseApproximate",
-]
+"""Base class for clustering module."""
+__author__ = ["chrisholder", "TonyBagnall"]
+__all__ = ["BaseClusterer"]
 
-from sktime.clustering.base.base import (
-    BaseClusterer,
-    BaseClusterCenterInitializer,
-    BaseClusterAverage,
-    BaseApproximate,
-)
+from sktime.clustering.base._base import BaseClusterer

@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn import metrics
 
-from sktime.clustering_redo._k_means import TimeSeriesKMeans
+from sktime.clustering._k_means import TimeSeriesKMeans
 from sktime.datasets import load_UCR_UEA_dataset
 
 dataset_name = "Beef"

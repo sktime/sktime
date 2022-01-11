@@ -2,7 +2,7 @@
 """Tests for medoids."""
 import numpy as np
 
-from sktime.clustering_redo.metrics.medoids import medoids
+from sktime.clustering.metrics.medoids import medoids
 from sktime.distances.tests._utils import create_test_distance_numpy
 
 

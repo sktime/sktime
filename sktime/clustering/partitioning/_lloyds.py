@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import RandomState
 from sklearn.utils import check_random_state
 
-from sktime.clustering_redo.base import BaseClusterer
+from sktime.clustering.base import BaseClusterer
 from sktime.distances import distance_factory, pairwise_distance
 from sktime.transformations.base import BaseTransformer
 
