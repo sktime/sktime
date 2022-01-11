@@ -105,6 +105,6 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         """
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
-            curr_indexes = np.where((assignment_indexes == i))
+            curr_indexes = np.where(assignment_indexes == i)[0]
             new_centers[i, :] = self._averaging_method(X[curr_indexes])
         return new_centers
