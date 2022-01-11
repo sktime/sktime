@@ -26,6 +26,7 @@ Optional implements:
     updating        - _update(self, y, X=None, update_params=True):
     fitted parameter inspection - get_fitted_params()
     predicting quantiles - _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA)
+    predicting variance - _predict_var(self, fh, X=None)
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -84,6 +85,7 @@ class MyForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement predict_quantiles?
+        "capability:pred_var": False,  # does forecaster implement predict_var?
         # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
     }
     #  in case of inheritance, concrete class should typically set tags
@@ -249,6 +251,29 @@ class MyForecaster(BaseForecaster):
                 Quantile forecasts are calculated for each a in alpha.
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
+        """
+        # implement here
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """
+        Compute/return prediction variance for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            Wether to return marginal variances or covariance matrices.
+
+        Returns
+        -------
+        pred_var : np.ndarray
+            if cov=False, a vector of same length as fh with predictive marginal variances; 
+            if cov=True, a square matrix of size len(fh) with predictive covariance matrix.
         """
         # implement here
 
