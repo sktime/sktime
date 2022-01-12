@@ -7,10 +7,12 @@ __author__ = ["mloning"]
 import numpy as np
 import pandas as pd
 import pytest
+from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import DELEGATED_METHODS
+from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
@@ -223,3 +225,42 @@ def test_to_absolute_freq(freqstr):
     fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
     assert abs_fh._values.freqstr == freqstr
+
+
+@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+def test_absolute_to_absolute(freqstr):
+    """Test converting between absolute and relative."""
+    # Converts from absolute to relative and back to absolute
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    fh = ForecastingHorizon([1, 2, 3])
+    abs_fh = fh.to_absolute(train.index[-1])
+
+    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    assert_array_equal(abs_fh, converted_abs_fh)
+    assert converted_abs_fh._values.freqstr == freqstr
+
+
+@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+def test_relative_to_relative(freqstr):
+    """Test converting between relative and absolute."""
+    # Converts from relative to absolute and back to relative
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    fh = ForecastingHorizon([1, 2, 3])
+    abs_fh = fh.to_absolute(train.index[-1])
+
+    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    assert_array_equal(fh, converted_rel_fh)
+
+
+@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+def test_estimator_fh(freqstr):
+    """Test model fitting with anchored frequency."""
+    train = pd.Series(
+        np.random.uniform(low=2000, high=7000, size=(104,)),
+        index=pd.date_range("2019-01-02", freq=freqstr, periods=104),
+    )
+    forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, restrict=True)
+    forecaster.fit(train)
+    pred = forecaster.predict(np.arange(1, 27))
+    expected_fh = ForecastingHorizon(np.arange(1, 27)).to_absolute(train.index[-1])
+    assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
