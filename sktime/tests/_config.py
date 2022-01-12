@@ -121,9 +121,11 @@ EXCLUDE_ESTIMATORS = [
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
-    # ConditionalDeseasonalizer and STLforecaster still need refactoring
+    # ConditionalDeseasonalizer and STLtransformer still need refactoring
+    #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
     "STLforecaster",
+    "STLTransformer",
 ]
 
 
