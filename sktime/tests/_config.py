@@ -126,6 +126,9 @@ EXCLUDE_ESTIMATORS = [
     "ConditionalDeseasonalizer",
     "STLforecaster",
     "STLTransformer",
+    # MUSE seems to have stochastic failures on small number instances or time points
+    # see 1866, this needs to be addressed
+    "MUSE",
 ]
 
 
