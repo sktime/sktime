@@ -7,20 +7,21 @@ from typing import Callable, Union
 import numpy as np
 from numpy.random import RandomState
 from sklearn.utils import check_random_state
+from sklearn.utils.extmath import stable_cumsum
 
-from sktime.clustering.base import BaseClusterer
+from sktime.clustering.base._base import BaseClusterer, TimeSeriesPanel
+from sktime.clustering.metrics.averaging._averaging import mean_average
 from sktime.distances import distance_factory, pairwise_distance
 
 
 def _forgy_center_initializer(
-    X: np.ndarray, n_centers: int, random_state: np.random.RandomState
-):
+    X: TimeSeriesPanel, n_clusters: int, random_state: np.random.RandomState
+) -> np.ndarray:
     """Compute the initial centers using forgy method.
 
     Parameters
     ----------
-    X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-        (n_instances,n_dimensions,series_length))
+    X : np.ndarray (3d array of shape (n_instances,n_dimensions,series_length))
         Time series instances to cluster.
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
@@ -30,10 +31,94 @@ def _forgy_center_initializer(
 
     Returns
     -------
-    np.ndarray (1d array of shape (n_clusters,))
+    np.ndarray (3d array of shape (n_clusters, n_dimensions, series_length))
         Indexes of the cluster centers.
     """
-    return random_state.choice(X.shape[0], n_centers, replace=False)
+    return X[random_state.choice(X.shape[0], n_clusters, replace=False)]
+
+
+def _random_center_initializer(
+    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState
+) -> np.ndarray:
+    """Compute initial centroids using random method.
+
+    This works by assigning each point randomly to a cluster. Then the average of
+    the cluster is taken to get the centers.
+
+    Parameters
+    ----------
+    X : np.ndarray (3d array of shape (n_instances,n_dimensions,series_length))
+        Time series instances to cluster.
+    n_clusters: int, defaults = 8
+        The number of clusters to form as well as the number of
+        centroids to generate.
+    random_state: np.random.RandomState
+        Determines random number generation for centroid initialization.
+
+    Returns
+    -------
+    np.ndarray (3d array of shape (n_clusters, n_dimensions, series_length))
+        Indexes of the cluster centers.
+    """
+    new_centers = np.zeros((n_clusters, X.shape[1], X.shape[2]))
+    selected = random_state.choice(n_clusters, X.shape[0], replace=True)
+    for i in range(n_clusters):
+        curr_indexes = np.where(selected == i)[0]
+        new_centers[i, :] = mean_average(X[curr_indexes])
+    return new_centers
+
+
+def _kmeans_plus_plus(
+    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState
+):
+    """Compute initial centroids using kmeans++ method.
+
+    This works by choosing one point at random. Next compute the distance between the
+    center and each point. Sample these with a probability proportional to the square
+    of the distance of the points from its nearest center.
+
+    NOTE: This is adapted from tslearns implementation:
+    https://github.com/tslearn-team/tslearn/blob/main/tslearn/clustering/kmeans.py
+
+    Parameters
+    ----------
+    X : np.ndarray (3d array of shape (n_instances,n_dimensions,series_length))
+        Time series instances to cluster.
+    n_clusters: int, defaults = 8
+        The number of clusters to form as well as the number of
+        centroids to generate.
+    random_state: np.random.RandomState
+        Determines random number generation for centroid initialization.
+
+    Returns
+    -------
+    np.ndarray (3d array of shape (n_clusters, n_dimensions, series_length))
+        Indexes of the cluster centers.
+    """
+    centers = np.empty((n_clusters, X.shape[1], X.shape[2]))
+
+    n_local_trials = 2 + int(np.log(n_clusters))
+
+    centers[0, :] = X[random_state.randint(X.shape[0])]
+
+    curr_dist = pairwise_distance(X[0, np.newaxis], X, metric="euclidean")
+    current_pot = curr_dist.sum()
+
+    for c in range(1, n_clusters):
+        rand_vals = random_state.random_sample(n_local_trials) * current_pot
+        candidate_ids = np.searchsorted(stable_cumsum(curr_dist), rand_vals)
+        np.clip(candidate_ids, None, curr_dist.size - 1, out=candidate_ids)
+        distance_to_candidates = pairwise_distance(X[candidate_ids], X, "dtw")
+        np.minimum(curr_dist, distance_to_candidates, out=distance_to_candidates)
+        candidates_pot = distance_to_candidates.sum(axis=1)
+        best_candidate = np.argmin(candidates_pot)
+        current_pot = candidates_pot[best_candidate]
+        curr_dist = distance_to_candidates[best_candidate]
+        best_candidate = candidate_ids[best_candidate]
+
+        centers[c] = X[best_candidate]
+
+    return centers
 
 
 class TimeSeriesLloyds(BaseClusterer, ABC):
@@ -86,7 +171,11 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         "capability:multivariate": True,
     }
 
-    _init_algorithms = {"forgy": _forgy_center_initializer, "random": None}
+    _init_algorithms = {
+        "forgy": _forgy_center_initializer,
+        "random": _random_center_initializer,
+        "kmeans++": _kmeans_plus_plus,
+    }
 
     def __init__(
         self,
@@ -163,9 +252,9 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Fitted estimator.
         """
         self._check_params(X)
-        self.cluster_centers_ = X[
-            self._init_algorithm(X, self.n_clusters, self._random_state), :
-        ]
+        self.cluster_centers_ = self._init_algorithm(
+            X, self.n_clusters, self._random_state
+        )
         for _ in range(self.max_iter):
             cluster_assignment_indexes = self._assign_clusters(X)
             self.cluster_centers_ = self._compute_new_cluster_centers(

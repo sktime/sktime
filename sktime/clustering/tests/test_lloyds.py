@@ -1,8 +1,20 @@
 # -*- coding: utf-8 -*-
 """Tests for time series Lloyds partitioning."""
-import numpy as np
+from typing import Callable
 
-from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
+import numpy as np
+import pytest
+from sklearn.model_selection import train_test_split
+from sklearn.utils import check_random_state
+
+from sktime.clustering.partitioning._lloyds import (
+    TimeSeriesLloyds,
+    _forgy_center_initializer,
+    _kmeans_plus_plus,
+    _random_center_initializer,
+)
+from sktime.datasets import load_arrow_head
+from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
 
 dataset_name = "Beef"
@@ -34,3 +46,23 @@ def test_lloyds():
         test_result,
         np.array([2, 1, 1, 3, 2, 2, 2, 2, 6, 2, 2, 6, 6, 6, 2, 4, 3, 0, 6, 4]),
     )
+
+
+CENTER_INIT_ALGO = [
+    _kmeans_plus_plus,
+    _random_center_initializer,
+    _forgy_center_initializer,
+]
+
+
+@pytest.mark.parametrize("center_init_callable", CENTER_INIT_ALGO)
+def test_center_init(center_init_callable: Callable[[np.ndarray], np.ndarray]):
+    """Test center initialisation algorithms."""
+    k = 5
+    X, y = load_arrow_head(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    X_train = convert_to(X_train, "numpy3D")
+    random_state = check_random_state(1)
+    test_centers = center_init_callable(X_train, k, random_state)
+    assert len(test_centers) == k
+    assert len(np.unique(test_centers, axis=1)) == k

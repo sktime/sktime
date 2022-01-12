@@ -29,6 +29,35 @@ def _get_cluster_values(cluster_indexes: np.ndarray, X: np.ndarray, k: int):
     return ts_in_center
 
 
+def plot_series(X: TimeSeriesPanel):
+    _check_soft_dependencies("matplotlib")
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+
+    if isinstance(X, pd.DataFrame):
+        predict_series = convert_to(X, "numpy3D")
+    plt.figure(figsize=(5, 10))
+    plt.rcParams["figure.dpi"] = 100
+
+    fig, axes = plt.subplots(nrows=len(X), ncols=1)
+    for i in range(len(X)):
+        curr = X[i][0]
+        curr_axes = axes[i]
+        curr_axes.plot(curr, color="b")
+
+    blue_patch = mpatches.Patch(color="blue", label="Series that belong to the cluster")
+    plt.legend(
+        handles=[blue_patch],
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.40),
+        fancybox=True,
+        shadow=True,
+        ncol=5,
+    )
+    plt.tight_layout()
+    plt.show()
+
+
 def plot_cluster_algorithm(model: TimeSeriesLloyds, X: TimeSeriesPanel, k: int):
     """Plot the results from a univariate partitioning algorithm.
 
