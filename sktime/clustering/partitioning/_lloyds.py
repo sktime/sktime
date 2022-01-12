@@ -180,7 +180,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "forgy",
+        init_algorithm: Union[str, Callable] = "kmeans++",
         metric: Union[str, Callable] = "dtw",
         n_init: int = 10,
         max_iter: int = 300,

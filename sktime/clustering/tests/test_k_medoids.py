@@ -4,98 +4,114 @@ import numpy as np
 from sklearn import metrics
 
 from sktime.clustering._k_medoids import TimeSeriesKMedoids
-from sktime.datasets import load_UCR_UEA_dataset
-
-dataset_name = "Beef"
+from sktime.datasets import load_basic_motions
 
 expected_results = {
     "medoids": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
         4,
-        7,
-        7,
-        7,
-        7,
+        5,
         6,
-        4,
-        2,
+        5,
         1,
         5,
         2,
-        2,
-        4,
-        2,
-        4,
-        4,
-        2,
-        2,
-        1,
-        3,
-        1,
-        4,
-        3,
-        3,
-        4,
-        0,
-        6,
-        1,
-        2,
-        0,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
     ]
 }
 
-expected_score = {"medoids": 0.7839080459770115}
+expected_score = {"medoids": 0.34615384615384615}
 
 expected_iters = {"medoids": 300}
 
 expected_labels = {
     "medoids": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
         6,
-        7,
-        7,
-        7,
-        7,
-        6,
-        4,
-        3,
         1,
-        6,
+        5,
         2,
-        2,
-        4,
-        2,
-        4,
-        4,
-        0,
-        2,
-        1,
-        3,
         5,
         4,
         3,
-        3,
+        5,
+        7,
         4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
         0,
-        6,
-        1,
-        2,
-        0,
+        5,
+        5,
     ]
 }
 
 
 def test_kmedoids():
-    """Test implementation of Kmeans."""
-    X_train, y_train = load_UCR_UEA_dataset(
-        dataset_name, split="train", return_X_y=True
-    )
-    X_test, y_test = load_UCR_UEA_dataset(dataset_name, split="test", return_X_y=True)
+    """Test implementation of Kmedoids."""
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
 
     kmedoids = TimeSeriesKMedoids(random_state=1)
     kmedoids.fit(X_train)
-    test_mean_result = kmedoids.predict(X_test)
-    medoids_score = metrics.rand_score(y_test, test_mean_result)
+    test_medoids_result = kmedoids.predict(X_test)
+    medoids_score = metrics.rand_score(y_test, test_medoids_result)
 
-    assert np.array_equal(test_mean_result, expected_results["medoids"])
+    assert np.array_equal(test_medoids_result, expected_results["medoids"])
     assert medoids_score == expected_score["medoids"]
     assert kmedoids.n_iter_ == 300
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])

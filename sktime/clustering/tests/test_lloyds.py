@@ -17,8 +17,6 @@ from sktime.datasets import load_arrow_head
 from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
 
-dataset_name = "Beef"
-
 
 class _test_class(TimeSeriesLloyds):
     def _compute_new_cluster_centers(
@@ -44,7 +42,7 @@ def test_lloyds():
 
     assert np.array_equal(
         test_result,
-        np.array([2, 1, 1, 3, 2, 2, 2, 2, 6, 2, 2, 6, 6, 6, 2, 4, 3, 0, 6, 4]),
+        np.array([4, 5, 5, 4, 3, 0, 4, 1, 4, 6, 4, 4, 4, 1, 5, 3, 3, 4, 3, 6]),
     )
 
 
