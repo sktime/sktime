@@ -44,6 +44,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._instantiate_model()
         self._check_changepoints()
+
         y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
 
         # We have to bring the data into the required format for fbprophet:
@@ -66,6 +67,18 @@ class _ProphetAdapter(BaseForecaster):
             df, X = _merge_X(df, X)
             for col in X.columns:
                 self._forecaster.add_regressor(col)
+
+        # Add floor and bottom when growth is logistic
+        if self.growth == 'logistic':
+
+            if self.growth_cap is None:
+                raise ValueError(
+                    'Capacities must be supplied for logistic growth either as a constant or'
+                    'as an array for every row in y'
+                )
+            
+            df['cap'] = self.growth_cap
+            df['floor'] = self.growth_floor
 
         if self.verbose:
             self._forecaster.fit(df=df, **fit_params)
@@ -111,6 +124,10 @@ class _ProphetAdapter(BaseForecaster):
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
             df, X = _merge_X(df, X)
+
+        if self.growth == 'logistic':
+            df['cap'] = self.growth_cap
+            df['floor'] = self.growth_floor
 
         # don't compute confidence intervals if not asked for
         with self._return_pred_int(return_pred_int):
