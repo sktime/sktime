@@ -8,7 +8,6 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
-
 from sklearn import clone
 
 from sktime.alignment.base import BaseAligner
