@@ -97,26 +97,26 @@ class ThetaLinesTransformer(BaseTransformer):
             pd.Series, with single Theta-line, if self.theta is float
             pd.DataFrame of shape: [len(X), len(self.theta)], if self.theta is tuple
         """
-        z = X
         theta = _check_theta(self.theta)
 
         forecaster = PolynomialTrendForecaster()
-        forecaster.fit(z)
-        fh = ForecastingHorizon(z.index, is_relative=False)
-        trend = forecaster.predict(fh)
+        forecaster.fit(y=X)
+        fh = ForecastingHorizon(X.index, is_relative=False)
+        trend = forecaster.predict(fh=fh)
 
-        theta_lines = np.zeros((z.shape[0], len(theta)))
+        theta_lines = np.zeros((X.shape[0], len(theta)))
         for i, theta in enumerate(theta):
-            theta_lines[:, i] = _theta_transform(z, trend, theta)
+            theta_lines[:, i] = _theta_transform(X, trend, theta)
         if isinstance(self.theta, (float, int)):
-            return pd.Series(theta_lines.flatten(), index=z.index)
+            return pd.Series(theta_lines.flatten(), index=X.index)
         else:
-            return pd.DataFrame(theta_lines, columns=self.theta, index=z.index)
+            return pd.DataFrame(theta_lines, columns=self.theta, index=X.index)
 
 
 def _theta_transform(Z, trend, theta):
     # obtain one Theta-line
     theta_line = Z * theta + (1 - theta) * trend
+    theta_line = theta_line.values.flatten()
     return theta_line
 
 
