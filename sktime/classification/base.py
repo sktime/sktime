@@ -26,6 +26,7 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -35,13 +36,12 @@ from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseClassifier(BaseEstimator):
+class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
     classifiers have to implement. Attributes with a underscore suffix are set in the
     method fit.
-    #TODO: Make _fit and _predict abstract
 
     Parameters
     ----------
@@ -70,28 +70,26 @@ class BaseClassifier(BaseEstimator):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._X_metadata = {}
         super(BaseClassifier, self).__init__()
 
-    def fit(self, X, y):
+    def fit(self, X, y) -> BaseEstimator:
         """Fit time series classifier to training data.
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.array of int, of shape [n_instances] - class labels for fitting
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series))
+            or of any other supported Panel data structures, for list of
+            supported, see MTYPE_REGISTER_PANEL in datatypes/panel/_registry.py
+        y : 1D np.array, of shape [n_instances] - class labels for fitting
             indices correspond to instance indices in X
 
         Returns
         -------
-        self : Reference to self.
+        self :  Fitted estimator.
 
         Notes
         -----
@@ -100,12 +98,12 @@ class BaseClassifier(BaseEstimator):
         """
         start = int(round(time.time() * 1000))
         # convenience conversions to allow user flexibility:
-        # if X is 2D array, convert to 3D, if y is Series, convert to numpy
+        # if X is 2D array, convert to 3D, if y is Series, convert to 1D-numpy
         X, y = _internal_convert(X, y)
-        X_metadata = _check_classifier_input(X, y)
-        missing = X_metadata["has_nans"]
-        multivariate = not X_metadata["is_univariate"]
-        unequal = not X_metadata["is_equal_length"]
+        self._X_metadata = _check_classifier_input(X, y)
+        missing = self._X_metadata["has_nans"]
+        multivariate = not self._X_metadata["is_univariate"]
+        unequal = not self._X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
@@ -135,24 +133,21 @@ class BaseClassifier(BaseEstimator):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series))
+            or of any other supported Panel data structures, for list of
+            supported, see MTYPE_REGISTER_PANEL in datatypes/panel/_registry.py
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+        y : 1D np.array, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
         self.check_is_fitted()
 
-        # boilerplate input checks for predict-like methods
+        # input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
         return self._predict(X)
@@ -241,6 +236,7 @@ class BaseClassifier(BaseEstimator):
 
         return X
 
+    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -267,10 +263,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError(
-            "_fit is a protected abstract method, it must be implemented."
-        )
+        ...
 
+    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -291,9 +286,7 @@ class BaseClassifier(BaseEstimator):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
-        raise NotImplementedError(
-            "_predict is a protected abstract method, it must be implemented."
-        )
+        ...
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
@@ -326,14 +319,14 @@ class BaseClassifier(BaseEstimator):
 
         return dists
 
-    def _check_capabilities(self, missing, multivariate, unequal):
+    def _check_capabilities(self, missing, multivariate, unequal) -> object:
         """Check whether this classifier can handle the data characteristics.
 
         Parameters
         ----------
         missing : boolean, does the data passed to fit contain missing values?
         multivariate : boolean, does the data passed to fit contain missing values?
-        unequal : boolea, do the time series passed to fit have variable lengths?
+        unequal : boolean, do the time series passed to fit have variable lengths?
 
         Raises
         ------
