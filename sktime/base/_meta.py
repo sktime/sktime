@@ -14,7 +14,7 @@ from sktime.base import BaseEstimator
 class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
     """Handles parameter management for estimtators composed of named estimators.
 
-    From sklearn utils.metaestimator.py
+    From sklearn utils.metaestimator.py.
     """
 
     def get_params(self, deep=True):
