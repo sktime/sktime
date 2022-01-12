@@ -35,7 +35,7 @@ def plot_series(X: TimeSeriesPanel):
     import matplotlib.pyplot as plt
 
     if isinstance(X, pd.DataFrame):
-        predict_series = convert_to(X, "numpy3D")
+        X = convert_to(X, "numpy3D")
     plt.figure(figsize=(5, 10))
     plt.rcParams["figure.dpi"] = 100
 
