@@ -417,6 +417,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         other_cls_count,
         worst_quality,
     ):
+        """Add the first attempt at including an Ordinal quality measure here."""
         pass
 
     @staticmethod
