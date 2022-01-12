@@ -404,6 +404,22 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         return quality, length, position, dim, inst_idx, cls_idx
 
     @staticmethod
+    def _find_ordinal_shapelet_quality(
+        X,
+        y,
+        shapelet,
+        sorted_indicies,
+        position,
+        length,
+        dim,
+        inst_idx,
+        this_cls_count,
+        other_cls_count,
+        worst_quality,
+    ):
+        pass
+
+    @staticmethod
     @njit(fastmath=True, cache=True)
     def _find_shapelet_quality(
         X,
