@@ -101,14 +101,14 @@ def _kmeans_plus_plus(
 
     centers[0, :] = X[random_state.randint(X.shape[0])]
 
-    curr_dist = pairwise_distance(X[0, np.newaxis], X, metric="euclidean")
+    curr_dist = pairwise_distance(X[0, np.newaxis], X, metric="euclidean") ** 2
     current_pot = curr_dist.sum()
 
     for c in range(1, n_clusters):
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
         candidate_ids = np.searchsorted(stable_cumsum(curr_dist), rand_vals)
         np.clip(candidate_ids, None, curr_dist.size - 1, out=candidate_ids)
-        distance_to_candidates = pairwise_distance(X[candidate_ids], X, "dtw")
+        distance_to_candidates = pairwise_distance(X[candidate_ids], X, "dtw") ** 2
         np.minimum(curr_dist, distance_to_candidates, out=distance_to_candidates)
         candidates_pot = distance_to_candidates.sum(axis=1)
         best_candidate = np.argmin(candidates_pot)
