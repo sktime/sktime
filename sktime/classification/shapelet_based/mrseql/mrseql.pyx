@@ -5,6 +5,8 @@
 # TODO remove in v0.10.0
 # the functionality in this file is depreciated and to be replaced with a version
 # based on numba.
+import sktime.classification
+
 STUFF = "Hi"  # https://stackoverflow.com/questions/8024805/cython-compiled-c-extension-importerror-dynamic-module-does-not-define-init-fu
 
 import numpy as np
@@ -15,12 +17,11 @@ from libcpp.vector cimport vector
 from deprecated.sphinx import deprecated
 from sklearn.linear_model import LogisticRegression
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X, check_X_y
 
 __author__ = ["Thach Le Nguyen"]
-
 ######################### SAX and SFA #########################
 
 cdef extern from "sax_converter.h":
