@@ -59,6 +59,19 @@ class MyClusterer(BaseClusterer):
     and so on
     """
 
+    # optional todo: override base class estimator default tags here if necessary
+    # these are the default values, only add if different to these.
+    _tags = {
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, usually this is
+        # either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other types are
+        # allowable, see datatypes/panel/_registry.py for options.
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:multithreading": False,
+    }
+
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
