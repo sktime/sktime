@@ -9,7 +9,7 @@ __author__ = ["MatthewMiddlehurst"]
 __all__ = ["FreshPRINCE"]
 
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y

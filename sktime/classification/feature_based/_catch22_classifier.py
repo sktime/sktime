@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
 
 

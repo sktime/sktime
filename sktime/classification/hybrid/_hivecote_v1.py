@@ -15,7 +15,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.utils import check_random_state
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
 from sktime.classification.interval_based import (
     RandomIntervalSpectralEnsemble,

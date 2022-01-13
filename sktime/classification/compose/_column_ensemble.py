@@ -15,7 +15,7 @@ from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 
 
 class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):

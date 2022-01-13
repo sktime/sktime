@@ -18,7 +18,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope

@@ -12,7 +12,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.transformations.panel.rocket import (
     MiniRocket,
     MiniRocketMultivariate,

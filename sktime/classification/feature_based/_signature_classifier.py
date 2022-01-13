@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.transformations.panel.signature_based._checks import (
     _handle_sktime_signatures,
 )

@@ -12,7 +12,7 @@ from joblib import Parallel, delayed
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.series_as_features.base.estimators.interval_based import (
     BaseTimeSeriesForest,
 )

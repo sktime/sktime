@@ -17,7 +17,7 @@ from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_random_state
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 
 
 def _transform(X, interval, lag):

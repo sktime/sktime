@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Abstract base class for time series classifiers.
 
@@ -30,6 +29,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
@@ -157,15 +157,12 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series))
+            or of any other supported Panel data structures, for list of
+            supported, see MTYPE_REGISTER_PANEL in datatypes/panel/_registry.py
 
         Returns
         -------
@@ -176,7 +173,7 @@ class BaseClassifier(BaseEstimator, ABC):
         """
         self.check_is_fitted()
 
-        # boilerplate input checks for predict-like methods
+        # input checks for predict and predict_proba
         X = self._check_convert_X_for_predict(X)
         return self._predict_proba(X)
 
@@ -185,26 +182,20 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.ndarray of int, of shape [n_instances] - class labels (ground truth)
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series))
+            or of any other supported Panel data structures, for list of
+            supported, see MTYPE_REGISTER_PANEL in datatypes/panel/_registry.py
+        y : 1D np.ndarray, of shape [n_instances] - class labels (ground truth)
             indices correspond to instance indices in X
 
         Returns
         -------
         float, accuracy score of predict(X) vs y
         """
-        from sklearn.metrics import accuracy_score
-
         self.check_is_fitted()
-
         return accuracy_score(y, self.predict(X), normalize=True)
 
     def _check_convert_X_for_predict(self, X):
@@ -231,6 +222,7 @@ class BaseClassifier(BaseEstimator, ABC):
         unequal = not X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
+        # Check data the same length
         # Convert data as dictated by the classifier tags
         X = self._convert_X(X)
 
@@ -368,7 +360,8 @@ class BaseClassifier(BaseEstimator, ABC):
             Checked and possibly converted input data
         """
         inner_type = self.get_tag("X_inner_mtype")
-        # convert pd.DataFrame
+        # If data is unequal length and the classifier can handle it,
+        # but the inner type is numpy, we should *not* convert
         X = convert_to(
             X,
             to_type=inner_type,

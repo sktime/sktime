@@ -23,7 +23,7 @@ from sklearn.model_selection import (
 )
 from sklearn.preprocessing import LabelEncoder
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )

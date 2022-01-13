@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.classification.base import (
+from sktime.classification._base import (
     BaseClassifier,
     _check_classifier_input,
     _internal_convert,

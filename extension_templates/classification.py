@@ -33,7 +33,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 import numpy as np
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification._base import BaseClassifier
 
 # todo: add any necessary imports here
 
