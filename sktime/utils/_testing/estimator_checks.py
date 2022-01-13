@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
-from sktime.clustering.base import BaseClusterer
+from sktime.clustering._base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster

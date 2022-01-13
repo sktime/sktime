@@ -7,7 +7,7 @@ __all__ = ["plot_cluster_algorithm"]
 import numpy as np
 import pandas as pd
 
-from sktime.clustering.base._base import TimeSeriesPanel
+from sktime.clustering._base import TimeSeriesPanel
 from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
 from sktime.datatypes import convert_to
 from sktime.utils.validation._dependencies import _check_soft_dependencies

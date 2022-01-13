@@ -9,7 +9,7 @@ from numpy.random import RandomState
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import stable_cumsum
 
-from sktime.clustering.base._base import BaseClusterer, TimeSeriesPanel
+from sktime.clustering._base import BaseClusterer, TimeSeriesPanel
 from sktime.clustering.metrics.averaging._averaging import mean_average
 from sktime.distances import distance_factory, pairwise_distance
 
@@ -69,7 +69,11 @@ def _random_center_initializer(
 
 
 def _kmeans_plus_plus(
-    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState
+    X: np.ndarray,
+    n_clusters: int,
+    random_state: np.random.RandomState,
+    distance_metric: str = "euclidean",
+    n_local_trials: int = None,
 ):
     """Compute initial centroids using kmeans++ method.
 
@@ -77,8 +81,9 @@ def _kmeans_plus_plus(
     center and each point. Sample these with a probability proportional to the square
     of the distance of the points from its nearest center.
 
-    NOTE: This is adapted from tslearns implementation:
-    https://github.com/tslearn-team/tslearn/blob/main/tslearn/clustering/kmeans.py
+    NOTE: This is adapted from sklearns implementation:
+    https://
+    github.com/scikit-learn/scikit-learn/blob/7e1e6d09b/sklearn/cluster/_kmeans.py
 
     Parameters
     ----------
@@ -89,31 +94,49 @@ def _kmeans_plus_plus(
         centroids to generate.
     random_state: np.random.RandomState
         Determines random number generation for centroid initialization.
+    distance_metric: str, defaults = 'euclidean'
+        String that is the distance metric.
+    n_local_trials : integer, optional
+        The number of seeding trials for each center (except the first),
+        of which the one reducing inertia the most is greedily chosen.
+        Set to None to make the number of trials depend logarithmically
+        on the number of seeds (2+log(k)); this is the default.
 
     Returns
     -------
     np.ndarray (3d array of shape (n_clusters, n_dimensions, series_length))
         Indexes of the cluster centers.
     """
-    centers = np.empty((n_clusters, X.shape[1], X.shape[2]))
+    n_samples, n_timestamps, n_features = X.shape
 
-    n_local_trials = 2 + int(np.log(n_clusters))
+    centers = np.empty((n_clusters, n_timestamps, n_features), dtype=X.dtype)
+    n_samples, n_timestamps, n_features = X.shape
 
-    centers[0, :] = X[random_state.randint(X.shape[0])]
+    if n_local_trials is None:
+        n_local_trials = 2 + int(np.log(n_clusters))
 
-    curr_dist = pairwise_distance(X[0, np.newaxis], X, metric="euclidean") ** 2
-    current_pot = curr_dist.sum()
+    center_id = random_state.randint(n_samples)
+    centers[0] = X[center_id]
+    closest_dist_sq = (
+        pairwise_distance(centers[0, np.newaxis], X, metric=distance_metric) ** 2
+    )
+    current_pot = closest_dist_sq.sum()
 
     for c in range(1, n_clusters):
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
-        candidate_ids = np.searchsorted(stable_cumsum(curr_dist), rand_vals)
-        np.clip(candidate_ids, None, curr_dist.size - 1, out=candidate_ids)
-        distance_to_candidates = pairwise_distance(X[candidate_ids], X, "dtw") ** 2
-        np.minimum(curr_dist, distance_to_candidates, out=distance_to_candidates)
+        candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq), rand_vals)
+        np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
+
+        distance_to_candidates = (
+            pairwise_distance(X[candidate_ids], X, metric=distance_metric) ** 2
+        )
+
+        np.minimum(closest_dist_sq, distance_to_candidates, out=distance_to_candidates)
         candidates_pot = distance_to_candidates.sum(axis=1)
+
         best_candidate = np.argmin(candidates_pot)
         current_pot = candidates_pot[best_candidate]
-        curr_dist = distance_to_candidates[best_candidate]
+        closest_dist_sq = distance_to_candidates[best_candidate]
         best_candidate = candidate_ids[best_candidate]
 
         centers[c] = X[best_candidate]
