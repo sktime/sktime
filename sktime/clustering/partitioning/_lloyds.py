@@ -9,13 +9,13 @@ from numpy.random import RandomState
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import stable_cumsum
 
-from sktime.clustering._base import BaseClusterer, TimeSeriesInstances
+from sktime.clustering._base import BaseClusterer
 from sktime.clustering.metrics.averaging._averaging import mean_average
 from sktime.distances import distance_factory, pairwise_distance
 
 
 def _forgy_center_initializer(
-    X: TimeSeriesInstances, n_clusters: int, random_state: np.random.RandomState
+    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState
 ) -> np.ndarray:
     """Compute the initial centers using forgy method.
 

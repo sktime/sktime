@@ -122,7 +122,7 @@ class BaseClusterer(BaseEstimator, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.Dataframe
+            (n_instances,n_dimensions,series_length)) or pd.Dataframe.
             Time series instances to predict their cluster indexes. If data is not
             equal length a pd.Dataframe given, if another other type of data a
             np.ndarray given.
@@ -142,7 +142,7 @@ class BaseClusterer(BaseEstimator, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.Dataframe
+            (n_instances,n_dimensions,series_length)) or pd.Dataframe.
             Training time series instances to cluster. If data is not equal length a
             pd.Dataframe given, if another other type of data a np.ndarray given.
 
@@ -220,13 +220,13 @@ class BaseClusterer(BaseEstimator, ABC):
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
             (n_instances,n_dimensions,series_length)) or nested pd.DataFrame (
-            n_instances,n_dimensions)
+            n_instances,n_dimensions).
             Training time series instances to cluster.
 
         Returns
         -------
         X : np.ndarray (3d of shape (n_instances,n_dimensions,series_length)) or
-            pd.Dataframe (n_instances,n_dimensions)
+            pd.Dataframe (n_instances,n_dimensions).
             Converted X ready for _fit.
 
         Raises
