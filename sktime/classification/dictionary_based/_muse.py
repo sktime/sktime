@@ -280,6 +280,10 @@ class MUSE(BaseClassifier):
             ),
         )
 
+        for words in all_words:
+            if len(words) == 0:
+                words[-1] = 1
+
         self.clf.fit(all_words, y)
 
         return self
