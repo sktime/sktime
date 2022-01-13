@@ -192,9 +192,6 @@ class BaseClusterer(BaseEstimator, ABC):
     def _initial_conversion(X: Any) -> TimeSeriesPanel:
         """Format data as valid panel mtype of the data.
 
-        This should be overwritten to format the data as a valid panel mtype if working
-        with data not in the correct format.
-
         Parameters
         ----------
         X: Any
@@ -212,7 +209,7 @@ class BaseClusterer(BaseEstimator, ABC):
 
     def _check_clusterer_input(
         self, X: TimeSeriesPanel, enforce_min_instances: int = 1
-    ) -> np.ndarray:
+    ) -> TimeSeriesPanel:
         """Validate the input and prepare for _fit.
 
         Parameters
@@ -223,7 +220,8 @@ class BaseClusterer(BaseEstimator, ABC):
 
         Returns
         -------
-        X : np.ndarray (3d array)
+        X : np.ndarray (3d of shape (n_instances,n_dimensions,series_length)) or
+            pd.Dataframe
             Converted X ready for _fit.
 
         Raises
@@ -253,4 +251,8 @@ class BaseClusterer(BaseEstimator, ABC):
         multivariate = not X_metadata["is_univariate"]
         unequal = not X_metadata["is_equal_length"]
         self._check_capabilities(missing, multivariate, unequal)
-        return convert_to(X, to_type="numpy3D", as_scitype="Panel")
+        return convert_to(
+            X,
+            to_type=self.get_tag("X_inner_mtype"),
+            as_scitype="Panel",
+        )
