@@ -22,7 +22,7 @@ class BaseClusterer(BaseEstimator, ABC):
     """Abstract base class for time series clusterer."""
 
     _tags = {
-        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "X_inner_mtype": "numpy3D",  # inner type for clustering, either numpy3D or
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -218,13 +218,14 @@ class BaseClusterer(BaseEstimator, ABC):
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length))
+            (n_instances,n_dimensions,series_length)) or nested pd.DataFrame (
+            n_instances,n_dimensions)
             Training time series instances to cluster.
 
         Returns
         -------
         X : np.ndarray (3d of shape (n_instances,n_dimensions,series_length)) or
-            pd.Dataframe
+            pd.Dataframe (n_instances,n_dimensions)
             Converted X ready for _fit.
 
         Raises
@@ -240,7 +241,7 @@ class BaseClusterer(BaseEstimator, ABC):
         if not X_valid:
             raise TypeError(
                 f"X is not of a supported input data type."
-                f"X must be in a supported mtype format for Panel, found {type(X)}"
+                f"X must be of type np.ndarray or pd.DataFrame, found {type(X)}"
                 f"Use datatypes.check_is_mtype to check conformance with "
                 f"specifications."
             )
