@@ -115,14 +115,16 @@ class BaseClusterer(BaseEstimator, ABC):
         return self.predict(X)
 
     @abstractmethod
-    def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
+    def _predict(self, X: TimeSeriesPanel, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Time series instances to predict their cluster indexes.
+            (n_instances,n_dimensions,series_length)) or pd.Dataframe
+            Time series instances to predict their cluster indexes. If data is not
+            equal length a pd.Dataframe given, if another other type of data a
+            np.ndarray given.
         y: ignored, exists for API consistency reasons.
 
         Returns
@@ -133,14 +135,15 @@ class BaseClusterer(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+    def _fit(self, X: TimeSeriesPanel, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
 
         Parameters
         ----------
         X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length))
-            Training time series instances to cluster.
+            (n_instances,n_dimensions,series_length)) or pd.Dataframe
+            Training time series instances to cluster. If data is not equal length a
+            pd.Dataframe given, if another other type of data a np.ndarray given.
 
         Returns
         -------
