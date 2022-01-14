@@ -1284,12 +1284,12 @@ class BaseForecaster(BaseEstimator):
             pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
 
             # change the column labels (multiindex) to the format for intervals
-            #   idx returned by _predict_quantiles
-            #   is 2-level MultiIndex with variable names, alpha
+            # idx returned by _predict_quantiles is
+            #   2-level MultiIndex with variable names, alpha
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
-            # idx returned by _predict?interval should be
+            # idx returned by _predict_interval should be
             #   3-level MultiIndex with variable names, coverage, lower/upper
             int_idx = pd.MultiIndex.from_product(
                 [var_names, coverage, ["lower", "upper"]]
@@ -1336,35 +1336,39 @@ class BaseForecaster(BaseEstimator):
 
         if implements_interval:
 
-            req_quant = np.asarray(alpha)  # requested quantiles
+            coverage = []
+            for alpha in alpha:
+                # compute quantiles corresponding to prediction interval coverage
+                #  this uses symmetric predictive intervals
+                if alpha < 0.5:
+                    coverage.extend([2 * alpha])
+                else:
+                    coverage.extend([2 * (1 - alpha)])
 
-            q1 = 0
-            quantiles = []
-            # accumulator of results
-            acc = pd.DataFrame([], fh.to_absolute(self.cutoff))
+            # compute quantile forecasts corresponding to upper/lower
+            pred_int = self._predict_interval(fh=fh, X=X, coverage=coverage)
 
-            q2 = 1 - q1  # the other quantile
+            # now we need to subset to lower/upper depending
+            #   on whether alpha was < 0.5 or >= 0.5
+            #   this formula gives the integer column indices giving lower/upper
+            col_selector = alpha >= 0.5 + 2 * range(len(alpha))
+            pred_int = pred_int.iloc[:, col_selector]
 
-            # _get_pred_int() returns DataFrame with "lower" "upper" columns
-            # rename them to quantiles
-            colnames = {
-                "lower": q1 if q1 < q2 else q2,
-                "upper": q2 if q2 > q1 else q1,
-            }
-            pred_int = pred_int.rename(columns=colnames)
+            # change the column labels (multiindex) to the format for intervals
+            # idx returned by _predict_interval is
+            #   3-level MultiIndex with variable names, coverage, lower/upper
+            idx = pred_int.columns
+            # variable names (unique, in same order)
+            var_names = idx.get_level_values(0).unique()
+            # idx returned by _predict_quantiles should be
+            #   is 2-level MultiIndex with variable names, alpha
+            int_idx = pd.MultiIndex.from_product(
+                [var_names, alpha]
+            )
 
-            # add to acc
-            for q in [q1, q2]:
-                acc[q] = pred_int[q]
+            pred_int.columns = int_idx
 
-            # order as requested and drop un-requested
-            quantiles = acc.reindex(columns=req_quant)
-
-            # the y.name for multi-index or "quantiles"
-            col_name = "quantiles" if (self._yname in {None, ""}) else self._yname
-            quantiles.columns = pd.MultiIndex.from_product([[col_name], req_quant])
-
-        return quantiles
+        return pred_int
 
     def _predict_moving_cutoff(
         self,
