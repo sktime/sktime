@@ -382,7 +382,11 @@ def load_from_tsfile(
         # convert to numpy if the user requests it.
         if isinstance(return_data_type, str):
             return_data_type = return_data_type.strip().lower()
-        if return_data_type == "numpy2d" or return_data_type == "np2d":
+        if (
+            return_data_type == "numpy2d"
+            or return_data_type == "np2d"
+            or return_data_type == "numpyflat"
+        ):
             if (
                 not _meta_data["has_timestamps"]
                 and _meta_data["is_equal_length"]
