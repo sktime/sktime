@@ -41,7 +41,6 @@ def test_individual_boss_on_unit_test():
     # train IndividualBOSS
     indiv_boss = IndividualBOSS(random_state=0)
     indiv_boss.fit(X_train, y_train)
-
     # assert probabilities are the same
     probas = indiv_boss.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(
