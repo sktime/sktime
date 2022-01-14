@@ -393,7 +393,7 @@ In the ``anaconda prompt`` terminal:
 
 4. Install required packages:
 
-   1. :code:`pip install numpy=1.19.3`
+   1. :code:`pip install numpy==1.19.3`
    2. :code:`pip install cython`
    3. :code:`pip install -r build_tools/requirements.txt`
 
