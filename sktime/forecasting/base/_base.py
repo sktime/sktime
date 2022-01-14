@@ -1263,13 +1263,29 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        alphas = []
-        for c in coverage:
-            alphas.extend([((1 - float(c)) / 2), 0.5 + (float(c) / 2)])
-        alphas = sorted(alphas)
-        pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
-        pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
-        # pred_int = self._convert_new_to_old_pred_int(pred_int, coverage)
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_proba = self._has_implementation_of("_predict_proba")
+
+        if not implements_quantiles and not implements_proba:
+            raise RuntimeError(
+                f"{self.__name__} does not implement probabilistic forecasting, "
+                'but capability:predict_int flag has been set to True incorrectly. '
+                "This is likely a bug, please report, and/pr set the flag to False."
+            )
+
+        if implements_quantiles:
+            alphas = []
+            for c in coverage:
+                # compute quantiles corresponding to prediction interval coverage
+                #  this uses symmetric predictive intervals
+                alphas.extend([((1 - float(c)) / 2), 0.5 + (float(c) / 2)])
+
+            # compute quantile forecasts corresponding to upper/lower
+            pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
+
+            # change the column labels (multiindex) to the format for intervals
+            pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
+
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1297,12 +1313,70 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not have the capability to return "
-            "prediction quantiles. If you "
-            "think this estimator should have the capability, please open "
-            "an issue on sktime."
-        )
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_proba = self._has_implementation_of("_predict_proba")
+
+        if not implements_interval and not implements_proba:
+            raise RuntimeError(
+                f"{self.__name__} does not implement probabilistic forecasting, "
+                'but capability:predict_int flag has been set to True incorrectly. '
+                "This is likely a bug, please report, and/pr set the flag to False."
+            )
+
+        if implements_interval:
+            if isinstance(alpha, (int, float)):
+                alpha = [alpha]
+            # else assume iterative/ list
+
+            req_quant = np.asarray(alpha)  # requested quantiles
+
+            # accumulator of results
+            acc = pd.DataFrame([], fh.to_absolute(self.cutoff))
+
+            for q1 in req_quant:
+
+                if q1 in acc.columns:
+                    # skip as this quantile is already computed by tbats
+                    continue
+
+                # q = 0.5 -> conf_lev = 0 -> y_pred = pred_int[lower] = pred_int[upper]
+                # so don't compute CI intervals simply save y_hat = predictions
+                if q1 == 0.5:
+                    acc[q1] = self._tbats_forecast(fh)
+                    continue
+
+                # otherwise compute CI intervals
+
+                # tbats with CI intervals
+                conf_level = np.abs(1 - q1 * 2)
+                y_pred, pred_int = self._tbats_forecast_with_interval(fh, conf_level)
+
+                # preserve q = 0.5, which is calculated and returned anyway
+                acc[0.5] = y_pred
+
+                q2 = 1 - q1  # the other quantile
+
+                # _get_pred_int() returns DataFrame with "lower" "upper" columns
+                # rename them to quantiles
+                colnames = {
+                    "lower": q1 if q1 < q2 else q2,
+                    "upper": q2 if q2 > q1 else q1,
+                }
+                pred_int = pred_int.rename(columns=colnames)
+
+                # add to acc
+                for q in [q1, q2]:
+                    acc[q] = pred_int[q]
+
+            # order as requested and drop un-requested
+            quantiles = acc.reindex(columns=req_quant)
+
+            # the y.name for multi-index or "quantiles"
+            col_name = "quantiles" if (self._yname in {None, ""}) else self._yname
+            quantiles.columns = pd.MultiIndex.from_product([[col_name], req_quant])
+
+        return quantiles
+
 
     def _predict_moving_cutoff(
         self,
