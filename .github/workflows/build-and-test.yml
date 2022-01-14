@@ -24,7 +24,7 @@ jobs:
         with:
           extra_args: --files ${{ steps.file_changes.outputs.files}}
 
-  test-examples:
+  run-notebook-examples:
     needs: code-quality
     runs-on: ubuntu-latest
     steps:
@@ -36,66 +36,40 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install wheel
-          pip install -r build_tools/requirements.txt
-          pip install -r .binder/prelim_requirements.txt
-          pip install -r .binder/requirements.txt
-      - name: Build wheel
-        run: python setup.py sdist bdist_wheel
-      - name: Install from wheel
-        run: pip install --pre --no-index --no-deps --find-links dist/ sktime
-      - name: Run examples
+          python -m pip install .[binder]
+      - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
 
-  build:
+  run-tests:
     needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-10.15]
+        os: [ubuntu-20.04, windows-2019, macOS-10.15]
         python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
-      - uses: actions/checkout@v2
-      - name: Check for missing init files
-        run: build_tools/fail_on_missing_init_files.sh
-        shell: bash
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-      - name: Install OS packages
-        run: brew install libomp
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r build_tools/requirements.txt
-          pip install pytest-cov
-      - name: Build wheel
-        run: |
-          export CC=/usr/bin/clang
-          export CXX=/usr/bin/clang++
-          export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-          export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-          export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-          export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-          export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-          export PATH="/usr/local/opt/ccache/libexec:$PATH"
-          python setup.py sdist bdist_wheel
-      - name: Install from wheel
-        run: pip install --pre --no-index --no-deps --find-links dist/ sktime
-      - name: Run tests
-        run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          cd testdir/
-          pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
-      - name: Display coverage report
-        run: ls -l ./testdir/
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./testdir/coverage.xml
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip pytest pytest-cov
+        pip install .
+    - name: Run tests
+      run: |
+        mkdir -p testdir/
+        cp .coveragerc testdir/
+        cp setup.cfg testdir/
+        cd testdir/
+        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime
+    - name: Display coverage report
+      run: ls -l ./testdir/
+    - name: Publish code coverage
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./testdir/coverage.xml

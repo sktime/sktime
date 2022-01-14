@@ -49,7 +49,7 @@ stages:
           - task: UsePythonVersion@0
             inputs:
               versionSpec: 3.7
-          - script: pip install -r build_tools/hard_dependencies.txt
+          - script: pip install .
             displayName: 'Install hard dependencies'
           - script: pip install -e .
             displayName: 'Build sktime'
