@@ -59,6 +59,19 @@ class MyClusterer(BaseClusterer):
     and so on
     """
 
+    # optional todo: override base class estimator default tags here if necessary
+    # these are the default values, only add if different to these.
+    _tags = {
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:multithreading": False,
+    }
+
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
@@ -82,39 +95,41 @@ class MyClusterer(BaseClusterer):
 
     # todo: implement this, mandatory
     def _fit(self, X):
-        """Fit the clustering algorithm on the dataset X.
-
-            core logic
+        """Fit time series clusterer to training data.
 
         Parameters
         ----------
-        X: 2D np.array with shape (n_instances, n_timepoints)
-            panel of univariate time series to train the clustering model on
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances,n_dimensions,series_length)) or pd.Dataframe.
+            Training time series instances to cluster. If data is not equal length a
+            pd.Dataframe given, if another other type of data a np.ndarray given.
 
         Returns
         -------
-        reference to self
+        self:
+            Fitted estimator.
         """
         # implement here
         # IMPORTANT: avoid side effects to X
 
-    # todo: consider implementing this, optional
+    # todo: implement this, mandatory
     # at least one of _predict and _get_fitted_params should be implemented
     def _predict(self, X):
-        """
-        Return cluster center index for data samples.
-
-            core logic
+        """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
-        X: 2D np.array with shape (n_instances, n_timepoints)
-            panel of univariate time series to cluster
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances,n_dimensions,series_length)) or pd.Dataframe.
+            Time series instances to predict their cluster indexes. If data is not
+            equal length a pd.Dataframe given, if another other type of data a
+            np.ndarray given.
+        y: ignored, exists for API consistency reasons.
 
         Returns
         -------
-        Numpy_Array: 1D np.array of length n_instances
-            Index of the cluster each sample belongs to
+        np.ndarray (1d array of shape (n_instances,))
+            Index of the cluster each time series in X belongs to.
         """
         # implement here
         # IMPORTANT: avoid side effects to X
