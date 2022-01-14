@@ -7,8 +7,9 @@ __author__ = ["Markus Löning", "Hongyi Yang"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class _PmdArimaAdapter(BaseForecaster):
@@ -168,6 +169,8 @@ class _PmdArimaAdapter(BaseForecaster):
         fitted_params = {name: param for name, param in zip(names, params)}
 
         if hasattr(self._forecaster, "model_"):  # AutoARIMA
+            fitted_params["order"] = self._forecaster.model_.order
+            fitted_params["seasonal_order"] = self._forecaster.model_.seasonal_order
             res = self._forecaster.model_.arima_res_
         elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
             res = self._forecaster.arima_res_

@@ -27,9 +27,9 @@ Tag inspection and setter methods
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
 Testing with default parameters methods
-    getting default parameters           - get_test_params()
-    get instance with default parameters - create_test_instance()
-
+    getting default parameters (all sets)         - get_test_params()
+    get one test instance with default parameters - create_test_instance()
+    get list of all test instances plus name list - create_test_instances_and_names()
 ---
 
     class name: BaseEstimator
@@ -49,7 +49,6 @@ __author__ = ["mloning", "RNKuhns", "fkiraly"]
 __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
-
 from copy import deepcopy
 
 from sklearn import clone
@@ -147,13 +146,13 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         tag_value :
-            Value of the `tag_name` tag in self. If not found, returns
-            `tag_value_default`.
+            Value of the `tag_name` tag in self. If not found, returns an error if
+            raise_error is True, otherwise it returns `tag_value_default`.
 
         Raises
         ------
-        ValueError if raise_error is True and tag_name does not exist
-            i.e., if tag_name is not in self.get_tags().keys()
+        ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
+        ).keys()
         """
         collected_tags = self.get_tags()
 
@@ -285,6 +284,44 @@ class BaseObject(_BaseEstimator):
             )
 
         return cls(**params)
+
+    @classmethod
+    def create_test_instances_and_names(cls):
+        """Create list of all test instances and a list of names for them.
+
+        Returns
+        -------
+        objs : list of instances of cls
+            i-th instance is cls(**cls.get_test_params()[i])
+        names : list of str, same length as objs
+            i-th element is name of i-th instance of obj in tests
+            convention is {cls.__name__}-{i} if more than one instance
+            otherwise {cls.__name__}
+        """
+        objs = []
+        param_list = cls.get_test_params()
+        if not isinstance(param_list, (dict, list)):
+            raise RuntimeError(
+                f"Error in {cls.__name__}.get_test_params, "
+                "return must be param dict for class, or list thereof"
+            )
+        if isinstance(param_list, dict):
+            param_list = [param_list]
+        for params in param_list:
+            if not isinstance(params, dict):
+                raise RuntimeError(
+                    f"Error in {cls.__name__}.get_test_params, "
+                    "return must be param dict for class, or list thereof"
+                )
+            objs += [cls(**params)]
+
+        num_instances = len(param_list)
+        if num_instances > 1:
+            names = [cls.__name__ + "-" + str(i) for i in range(num_instances)]
+        else:
+            names = [cls.__name__]
+
+        return objs, names
 
 
 class BaseEstimator(BaseObject):

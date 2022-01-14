@@ -10,7 +10,356 @@ All notable changes to this project will be documented in this file. We keep tra
     To stay up-to-date with sktime releases, subscribe to sktime `here
     <https://libraries.io/pypi/sktime>`_ or follow us on `Twitter <https://twitter.com/sktime_toolbox>`_.
 
-For planned changes and upcoming releases, see our :ref:`roadmap`.
+For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
+For our long-term plan, see our :ref:`roadmap`.
+
+
+[0.9.0] - 2021-12-08
+--------------------
+
+Highlights
+~~~~~~~~~~
+
+* frequently requested: AutoARIMA `get_fitted_params` access for fitted order and seasonal order (:pr:`1641`) :user:`AngelPone`
+* Numba distance module - efficient time series distances (:pr:`1574`) :user:`chrisholder`
+* Transformers base interface refactor - default vectorization to panel data :user:`fkiraly`
+* new experimental module: Time series alignment, dtw-python interface (:pr:`1264`) :user:`fkiraly`
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `check_is` renamed to `check_is_mtype`, `check_is` to be deprecated in 0.10.0 (:pr:`1692`) :user:`mloning`
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* time series classifiers now accept 2D `np.ndarray` by conversion to 3D rather than throwing exception (:pr:`1604`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Base interface refactor (:pr:`1365`, :pr:`1663`, :pr:`1706`):
+
+* `fit`, `transform`, `fit_transform` now accept both `Series` and `Panel` as argument
+* if `Panel` is passed to a series transformer, it is applied to all instances
+* all transformers now use `X` as their first argument, `y` as their second argument. This is enforced by the new base interface.
+* This was inconsistent previously between types of transformers: the series-to-series transformers were using `Z` as first argument, `X` as second argument.
+* `Z` (former first argument) aliases `X` until 0.10.0 in series transformers, will then be deprecated
+* `X` (former second argument) was not used in those transformers where it changed to `Z`
+* see new transformer extension template
+* these changes will gradually be rolled out to all transformers through 0.9.X versions
+
+
+New deprecations for 0.10.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `check_is` renamed to `check_is_mtype`, `check_is` to be deprecated in 0.10.0 (:pr:`1692`) :user:`mloning`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* MrSEQL time series classifier (:pr:`1548`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`)
+
+Added
+~~~~~
+
+Documentation
+^^^^^^^^^^^^^
+
+* [DOC] Windows installation guide for sktime development with Anaconda and PyCharm by (:pr:`1640`) :user:`jasonlines`
+* [DOC] Update installation.rst (:pr:`1636`) :user:`MrPr3ntice`
+* [DOC] additions to forecaster extension template (:pr:`1535`) :user:`fkiraly`
+* [DOC] Add missing classes to API reference (:pr:`1571`) :user:`RNKuhns`
+* [DOC] Add toggle button to make examples easy to copy (:pr:`1572`) :user:`RNKuhns`
+* [DOC] Update docs from roadmap planning sessions (:pr:`1527`) :user:`mloning`
+* [DOC] STLTransformer docstring and attribute (:pr:`1611`) :user:`aiwalter`
+* [DOC] typos in user documentation (:pr:`1671`) :user:`marcio55afr`
+* [DOC] Add links to estimator overview to README (:pr:`1691`) :user:`mloning`
+* [DOC] Update Time series forest regression docstring (:pr:`800`) :user:`thayeylolu`
+* [DOC] fix docstring in Feature Union (:pr:`1470`) :user:`AreloTanoh`
+* [DOC] Update Prophet and ETS docstrings (:pr:`1698`) :user:`mloning`
+* [DOC] Added new contributors (:pr:`1602` :pr:`1559`) :user:`Carlosbogo` :user:`freddyaboulton`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] added `check_is_scitype` for scitype checks, cleaning up dists_kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Auto-ETS checks models to select from based on non-negativity of data (:pr:`1615`) :user:`chernika158`
+* [DOC] meta-tuning examples for docstring of `ForecastingGridSearchCV` (:pr:`1656`) :user:`aiwalter`
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] new module: time series alignment; alignment distances (:pr:`1264`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Classifier test speed ups (:pr:`1599`) :user:`MatthewMiddlehurst`
+* [ENH] Experiments tidy-up by (:pr:`1619`) :user:`TonyBagnall`
+* [ENH] MiniRocket and MultiRocket as options for RocketClassifier (:pr:`1637`) :user:`MatthewMiddlehurst`
+* [ENH] Updated classification base class typing (:pr:`1633`) :user:`chrisholder`
+* [ENH] Integrate multi-rocket (:pr:`1567`) :user:`fstinner`
+* TSC refactor: Interval based classification package(:pr:`1583`) :user:`MatthewMiddlehurst`
+* TSC refactor: Distance based classification package (:pr:`1584`) :user:`MatthewMiddlehurst`
+* TSC refactor: Feature based classification package (:pr:`1545`) :user:`MatthewMiddlehurst`
+
+
+Time series distances
+^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Numba distance module - efficient time series distances (:pr:`1574`) :user:`chrisholder`
+* [ENH] Distance metric refactor (:pr:`1664`) :user:`chrisholder`
+
+Governance
+^^^^^^^^^^
+
+* eligibility and end of tenure clarification (:pr:`1573`) :user:`fkiraly`
+
+Maintenance
+^^^^^^^^^^^
+
+* [MNT] Update release script (:pr:`1562`) :user:`mloning`
+* [MNT] Delete release-drafter.yml (:pr:`1561`) :user:`mloning`
+* [MNT] Fail CI on missing init files (:pr:`1699`) :user:`mloning`
+
+
+Fixed
+~~~~~
+
+Estimator registry
+^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fixes to registry look-up, test suite for registry look-up (:pr:`1648`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Facebook prophet side effects on exogenous data X (:pr:`1711`) :user:`kejsitake`
+* [BUG] fixing bug for `_split`, accidental removal of `pandas.Index` support (:pr:`1582`) :user:`fkiraly`
+* [BUG] Fix `convert` and `_split` for Numpy 1D input (:pr:`1650`) :user:`fkiraly`
+* [BUG] issue with update_y_X when we refit forecaster by (:pr:`1595`) :user:`ltsaprounis`
+
+Performance metrics, evaluation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] missing clone in `evaluate` by (:pr:`1670`) :user:`ltsaprounis`
+* [BUG] fixing display via `repr` (:pr:`1566`) :user:`RNKuhns`
+* [BUG] Fix `test_wilcoxon` compatibility between pandas versions (:pr:`1653`) :user:`lmmentel`
+
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] missing alignment fixtures (:pr:`1661`) :user:`fkiraly`
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] Fixes :issue:`1234` (:pr:`1600`) :user:`Carlosbogo`
+* [BUG] load from UCR fix (:pr:`1610`) :user:`TonyBagnall`
+* [BUG] TimeSeriesForest Classifier Fix (:pr:`1588`) :user:`OliverMatthews`
+* [BUG] fix parameter mismatch in ShapeDTW by (:pr:`1638`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] Fix Imputer. Added Imputer tests (:pr:`1666`) :user:`aiwalter`
+* [BUG] Fix `ColumnwiseTransformer` example (:pr:`1681`) :user:`mloning`
+* [BUG] Fix `FeatureUnion` test failure (:pr:`1665`) :user:`lmmentel`
+* [BUG] Refactor the `_diff_transform` function to be compatible with pandas 1.3.4 (:pr:`1644`) :user:`lmmentel`
+
+
+Maintenance
+^^^^^^^^^^^
+
+* [MNT] fixing version clask between Numba and numpy (:pr:`1623`) :user:`TonyBagnall`
+* [MNT] Fix appveyor (:pr:`1669`) :user:`mloning`
+* [MNT] testing framework: replace `time.time` with time.perf_counter (:pr:`1680`) :user:`mloning`
+* [MNT] Add missing init files (:pr:`1695`) :user:`mloning`
+
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`AngelPone`,
+:user:`AreloTanoh`,
+:user:`Carlosbogo`,
+:user:`chernika158`,
+:user:`chrisholder`,
+:user:`fstinner`,
+:user:`fkiraly`,
+:user:`freddyaboulton`,
+:user:`kejsitake`,
+:user:`lmmentel`,
+:user:`ltsaprounis`,
+:user:`MatthewMiddlehurst`,
+:user:`marcio55afr`,
+:user:`MrPr3ntice`,
+:user:`mloning`,
+:user:`OliverMatthews`,
+:user:`RNKuhns`,
+:user:`thayeylolu`,
+:user:`TonyBagnall`,
+
+
+Full changelog
+~~~~~~~~~~~~~~
+https://github.com/alan-turing-institute/sktime/compare/v0.8.1...v0.9.0
+
+
+[0.8.1] - 2021-10-28
+--------------------
+
+Highlights
+~~~~~~~~~~
+
+* main forecasting pipelines now support multivariate forecasting - tuning, pipelines, imputers (:pr:`1376`) :user:`aiwalter`
+* collection of new transformers - date-time dummies, statistical summaries, STL transform, transformer from function (:pr:`1329` :pr:`1356` :pr:`1463` :pr:`1498`) :user:`boukepostma` :user:`eyalshafran` :user:`danbartl` :user:`RNKuhns`
+* new interface points for probabilistic forecasting, :code:`predict_interval` and :code:`predict_quantiles` (:pr:`1421`) :user:`SveaMeyer13`
+* experimental interface for time series segmentation (:pr:`1352`) :user:`patrickzib`
+
+
+New deprecations for 0.10.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* current prediction intervals interface in :code:`predict` via :code:`return_pred_int` will be deprecated and replaced by the new interface points :code:`predict_interval` and :code:`predict_quantiles`
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+* new interface points for probabilistic forecasting, :code:`predict_interval` and :code:`predict_quantiles` (:pr:`1421`) :user:`SveaMeyer13`
+* changed forecasting :code:`univariate-only` tag to :code:`ignores-exogeneous-X` (:pr:`1358`) :user:`fkiraly`
+
+
+Added
+~~~~~
+
+BaseEstimator/BaseObject
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Error handling for `get_tag` (:pr:`1450`) :user:`fkiraly`
+
+Forecasting
+^^^^^^^^^^^
+
+* statsmodels VAR interface (:pr:`1083`, :pr:`1491`) :user:`thayeylolu` :user:`fkiraly`
+* multivariate :code:`TransformedTargetForecaster`, :code:`ForecastingPipeline`, :code:`BaseGridSearch`, :code:`MultiplexForecaster` (:pr:`1376`) :user:`aiwalter`
+* prediction intervals for statsmodels interface :code:`_StatsModelsAdapter` (:pr:`1489`) :user:`eyalshafran`
+* geometric mean based forecasting metrics  (:pr:`1472`, :pr:`837`) :user:`RNKuhns`
+
+* new multivariate forecasting dataset, statsmodels macroeconomic data (:pr:`1553`) :user:`aiwalter` :user:`SinghShreya05`
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* HIVE-COTE 2.0 Classifier (:pr:`1504`) :user:`MatthewMiddlehurst`
+* Auto-generate d classifier capabilities summary :pr:`997` (:pr:`1229`) :user:`BINAYKUMAR943`
+
+Transformers
+^^^^^^^^^^^^
+
+* date-time dummy feature transformer :code:`DateTimeFeatures` (:pr:`1356`) :user:`danbartl`
+* statistical summary transformer, :code:`SummaryTransformer` (:pr:`1329`) :user:`RNKuhns`
+* transformer factory from function, :code:`FunctionTransformer` (:pr:`1498`) :user:`boukepostma`
+* STL transformation, :code:`STLTransformer` (:pr:`1463`) :user:`eyalshafran`
+* Multivariate imputer (:pr:`1461`) :user:`aiwalter`
+
+Annotation: change-points, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Clasp for time series segmentation (CIKM'21 publication) (:pr:`1352`) :user:`patrickzib`
+
+Documentation
+^^^^^^^^^^^^^
+
+* Add badge to track pypi downloads to README (:pr:`1506`) :user:`RNKuhns`
+* [DOC] Add deprecation guide (:pr:`1552`) :user:`mloning`
+* [DOC] Add coverage consideration to reviewer guide (:pr:`1403`) :user:`mloning`
+* [DOC] Update to TSC extension template (:pr:`1525`) :user:`TonyBagnall`
+
+Governance
+^^^^^^^^^^
+
+* Governance change: clearer timelines and conditions for decision making (:pr:`1110`) :user:`fkiraly`
+* :user:`aiwalter` joined community council (:pr:`1532`)
+* :user:`SveaMeyer13`, :user:`GuzalBulatova`, and :user:`freddyaboulton` joined core devs (:pr:`1444`)
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* Tests refactor: using `pytest_generate_tests` instead of loops (:pr:`1407`) :user:`fkiraly`
+* Tests refactor: Adding get_test_params method to extension template (:pr:`1395`) :user:`Aparna-Sakshi`
+* Changed defaults in `make_forecasting_problem` (:pr:`1477`) :user:`aiwalter`
+
+Fixed
+~~~~~
+
+* Refactor TSC: base class (:pr:`1517`) :user:`TonyBagnall`
+* Refactor TSC: Hybrid/kernel based classification package (:pr:`1557`) :user:`MatthewMiddlehurst`
+* Refactor TSC: Dictionary based classification package (:pr:`1544`) :user:`MatthewMiddlehurst`
+* Refactor TSC: Time series classifiers refactor/Shape_DTW (:pr:`1554`) :user:`Piyush1729`
+* Refactor TSC: :code:`_muse` classifier (:pr:`1359`) :user:`BINAYKUMAR943`
+* Refactor TSC: :code:`ShapeletTransformClassifier`, documentation for HC2 (:pr:`1490`) :user:`MatthewMiddlehurst`
+* Refactor TSC: catch22 (:pr:`1487`) :user:`RavenRudi`
+* Refactor TSC: tsfresh classifier (:pr:`1473`) :user:`kejsitake`
+
+* Refactor forecasting: forecaster x/y checks (:pr:`1436`) :user:`fkiraly`
+
+* [MNT] Fix appveyor failure (:pr:`1541`) :user:`freddyaboulton`
+* [MNT] Fix macOS CI (:pr:`1511`) :user:`mloning`
+* [MNT] Depcrecate manylinux2010 (:pr:`1379`) :user:`mloning`
+* [MNT] Added pre-commit hook to sort imports (:pr:`1465`) :user:`aiwalter`
+* [MNT] add :code:`max_requirements`, bound statsmodels (:pr:`1479`) :user:`fkiraly`
+* [MNT] Hotfix tag scitype:y typo (:pr:`1449`) :user:`aiwalter`
+* [MNT] Add :code:`pydocstyle` to precommit (:pr:`890`) :user:`mloning`
+
+* [BUG] incorrect/missing weighted geometric mean in forecasting ensemble (:pr:`1370`) :user:`fkiraly`
+* [BUG] :pr:`1469`: stripping names of index X and y  (:pr:`1493`) :user:`boukepostma`
+* [BUG] W-XXX frequency bug from :pr:`866` (:pr:`1409`) :user:`xiaobenbenecho`
+* [BUG] Pandas.NA for unpredictible insample forecasts in AutoARIMA (:pr:`1442`) :user:`IlyasMoutawwakil`
+* [BUG] missing :code:`extract_path` in :code:`_data_io` (:pr:`1475`) :user:`yairbeer`
+* [BUG] Refactor sktime/.../_panels/_examples.py for tsai compatibility (:pr:`1453`) :user:`bobbys-dev`
+* [BUG] Grid/random search tag fix (:pr:`1455`) :user:`fkiraly`
+* [BUG] model_selection/split passed the entire DataFrame as index if DataFrame was provided (:pr:`1456`) :user:`fkiraly`
+* [BUG] multivariate :code:`NaiveForecaster` was missing :code:`update` (:pr:`1457`) :user:`fkiraly`
+
+* [DOC] docstring fixes in :code:`_proximity_forest.py` (:pr:`1531`) :user:`TonyBagnall`
+* [DOC] fixes to landing page links (:pr:`1429`) :user:`Aparna-Sakshi`
+* [DOC] Add DataChef blog post to community showcase (:pr:`1464`) :user:`myprogrammerpersonality`
+* [DOC] Fixes broken links/estimator overview (:pr:`1445`) :user:`afzal442`
+* [DOC] Remove license info from docstrings (:pr:`1437`) :user:`ronnie-llamado`
+
+
+All contributors: :user:`Aparna-Sakshi`, :user:`BINAYKUMAR943`, :user:`IlyasMoutawwakil`, :user:`MatthewMiddlehurst`, :user:`Piyush1729`, :user:`RNKuhns`, :user:`RavenRudi`, :user:`SveaMeyer13`, :user:`TonyBagnall`, :user:`afzal442`, :user:`aiwalter`, :user:`bobbys-dev`, :user:`boukepostma`, :user:`danbartl`, :user:`eyalshafran`, :user:`fkiraly`, :user:`freddyaboulton`, :user:`kejsitake`, :user:`mloning`, :user:`myprogrammerpersonality`, :user:`patrickzib`, :user:`ronnie-llamado`, :user:`xiaobenbenecho`, :user:`SinghShreya05`, and :user:`yairbeer`
+
+
 
 [0.8.0] - 2021-09-17
 --------------------

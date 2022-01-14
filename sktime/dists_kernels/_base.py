@@ -37,7 +37,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-
+from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes._series_as_panel import convert_Series_to_Panel
 from sktime.utils.validation.series import check_series
 
 
@@ -154,10 +155,10 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
-        pass
+        return self
 
 
-def _pairwise_panel_x_check(X):
+def _pairwise_panel_x_check(X, var_name="X"):
     """Check and coerce input data.
 
     Method used to check the input and convert
@@ -167,6 +168,7 @@ def _pairwise_panel_x_check(X):
     ----------
     X: List of dfs, Numpy of dfs, 3d numpy
         The value to be checked
+    var_name: str, variable name to print in error messages
 
     Returns
     -------
@@ -174,35 +176,28 @@ def _pairwise_panel_x_check(X):
         of the other formats, otherwise identical to X
 
     """
+    check_res = check_is_scitype(
+        X, ["Series", "Panel"], return_metadata=True, var_name=var_name
+    )
+    X_valid = check_res[0]
+    metadata = check_res[2]
 
-    def arr_check(arr):
-        for i, Xi in enumerate(arr):
-            if not isinstance(Xi, pd.DataFrame):
-                raise TypeError(
-                    "X must be a list of pd.DataFrame or numpy "
-                    "of pd.Dataframe or 3d numpy"
-                )
-            X[i] = check_series(Xi)
+    X_scitype = metadata["scitype"]
 
-    return_X = []
+    if not X_valid:
+        raise TypeError("X/X2 must be of Series or Panel scitype")
 
-    if isinstance(X, np.ndarray):
-        X_check = np.array(X, copy=True)
-        if X_check.ndim == 3:
-            for arr in X_check:
-                return_X.append(pd.DataFrame(arr))
-        else:
-            arr_check(X_check)
-            return_X = X_check.tolist()
-    elif isinstance(X, list):
-        arr_check(X)
-        return_X = X
-    else:
-        raise TypeError(
-            "X must be a list of pd.DataFrame or numpy of pd.Dataframe or 3d numpy"
-        )
+    # if the input is a single series, convert it to a Panel
+    if X_scitype == "Series":
+        X = convert_Series_to_Panel(X)
 
-    return return_X
+    # can't be anything else if check_is_scitype is working properly
+    elif X_scitype != "Panel":
+        raise RuntimeError("Unexpected error in check_is_scitype, check validity")
+
+    X_coerced = convert_to(X, to_type="df-list", as_scitype="Panel")
+
+    return X_coerced
 
 
 class BasePairwiseTransformerPanel(BaseEstimator):
@@ -277,12 +272,10 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             X2 = X
             self.X_equals_X2 = True
         else:
-            X2 = _pairwise_panel_x_check(X2)
-            if len(X2) == len(X):
-                for i in range(len(X2)):
-                    if not X[i].equals(X2[i]):
-                        break
-                self.X_equals_X2 = True
+            X2 = _pairwise_panel_x_check(X2, var_name="X2")
+            # todo, possibly:
+            # check X, X2 for equality, then set X_equals_X2
+            # could use deep_equals
 
         return self._transform(X=X, X2=X2)
 
@@ -310,4 +303,4 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
-        pass
+        return self

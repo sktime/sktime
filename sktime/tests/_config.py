@@ -13,31 +13,42 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
-from sktime.annotation.adapters import PyODAnnotator, QuantileOutlierDetector
+from sktime.annotation.adapters import PyODAnnotator
+from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.classification.compose import (
     ColumnEnsembleClassifier,
     ComposableTimeSeriesForestClassifier,
 )
 from sktime.classification.dictionary_based import (
+    MUSE,
+    WEASEL,
+    BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
+from sktime.classification.early_classification import (
+    ProbabilityThresholdEarlyClassifier,
+)
 from sktime.classification.feature_based import (
     Catch22Classifier,
+    FreshPRINCE,
     MatrixProfileClassifier,
+    RandomIntervalClassifier,
     SignatureClassifier,
+    SummaryClassifier,
     TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
+    RandomIntervalSpectralEnsemble,
     RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal, ROCKETClassifier
+from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
@@ -46,20 +57,17 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import (
     AutoEnsembleForecaster,
-    ColumnEnsembleForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,
     DirRecTimeSeriesRegressionForecaster,
     EnsembleForecaster,
-    ForecastingPipeline,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
     MultiplexForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
     StackingForecaster,
-    TransformedTargetForecaster,
 )
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.fbprophet import Prophet
@@ -73,7 +81,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.forecasting.tbats import TBATS
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -83,6 +90,7 @@ from sktime.registry import (
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
     ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
@@ -90,6 +98,7 @@ from sktime.transformations.panel.compose import (
 )
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
+from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.shapelets import (
@@ -102,25 +111,12 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformations.series.acf import (
-    AutoCorrelationTransformer,
-    PartialAutoCorrelationTransformer,
-)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.compose import (
-    ColumnwiseTransformer,
-    OptionalPassthrough,
-)
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.feature_selection import FeatureSelection
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
-    "ShapeDTW",
     "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
@@ -130,21 +126,23 @@ EXCLUDE_ESTIMATORS = [
 
 # This is temporary until BaseObject is implemented
 DIST_KERNELS_IGNORE_TESTS = [
-    "check_fit_updates_state",
+    "test_fit_updates_state",
     "_make_fit_args",
-    "check_fit_returns_self",
-    "check_raises_not_fitted_error",
-    "check_fit_idempotent",
-    "check_fit_does_not_overwrite_hyper_params",
-    "check_methods_do_not_change_state",
-    "check_persistence_via_pickle",
+    "test_fit_returns_self",
+    "test_raises_not_fitted_error",
+    "test_fit_idempotent",
+    "test_fit_does_not_overwrite_hyper_params",
+    "test_methods_do_not_change_state",
+    "test_persistence_via_pickle",
 ]
 
 
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["check_fit_idempotent"],
+    "ContractedShapeletTransform": ["test_fit_idempotent"],
     "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
     "AggrDist": DIST_KERNELS_IGNORE_TESTS,
+    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
+    "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -174,19 +172,13 @@ TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
 ]
-FORECASTER = ExponentialSmoothing()
-QUANTILE_OD_FORECASTER = Prophet()
-FORECASTERS = [("ses1", FORECASTER), ("ses2", FORECASTER)]
-STEPS_y = [
-    ("transformer", Detrender(ThetaForecaster())),
-    ("forecaster", NaiveForecaster()),
-]
-STEPS_X = [
+FORECASTER = NaiveForecaster()
+FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
+STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    ColumnEnsembleForecaster: {"forecasters": FORECASTER},
     OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
@@ -205,12 +197,9 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    TransformedTargetForecaster: {"steps": STEPS_y},
-    ForecastingPipeline: {"steps": STEPS_X},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS},
     AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    Detrender: {"forecaster": FORECASTER},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplitter(fh=1),
@@ -223,14 +212,13 @@ ESTIMATOR_TEST_PARAMS = {
         "param_distributions": {"window_length": [2, 5]},
         "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
-    TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
         "estimators": [
             (name, estimator, 0) for (name, estimator) in TIME_SERIES_CLASSIFIERS
         ]
     },
     FittedParamExtractor: {
-        "forecaster": FORECASTER,
+        "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
     },
     SeriesToPrimitivesRowTransformer: {
@@ -296,7 +284,25 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "default_fc_parameters": "minimal",
     },
-    ROCKETClassifier: {"num_kernels": 100},
+    FreshPRINCE: {
+        "n_estimators": 3,
+        "default_fc_parameters": "minimal",
+    },
+    RandomIntervals: {
+        "n_intervals": 3,
+    },
+    RandomIntervalClassifier: {
+        "n_intervals": 3,
+        "estimator": RandomForestClassifier(n_estimators=3),
+        "interval_transformers": SummaryTransformer(
+            summary_function=("mean", "min", "max"),
+        ),
+    },
+    SummaryClassifier: {
+        "estimator": RandomForestClassifier(n_estimators=3),
+        "summary_functions": ("mean", "min", "max"),
+    },
+    RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
@@ -324,6 +330,12 @@ ESTIMATOR_TEST_PARAMS = {
             "randomly_selected_params": 2,
         },
     },
+    ProbabilityThresholdEarlyClassifier: {
+        "classification_points": [3],
+        "estimator": Catch22Classifier(
+            estimator=RandomForestClassifier(n_estimators=2)
+        ),
+    },
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,
@@ -332,11 +344,19 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
+    RandomIntervalSpectralEnsemble: {
+        "n_estimators": 3,
+        "acf_lag": 10,
+        "min_interval": 5,
+    },
     SFA: {"return_pandas_data_series": True},
-    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 5},
+    BOSSEnsemble: {"max_ensemble_size": 3},
+    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
+    WEASEL: {"window_inc": 4},
+    MUSE: {"window_inc": 4, "use_first_order_differences": False},
     TemporalDictionaryEnsemble: {
         "n_parameter_samples": 10,
-        "max_ensemble_size": 5,
+        "max_ensemble_size": 3,
         "randomly_selected_params": 5,
     },
     TSFC: {"n_estimators": 3},
@@ -371,16 +391,9 @@ ESTIMATOR_TEST_PARAMS = {
         "verbose": False,
     },
     UnobservedComponents: {"level": "local level"},
-    PartialAutoCorrelationTransformer: {"n_lags": 1},
-    AutoCorrelationTransformer: {"n_lags": 1},
-    Imputer: {"method": "mean"},
-    HampelFilter: {"window_length": 3},
-    OptionalPassthrough: {"transformer": BoxCoxTransformer(), "passthrough": True},
-    FeatureSelection: {"method": "all"},
-    ColumnwiseTransformer: {"transformer": Detrender()},
     AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
-    QuantileOutlierDetector: {"estimator": QUANTILE_OD_FORECASTER},
+    ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
 }
 
 # We use estimator tags in addition to class hierarchies to further distinguish
@@ -400,7 +413,7 @@ NON_STATE_CHANGING_METHODS = (
 )
 
 # The following gives a list of valid estimator base classes.
-VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST)
+VALID_TRANSFORMER_TYPES = tuple(TRANSFORMER_MIXIN_LIST) + (BaseTransformer,)
 
 VALID_ESTIMATOR_BASE_TYPES = tuple(BASE_CLASS_LIST)
 

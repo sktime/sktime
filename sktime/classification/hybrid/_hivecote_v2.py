@@ -5,7 +5,7 @@ Upgraded hybrid ensemble of classifiers from 4 separate time series classificati
 representations, using the weighted probabilistic CAWPE as an ensemble controller.
 """
 
-__author__ = "Matthew Middlehurst"
+__author__ = ["MatthewMiddlehurst"]
 __all__ = ["HIVECOTEV2"]
 
 from datetime import datetime
@@ -13,14 +13,12 @@ from datetime import datetime
 import numpy as np
 from sklearn.metrics import accuracy_score
 from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.utils.validation import check_n_jobs
 
 
 class HIVECOTEV2(BaseClassifier):
@@ -42,6 +40,13 @@ class HIVECOTEV2(BaseClassifier):
     tde_params : dict or None, default=None
         Parameters for the TemporalDictionaryEnsemble module. If None, uses the default
         parameters.
+    time_limit_in_minutes : int, default=0
+        Time contract to limit build time in minutes, overriding
+        n_estimators/n_parameter_samples for each component.
+        Default of 0 means n_estimators/n_parameter_samples for each component is used.
+    save_component_probas : bool, default=False
+        When predict/predict_proba is called, save each HIVE-COTEV2 component
+        probability predictions in component_probas.
     verbose : int, default=0
         Level of output printed to the console (for information only).
     n_jobs : int, default=1
@@ -56,8 +61,6 @@ class HIVECOTEV2(BaseClassifier):
         The number of classes.
     classes_ : list
         The unique class labels.
-    n_jobs_ : int
-        The number of threads used.
     stc_weight_ : float
         The weight for STC probabilities.
     drcif_weight_ : float
@@ -66,6 +69,9 @@ class HIVECOTEV2(BaseClassifier):
         The weight for Arsenal probabilities.
     tde_weight_ : float
         The weight for TDE probabilities.
+    component_probas : dict
+        Only used if save_component_probas is true. Saved probability predictions for
+        each HIVE-COTEV2 component.
 
     See Also
     --------
@@ -112,10 +118,8 @@ class HIVECOTEV2(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "capability:unequal_length": False,
-        "capability:missing_values": False,
-        "capability:train_estimate": True,
         "capability:contractable": True,
+        "capability:multithreading": True,
     }
 
     def __init__(
@@ -125,6 +129,7 @@ class HIVECOTEV2(BaseClassifier):
         arsenal_params=None,
         tde_params=None,
         time_limit_in_minutes=0,
+        save_component_probas=False,
         verbose=0,
         n_jobs=1,
         random_state=None,
@@ -136,17 +141,16 @@ class HIVECOTEV2(BaseClassifier):
 
         self.time_limit_in_minutes = time_limit_in_minutes
 
+        self.save_component_probas = save_component_probas
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.n_classes_ = 0
-        self.classes_ = []
-        self.n_jobs_ = n_jobs
         self.stc_weight_ = 0
         self.drcif_weight_ = 0
         self.arsenal_weight_ = 0
         self.tde_weight_ = 0
+        self.component_probas = {}
 
         self._stc_params = stc_params
         self._drcif_params = drcif_params
@@ -179,11 +183,6 @@ class HIVECOTEV2(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self.n_jobs_ = check_n_jobs(self.n_jobs)
-
-        self.n_classes_ = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-
         # Default values from HC2 paper
         if self.stc_params is None:
             self._stc_params = {"transform_limit_in_minutes": 120}
@@ -208,7 +207,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._stc_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._stc.fit(X, y)
 
@@ -232,7 +231,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._drcif_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._drcif.fit(X, y)
 
@@ -256,7 +255,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._arsenal_params,
             save_transformed_data=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._arsenal.fit(X, y)
 
@@ -280,7 +279,7 @@ class HIVECOTEV2(BaseClassifier):
             **self._tde_params,
             save_train_predictions=True,
             random_state=self.random_state,
-            n_jobs=self.n_jobs_,
+            n_jobs=self._threads_to_use,
         )
         self._tde.fit(X, y)
 
@@ -288,7 +287,7 @@ class HIVECOTEV2(BaseClassifier):
             print("TDE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))  # noqa
 
         # Find TDE weight using train set estimate
-        train_probs = self._tde._get_train_probs(X, y, train_estimate_method="oob")
+        train_probs = self._tde._get_train_probs(X, y, train_estimate_method="loocv")
         train_preds = self._tde.classes_[np.argmax(train_probs, axis=1)]
         self.tde_weight_ = accuracy_score(y, train_preds) ** 4
 
@@ -298,6 +297,8 @@ class HIVECOTEV2(BaseClassifier):
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
             print("TDE weight = " + str(self.tde_weight_))  # noqa
+
+        return self
 
     def _predict(self, X):
         """Predicts labels for sequences in X.
@@ -320,7 +321,7 @@ class HIVECOTEV2(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X, return_component_probas=False):
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -337,24 +338,34 @@ class HIVECOTEV2(BaseClassifier):
 
         # Call predict proba on each classifier, multiply the probabilities by the
         # classifiers weight then add them to the current HC2 probabilities
+        stc_probas = self._stc.predict_proba(X)
         dists = np.add(
             dists,
-            self._stc.predict_proba(X) * (np.ones(self.n_classes_) * self.stc_weight_),
+            stc_probas * (np.ones(self.n_classes_) * self.stc_weight_),
         )
+        drcif_probas = self._drcif.predict_proba(X)
         dists = np.add(
             dists,
-            self._drcif.predict_proba(X)
-            * (np.ones(self.n_classes_) * self.drcif_weight_),
+            drcif_probas * (np.ones(self.n_classes_) * self.drcif_weight_),
         )
+        arsenal_probas = self._arsenal.predict_proba(X)
         dists = np.add(
             dists,
-            self._arsenal.predict_proba(X)
-            * (np.ones(self.n_classes_) * self.arsenal_weight_),
+            arsenal_probas * (np.ones(self.n_classes_) * self.arsenal_weight_),
         )
+        tde_probas = self._tde.predict_proba(X)
         dists = np.add(
             dists,
-            self._tde.predict_proba(X) * (np.ones(self.n_classes_) * self.tde_weight_),
+            tde_probas * (np.ones(self.n_classes_) * self.tde_weight_),
         )
+
+        if self.save_component_probas:
+            self.component_probas = {
+                "STC": stc_probas,
+                "DrCIF": drcif_probas,
+                "Arsenal": arsenal_probas,
+                "TDE": tde_probas,
+            }
 
         # Make each instances probability array sum to 1 and return
         return dists / dists.sum(axis=1, keepdims=True)

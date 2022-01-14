@@ -11,8 +11,10 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_random_state
 
+from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
 from sktime.clustering.base.base import BaseClusterer
@@ -22,6 +24,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import (
+    BaseTransformer,
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
     _SeriesToPrimitivesTransformer,
@@ -48,10 +51,50 @@ def _get_err_msg(estimator):
     )
 
 
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    # return the instance of the class with default parameters
-    return Estimator.create_test_instance()
+def _list_required_methods(estimator):
+    """Return list of required method names (beyond BaseEstimator ones)."""
+    # all BaseEstimator children must implement these
+    MUST_HAVE_FOR_ESTIMATORS = [
+        "fit",
+        "check_is_fitted",
+        "is_fitted",  # read-only property
+        "set_params",
+        "get_params",
+    ]
+    # prediction/forecasting base classes that must have predict
+    BASE_CLASSES_THAT_MUST_HAVE_PREDICT = (
+        BaseClusterer,
+        BaseRegressor,
+        BaseForecaster,
+    )
+    # transformation base classes that must have transform
+    BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM = (
+        BaseTransformer,
+        BasePairwiseTransformer,
+        BasePairwiseTransformerPanel,
+    )
+
+    required_methods = []
+
+    if isinstance(estimator, BaseEstimator):
+        required_methods += MUST_HAVE_FOR_ESTIMATORS
+
+    if isinstance(estimator, BASE_CLASSES_THAT_MUST_HAVE_PREDICT):
+        required_methods += ["predict"]
+
+    if isinstance(estimator, BASE_CLASSES_THAT_MUST_HAVE_TRANSFORM):
+        required_methods += ["transform"]
+
+    if isinstance(estimator, BaseAligner):
+        required_methods += [
+            "get_alignment",
+            "get_alignment_loc",
+            "get_aligned",
+            "get_distance",
+            "get_distance_matrix",
+        ]
+
+    return required_methods
 
 
 def _make_args(estimator, method, **kwargs):
@@ -102,12 +145,18 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
     elif isinstance(estimator, BasePairwiseTransformer):
         return None, None
     elif isinstance(estimator, BasePairwiseTransformerPanel):
         return None, None
+    elif isinstance(estimator, BaseAligner):
+        X = [_make_series(n_columns=2, **kwargs), _make_series(n_columns=2, **kwargs)]
+        return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -144,6 +193,9 @@ def _make_transform_args(estimator, **kwargs):
     ):
         X = _make_panel_X(**kwargs)
         return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BasePairwiseTransformer):
         d = {"col1": [1, 2], "col2": [3, 4]}
         return pd.DataFrame(d), pd.DataFrame(d)
@@ -168,6 +220,9 @@ def _make_inverse_transform_args(estimator, **kwargs):
     elif isinstance(estimator, _PanelToPanelTransformer):
         X = _make_panel_X(**kwargs)
         return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
 
@@ -191,7 +246,7 @@ def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state
 
 
 def _compare_nested_frame(func, x, y, **kwargs):
-    """Comper two nested pd.DataFrames.
+    """Compare two nested pd.DataFrames.
 
     Parameters
     ----------
@@ -273,3 +328,12 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
+
+
+def _has_capability(est, method: str) -> bool:
+    """Check whether estimator has capability of method."""
+    if not hasattr(est, method):
+        return False
+    if method == "inverse_transform":
+        return est.get_class_tag("capability:inverse_transform", False)
+    return True

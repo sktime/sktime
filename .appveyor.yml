@@ -52,7 +52,8 @@ install:
   # purpose but is problematic because it tends to cancel builds pushed
   # directly to main instead of just PR builds.
   # credits: JuliaLang developers.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+  - ps:
+      if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
       https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
       Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
       throw "There are newer queued builds for this pull request, failing early." }
@@ -60,12 +61,12 @@ install:
   # Set up conda environment
   - cmd: SET PATH=%MINICONDA_VERSION%;%MINICONDA_VERSION%\Scripts;%PATH%
   - cmd: conda config --set always_yes true
-  - cmd: conda update --quiet conda
+  - cmd: conda update --quiet -c anaconda conda
   - cmd: conda create --name testenv python=%PYTHON_VERSION%
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
-  - cmd: conda install -c conda-forge "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba==0.53" "numpy>=1.19.3" "pandas>=1.1.0,<1.2" "statsmodels==0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0"
+  - cmd: conda install -c conda-forge "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1,<=1.9.2" "numba==0.53" "numpy>=1.19.3" "pandas>=1.1.0,<1.2" "statsmodels==0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" "pystan>=2.14,<3.0" "deprecated>=1.2.13" "fbprophet>=0.7.1"
 
   - cmd: pip install -r %REQUIREMENTS%
 
@@ -79,14 +80,15 @@ install:
   # to use for sktime
   - cmd: python setup.py build_ext --compiler=msvc
   - cmd: python setup.py bdist_wheel bdist_wininst
-  - ps: ls dist  # list built artifacts
+  - ps: ls dist # list built artifacts
 
   # Install the built wheel package to test it
   - cmd: pip install --pre --no-index --no-deps --find-links dist/ sktime
 
 test_script:
   # If there is a newer build queued for the same PR, cancel this one.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+  - ps:
+      if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
       https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
       Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
       throw "There are newer queued builds for this pull request, failing early." }

@@ -18,30 +18,27 @@ How to use this implementation template to implement a new estimator:
 - once complete: use as a local library, or contribute to sktime via PR
 
 Mandatory implements:
-    fitting         - _fit(self, X, y)
-    predicting      - _predict(self, X)
+    fitting                 - _fit(self, X, y)
+    predicting classes      - _predict(self, X)
 
 Optional implements:
-    fitted parameter inspection - get_fitted_params()
+    data conversion and capabilities tags - _tags
+    fitted parameter inspection           - get_fitted_params()
+    predicting class probabilities        - _predict_proba(self, X)
 
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
-
-Testing:
+Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+import numpy as np
 
 from sktime.classification.base import BaseClassifier
 
 # todo: add any necessary imports here
 
 
-class MyTSC(BaseClassifier):
+class MyTimeSeriesClassifier(BaseClassifier):
     """Custom time series classifier. todo: write docstring.
 
     todo: describe your custom time series classifier here
@@ -65,14 +62,16 @@ class MyTSC(BaseClassifier):
     and so on
     """
 
-    # todo: fill out estimator tags here
+    # optional todo: override base class estimator default tags here if necessary
     _tags = {
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
+        "capability:multithreading": False,
     }
-    # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
@@ -92,8 +91,8 @@ class MyTSC(BaseClassifier):
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
 
-        # todo: change "MyTSC" to the name of the class
-        super(MyTSC, self).__init__()
+        # todo: change "MyTimeSeriesClassifier" to the name of the class
+        super(MyTimeSeriesClassifier, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -132,7 +131,7 @@ class MyTSC(BaseClassifier):
         # IMPORTANT: avoid side effects to X, y
 
     # todo: implement this, mandatory
-    def _predict(self, X):
+    def _predict(self, X) -> np.array:
         """Predict labels for sequences in X.
 
         core logic
@@ -153,6 +152,32 @@ class MyTSC(BaseClassifier):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
+    # if you do not implement it, then the default _predict_proba will be  called.
+    # the default simply calls predict and sets probas to 0 or 1.
+    def _predict_proba(self, X) -> np.ndarray:
+        """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
+
+        Parameters
+        ----------
+        X : 3D np.array, array-like or sparse matrix
+                of shape = [n_instances,n_dimensions,series_length]
+                or shape = [n_instances,series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+
+        Returns
+        -------
+        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
+        of class membership.
+        """
+
+        # implement here
+        # IMPORTANT: avoid side effects to X
+
+    # todo: consider implementing this, optional
     # if not implementing, delete the method
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -164,6 +189,7 @@ class MyTSC(BaseClassifier):
         # implement here
 
     # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -179,6 +205,12 @@ class MyTSC(BaseClassifier):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

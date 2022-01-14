@@ -12,9 +12,9 @@ import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation import check_window_length
 from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.utils.validation import check_window_length
+from sktime.utils.validation.forecasting import check_sp
 
 
 class _NaiveForecaster(_BaseWindowForecaster):
@@ -201,7 +201,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
 
         # reshape last window, one column per season
         last_window = last_window.reshape(
-            np.int(np.ceil(self.window_length_ / self.sp_)), self.sp_
+            int(np.ceil(self.window_length_ / self.sp_)), self.sp_
         )
 
         return last_window
@@ -224,7 +224,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         # assume fh is sorted, i.e. max(fh) == fh[-1]
         # only slicing all the last seasons into last_window
         if fh[-1] > self.sp_:
-            reps = np.int(np.ceil(fh[-1] / self.sp_))
+            reps = int(np.ceil(fh[-1] / self.sp_))
             y_pred = np.tile(y_pred, reps=reps)
 
         # get zero-based index by subtracting the minimum
@@ -338,9 +338,16 @@ class NaiveForecaster(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        return self._forecaster.predict(
+        y_pred = self._forecaster.predict(
             fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha
         )
+
+        # check for in-sample prediction, if first time point needs to be imputed
+        if self._y.index[0] in y_pred.index:
+            # fill NaN with next row values
+            y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+
+        return y_pred
 
     def _update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.

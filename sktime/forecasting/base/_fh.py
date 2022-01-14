@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "eenticott-shell"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
@@ -11,8 +11,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.datetime import _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
@@ -92,11 +91,11 @@ def _check_values(values):
 
     # convert single integer to pandas index, no further checks needed
     elif isinstance(values, (int, np.integer)):
-        return pd.Int64Index([values], dtype=np.int)
+        return pd.Int64Index([values], dtype=int)
 
     # convert np.array or list to pandas index
     elif isinstance(values, (list, np.ndarray)):
-        values = pd.Int64Index(values, dtype=np.int)
+        values = pd.Int64Index(values, dtype=int)
 
     # otherwise, raise type error
     else:
@@ -306,13 +305,13 @@ class ForecastingHorizon:
             if is_timestamp:
                 # coerce to pd.Period for reliable arithmetic operations and
                 # computations of time deltas
-                cutoff = _coerce_to_period(cutoff)
+                cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
 
             absolute = cutoff + relative
 
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
-                freq = _get_freq(cutoff)
+                freq = cutoff.freqstr
                 absolute = absolute.to_timestamp(freq)
 
             return self._new(absolute, is_relative=False)

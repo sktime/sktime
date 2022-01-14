@@ -7,12 +7,9 @@ __author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection import check_cv
+from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
@@ -26,6 +23,7 @@ from sktime.utils.validation.forecasting import check_scoring
 class BaseGridSearch(BaseForecaster):
 
     _tags = {
+        "scitype:y": "both",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
@@ -45,7 +43,6 @@ class BaseGridSearch(BaseForecaster):
     ):
 
         self.forecaster = forecaster
-
         self.cv = cv
         self.strategy = strategy
         self.n_jobs = n_jobs
@@ -55,11 +52,10 @@ class BaseGridSearch(BaseForecaster):
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
         super(BaseGridSearch, self).__init__()
-
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:pred_int",
-            # "scitype:y", commented out until grid search works with multivariate
+            "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",
             "y_inner_mtype",
@@ -67,7 +63,6 @@ class BaseGridSearch(BaseForecaster):
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
-
         self.clone_tags(forecaster, tags_to_clone)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -78,61 +73,12 @@ class BaseGridSearch(BaseForecaster):
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict(
-        self,
-        y,
-        cv=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        """Call update_predict on forecaster with the best parameters."""
-        self.check_is_fitted("update_predict")
-
-        return self.best_forecaster_._update_predict(
-            y,
-            cv=cv,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update_predict_single(
-        self,
-        y,
-        fh=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
-        """Call predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("update_predict_single")
-        return self.best_forecaster_._update_predict_single(
-            y,
-            fh=fh,
-            X=X,
-            update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
         return self.best_forecaster_._predict(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        """Call compute_pred_int on the forecaster with the best found parameters."""
-        self.check_is_fitted("compute_pred_int")
-        return self.best_forecaster_._compute_pred_int(y_pred, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -422,7 +368,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
-
     >>> y = load_airline()
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(
@@ -437,6 +382,47 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh)
+
+        Advanced model meta-tuning (model selection) with multiple forecasters
+        together with hyper-parametertuning at same time using sklearn notation:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> y = load_airline()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer()),
+    ...     ("forecaster", NaiveForecaster())])
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=48,
+    ...     step_length=12,
+    ...     start_with_window=True,
+    ...     fh=[1,2,3])
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=pipe,
+    ...     param_grid=[{
+    ...         "forecaster": [NaiveForecaster(sp=12)],
+    ...         "forecaster__strategy": ["drift", "last", "mean"],
+    ...     },
+    ...     {
+    ...         "imputer__method": ["mean", "drift"],
+    ...         "forecaster": [ThetaForecaster(sp=12)],
+    ...     },
+    ...     {
+    ...         "imputer__method": ["mean", "last"],
+    ...         "forecaster": [ExponentialSmoothing(sp=12)],
+    ...         "forecaster__trend": ["add", "mul"],
+    ...     },
+    ...     ],
+    ...     cv=cv,
+    ...     n_jobs=-1)
+    >>> gscv.fit(y)
+    ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
