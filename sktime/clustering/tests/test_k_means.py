@@ -110,9 +110,14 @@ def test_kmeans():
     kmeans.fit(X_train)
     test_mean_result = kmeans.predict(X_test)
     mean_score = metrics.rand_score(y_test, test_mean_result)
+    proba = kmeans.predict_proba(X_test)
 
     assert np.array_equal(test_mean_result, expected_results["mean"])
     assert mean_score == expected_score["mean"]
     assert kmeans.n_iter_ == 300
     assert np.array_equal(kmeans.labels_, expected_labels["mean"])
     assert isinstance(kmeans.cluster_centers_, np.ndarray)
+    assert proba.shape == (40, 6)
+
+    for val in proba:
+        assert np.count_nonzero(val == 1.0) == 1

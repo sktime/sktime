@@ -96,7 +96,10 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         self:
             Fitted estimator.
         """
-        self._precomputed_pairwise = pairwise_distance(X, metric=self.metric)
+        self._check_params(X)
+        self._precomputed_pairwise = pairwise_distance(
+            X, metric=self.metric, **self._distance_params
+        )
         return super()._fit(X, y)
 
     def _compute_new_cluster_centers(

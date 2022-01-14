@@ -74,6 +74,7 @@ def _kmeans_plus_plus(
     random_state: np.random.RandomState,
     distance_metric: str = "euclidean",
     n_local_trials: int = None,
+    distance_params: dict = None,
 ):
     """Compute initial centroids using kmeans++ method.
 
@@ -96,11 +97,13 @@ def _kmeans_plus_plus(
         Determines random number generation for centroid initialization.
     distance_metric: str, defaults = 'euclidean'
         String that is the distance metric.
-    n_local_trials : integer, optional
+    n_local_trials: integer, optional
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
+    distance_params: dict, defaults = None
+        Dictionary containing distance parameter kwargs.
 
     Returns
     -------
@@ -115,10 +118,16 @@ def _kmeans_plus_plus(
     if n_local_trials is None:
         n_local_trials = 2 + int(np.log(n_clusters))
 
+    if distance_params is None:
+        distance_params = {}
+
     center_id = random_state.randint(n_samples)
     centers[0] = X[center_id]
     closest_dist_sq = (
-        pairwise_distance(centers[0, np.newaxis], X, metric=distance_metric) ** 2
+        pairwise_distance(
+            centers[0, np.newaxis], X, metric=distance_metric, **distance_params
+        )
+        ** 2
     )
     current_pot = closest_dist_sq.sum()
 
@@ -128,7 +137,10 @@ def _kmeans_plus_plus(
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
 
         distance_to_candidates = (
-            pairwise_distance(X[candidate_ids], X, metric=distance_metric) ** 2
+            pairwise_distance(
+                X[candidate_ids], X, metric=distance_metric, **distance_params
+            )
+            ** 2
         )
 
         np.minimum(closest_dist_sq, distance_to_candidates, out=distance_to_candidates)
@@ -174,6 +186,8 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         Verbosity mode.
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
+    distance_params: dict, defaults = None
+        Dictonary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -210,6 +224,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         tol: float = 1e-4,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
+        distance_params: dict = None,
     ):
         self.n_clusters = n_clusters
         self.init_algorithm = init_algorithm
@@ -219,6 +234,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
+        self.distance_params = distance_params
 
         self.cluster_centers_ = None
         self.labels_ = None
@@ -258,6 +274,11 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
                 f"invalid. The following are a list of valid init algorithms strings: "
                 f"{list(self._init_algorithms.keys())}"
             )
+
+        if self.distance_params is None:
+            self._distance_params = {}
+        else:
+            self._distance_params = self.distance_params
 
     def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
@@ -325,9 +346,9 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (1d array of shape (n_instance,))
             Array of indexes of each instance closest cluster.
         """
-        return pairwise_distance(X, self.cluster_centers_, metric=self.metric).argmin(
-            axis=1
-        )
+        return pairwise_distance(
+            X, self.cluster_centers_, metric=self.metric, **self._distance_params
+        ).argmin(axis=1)
 
     @abstractmethod
     def _compute_new_cluster_centers(
