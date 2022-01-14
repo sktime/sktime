@@ -865,7 +865,7 @@ class BaseForecaster(BaseEstimator):
             y_inner = convert_to(
                 y,
                 to_type=y_inner_mtype,
-                as_scitype="Series",  # we are dealing with series
+                as_scitype=y_scitype,  # we are dealing with series
                 store=self._converter_store_y,
             )
 
@@ -873,7 +873,7 @@ class BaseForecaster(BaseEstimator):
             X_inner = convert_to(
                 X,
                 to_type=X_inner_mtype,
-                as_scitype="Series",  # we are dealing with series
+                as_scitype=X_scitype,  # we are dealing with series
             )
         else:
             iterate_as = _most_complex_scitype(y_inner_scitype)
