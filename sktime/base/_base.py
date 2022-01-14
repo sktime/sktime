@@ -323,6 +323,39 @@ class BaseObject(_BaseEstimator):
 
         return objs, names
 
+    @classmethod
+    def _has_implementation_of(cls, method):
+        """Check if method has a concrete implementation in this class.
+
+        This assumes that having an implementation is equivalent to
+            one or more overrides of `method` in the method resolution order.
+
+        Parameters
+        ----------
+        method : str, name of method to check implementation of
+
+        Returns
+        -------
+        bool, whether method has implementation in cls
+            True if cls.method has been overridden at least once in
+                the inheritance tree (according to method resolution order)
+        """
+        # walk through method resolutoin order and inspect methods
+        #   of classes and direct parents, "adjacent" classes in mro
+        mro = inspect.getmro(cls)
+        for i in range(len(mro) - 1):
+            cls_i_mth = getattr(mro[i], method, None)
+            cls_nxt_mth = getattr(mro[i + 1], method, None)
+
+            # the method has been overridden once iff in mro
+            #  there are two adjacent classes where it is not None and different
+            both_not_none = cls_i_mth is not None and cls_nxt_mth is not None
+            overridden = both_not_none and cls_i_mth != cls_nxt_mth
+            if overridden:
+                return True
+
+        return False
+
 
 class BaseEstimator(BaseObject):
     """Base class for defining estimators in sktime.
