@@ -1284,7 +1284,18 @@ class BaseForecaster(BaseEstimator):
             pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
 
             # change the column labels (multiindex) to the format for intervals
-            pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
+            #   idx returned by _predict_quantiles
+            #   is 2-level MultiIndex with variable names, alpha
+            idx = pred_int.columns
+            # variable names (unique, in same order)
+            var_names = idx.get_level_values(0).unique()
+            # idx returned by _predict?interval should be
+            #   3-level MultiIndex with variable names, coverage, lower/upper
+            int_idx = pd.MultiIndex.from_product(
+                [var_names, coverage, ["lower", "upper"]]
+            )
+
+            pred_int.columns = int_idx
 
         return pred_int
 
@@ -1324,49 +1335,27 @@ class BaseForecaster(BaseEstimator):
             )
 
         if implements_interval:
-            if isinstance(alpha, (int, float)):
-                alpha = [alpha]
-            # else assume iterative/ list
 
             req_quant = np.asarray(alpha)  # requested quantiles
 
+            q1 = 0
+            quantiles = []
             # accumulator of results
             acc = pd.DataFrame([], fh.to_absolute(self.cutoff))
 
-            for q1 in req_quant:
+            q2 = 1 - q1  # the other quantile
 
-                if q1 in acc.columns:
-                    # skip as this quantile is already computed by tbats
-                    continue
+            # _get_pred_int() returns DataFrame with "lower" "upper" columns
+            # rename them to quantiles
+            colnames = {
+                "lower": q1 if q1 < q2 else q2,
+                "upper": q2 if q2 > q1 else q1,
+            }
+            pred_int = pred_int.rename(columns=colnames)
 
-                # q = 0.5 -> conf_lev = 0 -> y_pred = pred_int[lower] = pred_int[upper]
-                # so don't compute CI intervals simply save y_hat = predictions
-                if q1 == 0.5:
-                    acc[q1] = self._tbats_forecast(fh)
-                    continue
-
-                # otherwise compute CI intervals
-
-                # tbats with CI intervals
-                conf_level = np.abs(1 - q1 * 2)
-                y_pred, pred_int = self._tbats_forecast_with_interval(fh, conf_level)
-
-                # preserve q = 0.5, which is calculated and returned anyway
-                acc[0.5] = y_pred
-
-                q2 = 1 - q1  # the other quantile
-
-                # _get_pred_int() returns DataFrame with "lower" "upper" columns
-                # rename them to quantiles
-                colnames = {
-                    "lower": q1 if q1 < q2 else q2,
-                    "upper": q2 if q2 > q1 else q1,
-                }
-                pred_int = pred_int.rename(columns=colnames)
-
-                # add to acc
-                for q in [q1, q2]:
-                    acc[q] = pred_int[q]
+            # add to acc
+            for q in [q1, q2]:
+                acc[q] = pred_int[q]
 
             # order as requested and drop un-requested
             quantiles = acc.reindex(columns=req_quant)
@@ -1376,7 +1365,6 @@ class BaseForecaster(BaseEstimator):
             quantiles.columns = pd.MultiIndex.from_product([[col_name], req_quant])
 
         return quantiles
-
 
     def _predict_moving_cutoff(
         self,
