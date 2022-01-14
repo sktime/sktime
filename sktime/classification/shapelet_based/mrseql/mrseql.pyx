@@ -347,9 +347,10 @@ class MrSEQLClassifier(BaseClassifier):
         full_fm = np.hstack(full_fm)
         return full_fm
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """
         Fit the model according to the given training time series data.
+
         Parameters
         ----------
         X : Time series data.
@@ -360,7 +361,6 @@ class MrSEQLClassifier(BaseClassifier):
         self
             Fitted estimator.
         """
-        X, y = check_X_y(X,y, coerce_to_numpy=True)
 
         # transform time series to multiple symbolic representations
         mr_seqs = self._transform_time_series(X)
@@ -383,7 +383,7 @@ class MrSEQLClassifier(BaseClassifier):
 
 
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """
         If seql_mode is set to 'fs', it returns the estimation by sklearn logistic regression model.
         Otherwise (seql_mode == 'clf'), it returns normalized probability estimated with one-versus-all method.
@@ -399,7 +399,6 @@ class MrSEQLClassifier(BaseClassifier):
             where classes are ordered as they are in ``self.classes_``.
         """
         self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
         mr_seqs = self._transform_time_series(X)
 
         if self.seql_mode == 'fs':
@@ -408,7 +407,7 @@ class MrSEQLClassifier(BaseClassifier):
         else:
             return self.seql_clf.predict_proba(mr_seqs)
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class labels for samples in X.
 
         Parameters
