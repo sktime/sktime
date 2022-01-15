@@ -83,10 +83,10 @@ class QuantileOutlierDetector(BaseSeriesAnnotator):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        X_t = X.copy()
+        
         self.estimator_ = clone(self.estimator)
         check_estimator(self.estimator_)
-        self.estimator_.fit(X_t)
+        self.estimator_.fit(X)
         return self
 
     def _predict(self, X):
@@ -101,17 +101,17 @@ class QuantileOutlierDetector(BaseSeriesAnnotator):
         Y : pd.Series - annotations for sequence X
             exact format depends on annotation type
         """
-        X_t = X.copy()
+        
         fmt = self.fmt
         labels = self.labels
 
-        fh = ForecastingHorizon(X_t.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False)
         forecasts, uncertainty_intervals = self.estimator_.predict(
             fh, return_pred_int=True, alpha=self.alpha
         )
 
         uncertainty_intervals["forecast"] = forecasts
-        uncertainty_intervals["original"] = X_t.to_numpy()
+        uncertainty_intervals["original"] = X.to_numpy()
 
         uncertainty_intervals["score"] = (
             uncertainty_intervals["original"] - uncertainty_intervals["upper"]
@@ -135,3 +135,8 @@ class QuantileOutlierDetector(BaseSeriesAnnotator):
             Y = pd.Series(Y_val_np.iloc[Y_loc], index=X.index[Y_loc])
 
         return Y
+
+    @classmethod
+    def get_test_params(cls):
+        from sktime.forecasting.arima import ARIMA
+        return {"estimator":ARIMA()}
