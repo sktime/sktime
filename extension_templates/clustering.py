@@ -29,6 +29,7 @@ Testing - implement if sktime forecaster (not needed locally):
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+import numpy as np
 
 from sktime.clustering.base import BaseClusterer
 
@@ -68,7 +69,6 @@ class MyClusterer(BaseClusterer):
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
-        "capability:train_estimate": False,
         "capability:multithreading": False,
     }
 
@@ -111,16 +111,13 @@ class MyClusterer(BaseClusterer):
 
     # todo: implement this, mandatory
     # at least one of _predict and _get_fitted_params should be implemented
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.Dataframe.
-            Time series instances to predict their cluster indexes. If data is not
-            equal length a pd.Dataframe given, if another other type of data a
-            np.ndarray given.
+        X : data to cluster based on model formed in _fit, of type _tags[
+        "X_inner_mtype"]
         y: ignored, exists for API consistency reasons.
 
         Returns

@@ -22,12 +22,12 @@ class BaseClusterer(BaseEstimator, ABC):
     """Abstract base class for time series clusterer."""
 
     _tags = {
-        "X_inner_mtype": "numpy3D",  # inner type for clustering,
-        #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
-        "capability:train_estimate": False,
         "capability:multithreading": False,
     }
 
@@ -42,11 +42,11 @@ class BaseClusterer(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
-            column is a dimension, each cell is a pd.Series (any number of dimensions,
-            equal or unequal length series)).
-            Training time series instances to cluster.
+        X : Training time series instances to cluster. np.ndarray (2d or 3d array of
+        shape (n_instances, series_length) or shape (n_instances, n_dimensions,
+        series_length)) or pd.DataFrame (where each column is a dimension, each cell
+        is a pd.Series (any number of dimensions, equal or unequal length series)).
+        Converted to type _tags["X_inner_mtype"]
         y: ignored, exists for API consistency reasons.
 
         Returns
