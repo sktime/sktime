@@ -110,9 +110,14 @@ def test_kmedoids():
     kmedoids.fit(X_train)
     test_medoids_result = kmedoids.predict(X_test)
     medoids_score = metrics.rand_score(y_test, test_medoids_result)
+    proba = kmedoids.predict_proba(X_test)
 
     assert np.array_equal(test_medoids_result, expected_results["medoids"])
     assert medoids_score == expected_score["medoids"]
     assert kmedoids.n_iter_ == 300
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])
     assert isinstance(kmedoids.cluster_centers_, np.ndarray)
+    assert proba.shape == (40, 5)
+
+    for val in proba:
+        assert np.count_nonzero(val == 1.0) == 1
