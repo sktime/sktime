@@ -236,7 +236,7 @@ class MyForecaster(BaseForecaster):
     #
     # if implementing _predict_interval, delete _predict_quantiles
     # if not implementing either, delete both methods
-    def _predict_quantiles(self, fh, X=None, alpha=[0.5]):
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -248,7 +248,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : list of float, optional (default=[0.5])
+        alpha : list of float
             A list of probabilities at which quantile forecasts are computed.
 
         Returns
@@ -270,7 +270,7 @@ class MyForecaster(BaseForecaster):
     #
     # if implementing _predict_quantiles, delete _predict_interval
     # if not implementing either, delete both methods
-    def _predict_interval(self, fh, X=None, coverage=[0.90]):
+    def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
 
         Must be run *after* the forecaster has been fitted.
@@ -281,7 +281,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : list of float, optional (default=[0.90])
+        coverage : list of float
            nominal coverage(s) of predictive interval(s)
 
         Returns

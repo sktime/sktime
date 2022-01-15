@@ -1278,7 +1278,7 @@ class BaseForecaster(BaseEstimator):
         if not implements_quantiles and not implements_proba:
             raise RuntimeError(
                 f"{self.__name__} does not implement probabilistic forecasting, "
-                'but capability:predict_int flag has been set to True incorrectly. '
+                'but "capability:predict_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
@@ -1337,7 +1337,7 @@ class BaseForecaster(BaseEstimator):
         if not implements_interval and not implements_proba:
             raise RuntimeError(
                 f"{self.__name__} does not implement probabilistic forecasting, "
-                'but capability:predict_int flag has been set to True incorrectly. '
+                'but "capability:predict_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
@@ -1369,9 +1369,7 @@ class BaseForecaster(BaseEstimator):
             var_names = idx.get_level_values(0).unique()
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
-            int_idx = pd.MultiIndex.from_product(
-                [var_names, alpha]
-            )
+            int_idx = pd.MultiIndex.from_product([var_names, alpha])
 
             pred_int.columns = int_idx
 
