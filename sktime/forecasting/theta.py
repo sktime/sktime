@@ -136,7 +136,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.trend_ = self._compute_trend(y)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Make forecasts.
 
         Parameters
@@ -151,9 +151,7 @@ class ThetaForecaster(ExponentialSmoothing):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        y_pred = super(ThetaForecaster, self)._predict(
-            fh, X, return_pred_int=False, alpha=alpha
-        )
+        y_pred = super(ThetaForecaster, self)._predict(fh, X)
 
         # Add drift.
         drift = self._compute_drift()
@@ -161,10 +159,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         if self.deseasonalize:
             y_pred = self.deseasonalizer_.inverse_transform(y_pred)
-
-        if return_pred_int:
-            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, pred_int
 
         return y_pred
 
@@ -189,51 +183,33 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
         """
-        Compute/return prediction intervals for a forecast.
+        Compute/return prediction quantiles for a forecast.
 
         Must be run *after* the forecaster has been fitted.
 
-        If alpha is iterable, multiple intervals will be calculated.
-
-        public method including checks & utility
-        dispatches to core logic in _compute_pred_int
+        If alpha is iterable, multiple quantiles will be calculated.
 
         Parameters
         ----------
-        y_pred : pd.Series
-            Point predictions.
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list of float, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
 
         Returns
         -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         self.check_is_fitted()
-        alphas = check_alpha(alpha)
-        errors = self._compute_pred_err(alphas)
-
-        # compute prediction intervals
-        pred_int = [
-            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
-            for error in errors
-        ]
-
-        # for a single alpha, return single pd.DataFrame
-        if isinstance(alpha, float):
-            return pred_int[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int
-
-    def _compute_pred_err(self, alphas):
-        """Get the prediction errors for the forecast."""
-        self.check_is_fitted()
+        alpha = check_alpha(alpha)
 
         n_timepoints = len(self._y)
 
@@ -243,12 +219,24 @@ class ThetaForecaster(ExponentialSmoothing):
         )
 
         errors = []
-        for alpha in alphas:
-            z = _zscore(1 - alpha)
+        for a in alpha:
+            z = _zscore(1 - a)
             error = z * sem
             errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
 
-        return errors
+        y_pred = super(ThetaForecaster, self).predict(fh, X)
+
+        pred_quantiles = pd.DataFrame()
+        for a, error in zip(alpha, errors):
+            if a < 0.5:
+                pred_quantiles[a] = y_pred - error
+            else:
+                pred_quantiles[a] = y_pred + error
+
+        arrays = [len(alpha) * ["Quantiles"], alpha]
+        index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
+        pred_quantiles.columns = index
+        return pred_quantiles
 
     def _update(self, y, X=None, update_params=True):
         super(ThetaForecaster, self)._update(

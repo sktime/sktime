@@ -157,7 +157,7 @@ class MyTransformer(BaseTransformer):
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
 
         # implement here
@@ -177,7 +177,7 @@ class MyTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        private _inverse_transform containing core logic, called from inverse_transform
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
@@ -217,7 +217,7 @@ class MyTransformer(BaseTransformer):
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
-        private _transform containing the core logic, called from transform
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
@@ -265,7 +265,7 @@ class MyTransformer(BaseTransformer):
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
@@ -288,6 +288,7 @@ class MyTransformer(BaseTransformer):
         # implement here
 
     # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -303,6 +304,12 @@ class MyTransformer(BaseTransformer):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

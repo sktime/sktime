@@ -54,11 +54,13 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
+        "capability:early_prediction": False,
         "capability:multithreading": False,
     }
 
@@ -119,8 +121,9 @@ class BaseClassifier(BaseEstimator):
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
-        for index, classVal in enumerate(self.classes_):
-            self._class_dictionary[classVal] = index
+        self._class_dictionary = {}
+        for index, class_val in enumerate(self.classes_):
+            self._class_dictionary[class_val] = index
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
@@ -180,7 +183,6 @@ class BaseClassifier(BaseEstimator):
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
-
         return self._predict_proba(X)
 
     def score(self, X, y) -> float:

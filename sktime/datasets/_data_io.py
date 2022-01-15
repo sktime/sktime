@@ -14,8 +14,11 @@ __all__ = [
     "write_ndarray_to_tsfile",
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
+    "load_from_tsfile",
     "load_from_tsfile_to_dataframe",
+    "load_from_arff_to_dataframe",
     "load_from_long_to_dataframe",
+    "load_from_ucr_tsv_to_dataframe",
 ]
 
 import itertools
@@ -29,7 +32,12 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
+from sktime.datatypes._panel._convert import (
+    _make_column_names,
+    from_long_to_nested,
+    from_nested_to_2d_np_array,
+    from_nested_to_3d_numpy,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
 
@@ -67,7 +75,7 @@ def _download_and_extract(url, extract_path=None):
     urlretrieve(url, zip_file_name)
 
     if extract_path is None:
-        extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
+        extract_path = os.path.join(MODULE, "local_data/%s/" % file_name.split(".")[0])
     else:
         extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
 
@@ -86,7 +94,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_downloaded_datasets(extract_path):
+def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
     Modified version of
@@ -100,7 +108,7 @@ def _list_downloaded_datasets(extract_path):
 
     """
     if extract_path is None:
-        data_dir = os.path.join(MODULE, DIRNAME)
+        data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
     datasets = [
@@ -119,26 +127,34 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         local_dirname = extract_path
     else:
         local_module = MODULE
-        local_dirname = DIRNAME
+        local_dirname = "data"
 
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_downloaded_datasets(extract_path):
-        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-        # This also tests the validitiy of the URL, can't rely on the html
-        # status code as it always returns 200
-        try:
-            _download_and_extract(
-                url,
-                extract_path=extract_path,
-            )
-        except zipfile.BadZipFile as e:
-            raise ValueError(
-                "Invalid dataset name. ",
-                extract_path,
-                "Please make sure the dataset "
-                + "is available on http://timeseriesclassification.com/.",
-            ) from e
+    if name not in _list_available_datasets(extract_path):
+        local_dirname = "local_data"
+        if not os.path.exists(os.path.join(local_module, local_dirname)):
+            os.makedirs(os.path.join(local_module, local_dirname))
+        if name not in _list_available_datasets(
+            os.path.join(local_module, local_dirname)
+        ):
+            # Dataset is not baked in the datasets directory, look in local_data,
+            # if it is not there, download and install it.
+            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+            # This also tests the validitiy of the URL, can't rely on the html
+            # status code as it always returns 200
+            try:
+                _download_and_extract(
+                    url,
+                    extract_path=extract_path,
+                )
+            except zipfile.BadZipFile as e:
+                raise ValueError(
+                    "Invalid dataset name. ",
+                    extract_path,
+                    "Please make sure the dataset "
+                    + "is available on http://timeseriesclassification.com/.",
+                ) from e
     if isinstance(split, str):
         split = split.upper()
 
@@ -168,6 +184,246 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
+def _load_provided_dataset(name, split=None, return_X_y=True):
+    """Load baked in time series classification datasets (helper function)."""
+    if isinstance(split, str):
+        split = split.upper()
+
+    if split in ("TRAIN", "TEST"):
+        fname = name + "_" + split + ".ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X, y = load_from_tsfile(abspath)
+    # if split is None, load both train and test set
+    elif split is None:
+        fname = name + "_TRAIN.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_train, y_train = load_from_tsfile(abspath)
+        fname = name + "_TEST.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_test, y_test = load_from_tsfile(abspath)
+        if isinstance(X_train, np.ndarray):
+            X = np.concatenate(X_train, X_test)
+            y = np.concatenate(y_train, y_test)
+        elif isinstance(X_train, pd.DataFrame):
+            X = pd.concat([X_train, X_test])
+            y = pd.concat([y_train, y_test])
+        else:
+            raise IOError(
+                f"Invalid data structure type {type(X_train)} for loading "
+                f"classification problem "
+            )
+    else:
+        raise ValueError("Invalid `split` value =", split)
+    return X, y
+
+
+def _read_header(file, full_file_path_and_name):
+    """Read the header information, returning the meta information."""
+    # Meta data for data information
+    meta_data = {
+        "is_univariate": True,
+        "is_equally_spaced": True,
+        "is_equal_length": True,
+        "has_nans": False,
+        "has_timestamps": False,
+        "has_class_labels": True,
+    }
+    # Read header until @data tag met
+    for line in file:
+        line = line.strip().lower()
+        if line:
+            if line.startswith("@problemname"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+            elif line.startswith("@timestamps"):
+                tokens = line.split(" ")
+                if tokens[1] == "true":
+                    meta_data["has_timestamps"] = True
+                elif tokens[1] != "false":
+                    raise IOError(
+                        f"invalid timestamps tag value {tokens[1]} value in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@univariate"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["is_univariate"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid univariate tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@equallength"):
+                tokens = line.split(" ")
+                if tokens[1] == "false":
+                    meta_data["is_equal_length"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid unequal tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@classlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                    )
+                if token_len == 2 and meta_data["class_labels"]:
+                    raise IOError(
+                        f"if the classlabel tag is true then class values must be "
+                        f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@data"):
+                return meta_data
+    raise IOError(
+        f"End of file reached for {full_file_path_and_name} but no indicated start of "
+        f"data with the tag @data"
+    )
+
+
+def load_from_tsfile(
+    full_file_path_and_name,
+    replace_missing_vals_with="NaN",
+    return_y=True,
+    return_data_type=None,
+):
+    """Load time series .ts file into X and (optionally) y.
+
+    Data from a .ts file is loaded into a nested pd.DataFrame, or optionally into a
+    2d np.ndarray (equal length, univariate problem) or 3d np.ndarray (eqal length,
+    multivariate problem) if requested. If present, y is loaded into a 1d .
+
+    Parameters
+    ----------
+    full_file_path_and_name: str
+        The full pathname and file name of the .ts file to read.
+    replace_missing_vals_with: str, default NaN
+       The value that missing values in the text file should be replaced with prior
+       to parsing.
+    return_y: boolean, default True
+       whether to return the y variable, if it is present.
+    return_data_type: default, None
+        what data structure to return X in. Valid alternatives to None (default
+        pd.DataFrame are numpy2d/np2d or numpy3d/np3d. These arguments will raise an
+        error if the data cannot be stored in the requested type.
+
+    Returns
+    -------
+    X:  If return_data_type = None retuns X in a nested pd.dataframe
+        If return_data_type = numpy3d/np3ddefault DataFrame or ndarray
+    y (optional): ndarray.
+
+    Raises
+    ------
+    IOError if the requested file does not exist
+    IOError if input series are not all the same dimension (not supported)
+    IOError if class labels have been requested but are not present in the file
+    IOError if the input file has no cases
+    ValueError if return_data_type = numpy3d but the data are unequal length series
+    ValueError if return_data_type = numpy2d but the data are multivariate and/
+    or unequal length series
+
+    """
+    # Initialize flags and variables used when parsing the file
+    is_first_case = True
+    instance_list = []
+    class_val_list = []
+    line_num = 0
+    num_dimensions = 0
+    num_cases = 0
+    with open(full_file_path_and_name, "r", encoding="utf-8") as file:
+        _meta_data = _read_header(file, full_file_path_and_name)
+        for line in file:  # Will this work?
+            num_cases = num_cases + 1
+            line = line.replace("?", replace_missing_vals_with)
+            dimensions = line.split(":")
+            # If first instance then note the number of dimensions.
+            # This must be the same for all cases.
+            if is_first_case:
+                num_dimensions = len(dimensions)
+                if _meta_data["has_class_labels"]:
+                    num_dimensions -= 1
+                for _dim in range(0, num_dimensions):
+                    instance_list.append([])
+                is_first_case = False
+                _meta_data["num_dimensions"] = num_dimensions
+            # See how many dimensions a case has
+            this_line_num_dim = len(dimensions)
+            if _meta_data["has_class_labels"]:
+                this_line_num_dim -= 1
+            if this_line_num_dim != _meta_data["num_dimensions"]:
+                raise IOError(
+                    f"Error input {full_file_path_and_name} all cases must "
+                    f"have the {num_dimensions} dimensions. Case "
+                    f"{num_cases} has {this_line_num_dim}"
+                )
+            # Process the data for each dimension
+            for dim in range(0, _meta_data["num_dimensions"]):
+                dimension = dimensions[dim].strip()
+                if dimension:
+                    data_series = dimension.split(",")
+                    data_series = [float(i) for i in data_series]
+                    instance_list[dim].append(pd.Series(data_series))
+                else:
+                    instance_list[dim].append(pd.Series(dtype="object"))
+            if _meta_data["has_class_labels"]:
+                class_val_list.append(dimensions[_meta_data["num_dimensions"]].strip())
+                line_num += 1
+    # Check that the file was not empty
+    if line_num:
+        # Create a DataFrame from the data parsed
+        data = pd.DataFrame(dtype=np.float32)
+        for dim in range(0, _meta_data["num_dimensions"]):
+            data["dim_" + str(dim)] = instance_list[dim]
+        # convert to numpy if the user requests it.
+        if isinstance(return_data_type, str):
+            return_data_type = return_data_type.strip().lower()
+        if (
+            return_data_type == "numpy2d"
+            or return_data_type == "np2d"
+            or return_data_type == "numpyflat"
+        ):
+            if (
+                not _meta_data["has_timestamps"]
+                and _meta_data["is_equal_length"]
+                and _meta_data["is_univariate"]
+            ):
+                data = from_nested_to_2d_np_array(data)
+            else:
+                raise ValueError(
+                    "Unable to convert to 2d numpy as requested, "
+                    "because at least one flag means the data structure "
+                    f"cannot be used {_meta_data}"
+                )
+        elif return_data_type == "numpy3d" or return_data_type == "np3d":
+            if not _meta_data["has_timestamps"] and _meta_data["is_equal_length"]:
+                data = from_nested_to_3d_numpy(data)
+            else:
+                raise ValueError(
+                    " Unable to convert to 3d numpy as requested, "
+                    "because at least one flag means the data structure "
+                    f"cannot be used, meta data = {_meta_data}"
+                )
+        if return_y and not _meta_data["has_class_labels"]:
+            raise IOError(
+                f"class labels have been requested, but they "
+                f"are not present in the file "
+                f"{full_file_path_and_name}"
+            )
+        if _meta_data["has_class_labels"] and return_y:
+            return data, np.asarray(class_val_list)
+        else:
+            return data
+    else:
+        raise IOError(
+            f"Empty file {full_file_path_and_name} with header info but no " f"cases"
+        )
+
+
 def load_from_tsfile_to_dataframe(
     full_file_path_and_name,
     return_separate_X_and_y=True,
@@ -189,7 +445,7 @@ def load_from_tsfile_to_dataframe(
 
     Returns
     -------
-    DataFrame, ndarray
+    DataFrame (default) or ndarray (i
         If return_separate_X_and_y then a tuple containing a DataFrame and a
         numpy array containing the relevant time-series and corresponding
         class values.

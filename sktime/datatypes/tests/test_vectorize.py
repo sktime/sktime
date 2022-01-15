@@ -123,7 +123,7 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("iterate_as", ["Panel", "Series"])
 
 
-def test_construct_VectorizedDF(scitype, mtype, fixture_index):
+def test_construct_vectorizeddf(scitype, mtype, fixture_index):
     """Test VectorizedDF constructs with valid arguments.
 
     Fixtures parameterized
@@ -146,7 +146,7 @@ def test_construct_VectorizedDF(scitype, mtype, fixture_index):
         VectorizedDF(X=fixture, iterate_as="Panel", is_scitype=None)
 
 
-def test_construct_VectorizedDF_errors(scitype, mtype, fixture_index):
+def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
     """Test VectorizedDF raises appropriate errors with invalid arguments.
 
     Fixtures parameterized
