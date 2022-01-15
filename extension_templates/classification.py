@@ -115,7 +115,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : Training data of type _tags["X_inner_mtype"]
+        X : Training data of type self.get_tag("X_inner_mtype")
         y : array-like, shape = [n_instances] - the class labels
 
         Returns
@@ -138,7 +138,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : data not used in training, of type _tags["X_inner_mtype"]
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
@@ -160,7 +160,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : data to predict y with, of type _tags["X_inner_mtype"]
+        X : data to predict y with, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
