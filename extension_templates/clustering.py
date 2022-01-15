@@ -99,7 +99,7 @@ class MyClusterer(BaseClusterer):
 
         Parameters
         ----------
-        X : Data to cluster, of type _tags["X_inner_mtype"]
+        X : Data to cluster, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
@@ -116,8 +116,8 @@ class MyClusterer(BaseClusterer):
 
         Parameters
         ----------
-        X : data to cluster based on model formed in _fit, of type _tags[
-        "X_inner_mtype"]
+        X : data to cluster based on model formed in _fit, of type self.get_tag(
+        "X_inner_mtype")
         y: ignored, exists for API consistency reasons.
 
         Returns
