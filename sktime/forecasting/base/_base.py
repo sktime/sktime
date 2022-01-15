@@ -401,15 +401,20 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         coverage : float or list of float, optional (default=0.90)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being quantile fractions for interval low-high.
-                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         self.check_is_fitted()
         # input checks
@@ -1251,17 +1256,21 @@ class BaseForecaster(BaseEstimator):
            Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
            Exogenous time series
-        alpha : float or list, optional (default=0.95)
-           Probability mass covered by interval or list of coverages.
+        coverage : float or list, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
         pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being quantile fractions for interval low-high.
-                Quantile fractions are 0.5 - c/2, 0.5 + c/2 for c in coverage.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
@@ -1300,21 +1309,19 @@ class BaseForecaster(BaseEstimator):
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
-        """
-        Compute/return prediction quantiles for a forecast.
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
-
-        If alpha is iterable, multiple quantiles will be calculated.
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and predict_interval
 
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
+            Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
-            A probability or list of, at which quantile forecasts are computed.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
