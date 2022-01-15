@@ -115,10 +115,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+        X : Training data of type _tags["X_inner_mtype"]
         y : array-like, shape = [n_instances] - the class labels
 
         Returns

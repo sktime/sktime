@@ -93,16 +93,13 @@ class MyClusterer(BaseClusterer):
         # todo: change "MyClusterer" to the name of the class
         super(MyClusterer, self).__init__()
 
-    # todo: implement this, mandatory
+    # todo: implement this abstract class, mandatory
     def _fit(self, X):
         """Fit time series clusterer to training data.
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances,n_dimensions,series_length)) or pd.Dataframe.
-            Training time series instances to cluster. If data is not equal length a
-            pd.Dataframe given, if another other type of data a np.ndarray given.
+        X : Data to cluster, of type _tags["X_inner_mtype"]
 
         Returns
         -------
