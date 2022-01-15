@@ -245,10 +245,10 @@ class BaseClassifier(BaseEstimator, ABC):
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : 1D np.array of int, of shape [n_instances] - class labels for fitting
             indices correspond to instance indices in X
+
         Returns
         -------
-        self :
-            Reference to self.
+        self : Reference to self.
 
         Notes
         -----
@@ -300,9 +300,7 @@ class BaseClassifier(BaseEstimator, ABC):
         Returns
         -------
         y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
+            y[i, j] is estimated probability that i-th instance is of class j
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds = self._predict(X)
@@ -362,6 +360,7 @@ class BaseClassifier(BaseEstimator, ABC):
         inner_type = self.get_tag("X_inner_mtype")
         # If data is unequal length and the classifier can handle it,
         # but the inner type is numpy, we should *not* convert
+        # this use case is NOT yet allowed for
         X = convert_to(
             X,
             to_type=inner_type,
