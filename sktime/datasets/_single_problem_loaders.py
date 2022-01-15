@@ -42,7 +42,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from sktime.datasets._data_io import _load_dataset
+from sktime.datasets._data_io import _load_dataset, _load_provided_dataset
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -286,7 +286,7 @@ def load_unit_test(split=None, return_X_y=True):
     Number of classes:  2
     """
     name = "UnitTest"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y)
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
