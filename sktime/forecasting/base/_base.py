@@ -904,6 +904,9 @@ class BaseForecaster(BaseEstimator):
                 raise ValueError(
                     "y must have two or more variables, but found only one"
                 )
+        else:
+            # y_scitype is used below - set to None if y is None
+            y_scitype = None
         # end checking y
 
         # checking X
@@ -925,6 +928,9 @@ class BaseForecaster(BaseEstimator):
 
             X_scitype = X_metadata["scitype"]
             requires_vectorization = X_scitype not in X_inner_scitype
+        else:
+            # X_scitype is used below - set to None if X is None
+            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y
