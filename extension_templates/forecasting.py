@@ -248,7 +248,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : list of float
+        alpha : list of float (guaranteed not None and flots in [0,1] interval)
             A list of probabilities at which quantile forecasts are computed.
 
         Returns
@@ -281,7 +281,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : list of float
+        coverage : list of float (guaranteed not None and flots in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
         Returns
