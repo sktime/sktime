@@ -2,7 +2,9 @@
 """
 Abstract base class for time series classifiers.
 
-    class name: BaseClassifier
+    class name: BaseClassifier. Note the term Panel used here and throughout
+    sktime simply refers to a collection of time series, for example a training set,
+    where each series is assumed to be independent of the others.
 
 Defining methods:
     fitting         - fit(self, X, y)
@@ -50,11 +52,16 @@ class BaseClassifier(BaseEstimator, ABC):
     fit_time_           : integer, time (in milliseconds) for fit to run.
     _class_dictionary   : dictionary mapping classes_ onto integers 0...n_classes_-1.
     _threads_to_use     : number of threads to use in fit as determined by n_jobs.
+    _series_length      : length of series if they are all the same length, otherwise 0.
+    _X_metadata         : dictionary, the data characteristics of X passed to fit.
+                            The keys for this hash table are given in function check_is
+                            in datatypes._check.py
     """
 
     _tags = {
-        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
-        #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -70,6 +77,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._series_length = 0
         self._X_metadata = {}
         super(BaseClassifier, self).__init__()
 
@@ -93,23 +101,29 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Notes
         -----
-        Changes state by creating a fitted model that updates attributes
-        ending in "_" and sets is_fitted flag to True.
+        Converts X to type self.get_tag("X_inner_mtype"), creates a fitted model by
+        calling _fit that updates attributes ending in "_" and sets is_fitted to True.
         """
         start = int(round(time.time() * 1000))
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to 1D-numpy
         X, y = _internal_convert(X, y)
+        #  Get data characteristics
         self._X_metadata = _check_classifier_input(X, y)
         missing = self._X_metadata["has_nans"]
         multivariate = not self._X_metadata["is_univariate"]
         unequal = not self._X_metadata["is_equal_length"]
-        # Check this classifier can handle characteristics
+        # Check this classifier can handle these three characteristics
         self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
+        # Convert data as dictated by the classifier tag self.get_tag("X_inner_mtype")
         X = self._convert_X(X)
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
+        # Store series length for checking in predict
+        if not unequal:
+            self._series_length = self._find_series_length(X)
+        else:
+            self._series_length = 0
+
+        if self.get_tag("capability:multithreading"):
             try:
                 self._threads_to_use = check_n_jobs(self.n_jobs)
             except NameError:
@@ -124,7 +138,6 @@ class BaseClassifier(BaseEstimator, ABC):
             self._class_dictionary[class_val] = index
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
-        # this should happen last
         self._is_fitted = True
         return self
 
@@ -149,7 +162,18 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
-
+        # If the input have to be the same length as the training data
+        if not self.get_tag("capability:unequal_length") and not self.get_tag(
+            "capability:early_prediction"
+        ):
+            # check input is the same length as train data
+            length = self._find_series_length(X)
+            if length != self._series_length:
+                raise ValueError(
+                    "Error in predict: input series different length to "
+                    "training series, but tags dictate they must be the "
+                    "same."
+                )
         return self._predict(X)
 
     def predict_proba(self, X) -> np.ndarray:
@@ -167,9 +191,7 @@ class BaseClassifier(BaseEstimator, ABC):
         Returns
         -------
         y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
+            y[i, j] is estimated probability that i-th instance is of class j
         """
         self.check_is_fitted()
 
@@ -204,11 +226,11 @@ class BaseClassifier(BaseEstimator, ABC):
         Parameters
         ----------
         X : any object (to check/convert)
-            should be of a supported Panel mtype or 2D numpy.ndarray
+            should be of a type compatible with fit
 
         Returns
         -------
-        X: an object of a supported Panel mtype, numpy3D if X was a 2D numpy.ndarray
+        X: an object of a type
 
         Raises
         ------
@@ -353,8 +375,8 @@ class BaseClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        X : input X converted to type in "X_inner_mtype" tag
-                usually a pd.DataFrame (nested) or 3D np.ndarray
+        X : input X converted to type self.get_tag("X_inner_mtype") tag
+                usually a pd.DataFrame (tag nested_univ) or 3D np.ndarray (numpy3D)
             Checked and possibly converted input data
         """
         inner_type = self.get_tag("X_inner_mtype")
@@ -368,6 +390,35 @@ class BaseClassifier(BaseEstimator, ABC):
         )
         return X
 
+    def _find_series_length(self, X):
+        """Find the series length for a fixed length input series.
+
+        Parameters
+        ----------
+        X: input data of type self.get_tag("X_inner_mtype"), assumed to be equal length
+
+        Returns
+        -------
+        int, length of the first series in X
+
+        Raises
+        ------
+        ValueError if X is not of type np.ndarray or pd.DataFrame
+        """
+        if isinstance(X, pd.DataFrame):
+            return X.iloc(0, 0).size
+        elif isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                return X.shape[1]
+            else:
+                return X.shape[2]
+        else:
+            raise ValueError(
+                f"Unable to detect the length of series from X, "
+                f"it is not an np.ndarray or pd.DataFrame, it is "
+                f"{type(X)}."
+            )
+
 
 def _check_classifier_input(
     X,
@@ -380,14 +431,16 @@ def _check_classifier_input(
 
     Parameters
     ----------
-    X : check whether conformant with any sktime Panel mtype specification
+    X : check whether X is any sktime Panel mtype specification
     y : check whether a pd.Series or np.array
     enforce_min_instances : int, optional (default=1)
         check there are a minimum number of instances.
 
     Returns
     -------
-    metadata : dict with metadata for X returned by datatypes.check_is_scitype
+    metadata : dictionary with metadata for X returned by check_is_scitype in
+    datatypes._check.py. The keys for this hash table are given in function check_is in
+    datatypes._check.py
 
     Raises
     ------
