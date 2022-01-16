@@ -17,7 +17,7 @@ from numba import njit, types
 from numba.typed.typeddict import Dict
 from sklearn.utils import check_random_state
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
 
@@ -108,8 +108,8 @@ class BOSSEnsemble(BaseClassifier):
     --------
     >>> from sktime.classification.dictionary_based import BOSSEnsemble
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = BOSSEnsemble(max_ensemble_size=5)
     >>> clf.fit(X_train, y_train)
     BOSSEnsemble(...)
@@ -474,8 +474,8 @@ class IndividualBOSS(BaseClassifier):
     --------
     >>> from sktime.classification.dictionary_based import IndividualBOSS
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = IndividualBOSS()
     >>> clf.fit(X_train, y_train)
     IndividualBOSS(...)
@@ -655,7 +655,9 @@ class IndividualBOSS(BaseClassifier):
         new_boss.n_classes_ = self.n_classes_
         new_boss.classes_ = self.classes_
         new_boss._class_dictionary = self._class_dictionary
-
+        new_boss.fit_time_ = self.fit_time_
+        new_boss._series_length = self._series_length
+        new_boss._X_metadata = self._X_metadata
         new_boss._threads_to_use = self._threads_to_use
         new_boss._is_fitted = True
         return new_boss
