@@ -157,7 +157,7 @@ class MyTransformer(BaseTransformer):
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
 
         # implement here
@@ -177,7 +177,7 @@ class MyTransformer(BaseTransformer):
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
-        private _inverse_transform containing core logic, called from inverse_transform
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
@@ -217,7 +217,7 @@ class MyTransformer(BaseTransformer):
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
-        private _transform containing the core logic, called from transform
+        private _inverse_transform containing core logic, called from inverse_transform
 
         Parameters
         ----------
@@ -265,7 +265,7 @@ class MyTransformer(BaseTransformer):
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self: reference to self
         """
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype

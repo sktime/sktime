@@ -28,7 +28,6 @@ Optional implements:
     predicting variance         - _predict_variance(self, fh, X=None)
     fitted parameter inspection - get_fitted_params()
 
-
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
 
@@ -128,7 +127,7 @@ class MyForecaster(BaseForecaster):
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
-            core logic
+        private _fit containing the core logic, called from fit
 
         Writes to self:
             Sets fitted model attributes ending in "_".
@@ -142,15 +141,17 @@ class MyForecaster(BaseForecaster):
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : reference to self
         """
 
         # implement here
@@ -165,12 +166,13 @@ class MyForecaster(BaseForecaster):
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
-            core logic
+        private _predict containing the core logic, called from predict
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
@@ -188,32 +190,36 @@ class MyForecaster(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
-            core logic
+        private _update containing the core logic, called from update
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
-
-        State change
-        ------------
-        updates self._X and self._y with new data
-        updates self.cutoff to most recent time in y
-        if update_params=True, updates model (attributes ending in "_")
+        self : reference to self
         """
 
         # implement here
         # IMPORTANT: avoid side effects to X, fh
 
     # todo: consider implementing this, optional
-    # if not implementing, delete the method
+    # if not implementing, delete the _update_predict_single method
     def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
 
@@ -226,15 +232,17 @@ class MyForecaster(BaseForecaster):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
+    # todo: consider implementing this, optional
+    # if not implementing, delete the _predict_quantiles method
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
-        """
-        Compute/return prediction quantiles for a forecast.
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and predict_interval
 
         If alpha is iterable, multiple quantiles will be calculated.
 
-        Users can implement _predict_interval if calling it makes this faster.
+        Users can also implement _predict_interval if calling it makes this faster.
 
         Parameters
         ----------
@@ -308,7 +316,7 @@ class MyForecaster(BaseForecaster):
         # IMPORTANT: avoid side effects to y, X, cv
 
     # todo: consider implementing this, optional
-    # if not implementing, delete the method
+    # if not implementing, delete the get_fitted_params method
     def get_fitted_params(self):
         """Get fitted parameters.
 
@@ -318,8 +326,9 @@ class MyForecaster(BaseForecaster):
         """
         # implement here
 
-    # todo: return default parameters, so that a test instance can be created
-    #   required for automated unit and integration testing of estimator
+    # todo: implement this if this is an estimator contributed to sktime
+    #   or to run local automated unit and integration testing of estimator
+    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
