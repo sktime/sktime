@@ -75,6 +75,7 @@ class _DummyConvertPandas(BaseClassifier):
 multivariate_message = r"X must be univariate, this classifier cannot deal with"
 missing_message = r"The data has missing values"
 unequal_message = r"The data has unequal length series"
+predict_mismatch_message = r"Error in predict: input series different length"
 incorrect_X_data_structure = r"must be a np.array or a pd.Series"
 incorrect_y_data_structure = r"must be 1-dimensional"
 
@@ -118,6 +119,25 @@ def test_base_classifier_fit():
     # Pass a data fram
     with pytest.raises(ValueError, match=incorrect_X_data_structure):
         result = dummy.fit(test_X1, test_X3)
+
+
+def test_base_classifier_predict():
+    """Test the base class predict.
+
+    Tests for the case when series passed to predict are not the same length as
+    series passed to fit, but they should be the same.
+    """
+    dummy = _DummyClassifier()
+    cases = 5
+    length = 10
+    test_X1 = np.random.uniform(-1, 1, size=(cases, length))
+    test_y1 = np.random.randint(0, 2, size=(cases))
+    train_X1 = np.random.uniform(-1, 1, size=(cases, length))
+    train_X2 = np.random.uniform(-1, 1, size=(cases, length - 1))
+    dummy.fit(test_X1, test_y1)
+    dummy.predict(train_X1)
+    with pytest.raises(ValueError, match=predict_mismatch_message):
+        dummy.predict(train_X2)
 
 
 def test_check_capabilities():

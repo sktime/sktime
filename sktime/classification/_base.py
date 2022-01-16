@@ -118,7 +118,7 @@ class BaseClassifier(BaseEstimator, ABC):
         # Convert data as dictated by the classifier tag self.get_tag("X_inner_mtype")
         X = self._convert_X(X)
         # Store series length for checking in predict
-        if not unequal:
+        if self.get_tag("X_inner_mtype") == "numpy3D":
             self._series_length = self._find_series_length(X)
         else:
             self._series_length = 0
@@ -166,14 +166,15 @@ class BaseClassifier(BaseEstimator, ABC):
         if not self.get_tag("capability:unequal_length") and not self.get_tag(
             "capability:early_prediction"
         ):
-            # check input is the same length as train data
-            length = self._find_series_length(X)
-            if length != self._series_length:
-                raise ValueError(
-                    "Error in predict: input series different length to "
-                    "training series, but tags dictate they must be the "
-                    "same."
-                )
+            # check input is the same length as train data, if using numpy
+            if self.get_tag("X_inner_mtype") == "numpy3D":
+                length = self._find_series_length(X)
+                if length != self._series_length:
+                    raise ValueError(
+                        "Error in predict: input series different length to "
+                        "training series, but tags capability:unequal_length and "
+                        "capability:early_prediction dictate they must be the same."
+                    )
         return self._predict(X)
 
     def predict_proba(self, X) -> np.ndarray:
@@ -393,9 +394,11 @@ class BaseClassifier(BaseEstimator, ABC):
     def _find_series_length(self, X):
         """Find the series length for a fixed length input series.
 
+        Only use if self.get_tag("X_inner_mtype") is numpy3D or numpyflat.
+
         Parameters
         ----------
-        X: input data of type self.get_tag("X_inner_mtype"), assumed to be equal length
+        X: input data of type np.ndarray
 
         Returns
         -------
@@ -405,9 +408,7 @@ class BaseClassifier(BaseEstimator, ABC):
         ------
         ValueError if X is not of type np.ndarray or pd.DataFrame
         """
-        if isinstance(X, pd.DataFrame):
-            return X.iloc(0, 0).size
-        elif isinstance(X, np.ndarray):
+        if isinstance(X, np.ndarray):
             if X.ndim == 2:
                 return X.shape[1]
             else:
