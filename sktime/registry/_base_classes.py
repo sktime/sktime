@@ -60,8 +60,8 @@ import pandas as pd
 
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
-from sktime.classification.base import BaseClassifier
-from sktime.clustering._base import BaseClusterer
+from sktime.classification import BaseClassifier
+from sktime.clustering import BaseClusterer
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
