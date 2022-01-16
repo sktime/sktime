@@ -85,8 +85,9 @@ class MyForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        "capability:pred_var": False,  # does forecaster implement predict_var?
         # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        "capability:pred_var": False,  # does forecaster implement predict_var?
+        # deprecated and will be renamed to capability:predict_variance in 0.11.0
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -272,8 +273,10 @@ class MyForecaster(BaseForecaster):
         Returns
         -------
         pred_var : np.ndarray
-            if cov=False, a vector of same length as fh with predictive marginal variances; 
-            if cov=True, a square matrix of size len(fh) with predictive covariance matrix.
+            if cov=False,
+                a vector of same length as fh with predictive marginal variances;
+            if cov=True,
+                a square matrix of size len(fh) with predictive covariance matrix.
         """
         # implement here
 
