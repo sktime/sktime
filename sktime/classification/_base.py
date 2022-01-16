@@ -52,7 +52,8 @@ class BaseClassifier(BaseEstimator, ABC):
     fit_time_           : integer, time (in milliseconds) for fit to run.
     _class_dictionary   : dictionary mapping classes_ onto integers 0...n_classes_-1.
     _threads_to_use     : number of threads to use in fit as determined by n_jobs.
-    _series_length      : length of series if they are all the same length, otherwise 0.
+    _series_length      : length of series passed in fit. If the series are of
+                          unequal length, this is set to 0.
     _X_metadata         : dictionary, the data characteristics of X passed to fit.
                             The keys for this hash table are given in function check_is
                             in datatypes._check.py
