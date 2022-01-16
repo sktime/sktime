@@ -23,10 +23,11 @@ Mandatory implements:
     forecasting     - _predict(self, fh=None, X=None)
 
 Optional implements:
-    updating        - _update(self, y, X=None, update_params=True):
+    updating                    - _update(self, y, X=None, update_params=True):
+    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=0.5)
+    predicting variance         - _predict_variance(self, fh, X=None)
     fitted parameter inspection - get_fitted_params()
-    predicting quantiles - _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA)
-    predicting variance - _predict_var(self, fh, X=None)
+
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
