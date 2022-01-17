@@ -236,7 +236,6 @@ class BaseForecaster(BaseEstimator):
             y_out = convert_to(
                 y_pred,
                 self._y_mtype_last_seen,
-                as_scitype="Series",
                 store=self._converter_store_y,
             )
 
@@ -286,7 +285,6 @@ class BaseForecaster(BaseEstimator):
             y_out = convert_to(
                 y_pred,
                 self._y_mtype_last_seen,
-                as_scitype="Series",
                 store=self._converter_store_y,
             )
 
@@ -1022,6 +1020,7 @@ class BaseForecaster(BaseEstimator):
                 y, to_type=[
                     "np.darray",
                     "numpy3D",
+                    "pd.Series",
                     "pd.DataFrame",
                     "pd-multiindex",
                     "pd_multiindex_hier"
@@ -1040,7 +1039,7 @@ class BaseForecaster(BaseEstimator):
                 elif y.ndim == 3:
                     self._y = np.concatenate(self._y, y, axis=2)
             #  if y is pandas, we use combine_first to update
-            elif isinstance(y, pd.DataFrame) and len(y) > 0:
+            elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
                 self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
@@ -1135,7 +1134,7 @@ class BaseForecaster(BaseEstimator):
         Set self._cutoff to latest index seen in `y`.
         """
         if len(y) > 0:
-            if isinstance(y, pd.DataFrame):
+            if isinstance(y, (pd.Series, pd.DataFrame)):
                 if not isinstance(y.index, pd.MultiIndex):
                     # if index is not a multiindex, last index value is latest
                     self._cutoff = y.index[-1]
