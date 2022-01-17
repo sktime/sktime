@@ -47,7 +47,6 @@ from sktime.datatypes import (
     VectorizedDF,
     check_is_scitype,
     convert_to,
-    mtype,
     mtype_to_scitype,
 )
 from sktime.forecasting.base import ForecastingHorizon
@@ -1017,15 +1016,31 @@ class BaseForecaster(BaseEstimator):
         """
         # we only need to modify _y if y is not None
         if y is not None:
+            # we want to ensure that y is either numpy (1D, 2D, 3D)
+            # or in one of the long pandas formats
+            y = convert_to(
+                y, to_type=[
+                    "np.darray",
+                    "numpy3D",
+                    "pd.DataFrame",
+                    "pd-multiindex",
+                    "pd_multiindex_hier"
+                ]
+            )
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
             # otherwise, update _y with the new rows in y
             #  if y is np.ndarray, we assume all rows are new
             elif isinstance(y, np.ndarray):
-                self._y = np.concatenate(self._y, y)
+                # if 1D or 2D, axis 0 is "time"
+                if y.ndim in [1, 2]:
+                    self._y = np.concatenate(self._y, y, axis=0)
+                # if 3D, axis 2 is "time"
+                elif y.ndim == 3:
+                    self._y = np.concatenate(self._y, y, axis=2)
             #  if y is pandas, we use combine_first to update
-            elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
+            elif isinstance(y, pd.DataFrame) and len(y) > 0:
                 self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
@@ -1033,15 +1048,31 @@ class BaseForecaster(BaseEstimator):
 
         # we only need to modify _X if X is not None
         if X is not None:
+            # we want to ensure that X is either numpy (1D, 2D, 3D)
+            # or in one of the long pandas formats
+            X = convert_to(
+                X, to_type=[
+                    "np.darray",
+                    "numpy3D",
+                    "pd.DataFrame",
+                    "pd-multiindex",
+                    "pd_multiindex_hier"
+                ]
+            )
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
             # otherwise, update _X with the new rows in X
             #  if X is np.ndarray, we assume all rows are new
             elif isinstance(X, np.ndarray):
-                self._X = np.concatenate(self._X, X)
+                # if 1D or 2D, axis 0 is "time"
+                if X.ndim in [1, 2]:
+                    self._X = np.concatenate(self._X, X, axis=0)
+                # if 3D, axis 2 is "time"
+                elif X.ndim == 3:
+                    self._X = np.concatenate(self._X, X, axis=2)
             #  if X is pandas, we use combine_first to update
-            elif isinstance(X, (pd.Series, pd.DataFrame)) and len(X) > 0:
+            elif isinstance(X, pd.DataFrame) and len(X) > 0:
                 self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
@@ -1096,22 +1127,40 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y: pd.Series, pd.DataFrame, or np.array
+        y: pd.DataFrame (long format) or np.array (1D, 2D, 3D)
             Time series from which to infer the cutoff.
 
         Notes
         -----
-        Set self._cutoff to last index seen in `y`.
+        Set self._cutoff to latest index seen in `y`.
         """
-        y_mtype = mtype(y, as_scitype="Series")
-
         if len(y) > 0:
-            if y_mtype in ["pd.Series", "pd.DataFrame"]:
-                self._cutoff = y.index[-1]
-            elif y_mtype == "np.ndarray":
-                self._cutoff = len(y)
+            if isinstance(y, pd.DataFrame):
+                if not isinstance(y.index, pd.MultiIndex):
+                    # if index is not a multiindex, last index value is latest
+                    self._cutoff = y.index[-1]
+                else:
+                    # otherwise, we need to look in last level, take the max index
+                    self._cutoff = y.index.get_level_values(-1).max()
+            elif isinstance(y, "np.ndarray"):
+                # if numpy 3D, time is in axis 2
+                if y.ndim == 3:
+                    cutoff = y.shape[2]
+                # if numpy 2D or 1D, time is in axis 0
+                else:
+                    cutoff = y.shape[0]
+                # if we've already seen data, add to the cutoff
+                if self._cutoff is not None:
+                    cutoff += self._cutoff
+                # if not, we need to subtract 1, since python starts counting at 0
+                else:
+                    cutoff -= 1
+                self._cutoff = cutoff
             else:
-                raise TypeError("y does not have a supported type")
+                raise TypeError(
+                    "y does not have a supported type in _set_cutoff_from_y. "
+                    "This error should be unreachable, probable bug in input checks."
+                )
 
     @contextmanager
     def _detached_cutoff(self):
