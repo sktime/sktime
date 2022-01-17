@@ -434,14 +434,14 @@ class AutoETS(_StatsModelsAdapter):
         self.check_is_fitted()
         alpha = check_alpha(alpha)
         # convert alpha to the one needed for predict intervals
-        alphas = []
+        coverage = []
         for a in alpha:
             if a < 0.5:
-                alphas.append((0.5 - a) * 2)
+                coverage.append((0.5 - a) * 2)
             elif a > 0.5:
-                alphas.append((a - 0.5) * 2)
+                coverage.append((a - 0.5) * 2)
             else:
-                alphas.append(0)
+                coverage.append(0)
 
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
@@ -451,7 +451,7 @@ class AutoETS(_StatsModelsAdapter):
         )
 
         pred_quantiles = pd.DataFrame()
-        for a, coverage in zip(alpha, alphas):
+        for a, coverage in zip(alpha, coverage):
             pred_int = prediction_results.pred_int(1 - coverage)
             pred_int.columns = ["lower", "upper"]
             if a < 0.5:
