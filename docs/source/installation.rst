@@ -362,7 +362,7 @@ You will need Build Tools for Visual Studio 2022
 3. Download and install ``Build Tools for Visual Studio 2022``
 4. Open the Visual Studio installer
 5. Tick ``Desktop Development with C++``
-6. In the panel make sure ``MSVC v143 VS 2022 C++ x64/x86 build tools (Latest)`` is selected
+6. In the panel, make sure that ``MSVC v143 VS 2022 C++ x64/x86 build tools (Latest)`` is selected
 7. Click install
 
 .. images:: images/visual_installer_selection.png
