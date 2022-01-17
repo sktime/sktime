@@ -476,7 +476,9 @@ def load_basic_motions(split=None, return_X_y=True):
     =BasicMotions
     """
     name = "BasicMotions"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(
+        name=name, split=split, return_X_y=return_X_y, return_type="numpy3d"
+    )
 
 
 # forecasting data sets
