@@ -16,7 +16,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
     ContinuousIntervalTree,
     _drcif_feature,

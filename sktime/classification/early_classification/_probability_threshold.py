@@ -15,7 +15,7 @@ from joblib import Parallel, delayed
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 

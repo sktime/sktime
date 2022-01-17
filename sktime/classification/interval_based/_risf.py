@@ -14,7 +14,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.classification.interval_based._rise import (
     _make_estimator,
     _parallel_build_trees,

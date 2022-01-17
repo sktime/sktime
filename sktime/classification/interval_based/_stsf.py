@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_random_state
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.utils.slope_and_trend import _slope
 
 

@@ -21,7 +21,7 @@ from sklearn import preprocessing
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
 

@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.model_selection import GridSearchCV, KFold
 
 # Classifiers
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )

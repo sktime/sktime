@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.transformations.panel.rocket import (
     MiniRocket,
     MiniRocketMultivariate,

@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.base._base import _clone_estimator
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 from sktime.transformations.panel.matrix_profile import MatrixProfile
 
 

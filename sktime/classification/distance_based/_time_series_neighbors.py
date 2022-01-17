@@ -34,7 +34,7 @@ from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification import BaseClassifier
 
 # New imports using Numba
 from sktime.distances import distance_factory
