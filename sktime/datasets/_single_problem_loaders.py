@@ -386,7 +386,9 @@ def load_arrow_head(split=None, return_X_y=True):
     ?Dataset=ArrowHead
     """
     name = "ArrowHead"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(
+        name=name, split=split, return_X_y=return_X_y, return_type="numpy2d"
+    )
 
 
 def load_acsf1(split=None, return_X_y=True):
