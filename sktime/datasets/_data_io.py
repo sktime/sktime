@@ -212,8 +212,8 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
         if isinstance(X_train, np.ndarray):
-            X = np.concatenate(X_train, X_test)
-            y = np.concatenate(y_train, y_test)
+            X = np.concatenate((X_train, X_test))
+            y = np.concatenate((y_train, y_test))
         elif isinstance(X_train, pd.DataFrame):
             X = pd.concat([X_train, X_test])
             y = pd.concat([y_train, y_test])
