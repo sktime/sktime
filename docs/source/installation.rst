@@ -77,7 +77,7 @@ Facebook prophet
 A frequent issue arises with installation of facebook prophet when installing via ``pip``, especially on Windows systems.
 There are several workarounds:
 
-1. Install manually via ``conda-forge``:
+- Option 1: Install manually via ``conda-forge``:
 
    .. code-block:: bash
 
@@ -86,13 +86,13 @@ There are several workarounds:
 
 The remaining packages can be installed via ``pip`` or ``conda``.
 
-2. Install ``pystan`` with ``no-cache`` parameter:
+- Option 2: Install ``pystan`` with ``no-cache`` parameter:
 
    .. code-block:: bash
 
        pip install pystan --no-cache
 
-3. If on Windows: use WSL (Windows Subsystem for Linux), see end of section `Windows 8.1 and higher`_.
+- Option 3: If on Windows: use WSL (Windows Subsystem for Linux), see end of section `Windows 8.1 and higher`_.
 
 
 numpy or C related issues
