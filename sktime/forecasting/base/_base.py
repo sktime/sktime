@@ -1017,14 +1017,15 @@ class BaseForecaster(BaseEstimator):
             # we want to ensure that y is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             y = convert_to(
-                y, to_type=[
+                y,
+                to_type=[
                     "np.darray",
                     "numpy3D",
                     "pd.Series",
                     "pd.DataFrame",
                     "pd-multiindex",
-                    "pd_multiindex_hier"
-                ]
+                    "pd_multiindex_hier",
+                ],
             )
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
@@ -1050,13 +1051,14 @@ class BaseForecaster(BaseEstimator):
             # we want to ensure that X is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             X = convert_to(
-                X, to_type=[
+                X,
+                to_type=[
                     "np.darray",
                     "numpy3D",
                     "pd.DataFrame",
                     "pd-multiindex",
-                    "pd_multiindex_hier"
-                ]
+                    "pd_multiindex_hier",
+                ],
             )
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
