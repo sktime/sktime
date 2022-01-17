@@ -4,10 +4,15 @@ version = "0.9.0"
 description = "A unified framework for machine learning with time series"
 license = "BSD-3-Clause"
 authors = [
-    {name = "F. Király", email = "f.kiraly@ucl.ac.uk"}
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Tony Bagnall"},
+    {name = "Markus Löning"},
+    {name = "Marting Walter"},
 ]
 maintainers = [
-    {name = "F. Király", email = "f.kiraly@ucl.ac.uk"}
+    {name = "F. Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Tony Bagnall"},
+    {name = "Marting Walter"},
 ]
 readme = "README.md"
 keywords = [
