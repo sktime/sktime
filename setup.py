@@ -16,7 +16,7 @@
 # /astropy_helpers/openmp_helpers.py  # noqa
 
 
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "lmmentel"]
 
 import codecs
 import glob
