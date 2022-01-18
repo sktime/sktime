@@ -2,7 +2,7 @@
 
 """Implements naive variance functionality to tune forecasters."""
 
-__author__ = ["Ilyas Moutawwakil"]
+__author__ = ["IlyasMoutawwakil"]
 
 
 import numpy as np
@@ -11,7 +11,7 @@ from scipy.stats import norm
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_alpha, check_fh
 
 
 class NaiveVariance(BaseForecaster):
@@ -87,7 +87,30 @@ class NaiveVariance(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        # implement here
+        self.check_is_fitted()
+        alpha = check_alpha(alpha)
+
+        pred_var = self.predict_var(fh, X)
+
+        errors = []
+        for a in alpha:
+            z = _zscore(1 - a)
+            errors.append(pred_var * z)
+
+        y_pred = self.predict(fh, X)
+
+        pred_quantiles = pd.DataFrame()
+        for a, error in zip(alpha, errors):
+            if a < 0.5:
+                pred_quantiles[a] = y_pred - error
+            else:
+                pred_quantiles[a] = y_pred + error
+
+        arrays = [len(alpha) * ["Quantiles"], alpha]
+        columns = pd.MultiIndex.from_tuples(list(zip(*arrays)))
+        pred_quantiles.columns = columns
+
+        return pred_quantiles
 
     def _predict_var(self, fh, X=None, cov=False):
         """
