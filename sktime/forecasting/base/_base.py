@@ -360,6 +360,13 @@ class BaseForecaster(BaseEstimator):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "quantile predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
         self.check_is_fitted()
         # input checks
         if alpha is None:
@@ -416,6 +423,13 @@ class BaseForecaster(BaseEstimator):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
@@ -1277,7 +1291,8 @@ class BaseForecaster(BaseEstimator):
 
         if not implements_quantiles and not implements_proba:
             raise RuntimeError(
-                f"{self.__name__} does not implement probabilistic forecasting, "
+                f"{self.__class__.__name__} does not implement "
+                "probabilistic forecasting, "
                 'but "capability:predict_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
@@ -1339,7 +1354,8 @@ class BaseForecaster(BaseEstimator):
 
         if not implements_interval and not implements_proba:
             raise RuntimeError(
-                f"{self.__name__} does not implement probabilistic forecasting, "
+                f"{self.__class__.__name__} does not implement "
+                "probabilistic forecasting, "
                 'but "capability:predict_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
