@@ -5,13 +5,13 @@ description = "A unified framework for machine learning with time series"
 license = "BSD-3-Clause"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall"},
+    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Markus Löning"},
     {name = "Marting Walter"},
 ]
 maintainers = [
     {name = "F. Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall"},
+    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Marting Walter"},
 ]
 readme = "README.md"
