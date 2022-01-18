@@ -341,7 +341,7 @@ def load_japanese_vowels(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=True):
+def load_arrow_head(split=None, return_X_y=True, return_type="numpy2d"):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
@@ -387,7 +387,7 @@ def load_arrow_head(split=None, return_X_y=True):
     """
     name = "ArrowHead"
     return _load_provided_dataset(
-        name=name, split=split, return_X_y=return_X_y, return_type="numpy2d"
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )
 
 
