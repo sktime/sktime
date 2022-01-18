@@ -12,6 +12,7 @@ from sklearn.utils.extmath import stable_cumsum
 from sktime.clustering._base import BaseClusterer
 from sktime.clustering.metrics.averaging._averaging import mean_average
 from sktime.distances import distance_factory, pairwise_distance
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 def _forgy_center_initializer(
@@ -242,6 +243,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self.n_iter_ = 0
 
         self._random_state = None
+        self._init_algorithm = None
 
         super(TimeSeriesLloyds, self).__init__()
 
@@ -263,7 +265,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
         self._distance_metric = distance_factory(X[0], X[1], metric=self.metric)
 
-        if isinstance(self.init_algorithm, str):
+        if isinstance(self.init_algorithm, str) and self._init_algorithm is None:
             self._init_algorithm = self._init_algorithms.get(self.init_algorithm)
         else:
             self._init_algorithm = self.init_algorithm

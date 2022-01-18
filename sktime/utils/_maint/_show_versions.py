@@ -1,7 +1,4 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# License: BSD 3 clause
-
 """
 Utility methods to print system info for debugging
 adapted from :func:`sklearn.show_versions`
@@ -10,13 +7,13 @@ adapted from :func:`sklearn.show_versions`
 __author__ = ["Markus Löning"]
 __all__ = ["show_versions"]
 
+import importlib
 import platform
 import sys
-import importlib
 
 
 def _get_sys_info():
-    """System information
+    """System information.
     Return
     ------
     sys_info : dict
@@ -34,7 +31,7 @@ def _get_sys_info():
 
 
 def _get_deps_info():
-    """Overview of the installed version of main dependencies
+    """Overview of the installed version of main dependency.
     Returns
     -------
     deps_info: dict
@@ -55,6 +52,7 @@ def _get_deps_info():
         "numba",
         "pmdarima",
         "tsfresh",
+        "tslearn",
     ]
 
     def get_version(module):
@@ -77,7 +75,7 @@ def _get_deps_info():
 
 
 def show_versions():
-    """Print useful debugging information"""
+    """Print useful debugging information."""
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
