@@ -1286,10 +1286,12 @@ class BaseForecaster(BaseEstimator):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
+        can_do_proba = implements_interval or implements_quantiles or implements_proba
 
-        if not implements_quantiles and not implements_proba:
+        if not can_do_proba:
             raise RuntimeError(
                 f"{self.__class__.__name__} does not implement "
                 "probabilistic forecasting, "
@@ -1350,9 +1352,11 @@ class BaseForecaster(BaseEstimator):
                 at quantile probability in second col index, for the row index.
         """
         implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
         implements_proba = self._has_implementation_of("_predict_proba")
+        can_do_proba = implements_interval or implements_quantiles or implements_proba
 
-        if not implements_interval and not implements_proba:
+        if not can_do_proba:
             raise RuntimeError(
                 f"{self.__class__.__name__} does not implement "
                 "probabilistic forecasting, "
