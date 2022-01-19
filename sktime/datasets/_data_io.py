@@ -184,34 +184,44 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
-def _load_provided_dataset(name, split=None, return_X_y=True):
-    """Load baked in time series classification datasets (helper function)."""
+def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
+    """Load baked in time series classification datasets (helper function).
+
+    Loads data from the provided files from sktime/datasets/data only.
+
+    Parameters
+    ----------
+        name : string, file name
+        split : string, default = None, or one of "TRAIN" or "TEST".
+        return_X_y : default = True, if true, returns X and y separately.
+        return_type : default = None,
+    """
     if isinstance(split, str):
         split = split.upper()
 
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X, y = load_from_tsfile(abspath)
+        X, y = load_from_tsfile(abspath, return_data_type=return_type)
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X_train, y_train = load_from_tsfile(abspath)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
         fname = name + "_TEST.ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X_test, y_test = load_from_tsfile(abspath)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
         if isinstance(X_train, np.ndarray):
-            X = np.concatenate(X_train, X_test)
-            y = np.concatenate(y_train, y_test)
+            X = np.concatenate((X_train, X_test))
         elif isinstance(X_train, pd.DataFrame):
             X = pd.concat([X_train, X_test])
-            y = pd.concat([y_train, y_test])
         else:
             raise IOError(
                 f"Invalid data structure type {type(X_train)} for loading "
                 f"classification problem "
             )
+        y = np.concatenate((y_train, y_test))
+
     else:
         raise ValueError("Invalid `split` value =", split)
     return X, y
@@ -308,7 +318,8 @@ def load_from_tsfile(
        whether to return the y variable, if it is present.
     return_data_type: default, None
         what data structure to return X in. Valid alternatives to None (default
-        pd.DataFrame are numpy2d/np2d or numpy3d/np3d. These arguments will raise an
+        pd.DataFrame are numpy2d/np2d/numpyflat or numpy3d/np3d. These arguments will
+        raise an
         error if the data cannot be stored in the requested type.
 
     Returns
