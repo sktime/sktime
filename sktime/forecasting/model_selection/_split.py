@@ -392,11 +392,33 @@ class CutoffSplitter(BaseSplitter):
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
-        """Return the number of splits."""
+        """Return the number of splits.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        n_splits : int
+            The number of splits.
+        """
         return len(self.cutoffs)
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Return the cutoff points."""
+        """Return the cutoff points.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
+
+        Returns
+        -------
+        cutoffs : np.array
+            The array of cutoff points.
+        """
         return check_cutoffs(self.cutoffs)
 
 
@@ -533,15 +555,17 @@ class BaseWindowSplitter(BaseSplitter):
         return _coerce_duration_to_int(duration=x, freq="D")
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
-        """Return number of splits.
+        """Return the number of splits.
 
         Parameters
         ----------
         y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
 
         Returns
         -------
         n_splits : int
+            The number of splits.
         """
         if y is None:
             raise ValueError(
@@ -551,15 +575,17 @@ class BaseWindowSplitter(BaseSplitter):
         return len(self.get_cutoffs(y))
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Get the cutoff time points.
+        """Return the cutoff points.
 
         Parameters
         ----------
         y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
 
         Returns
         -------
         cutoffs : np.array
+            The array of cutoff points.
         """
         if y is None:
             raise ValueError(
@@ -760,24 +786,28 @@ class SingleWindowSplitter(BaseSplitter):
 
         Parameters
         ----------
-        y : pd.Series, optional (default=None)
+        y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
 
         Returns
         -------
         n_splits : int
+            The number of splits.
         """
         return 1
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Return the cutoff time points.
+        """Return the cutoff points.
 
         Parameters
         ----------
         y : pd.Series or pd.Index, optional (default=None)
+            Time series to split
 
         Returns
         -------
         cutoffs : np.array
+            The array of cutoff points.
         """
         if y is None:
             raise ValueError(
