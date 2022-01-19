@@ -233,7 +233,7 @@ class BaseSplitter:
 
     Parameters
     ----------
-    window_length : int or timedelta
+    window_length : int or timedelta or pd.DateOffset
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
