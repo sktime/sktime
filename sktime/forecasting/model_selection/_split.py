@@ -267,7 +267,40 @@ class BaseSplitter:
             yield train[train >= 0], test[test >= 0]
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Split method containing internal logic implemented by concrete classes."""
+        """Split `y` into training and test windows.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index
+            Time series to split
+
+        Yields
+        ------
+        training_window : np.array
+            Training window indices
+        test_window : np.array
+            Test window indices
+
+        Notes
+        -----
+        Depending on the type of the arguments, e.g. `window_length`,
+        the calculation of train/test window edges is different.
+
+        For example, for integer arguments `cutoff = 10` and `window_length = 6`,
+        we have `train_start = cutoff - window_length = 4`.
+
+        For timedelta-like values the logic is a bit more complicated.
+        The time point corresponding to the `cutoff`
+        (index value of the `y` series) is shifted back
+        by the timedelta `window_length`,
+        and then the integer position of the resulting datetime
+        is considered to be the training window start.
+        For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+        we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
+        and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
+        which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+        Similar timedelta arithmetic applies to other splitter arguments.
+        """
         raise NotImplementedError("abstract method")
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
@@ -338,7 +371,6 @@ class CutoffSplitter(BaseSplitter):
         super(CutoffSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        # cutoffs
         cutoffs = check_cutoffs(self.cutoffs)
         if np.max(cutoffs) >= y.shape[0]:
             raise ValueError("`cutoffs` are incompatible with given `y`.")
