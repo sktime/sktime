@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "eenticott-shell"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
@@ -319,13 +319,13 @@ class ForecastingHorizon:
             if is_timestamp:
                 # coerce to pd.Period for reliable arithmetic operations and
                 # computations of time deltas
-                cutoff = _coerce_to_period(cutoff)
+                cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
 
             absolute = cutoff + relative
 
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
-                freq = _get_freq(cutoff)
+                freq = cutoff.freqstr
                 absolute = absolute.to_timestamp(freq)
 
             return self._new(absolute, is_relative=False)

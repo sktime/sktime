@@ -272,7 +272,6 @@ def _check_pred_ints(
 
         # check time index
         _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
-
         # check values
         assert np.all(pred_int["upper"] > y_pred)
         assert np.all(pred_int["lower"] < y_pred)
