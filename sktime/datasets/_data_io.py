@@ -317,10 +317,11 @@ def load_from_tsfile(
     return_y: boolean, default True
        whether to return the y variable, if it is present.
     return_data_type: default, None
-        what data structure to return X in. Valid alternatives to None (default
-        pd.DataFrame are numpy2d/np2d/numpyflat or numpy3d/np3d. These arguments will
-        raise an
-        error if the data cannot be stored in the requested type.
+        what data structure to return X in. Valid alternatives to None (default to
+        pd.DataFrame) are nested_univ (pd.DataFrame) are numpy2d/np2d/numpyflat or
+        numpy3d/np3d.
+        These arguments will raise an error if the data cannot be stored in the
+        requested type.
 
     Returns
     -------
