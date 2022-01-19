@@ -106,11 +106,17 @@ def test_kmeans():
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    kmeans = TimeSeriesKMeans(averaging_method="mean", random_state=1)
-    kmeans.fit(X_train)
+    kmeans = TimeSeriesKMeans(
+        averaging_method="mean", random_state=1, n_init=10, n_clusters=4
+    )
+    train_predict = kmeans.fit_predict(X_train)
+    train_mean_score = metrics.rand_score(y_train, train_predict)
+
     test_mean_result = kmeans.predict(X_test)
     mean_score = metrics.rand_score(y_test, test_mean_result)
     proba = kmeans.predict_proba(X_test)
+
+    test = kmeans.inertia_
 
     assert np.array_equal(test_mean_result, expected_results["mean"])
     assert mean_score == expected_score["mean"]
