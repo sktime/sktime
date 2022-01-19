@@ -261,25 +261,6 @@ class BaseSplitter:
             Training window indices
         test : np.array
             Test window indices
-        """
-        y = _check_y(y)
-        for train, test in self._split(y):
-            yield train[train >= 0], test[test >= 0]
-
-    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Split `y` into training and test windows.
-
-        Parameters
-        ----------
-        y : pd.Series or pd.Index
-            Time series to split
-
-        Yields
-        ------
-        training_window : np.array
-            Training window indices
-        test_window : np.array
-            Test window indices
 
         Notes
         -----
@@ -300,6 +281,26 @@ class BaseSplitter:
         and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
         which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
         Similar timedelta arithmetic applies to other splitter arguments.
+
+        """
+        y = _check_y(y)
+        for train, test in self._split(y):
+            yield train[train >= 0], test[test >= 0]
+
+    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+        """Split `y` into training and test windows.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index
+            Time series to split
+
+        Yields
+        ------
+        training_window : np.array
+            Training window indices
+        test_window : np.array
+            Test window indices
         """
         raise NotImplementedError("abstract method")
 
