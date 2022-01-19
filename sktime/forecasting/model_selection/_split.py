@@ -237,6 +237,27 @@ class BaseSplitter:
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
+
+    Notes
+    -----
+    Depending on the type of the arguments, e.g. `window_length`,
+    the calculation of train/test window edges is different.
+
+    For example, for integer arguments `cutoff = 10` and `window_length = 6`,
+    we have `train_start = cutoff - window_length = 4`.
+
+    For timedelta-like values the logic is a bit more complicated.
+    The time point corresponding to the `cutoff`
+    (index value of the `y` series) is shifted back
+    by the timedelta `window_length`,
+    and then the integer position of the resulting datetime
+    is considered to be the training window start.
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
+    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
+    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    Similar timedelta arithmetic applies to other splitter arguments.
+
     """
 
     def __init__(
@@ -261,26 +282,6 @@ class BaseSplitter:
             Training window indices
         test : np.array
             Test window indices
-
-        Notes
-        -----
-        Depending on the type of the arguments, e.g. `window_length`,
-        the calculation of train/test window edges is different.
-
-        For example, for integer arguments `cutoff = 10` and `window_length = 6`,
-        we have `train_start = cutoff - window_length = 4`.
-
-        For timedelta-like values the logic is a bit more complicated.
-        The time point corresponding to the `cutoff`
-        (index value of the `y` series) is shifted back
-        by the timedelta `window_length`,
-        and then the integer position of the resulting datetime
-        is considered to be the training window start.
-        For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
-        we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
-        and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
-        which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
-        Similar timedelta arithmetic applies to other splitter arguments.
 
         """
         y = _check_y(y)
@@ -360,6 +361,27 @@ class CutoffSplitter(BaseSplitter):
         .iloc[] indexing
     fh : int, list or np.array
     window_length : int or timedelta or pd.DateOffset
+
+    Notes
+    -----
+    Depending on the type of the arguments, e.g. `window_length`,
+    the calculation of train/test window edges is different.
+
+    For example, for integer arguments `cutoff = 10` and `window_length = 6`,
+    we have `train_start = cutoff - window_length = 4`.
+
+    For timedelta-like values the logic is a bit more complicated.
+    The time point corresponding to the `cutoff`
+    (index value of the `y` series) is shifted back
+    by the timedelta `window_length`,
+    and then the integer position of the resulting datetime
+    is considered to be the training window start.
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
+    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
+    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    Similar timedelta arithmetic applies to other splitter arguments.
+
     """
 
     def __init__(
@@ -641,6 +663,27 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
         - If False, starts with empty window.
+
+    Notes
+    -----
+    Depending on the type of the arguments, e.g. `window_length`,
+    the calculation of train/test window edges is different.
+
+    For example, for integer arguments `cutoff = 10` and `window_length = 6`,
+    we have `train_start = cutoff - window_length = 4`.
+
+    For timedelta-like values the logic is a bit more complicated.
+    The time point corresponding to the `cutoff`
+    (index value of the `y` series) is shifted back
+    by the timedelta `window_length`,
+    and then the integer position of the resulting datetime
+    is considered to be the training window start.
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
+    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
+    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    Similar timedelta arithmetic applies to other splitter arguments.
+
     """
 
     def __init__(
@@ -707,6 +750,27 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     start_with_window : bool, optional (default=False)
         - If True, starts with full window.
         - If False, starts with empty window.
+
+    Notes
+    -----
+    Depending on the type of the arguments, e.g. `window_length`,
+    the calculation of train/test window edges is different.
+
+    For example, for integer arguments `cutoff = 10` and `window_length = 6`,
+    we have `train_start = cutoff - window_length = 4`.
+
+    For timedelta-like values the logic is a bit more complicated.
+    The time point corresponding to the `cutoff`
+    (index value of the `y` series) is shifted back
+    by the timedelta `window_length`,
+    and then the integer position of the resulting datetime
+    is considered to be the training window start.
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
+    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
+    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    Similar timedelta arithmetic applies to other splitter arguments.
+
     """
 
     def __init__(
@@ -756,6 +820,27 @@ class SingleWindowSplitter(BaseSplitter):
         Forecasting horizon
     window_length : int or timedelta or pd.DateOffset
         Window length
+
+    Notes
+    -----
+    Depending on the type of the arguments, e.g. `window_length`,
+    the calculation of train/test window edges is different.
+
+    For example, for integer arguments `cutoff = 10` and `window_length = 6`,
+    we have `train_start = cutoff - window_length = 4`.
+
+    For timedelta-like values the logic is a bit more complicated.
+    The time point corresponding to the `cutoff`
+    (index value of the `y` series) is shifted back
+    by the timedelta `window_length`,
+    and then the integer position of the resulting datetime
+    is considered to be the training window start.
+    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, unit="D")`,
+    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
+    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
+    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    Similar timedelta arithmetic applies to other splitter arguments.
+
     """
 
     def __init__(
