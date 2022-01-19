@@ -282,7 +282,6 @@ class BaseSplitter:
             Training window indices
         test : np.array
             Test window indices
-
         """
         y = _check_y(y)
         for train, test in self._split(y):
