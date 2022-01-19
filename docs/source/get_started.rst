@@ -155,7 +155,7 @@ Time Series Clustering
     >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
     >>> from sktime.datasets import load_arrow_head
 
-    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X, y = load_arrow_head()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     >>> k_means = TimeSeriesKMeans(n_clusters=5, init_algorithm="forgy", metric="dtw")
