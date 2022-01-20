@@ -279,7 +279,7 @@ class _TbatsAdapter(BaseForecaster):
         quantiles = acc.reindex(columns=req_quant)
 
         # the y.name for multi-index or "quantiles"
-        col_name = "quantiles" if (self._yname in {None, ""}) else self._yname
+        col_name = "Quantiles" if (self._yname in {None, ""}) else self._yname
         quantiles.columns = pd.MultiIndex.from_product([[col_name], req_quant])
 
         return quantiles
