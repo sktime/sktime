@@ -1,0 +1,201 @@
+# -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Implmenents the scaled logit tranformation."""
+
+__author__ = ["ltsaprounis"]
+
+from copy import deepcopy
+
+import numpy as np
+
+from sktime.transformations.base import BaseTransformer
+
+
+class ScaledLogitBoundsError(ValueError):
+    """Specific error for scaled logit bounds."""
+
+    pass
+
+
+class ScaledLogitTransformer(BaseTransformer):
+    """Scaled logit transform.
+
+    Applies a scaled logit transform to the data.
+    Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
+    that the forecast stays between the specified bounds (lower_bound, upper_bound).
+
+    Parameters
+    ----------
+    lower_bound : float
+        lower bound
+    upper_bound : float
+        upper bound
+
+    See Also
+    --------
+    sktime.transformations.series.boxcox.BoxCoxTransformer :
+        Transformer input data using natural log. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.boxcox.BoxCoxTransformer :
+        Applies Box-Cox power transformation. Can help normalize data and
+        compress variance of the series.
+    sktime.transformations.series.exponent.ExponentTransformer :
+        Transform input data by raising it to an exponent. Can help compress
+        variance of series if a fractional exponent is supplied.
+    sktime.transformations.series.exponent.SqrtTransformer :
+        Transform input data by taking its square root. Can help compress
+        variance of input series.
+
+    Notes
+    -----
+    The scaled logit transform is applied if both upper_bound and lower_bound are
+    not None:
+        :math: `log(frac{x - a}{b - x})`,  where a is the lower and b is the upper bound
+    If upper_bound is None and lower_bound is not the transform applied is:
+         :math: `log(frac{x - a})`
+    If lower_bound is None and upper_bound is not the transform applied is:
+         :math: `- log(frac{b - x})`
+
+
+    References
+    ----------
+    .. [1] `Hyndsight - Forecasting within limits
+    <https://robjhyndman.com/hyndsight/forecasting-within-limits/>`_
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = ScaledLogitTransformer(lower_bound=0, upper_bound=10**)
+    >>> y_hat = transformer.fit_transform(y)
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "transform-returns-same-time-index": True,
+        "fit-in-transform": True,
+        "univariate-only": False,
+        "capability:inverse_transform": True,
+    }
+
+    def __init__(self, lower_bound=None, upper_bound=None):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+
+        super(ScaledLogitTransformer, self).__init__()
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Ignored argument for interface mobility
+
+        Returns
+        -------
+        transformed version of X
+        """
+        if self.upper_bound:
+            if np.any(X >= self.upper_bound):
+                raise ScaledLogitBoundsError(
+                    "X should not have values greater than upper_bound"
+                )
+
+        if self.lower_bound:
+            if np.any(X <= self.lower_bound):
+                raise ScaledLogitBoundsError(
+                    "X should not have values lower than lower_bound"
+                )
+
+        if self.upper_bound and self.lower_bound:
+            if self.upper_bound <= self.lower_bound:
+                raise ScaledLogitBoundsError(
+                    "upper_bound should be greater than lower bound"
+                )
+            X_transformed = np.log((X - self.lower) / (self.upper - X))
+        elif self.upper_bound is not None:
+            X_transformed = -np.log(self.upper_bound - X)
+        elif self.lower_bound is not None:
+            X_transformed = np.log(X - self.lower_bound)
+        else:
+            X_transformed = deepcopy(X)
+
+        return X_transformed
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
+
+        private _inverse_transform containing core logic, called from inverse_transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Ignored argument for interface mobility
+
+        Returns
+        -------
+        inverse transformed version of X
+        """
+        if self.upper_bound and self.lower_bound:
+            X_inv_transformed = (self.upper_bound * np.exp(X) + self.lower_bound) / (
+                np.exp(X) + 1
+            )
+        elif self.upper_bound is not None:
+            X_inv_transformed = self.upper_bound - np.exp(-X)
+        elif self.lower_bound is not None:
+            X_inv_transformed = np.exp(X) + self.lower_bound
+        else:
+            X_inv_transformed = deepcopy(X)
+
+        return X_inv_transformed
+
+    # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries
+        #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params
