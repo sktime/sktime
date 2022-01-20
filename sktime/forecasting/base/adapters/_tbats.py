@@ -219,7 +219,7 @@ class _TbatsAdapter(BaseForecaster):
         fh : int, list, np.array or ForecastingHorizon
             Forecasting horizon, default = y.index (in-sample forecast)
         X : (default=None)
-            NOT USED BY TBATS
+            Ignored, passed for interface compatibility
         alpha : float or list of float, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
@@ -336,5 +336,5 @@ class _TbatsAdapter(BaseForecaster):
 
 
 def nans(length):
-    """Return l NaNs."""
+    """Return a vector of NaNs, of length `length`."""
     return np.full(length, np.nan)
