@@ -241,15 +241,19 @@ class BaseForecaster(BaseEstimator):
             else:
                 # it's already refactored
                 # opposite definition previously vs. now
-                alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-                coverage = [1 - a for a in alphas]
+                if isinstance(alpha, list):
+                    coverage = [1 - a for a in alpha]
+                else:
+                    coverage = alpha
                 pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
 
                 if keep_old_return_type:
                     pred_int = self._convert_new_to_old_pred_int(pred_int, alpha)
 
-                y_pred = self._predict(fh=fh, X=X_inner)
-
+            y_pred = self._predict(
+                self.fh,
+                X=X_inner,
+            )
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
                 y_pred,
