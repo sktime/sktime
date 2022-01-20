@@ -1365,24 +1365,15 @@ class BaseForecaster(BaseEstimator):
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
         name = pred_int_new.columns.get_level_values(0).unique()[0]
         alpha = check_alpha(alpha)
-
         alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-        coverage = [1 - a for a in alphas]
-
-        alpha_quantiles = []
-        for c in coverage:
-            aq_pair = ((1 - c) / 2, 0.5 + (c / 2))
-            alpha_quantiles.append(aq_pair)
-        alpha_quantiles.sort()
-
         pred_int_old_format = [
             pd.DataFrame(
                 {
-                    "lower": pred_int_new[(name, al)],
-                    "upper": pred_int_new[(name, au)],
+                    "lower": pred_int_new[(name, 0.5 - (float(a) / 2))],
+                    "upper": pred_int_new[(name, 0.5 + (float(a) / 2))],
                 }
             )
-            for al, au in alpha_quantiles
+            for a in alphas
         ]
 
         # for a single alpha, return single pd.DataFrame
