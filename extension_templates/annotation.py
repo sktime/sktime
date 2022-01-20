@@ -41,6 +41,17 @@ from sktime.annotation.base import BaseSeriesAnnotator
 
 # todo: add any necessary imports here
 
+# Soft-dependency vs Hard-dependency:
+# Soft dependency would only effect few estimators.
+# Eg: fbprophet
+# Hard-dependency would effect entire sktime project.
+# Eg: numpy
+# A good practice is to reduce the number of soft-dependencies
+#
+# Import a soft-dependency:
+# >>> from sktime.utils.validation._dependencies import check_soft_dependencies
+# >>> _check_soft_dependencies("estimator")
+
 
 class MySeriesAnnotator(BaseSeriesAnnotator):
     """Custom series annotator.
