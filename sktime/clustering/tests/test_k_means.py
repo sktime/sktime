@@ -55,7 +55,7 @@ expected_train_result = {"mean": 0.4846153846153846}
 
 expected_score = {"mean": 0.3153846153846154}
 
-expected_iters = {"mean": 3}
+expected_iters = {"mean": 4}
 
 expected_labels = {
     "mean": [
@@ -109,7 +109,7 @@ def test_kmeans():
     X_test, y_test = load_basic_motions(split="test")
 
     kmeans = TimeSeriesKMeans(
-        averaging_method="mean", random_state=1, n_init=10, n_clusters=4
+        averaging_method="mean", random_state=1, n_init=2, n_clusters=4
     )
     train_predict = kmeans.fit_predict(X_train)
     train_mean_score = metrics.rand_score(y_train, train_predict)

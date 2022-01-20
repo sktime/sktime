@@ -57,7 +57,7 @@ train_expected_score = {"medoids": 0.48717948717948717}
 
 expected_inertia = {"medoids": 290241.1549727707}
 
-expected_iters = {"medoids": 299}
+expected_iters = {"medoids": 300}
 
 expected_labels = {
     "medoids": [
