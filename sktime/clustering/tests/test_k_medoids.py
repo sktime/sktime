@@ -8,95 +8,99 @@ from sktime.datasets import load_basic_motions
 
 expected_results = {
     "medoids": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        3,
-        1,
-        1,
-        1,
-        1,
-        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
         4,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
+        0,
+        3,
+        0,
+        0,
+        0,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
     ]
 }
 
-expected_score = {"medoids": 0.2858974358974359}
+expected_score = {"medoids": 0.3153846153846154}
+
+train_expected_score = {"medoids": 0.48717948717948717}
+
+expected_inertia = {"medoids": 290241.1549727707}
 
 expected_iters = {"medoids": 300}
 
 expected_labels = {
     "medoids": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        4,
-        7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
         5,
         2,
-        1,
-        5,
-        3,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        6,
-        1,
-        1,
-        1,
-        1,
-        1,
+        4,
         1,
         0,
-        1,
-        1,
+        4,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        6,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
     ]
 }
 
@@ -106,18 +110,21 @@ def test_kmedoids():
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    kmedoids = TimeSeriesKMedoids(random_state=1)
-    kmedoids.fit(X_train)
+    kmedoids = TimeSeriesKMedoids(random_state=1, n_init=2)
+    train_predict = kmedoids.fit_predict(X_train)
+    train_score = metrics.rand_score(y_train, train_predict)
     test_medoids_result = kmedoids.predict(X_test)
     medoids_score = metrics.rand_score(y_test, test_medoids_result)
     proba = kmedoids.predict_proba(X_test)
 
     assert np.array_equal(test_medoids_result, expected_results["medoids"])
     assert medoids_score == expected_score["medoids"]
-    assert kmedoids.n_iter_ == 300
+    assert train_score == train_expected_score["medoids"]
+    assert kmedoids.inertia_ == expected_inertia["medoids"]
+    assert kmedoids.n_iter_ == expected_iters["medoids"]
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])
     assert isinstance(kmedoids.cluster_centers_, np.ndarray)
-    assert proba.shape == (40, 5)
+    assert proba.shape == (40, 6)
 
     for val in proba:
         assert np.count_nonzero(val == 1.0) == 1
