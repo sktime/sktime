@@ -8,11 +8,11 @@ __all__ = ["TrendForecaster", "PolynomialTrendForecaster"]
 
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
-from sklearn.base import clone
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.datetime import _get_duration
@@ -41,7 +41,7 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": False,
+        "ignores-exogeneous-X": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
     }

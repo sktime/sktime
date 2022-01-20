@@ -823,7 +823,7 @@ class BaseForecaster(BaseEstimator):
         if X is not None:
             X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+                check_equal_time_index(X, y, mode="contains")
         # end checking X
 
         # convert X & y to supported inner type, if necessary
@@ -1261,10 +1261,11 @@ class BaseForecaster(BaseEstimator):
         """
         alphas = []
         for c in coverage:
-            alphas.extend([((1 - float(c)) / 2), 0.5 + (float(c) / 2)])
+            alphas.extend([(1 - c) / 2.0, 0.5 + (c / 2.0)])
         alphas = sorted(alphas)
         pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
-        # pred_int = self._convert_new_to_old_pred_int(pred_int, coverage)
+
+        pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1355,10 +1356,10 @@ class BaseForecaster(BaseEstimator):
     # TODO: remove in v0.10.0
     def _has_predict_quantiles_been_refactored(self):
         """Check if specific forecaster implements _predict_quantiles()."""
-        base_pq = BaseForecaster._predict_quantiles
-        this_pq = self.__class__._predict_quantiles
+        base_predict_quantiles = BaseForecaster._predict_quantiles
+        this_predict_quantiles = self.__class__._predict_quantiles
         # true if self's _predict_quantiles is new implementation
-        return base_pq != this_pq
+        return base_predict_quantiles != this_predict_quantiles
 
     # TODO: remove in v0.10.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
