@@ -1264,7 +1264,6 @@ class BaseForecaster(BaseEstimator):
             alphas.extend([(1 - c) / 2.0, 0.5 + (c / 2.0)])
         alphas = sorted(alphas)
         pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
-
         pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
         return pred_int
 
