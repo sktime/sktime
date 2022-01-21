@@ -463,12 +463,10 @@ def test_fit_returns_self(estimator_instance, scenario):
 
 def test_raises_not_fitted_error(estimator_instance, scenario):
     """Check that we raise appropriate error for unfitted estimators."""
-    estimator = estimator_instance
-
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:
-        if _has_capability(estimator, method):
+        if _has_capability(estimator_instance, method):
             with pytest.raises(NotFittedError, match=r"has not been fitted"):
                 scenario.run(estimator_instance, method_sequence=[method])
 
