@@ -792,7 +792,7 @@ class BaseForecaster(BaseEstimator):
         TypeError if y is not compatible with self.get_tag("scitype:y")
             if tag value is "univariate", y must be univariate
             if tag value is "multivariate", y must be bi- or higher-variate
-            if tag vaule is "both", y can be either
+            if tag value is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
 
@@ -883,7 +883,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or nd.nparray (1D or 2D)
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
@@ -1139,7 +1139,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None, alpha=0.95):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
             core logic
@@ -1235,7 +1235,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _predict_interval(self, fh=fh, X=None, coverage=0.95):
+    def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.
