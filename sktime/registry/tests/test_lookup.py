@@ -7,12 +7,13 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.base import BaseEstimator
-from sktime.registry import all_estimators, all_tags
+from sktime.registry import all_estimators, all_tags, scitype
 from sktime.registry._base_classes import (
     BASE_CLASS_LOOKUP,
     BASE_CLASS_SCITYPE_LIST,
     TRANSFORMER_MIXIN_SCITYPE_LIST,
 )
+from sktime.registry._lookup import _check_estimator_types
 
 VALID_SCITYPES_SET = set(
     BASE_CLASS_SCITYPE_LIST + TRANSFORMER_MIXIN_SCITYPE_LIST + ["estimator"]
@@ -111,3 +112,57 @@ def test_all_tags(estimator_scitype):
             assert isinstance(tag[2][0], str)
             assert isinstance(tag[2][1], list)
         assert isinstance(tag[3], str)
+
+
+@pytest.mark.parametrize("return_names", [True, False])
+def test_all_estimators_return_names(return_names):
+    """Test return_names argument in all_estimators."""
+    estimators = all_estimators(return_names=return_names)
+    assert isinstance(estimators, list)
+    assert len(estimators) > 0
+
+    if return_names:
+        assert all([isinstance(estimator, tuple) for estimator in estimators])
+        names, estimators = list(zip(*estimators))
+        assert all([isinstance(name, str) for name in names])
+        assert all(
+            [name == estimator.__name__ for name, estimator in zip(names, estimators)]
+        )
+
+    assert all([isinstance(estimator, type) for estimator in estimators])
+
+
+# arbitrary list for exclude_estimators argument test
+EXCLUDE_ESTIMATORS = [
+    "ElasticEnsemble",
+    "ProximityForest",
+    "ProximityStump",
+    "ProximityTree",
+]
+
+
+@pytest.mark.parametrize("exclude_estimators", ["NaiveForecaster", EXCLUDE_ESTIMATORS])
+def test_all_estimators_exclude_estimators(exclude_estimators):
+    """Test exclued_estimators argument in all_estimators."""
+    estimators = all_estimators(
+        return_names=True, exclude_estimators=exclude_estimators
+    )
+    assert isinstance(estimators, list)
+    assert len(estimators) > 0
+    names, estimators = list(zip(*estimators))
+
+    if not isinstance(exclude_estimators, list):
+        exclude_estimators = [exclude_estimators]
+    for estimator in exclude_estimators:
+        assert estimator not in names
+
+
+@pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
+def test_scitype_inference(estimator_scitype):
+    """Check that scitype inverts _check_estimator_types."""
+    base_class = _check_estimator_types(estimator_scitype)[0]
+    inferred_scitype = scitype(base_class)
+
+    assert (
+        inferred_scitype == estimator_scitype
+    ), "one of scitype, _check_estimator_types is incorrect, these should be inverses"

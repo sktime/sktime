@@ -3,11 +3,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implmenents Box-Cox and Log Transformations."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning, aiwalter, fkiraly"]
 __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
-import pandas as pd
 from scipy import optimize, special, stats
 from scipy.special import boxcox, inv_boxcox
 from scipy.stats import boxcox_llf, distributions, variation
@@ -16,12 +15,11 @@ from scipy.stats.morestats import (
     _calc_uniform_order_statistic_medians,
 )
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
-from sktime.utils.validation.series import check_series
 
 
-class BoxCoxTransformer(_SeriesToSeriesTransformer):
+class BoxCoxTransformer(BaseTransformer):
     r"""Box-Cox power transform.
 
     Box-Cox transformation is a power transformation that is used to
@@ -97,11 +95,17 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "univariate-only": True,
-        "X_inner_mtype": "pd.Series",
-        "y_inner_mtype": "pd.DataFrame",
         "fit-in-transform": False,
+        "univariate-only": True,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, bounds=None, method="mle", sp=None):
@@ -111,69 +115,77 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         self.sp = sp
         super(BoxCoxTransformer, self).__init__()
 
-    def _fit(self, Z, X=None):
-        """Fit data.
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to fit.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : 2D np.ndarray (n x 1)
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
-        z = check_series(Z, enforce_univariate=True)
+        X = X.flatten()
         if self.method != "guerrero":
-            self.lambda_ = _boxcox_normmax(z, bounds=self.bounds, method=self.method)
+            self.lambda_ = _boxcox_normmax(X, bounds=self.bounds, method=self.method)
         else:
-            self.lambda_ = _guerrero(z, self.sp, self.bounds)
+            self.lambda_ = _guerrero(X, self.sp, self.bounds)
 
         return self
 
-    def _transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : 2D np.ndarray (n x 1)
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series
-            Transformed series.
+        Xt : 2D np.ndarray
+            transformed version of X
         """
-        z = check_series(Z, enforce_univariate=True)
-        zt = boxcox(z.to_numpy(), self.lambda_)
-        return pd.Series(zt, index=z.index)
+        X_shape = X.shape
+        Xt = boxcox(X.flatten(), self.lambda_)
+        Xt = Xt.reshape(X_shape)
+        return Xt
 
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform X and return an inverse transformed version.
+
+        core logic
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : 2D np.ndarray (n x 1)
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series
-            Transformed data - the inverse of the Box-Cox transformation.
+        Xt : 2D np.ndarray
+            inverse transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=True)
-        zt = inv_boxcox(z.to_numpy(), self.lambda_)
-        return pd.Series(zt, index=z.index)
+        X_shape = X.shape
+        Xt = inv_boxcox(X.flatten(), self.lambda_)
+        Xt = Xt.reshape(X_shape)
+        return Xt
 
 
-class LogTransformer(_SeriesToSeriesTransformer):
+class LogTransformer(BaseTransformer):
     """Natural logarithm transformation.
 
     The natural log transformation can used to make data more normally
@@ -204,45 +216,59 @@ class LogTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "transform-returns-same-time-index": True,
+        "fit-in-transform": True,
+        "univariate-only": False,
+        "capability:inverse_transform": True,
+    }
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Parameters
-        ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
-
-        Returns
-        -------
-        Zt : pd.Series
-            Transformed series.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        return np.log(Z)
-
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : 2D np.ndarray
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series
-            Transformed data - the inverse of the Box-Cox transformation.
+        Xt : 2D np.ndarray
+            transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        return np.exp(Z)
+        Xt = np.log(X)
+        return Xt
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform X and return an inverse transformed version.
+
+        core logic
+
+        Parameters
+        ----------
+        X : 2D np.ndarray
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        Xt : 2D np.ndarray
+            inverse transformed version of X
+        """
+        Xt = np.exp(X)
+        return Xt
 
 
 def _make_boxcox_optimizer(bounds=None, brack=(-2.0, 2.0)):

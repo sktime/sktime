@@ -211,10 +211,14 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -302,12 +306,12 @@ class BaseTransformer(BaseEstimator):
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
-            ValueError(msg)
+            raise ValueError(msg)
 
         # checking X
         enforce_univariate = self.get_tag("univariate-only")
         if enforce_univariate and not X_metadata["is_univariate"]:
-            ValueError("X must be univariate but is not")
+            raise ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
@@ -486,12 +490,12 @@ class BaseTransformer(BaseEstimator):
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
         )
         if not valid:
-            ValueError(msg)
+            raise ValueError(msg)
 
         # checking X
         enforce_univariate = self.get_tag("univariate-only")
         if enforce_univariate and not X_metadata["is_univariate"]:
-            ValueError("X must be univariate but is not")
+            raise ValueError("X must be univariate but is not")
 
         # retrieve mtypes/scitypes of all objects
         #########################################
@@ -644,10 +648,14 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -671,10 +679,14 @@ class BaseTransformer(BaseEstimator):
         """Vectorized application of transform or inverse, and convert back."""
         if X_input_mtype is None:
             X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        if y is not None:
-            ValueError(
-                "no default behaviour if _fit does not support Panel, "
-                " but X is Panel and y is not None"
+        if y is not None and self.get_tag("y_inner_mtype") != "None":
+            raise ValueError(
+                f"{type(self).__name__} does not support Panel X if y is not None, "
+                f"since {type(self).__name__} supports only Series. "
+                "Auto-vectorization to extend Series X to Panel X can only be "
+                'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                "Consider extending _fit and _transform to handle the following "
+                "input types natively: Panel X and non-None y."
             )
 
         X = convert_to(
@@ -683,11 +695,13 @@ class BaseTransformer(BaseEstimator):
 
         # depending on whether fitting happens, apply fitted or unfitted instances
         if not self.get_tag("fit-in-transform"):
-            # these are the transformers-per-instanced, fitted in fit
+            # these are the transformers-per-instance, fitted in fit
             transformers = self.transformers_
             if len(transformers) != len(X):
                 raise RuntimeError(
-                    "found different number of instances in transform than in fit"
+                    "found different number of instances in transform than in fit. "
+                    f"number of instances seen in fit: {len(transformers)}; "
+                    f"number of instances seen in transform: {len(X)}"
                 )
             if inverse:
                 Xt = [transformers[i].inverse_transform(X[i]) for i in range(len(X))]
@@ -784,18 +798,27 @@ class BaseTransformer(BaseEstimator):
 
         # if we converted Series to "one-instance-Panel", revert that
         if X_was_Series and output_scitype == "Series":
+            Xt = convert_to(
+                Xt, to_type=["pd-multiindex", "numpy3D", "df-list"], as_scitype="Panel"
+            )
             Xt = convert_Panel_to_Series(Xt)
 
         if output_scitype == "Series":
-            # if the transformer outputs multivariate series,
+            # output mtype is input mtype
+            X_output_mtype = X_input_mtype
+
+            # exception to this: if the transformer outputs multivariate series,
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
-            _, _, metadata = check_is_mtype(
-                Xt, ["pd.DataFrame", "pd.Series", "np.ndarray"], return_metadata=True
-            )
-            if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
-                X_output_mtype = "pd.DataFrame"
-            else:
-                X_output_mtype = X_input_mtype
+            #   this happens only for Series, not Panel
+            if X_input_scitype == "Series":
+                _, _, metadata = check_is_mtype(
+                    Xt,
+                    ["pd.DataFrame", "pd.Series", "np.ndarray"],
+                    return_metadata=True,
+                )
+                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                    X_output_mtype = "pd.DataFrame"
+
             Xt = convert_to(
                 Xt,
                 to_type=X_output_mtype,
@@ -813,15 +836,12 @@ class BaseTransformer(BaseEstimator):
                 as_scitype="Series",
                 # no converter store since this is not a "1:1 back-conversion"
             )
-        else:
-            # output_scitype is "Panel" and no need for conversion
-            pass
+        # else output_scitype is "Panel" and no need for conversion
 
         return Xt
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 
