@@ -2,36 +2,23 @@
 """Utilities for loading datasets."""
 
 __author__ = [
-    "mloning",
-    "sajaysurya",
-    "big-o",
-    "SebasKoel",
     "Emiliathewolf",
     "TonyBagnall",
-    "yairbeer",
-    "patrickZIB",
-    "aiwalter",
     "jasonlines",
 ]
 
 __all__ = [
-    "load_airline",
-    "load_arrow_head",
-    "load_gunpoint",
-    "load_osuleaf",
-    "load_italy_power_demand",
-    "load_basic_motions",
-    "load_japanese_vowels",
-    "load_shampoo_sales",
-    "load_longley",
-    "load_lynx",
-    "load_acsf1",
-    "load_uschange",
-    "load_UCR_UEA_dataset",
-    "load_PBS_dataset",
-    "load_gun_point_segmentation",
-    "load_electric_devices_segmentation",
-    "load_macroeconomic",
+    "generate_example_long_table",
+    "make_multi_index_dataframe",
+    "write_dataframe_to_tsfile",
+    "write_ndarray_to_tsfile",
+    "write_results_to_uea_format",
+    "write_tabular_transformation_to_arff",
+    "load_from_tsfile",
+    "load_from_tsfile_to_dataframe",
+    "load_from_arff_to_dataframe",
+    "load_from_long_to_dataframe",
+    "load_from_ucr_tsv_to_dataframe",
 ]
 
 import itertools
@@ -44,9 +31,13 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 
-from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
+from sktime.datatypes._panel._convert import (
+    _make_column_names,
+    from_long_to_nested,
+    from_nested_to_2d_np_array,
+    from_nested_to_3d_numpy,
+)
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
 
@@ -84,7 +75,7 @@ def _download_and_extract(url, extract_path=None):
     urlretrieve(url, zip_file_name)
 
     if extract_path is None:
-        extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
+        extract_path = os.path.join(MODULE, "local_data/%s/" % file_name.split(".")[0])
     else:
         extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
 
@@ -103,7 +94,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_downloaded_datasets(extract_path):
+def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
     Modified version of
@@ -117,7 +108,7 @@ def _list_downloaded_datasets(extract_path):
 
     """
     if extract_path is None:
-        data_dir = os.path.join(MODULE, DIRNAME)
+        data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
     datasets = [
@@ -128,47 +119,6 @@ def _list_downloaded_datasets(extract_path):
     return datasets
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
-    """Load dataset from UCR UEA time series archive.
-
-    Downloads and extracts dataset if not already downloaded. Data is assumed to be
-    in the standard .ts format: each row is a (possibly multivariate) time series.
-    Each dimension is separated by a colon, each value in a series is comma
-    separated. For examples see sktime.datasets.data.tsc. ArrowHead is an example of
-    a univariate equal length problem, BasicMotions an equal length multivariate
-    problem.
-
-    Parameters
-    ----------
-    name : str
-        Name of data set. If a dataset that is listed in tsc_dataset_names is given,
-        this function will look in the extract_path first, and if it is not present,
-        attempt to download the data from www.timeseriesclassification.com, saving it to
-        the extract_path.
-    split : None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By default it
-        loads both into a single dataset, otherwise it looks only for files of the
-        format <name>_TRAIN.ts or <name>_TEST.ts.
-    return_X_y : bool, optional (default=False)
-        it returns two objects, if False, it appends the class labels to the dataframe.
-    extract_path : str, optional (default=None)
-        the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`.
-
-    Returns
-    -------
-    X: pandas DataFrame
-        The time series data for the problem with n_cases rows and either
-        n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
-        series associated with each case. If return_X_y is False, column
-        n_dimensions+1 contains the class labels/target variable.
-    y: numpy array, optional
-        The class labels for each case in X, returned separately if return_X_y is
-        True, or appended to X if False
-    """
-    return _load_dataset(name, split, return_X_y, extract_path)
-
-
 def _load_dataset(name, split, return_X_y, extract_path=None):
     """Load time series classification datasets (helper function)."""
     # Allow user to have non standard extract path
@@ -177,26 +127,34 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         local_dirname = extract_path
     else:
         local_module = MODULE
-        local_dirname = DIRNAME
+        local_dirname = "data"
 
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_downloaded_datasets(extract_path):
-        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-        # This also tests the validitiy of the URL, can't rely on the html
-        # status code as it always returns 200
-        try:
-            _download_and_extract(
-                url,
-                extract_path=extract_path,
-            )
-        except zipfile.BadZipFile as e:
-            raise ValueError(
-                "Invalid dataset name. ",
-                extract_path,
-                "Please make sure the dataset "
-                + "is available on http://timeseriesclassification.com/.",
-            ) from e
+    if name not in _list_available_datasets(extract_path):
+        local_dirname = "local_data"
+        if not os.path.exists(os.path.join(local_module, local_dirname)):
+            os.makedirs(os.path.join(local_module, local_dirname))
+        if name not in _list_available_datasets(
+            os.path.join(local_module, local_dirname)
+        ):
+            # Dataset is not baked in the datasets directory, look in local_data,
+            # if it is not there, download and install it.
+            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+            # This also tests the validitiy of the URL, can't rely on the html
+            # status code as it always returns 200
+            try:
+                _download_and_extract(
+                    url,
+                    extract_path=extract_path,
+                )
+            except zipfile.BadZipFile as e:
+                raise ValueError(
+                    "Invalid dataset name. ",
+                    extract_path,
+                    "Please make sure the dataset "
+                    + "is available on http://timeseriesclassification.com/.",
+                ) from e
     if isinstance(split, str):
         split = split.upper()
 
@@ -226,746 +184,256 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
-def load_gunpoint(split=None, return_X_y=False):
-    """
-    Load the GunPoint time series classification problem and returns X and y.
+def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
+    """Load baked in time series classification datasets (helper function).
+
+    Loads data from the provided files from sktime/datasets/data only.
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Notes
-    -----
-    Dimensionality:     univariate
-    Series length:      150
-    Train cases:        50
-    Test cases:         150
-    Number of classes:  2
-
-    This dataset involves one female actor and one male actor making a
-    motion with their
-    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors
-    have their
-    hands by their sides. They draw a replicate gun from a hip-mounted
-    holster, point it
-    at a target for approximately one second, then return the gun to the
-    holster, and
-    their hands to their sides. For Point the actors have their gun by their
-    sides.
-    They point with their index fingers to a target for approximately one
-    second, and
-    then return their hands to their sides. For both classes, we tracked the
-    centroid
-    of the actor's right hands in both X- and Y-axes, which appear to be highly
-    correlated. The data in the archive is just the X-axis.
-
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=GunPoint
+        name : string, file name
+        split : string, default = None, or one of "TRAIN" or "TEST".
+        return_X_y : default = True, if true, returns X and y separately.
+        return_type : default = None,
     """
-    name = "GunPoint"
-    return _load_dataset(name, split, return_X_y)
+    if isinstance(split, str):
+        split = split.upper()
+
+    if split in ("TRAIN", "TEST"):
+        fname = name + "_" + split + ".ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X, y = load_from_tsfile(abspath, return_data_type=return_type)
+    # if split is None, load both train and test set
+    elif split is None:
+        fname = name + "_TRAIN.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        fname = name + "_TEST.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
+        if isinstance(X_train, np.ndarray):
+            X = np.concatenate((X_train, X_test))
+        elif isinstance(X_train, pd.DataFrame):
+            X = pd.concat([X_train, X_test])
+        else:
+            raise IOError(
+                f"Invalid data structure type {type(X_train)} for loading "
+                f"classification problem "
+            )
+        y = np.concatenate((y_train, y_test))
+
+    else:
+        raise ValueError("Invalid `split` value =", split)
+    return X, y
 
 
-def load_osuleaf(split=None, return_X_y=False):
-    """
-    Load the OSULeaf time series classification problem and returns X and y.
+def _read_header(file, full_file_path_and_name):
+    """Read the header information, returning the meta information."""
+    # Meta data for data information
+    meta_data = {
+        "is_univariate": True,
+        "is_equally_spaced": True,
+        "is_equal_length": True,
+        "has_nans": False,
+        "has_timestamps": False,
+        "has_class_labels": True,
+    }
+    # Read header until @data tag met
+    for line in file:
+        line = line.strip().lower()
+        if line:
+            if line.startswith("@problemname"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+            elif line.startswith("@timestamps"):
+                tokens = line.split(" ")
+                if tokens[1] == "true":
+                    meta_data["has_timestamps"] = True
+                elif tokens[1] != "false":
+                    raise IOError(
+                        f"invalid timestamps tag value {tokens[1]} value in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@univariate"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["is_univariate"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid univariate tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@equallength"):
+                tokens = line.split(" ")
+                if tokens[1] == "false":
+                    meta_data["is_equal_length"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid unequal tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@classlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                    )
+                if token_len == 2 and meta_data["class_labels"]:
+                    raise IOError(
+                        f"if the classlabel tag is true then class values must be "
+                        f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@data"):
+                return meta_data
+    raise IOError(
+        f"End of file reached for {full_file_path_and_name} but no indicated start of "
+        f"data with the tag @data"
+    )
+
+
+def load_from_tsfile(
+    full_file_path_and_name,
+    replace_missing_vals_with="NaN",
+    return_y=True,
+    return_data_type=None,
+):
+    """Load time series .ts file into X and (optionally) y.
+
+    Data from a .ts file is loaded into a nested pd.DataFrame, or optionally into a
+    2d np.ndarray (equal length, univariate problem) or 3d np.ndarray (eqal length,
+    multivariate problem) if requested. If present, y is loaded into a 1d .
 
     Parameters
     ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+    full_file_path_and_name: str
+        The full pathname and file name of the .ts file to read.
+    replace_missing_vals_with: str, default NaN
+       The value that missing values in the text file should be replaced with prior
+       to parsing.
+    return_y: boolean, default True
+       whether to return the y variable, if it is present.
+    return_data_type: default, None
+        what data structure to return X in. Valid alternatives to None (default to
+        pd.DataFrame) are nested_univ (pd.DataFrame) are numpy2d/np2d/numpyflat or
+        numpy3d/np3d.
+        These arguments will raise an error if the data cannot be stored in the
+        requested type.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  If return_data_type = None retuns X in a nested pd.dataframe
+        If return_data_type = numpy3d/np3ddefault DataFrame or ndarray
+    y (optional): ndarray.
 
-    Notes
-    -----
-    Dimensionality:     univariate
-    Series length:      427
-    Train cases:        200
-    Test cases:         242
-    Number of classes:  6
+    Raises
+    ------
+    IOError if the requested file does not exist
+    IOError if input series are not all the same dimension (not supported)
+    IOError if class labels have been requested but are not present in the file
+    IOError if the input file has no cases
+    ValueError if return_data_type = numpy3d but the data are unequal length series
+    ValueError if return_data_type = numpy2d but the data are multivariate and/
+    or unequal length series
 
-    The OSULeaf data set consist of one dimensional outlines of leaves.
-    The series were obtained by color image segmentation and boundary
-    extraction (in the anti-clockwise direction) from digitized leaf images
-    of six classes: Acer Circinatum, Acer Glabrum, Acer Macrophyllum,
-    Acer Negundo, Quercus Garryanaand Quercus Kelloggii for the MSc thesis
-    "Content-Based Image Retrieval: Plant Species Identification" by A Grandhi.
-
-    Dataset details: http://www.timeseriesclassification.com/description.php
-    ?Dataset=OSULeaf
     """
-    name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_italy_power_demand(split=None, return_X_y=False):
-    """
-    Load ItalyPowerDemand time series classification problem.
-
-    Parameters
-    ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Notes
-    -----
-    Dimensionality:     univariate
-    Series length:      24
-    Train cases:        67
-    Test cases:         1029
-    Number of classes:  2
-
-    The data was derived from twelve monthly electrical power demand time series from
-    Italy and first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
-    Mining and Visualization into GUI Operating Systems". The classification task is to
-    distinguish days from Oct to March (inclusive) from April to September.
-    Dataset details:
-    http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
-    """
-    name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_unit_test(split=None, return_X_y=False):
-    """
-    Load UnitTest time series classification problem.
-
-    Parameters
-    ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Details
-    -------
-    This is the Chinatown problem with a smaller test set, useful for rapid tests. See
-    http://timeseriesclassification.com/description.php?Dataset=Chinatown
-    for the full dataset
-    Dimensionality:     univariate
-    Series length:      24
-    Train cases:        20
-    Test cases:         22 (full dataset has 345)
-    Number of classes:  2
-    """
-    name = "UnitTest"
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_japanese_vowels(split=None, return_X_y=False):
-    """
-    Load the JapaneseVowels time series classification problem.
-
-    Parameters
-    ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-    default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a
-        single dataframe with columns for features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Notes
-    -----
-    Dimensionality:     multivariate, 12
-    Series length:      7-29
-    Train cases:        270
-    Test cases:         370
-    Number of classes:  9
-
-    A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
-    the vowels 'a' and 'e'. A '12-degree
-    linear prediction analysis' is applied to the raw recordings to
-    obtain time-series with 12 dimensions and series lengths between 7 and 29.
-    The classification task is to predict the speaker. Therefore,
-    each instance is a transformed utterance,
-    12*29 values with a single class label attached, [1...9]. The given
-    training set is comprised of 30
-    utterances for each speaker, however the test set has a varied
-    distribution based on external factors of
-    timing and experimental availability, between 24 and 88 instances per
-    speaker. Reference: M. Kudo, J. Toyama
-    and M. Shimbo. (1999). "Multidimensional Curve Classification Using
-    Passing-Through Regions". Pattern
-    Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=JapaneseVowels
-    """
-    name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_arrow_head(split=None, return_X_y=False):
-    """
-    Load the ArrowHead time series classification problem and returns X and y.
-
-    Parameters
-    ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Notes
-    -----
-    Dimensionality:     univariate
-    Series length:      251
-    Train cases:        36
-    Test cases:         175
-    Number of classes:  3
-
-    The arrowhead data consists of outlines of the images of arrowheads. The
-    shapes of the
-    projectile points are converted into a time series using the angle-based
-    method. The
-    classification of projectile points is an important topic in
-    anthropology. The classes
-    are based on shape distinctions such as the presence and location of a
-    notch in the
-    arrow. The problem in the repository is a length normalised version of
-    that used in
-    Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
-
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=ArrowHead
-    """
-    name = "ArrowHead"
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_acsf1(split=None, return_X_y=False):
-    """
-    Load dataset on power consumption of typical appliances.
-
-    Parameters
-    ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Notes
-    -----
-    Dimensionality:     univariate
-    Series length:      1460
-    Train cases:        100
-    Test cases:         100
-    Number of classes:  10
-
-    The dataset contains the power consumption of typical appliances.
-    The recordings are characterized by long idle periods and some high bursts
-    of energy consumption when the appliance is active.
-    The classes correspond to 10 categories of home appliances;
-    mobile phones (via chargers), coffee machines, computer stations
-    (including monitor), fridges and freezers, Hi-Fi systems (CD players),
-    lamp (CFL), laptops (via chargers), microwave ovens, printers, and
-    televisions (LCD or LED)."
-
-    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
-    =ACSF1
-    """
-    name = "ACSF1"
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_basic_motions(split=None, return_X_y=False):
-    """
-    Load the  BasicMotions time series classification problem and returns X and y.
-
-    Parameters
-    ----------
-    split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
-
-    Notes
-    -----
-    Dimensionality:     multivariate, 6
-    Series length:      100
-    Train cases:        40
-    Test cases:         40
-    Number of classes:  4
-
-    The data was generated as part of a student project where four students performed
-    four activities whilst wearing a smart watch. The watch collects 3D accelerometer
-    and a 3D gyroscope It consists of four classes, which are walking, resting,
-    running and badminton. Participants were required to record motion a total of
-    five times, and the data is sampled once every tenth of a second, for a ten second
-    period.
-
-    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
-    =BasicMotions
-    """
-    name = "BasicMotions"
-    return _load_dataset(name, split, return_X_y)
-
-
-# forecasting data sets
-def load_shampoo_sales():
-    """
-    Load the shampoo sales univariate time series dataset for forecasting.
-
-    Returns
-    -------
-    y : pandas Series/DataFrame
-        Shampoo sales dataset
-
-    Notes
-    -----
-    This dataset describes the monthly number of sales of shampoo over a 3
-    year period.
-    The units are a sales count.
-
-    Dimensionality:     univariate
-    Series length:      36
-    Frequency:          Monthly
-    Number of cases:    1
-
-
-    References
-    ----------
-    .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods
-    and applications,
-        John Wiley & Sons: New York. Chapter 3.
-    """
-    name = "ShampooSales"
-    fname = name + ".csv"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
-    y.name = "Number of shampoo sales"
-    return y
-
-
-def load_longley(y_name="TOTEMP"):
-    """
-    Load the Longley dataset for forecasting with exogenous variables.
-
-    Parameters
-    ----------
-    y_name: str, optional (default="TOTEMP")
-        Name of target variable (y)
-
-    Returns
-    -------
-    y: pandas.Series
-        The target series to be predicted.
-    X: pandas.DataFrame
-        The exogenous time series data for the problem.
-
-    Notes
-    -----
-    This mulitvariate time series dataset contains various US macroeconomic
-    variables from 1947 to 1962 that are known to be highly collinear.
-
-    Dimensionality:     multivariate, 6
-    Series length:      16
-    Frequency:          Yearly
-    Number of cases:    1
-
-    Variable description:
-
-    TOTEMP - Total employment
-    GNPDEFL - Gross national product deflator
-    GNP - Gross national product
-    UNEMP - Number of unemployed
-    ARMED - Size of armed forces
-    POP - Population
-
-    References
-    ----------
-    .. [1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
-        Electronic Computer from the Point of View of the User."  Journal of
-        the American Statistical Association.  62.319, 819-41.
-        (https://www.itl.nist.gov/div898/strd/lls/data/LINKS/DATA/Longley.dat)
-    """
-    name = "Longley"
-    fname = name + ".csv"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0)
-    data = data.set_index("YEAR")
-    data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
-    data = data.astype(np.float)
-
-    # Get target series
-    y = data.pop(y_name)
-    return y, data
-
-
-def load_lynx():
-    """
-    Load the lynx univariate time series dataset for forecasting.
-
-    Returns
-    -------
-    y : pandas Series/DataFrame
-        Lynx sales dataset
-
-    Notes
-    -----
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This
-    time-series records the number of skins of
-    predators (lynx) that were collected over several years by the Hudson's
-    Bay Company. The dataset was
-    taken from Brockwell & Davis (1991) and appears to be the series
-    considered by Campbell & Walker (1977).
-
-    Dimensionality:     univariate
-    Series length:      114
-    Frequency:          Yearly
-    Number of cases:    1
-
-    This data shows aperiodic, cyclical patterns, as opposed to periodic,
-    seasonal patterns.
-
-    References
-    ----------
-    .. [1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S
-    Language. Wadsworth & Brooks/Cole.
-
-    .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical
-    work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new
-    analysis. Journal of the Royal Statistical Society
-    series A, 140, 411–431.
-    """
-    name = "Lynx"
-    fname = name + ".csv"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
-    y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
-    y.name = "Number of Lynx trappings"
-    return y
-
-
-def load_airline():
-    """
-    Load the airline univariate time series dataset [1].
-
-    Returns
-    -------
-    y : pd.Series
-     Time series
-
-    Notes
-    -----
-    The classic Box & Jenkins airline data. Monthly totals of international
-    airline passengers, 1949 to 1960.
-
-    Dimensionality:     univariate
-    Series length:      144
-    Frequency:          Monthly
-    Number of cases:    1
-
-    This data shows an increasing trend, non-constant (increasing) variance
-    and periodic, seasonal patterns.
-
-    References
-    ----------
-    ..[1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
-          Analysis, Forecasting and Control. Third Edition. Holden-Day.
-          Series G.
-    """
-    name = "Airline"
-    fname = name + ".csv"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
-
-    # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
-    y.name = "Number of airline passengers"
-    return y
-
-
-def load_uschange(y_name="Consumption"):
-    """
-    Load MTS dataset for forecasting Growth rates of personal consumption and income.
-
-    Returns
-    -------
-    y : pandas Series
-        selected column, default consumption
-    X : pandas Dataframe
-        columns with explanatory variables
-
-    Notes
-    -----
-    Percentage changes in quarterly personal consumption expenditure,
-    personal disposable income, production, savings and the
-    unemployment rate for the US, 1960 to 2016.
-
-
-    Dimensionality:     multivariate
-    Columns:            ['Quarter', 'Consumption', 'Income', 'Production',
-                         'Savings', 'Unemployment']
-    Series length:      188
-    Frequency:          Quarterly
-    Number of cases:    1
-
-    This data shows an increasing trend, non-constant (increasing) variance
-    and periodic, seasonal patterns.
-
-    References
-    ----------
-    ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
-    """
-    name = "Uschange"
-    fname = name + ".csv"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # Sort by Quarter then set simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.sort_values("Quarter")
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    y = data[y_name]
-    if y_name != "Quarter":
-        data = data.drop("Quarter", axis=1)
-    X = data.drop(y_name, axis=1)
-    return y, X
-
-
-def load_gun_point_segmentation():
-    """Load the GunPoint time series segmentation problem and returns X.
-
-    We group TS of the UCR GunPoint dataset by class label and concatenate
-    all TS to create segments with repeating temporal patterns and
-    characteristics. The location at which different classes were
-    concatenated are marked as change points.
-
-    We resample the resulting TS to control the TS resolution.
-    The window sizes for these datasets are hand-selected to capture
-    temporal patterns but are approximate and limited to the values
-    [10,20,50,100] to avoid over-fitting.
-
-    -----------
-
-    Returns
-    -------
-        X : pd.Series
-            Single time series for segmentation
-        period_length : int
-            The annotated period length by a human expert
-        change_points : numpy array
-            The change points annotated within the dataset
-    -----------
-    """
-    dir = "segmentation"
-    name = "GunPoint"
-    fname = name + ".csv"
-
-    period_length = int(10)
-    change_points = np.int32([900])
-
-    path = os.path.join(MODULE, DIRNAME, dir, fname)
-    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
-
-    return ts, period_length, change_points
-
-
-def load_electric_devices_segmentation():
-    """Load the Electric Devices segmentation problem and returns X.
-
-    We group TS of the UCR Electric Devices dataset by class label and concatenate
-    all TS to create segments with repeating temporal patterns and
-    characteristics. The location at which different classes were
-    concatenated are marked as change points.
-
-    We resample the resulting TS to control the TS resolution.
-    The window sizes for these datasets are hand-selected to capture
-    temporal patterns but are approximate and limited to the values
-    [10,20,50,100] to avoid over-fitting.
-
-    -----------
-
-    Returns
-    -------
-        X : pd.Series
-            Single time series for segmentation
-        period_length : int
-            The annotated period length by a human expert
-        change_points : numpy array
-            The change points annotated within the dataset
-    -----------
-    """
-    dir = "segmentation"
-    name = "ElectricDevices"
-    fname = name + ".csv"
-
-    period_length = int(10)
-    change_points = np.int32([1090, 4436, 5712, 7923])
-
-    path = os.path.join(MODULE, DIRNAME, dir, fname)
-    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
-
-    return ts, period_length, change_points
-
-
-def load_PBS_dataset():
-    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
-
-    Returns
-    -------
-    y : pd.Series
-     Time series
-
-    Notes
-    -----
-    The Pharmaceutical Benefits Scheme (PBS) is the Australian government drugs
-    subsidy scheme.
-    Data comprises of the numbers of scripts sold each month for immune sera
-    and immunoglobulin products in Australia.
-
-
-    Dimensionality:     univariate
-    Series length:      204
-    Frequency:          Monthly
-    Number of cases:    1
-
-    The time series is intermittent, i.e contains small counts,
-    with many months registering no sales at all,
-    and only small numbers of items sold in other months.
-
-    References
-    ----------
-    ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
-    """
-    name = "PBS_dataset"
-    fname = name + ".csv"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
-
-    # make sure time index is properly formatted
-    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
-    y.name = "Number of scripts"
-    return y
-
-
-def load_macroeconomic():
-    """
-    Load the US Macroeconomic Data [1].
-
-    Returns
-    -------
-    y : pd.DataFrame
-     Time series
-
-    Notes
-    -----
-    US Macroeconomic Data for 1959Q1 - 2009Q3.
-
-    Dimensionality:     multivariate, 14
-    Series length:      203
-    Frequency:          Quarterly
-    Number of cases:    1
-
-    This data is kindly wrapped via `statsmodels.datasets.macrodata`.
-
-    References
-    ----------
-    ..[1] Wrapped via statsmodels:
-          https://www.statsmodels.org/dev/datasets/generated/macrodata.html
-    ..[2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
-          Bank of St. Louis; http://research.stlouisfed.org/fred2/;
-          accessed December 15, 2009.
-    ..[3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
-          http://www.bls.gov/data/; accessed December 15, 2009.
-    """
-    y = sm.datasets.macrodata.load_pandas().data
-    y["year"] = y["year"].astype(int).astype(str)
-    y["quarter"] = y["quarter"].astype(int).astype(str).apply(lambda x: "Q" + x)
-    y["time"] = y["year"] + "-" + y["quarter"]
-    y.index = pd.PeriodIndex(data=y["time"], freq="Q", name="Period")
-    y = y.drop(columns=["year", "quarter", "time"])
-    y.name = "US Macroeconomic Data"
-    return y
+    # Initialize flags and variables used when parsing the file
+    is_first_case = True
+    instance_list = []
+    class_val_list = []
+    line_num = 0
+    num_dimensions = 0
+    num_cases = 0
+    with open(full_file_path_and_name, "r", encoding="utf-8") as file:
+        _meta_data = _read_header(file, full_file_path_and_name)
+        for line in file:  # Will this work?
+            num_cases = num_cases + 1
+            line = line.replace("?", replace_missing_vals_with)
+            dimensions = line.split(":")
+            # If first instance then note the number of dimensions.
+            # This must be the same for all cases.
+            if is_first_case:
+                num_dimensions = len(dimensions)
+                if _meta_data["has_class_labels"]:
+                    num_dimensions -= 1
+                for _dim in range(0, num_dimensions):
+                    instance_list.append([])
+                is_first_case = False
+                _meta_data["num_dimensions"] = num_dimensions
+            # See how many dimensions a case has
+            this_line_num_dim = len(dimensions)
+            if _meta_data["has_class_labels"]:
+                this_line_num_dim -= 1
+            if this_line_num_dim != _meta_data["num_dimensions"]:
+                raise IOError(
+                    f"Error input {full_file_path_and_name} all cases must "
+                    f"have the {num_dimensions} dimensions. Case "
+                    f"{num_cases} has {this_line_num_dim}"
+                )
+            # Process the data for each dimension
+            for dim in range(0, _meta_data["num_dimensions"]):
+                dimension = dimensions[dim].strip()
+                if dimension:
+                    data_series = dimension.split(",")
+                    data_series = [float(i) for i in data_series]
+                    instance_list[dim].append(pd.Series(data_series))
+                else:
+                    instance_list[dim].append(pd.Series(dtype="object"))
+            if _meta_data["has_class_labels"]:
+                class_val_list.append(dimensions[_meta_data["num_dimensions"]].strip())
+                line_num += 1
+    # Check that the file was not empty
+    if line_num:
+        # Create a DataFrame from the data parsed
+        data = pd.DataFrame(dtype=np.float32)
+        for dim in range(0, _meta_data["num_dimensions"]):
+            data["dim_" + str(dim)] = instance_list[dim]
+        # convert to numpy if the user requests it.
+        if isinstance(return_data_type, str):
+            return_data_type = return_data_type.strip().lower()
+        if (
+            return_data_type == "numpy2d"
+            or return_data_type == "np2d"
+            or return_data_type == "numpyflat"
+        ):
+            if (
+                not _meta_data["has_timestamps"]
+                and _meta_data["is_equal_length"]
+                and _meta_data["is_univariate"]
+            ):
+                data = from_nested_to_2d_np_array(data)
+            else:
+                raise ValueError(
+                    "Unable to convert to 2d numpy as requested, "
+                    "because at least one flag means the data structure "
+                    f"cannot be used {_meta_data}"
+                )
+        elif return_data_type == "numpy3d" or return_data_type == "np3d":
+            if not _meta_data["has_timestamps"] and _meta_data["is_equal_length"]:
+                data = from_nested_to_3d_numpy(data)
+            else:
+                raise ValueError(
+                    " Unable to convert to 3d numpy as requested, "
+                    "because at least one flag means the data structure "
+                    f"cannot be used, meta data = {_meta_data}"
+                )
+        if return_y and not _meta_data["has_class_labels"]:
+            raise IOError(
+                f"class labels have been requested, but they "
+                f"are not present in the file "
+                f"{full_file_path_and_name}"
+            )
+        if _meta_data["has_class_labels"] and return_y:
+            return data, np.asarray(class_val_list)
+        else:
+            return data
+    else:
+        raise IOError(
+            f"Empty file {full_file_path_and_name} with header info but no " f"cases"
+        )
 
 
 def load_from_tsfile_to_dataframe(
@@ -989,7 +457,7 @@ def load_from_tsfile_to_dataframe(
 
     Returns
     -------
-    DataFrame, ndarray
+    DataFrame (default) or ndarray (i
         If return_separate_X_and_y then a tuple containing a DataFrame and a
         numpy array containing the relevant time-series and corresponding
         class values.

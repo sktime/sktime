@@ -30,6 +30,7 @@ import numpy as np
 from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
+from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
@@ -39,6 +40,7 @@ from sktime.datatypes._table import check_dict_Table
 check_dict = dict()
 check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
 
@@ -232,6 +234,7 @@ def check_is_mtype(
     #  for each check we remember whether it passed and what it returned
     msg = []
     found_mtype = []
+    found_scitype = []
 
     for m in mtype:
         if scitype is None:
@@ -252,6 +255,7 @@ def check_is_mtype(
 
         if check_passed:
             found_mtype.append(m)
+            found_scitype.append(scitype_of_m)
             final_result = res
         elif return_metadata:
             msg.append(res[1])
@@ -267,6 +271,7 @@ def check_is_mtype(
         if return_metadata:
             # add the mtype return to the metadata
             final_result[2]["mtype"] = found_mtype[0]
+            final_result[2]["scitype"] = found_scitype[0]
             # final_result already has right shape and dependency on return_metadata
             return final_result
         else:
@@ -454,7 +459,7 @@ def check_is_scitype(
 
         if check_passed:
             final_result = res
-            found_mtype.append([0])
+            found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
             msg.append(res[1])
