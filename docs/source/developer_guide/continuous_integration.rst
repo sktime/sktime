@@ -1,6 +1,6 @@
-.. _continious_integration:
+.. _continuous_integration:
 
-Continious integration
+Continuous integration
 ======================
 
 We use continuous integration services on GitHub to automatically check

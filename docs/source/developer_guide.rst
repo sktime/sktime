@@ -25,5 +25,5 @@ If you’re already familiar with scikit-learn, you may still learn something ne
    installation
    developer_guide/documentation
    developer_guide/git_workflow
-   developer_guide/continious_integration
+   developer_guide/continuous_integration
    developer_guide/release
