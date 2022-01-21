@@ -50,10 +50,7 @@ class ScaledLogitTransformer(BaseTransformer):
     -----
     The scaled logit transform is applied if both upper_bound and lower_bound are
     not None:
-        :math:`\frac{x - a}{b - x}`, where a is the lower and b is the upper bound
-    The scaled logit transform is applied if both upper_bound and lower_bound are
-    not None:
-        :math:`log(x - a)`,  where a is the lower and b is the upper bound
+        :math:`log(\frac{x - a}{b - x})`, where a is the lower and b is the upper bound
     If upper_bound is None and lower_bound is not the transform applied is:
         :math:`log(x - a)`
     If lower_bound is None and upper_bound is not the transform applied is:
