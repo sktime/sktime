@@ -341,7 +341,7 @@ def load_japanese_vowels(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=True, return_type="numpy2d"):
+def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
@@ -436,7 +436,7 @@ def load_acsf1(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=True):
+def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
     """
     Load the  BasicMotions time series classification problem and returns X and y.
 
@@ -477,7 +477,7 @@ def load_basic_motions(split=None, return_X_y=True):
     """
     name = "BasicMotions"
     return _load_provided_dataset(
-        name=name, split=split, return_X_y=return_X_y, return_type="numpy3d"
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )
 
 
