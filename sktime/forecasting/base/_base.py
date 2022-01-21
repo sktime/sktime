@@ -792,7 +792,7 @@ class BaseForecaster(BaseEstimator):
         TypeError if y is not compatible with self.get_tag("scitype:y")
             if tag value is "univariate", y must be univariate
             if tag value is "multivariate", y must be bi- or higher-variate
-            if tag vaule is "both", y can be either
+            if tag value is "both", y can be either
         TypeError if self.get_tag("X-y-must-have-same-index") is True
             and the index set of X is not a super-set of the index set of y
 
@@ -827,7 +827,7 @@ class BaseForecaster(BaseEstimator):
         if X is not None:
             X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y)
+                check_equal_time_index(X, y, mode="contains")
         # end checking X
 
         # convert X & y to supported inner type, if necessary
@@ -883,7 +883,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or nd.nparray (1D or 2D)
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
@@ -1139,7 +1139,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None, alpha=0.95):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
             core logic
@@ -1235,7 +1235,7 @@ class BaseForecaster(BaseEstimator):
         self.update(y, X, update_params=update_params)
         return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def _predict_interval(self, fh=fh, X=None, coverage=0.95):
+    def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
 
         If coverage is iterable, multiple intervals will be calculated.
@@ -1265,11 +1265,10 @@ class BaseForecaster(BaseEstimator):
         """
         alphas = []
         for c in coverage:
-            alphas.extend([((1 - float(c)) / 2), 0.5 + (float(c) / 2)])
+            alphas.extend([(1 - c) / 2.0, 0.5 + (c / 2.0)])
         alphas = sorted(alphas)
         pred_int = self._predict_quantiles(fh=fh, X=X, alpha=alphas)
         pred_int = pred_int.rename(columns={"Quantiles": "Intervals"})
-        # pred_int = self._convert_new_to_old_pred_int(pred_int, coverage)
         return pred_int
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -1359,15 +1358,17 @@ class BaseForecaster(BaseEstimator):
 
     # TODO: remove in v0.10.0
     def _has_predict_quantiles_been_refactored(self):
-        if "_predict_quantiles" in type(self).__dict__.keys():
-            return True
-        else:
-            return False
+        """Check if specific forecaster implements _predict_quantiles()."""
+        base_predict_quantiles = BaseForecaster._predict_quantiles
+        this_predict_quantiles = self.__class__._predict_quantiles
+        # true if self's _predict_quantiles is new implementation
+        return base_predict_quantiles != this_predict_quantiles
 
     # TODO: remove in v0.10.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
         name = pred_int_new.columns.get_level_values(0).unique()[0]
         alpha = check_alpha(alpha)
+        alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
         pred_int_old_format = [
             pd.DataFrame(
                 {
@@ -1375,11 +1376,11 @@ class BaseForecaster(BaseEstimator):
                     "upper": pred_int_new[(name, 0.5 + (float(a) / 2))],
                 }
             )
-            for a in alpha
+            for a in alphas
         ]
 
         # for a single alpha, return single pd.DataFrame
-        if len(alpha) == 1:
+        if len(alphas) == 1:
             return pred_int_old_format[0]
 
         # otherwise return list of pd.DataFrames

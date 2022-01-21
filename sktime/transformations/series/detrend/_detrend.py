@@ -98,20 +98,23 @@ class Detrender(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        z = X
         if self.forecaster is None:
             self.forecaster = PolynomialTrendForecaster(degree=1)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
-            self.forecaster_ = {}
-            for colname in z.columns:
-                forecaster = clone(self.forecaster)
-                self.forecaster_[colname] = forecaster.fit(X[colname], y)
-        # univariate
-        else:
+        # univariate: X is pd.Series
+        if isinstance(X, pd.Series):
             forecaster = clone(self.forecaster)
-            self.forecaster_ = forecaster.fit(z, X)
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
+            self.forecaster_ = forecaster.fit(y=X, X=y)
+        # multivariate
+        elif isinstance(X, pd.DataFrame):
+            self.forecaster_ = {}
+            for colname in X.columns:
+                forecaster = clone(self.forecaster)
+                self.forecaster_[colname] = forecaster.fit(y=X[colname], X=y)
+        else:
+            raise TypeError("X must be pd.Series or pd.DataFrame")
+
         return self
 
     def _transform(self, X, y=None):
@@ -131,31 +134,32 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X, detrended series
         """
-        z = X
-        fh = ForecastingHorizon(z.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
-            z = z.copy()
+        # univariate: X is pd.Series
+        if isinstance(X, pd.Series):
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
+            X_pred = self.forecaster_.predict(fh=fh, X=y)
+            Xt = X - X_pred
+            return Xt
+        # multivariate: X is pd.DataFrame
+        elif isinstance(X, pd.DataFrame):
+            Xt = X.copy()
             # check if all columns are known
-            Z_fit_keys = set(self.forecaster_.keys())
-            Z_new_keys = set(z.columns)
-            difference = Z_new_keys.difference(Z_fit_keys)
+            X_fit_keys = set(self.forecaster_.keys())
+            X_new_keys = set(X.columns)
+            difference = X_new_keys.difference(X_fit_keys)
             if len(difference) != 0:
                 raise ValueError(
-                    "Z contains columns that have not been "
-                    "seen in fit: " + str(difference)
+                    "X contains columns that have not been "
+                    "seen in fit: " + difference
                 )
-            for colname in z.columns:
-                z_pred = self.forecaster_[colname].predict(fh, y)
-                z[colname] = z[colname] - z_pred
-            Xt = z
-        # univariate
+            for colname in Xt.columns:
+                X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
+                Xt[colname] = Xt[colname] - X_pred
+            return Xt
         else:
-            z_pred = self.forecaster_.predict(fh, y)
-            Xt = z - z_pred
-
-        return Xt
+            raise TypeError("X must be pd.Series or pd.DataFrame")
 
     def _inverse_transform(self, X, y=None):
         """Logic used by `inverse_transform` to reverse transformation on `X`.
@@ -172,29 +176,29 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        z = X
-        fh = ForecastingHorizon(z.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False)
 
-        # multivariate
-        if isinstance(z, pd.DataFrame):
-            z = z.copy()
+        # univariate: X is pd.Series
+        if isinstance(X, pd.Series):
+            # note: the y in the transformer is exogeneous in the forecaster, i.e., X
+            X_pred = self.forecaster_.predict(fh=fh, X=y)
+            return X + X_pred
+        # multivariate: X is pd.DataFrame
+        if isinstance(X, pd.DataFrame):
+            X = X.copy()
             # check if all columns are known
-            Z_fit_keys = set(self.forecaster_.keys())
-            Z_new_keys = set(z.columns)
-            difference = Z_new_keys.difference(Z_fit_keys)
+            X_fit_keys = set(self.forecaster_.keys())
+            X_new_keys = set(X.columns)
+            difference = X_new_keys.difference(X_fit_keys)
             if len(difference) != 0:
                 raise ValueError(
-                    "Z contains columns that have not been "
+                    "X contains columns that have not been "
                     "seen in fit: " + difference
                 )
-            for colname in z.columns:
-                z_pred = self.forecaster_[colname].predict(fh, X)
-                z[colname] = z[colname] + z_pred
-            return z
-        # univariate
-        else:
-            z_pred = self.forecaster_.predict(fh, X)
-            return z + z_pred
+            for colname in X.columns:
+                X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
+                X[colname] = X[colname] + X_pred
+            return X
 
     def _update(self, X, y=None, update_params=True):
         """Update the parameters of the detrending estimator with new data.
@@ -228,11 +232,11 @@ class Detrender(BaseTransformer):
                 )
             for colname in X.columns:
                 self.forecaster_[colname].update(
-                    X[colname], y, update_params=update_params
+                    y=X[colname], X=y, update_params=update_params
                 )
         # univariate
         else:
-            self.forecaster_.update(X, y, update_params=update_params)
+            self.forecaster_.update(y=X, X=y, update_params=update_params)
         return self
 
     @classmethod
