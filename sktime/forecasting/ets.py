@@ -3,13 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
 
+
+__author__ = ["hyang1996"]
 __all__ = ["AutoETS"]
-__author__ = ["Hongyi Yang"]
 
 import warnings
 from itertools import product
 
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
@@ -21,35 +23,32 @@ from sktime.utils.validation.forecasting import check_alpha
 class AutoETS(_StatsModelsAdapter):
     """ETS models with both manual and automatic fitting capabilities.
 
-    Manual fitting is adapted from statsmodels' version,
-    while automatic fitting is adapted from R version of ets.
+    Manual fitting is adapted from the statsmodels version,
+    while automatic fitting is adapted from the R version of ets.
 
     The first few parameters are the same as the ones on statsmodels
-    (from ``error`` to ``return_params``, link:
-    https://www.statsmodels.org/stable/_modules/statsmodels/tsa/exponential_smoothing/ets.html#ETSModel).
+    (from ``error`` to ``return_params``) [2]_.
 
     The next few parameters are adapted from the ones on R
-    (``auto`` to ``additive_only``, link:
-    https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets),
+    (``auto`` to ``additive_only``) [3]_,
     and are used for automatic model selection.
 
     Parameters
     ----------
-    error : str, optional
-        The error model. "add" (default) or "mul".
-    trend : str or None, optional
-        The trend component model. "add", "mul", or None (default).
-    damped_trend : bool, optional
-        Whether or not an included trend component is damped. Default is
-        False.
-    seasonal : str, optional
-        The seasonality model. "add", "mul", or None (default).
-    sp : int, optional
+    error : str, default="add"
+        The error model. Takes one of "add" or "mul".
+    trend : str or None, default=None
+        The trend component model. Takes one of "add", "mul", or None.
+    damped_trend : bool, default=False
+        Whether or not an included trend component is damped.
+    seasonal : str or None, default=None
+        The seasonality model. Takes one of "add", "mul", or None.
+    sp : int, default=1
         The number of periods in a complete seasonal cycle for seasonal
         (Holt-Winters) models. For example, 4 for quarterly data with an
         annual cycle or 7 for daily data with a weekly cycle. Required if
-        `seasonal` is not None. Default is `1`.
-    initialization_method : str, optional
+        `seasonal` is not None.
+    initialization_method : str, default='estimated'
         Method for initialization of the state space model. One of:
 
         * 'estimated' (default)
@@ -63,14 +62,14 @@ class AutoETS(_StatsModelsAdapter):
         level, trend, and seasonal state. 'estimated' uses the same heuristic
         as initial guesses, but then estimates the initial states as part of
         the fitting process.  Default is 'estimated'.
-    initial_level : float, optional
+    initial_level : float or None, default=None
         The initial level component. Only used if initialization is 'known'.
-    initial_trend : float, optional
+    initial_trend : float or None, default=None
         The initial trend component. Only used if initialization is 'known'.
-    initial_seasonal : array_like, optional
+    initial_seasonal : array_like or None, default=None
         The initial seasonal component. An array of length `seasonal_periods`.
         Only used if initialization is 'known'.
-    bounds : dict or None, optional
+    bounds : dict or None, default=None
         A dictionary with parameter names as keys and the respective bounds
         intervals as values (lists/tuples/arrays).
         The available parameter names are, depending on the model and
@@ -86,7 +85,7 @@ class AutoETS(_StatsModelsAdapter):
 
         The default option is ``None``, in which case the traditional
         (nonlinear) bounds as described in [1]_ are used.
-    start_params : array_like, optional
+    start_params : array_like or None, default=None
         Initial values for parameters that will be optimized. If this is
         ``None``, default values will be used.
         The length of this depends on the chosen model. This should contain
@@ -104,50 +103,42 @@ class AutoETS(_StatsModelsAdapter):
         * `initial_level` (:math:`l_{-1}`)
         * `initial_trend` (:math:`l_{-1}`)
         * `initial_seasonal.0` (:math:`s_{-1}`)
-        * ...
         * `initial_seasonal.<m-1>` (:math:`s_{-m}`)
 
         also have to be specified.
-    maxiter : int, optional
+    maxiter : int, default=1000
         The maximum number of iterations to perform.
-    full_output : bool, optional
+    full_output : bool, default=True
         Set to True to have all available output in the Results object's
         mle_retvals attribute. The output is dependent on the solver.
         See LikelihoodModelResults notes section for more information.
-    disp : bool, optional
+    disp : bool, default=False
         Set to True to print convergence messages.
-    callback : callable callback(xk), optional
+    callback : callable callback(xk) or None, default=None
         Called after each iteration, as callback(xk), where xk is the
         current parameter vector.
-    return_params : bool, optional
+    return_params : bool, default=False
         Whether or not to return only the array of maximizing parameters.
-        Default is False.
-    auto : bool, optional
+    auto : bool, default=False
         Set True to enable automatic model selection.
-        Default is False.
-    information_criterion : str, optional
+    information_criterion : str, default="aic"
         Information criterion to be used in model selection. One of:
 
         * "aic"
         * "bic"
         * "aicc"
 
-        Default is "aic".
-    allow_multiplicative_trend : bool, optional
+    allow_multiplicative_trend : bool, default=False
         If True, models with multiplicative trend are allowed when
         searching for a model. Otherwise, the model space excludes them.
-        Default is False.
-    restrict : bool, optional
+    restrict : bool, default=True
         If True, the models with infinite variance will not be allowed.
-        Default is True.
-    additive_only : bool, optional
+    additive_only : bool, default=False
         If True, will only consider additive models.
-        Default is False.
-    ignore_inf_ic: bool, optional
+    ignore_inf_ic: bool, default=True
         If True models with negative infinity Information Criterion
         (aic, bic, aicc) will be ignored.
-        Default is True
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
@@ -157,6 +148,10 @@ class AutoETS(_StatsModelsAdapter):
     .. [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
        principles and practice*, 3rd edition, OTexts: Melbourne,
        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
+    .. [2] Statsmodels ETS:
+        https://www.statsmodels.org/stable/_modules/statsmodels/tsa/exponential_smoothing/ets.html#ETSModel
+    .. [3] R Version of ETS:
+        https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets
 
     Examples
     --------
@@ -384,49 +379,7 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
-    def compute_pred_int(self, valid_indices, alpha, **simulate_kwargs):
-        """Compute/return prediction intervals for AutoETS.
-
-        Must be run *after* the forecaster has been fitted.
-        If alpha is iterable, multiple intervals will be calculated.
-
-        Parameters
-        ----------
-        valid_indices : pd.PeriodIndex
-            indices to compute the prediction intervals for
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
-        simulate_kwargs : see statsmodels ETSResults.get_prediction
-
-        Returns
-        -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
-        """
-        self.check_is_fitted()
-        alphas = check_alpha(alpha)
-
-        start, end = valid_indices[[0, -1]]
-        prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end, **simulate_kwargs
-        )
-
-        pred_ints = []
-        for alpha_iter in alphas:
-            pred_int = prediction_results.pred_int(alpha_iter)
-            pred_int.columns = ["lower", "upper"]
-            pred_ints.append(pred_int.loc[valid_indices])
-
-        if isinstance(alpha, float):
-            pred_ints = pred_ints[0]
-
-        return pred_ints
-
-    def _predict(
-        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA, **simulate_kwargs
-    ):
+    def _predict(self, fh, X=None, **simulate_kwargs):
         """Make forecasts.
 
         Parameters
@@ -437,8 +390,6 @@ class AutoETS(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
         **simulate_kwargs : see statsmodels ETSResults.get_prediction
 
         Returns
@@ -453,15 +404,63 @@ class AutoETS(_StatsModelsAdapter):
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        return y_pred.loc[valid_indices]
 
-        if return_pred_int:
-            pred_int = self.compute_pred_int(
-                valid_indices, alpha=alpha, **simulate_kwargs
-            )
+    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
+        """
+        Compute/return prediction quantiles for a forecast.
 
-            return y_pred.loc[valid_indices], pred_int
-        else:
-            return y_pred.loc[valid_indices]
+        Must be run *after* the forecaster has been fitted.
+
+        If alpha is iterable, multiple quantiles will be calculated.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list of float, optional (default=[0.05, 0.95])
+            A probability or list of, at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        self.check_is_fitted()
+        alpha = check_alpha(alpha)
+        # convert alpha to the one needed for predict intervals
+        coverage = []
+        for a in alpha:
+            if a < 0.5:
+                coverage.append((0.5 - a) * 2)
+            elif a > 0.5:
+                coverage.append((a - 0.5) * 2)
+            else:
+                coverage.append(0)
+
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end
+        )
+
+        pred_quantiles = pd.DataFrame()
+        for a, coverage in zip(alpha, coverage):
+            pred_int = prediction_results.pred_int(1 - coverage)
+            pred_int.columns = ["lower", "upper"]
+            if a < 0.5:
+                pred_quantiles[a] = pred_int["lower"].loc[valid_indices]
+            else:
+                pred_quantiles[a] = pred_int["upper"].loc[valid_indices]
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles.columns = index
+        return pred_quantiles
 
     def summary(self):
         """Get a summary of the fitted forecaster.

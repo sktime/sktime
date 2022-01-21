@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # The key string (i.e. 'euclidean') must be the same as the name in _registry
+
 _expected_distance_results = {
     # Result structure:
     # [single value series, univariate series, multivariate series, multivariate panel]
@@ -13,55 +14,45 @@ _expected_distance_results = {
     "edr": [1.0, 0.6, 1.0],
     "erp": [5.0, 5.03767, 20.78718],
 }
-#
-# import numpy as np
-#
-# from sktime.distances import edr_distance as dist
-# from sktime.distances.tests._utils import create_test_distance_numpy
-#
-#
-# def test_dist_result(dist):
-#     x_first = np.array([10.0])
-#     y_first = np.array([15.0])
-#
-#     x_second = create_test_distance_numpy(10)
-#     y_second = create_test_distance_numpy(10, random_state=2)
-#
-#     x_third = create_test_distance_numpy(10, 1)
-#     y_third = create_test_distance_numpy(10, 1, random_state=2)
-#
-#     x_fourth = create_test_distance_numpy(10, 10)
-#     y_fourth = create_test_distance_numpy(10, 10, random_state=2)
-#
-#     first = dist(x_first, y_first)
-#     second = dist(x_second, y_second)
-#
-#     third = dist(x_third, y_third)
-#     fourth = dist(x_fourth, y_fourth)
-#
-#     test = dist(x_first, x_first)
-#     tst_1 = dist(x_second, x_second)
-#     tst_2 = dist(x_third, x_third)
-#     tst_3 = dist(x_fourth, x_fourth)
-#
-#     expected = [round(first, 5), round(second, 5), round(fourth, 5)]
-#
-#     pass
-#
-# def test_create_examples():
-#     import numpy as np
-#     from sktime.distances import distance as dist
-#     metric = 'wddtw'
-#
-#     x_1d = np.array([1, 2, 3, 4])  # 1d array
-#     y_1d = np.array([5, 6, 7, 8])  # 1d array
-#     result_1 = dist(x_1d, y_1d, metric=metric)
-#
-#     x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
-#     y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-#     result_2 = dist(x_2d, y_2d, metric=metric)
-#     pass
-#
-#
-# if __name__ == "__main__":
-#     test_create_examples()
+
+_expected_distance_results_params = {
+    # Result structure:
+    # [univariate series, multivariate series]
+    "dtw": [
+        [3.088712375990371, 46.68062114164414],
+        [3.2313355792547123, 46.68062114164414],
+        [2.180365495972097, 46.68062114164414],
+    ],
+    "erp": [
+        [0.6648081862148058, 3.118357067053237],
+        [0.12468518773870504, 0.8940941038513627],
+        [5.037672883414786, 20.78718308188706],
+        [5.279748833082764, 21.86313185846529],
+    ],
+    "edr": [[0.3, 0.3], [0.1, 0.1], [0.6, 1.0], [0.3, 1.0]],
+    "lcss": [
+        [0.09999999999999998, 1.0],
+        [0.19999999999999996, 1.0],
+        [0.09999999999999998, 1.0],
+        [0.30000000000000004, 1.0],
+    ],
+    "ddtw": [
+        [2.683958998434711, 31.57625107133578],
+        [2.749733513749798, 31.57625107133578],
+        [2.0884818837222006, 31.57625107133578],
+        [2.180365495972097, 46.68062114164414],
+    ],
+    "wdtw": [
+        [1.5443561879951855, 23.34031057082207],
+        [1.6156677896273561, 23.34031057082207],
+        [1.0901827479860484, 23.34031057082207],
+        [0.2643712293510365, 3.8171163209131698],
+    ],
+    "wddtw": [
+        [1.3419794992173555, 15.78812553566789],
+        [1.374866756874899, 15.78812553566789],
+        [1.0442409418611003, 15.78812553566789],
+        [1.0901827479860484, 23.34031057082207],
+        [0.39934168049275554, 3.8217269294140355],
+    ],
+}

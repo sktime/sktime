@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
-from typing import Any, Callable, Union
+import warnings
+from typing import Any, Callable
 
 import numpy as np
 from numba import njit
+from numba.core.errors import NumbaWarning
 
 from sktime.distances._dtw import _cost_matrix
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.lower_bounding import LowerBounding, resolve_bounding_matrix
+from sktime.distances.lower_bounding import resolve_bounding_matrix
+
+# Warning occurs when using large time series (i.e. 1000x1000)
+warnings.simplefilter("ignore", category=NumbaWarning)
 
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
@@ -52,9 +57,8 @@ class _DdtwDistance(NumbaDistance):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        lower_bounding: Union[LowerBounding, int] = LowerBounding.NO_BOUNDING,
-        window: int = 2,
-        itakura_max_slope: float = 2.0,
+        window: float = None,
+        itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         compute_derivative: DerivativeCallable = _average_of_slope,
         **kwargs: Any,
@@ -67,24 +71,14 @@ class _DdtwDistance(NumbaDistance):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        lower_bounding: LowerBounding or int, defaults = LowerBounding.NO_BOUNDING
-            Lower bounding technique to use.
-            If LowerBounding enum provided, the following are valid:
-                LowerBounding.NO_BOUNDING - No bounding
-                LowerBounding.SAKOE_CHIBA - Sakoe chiba
-                LowerBounding.ITAKURA_PARALLELOGRAM - Itakura parallelogram
-            If int value provided, the following are valid:
-                1 - No bounding
-                2 - Sakoe chiba
-                3 - Itakura parallelogram
-        window: int, defaults = 2
-            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-            lower bounding).
-        itakura_max_slope: float, defaults = 2.
+        window: float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
-            Parallelogram lower bounding).
+            Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None)
+                                        defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -93,9 +87,8 @@ class _DdtwDistance(NumbaDistance):
                                 defaults = average slope difference
             Callable that computes the derivative. If none is provided the average of
             the slope between two points used.
-        kwargs: Any
-            Extra arguments for custom distances. See the documentation for the
-            distance itself for valid kwargs.
+        kwargs: any
+            extra kwargs.
 
         Returns
         -------
@@ -112,7 +105,7 @@ class _DdtwDistance(NumbaDistance):
             If the compute derivative callable is not no_python compiled.
         """
         _bounding_matrix = resolve_bounding_matrix(
-            x, y, lower_bounding, window, itakura_max_slope, bounding_matrix
+            x, y, window, itakura_max_slope, bounding_matrix
         )
 
         if not is_no_python_compiled_callable(compute_derivative):
@@ -122,7 +115,7 @@ class _DdtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        @njit(fastmath=True)
+        @njit(cache=True)
         def numba_ddtw_distance(
             _x: np.ndarray,
             _y: np.ndarray,

@@ -13,11 +13,18 @@ import numpy as np
 from joblib import Parallel, delayed
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.rocket import Rocket
+from sktime.transformations.panel.rocket import (
+    MiniRocket,
+    MiniRocketMultivariate,
+    MultiRocket,
+    MultiRocketMultivariate,
+    Rocket,
+)
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -35,6 +42,13 @@ class Arsenal(BaseClassifier):
         Number of kernels for each ROCKET transform.
     n_estimators : int, default=25
         Number of estimators to build for the ensemble.
+    rocket_transform : str, default="rocket"
+        The type of Rocket transformer to use.
+        Valid inputs = ["rocket","minirocket","multirocket"]
+    max_dilations_per_kernel : int, default=32
+        MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
+    n_features_per_kernel : int, default=4
+        MultiRocket only. The number of features per kernel.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -108,6 +122,9 @@ class Arsenal(BaseClassifier):
         self,
         num_kernels=2000,
         n_estimators=25,
+        rocket_transform="rocket",
+        max_dilations_per_kernel=32,
+        n_features_per_kernel=4,
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=100,
         save_transformed_data=False,
@@ -116,6 +133,9 @@ class Arsenal(BaseClassifier):
     ):
         self.num_kernels = num_kernels
         self.n_estimators = n_estimators
+        self.rocket_transform = rocket_transform
+        self.max_dilations_per_kernel = max_dilations_per_kernel
+        self.n_features_per_kernel = n_features_per_kernel
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_estimators = contract_max_n_estimators
@@ -156,12 +176,38 @@ class Arsenal(BaseClassifier):
         ending in "_" and sets is_fitted flag to True.
         """
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
-
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
 
-        base_rocket = Rocket(num_kernels=self.num_kernels)
+        if self.rocket_transform == "rocket":
+            base_rocket = Rocket(num_kernels=self.num_kernels)
+        elif self.rocket_transform == "minirocket":
+            if self.n_dims_ > 1:
+                base_rocket = MiniRocketMultivariate(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                )
+            else:
+                base_rocket = MiniRocket(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                )
+        elif self.rocket_transform == "multirocket":
+            if self.n_dims_ > 1:
+                base_rocket = MultiRocketMultivariate(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    n_features_per_kernel=self.n_features_per_kernel,
+                )
+            else:
+                base_rocket = MultiRocket(
+                    num_kernels=self.num_kernels,
+                    max_dilations_per_kernel=self.max_dilations_per_kernel,
+                    n_features_per_kernel=self.n_features_per_kernel,
+                )
+        else:
+            raise ValueError(f"Invalid Rocket transformer: {self.rocket_transform}")
 
         if time_limit > 0:
             self.n_estimators = 0
@@ -217,7 +263,7 @@ class Arsenal(BaseClassifier):
         self.weights_ = []
         self._weight_sum = 0
         for rocket_pipeline in self.estimators_:
-            weight = rocket_pipeline.steps[1][1].best_score_
+            weight = rocket_pipeline.steps[2][1].best_score_
             self.weights_.append(weight)
             self._weight_sum += weight
 
@@ -297,13 +343,13 @@ class Arsenal(BaseClassifier):
             )
             for i in range(self.n_estimators)
         )
-        y_probas, oobs = zip(*p)
+        y_probas, weights, oobs = zip(*p)
 
         results = np.sum(y_probas, axis=0)
         divisors = np.zeros(n_instances)
         for n, oob in enumerate(oobs):
             for inst in oob:
-                divisors[inst] += self.weights_[n]
+                divisors[inst] += weights[n]
 
         for i in range(n_instances):
             results[i] = (
@@ -316,10 +362,12 @@ class Arsenal(BaseClassifier):
 
     def _fit_estimator(self, rocket, X, y):
         transformed_x = rocket.fit_transform(X)
-        ridge = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-        ridge.fit(transformed_x, y)
+        scaler = StandardScaler(with_mean=False)
+        scaler.fit(transformed_x, y)
+        ridge = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
+        ridge.fit(scaler.transform(transformed_x), y)
         return [
-            make_pipeline(rocket, ridge),
+            make_pipeline(rocket, scaler, ridge),
             transformed_x if self.save_transformed_data else None,
         ]
 
@@ -332,19 +380,28 @@ class Arsenal(BaseClassifier):
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         indices = range(self.n_instances_)
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
-        clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        clf = make_pipeline(
+            StandardScaler(with_mean=False),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
+        )
         clf.fit(self.transformed_data_[idx].iloc[subsample], y[subsample])
         preds = clf.predict(self.transformed_data_[idx].iloc[oob])
 
+        weight = clf.steps[1][1].best_score_
+
         results = np.zeros((self.n_instances_, self.n_classes_))
         for n, pred in enumerate(preds):
-            results[oob[n]][self._class_dictionary[pred]] += self.weights_[idx]
+            results[oob[n]][self._class_dictionary[pred]] += weight
 
-        return results, oob
+        return results, weight, oob

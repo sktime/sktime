@@ -256,7 +256,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         """Generate intervals using a recursive function and random split point."""
         n_instances, series_length = X.shape
         split_point = (
-            series_length / 2
+            int(series_length / 2)
             if series_length <= 8
             else rng.randint(4, series_length - 4)
         )
@@ -306,7 +306,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         if series_length < 4:
             return
 
-        e = start + math.floor(series_length / 2)
+        e = start + int(series_length / 2)
 
         X_l = function(X[:, start:e], axis=1)
         X_r = function(X[:, e:end], axis=1)
@@ -346,7 +346,11 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         """
         estimator = clone(self._base_estimator)
         rs = 5465 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         estimator.set_params(random_state=rs)
         rng = check_random_state(rs)
 

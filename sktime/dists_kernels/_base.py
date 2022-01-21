@@ -37,6 +37,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
+from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes._series_as_panel import convert_Series_to_Panel
 from sktime.utils.validation.series import check_series
 
 
@@ -52,6 +54,7 @@ class BasePairwiseTransformer(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
+        "fit-in-transform": True,  # is "fit" empty? Yes, for all pairwise transforms
     }
 
     def __init__(self):
@@ -132,7 +135,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
-            Core logic
+        private _transform containing core logic, called from transform
 
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
@@ -153,55 +156,8 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self._is_fitted = True
         return self
-
-
-def _pairwise_panel_x_check(X):
-    """Check and coerce input data.
-
-    Method used to check the input and convert
-    numpy 3d or numpy list of df to list of dfs
-
-    Parameters
-    ----------
-    X: List of dfs, Numpy of dfs, 3d numpy
-        The value to be checked
-
-    Returns
-    -------
-    X: List of pd.Dataframe, coerced to this format if one
-        of the other formats, otherwise identical to X
-
-    """
-
-    def arr_check(arr):
-        for i, Xi in enumerate(arr):
-            if not isinstance(Xi, pd.DataFrame):
-                raise TypeError(
-                    "X must be a list of pd.DataFrame or numpy "
-                    "of pd.Dataframe or 3d numpy"
-                )
-            X[i] = check_series(Xi)
-
-    return_X = []
-
-    if isinstance(X, np.ndarray):
-        X_check = np.array(X, copy=True)
-        if X_check.ndim == 3:
-            for arr in X_check:
-                return_X.append(pd.DataFrame(arr))
-        else:
-            arr_check(X_check)
-            return_X = X_check.tolist()
-    elif isinstance(X, list):
-        arr_check(X)
-        return_X = X
-    else:
-        raise TypeError(
-            "X must be a list of pd.DataFrame or numpy of pd.Dataframe or 3d numpy"
-        )
-
-    return return_X
 
 
 class BasePairwiseTransformerPanel(BaseEstimator):
@@ -216,6 +172,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     # default tag values - these typically make the "safest" assumption
     _tags = {
         "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
+        "X_inner_mtype": "df-list",  # which mtype is used internally in _transform?
+        "fit-in-transform": True,  # is "fit" empty? Yes, for all pairwise transforms
     }
 
     def __init__(self):
@@ -230,9 +188,22 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
-            default X2 = X
+        X : Series or Panel, any supported mtype, of n instances
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+        X2 : Series or Panel, any supported mtype, of m instances
+                optional, default: X = X2
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+            X and X2 need not have the same mtype
 
         Returns
         -------
@@ -256,9 +227,22 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
-            default X2 = X
+        X : Series or Panel, any supported mtype, of n instances
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+        X2 : Series or Panel, any supported mtype, of m instances
+                optional, default: X = X2
+            Data to transform, of python type as follows:
+                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
+                    nested pd.DataFrame, or pd.DataFrame in long/wide format
+                subject to sktime mtype format specifications, for further details see
+                    examples/AA_datatypes_and_datasets.ipynb
+            X and X2 need not have the same mtype
 
         Returns
         -------
@@ -270,33 +254,35 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         X_equals_X2: bool = True if X2 was not passed, False if X2 was passed
             for use to make internal calculations efficient, e.g., in _transform
         """
-        X = _pairwise_panel_x_check(X)
+        X = self._pairwise_panel_x_check(X)
 
         if X2 is None:
             X2 = X
             self.X_equals_X2 = True
         else:
-            X2 = _pairwise_panel_x_check(X2)
-            if len(X2) == len(X):
-                for i in range(len(X2)):
-                    if not X[i].equals(X2[i]):
-                        break
-                self.X_equals_X2 = True
+            X2 = self._pairwise_panel_x_check(X2, var_name="X2")
+            # todo, possibly:
+            # check X, X2 for equality, then set X_equals_X2
+            # could use deep_equals
 
         return self._transform(X=X, X2=X2)
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
 
-            Core logic
+        private _transform containing core logic, called from transform
 
         Behaviour: returns pairwise distance/kernel matrix
             between samples in X and X2 (equal to X if not passed)
 
         Parameters
         ----------
-        X: list of pd.DataFrame or 2D np.arrays, of length n
-        X2: list of pd.DataFrame or 2D np.arrays, of length m, optional
+        X : guaranteed to be Series or Panel of mtype X_inner_mtype, n instances
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        X2 : guaranteed to be Series or Panel of mtype X_inner_mtype, m instances
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
             default X2 = X
 
         Returns
@@ -309,4 +295,46 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self._is_fitted = True
         return self
+
+    def _pairwise_panel_x_check(self, X, var_name="X"):
+        """Check and coerce input data.
+
+        Method used to check the input and convert Series/Panel input
+            to internally used format, as defined in X_inner_mtype tag
+
+        Parameters
+        ----------
+        X: List of dfs, Numpy of dfs, 3d numpy
+            The value to be checked
+        var_name: str, variable name to print in error messages
+
+        Returns
+        -------
+        X: Panel data container of a supported format in X_inner_mtype
+            usually df-list, list of pd.DataFrame, unless overridden
+        """
+        check_res = check_is_scitype(
+            X, ["Series", "Panel"], return_metadata=True, var_name=var_name
+        )
+        X_valid = check_res[0]
+        metadata = check_res[2]
+
+        X_scitype = metadata["scitype"]
+
+        if not X_valid:
+            raise TypeError("X/X2 must be of Series or Panel scitype")
+
+        # if the input is a single series, convert it to a Panel
+        if X_scitype == "Series":
+            X = convert_Series_to_Panel(X)
+
+        # can't be anything else if check_is_scitype is working properly
+        elif X_scitype != "Panel":
+            raise RuntimeError("Unexpected error in check_is_scitype, check validity")
+
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        X_coerced = convert_to(X, to_type=X_inner_mtype, as_scitype="Panel")
+
+        return X_coerced
