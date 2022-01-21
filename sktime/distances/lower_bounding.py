@@ -388,7 +388,11 @@ class LowerBounding(Enum):
         _y = self._check_input_timeseries(y)
         if self.int_val == 2:
             if not isinstance(sakoe_chiba_window_radius, float):
-                raise ValueError("The sakoe chiba window must be a float.")
+                raise ValueError(
+                    f"The sakoe chiba window must be a float, passed "
+                    f"{sakoe_chiba_window_radius} of type"
+                    f" {type(sakoe_chiba_window_radius)}."
+                )
             bounding_matrix = sakoe_chiba(_x, _y, sakoe_chiba_window_radius)
         elif self.int_val == 3:
             if not isinstance(itakura_max_slope, float):
