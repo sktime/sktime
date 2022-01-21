@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+from contrib.shapelets import ContractedShapeletTransform, ShapeletTransform
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from pyod.models.knn import KNN
 from sklearn.ensemble import RandomForestClassifier
@@ -101,10 +102,6 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.shapelets import (
-    ContractedShapeletTransform,
-    ShapeletTransform,
-)
 from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.panel.tsfresh import (
