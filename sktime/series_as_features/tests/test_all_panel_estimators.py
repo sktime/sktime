@@ -1,8 +1,7 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Unit tests for classifier/regressor input output."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "TonyBagnall"]
 __all__ = [
     "test_classifier_output",
     "test_regressor_output",
@@ -13,14 +12,14 @@ __all__ = [
 import numpy as np
 import pytest
 
-from sktime.series_as_features.tests._config import ACCEPTED_OUTPUT_TYPES
-from sktime.tests._config import EXCLUDE_ESTIMATORS
-from sktime.tests._config import NON_STATE_CHANGING_METHODS
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.registry import all_estimators
-from sktime.utils._testing.estimator_checks import _construct_instance
-from sktime.utils._testing.estimator_checks import _make_args
+from sktime.series_as_features.tests._config import ACCEPTED_OUTPUT_TYPES
+from sktime.tests._config import EXCLUDE_ESTIMATORS, NON_STATE_CHANGING_METHODS
+from sktime.transformations.base import (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+)
+from sktime.utils._testing.estimator_checks import _has_capability, _make_args
 
 CLASSIFIERS = all_estimators(
     "classifier", return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
@@ -43,12 +42,13 @@ N_CLASSES = 3
 
 @pytest.mark.parametrize("Estimator", PANEL_ESTIMATORS)
 def test_3d_numpy_input(Estimator):
-    estimator = _construct_instance(Estimator)
+    """Test classifiers handle 3D numpy input correctly."""
+    estimator = Estimator.create_test_instance()
     fit_args = _make_args(estimator, "fit", return_numpy=True)
     estimator.fit(*fit_args)
 
     for method in NON_STATE_CHANGING_METHODS:
-        if hasattr(estimator, method):
+        if _has_capability(estimator, method):
 
             # try if methods can handle 3d numpy input data
             try:
@@ -66,15 +66,12 @@ def test_3d_numpy_input(Estimator):
 
 @pytest.mark.parametrize("Estimator", CLASSIFIERS + REGRESSORS)
 def test_multivariate_input(Estimator):
+    """Test classifiers handle multivariate pd.DataFrame input correctly."""
     # check if multivariate input is correctly handled
     n_columns = 2
-    error_msg = (
-        f"X must be univariate "
-        f"with X.shape[1] == 1, but found: "
-        f"X.shape[1] == {n_columns}."
-    )
+    error_msg = "X must be univariate"
 
-    estimator = _construct_instance(Estimator)
+    estimator = Estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit", n_columns=n_columns)
 
     # check if estimator can handle multivariate data
@@ -95,7 +92,12 @@ def test_multivariate_input(Estimator):
 
 @pytest.mark.parametrize("Estimator", CLASSIFIERS)
 def test_classifier_output(Estimator):
-    estimator = _construct_instance(Estimator)
+    """Test classifier outputs the correct data types and values.
+
+    Test predict produces a np.array or pd.Series with only values seen in the train
+    data, and that predict_proba probability estimates add up to one.
+    """
+    estimator = Estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit", n_classes=N_CLASSES)
     estimator.fit(X_train, y_train)
 
@@ -117,7 +119,8 @@ def test_classifier_output(Estimator):
 
 @pytest.mark.parametrize("Estimator", REGRESSORS)
 def test_regressor_output(Estimator):
-    estimator = _construct_instance(Estimator)
+    """Test regressors output correctly."""
+    estimator = Estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit")
     estimator.fit(X_train, y_train)
 

@@ -29,7 +29,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ----------
-    n_shapelet_samples : int, default=100000
+    n_shapelet_samples : int, default=10000
         The number of candidate shapelets to be considered for the final transform.
         Filtered down to <= max_shapelets, keeping the shapelets with the most
         information gain.
@@ -58,10 +58,9 @@ class ShapeletTransformClassifier(BaseClassifier):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    batch_size : int or None, default=None
+    batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
-        shapelets in the transform. If none the max of n_instances and max_shapelets is
-        used.
+        shapelets in the transform.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -126,7 +125,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     def __init__(
         self,
-        n_shapelet_samples=100000,
+        n_shapelet_samples=10000,
         max_shapelets=None,
         max_shapelet_length=None,
         estimator=None,
@@ -135,7 +134,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         contract_max_n_shapelet_samples=np.inf,
         save_transformed_data=False,
         n_jobs=1,
-        batch_size=None,
+        batch_size=100,
         random_state=None,
     ):
         self.n_shapelet_samples = n_shapelet_samples
@@ -281,7 +280,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         if n_instances != self.n_instances_ or n_dims != self.n_dims_:
             raise ValueError(
-                "n_instances, n_dims, series_length mismatch. X should be "
+                "n_instances, n_dims mismatch. X should be "
                 "the same as the training data used in fit for generating train "
                 "probabilities."
             )
