@@ -153,7 +153,7 @@ class MyTransformer(BaseTransformer):
             if X_inner_mtype is list, _fit must support all types in it
             Data to fit transform to
         y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
