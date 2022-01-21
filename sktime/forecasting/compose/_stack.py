@@ -174,5 +174,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         """
         from sktime.forecasting.naive import NaiveForecaster
 
-        params = {"forecasters": NaiveForecaster()}
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
         return params
