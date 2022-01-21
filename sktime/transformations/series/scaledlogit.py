@@ -18,10 +18,10 @@ class ScaledLogitBoundsError(ValueError):
 
 
 class ScaledLogitTransformer(BaseTransformer):
-    """Scaled logit transform.
+    r"""Scaled logit transform.
 
     Applies a scaled logit transform to the data.
-    Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
+    Combined with a sktime.forecasting.compose.TransformedTargetForecaster : it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
 
     Parameters
@@ -33,7 +33,7 @@ class ScaledLogitTransformer(BaseTransformer):
 
     See Also
     --------
-    sktime.transformations.series.boxcox.BoxCoxTransformer :
+    sktime.transformations.series.boxcox.LogTransformer :
         Transformer input data using natural log. Can help normalize data and
         compress variance of the series.
     sktime.transformations.series.boxcox.BoxCoxTransformer :
@@ -50,17 +50,22 @@ class ScaledLogitTransformer(BaseTransformer):
     -----
     The scaled logit transform is applied if both upper_bound and lower_bound are
     not None:
-        :math: `log(frac{x - a}{b - x})`,  where a is the lower and b is the upper bound
+        :math:`\frac{y^{\lambda}-1}{\lambda},
+    \lambda \ne 0 \text{ or } ln(y), \lambda = 0`,
+    where a is the lower and b is the upper bound
+    The scaled logit transform is applied if both upper_bound and lower_bound are
+    not None:
+        :math:`log(x - a)`,  where a is the lower and b is the upper bound
     If upper_bound is None and lower_bound is not the transform applied is:
-         :math: `log(frac{x - a})`
+        :math:`log(x - a)`
     If lower_bound is None and upper_bound is not the transform applied is:
-         :math: `- log(frac{b - x})`
+        :math:`- log(b - x)`
 
 
     References
     ----------
-    .. [1] `Hyndsight - Forecasting within limits
-    <https://robjhyndman.com/hyndsight/forecasting-within-limits/>`_
+    .. [1] Hyndsight - Forecasting within limits:
+        https://robjhyndman.com/hyndsight/forecasting-within-limits/
 
     Examples
     --------
