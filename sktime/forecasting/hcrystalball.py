@@ -168,3 +168,16 @@ class HCrystalBallForecaster(BaseForecaster):
 
     def _compute_pred_err(self, alphas):
         raise NotImplementedError()
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from hcrystalball.wrappers import HoltSmoothingWrapper
+
+        params = {"model": HoltSmoothingWrapper()}
+        return params

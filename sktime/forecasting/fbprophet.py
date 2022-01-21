@@ -190,3 +190,21 @@ class Prophet(_ProphetAdapter):
             stan_backend=self.stan_backend,
         )
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "n_changepoints": 0,
+            "yearly_seasonality": False,
+            "weekly_seasonality": False,
+            "daily_seasonality": False,
+            "uncertainty_samples": 1000,
+            "verbose": False,
+        }
+        return params

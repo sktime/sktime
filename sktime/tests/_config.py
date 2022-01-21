@@ -6,7 +6,6 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-from hcrystalball.wrappers import HoltSmoothingWrapper
 from pyod.models.knn import KNN
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
@@ -51,37 +50,19 @@ from sktime.classification.interval_based import TimeSeriesForestClassifier as T
 from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-from sktime.dists_kernels.compose_tab_to_panel import AggrDist
-from sktime.dists_kernels.scipy_dist import ScipyDist
-from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import (
-    AutoEnsembleForecaster,
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
     DirRecTabularRegressionForecaster,
     DirRecTimeSeriesRegressionForecaster,
-    EnsembleForecaster,
     MultioutputTabularRegressionForecaster,
     MultioutputTimeSeriesRegressionForecaster,
-    MultiplexForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
-    StackingForecaster,
 )
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.fbprophet import Prophet
-from sktime.forecasting.hcrystalball import HCrystalBallForecaster
-from sktime.forecasting.model_selection import (
-    ForecastingGridSearchCV,
-    ForecastingRandomizedSearchCV,
-    SingleWindowSplitter,
-)
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.structural import UnobservedComponents
-from sktime.forecasting.tbats import TBATS
-from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
 from sktime.registry import (
     BASE_CLASS_LIST,
     BASE_CLASS_LOOKUP,
@@ -163,7 +144,6 @@ STEPS = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    OnlineEnsembleForecaster: {"forecasters": FORECASTERS},
     FeatureUnion: {"transformer_list": TRANSFORMERS},
     DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
     MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
@@ -180,21 +160,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    EnsembleForecaster: {"forecasters": FORECASTERS},
-    StackingForecaster: {"forecasters": FORECASTERS},
-    AutoEnsembleForecaster: {"forecasters": FORECASTERS},
-    ForecastingGridSearchCV: {
-        "forecaster": NaiveForecaster(strategy="mean"),
-        "cv": SingleWindowSplitter(fh=1),
-        "param_grid": {"window_length": [2, 5]},
-        "scoring": MeanAbsolutePercentageError(symmetric=True),
-    },
-    ForecastingRandomizedSearchCV: {
-        "forecaster": NaiveForecaster(strategy="mean"),
-        "cv": SingleWindowSplitter(fh=1),
-        "param_distributions": {"window_length": [2, 5]},
-        "scoring": MeanAbsolutePercentageError(symmetric=True),
     },
     ColumnEnsembleClassifier: {
         "estimators": [
@@ -215,21 +180,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     ColumnTransformer: {
         "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-    },
-    AutoARIMA: {
-        "d": 0,
-        "suppress_warnings": True,
-        "max_p": 2,
-        "max_q": 2,
-        "seasonal": False,
-    },
-    MultiplexForecaster: {
-        "forecasters": [
-            ("Naive_mean", NaiveForecaster(strategy="mean")),
-            ("Naive_last", NaiveForecaster(strategy="last")),
-            ("Naive_drift", NaiveForecaster(strategy="drift")),
-        ],
-        "selected_forecaster": "Naive_mean",
     },
     ShapeletTransformClassifier: {
         "estimator": RotationForest(n_estimators=3),
@@ -349,33 +299,7 @@ ESTIMATOR_TEST_PARAMS = {
     SupervisedTimeSeriesForest: {"n_estimators": 3},
     CanonicalIntervalForest: {"n_estimators": 3},
     DrCIF: {"n_estimators": 3},
-    HCrystalBallForecaster: {"model": HoltSmoothingWrapper()},
-    BATS: {
-        "use_box_cox": False,
-        "use_trend": False,
-        "use_damped_trend": False,
-        "sp": [],
-        "use_arma_errors": False,
-        "n_jobs": 1,
-    },
-    TBATS: {
-        "use_box_cox": False,
-        "use_trend": False,
-        "use_damped_trend": False,
-        "sp": [],
-        "use_arma_errors": False,
-        "n_jobs": 1,
-    },
-    Prophet: {
-        "n_changepoints": 0,
-        "yearly_seasonality": False,
-        "weekly_seasonality": False,
-        "daily_seasonality": False,
-        "uncertainty_samples": 1000,
-        "verbose": False,
-    },
     UnobservedComponents: {"level": "local level"},
-    AggrDist: {"transformer": ScipyDist()},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
 }

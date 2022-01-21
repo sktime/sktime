@@ -109,3 +109,16 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         return (pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights).sum(
             axis=1
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params = {"forecasters": NaiveForecaster()}
+        return params
