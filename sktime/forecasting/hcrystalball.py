@@ -6,8 +6,8 @@
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("hcrystalball")
