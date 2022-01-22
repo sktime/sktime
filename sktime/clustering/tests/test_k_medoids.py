@@ -110,7 +110,9 @@ def test_kmedoids():
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    kmedoids = TimeSeriesKMedoids(random_state=1, n_init=2, max_iter=5)
+    kmedoids = TimeSeriesKMedoids(
+        random_state=1, n_init=2, max_iter=5, init_algorithm="kmeans++", metric="dtw"
+    )
     train_predict = kmedoids.fit_predict(X_train)
     train_score = metrics.rand_score(y_train, train_predict)
     test_medoids_result = kmedoids.predict(X_test)
