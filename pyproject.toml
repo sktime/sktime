@@ -7,12 +7,12 @@ authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
     {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Markus Löning"},
-    {name = "Marting Walter"},
+    {name = "Martin Walter"},
 ]
 maintainers = [
-    {name = "F. Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
     {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
-    {name = "Marting Walter"},
+    {name = "Martin Walter"},
 ]
 readme = "README.md"
 keywords = [
