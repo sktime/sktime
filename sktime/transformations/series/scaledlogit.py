@@ -120,7 +120,7 @@ class ScaledLogitTransformer(BaseTransformer):
                 raise ValueError("X should not have values lower than lower_bound")
 
         if self.upper_bound and self.lower_bound:
-            X_transformed = np.log((X - self.lower) / (self.upper - X))
+            X_transformed = np.log((X - self.lower_bound) / (self.upper_bound - X))
         elif self.upper_bound is not None:
             X_transformed = -np.log(self.upper_bound - X)
         elif self.lower_bound is not None:

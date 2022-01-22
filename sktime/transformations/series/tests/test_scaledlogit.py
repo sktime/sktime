@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """ScaledLogit transform unit tests."""
+import numpy as np
 import pytest
 from pandas.testing import assert_series_equal
 
 from sktime.datasets import load_airline
 from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+
+TEST_SERIES = np.array([30, 40, 60])
+
+
+@pytest.mark.parametrize(
+    "lower, upper, output",
+    [
+        (10, 70, np.log((TEST_SERIES - 10) / (70 - TEST_SERIES))),
+        (None, 70, -np.log(70 - TEST_SERIES)),
+        (10, None, np.log(TEST_SERIES - 10)),
+    ],
+)
+def test_scaledlogit_transform(lower, upper, output):
+    """Test that we get the right output."""
+    transformer = ScaledLogitTransformer(lower, upper)
+    y_transformed = transformer.fit_transform(TEST_SERIES)
+    assert np.all(output == y_transformed)
 
 
 # Tests that all cases have a consistent inverse transform
