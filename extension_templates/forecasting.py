@@ -265,27 +265,26 @@ class MyForecaster(BaseForecaster):
         # implement here
 
     def _predict_var(self, fh, X=None, cov=False):
-        """
-        Compute/return prediction variance for a forecast.
+        """Compute/return variance at future horizon.
 
-        Must be run *after* the forecaster has been fitted.
+        private _predict_var containing the core logic, called from predict_var
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         cov : bool, optional (default=False)
-            Wether to return marginal variances or covariance matrices.
+            if True, computes the covariance matrix.
+            if False, computes the marginal variance.
 
         Returns
         -------
-        pred_var : np.ndarray
-            if cov=False,
-                a vector of same length as fh with predictive marginal variances;
-            if cov=True,
-                a square matrix of size len(fh) with predictive covariance matrix.
+        pred_var : DataFrame, 
+            Prediction variance where row indices (and in the case of cov=True, 
+            column indices) are those of fh.
         """
         # implement here
 
