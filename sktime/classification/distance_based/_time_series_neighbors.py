@@ -102,9 +102,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         distance_params=None,
         **kwargs
     ):
-        self._distance_params = distance_params
-        if distance_params is None:
-            self._distance_params = {}
+        # self._distance_params = distance_params
+        # if distance_params is None:
+        #    self._distance_params = {}
         self.distance = distance
         self.distance_params = distance_params
 
@@ -141,11 +141,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
-
         if isinstance(self.distance, str):
-            self.metric = distance_factory(
-                X[0], X[0], metric=self.distance, **self._distance_params
-            )
+            if self.distance_params is None:
+                self.metric = distance_factory(X[0], X[0], metric=self.distance)
+            else:
+                self.metric = distance_factory(
+                    X[0], X[0], metric=self.distance, **self.distance_params
+                )
 
         y = np.asarray(y)
         check_classification_targets(y)
