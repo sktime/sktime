@@ -15,7 +15,7 @@ class ScaledLogitTransformer(BaseTransformer):
     r"""Scaled logit transform.
 
     Applies a scaled logit transform to the data.
-    Combined with a sktime.forecasting.compose.TransformedTargetForecaster : it ensures
+    Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
 
     Parameters
@@ -42,15 +42,15 @@ class ScaledLogitTransformer(BaseTransformer):
 
     Notes
     -----
-    The scaled logit transform is applied if both upper_bound and lower_bound are
-    not None:
-      :math:`log(\frac{x - a}{b - x})`, where a is the lower and b is the upper bound.
+    | The scaled logit transform is applied if both upper_bound and lower_bound are
+    | not None:
+    |   :math:`log(\frac{x - a}{b - x})`, where a is the lower and b is the upper bound.
 
-    If upper_bound is None and lower_bound is not the transform applied is:
-        log(x - a)
+    | If upper_bound is None and lower_bound is not the transform applied is:
+    |   :math:`log(x - a)`
 
-    If lower_bound is None and upper_bound is not the transform applied is:
-        - log(b - x)
+    | If lower_bound is None and upper_bound is not the transform applied is:
+    |   :math:`- log(b - x)`
 
     References
     ----------
