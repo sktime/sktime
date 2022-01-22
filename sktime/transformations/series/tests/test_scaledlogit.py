@@ -17,6 +17,7 @@ TEST_SERIES = np.array([30, 40, 60])
         (10, 70, np.log((TEST_SERIES - 10) / (70 - TEST_SERIES))),
         (None, 70, -np.log(70 - TEST_SERIES)),
         (10, None, np.log(TEST_SERIES - 10)),
+        (None, None, TEST_SERIES),
     ],
 )
 def test_scaledlogit_transform(lower, upper, output):
@@ -27,7 +28,9 @@ def test_scaledlogit_transform(lower, upper, output):
 
 
 # Tests that all cases have a consistent inverse transform
-@pytest.mark.parametrize("lower, upper", [(0, 700), (None, 700), (0, None)])
+@pytest.mark.parametrize(
+    "lower, upper", [(0, 700), (None, 700), (0, None), (None, None)]
+)
 def test_scaledlogit_consistent_invesre_transform(lower, upper):
     """Tests that all cases have a consistent inverse transform."""
     y = load_airline()
