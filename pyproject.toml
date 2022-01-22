@@ -46,7 +46,7 @@ dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
     "numpy==1.19.3",
-    "pandas>=1.1.0",
+    "pandas>=1.1.0,<1.4.0",
     "scikit-learn>=0.24.0",
     "statsmodels>=0.12.1",
 ]
