@@ -12,6 +12,9 @@ See here for a `full list of precompiled wheels available on PyPI <https://pypi.
 
 We appreciate community contributions towards compatibility with python 3.9, or other operating systems.
 
+.. contents::
+   :local:
+
 Release versions
 ----------------
 
@@ -393,7 +396,7 @@ In the ``anaconda prompt`` terminal:
 
 4. Install required packages:
 
-   1. :code:`pip install numpy=1.19.3`
+   1. :code:`pip install numpy==1.19.3`
    2. :code:`pip install cython`
    3. :code:`pip install -r build_tools/requirements.txt`
 
