@@ -11,12 +11,6 @@ import numpy as np
 from sktime.transformations.base import BaseTransformer
 
 
-class ScaledLogitBoundsError(ValueError):
-    """Specific error for scaled logit bounds."""
-
-    pass
-
-
 class ScaledLogitTransformer(BaseTransformer):
     r"""Scaled logit transform.
 
@@ -50,12 +44,13 @@ class ScaledLogitTransformer(BaseTransformer):
     -----
     The scaled logit transform is applied if both upper_bound and lower_bound are
     not None:
-        :math:`log(\frac{x - a}{b - x})`, where a is the lower and b is the upper bound
-    If upper_bound is None and lower_bound is not the transform applied is:
-        :math:`log(x - a)`
-    If lower_bound is None and upper_bound is not the transform applied is:
-        :math:`- log(b - x)`
+      :math:`log(\frac{x - a}{b - x})`, where a is the lower and b is the upper bound.
 
+    If upper_bound is None and lower_bound is not the transform applied is:
+        log(x - a)
+
+    If lower_bound is None and upper_bound is not the transform applied is:
+        - log(b - x)
 
     References
     ----------
@@ -83,6 +78,7 @@ class ScaledLogitTransformer(BaseTransformer):
         "fit-in-transform": True,
         "univariate-only": False,
         "capability:inverse_transform": True,
+        "skip-inverse-transform": False,
     }
 
     def __init__(self, lower_bound=None, upper_bound=None):
@@ -110,21 +106,13 @@ class ScaledLogitTransformer(BaseTransformer):
         """
         if self.upper_bound:
             if np.any(X >= self.upper_bound):
-                raise ScaledLogitBoundsError(
-                    "X should not have values greater than upper_bound"
-                )
+                raise ValueError("X should not have values greater than upper_bound")
 
         if self.lower_bound:
             if np.any(X <= self.lower_bound):
-                raise ScaledLogitBoundsError(
-                    "X should not have values lower than lower_bound"
-                )
+                raise ValueError("X should not have values lower than lower_bound")
 
         if self.upper_bound and self.lower_bound:
-            if self.upper_bound <= self.lower_bound:
-                raise ScaledLogitBoundsError(
-                    "upper_bound should be greater than lower bound"
-                )
             X_transformed = np.log((X - self.lower) / (self.upper - X))
         elif self.upper_bound is not None:
             X_transformed = -np.log(self.upper_bound - X)
