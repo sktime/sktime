@@ -78,7 +78,6 @@ dev = [
 ]
 
 binder = [
-    "convertdate>= 2.3.2",
     "jupyter",
 ]
 
