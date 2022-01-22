@@ -15,30 +15,7 @@ Installation
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 * installation via ``PyPi`` or ``conda``
 
-To install ``sktime`` with its core dependencies via ``pip`` use:
-
-.. code-block:: bash
-
-    pip install sktime
-
-To install ``sktime`` via ``pip`` with maximum dependencies, including soft dependencies, install using the `all_extras` modifier:
-
-.. code-block:: bash
-
-    pip install sktime[all_extras]
-
-
-To install ``sktime`` with its core dependencies via ``conda`` from ``conda-forge`` use:
-
-.. code-block:: bash
-
-    conda install -c conda-forge sktime
-
-To install ``sktime`` via ``conda`` with maximum dependencies, including soft dependencies, install using the `all-extras` conda recipe:
-
-.. code-block:: bash
-
-    conda install -c conda-forge sktime-all-extras
+Please see the :ref:`installation <installation>` guide for step-by-step instructions on the package installation.
 
 Key Concepts
 ------------
