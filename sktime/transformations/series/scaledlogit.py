@@ -59,11 +59,18 @@ class ScaledLogitTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+    >>> import numpy as np
     >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
+    >>> from sktime.forecasting.ets import AutoETS
+    >>> from sktime.forecasting. compose import TransformedTargetForecaster
     >>> y = load_airline()
-    >>> transformer = ScaledLogitTransformer(lower_bound=0, upper_bound=10**)
-    >>> y_hat = transformer.fit_transform(y)
+    >>> fcaster = TransformedTargetForecaster([
+    >>>     ("scaled_logit", ScaledLogitTransformer(0, 650)),
+    >>>     ("ets", AutoETS(sp=12, auto=True))
+    >>> ])
+    >>> fcaster.fit(y)
+    >>> y_pred = fcaster.predict(fh = np.arange(32))
     """
 
     _tags = {
