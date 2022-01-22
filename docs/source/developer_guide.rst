@@ -21,5 +21,9 @@ If you’re already familiar with scikit-learn, you may still learn something ne
 
    developer_guide/add_dataset
    developer_guide/add_estimators
+   developer_guide/coding_standards
+   installation
    developer_guide/documentation
-   developer_guide/deprecation
+   developer_guide/git_workflow
+   developer_guide/continuous_integration
+   developer_guide/release
