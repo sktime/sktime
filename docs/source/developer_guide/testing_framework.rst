@@ -120,6 +120,8 @@ to multivariate forecasters, and will cause exceptions in a ``fit`` method call.
 Non-applicable scenarios can be filtered out in positive tests, and filtered in in negative tests.
 As a default, the ``sktime`` implemented ``pytest_generate_tests`` only pass applicable scenarios.
 
+Further, scenarios inherit from ``BaseObject``, which allows to ue the ``sktime`` tag system with scenarios.
+
 For further details on scenarios, inspect the docstring of ``BaseScenario``.
 
 Extending the testing module
@@ -166,7 +168,6 @@ This can be done (currently, as of 0.9.0) in two ways:
 
 Escaping tests directly in the tests, e.g., via ``if isinstance(estimator_instance, MyClass)`` should be avoided where possible.
 
-
 Adding package or module level tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -181,7 +182,6 @@ instructions in the next section should be followed.
 
 Where possible, scenarios should be used to simulate generic method calls (see above),
 instead of creating and passing arguments directly. Scenarios will ensure consistent coverage of input argument cases.
-
 
 Adding fixture variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -209,9 +209,48 @@ One-off escapes and similar should be avoided here, and instead dealt with ``xfa
 For instance, the value of ``estimator_instance``, if this is a variable used in the test.
 This can be used to make the list of fixtures for ``variablename`` dependent on the value of other fixtures variables
 
-
 Adding or extending scenarios
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Scenarios can be added or modified if a new combination of method/input values should be tested.
+The two main options are:
+
+* adding a new scenario, similar to existing scenarios for an estimator scitype.
+  This is the common case when a new input condition should be covered.
+* adding a method or argument key to existing scenarios.
+  This is the common case when a new method or method sequence should be covered.
+  For this, args cshould be added to the scenarios' ``args`` key of an existing scenario.
+
+Scenarios for a specific estimator scitype are found in ``utils/_testing/scenarios_[estimator_scitype]``.
+All scenarios inherit from a base class for that scitype, e.g., ``ForecasterTestScenario``.
+This base class defines generics such as ``is_applicable``, or tag handling, for all scenarios of the same type.
+
+Scenarios should usually define:
+* an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
+  The ``args`` parameter may be set as a class variable, or set by the contructor.
+* optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
+  These define the sequence in which methods are called, with which argument set,
+  if ``run`` is called. Both may be class variables, or object variable set in the constructor.
+* side note: a ``method_sequence`` and ``arg_sequence`` can also be specified in ``run``.
+  If not passed, defaulting will take place (first to each other, then to the ``detault_etc`` variables)
+* optionally, a ``_tags`` dictionary, which is a ``BaseObject`` tags dictionary and behaves exactly like that of estimators.
+* optionally, a ``get_args`` method which allows to override key retrieval from ``args``.
+  For instance, to specify rules such as "if the key starts with ``predict_``, always return ..."
+* optionally, an ``is_applicable`` method which allows to compare the scenario with estimators.
+  For instance, comparing whether both scenario and estimator are multivariate.
+
+For further details and expected signature, consult the docstring of ``TestScenario``,
+and inspect any of the scenarios base classes, e.g., ``ForecasterTestScenario``.
+
 Creating tests for a new estimator type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If a module for a new estimator type is added, multiple things should be added in testing modules:
+
+* a ``tests/test_all_[estimator_scitype].py``, from the root of the module.
+* scenarios to cover the specified base class interface behaviour, in 
+  ``utils/_testing/scenarios_[estimator_scitype]``.
+  This can be modelled on ``utils/_testing/scenarios_forecasting``, or the other scenarios files.
+* in this file, appropriate fixture generation via ``pytest_generate_fixtures``.
+  This can be modelled off ``test_all_estimators`` or ``test_all_forecasters``.
+* and, a collection of tests for interface compliance with the base class of the 
