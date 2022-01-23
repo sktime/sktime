@@ -45,23 +45,17 @@ Additional configurations can be found in
 
 
 Unit testing
-------------
+~~~~~~~~~~~~
 
 We use `pytest <https://docs.pytest.org/en/latest/>`__ for unit testing.
 To check if your code passes all tests locally, you need to install the
 development version of sktime and all extra dependencies.
 
-1. Install all extra requirements from the root directory of sktime:
+1. Install the development version of sktime with developer dependencies:
 
    .. code:: bash
 
-      pip install -r build_tools/requirements.txt
-
-2. Install the development version of sktime:
-
-   .. code:: bash
-
-      pip install -e .
+      pip install -e .[dev]
 
    This installs an editable `development
    version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
@@ -72,11 +66,17 @@ development version of sktime and all extra dependencies.
    For trouble shooting on different operating systems, please see our detailed
    `installation instructions <https://www.sktime.org/en/latest/installation.html>`__.
 
-3. To run all unit tests, run:
+2. To run all unit tests, run:
 
    .. code:: bash
 
-      pytest sktime/
+      make test
+
+or if you don't have `make <https://www.gnu.org/software/make/>`_ installed:
+
+   .. code:: bash
+
+      pytest ./sktime
 
 Test coverage
 -------------
@@ -93,43 +93,29 @@ Infrastructure
 This section gives an overview of the infrastructure and continuous
 integration services we use.
 
-+---------------+----------------+-------------------------------------+
-| Platform      | Operation      | Configuration                       |
-+===============+================+=====================================+
-| `Appveyor     | Build/t        | `.appveyor.yml <https               |
-|  <https://ci. | est/distribute | ://github.com/alan-turing-institute |
-| appveyor.com/ | on Windows     | /sktime/blob/main/.appveyor.yml>`__ |
-| project/mloni |                |                                     |
-| ng/sktime>`__ |                |                                     |
-+---------------+----------------+-------------------------------------+
-| `Azure        | Build/t        | `azure-pipelines.yml <https://git   |
-| Pipelines <h  | est/distribute | hub.com/alan-turing-institute/sktim |
-| ttps://dev.az | on Linux       | e/blob/main/azure-pipelines.yml>`__ |
-| ure.com/mloni | (`manylin      |                                     |
-| ng/sktime>`__ | ux <https://gi |                                     |
-|               | thub.com/pypa/ |                                     |
-|               | manylinux>`__) |                                     |
-+---------------+----------------+-------------------------------------+
-| `GitHub       | Build/t        | `.github/workflows/ <https://gi     |
-| Act           | est/distribute | thub.com/alan-turing-institute/skti |
-| ions <https:/ | on MacOS; Code | me/blob/main/.github/workflows/>`__ |
-| /docs.github. | quality checks |                                     |
-| com/en/free-p |                |                                     |
-| ro-team@lates |                |                                     |
-| t/actions>`__ |                |                                     |
-+---------------+----------------+-------------------------------------+
-| `Read the     | Build/deploy   | `.readthed                          |
-| Docs <h       | documentation  | ocs.yml <https://github.com/alan-tu |
-| ttps://readth |                | ring-institute/sktime/blob/main/.gi |
-| edocs.org>`__ |                | thub/workflows/code-quality.yml>`__ |
-+---------------+----------------+-------------------------------------+
-| `Codec        | Test coverage  | `.codecov.yml <https                |
-| ov <https://c |                | ://github.com/alan-turing-institute |
-| odecov.io>`__ |                | /sktime/blob/main/.codecov.yml>`__, |
-|               |                | `.coveragerc <htt                   |
-|               |                | ps://github.com/alan-turing-institu |
-|               |                | te/sktime/blob/main/.coveragerc>`__ |
-+---------------+----------------+-------------------------------------+
++---------------+-----------------------+-------------------------------------+
+| Platform      | Operation             | Configuration                       |
++===============+=======================+=====================================+
+| `GitHub       | Build/test/           | `.github/workflows/ <https://gi     |
+| Act           | distribute            | thub.com/alan-turing-institute/skti |
+| ions <https:/ | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
+| /docs.github. | Windows,              |                                     |
+| com/en/free-p | run code quality      |                                     |
+| ro-team@lates | checks                |                                     |
+| t/actions>`__ |                       |                                     |
++---------------+-----------------------+-------------------------------------+
+| `Read the     | Build/deploy          | `.readthed                          |
+| Docs <h       | documentation         | ocs.yml <https://github.com/alan-tu |
+| ttps://readth |                       | ring-institute/sktime/blob/main/.gi |
+| edocs.org>`__ |                       | thub/workflows/code-quality.yml>`__ |
++---------------+-----------------------+-------------------------------------+
+| `Codec        | Test coverage         | `.codecov.yml <https                |
+| ov <https://c |                       | ://github.com/alan-turing-institute |
+| odecov.io>`__ |                       | /sktime/blob/main/.codecov.yml>`__, |
+|               |                       | `.coveragerc <htt                   |
+|               |                       | ps://github.com/alan-turing-institu |
+|               |                       | te/sktime/blob/main/.coveragerc>`__ |
++---------------+-----------------------+-------------------------------------+
 
 Additional scripts used for building, unit testing and distribution can
 be found in
