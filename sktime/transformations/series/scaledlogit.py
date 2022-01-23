@@ -17,8 +17,8 @@ class ScaledLogitTransformer(BaseTransformer):
 
     Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
-    If both lower_bound and upper_bound are not None, applies a scaled logit transform
-    to the data. Otherwise, it applies a log transform variation that ensures the
+    If both lower_bound and upper_bound are not None, a scaled logit transform is
+    applied. Otherwise, it applies a log transform variation that ensures the
     resulting forecast is bounded as specified. The transform is applied to all
     scalar elements of the input array individually.
 
@@ -70,10 +70,11 @@ class ScaledLogitTransformer(BaseTransformer):
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> y = load_airline()
     >>> fcaster = TransformedTargetForecaster([
-    >>>     ("scaled_logit", ScaledLogitTransformer(0, 650)),
-    >>>     ("ets", AutoETS(sp=12, auto=True))
-    >>> ])
+    ...     ("scaled_logit", ScaledLogitTransformer(0, 650)),
+    ...     ("ets", AutoETS(sp=12, auto=True))
+    ... ])
     >>> fcaster.fit(y)
+    TransformedTargetForecaster(...)
     >>> y_pred = fcaster.predict(fh = np.arange(32))
     """
 
