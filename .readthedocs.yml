@@ -12,10 +12,8 @@ python:
       path: .
       extra_requirements:
         - docs
-    # install doc requirements
-    # - requirements: docs/requirements.txt
-  build:
-    os: ubuntu-20.04
+build:
+  os: ubuntu-20.04
 
 sphinx:
   configuration: docs/source/conf.py
