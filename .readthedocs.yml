@@ -8,13 +8,14 @@ version: 2
 python:
   version: 3.8
   install:
-    # install build requirements
-    - requirements: build_tools/requirements.txt
-    # build sktime using `python ./setup.py install --force`
-    - method: setuptools
+    - method: pip
       path: .
+      extra_requirements:
+        - docs
     # install doc requirements
-    - requirements: docs/requirements.txt
+    # - requirements: docs/requirements.txt
+  build:
+    os: ubuntu-20.04
 
 sphinx:
   configuration: docs/source/conf.py
