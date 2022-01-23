@@ -45,7 +45,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
 
     Parameters
     ----------
-    transformer : the transformer to transform uncached data
+    transformer: the transformer to transform uncached data
 
     Attributes
     ----------

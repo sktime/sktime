@@ -162,7 +162,7 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
                 full_profile.fill(0.5)
                 np.copyto(
                     full_profile[ranges[0] : ranges[0] + len(profile)],
-                    profile.values,
+                    profile,
                 )
 
                 global_change_point = ranges[0] + change_point
