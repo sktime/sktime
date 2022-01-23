@@ -247,8 +247,9 @@ Scenarios should usually define:
 * optionally, an ``is_applicable`` method which allows to compare the scenario with estimators.
   For instance, comparing whether both scenario and estimator are multivariate.
 
-For further details and expected signature, consult the docstring of ``TestScenario``,
-and inspect any of the scenarios base classes, e.g., ``ForecasterTestScenario``.
+For further details and expected signature, consult the docstring of ``TestScenario``
+(`link <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/_testing/scenarios.py>`_),
+and/or inspect any of the scenarios base classes, e.g., ``ForecasterTestScenario``.
 
 Creating tests for a new estimator type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
