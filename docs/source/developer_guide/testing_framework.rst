@@ -85,7 +85,7 @@ In ``test_all_estimators``, this loops over all estimators.
 Scenarios
 ~~~~~~~~~
 
-The ``scenario`` fixtures encode arguments for method calls, and a sequence for method calls.
+The ``scenario`` fixtures contain arguments for method calls, and a sequence for method calls.
 
 An example scenario specification, from ``utils/_testing/scenarios_forecasting``:
 
