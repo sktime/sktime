@@ -38,7 +38,7 @@ Xt_group = transformer.fit_transform(y_grouped)
 
 test_singlegroup = Xt_nongroup.columns.to_list()
 
-test_multigroup = Xt_nongroup.columns.to_list()
+test_multigroup = Xt_group.columns.to_list()
 
 
 @pytest.mark.parametrize(
