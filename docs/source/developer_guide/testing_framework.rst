@@ -27,7 +27,7 @@ Sub-modules may also contain ``tests`` folders.
 * ``tests`` folders may contain ``_config.py`` files to collect test configuration settings for that module
 * generic utilities for tests are located in the module ``utils._testing``.
  Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
-* each test module corresponding to a learning task and estimator scitype should contain 
+* each test module corresponding to a learning task and estimator scitype should contain
 module level tests in a test ``test_all_[name_of_scitype].py`` file that tests interface compliance of all estimators adhering to the scitype.
  For instance, ``forecasting/tests/test_all_forecasters.py``, or ``distances/tests/test_all_dist_kernels.py``.
 * Learning task specific tests should not duplicate package level, generic estimator tests in ``test_all_estimators.py``
@@ -133,7 +133,7 @@ be shallow or deep. In decreasing order of commonality:
 
 * When adding new estimators or utiliy functionality, it usually suffices to write only
 low level tests that check correctness of the estimator.
-These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization). 
+These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
 Adding a new estimator will typically *not* require changes to module level tests,
 as new estimators are automatically discovered and looped over by the existing tests.
 * Introducing or changing base class level interface points will typically require addition of module level tests,
@@ -247,7 +247,7 @@ Creating tests for a new estimator type
 
 If a module for a new estimator type is added, multiple things need to be created for module level tests:
 
-* scenarios to cover the specified base class interface behaviour, in 
+* scenarios to cover the specified base class interface behaviour, in
   ``utils/_testing/scenarios_[estimator_scitype]``.
   This can be modelled on ``utils/_testing/scenarios_forecasting``, or the other scenarios files.
 * a line in the dispatch dictionary in ``utils/_testing/scenarios_getter`` which links
