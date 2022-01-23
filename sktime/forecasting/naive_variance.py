@@ -15,17 +15,13 @@ from sktime.utils.validation.forecasting import check_alpha, check_fh
 
 
 class NaiveVariance(BaseForecaster):
-    """
-    Compute the prediction variance using the 'simple strategy'.
+    """Compute the prediction variance using a naive strategy.
 
-    Parameters
-    ----------
-    fh : int, list, np.array or ForecastingHorizon
-        Forecasting horizon
-    X : pd.DataFrame, optional (default=None)
-        Exogenous time series
-    cov : bool, optional (default=False)
-        Wether to return marginal variances or covariance matrices.
+    The strategy works as follows:
+    -train the internal forecaster on subsets of `self._y` (rolling window)
+    -computes the residuals of the rest of the time series for each subset
+    -for each point k in `fh`, computes the variance of the prediction
+        by averaging the squared residuals that are k steps ahead.
     """
 
     _tags = {
@@ -39,7 +35,7 @@ class NaiveVariance(BaseForecaster):
 
     def __init__(self, forecaster):
 
-        self.forecaster = forecaster
+        self.forecaster = clone(forecaster)
         super(NaiveVariance, self).__init__()
 
         tags_to_clone = [
@@ -55,19 +51,14 @@ class NaiveVariance(BaseForecaster):
     def _fit(self, y, X=None, fh=None):
         return self.forecaster.fit(y, X, fh)
 
-    # todo: implement this, mandatory
     def _predict(self, fh, X=None):
         return self.forecaster.predict(fh, X)
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
         """Compute/return prediction quantiles for a forecast.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and predict_interval
-
-        If alpha is iterable, multiple quantiles will be calculated.
-
-        Users can also implement _predict_interval if calling it makes this faster.
+        Uses normal distribution as predictive distribution to compute the
+        quantiles.
 
         Parameters
         ----------
@@ -87,28 +78,16 @@ class NaiveVariance(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        self.check_is_fitted()
-        alpha = check_alpha(alpha)
-
-        pred_var = self.predict_var(fh, X)
-
-        errors = []
-        for a in alpha:
-            z = _zscore(1 - a)
-            errors.append(pred_var * z)
 
         y_pred = self.predict(fh, X)
+        pred_var = self.predict_var(fh, X)
+
+        z_scores = norm.ppf(alpha)
+        errors = [pred_var * z for z in z_scores]
 
         pred_quantiles = pd.DataFrame()
         for a, error in zip(alpha, errors):
-            if a < 0.5:
-                pred_quantiles[a] = y_pred - error
-            else:
-                pred_quantiles[a] = y_pred + error
-
-        arrays = [len(alpha) * ["Quantiles"], alpha]
-        columns = pd.MultiIndex.from_tuples(list(zip(*arrays)))
-        pred_quantiles.columns = columns
+            pred_quantiles[a] = y_pred + error
 
         return pred_quantiles
 
@@ -125,68 +104,43 @@ class NaiveVariance(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         cov : bool, optional (default=False)
-            Wether to return marginal variances or covariance matrices.
+            If True, return the covariance matrix.
+            If False, return the marginal variance.
 
         Returns
         -------
-        pred_var : np.ndarray
-            if cov=False,
+        pred_var : 
+            if cov=False, pd.Series with index fh.
                 a vector of same length as fh with predictive marginal variances;
-            if cov=True,
+            if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-        self.forecaster.check_is_fitted()
 
-        fh_ = check_fh(fh)
-
-        n_timepoints = len(self._y)
-        residuals = []
-        for i in range(0, n_timepoints):
-            # a duplicate for rolling window fit/predict
+        residuals_matrix = pd.DataFrame(
+            columns=self._y.index[1:], index=self._y.index[1:])
+        for id in residuals_matrix.columns:
             forecaster = clone(self.forecaster)
 
-            try:
-                forecaster.fit(self._y[: i + 1])
-                y_hat = forecaster.predict(self._y.index, self._X)
-                residuals.append(y_hat - self._y)
-            except Exception:
-                # warn ?
-                pass
+            subset = self._y[:id]
+            forecaster.fit(subset)
 
-        if len(residuals) == 0:
-            # eiter raise an error or warn (not enough data)
-            pass
+            # predict_residuals not supported yet in many forecasters
+            y_true = self._y[id:]
+            y_hat = forecaster.predict(y_true.index, self._X)
 
-        residuals = np.array(residuals)
+            residuals_matrix[id] = y_true - y_hat
+
+        residuals_matrix = residuals_matrix.T
+        variance = [(np.diagonal(residuals_matrix, offset=offset) ** 2).mean()
+                    for offset in fh.to_relative(self.cutoff)]
 
         if cov:
-            # working on it
-            pass
+            pred_var = pd.DataFrame(np.diag(variance), index=fh.to_absolute(
+                self.cutoff), columns=fh.to_absolute(self.cutoff))
         else:
             pred_var = pd.Series(
-                [(np.diagonal(residuals, offset=offset) ** 2).mean() for offset in fh_],
-                index=fh_,
+                variance,
+                index=fh.to_absolute(self.cutoff),
             )
 
         return pred_var
-
-
-def _zscore(level: float, two_tailed: bool = True) -> float:
-    """Calculate a z-score from a confidence level.
-
-    Parameters
-    ----------
-    level : float
-        A confidence level, in the open interval (0, 1).
-    two_tailed : bool (default=True)
-        If True, return the two-tailed z score.
-
-    Returns
-    -------
-    z : float
-        The z score.
-    """
-    alpha = 1 - level
-    if two_tailed:
-        alpha /= 2
-    return -norm.ppf(alpha)
