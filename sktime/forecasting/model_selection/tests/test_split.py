@@ -246,7 +246,7 @@ def test_sliding_window_splitter_with_incompatible_initial_window_and_window_len
         initial_window=initial_window,
         start_with_window=True,
     )
-    match = "The `initial_window` and `window_length` units are incompatible"
+    match = "The `initial_window` and `window_length` types are incompatible"
     with pytest.raises(ValueError, match=match):
         _check_cv(cv, y)
 
