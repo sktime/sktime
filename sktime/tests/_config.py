@@ -132,24 +132,8 @@ EXCLUDE_ESTIMATORS = [
 ]
 
 
-# This is temporary until BaseObject is implemented
-DIST_KERNELS_IGNORE_TESTS = [
-    "test_fit_updates_state",
-    "_make_fit_args",
-    "test_fit_returns_self",
-    "test_raises_not_fitted_error",
-    "test_fit_idempotent",
-    "test_fit_does_not_overwrite_hyper_params",
-    "test_methods_do_not_change_state",
-    "test_persistence_via_pickle",
-]
-
-
 EXCLUDED_TESTS = {
     "ContractedShapeletTransform": ["test_fit_idempotent"],
-    "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
-    "AggrDist": DIST_KERNELS_IGNORE_TESTS,
-    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
     "StackingForecaster": ["test_predict_time_index_with_X"],
 }

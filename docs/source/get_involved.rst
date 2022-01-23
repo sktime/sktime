@@ -10,6 +10,8 @@ Get Involved
    get_involved/contributing
    get_involved/mentoring
    get_involved/meetups
+   get_involved/code_of_conduct
+   get_involved/governance
 
 sktime is a community-driven project and your help is extremely welcome.
 If you get stuck, please don’t hesitate to chat with us or raise an issue.
@@ -70,4 +72,30 @@ If you get stuck, please don’t hesitate to chat with us or raise an issue.
     .. link-button:: meetups
             :type: ref
             :text: Participate
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Code of Conduct
+    ^^^^^^^^^^^^^^^
+
+
+    +++
+
+    .. link-button:: code_of_conduct
+            :type: ref
+            :text: Code of Conduct
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Governance
+    ^^^^^^^^^^^^^^^
+
+
+    +++
+
+    .. link-button:: governance
+            :type: ref
+            :text: Governance
             :classes: btn-block btn-secondary stretched-link

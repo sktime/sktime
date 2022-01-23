@@ -24,6 +24,10 @@ from sklearn.utils.estimator_checks import (
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 
 from sktime.base import BaseEstimator
+from sktime.dists_kernels._base import (
+    BasePairwiseTransformer,
+    BasePairwiseTransformerPanel,
+)
 from sktime.exceptions import NotFittedError
 from sktime.registry import all_estimators
 from sktime.tests._config import (
@@ -463,6 +467,12 @@ def test_fit_returns_self(estimator_instance, scenario):
 
 def test_raises_not_fitted_error(estimator_instance, scenario):
     """Check that we raise appropriate error for unfitted estimators."""
+    # pairwise transformers are exempted from this test, since they have no fitting
+    PWTRAFOS = (BasePairwiseTransformer, BasePairwiseTransformerPanel)
+    excepted = isinstance(estimator_instance, PWTRAFOS)
+    if excepted:
+        return None
+
     # call methods without prior fitting and check that they raise our
     # NotFittedError
     for method in NON_STATE_CHANGING_METHODS:

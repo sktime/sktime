@@ -16,7 +16,6 @@ Development
    reviewer_guide
    enhancement_proposals
    roadmap
-   code_of_conduct
    governance
 
 .. panels::
@@ -76,19 +75,6 @@ Development
     .. link-button:: roadmap
             :type: ref
             :text: Roadmap
-            :classes: btn-block btn-secondary stretched-link
-
-    ---
-
-    Code of Conduct
-    ^^^^^^^^^^^^^^^
-
-
-    +++
-
-    .. link-button:: code_of_conduct
-            :type: ref
-            :text: Code of Conduct
             :classes: btn-block btn-secondary stretched-link
 
     ---
