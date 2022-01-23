@@ -154,6 +154,19 @@ Useful functionality to write tests:
 * data format checkers in ``datatypes``: ``check_is_mtype``, ``check_is_scitype``, ``check_raise``
 * miscellaneous utilities in ``utils``, especially in ``_testing``
 
+Escaping tests
+~~~~~~~~~~~~~~
+
+On occasion, it may make sense to escape individual estimators from individual tests.
+
+This can be done (currently, as of 0.9.0) in two ways:
+
+* adding the estimator or test/estimator combination to the ``EXCLUDED_TESTS`` or ``EXCLUDE_ESTIMATORS`` in the appropriate ``_config`` file.
+* adding a check condition in the ``is_excluded`` method used in ``pytest_generate_fixtures``, possibly only if the testing module supports this
+
+Escaping tests directly in the tests, e.g., via ``if isinstance(estimator_instance, MyClass)`` should be avoided where possible.
+
+
 Adding package or module level tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -178,6 +191,23 @@ One-off fixture variables can be added using ``pytest`` basic functionality.
 Fixtures used throughout module or package level tests should be added to the
 fixture generation process called by ``pytest_generate_tests``.
 
+This requires:
+* adding a function ``_generate_[variablename](test_name, **kwargs)``, as described below
+* assigning the function to ``generator_dict["variablename"]``
+* adding the new variable in the ``fixture_sequence`` list in ``pytest_generate_tests``
+
+The function ``_generate_[variablename](test_name, **kwargs)`` should return two objects:
+* a list of fixture to loop over, to substitute for ``variablename`` when appearing in a test signature
+* a list of names of equal length, i-th element used as a name for the i-th fixture in test logs
+
+The function has access to:
+* ``test_name``, the name of the test the variable is called in.
+This can be used to customize the list of fixtures for specific tests,
+although this is meant for generic behaviour mainly.
+One-off escapes and similar should be avoided here, and instead dealt with ``xfail`` and similar.
+* the value of the fixture variables that appear earlier in ``fixture_sequence``, in ``kwargs``.
+For instance, the value of ``estimator_instance``, if this is a variable used in the test.
+This can be used to make the list of fixtures for ``variablename`` dependent on the value of other fixtures variables
 
 
 Adding or extending scenarios
