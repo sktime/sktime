@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Test extraction of features across (shifted) windows."""
-
 __author__ = ["Daniel Bartling"]
 
 import pandas as pd

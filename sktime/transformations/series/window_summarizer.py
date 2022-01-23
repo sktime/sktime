@@ -10,7 +10,6 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.series import check_series
 
 # from sktime.utils.validation.panel import check_X
 # List of native pandas rolling window function.
@@ -91,6 +90,12 @@ class _LaggedWindowExtractor(_PanelToTabularTransformer):
     based on a provided dictionary of window summarizer, window shifts
     and window lengths.
     """
+
+    _tags = {
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "y_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
+        "X_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
+    }
 
     def __init__(
         self,
@@ -180,10 +185,6 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
 
         """
         # input checks
-
-        self.check_is_fitted()
-        # danbartl: currently check drops multiindex column names, therefore disabled
-        X = check_series(X)
 
         if isinstance(X.index, pd.MultiIndex):
             X_grouped = getattr(X.groupby("instances"), X.columns[0])
