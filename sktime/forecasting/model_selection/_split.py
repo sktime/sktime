@@ -791,6 +791,7 @@ class SingleWindowSplitter(BaseSplitter):
     """Single window splitter.
 
     Split time series once into a training and test set.
+    See more details on what to expect from this splitter in :class:`BaseSplitter`.
 
     Parameters
     ----------
@@ -826,6 +827,9 @@ class SingleWindowSplitter(BaseSplitter):
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
+        Since this splitter returns a single train/test split,
+        this number is trivially 1.
+
         Parameters
         ----------
         y : pd.Series or pd.Index, optional (default=None)
@@ -840,6 +844,10 @@ class SingleWindowSplitter(BaseSplitter):
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points.
+
+        Since this splitter returns a single train/test split,
+        this method returns a single one-dimensional array
+        with the last train set index.
 
         Parameters
         ----------
