@@ -621,3 +621,7 @@ def _get_err_msg(estimator):
         f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
         f"{VALID_ESTIMATOR_TYPES}"
     )
+
+def _abcd():
+
+    return 42
