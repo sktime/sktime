@@ -184,47 +184,42 @@ def _check_window_lengths(
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
-    error_msg = (
+    error_msg_for_incompatible_window_length = (
         f"The `window_length` and the forecasting horizon are incompatible "
         f"with the length of `y`. Found `window_length`={window_length}, "
         f"`max(fh)`={fh_max}, but len(y)={n_timepoints}. "
         f"It is required that the window length plus maximum forecast horizon "
-        f"is smaller than the time series `y` itself."
+        f"is smaller than the length of the time series `y` itself."
     )
     if is_timedelta_or_date_offset(x=window_length):
         if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
-            raise ValueError(error_msg)
+            raise ValueError(error_msg_for_incompatible_window_length)
     else:
         if window_length + fh_max > n_timepoints:
-            raise ValueError(error_msg)
+            raise ValueError(error_msg_for_incompatible_window_length)
 
+    error_msg_for_incompatible_initial_window = (
+        f"The `initial_window` and the forecasting horizon are incompatible "
+        f"with the length of `y`. Found `initial_window`={initial_window}, "
+        f"`max(fh)`={fh_max}, but len(y)={n_timepoints}. "
+        f"It is required that the initial window plus maximum forecast horizon "
+        f"is smaller than the length of the time series `y` itself."
+    )
+    error_msg_for_incompatible_types = (
+        "The `initial_window` and `window_length` types are incompatible. "
+        "They should be either all timedelta or all int."
+    )
     if initial_window is not None:
         if is_timedelta_or_date_offset(x=initial_window):
             if y.get_loc(min(y[-1], y[0] + initial_window)) + fh_max > n_timepoints:
-                raise ValueError(
-                    f"The `initial_window` and the forecasting horizon are "
-                    f"incompatible "
-                    f"with the length of `y`. Found `initial_window`={initial_window}, "
-                    f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
-                )
+                raise ValueError(error_msg_for_incompatible_initial_window)
             if not is_timedelta_or_date_offset(x=window_length):
-                raise ValueError(
-                    "The `initial_window` and `window_length` units are incompatible. "
-                    "They are pd.Timedelta and int, respectively."
-                )
+                raise ValueError(error_msg_for_incompatible_types)
         else:
             if initial_window + fh_max > n_timepoints:
-                raise ValueError(
-                    f"The `initial_window` and the forecasting horizon are "
-                    f"incompatible "
-                    f"with the length of `y`. Found `initial_window`={initial_window}, "
-                    f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
-                )
+                raise ValueError(error_msg_for_incompatible_initial_window)
             if is_timedelta_or_date_offset(x=window_length):
-                raise ValueError(
-                    "The `initial_window` and `window_length` units are incompatible. "
-                    "They are int and pd.Timedelta, respectively."
-                )
+                raise ValueError(error_msg_for_incompatible_types)
 
 
 class BaseSplitter:
