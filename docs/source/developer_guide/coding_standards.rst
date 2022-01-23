@@ -52,22 +52,17 @@ other packages as soft dependencies when feasible.
    use a module that requires a soft dependency.
 
 If you add a new dependency or change the version of an existing one,
-you need to update the following files:
+you need to update the following file:
 
--  `sktime/setup.py <https://github.com/alan-turing-institute/sktime/blob/main/setup.py>`__
-   for package installation and minimum version requirements,
--  `build_tools/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/requirements.txt>`__
-   for continuous integration and distribution,
--  `docs/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt>`__
-   for building the documentation,
--  `.binder/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/.binder/requirements.txt>`__
-   for launching notebooks on Binder.
+-  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__
+   following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention all dependencies
+   including build time dependencies and optional dependencies are specified in this file.
 
 If a user is missing a soft dependency, we raise a user-friendly error message.
 This is handled through our ``_check_soft_dependencies`` defined
 `here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
 
-We use contiunous integration tests to check if all soft
+We use continuous integration tests to check if all soft
 dependencies are properly isolated to specific modules.
 If you add a new soft dependency, make sure to add it
 `here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__
