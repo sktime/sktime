@@ -33,7 +33,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     max_iter: int, defaults = 30
         Maximum number of iterations of the k-means algorithm for a single
         run.
-    tol: float, defaults = 1e-4
+    tol: float, defaults = 1e-6
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
@@ -64,7 +64,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         metric: Union[str, Callable] = "euclidean",
         n_init: int = 10,
         max_iter: int = 300,
-        tol: float = 1e-4,
+        tol: float = 1e-6,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
     ):
