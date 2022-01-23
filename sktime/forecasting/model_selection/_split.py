@@ -184,20 +184,19 @@ def _check_window_lengths(
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
+    error_msg = (
+        f"The `window_length` and the forecasting horizon are incompatible "
+        f"with the length of `y`. Found `window_length`={window_length}, "
+        f"`max(fh)`={fh_max}, but len(y)={n_timepoints}. "
+        f"It is required that the window length plus maximum forecast horizon "
+        f"is smaller than the time series `y` itself."
+    )
     if is_timedelta_or_date_offset(x=window_length):
         if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
-            raise ValueError(
-                f"The `window_length` and the forecasting horizon are incompatible "
-                f"with the length of `y`. Found `window_length`={window_length}, "
-                f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
-            )
+            raise ValueError(error_msg)
     else:
         if window_length + fh_max > n_timepoints:
-            raise ValueError(
-                f"The `window_length` and the forecasting horizon are incompatible "
-                f"with the length of `y`. Found `window_length`={window_length}, "
-                f"`max(fh)`={fh_max}, but len(y)={n_timepoints}."
-            )
+            raise ValueError(error_msg)
 
     if initial_window is not None:
         if is_timedelta_or_date_offset(x=initial_window):
