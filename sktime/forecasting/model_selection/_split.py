@@ -223,7 +223,41 @@ def _check_window_lengths(
 
 
 class BaseSplitter:
-    """Base class for temporal cross-validation splitters.
+    r"""Base class for temporal cross-validation splitters.
+
+    The purpose of this implementation is to fill the gap relative to
+    `sklearn.model_selection.TimeSeriesSplit
+    <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html>`__
+    which implements only expanding window split strategy, and only integer based.
+
+    The most important method in this class is `.split(y)` which generates indices
+    of non-overlapping train/test splits of a time series `y`.
+    The length of the train split is determined by `window_length`.
+    The length of the test split is determined by forecasting horizon `fh`.
+
+    In general, splitting a time series :math:`y=(y_1,\ldots,y_T)`
+    into train/test splits means separating it into two non-overlapping series:
+    train :math:`(y_{t(1)},\ldots,y_{t(k)})`
+    and test :math:`(y_{t(k+1)},\ldots,y_{t(k+l)})`,
+    where :math:`k,l` are all integers greater than zero,
+    and :math:`t(k)<t(k+1)` are ordered time indices.
+    The exact set of indices depends on a concrete splitter.
+    Method `.split` is used to generate a pair of index sets:
+    train :math:`\{t(1),\ldots,t(k)\}` and test :math:`\{t(k+1),\ldots,t(k+l)\}`.
+
+    In case `window_length` and `fh` are integer valued,
+    they translate into :math:`k` and :math:`l`, respectively.
+
+    In case `window_length` and `fh` can be interpreted
+    as time interval length (time deltas), then they correspond to
+    :math:`t(k)-t(1)` and :math:`t(k+l)-t(k+1)`, respectively.
+
+    Method `.get_n_splits` returns the number of splitting iterations.
+    This number depends on a concrete splitting strategy and splitter parameters.
+
+    Method `.get_cutoffs` returns the cutoff points between each train/test split.
+    Using the above notation, for a single split it corresponds
+    to the last index of the training window, :math:`t(k)`
 
     Parameters
     ----------
