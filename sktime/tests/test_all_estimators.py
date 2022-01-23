@@ -622,6 +622,7 @@ def _get_err_msg(estimator):
         f"{VALID_ESTIMATOR_TYPES}"
     )
 
+
 def _abcd():
 
     return 42
