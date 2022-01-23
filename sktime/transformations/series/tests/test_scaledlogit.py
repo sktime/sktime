@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """ScaledLogit transform unit tests."""
+
+__author__ = ["ltsaprounis"]
+
 import numpy as np
 import pytest
 from pandas.testing import assert_series_equal
