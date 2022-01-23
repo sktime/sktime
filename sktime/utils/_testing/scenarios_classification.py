@@ -21,7 +21,7 @@ RAND_SEED = 42
 class ClassifierTestScenario(TestScenario, BaseObject):
     """Generic test scenario for classifiers."""
 
-    def get_args(self, key, obj=None, deepcopy_args=False):
+    def get_args(self, key, obj=None, deepcopy_args=True):
         """Return args for key. Can be overridden for dynamic arg generation.
 
         If overridden, must not have any side effects on self.args
