@@ -377,9 +377,17 @@ class BaseSplitter:
 
 
 class CutoffSplitter(BaseSplitter):
-    """Cutoff window splitter.
+    r"""Cutoff window splitter.
 
     Split time series at given cutoff points into a fixed-length training and test set.
+
+    Here the user is expected to provide a set of cutoffs (train set endpoints),
+    which using the notation provided in :class:`BaseSplitter`,
+    can be written as :math:`\{t(k_1),\ldots,t(k_n)\}`.
+    The number of splits returned by `.get_n_splits`
+    is then trivially equal to :math:`n`.
+    The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
+    :math:`\{t(k_1),\ldots,t(k_n)\}` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
@@ -443,6 +451,9 @@ class CutoffSplitter(BaseSplitter):
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
+        For this splitter the number is trivially equal to
+        the number of cutoffs given during instance initialization.
+
         Parameters
         ----------
         y : pd.Series or pd.Index, optional (default=None)
@@ -457,6 +468,9 @@ class CutoffSplitter(BaseSplitter):
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
         """Return the cutoff points.
+
+        This method trivially returns the cutoffs given during instance initialization.
+        The only change is that the set of cutoffs is sorted from smallest to largest.
 
         Parameters
         ----------
