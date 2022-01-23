@@ -126,8 +126,6 @@ Paired (or second-degree) transformations:
 | ROCKET Classifier | classification.kernel_based._rocket_classifier.ROCKETClassifier | @MatthewMiddlehurst  | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Arsenal Classifier | classification.kernel_based._arsenal.Arsenal | @MatthewMiddlehurst  | [Middlehurst et al (2020) - HIVE-COTE 2.0: a new meta ensemble for time series classification](https://arxiv.org/abs/2104.07551) |
 | Shapelet Transform Classifier (STC) | classification.shapelet_based._stc.ShapeletTransformClassifier | @TonyBagnall | [Hills et al (2014) - Classification of time series by shapelet transformation](https://ieeexplore.ieee.org/document/7837946) |
-| Mr-SEQL | classification.shapelet_based.mrseql.mrseql.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
-
 
 
 ### Multivariate time series classifiers
