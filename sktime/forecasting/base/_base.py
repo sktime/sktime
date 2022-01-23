@@ -328,6 +328,47 @@ class BaseForecaster(BaseEstimator):
             fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
         )
 
+    def predict_var(self, fh=None, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.ndarray or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
+            Exogeneous time series to predict from
+            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+        cov : bool, optional (default=False)
+            If True, compute the covariance matrix.
+            If False, returns the variance of the forecast.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame
+            Prediction variance where row indices (and in the case of cov=True, 
+            column indices) are those of fh.
+        """
+        # handle inputs
+
+        self.check_is_fitted()
+        fh = self._check_fh(fh)
+
+        # input check and conversion for X
+        X_inner = self._check_X(X=X)
+
+        variance = self._predict_var(fh=fh, X=X_inner, cov=cov)
+        return variance
+
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 
