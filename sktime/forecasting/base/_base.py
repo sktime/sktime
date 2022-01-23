@@ -355,7 +355,7 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         pred_var : pd.DataFrame
-            Prediction variance where row indices (and in the case of cov=True, 
+            Prediction variance where row indices (and in the case of cov=True,
             column indices) are those of fh.
         """
         # handle inputs

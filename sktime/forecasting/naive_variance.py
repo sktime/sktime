@@ -11,7 +11,6 @@ from scipy.stats import norm
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation.forecasting import check_alpha, check_fh
 
 
 class NaiveVariance(BaseForecaster):
@@ -78,7 +77,6 @@ class NaiveVariance(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-
         y_pred = self.predict(fh, X)
         pred_var = self.predict_var(fh, X)
 
@@ -92,8 +90,7 @@ class NaiveVariance(BaseForecaster):
         return pred_quantiles
 
     def _predict_var(self, fh, X=None, cov=False):
-        """
-        Compute/return prediction variance for a forecast.
+        """Compute/return prediction variance for a forecast.
 
         Must be run *after* the forecaster has been fitted.
 
@@ -109,15 +106,15 @@ class NaiveVariance(BaseForecaster):
 
         Returns
         -------
-        pred_var : 
+        pred_var :
             if cov=False, pd.Series with index fh.
                 a vector of same length as fh with predictive marginal variances;
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-
         residuals_matrix = pd.DataFrame(
-            columns=self._y.index[1:], index=self._y.index[1:])
+            columns=self._y.index[1:], index=self._y.index[1:]
+        )
         for id in residuals_matrix.columns:
             forecaster = clone(self.forecaster)
 
@@ -131,12 +128,17 @@ class NaiveVariance(BaseForecaster):
             residuals_matrix[id] = y_true - y_hat
 
         residuals_matrix = residuals_matrix.T
-        variance = [(np.diagonal(residuals_matrix, offset=offset) ** 2).mean()
-                    for offset in fh.to_relative(self.cutoff)]
+        variance = [
+            (np.diagonal(residuals_matrix, offset=offset) ** 2).mean()
+            for offset in fh.to_relative(self.cutoff)
+        ]
 
         if cov:
-            pred_var = pd.DataFrame(np.diag(variance), index=fh.to_absolute(
-                self.cutoff), columns=fh.to_absolute(self.cutoff))
+            pred_var = pd.DataFrame(
+                np.diag(variance),
+                index=fh.to_absolute(self.cutoff),
+                columns=fh.to_absolute(self.cutoff),
+            )
         else:
             pred_var = pd.Series(
                 variance,
