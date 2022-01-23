@@ -82,14 +82,45 @@ In ``test_all_estimators``, this loops over all estimators.
 * ``scenario``: test scenarios, applicable to ``estimator`` or ``estimator_instance``.
    The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
 
-
 Scenarios
 ~~~~~~~~~
 
 The ``scenario`` fixtures encode arguments for method calls, and a sequence for method calls.
 
-An example scenario specification, from ``utils/_testing/scenarios_forecaster``
+An example scenario specification, from ``utils/_testing/scenarios_forecasting``:
 
+.. code-block::
+
+   class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
+      """Fit/predict only, univariate y, no X, no fh in predict."""
+
+      _tags = {"univariate_y": True, "fh_passed_in_fit": False}
+
+      args = {
+         "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED)},
+         "predict": {"fh": 1},
+      }
+      default_method_sequence = ["fit", "predict"]
+
+The scenario ``ForecasterFitPredictUnivariateNoXLateFh`` encodes instructions
+applied to an ``estimator_instance``, via instances ``scenario``.
+A call ``result = scenario.run(estimator_instance)`` will:
+
+1. first, call ``estimator_instance.fit(y=_make_series(n_timepoints=20, random_state=RAND_SEED))``
+2. then, call ``estimator_instance.predict(fh=1)`` and return the  output too ``result``.
+
+The abstraction of "scenario" allows to easily specify multiple argument combinations across multiple methods.
+
+The method ``run`` also has arguments that allow to override the method sequence, e.g.,
+run them in a different order, or only a subset thereof.
+
+Scenarios also provide a method ``scenario.is_applicable(estimator)``, which returns a boolean, whether
+``scenario`` is applicable to ``estimator``. For instance, scenarios with univariate data are not applicable
+to multivariate forecasters, and will cause exceptions in a ``fit`` method call.
+Non-applicable scenarios can be filtered out in positive tests, and filtered in in negative tests.
+As a default, the ``sktime`` implemented ``pytest_generate_tests`` only pass applicable scenarios.
+
+For further details on scenarios, inspect the docstring of ``BaseScenario``.
 
 Extending the testing module
 ----------------------------
