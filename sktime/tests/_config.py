@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+from contrib.shapelets import ContractedShapeletTransform, ShapeletTransform
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from pyod.models.knn import KNN
 from sklearn.ensemble import RandomForestClassifier
@@ -44,7 +45,6 @@ from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
     RandomIntervalSpectralEnsemble,
-    RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
@@ -101,10 +101,6 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.shapelets import (
-    ContractedShapeletTransform,
-    ShapeletTransform,
-)
 from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.panel.tsfresh import (
@@ -327,7 +323,6 @@ ESTIMATOR_TEST_PARAMS = {
         "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
-    RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     RandomIntervalSpectralEnsemble: {
         "n_estimators": 3,
         "acf_lag": 10,
