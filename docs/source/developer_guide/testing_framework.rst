@@ -14,11 +14,11 @@ Test module architecture
 
 ``sktime`` testing happens on three layers, roughly corresponding to the inheritance layers of estimators.
 
-* testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in
+* "package level": testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in
 ``tests/test_all_estimators.py``
-* testing interface compliance of concrete estimators with their scitype base class, for instance
+* "module level": testing interface compliance of concrete estimators with their scitype base class, for instance
 ``forecasting/tests/test_all_forecasters.py``
-* testing individual functionality of estimators or other code, in individual files in ``tests`` folders
+* "low level": testing individual functionality of estimators or other code, in individual files in ``tests`` folders
 
 Module conventions are as follows:
 
@@ -27,10 +27,10 @@ Sub-modules may also contain ``tests`` folders.
 * ``tests`` folders may contain ``_config.py`` files to collect test configuration settings for that module
 * generic utilities for tests are located in the module ``utils._testing``.
  Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
-* each test module corresponding to a learning task and estimator scitype should
- contain a test ``test_all_[name_of_scitype].py`` file that tests interface compliance of all estimators adhering to the scitype.
+* each test module corresponding to a learning task and estimator scitype should contain 
+module level tests in a test ``test_all_[name_of_scitype].py`` file that tests interface compliance of all estimators adhering to the scitype.
  For instance, ``forecasting/tests/test_all_forecasters.py``, or ``distances/tests/test_all_dist_kernels.py``.
-* Learning task specific tests should not duplicate generic estimator tests in ``test_all_estimators.py``
+* Learning task specific tests should not duplicate package level, generic estimator tests in ``test_all_estimators.py``
 
 Test code architecture
 ----------------------
@@ -125,13 +125,63 @@ For further details on scenarios, inspect the docstring of ``BaseScenario``.
 Extending the testing module
 ----------------------------
 
+This section explains how to extend the testing module.
+Depending on the primary change that is tested, the changes to the testing module will
+be shallow or deep. In decreasing order of commonality:
 
-Adding tests
-~~~~~~~~~~~~
+* When adding new estimators or utiliy functionality, it usually suffices to write only
+low level tests that check correctness of the estimator.
+These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization). 
+Adding a new estimator will typically *not* require changes to module level tests,
+as new estimators are automatically discovered and looped over by the existing tests.
+* Introducing or changing base class level interface points will typically require addition of module level tests,
+and addition of, or modification to scenarios with functionality specific to these interface points.
+Rarely, this may require changes package level tests.
+* Major interface changes or addition of modules may require writing of entire test suites,
+and changes or additions to package level tests.
+
+Adding low level tests
+~~~~~~~~~~~~~~~~~~~~~~
+
+Low level tests are "free-form" and should follow best ``pytest`` practice.
+``pytest`` tests should be located in the appropriate ``tests`` folder of the module where a change is made.
+Examples should be located in the docstring of the class or function added.
+
+For an added estimator of name ``estimator_name``, the test file should be called ``test_estimator_name.py``.
+
+Useful functionality to write tests:
+* example fixture generation, via ``datatypes.get_examples``
+* data format checkers in ``datatypes``: ``check_is_mtype``, ``check_is_scitype``, ``check_raise``
+* miscellaneous utilities in ``utils``, especially in ``_testing``
+
+Adding package or module level tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Module level tests use ``pytest_generate_tests`` to define fixtures.
+
+The available fixtures vary per module, and are listed in the docstring of ``pytest_generate_tests``.
+
+A new test should use these fixtures, if possible, but also can add new fixtures via ``pytest`` basic fixture functionality.
+
+If new fixture variables are to be used throughout the module, or depend on existing fixtures,
+instructions in the next section should be followed.
+
+Where possible, scenarios should be used to simulate generic method calls (see above),
+instead of creating and passing arguments directly. Scenarios will ensure consistent coverage of input argument cases.
 
 
-Adding fixtures
-~~~~~~~~~~~~~~~
+Adding fixture variables
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Adding scenarios
-~~~~~~~~~~~~~~~~
+One-off fixture variables can be added using ``pytest`` basic functionality.
+
+Fixtures used throughout module or package level tests should be added to the
+fixture generation process called by ``pytest_generate_tests``.
+
+
+
+Adding or extending scenarios
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Creating tests for a new estimator type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
