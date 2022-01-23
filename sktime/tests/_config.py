@@ -45,7 +45,6 @@ from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
     RandomIntervalSpectralEnsemble,
-    RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
@@ -324,7 +323,6 @@ ESTIMATOR_TEST_PARAMS = {
         "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
-    RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     RandomIntervalSpectralEnsemble: {
         "n_estimators": 3,
         "acf_lag": 10,
