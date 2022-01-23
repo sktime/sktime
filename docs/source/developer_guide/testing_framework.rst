@@ -74,13 +74,21 @@ since inputs to ``fit`` of a classifier will differ to an input to ``fit`` of a 
 Parameterized fixtures
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Currently, the ``sktime`` testing framework parameterizes the following fixtures:
+.. _pytestfixtparam: https://docs.pytest.org/en/6.2.x/parametrize.html
+
+``sktime`` uses ``pytest`` fixture parameterization to execute tests in a loop over fixtures,
+for instance running all interface compatibility tests for all estimators.
+See the `pytest documentation on fixture parameterization <pytestfixtparam>`_ for an explanation of fixture parameterization.
+
+Currently, the ``sktime`` testing framework parameterizes the following fixtures in module level tests:
 
 * ``estimator``: all estimator classes, inheriting from the base class of the given module.
 In ``test_all_estimators``, this loops over all estimators.
 * ``estimator_instance``: all estimator test instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
 * ``scenario``: test scenarios, applicable to ``estimator`` or ``estimator_instance``.
    The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
+
+Further parameterization may happen for individual tests, the scope is usually explained in the test docstrings.
 
 Scenarios
 ~~~~~~~~~
