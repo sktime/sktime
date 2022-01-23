@@ -15,9 +15,12 @@ from sktime.transformations.base import BaseTransformer
 class ScaledLogitTransformer(BaseTransformer):
     r"""Scaled logit transform.
 
-    Applies a scaled logit transform to the data.
     Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
+    If both lower_bound and upper_bound are not None, applies a scaled logit transform
+    to the data. Otherwise, it applies a log transform variation that ensures the
+    resulting forecast is bounded as specified. The transform is applied to all
+    scalar elements of the input array individually.
 
     Parameters
     ----------
@@ -102,11 +105,10 @@ class ScaledLogitTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
+        X : 2D np.ndarray
             Data to be transformed
         y : Series or Panel of mtype y_inner_mtype, default=None
-            Ignored argument for interface mobility
+            Ignored argument for interface compatibility
 
         Returns
         -------
@@ -138,11 +140,10 @@ class ScaledLogitTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
+        X : 2D np.ndarray
             Data to be inverse transformed
         y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Ignored argument for interface mobility
+            Ignored argument for interface compatibility
 
         Returns
         -------
