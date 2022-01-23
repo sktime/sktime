@@ -64,7 +64,7 @@ class ScaledLogitTransformer(BaseTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.scaledlogit import ScaledLogitTransformer
     >>> from sktime.forecasting.ets import AutoETS
-    >>> from sktime.forecasting. compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> y = load_airline()
     >>> fcaster = TransformedTargetForecaster([
     >>>     ("scaled_logit", ScaledLogitTransformer(0, 650)),
