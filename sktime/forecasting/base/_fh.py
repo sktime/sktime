@@ -7,7 +7,7 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Optional, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -141,8 +141,8 @@ class ForecastingHorizon:
 
     def __new__(
         cls,
-        values: Optional[Union[VALID_FORECASTING_HORIZON_TYPES]] = None,
-        is_relative: Optional[bool] = None,
+        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
+        is_relative: bool = None,
     ):
         """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
@@ -157,7 +157,7 @@ class ForecastingHorizon:
 
     def __init__(
         self,
-        values: Optional[Union[VALID_FORECASTING_HORIZON_TYPES]] = None,
+        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
         is_relative: bool = True,
     ):
         if is_relative is not None and not isinstance(is_relative, bool):
@@ -188,8 +188,8 @@ class ForecastingHorizon:
 
     def _new(
         self,
-        values: Optional[Union[VALID_FORECASTING_HORIZON_TYPES]] = None,
-        is_relative: Optional[bool] = None,
+        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
+        is_relative: bool = None,
     ):
         """Construct new ForecastingHorizon based on current object.
 
