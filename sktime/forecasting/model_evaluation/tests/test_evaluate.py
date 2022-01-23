@@ -1,7 +1,11 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Testt evaluate."""
+"""Tests for model evaluation module.
+
+In particular, function `evaluate`, that performs time series
+cross-validation, is tested with various configurations for correct output.
+"""
 
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = [
