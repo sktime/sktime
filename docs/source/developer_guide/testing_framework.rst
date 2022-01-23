@@ -120,7 +120,7 @@ to multivariate forecasters, and will cause exceptions in a ``fit`` method call.
 Non-applicable scenarios can be filtered out in positive tests, and filtered in in negative tests.
 As a default, the ``sktime`` implemented ``pytest_generate_tests`` only pass applicable scenarios.
 
-Further, scenarios inherit from ``BaseObject``, which allows to ue the ``sktime`` tag system with scenarios.
+Further, scenarios inherit from ``BaseObject``, which allows to use the ``sktime`` tag system with scenarios.
 
 For further details on scenarios, inspect the docstring of ``BaseScenario``.
 
