@@ -12,13 +12,12 @@ __all__ = [
 
 
 import random
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from scipy.stats import norm
-from sklearn.model_selection import StratifiedShuffleSplit
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 
 class _AugmenterTags:
@@ -42,8 +41,8 @@ class WhiteNoiseAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
     Parameters
     ----------
     param: statistic function or integer or float (default: 1.0)
-        Standard deviation (std) of the gaussian noise. If a statistic function is given,
-        the std of the gaussian noise will be calculated from X.
+        Standard deviation (std) of the gaussian noise. If a statistic function is
+        given, the std of the gaussian noise will be calculated from X.
     random_state: int
     """
 
@@ -61,7 +60,7 @@ class WhiteNoiseAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
             scale = self.scale
         else:
             raise TypeError(
-                f"Type of parameter 'scale' must be a float value or a distribution."
+                "Type of parameter 'scale' must be a float value or a distribution."
             )
         return X + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
 

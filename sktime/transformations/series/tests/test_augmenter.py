@@ -35,13 +35,14 @@ def test_loaded_data():
 
 
 # Test WhiteNoiseAugmenter
-expected_checksums_white_noise = [-3.01141, 12.565567, 5.86128]
+expected_checksums_white_noise = [7.373241, -3.01141, 12.565567, 5.86128]
 
 
 @pytest.mark.parametrize(
     "parameter",
     [
         (
+            {},
             {"scale": 2},
             {"scale": 0.5},
             {"scale": np.std},
@@ -117,5 +118,4 @@ def test_random_samples(parameter):
         Xt = augmenter.fit_transform(X)
         checksum = _calc_checksum(Xt)
         checksums.append(checksum)
-    print(checksums)
     assert checksums == expected_checksums_random_samples
