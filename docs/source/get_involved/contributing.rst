@@ -111,9 +111,6 @@ and people who are looking to learn and develop their skills.
             :text: Reporting Bugs
             :classes: btn-block btn-secondary stretched-link
 
-
-
-
 Acknowledging contributions
 ---------------------------
 
