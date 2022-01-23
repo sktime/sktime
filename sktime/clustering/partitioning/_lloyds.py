@@ -217,8 +217,8 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "kmeans++",
-        metric: Union[str, Callable] = "dtw",
+        init_algorithm: Union[str, Callable] = "random",
+        metric: Union[str, Callable] = "euclidean",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
