@@ -245,12 +245,15 @@ and inspect any of the scenarios base classes, e.g., ``ForecasterTestScenario``.
 Creating tests for a new estimator type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If a module for a new estimator type is added, multiple things should be added in testing modules:
+If a module for a new estimator type is added, multiple things need to be created for module level tests:
 
-* a ``tests/test_all_[estimator_scitype].py``, from the root of the module.
 * scenarios to cover the specified base class interface behaviour, in 
   ``utils/_testing/scenarios_[estimator_scitype]``.
   This can be modelled on ``utils/_testing/scenarios_forecasting``, or the other scenarios files.
+* a line in the dispatch dictionary in ``utils/_testing/scenarios_getter`` which links
+  the scenarios to the scenario retrieval function, e.g., ``scenarios["forecaster"] = scenarios_forecasting``
+* a ``tests/test_all_[estimator_scitype].py``, from the root of the module.
 * in this file, appropriate fixture generation via ``pytest_generate_fixtures``.
   This can be modelled off ``test_all_estimators`` or ``test_all_forecasters``.
-* and, a collection of tests for interface compliance with the base class of the 
+* and, a collection of tests for interface compliance with the base class of the estimator type.
+  The tests should cover positive cases, as well as testing raising of informative error message in negative cases.
