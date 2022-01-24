@@ -213,7 +213,7 @@ class _TbatsAdapter(BaseForecaster):
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
 
-        Note: In-sample forecasts are set to NaNs, ince TBATS does not support it.
+        Note: In-sample forecasts are set to NaNs, since TBATS does not support it.
 
         State required:
             Requires state to be "fitted".
@@ -227,7 +227,7 @@ class _TbatsAdapter(BaseForecaster):
         fh : int, list, np.array or ForecastingHorizon
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+            Ignored, passed for interface compatibility
         coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
