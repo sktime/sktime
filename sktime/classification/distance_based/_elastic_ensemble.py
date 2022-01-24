@@ -7,7 +7,6 @@ An ensemble of elastic nearest neighbour classifiers.
 __author__ = ["jasonlines"]
 __all__ = ["ElasticEnsemble"]
 
-import os
 import time
 from itertools import product
 
@@ -21,7 +20,6 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     cross_val_predict,
 )
-from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
@@ -71,8 +69,6 @@ class ElasticEnsemble(BaseClassifier):
       A list storing all classifiers
     train_accs_by_classifier : ndarray
       Store the train accuracies of the classifiers
-    train_preds_by_classifier : list
-      Store the train predictions of each classifier
 
     Notes
     -----
@@ -109,6 +105,7 @@ class ElasticEnsemble(BaseClassifier):
         n_jobs=1,
         random_state=0,
         verbose=0,
+        majority_vote=False,
     ):
         if distance_measures == "all":
             self.distance_measures = [
@@ -125,9 +122,9 @@ class ElasticEnsemble(BaseClassifier):
         self.proportion_train_in_param_finding = proportion_train_in_param_finding
         self.proportion_of_param_options = proportion_of_param_options
         self.proportion_train_for_test = proportion_train_for_test
+        self.majority_vote = (majority_vote,)
         self.estimators_ = None
         self.train_accs_by_classifier = None
-        self.train_preds_by_classifier = None
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -176,24 +173,20 @@ class ElasticEnsemble(BaseClassifier):
             X = np.array([np.asarray([x]).reshape(1, len(x)) for x in X.iloc[:, 0]])
 
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
-        self.train_preds_by_classifier = [None] * len(self.distance_measures)
         self.estimators_ = [None] * len(self.distance_measures)
         rand = np.random.RandomState(self.random_state)
 
         # The default EE uses all training instances for setting parameters,
-        # and 100 parameter options per
-        # elastic measure. The prop_train_in_param_finding and
-        # prop_of_param_options attributes of this class
-        # can be used to control this however, using less cases to optimise
-        # parameters on the training data
-        # and/or using less parameter options.
+        # and 100 parameter options per elastic measure. The
+        # prop_train_in_param_finding and prop_of_param_options attributes of this class
+        # can be used to control this however, using fewer cases to optimise
+        # parameters on the training data and/or using less parameter options.
         #
-        # For using less training instances the appropriate number of cases
-        # must be sampled from the data.
-        # This is achieved through the use of a deterministic
+        # For using fewer training instances the appropriate number of cases must be
+        # sampled from the data. This is achieved through the use of a deterministic
         # StratifiedShuffleSplit
         #
-        # For using less parameter options a RandomizedSearchCV is used in
+        # For using fewer parameter options a RandomizedSearchCV is used in
         # place of a GridSearchCV
 
         param_train_x = None
@@ -315,22 +308,25 @@ class ElasticEnsemble(BaseClassifier):
                 )
                 grid.fit(param_train_to_use, param_train_y)
 
+            if self.majority_vote:
+                acc = 1
             # once the best parameter option has been estimated on the
             # training data, perform a final pass with this parameter option
             # to get the individual predictions with cross_cal_predict (
             # Note: optimisation potentially possible here if a GridSearchCV
             # was used previously. TO-DO: determine how to extract
             # predictions for the best param option from GridSearchCV)
-            best_model = KNeighborsTimeSeriesClassifier(
-                n_neighbors=1,
-                distance=this_measure,
-                distance_params=grid.best_params_["distance_params"],
-                n_jobs=self._threads_to_use,
-            )
-            preds = cross_val_predict(
-                best_model, full_train_to_use, y, cv=LeaveOneOut()
-            )
-            acc = accuracy_score(y, preds)
+            else:
+                best_model = KNeighborsTimeSeriesClassifier(
+                    n_neighbors=1,
+                    distance=this_measure,
+                    distance_params=grid.best_params_["distance_params"],
+                    n_jobs=self._threads_to_use,
+                )
+                preds = cross_val_predict(
+                    best_model, full_train_to_use, y, cv=LeaveOneOut()
+                )
+                acc = accuracy_score(y, preds)
 
             if self.verbose > 0:
                 print(  # noqa: T001
@@ -356,7 +352,6 @@ class ElasticEnsemble(BaseClassifier):
             self.constituent_build_times.append(str(end_build_time - start_build_time))
             self.estimators_[dm] = best_model
             self.train_accs_by_classifier[dm] = acc
-            self.train_preds_by_classifier[dm] = preds
 
         return self
 
@@ -435,94 +430,12 @@ class ElasticEnsemble(BaseClassifier):
         else:
             return preds, probas
 
-    def get_train_probs(self, X=None):
-        """Find and returns the probability estimates for data X."""
-        num_cases = len(self.train_preds_by_classifier[0])
-        num_classes = len(self.classes_)
-        num_estimators = len(self.estimators_)
-
-        probs = np.zeros((num_cases, num_classes))
-
-        map = LabelEncoder().fit(self.classes_)
-        weight_sum = np.sum(self.train_accs_by_classifier)
-
-        for i in range(num_cases):
-            for e in range(num_estimators):
-                pred_class = map.transform([self.train_preds_by_classifier[e][i]])[0]
-                probs[i][pred_class] += self.train_accs_by_classifier[e] / weight_sum
-        return probs
-
     def get_metric_params(self):
         """Return the parameters for the distance metrics used."""
         return {
             self.distance_measures[dm].__name__: str(self.estimators_[dm].metric_params)
             for dm in range(len(self.estimators_))
         }
-
-    def write_constituent_train_files(self, output_file_path, dataset_name, actual_y):
-        """Write the train information to file in UEA format."""
-        for c in range(len(self.estimators_)):
-            measure_name = self.distance_measures[c].__name__
-
-            try:
-                os.makedirs(
-                    str(output_file_path)
-                    + "/"
-                    + str(measure_name)
-                    + "/Predictions/"
-                    + str(dataset_name)
-                    + "/"
-                )
-            except os.error:
-                pass  # raises os.error if path already exists
-
-            file = open(
-                str(output_file_path)
-                + "/"
-                + str(measure_name)
-                + "/Predictions/"
-                + str(dataset_name)
-                + "/trainFold"
-                + str(self.random_state)
-                + ".csv",
-                "w",
-            )
-
-            # the first line of the output file is in the form of:
-            # <classifierName>,<datasetName>,<train/test>
-            file.write(str(measure_name) + "," + str(dataset_name) + ",train\n")
-
-            # the second line of the output is free form and
-            # classifier-specific; usually this will record info
-            # such as build time, paramater options used, any constituent
-            # model names for ensembles, etc.
-            # file.write(str(self.estimators_[c].best_params_[
-            # 'metric_params'])+"\n")
-            self.proportion_train_in_param_finding
-            file.write(
-                str(self.estimators_[c].metric_params)
-                + ",build_time,"
-                + str(self.constituent_build_times[c])
-                + ",prop_of_param_options,"
-                + str(self.proportion_of_param_options)
-                + ",prop_train_in_param_finding,"
-                + str(self.proportion_train_in_param_finding)
-                + "\n"
-            )
-
-            # third line is training acc
-            file.write(str(self.train_accs_by_classifier[c]) + "\n")
-
-            for i in range(len(actual_y)):
-                file.write(
-                    str(actual_y[i])
-                    + ","
-                    + str(self.train_preds_by_classifier[c][i])
-                    + "\n"
-                )
-            # preds would go here once stored as part of fit
-
-            file.close()
 
     @staticmethod
     def _get_100_param_options(distance_measure, train_x=None, data_dim_to_use=0):
