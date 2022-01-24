@@ -119,7 +119,8 @@ A call ``result = scenario.run(estimator_instance)`` will:
 
 The abstraction of "scenario" allows to easily specify multiple argument combinations across multiple methods.
 
-The method ``run`` also has arguments that allow to override the method sequence, e.g.,
+The method ``run`` also has arguments (``method_sequence`` and ``arg_sequence``)
+that allow to override the method sequence, e.g.,
 run them in a different order, or only a subset thereof.
 
 Scenarios also provide a method ``scenario.is_applicable(estimator)``, which returns a boolean, whether
