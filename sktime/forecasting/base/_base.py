@@ -439,6 +439,11 @@ class BaseForecaster(BaseEstimator):
         X_inner = self._check_X(X=X)
 
         pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+
+        # todo: remove if changing pred_interval format
+        if pred_int.columns.nlevels == 3:
+            pred_int = _convert_pred_interval_to_quantiles(pred_int)
+
         return pred_int
 
     def update(self, y, X=None, update_params=True):
@@ -1322,9 +1327,6 @@ class BaseForecaster(BaseEstimator):
             )
 
             pred_int.columns = int_idx
-
-        # todo: remove if changing pred_interval format
-        pred_int = _convert_pred_interval_to_quantiles(pred_int)
 
         return pred_int
 
