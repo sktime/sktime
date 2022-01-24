@@ -324,7 +324,7 @@ def dtw_distance_measure_getter(X):
     """
     return {
         "distance_measure": [cython_wrapper(dtw_distance)],
-        "w": stats.uniform(0, 0.25),
+        "window": stats.uniform(0, 0.25),
     }
 
 
@@ -766,8 +766,8 @@ class ProximityStump(BaseClassifier):
     --------
     >>> from sktime.classification.distance_based import ProximityStump
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = ProximityStump()
     >>> clf.fit(X_train, y_train)
     ProximityStump(...)

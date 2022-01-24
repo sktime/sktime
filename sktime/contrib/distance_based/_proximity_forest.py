@@ -94,8 +94,7 @@ class _CachedTransformer(_PanelToPanelTransformer):
     """Transformer that transforms data and adds the transformed version to a cache.
 
     If the transformation is called again on already seen data the data is
-    fetched
-    from the cache rather than performing the expensive transformation.
+    fetched from the cache rather than performing the expensive transformation.
 
     Parameters
     ----------
