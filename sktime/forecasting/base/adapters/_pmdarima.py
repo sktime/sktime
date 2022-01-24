@@ -209,7 +209,8 @@ class _PmdArimaAdapter(BaseForecaster):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
@@ -235,8 +236,8 @@ class _PmdArimaAdapter(BaseForecaster):
         """
         # initializaing cutoff and fh related info
         cutoff = self.cutoff
-        fh_oos = fh.to_out_of_sample(self.cutoff)
-        fh_ins = fh.to_in_sample(self.cutoff)
+        fh_oos = fh.to_out_of_sample(cutoff)
+        fh_ins = fh.to_in_sample(cutoff)
         fh_is_in_sample = fh.is_all_in_sample(cutoff)
         fh_is_oosample = fh.is_all_out_of_sample(cutoff)
 
