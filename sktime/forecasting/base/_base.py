@@ -1320,6 +1320,9 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
+            # if was univariate & unnamed variable, replace default
+            if var_names == ["Quantiles"]:
+                var_names = ["Coverage"]
             # idx returned by _predict_interval should be
             #   3-level MultiIndex with variable names, coverage, lower/upper
             int_idx = pd.MultiIndex.from_product(
@@ -1369,13 +1372,13 @@ class BaseForecaster(BaseEstimator):
         if implements_interval:
 
             coverage = []
-            for alpha in alpha:
+            for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
                 #  this uses symmetric predictive intervals
-                if alpha < 0.5:
-                    coverage.extend([2 * alpha])
+                if a < 0.5:
+                    coverage.extend([2 * a])
                 else:
-                    coverage.extend([2 * (1 - alpha)])
+                    coverage.extend([2 * (1 - a)])
 
             # compute quantile forecasts corresponding to upper/lower
             pred_int = self._predict_interval(fh=fh, X=X, coverage=coverage)
@@ -1383,7 +1386,7 @@ class BaseForecaster(BaseEstimator):
             # now we need to subset to lower/upper depending
             #   on whether alpha was < 0.5 or >= 0.5
             #   this formula gives the integer column indices giving lower/upper
-            col_selector = alpha >= 0.5 + 2 * range(len(alpha))
+            col_selector = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
             pred_int = pred_int.iloc[:, col_selector]
 
             # change the column labels (multiindex) to the format for intervals
@@ -1392,6 +1395,9 @@ class BaseForecaster(BaseEstimator):
             idx = pred_int.columns
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
+            # if was univariate & unnamed variable, replace default
+            if var_names == ["Coverage"]:
+                var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -1455,11 +1461,14 @@ class BaseForecaster(BaseEstimator):
 
     # TODO: remove in v0.10.0
     def _has_predict_quantiles_been_refactored(self):
-        """Check if specific forecaster implements _predict_quantiles()."""
-        base_predict_quantiles = BaseForecaster._predict_quantiles
-        this_predict_quantiles = self.__class__._predict_quantiles
-        # true if self's _predict_quantiles is new implementation
-        return base_predict_quantiles != this_predict_quantiles
+        """Check if specific forecaster implements one of the proba methods."""
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_proba = self._has_implementation_of("_predict_proba")
+
+        refactored = implements_interval or implements_quantiles or implements_proba
+
+        return refactored
 
     # TODO: remove in v0.10.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
