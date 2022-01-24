@@ -282,6 +282,80 @@ class _PmdArimaAdapter(BaseForecaster):
         pred_quantiles.columns = index
         return pred_quantiles
 
+
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction interval forecasts.
+
+        If coverage is iterable, multiple intervals will be calculated.
+
+            core logic
+
+        State required:
+            Requires state to be "fitted".
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+           Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+           Exogenous time series
+        coverage : float or list, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        # initializaing cutoff and fh related info
+        cutoff = self.cutoff
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
+        fh_is_in_sample = fh.is_all_in_sample(cutoff)
+        fh_is_oosample = fh.is_all_out_of_sample(cutoff)
+
+        # prepare the return DataFrame - empty with correct cols
+        var_names = ["Coverage"]
+        int_idx = pd.MultiIndex.from_product(
+            [var_names, coverage, ["lower", "upper"]]
+        )
+        pred_int = pd.DataFrame(columns=int_idx)
+
+        kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
+        # all values are out-of-sample
+        if fh_is_oosample:
+            _, y_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
+
+        # all values are in-sample
+        elif fh_is_in_sample:
+            _, y_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+
+        # if all in-sample/out-of-sample, we put y_pred_int in the required format
+        if fh_is_in_sample or fh_is_oosample:
+            # needs to be replaced, also seems duplicative, identical to part A
+            for intervals, a in zip(y_pred_int, coverage):
+                pred_int[("Coverage", a, "lower")] = intervals["lower"]
+                pred_int[("Coverage", a, "upper")] = intervals["upper"]
+            return pred_int
+
+        # both in-sample and out-of-sample values (we reach this line only then)
+        # in this case, we additionally need to concat in and out-of-sample returns
+        _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+        _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
+        for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
+            pred_int[("Coverage", a, "lower")] = ins_int.append(oos_int)["lower"]
+            pred_int[("Coverage", a, "upper")] = ins_int.append(oos_int)["upper"]
+
+        return pred_int
+
     def get_fitted_params(self):
         """Get fitted parameters.
 
