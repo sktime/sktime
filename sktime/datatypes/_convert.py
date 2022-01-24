@@ -157,7 +157,8 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     Raises
     ------
     TypeError if machine type of input "obj" is not recognized
-    KeyError if conversion is not implemented
+    TypeError if to_type contains no mtype compatible with mtype of obj
+    KeyError if conversion that would be conducted is not implemented
     """
     if obj is None:
         return None
@@ -182,6 +183,11 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
             same_scitype_mtypes = [
                 mtype for mtype in to_type if mtype_to_scitype(mtype) == as_scitype
             ]
+            if len(same_scitype_mtypes) == 0:
+                raise TypeError(
+                    "to_type contains no mtype compatible with the scitype of obj,"
+                    f"which is {as_scitype}"
+                )
             to_type = same_scitype_mtypes[0]
 
     converted_obj = convert(
