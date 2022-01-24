@@ -93,12 +93,12 @@ Time Series Classification
 
 .. code-block:: python
 
-    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.classification.kernel_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_arrow_head
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.metrics import accuracy_score
 
-    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X, y = load_arrow_head()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
     >>> classifier = TimeSeriesForestClassifier()
     >>> classifier.fit(X_train, y_train)
@@ -132,7 +132,7 @@ Time Series Clustering
     >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
     >>> from sktime.datasets import load_arrow_head
 
-    >>> X, y = load_arrow_head(return_X_y=True)
+    >>> X, y = load_arrow_head()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     >>> k_means = TimeSeriesKMeans(n_clusters=5, init_algorithm="forgy", metric="dtw")
