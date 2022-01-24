@@ -6,6 +6,7 @@ __author__ = ["ltsaprounis"]
 __all__ = ["ScaledLogitTransformer"]
 
 from copy import deepcopy
+from warnings import warn
 
 import numpy as np
 
@@ -116,10 +117,18 @@ class ScaledLogitTransformer(BaseTransformer):
         transformed version of X
         """
         if self.upper_bound is not None and np.any(X >= self.upper_bound):
-            raise ValueError("X should not have values greater than upper_bound")
+            warn(
+                "X in ScaledLogitTransformer should not have values "
+                "greater than upper_bound",
+                RuntimeWarning,
+            )
 
         if self.lower_bound is not None and np.any(X <= self.lower_bound):
-            raise ValueError("X should not have values lower than lower_bound")
+            warn(
+                "X in ScaledLogitTransformer should not have values "
+                "lower than lower_bound",
+                RuntimeWarning,
+            )
 
         if self.upper_bound and self.lower_bound:
             X_transformed = np.log((X - self.lower_bound) / (self.upper_bound - X))
