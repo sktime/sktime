@@ -138,16 +138,21 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     to_type : str - the type to convert "obj" to, a valid mtype string
               or list - admissible types for conversion to
     as_scitype : str, optional - name of scitype the object "obj" is considered as
+        pre-specifying the scitype reduces the number of checks done in type inference
         default = inferred from mtype of obj, which is in turn inferred internally
     store : reference of storage for lossy conversions, default=None (no store)
 
     Returns
     -------
-    converted_obj : to_type - object obj converted to to_type, if to_type is str
-                     if to_type is list, converted to first element that is of
-                            and mtype of the scitype as_scitype
-                        unless from_type in to_type, in this case converted_obj=obj
-                    if obj was None, returns None
+    converted_obj : to_type - object obj, or obj converted to target mtype as follows:
+        case 1: mtype of obj is equal to to_type, or a list element of to_type
+            no conversion happens, converted_obj = obj
+        case 2: to_type is a str, and not equal to mtype of obj
+            converted_obj is obj converted to to_type
+        case 3: to_type is list of str, and mtype of obj is not in that list
+            converted_obj is converted to the first mtype in to_type
+                that is of same scitype as obj
+        case 4: if obj was None, converted_obj is also None
 
     Raises
     ------
