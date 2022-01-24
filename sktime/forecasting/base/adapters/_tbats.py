@@ -213,6 +213,8 @@ class _TbatsAdapter(BaseForecaster):
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
 
+        Note: In-sample forecasts are set to NaNs, ince TBATS does not support it.
+
         State required:
             Requires state to be "fitted".
 
