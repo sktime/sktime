@@ -4,6 +4,8 @@
 
 __author__ = ["ltsaprounis"]
 
+from warnings import warn
+
 import numpy as np
 import pytest
 from pandas.testing import assert_series_equal
@@ -46,13 +48,24 @@ def test_scaledlogit_consistent_invesre_transform(lower, upper):
 @pytest.mark.parametrize(
     "lower, upper, message",
     [
-        (0, 300, "X should not have values greater than upper_bound"),
-        (300, 700, "X should not have values lower than lower_bound"),
+        (
+            0,
+            300,
+            (
+                "X in ScaledLogitTransformer should not have values greater"
+                "than upper_bound"
+            ),
+        ),
+        (
+            300,
+            700,
+            "X in ScaledLogitTransformer should not have values lower than lower_bound",
+        ),
     ],
 )
 def test_scaledlogit_bound_errors(lower, upper, message):
     """Tests all exceptions."""
     y = load_airline()
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.warns(RuntimeWarning):
         ScaledLogitTransformer(lower, upper).fit_transform(y)
-        assert message in str(excinfo.value)
+        warn(message, RuntimeWarning)
