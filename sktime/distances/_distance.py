@@ -687,20 +687,30 @@ def dtw_distance(
 
     return distance(x, y, metric="dtw", **format_kwargs)
 
+
 def msm_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: np.ndarray = None,
-    c: float = 0,
+    c: float = 0.0,
     **kwargs: Any,
 ) -> float:
+    """Compute the msm distance.
 
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    float
+        Msm distance between x and y.
+    """
     format_kwargs = {
-        "window": window,
-        "itakura_max_slope": itakura_max_slope,
-        "bounding_matrix": bounding_matrix,
         "c": c,
     }
     format_kwargs = {**format_kwargs, **kwargs}
@@ -837,7 +847,8 @@ def distance(
     metric: str or Callable
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp', 'msm'
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
+        'msm'
 
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
