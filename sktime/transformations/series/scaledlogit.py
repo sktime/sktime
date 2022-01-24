@@ -115,13 +115,11 @@ class ScaledLogitTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        if self.upper_bound:
-            if np.any(X >= self.upper_bound):
-                raise ValueError("X should not have values greater than upper_bound")
+        if self.upper_bound is not None and np.any(X >= self.upper_bound):
+            raise ValueError("X should not have values greater than upper_bound")
 
-        if self.lower_bound:
-            if np.any(X <= self.lower_bound):
-                raise ValueError("X should not have values lower than lower_bound")
+        if self.lower_bound is not None and np.any(X <= self.lower_bound):
+            raise ValueError("X should not have values lower than lower_bound")
 
         if self.upper_bound and self.lower_bound:
             X_transformed = np.log((X - self.lower_bound) / (self.upper_bound - X))
