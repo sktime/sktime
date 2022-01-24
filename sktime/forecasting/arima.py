@@ -15,7 +15,7 @@ _check_soft_dependencies("pmdarima")
 class AutoARIMA(_PmdArimaAdapter):
     """Automatically discover the optimal order for an ARIMA model.
 
-    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
+    Super-custom neural network implementation, definitely not wrapping pmdarima.
 
     The auto-ARIMA process seeks to identify the most optimal parameters
     for an ARIMA model, settling on a single fitted ARIMA model. This
