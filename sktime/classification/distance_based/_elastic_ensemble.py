@@ -25,13 +25,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
-from sktime.distances import ddtw_distance as ddtw_c
-from sktime.distances import dtw_distance as dtw_c
-from sktime.distances import erp_distance as erp_c
-from sktime.distances import lcss_distance as lcss_c
-from sktime.distances import wddtw_distance as wddtw_c
-from sktime.distances import wdtw_distance as wdtw_c
-from sktime.distances.elastic_cython import msm_distance as msm_c
+from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 
 
@@ -48,7 +42,8 @@ class ElasticEnsemble(BaseClassifier):
     Parameters
     ----------
     distance_measures : list of strings, optional (default="all")
-      A list of strings identifying which distance measures to include.
+      A list of strings identifying which distance measures to include. Valid values
+      are one or more of: euclidean, dtw, wdtw, ddtw, dwdtw, lcss, erp, msm
     proportion_of_param_options : float, optional (default=1)
       The proportion of the parameter grid space to search optional.
     proportion_train_in_param_finding : float, optional (default=1)
@@ -109,13 +104,13 @@ class ElasticEnsemble(BaseClassifier):
     ):
         if distance_measures == "all":
             self.distance_measures = [
-                dtw_c,
-                ddtw_c,
-                wdtw_c,
-                wddtw_c,
-                lcss_c,
-                erp_c,
-                msm_c,
+                "dtw",
+                "ddtw",
+                "wdtw",
+                "wddtw",
+                "lcss",
+                "erp",
+                #                "msm",
             ]
         else:
             self.distance_measures = distance_measures
@@ -157,20 +152,14 @@ class ElasticEnsemble(BaseClassifier):
         # is made. Please note that using DDTW elsewhere will not benefit
         # from this speed enhancement
         if self.distance_measures.__contains__(
-            ddtw_c
-        ) or self.distance_measures.__contains__(wddtw_c):
+            "ddtw"
+        ) or self.distance_measures.__contains__("wddtw"):
             der_X = DerivativeSlopeTransformer().fit_transform(X)
-            # reshape X for use with the efficient cython distance measures
-            if isinstance(X, pd.DataFrame):
-                der_X = np.array(
-                    [np.asarray([x]).reshape(1, len(x)) for x in der_X.iloc[:, 0]]
-                )
+            # convert back to numpy
+            if isinstance(der_X, pd.DataFrame):
+                der_X = from_nested_to_3d_numpy(der_X)
         else:
             der_X = None
-
-        # reshape X for use with the efficient cython distance measures
-        if isinstance(X, pd.DataFrame):
-            X = np.array([np.asarray([x]).reshape(1, len(x)) for x in X.iloc[:, 0]])
 
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.estimators_ = [None] * len(self.distance_measures)
@@ -244,19 +233,19 @@ class ElasticEnsemble(BaseClassifier):
             # smaller sample as per the StratifiedShuffleSplit)
             param_train_to_use = param_train_x
             full_train_to_use = X
-            if this_measure is ddtw_c or dm is wddtw_c:
+            if this_measure == "ddtw" or this_measure == "wddtw":
                 param_train_to_use = der_param_train_x
                 full_train_to_use = der_X
-                if this_measure is ddtw_c:
-                    this_measure = dtw_c
-                elif this_measure is wddtw_c:
-                    this_measure = wdtw_c
+                if this_measure == "ddtw":
+                    this_measure = "dtw"
+                elif this_measure == "wddtw":
+                    this_measure = "wdtw"
 
             start_build_time = time.time()
             if self.verbose > 0:
                 if (
-                    self.distance_measures[dm] is ddtw_c
-                    or self.distance_measures[dm] is wddtw_c
+                    self.distance_measures[dm] == "ddtw"
+                    or self.distance_measures[dm] == "wddtw"
                 ):
                     print(  # noqa: T001
                         "Currently evaluating "
@@ -352,7 +341,6 @@ class ElasticEnsemble(BaseClassifier):
             self.constituent_build_times.append(str(end_build_time - start_build_time))
             self.estimators_[dm] = best_model
             self.train_accs_by_classifier[dm] = acc
-
         return self
 
     def _predict_proba(self, X):
@@ -375,8 +363,8 @@ class ElasticEnsemble(BaseClassifier):
         # is made. Please note that using DDTW elsewhere will not benefit
         # from this speed enhancement
         if self.distance_measures.__contains__(
-            ddtw_c
-        ) or self.distance_measures.__contains__(wddtw_c):
+            "ddtw"
+        ) or self.distance_measures.__contains__("wddtw"):
             der_X = DerivativeSlopeTransformer().fit_transform(X)
             if isinstance(X, pd.DataFrame):
                 der_X = np.array(
@@ -394,8 +382,8 @@ class ElasticEnsemble(BaseClassifier):
 
         for c in range(0, len(self.estimators_)):
             if (
-                self.distance_measures[c] == ddtw_c
-                or self.distance_measures[c] == wddtw_c
+                self.distance_measures[c] == "ddtw"
+                or self.distance_measures[c] == "wddtw"
             ):
                 test_X_to_use = der_X
             else:
@@ -443,11 +431,11 @@ class ElasticEnsemble(BaseClassifier):
             inc = (max_val - min_val) / (num_vals - 1)
             return np.arange(min_val, max_val + inc / 2, inc)
 
-        if distance_measure == dtw_c or distance_measure == ddtw_c:
+        if distance_measure == "dtw" or distance_measure == "ddtw":
             return {"distance_params": [{"window": x / 100} for x in range(0, 100)]}
-        elif distance_measure == wdtw_c or distance_measure == wddtw_c:
+        elif distance_measure == "wdtw" or distance_measure == "wddtw":
             return {"distance_params": [{"g": x / 100} for x in range(0, 100)]}
-        elif distance_measure == lcss_c:
+        elif distance_measure == "lcss":
             train_std = np.std(train_x)
             epsilons = get_inclusive(train_std * 0.2, train_std, 10)
             deltas = get_inclusive(int(len(train_x[0]) / 4), len(train_x[0]), 10)
@@ -458,7 +446,7 @@ class ElasticEnsemble(BaseClassifier):
                     {"epsilon": a[x][0], "delta": a[x][1]} for x in range(0, len(a))
                 ]
             }
-        elif distance_measure == erp_c:
+        elif distance_measure == "erp":
             train_std = np.std(train_x)
             band_sizes = get_inclusive(0, 0.25, 10)
             g_vals = get_inclusive(train_std * 0.2, train_std, 10)
@@ -469,7 +457,7 @@ class ElasticEnsemble(BaseClassifier):
                     for x in range(0, len(b_and_g))
                 ]
             }
-        elif distance_measure == msm_c:
+        elif distance_measure == "msm":
             a = get_inclusive(0.01, 0.1, 25)
             b = get_inclusive(0.1, 1, 26)
             c = get_inclusive(1, 10, 26)

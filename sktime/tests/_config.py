@@ -1,8 +1,6 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
@@ -258,6 +256,8 @@ ESTIMATOR_TEST_PARAMS = {
     ElasticEnsemble: {
         "proportion_of_param_options": 0.01,
         "proportion_train_for_test": 0.1,
+        "majority_vote": True,
+        "distance_measures": ["euclidean"],
     },
     Catch22Classifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
