@@ -328,10 +328,10 @@ class MyForecaster(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, alpha
+        # IMPORTANT: avoid side effects to y, X, fh, coverage
         #
-        # Note: unlike in predict_quantiles where alpha can be float or list of float
-        #   alpha in _predict_quantiles is guaranteed to be a list of float
+        # Note: unlike in predict_interval where coverage can be float or list of float
+        #   coverage in _predict_interval is guaranteed to be a list of float
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
