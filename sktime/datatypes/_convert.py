@@ -174,9 +174,8 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
             to_type = from_type
         # otherwise convert to first element of same scitype
         else:
-            to_scitypes = mtype_to_scitype(to_type)
             same_scitype_mtypes = [
-                to_type[i] for i in len(range(to_type)) if to_scitypes[i] == as_scitype
+                mtype for mtype in to_type if mtype_to_scitype(mtype) == as_scitype
             ]
             to_type = same_scitype_mtypes[0]
 
