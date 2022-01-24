@@ -170,7 +170,8 @@ class MyForecaster(BaseForecaster):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
@@ -198,6 +199,10 @@ class MyForecaster(BaseForecaster):
 
         State required:
             Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Writes to self:
             Sets fitted model attributes ending in "_", if update_params=True.
@@ -256,7 +261,8 @@ class MyForecaster(BaseForecaster):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
@@ -296,7 +302,8 @@ class MyForecaster(BaseForecaster):
             Requires state to be "fitted".
 
         Accesses in self:
-            Fitted model attributes ending in "_".
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
