@@ -16,14 +16,8 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.distances.elastic_cython import (
-    dtw_distance,
-    erp_distance,
-    lcss_distance,
-    msm_distance,
-    twe_distance,
-    wdtw_distance,
-)
+from sktime.distances import dtw_distance, erp_distance, lcss_distance, wdtw_distance
+from sktime.distances.elastic_cython import msm_distance, twe_distance
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
