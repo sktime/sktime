@@ -24,7 +24,8 @@ Mandatory implements:
 
 Optional implements:
     updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=0.5)
+    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
+    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
@@ -240,7 +241,7 @@ class MyForecaster(BaseForecaster):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
-            called from predict_quantiles and predict_interval
+            called from predict_quantiles and possibly predict_interval
 
         Parameters
         ----------
@@ -248,7 +249,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : list of float (guaranteed not None and flots in [0,1] interval)
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
             A list of probabilities at which quantile forecasts are computed.
 
         Returns
@@ -273,7 +274,8 @@ class MyForecaster(BaseForecaster):
     def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
 
         Parameters
         ----------
@@ -281,7 +283,7 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : list of float (guaranteed not None and flots in [0,1] interval)
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
         Returns
