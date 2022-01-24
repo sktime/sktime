@@ -1,5 +1,5 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""TSFresh feature extractors."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
@@ -7,18 +7,17 @@ __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.datatypes._panel._convert import from_nested_to_long
+from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation.panel import check_X, check_X_y
 
 _check_soft_dependencies("tsfresh")
 
 
 class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
-    """Base adapter class for tsfresh transformations"""
+    """Base adapter class for tsfresh transformations."""
 
     def __init__(
         self,
@@ -70,22 +69,26 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
         return self
 
     def _get_extraction_params(self):
-        """Helper function to set default parameters from tsfresh"""
+        """Set default parameters from tsfresh."""
         # make n_jobs compatible with scikit-learn
         self.n_jobs = check_n_jobs(self.n_jobs)
 
         # lazy imports to avoid hard dependency
-        from tsfresh.defaults import CHUNKSIZE
-        from tsfresh.defaults import DISABLE_PROGRESSBAR
+        from tsfresh.defaults import (
+            CHUNKSIZE,
+            DISABLE_PROGRESSBAR,
+            N_PROCESSES,
+            PROFILING,
+            PROFILING_FILENAME,
+            PROFILING_SORTING,
+            SHOW_WARNINGS,
+        )
+        from tsfresh.feature_extraction.settings import (
+            ComprehensiveFCParameters,
+            EfficientFCParameters,
+            MinimalFCParameters,
+        )
         from tsfresh.utilities.dataframe_functions import impute
-        from tsfresh.defaults import N_PROCESSES
-        from tsfresh.defaults import PROFILING
-        from tsfresh.defaults import PROFILING_FILENAME
-        from tsfresh.defaults import PROFILING_SORTING
-        from tsfresh.defaults import SHOW_WARNINGS
-        from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
-        from tsfresh.feature_extraction.settings import EfficientFCParameters
-        from tsfresh.feature_extraction.settings import MinimalFCParameters
 
         # Set defaults from tsfresh
         extraction_params = {
@@ -132,7 +135,7 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
 
 
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features
+    """Transformer for extracting TSFresh time series features.
 
     References
     ----------
@@ -186,6 +189,26 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # here we make sure we return the dataframe in the sort order as the
         # input data
         return Xt.reindex(X.index)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+        }
+
+        return params
 
 
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
@@ -242,14 +265,16 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         self.ml_task = ml_task
 
     def _get_selection_params(self):
-        """Helper function to set default values from tsfresh"""
+        """Set default values from tsfresh."""
         # lazy imports to avoid hard dependency
-        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
-        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
-        from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
-        from tsfresh.defaults import TEST_FOR_REAL_TARGET_REAL_FEATURE
-        from tsfresh.defaults import FDR_LEVEL
-        from tsfresh.defaults import HYPOTHESES_INDEPENDENT
+        from tsfresh.defaults import (
+            FDR_LEVEL,
+            HYPOTHESES_INDEPENDENT,
+            TEST_FOR_BINARY_TARGET_BINARY_FEATURE,
+            TEST_FOR_BINARY_TARGET_REAL_FEATURE,
+            TEST_FOR_REAL_TARGET_BINARY_FEATURE,
+            TEST_FOR_REAL_TARGET_REAL_FEATURE,
+        )
 
         # Set defaults
         selection_params = {
@@ -337,3 +362,24 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt = self.extractor_.transform(X)
         Xt = self.selector_.transform(Xt)
         return Xt.reindex(X.index)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "default_fc_parameters": "minimal",
+            "disable_progressbar": True,
+            "show_warnings": False,
+            "fdr_level": 0.01,
+        }
+
+        return params
