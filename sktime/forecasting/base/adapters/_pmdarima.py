@@ -3,14 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pmdarima forecasters to be used in sktime framework."""
 
-__author__ = ["Markus Löning", "Hongyi Yang"]
+__author__ = ["mloning", "hyang1996", "kejsitake", "fkiraly"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import check_alpha
 
 
 class _PmdArimaAdapter(BaseForecaster):
