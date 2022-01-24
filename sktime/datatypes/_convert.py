@@ -157,21 +157,17 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     if obj is None:
         return None
 
-    if isinstance(to_type, list):
-        if not np.all(isinstance(x, str) for x in to_type):
-            raise TypeError("to_type must be a str or list of str")
-    elif not isinstance(to_type, str):
-        raise TypeError("to_type must be a str or list of str")
+    _check_str_or_list_of_str(to_type, obj_name="to_type")
 
-    if as_scitype is None:
-        from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
-        as_scitype = mtype_to_scitype(from_type)
-    elif not isinstance(as_scitype, str):
-        raise TypeError("as_scitype must be a str or None")
-    else:
-        from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
+    if as_scitype is not None:
+        _check_str_or_list_of_str(to_type, obj_name="as_scitype")
 
-    # if to_type is a list:
+    from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
+    as_scitype = mtype_to_scitype(from_type)
+
+    # if to_type is a list, we do the following:
+    # if on the list, then don't do a conversion (convert to from_type)
+    # if not on the list, we find and convert to first mtype that has same scitype
     if isinstance(to_type, list):
         # no conversion of from_type is in the list
         if from_type in to_type:
@@ -223,3 +219,11 @@ def _conversions_defined(scitype: str):
     conv_df = pd.DataFrame(mat, index=cols, columns=cols)
 
     return conv_df
+
+
+def _check_str_or_list_of_str(obj, obj_name="obj"):
+    if isinstance(obj, list):
+        if not np.all(isinstance(x, str) for x in obj):
+            raise TypeError(f"{obj} must be a str or list of str")
+    elif not isinstance(obj, str):
+        raise TypeError(f"{obj} must be a str or list of str")
