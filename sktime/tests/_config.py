@@ -120,7 +120,6 @@ EXCLUDE_ESTIMATORS = [
 
 
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["test_fit_idempotent"],
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
