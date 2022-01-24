@@ -106,7 +106,7 @@ class MUSE(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
+        "X_inner_mtype": "nested_univ",  # MUSE requires nested datafrane
     }
 
     def __init__(
@@ -279,6 +279,10 @@ class MUSE(BaseClassifier):
                 n_jobs=self._threads_to_use,
             ),
         )
+
+        for words in all_words:
+            if len(words) == 0:
+                words[-1] = 1
 
         self.clf.fit(all_words, y)
 

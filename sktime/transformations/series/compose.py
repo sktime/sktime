@@ -7,14 +7,14 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.series import check_series
 
 __author__ = ["aiwalter", "SveaMeyer13"]
 __all__ = ["OptionalPassthrough", "ColumnwiseTransformer"]
 
 
-class OptionalPassthrough(_SeriesToSeriesTransformer):
+class OptionalPassthrough(BaseTransformer):
     """Wrap an existing transformer to tune whether to include it in a pipeline.
 
     Allows tuning the implicit hyperparameter whether or not to use a
@@ -70,8 +70,17 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
 
     _required_parameters = ["transformer"]
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
-        "fit-in-transform": True,
+        "fit-in-transform": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, transformer, passthrough=False):
@@ -80,73 +89,105 @@ class OptionalPassthrough(_SeriesToSeriesTransformer):
         self.passthrough = passthrough
         self._is_fitted = False
         super(OptionalPassthrough, self).__init__()
-        self.clone_tags(transformer)
 
-    def fit(self, Z, X=None):
-        """Fit the model.
+        # should be all tags, but not fit-in-transform
+        #   (_fit should not be skipped)
+        tags_to_clone = [
+            "scitype:transform-input",
+            "scitype:transform-output",
+            "scitype:instancewise",
+            "X_inner_mtype",
+            "y_inner_mtype",
+            "capability:inverse_transform",
+            "handles-missing-data",
+            "X-y-must-have-same-index",
+            "transform-returns-same-time-index",
+            "skip-inverse-transform",
+        ]
+        self.clone_tags(transformer, tag_names=tags_to_clone)
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series
-             Series to fit.
-        X : pd.DataFrame, optional (default=None)
-             Exogenous data used in transformation.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for tarnsformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
         if not self.passthrough:
             self.transformer_ = clone(self.transformer)
-            self.transformer_.fit(Z, X)
-        self._is_fitted = True
+            self.transformer_._fit(X, y)
         return self
 
-    def transform(self, Z, X=None):
-        """Apply transformation.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        z : pd.Series
-            Transformed series.
+        transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
-            z = self.transformer_.transform(z, X)
-        return z
+            X = self.transformer_._transform(X, y)
+        return X
 
-    @if_delegate_has_method(delegate="transformer")
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
+
+        core logic
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        z : pd.Series
-            Inverse transformed data.
+        inverse transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z, enforce_univariate=False)
         if not self.passthrough:
-            z = self.transformer_.inverse_transform(z, X=X)
-        return z
+            X = self.transformer_._inverse_transform(X, y)
+        return X
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+
+        return {"transformer": BoxCoxTransformer(), "passthrough": False}
 
 
-class ColumnwiseTransformer(_SeriesToSeriesTransformer):
+class ColumnwiseTransformer(BaseTransformer):
     """Apply a transformer columnwise to multivariate series.
 
     Overview: input multivariate time series and the transformer passed
@@ -184,34 +225,50 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
     """
 
     _required_parameters = ["transformer"]
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.DataFrame",
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": False,
+        "fit-in-transform": False,
+    }
 
     def __init__(self, transformer, columns=None):
         self.transformer = transformer
         self.columns = columns
         super(ColumnwiseTransformer, self).__init__()
 
-    def fit(self, Z, X=None):
-        """Fit data.
+        tags_to_clone = [
+            "y_inner_mtype",
+            "capability:inverse_transform",
+            "handles-missing-data",
+            "X-y-must-have-same-index",
+            "transform-returns-same-time-index",
+            "skip-inverse-transform",
+        ]
+        self.clone_tags(transformer, tag_names=tags_to_clone)
 
-        Iterates over columns (series) and applies
-        the fit function of the transformer.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.DataFrame
+            Data to fit transform to
+        y : Series or Panel, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self : an instance of self
+        self: a fitted instance of the estimator
         """
-        self._is_fitted = False
-
-        z = check_series(Z, allow_numpy=False)
-
-        # cast to pd.DataFrame in univariate case
-        if isinstance(z, pd.Series):
-            z = z.to_frame()
-
         # check that columns are None or list of strings
         if self.columns is not None:
             if not isinstance(self.columns, list) and all(
@@ -223,94 +280,81 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         # (all if self.columns is None)
         self.columns_ = self.columns
         if self.columns_ is None:
-            self.columns_ = z.columns
+            self.columns_ = X.columns
 
         # make sure z contains all columns that the user wants to transform
-        _check_columns(z, selected_columns=self.columns_)
+        _check_columns(X, selected_columns=self.columns_)
 
         # fit by iterating over columns
         self.transformers_ = {}
         for colname in self.columns_:
             transformer = clone(self.transformer)
             self.transformers_[colname] = transformer
-            self.transformers_[colname].fit(z[colname], X)
-        self._is_fitted = True
+            self.transformers_[colname].fit(X[colname], y)
         return self
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
-        Returns a transformed version of Z by iterating over specified
-        columns and applying the univariate series transformer to them.
+        private _transform containing the core logic, called from transform
+
+        Returns a transformed version of X by iterating over specified
+        columns and applying the wrapped transformer to them.
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.DataFrame
+            Data to be transformed
+        y : Series or Panel, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Transformed time series(es).
+        Xt : pd.DataFrame
+            transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z)
-
-        # handle univariate case
-        z, is_series = _check_is_pdseries(z)
-
         # make copy of z
-        z = z.copy()
+        X = X.copy()
 
         # make sure z contains all columns that the user wants to transform
-        _check_columns(z, selected_columns=self.columns_)
+        _check_columns(X, selected_columns=self.columns_)
         for colname in self.columns_:
-            z[colname] = self.transformers_[colname].transform(z[colname], X)
+            X[colname] = self.transformers_[colname].transform(X[colname], y)
+        return X
 
-        # make z a series again in univariate case
-        if is_series:
-            z = z.squeeze("columns")
-        return z
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
-    @if_delegate_has_method(delegate="transformer")
-    def inverse_transform(self, Z, X=None):
-        """Inverse transform data.
-
-        Returns an inverse-transformed version of Z by iterating over specified
+        Returns an inverse-transformed version of X by iterating over specified
         columns and applying the univariate series transformer to them.
         Only works if `self.transformer` has an `inverse_transform` method.
 
         Parameters
         ----------
-        Z : pd.Series, pd.DataFrame
+        X : pd.DataFrame
+            Data to be inverse transformed
+        y : Series or Panel, default=None
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z : pd.Series, pd.DataFrame
-            Inverse-transformed time series(es).
+        Xt : pd.DataFrame
+            inverse transformed version of X
         """
-        self.check_is_fitted()
-        z = check_series(Z)
-
-        # handle univariate case
-        z, is_series = _check_is_pdseries(z)
-
         # make copy of z
-        z = z.copy()
+        X = X.copy()
 
         # make sure z contains all columns that the user wants to transform
-        _check_columns(z, selected_columns=self.columns_)
+        _check_columns(X, selected_columns=self.columns_)
 
         # iterate over columns that are supposed to be inverse_transformed
         for colname in self.columns_:
-            z[colname] = self.transformers_[colname].inverse_transform(z[colname], X)
+            X[colname] = self.transformers_[colname].inverse_transform(X[colname], y)
 
-        # make z a series again in univariate case
-        if is_series:
-            z = z.squeeze("columns")
-        return z
+        return X
 
     @if_delegate_has_method(delegate="transformer")
-    def update(self, Z, X=None, update_params=True):
+    def update(self, X, y=None, update_params=True):
         """Update parameters.
 
         Update the parameters of the estimator with new data
@@ -319,7 +363,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        Z : pd.Series
+        X : pd.Series
             New time series.
         update_params : bool, optional, default=True
 
@@ -327,7 +371,7 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-        z = check_series(Z)
+        z = check_series(X)
 
         # make z a pd.DataFrame in univariate case
         if isinstance(z, pd.Series):
@@ -338,6 +382,22 @@ class ColumnwiseTransformer(_SeriesToSeriesTransformer):
         for colname in self.columns_:
             self.transformers_[colname].update(z[colname], X)
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.transformations.series.detrend import Detrender
+
+        return {"transformer": Detrender()}
 
 
 def _check_columns(z, selected_columns):

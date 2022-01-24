@@ -7,14 +7,11 @@
 __author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
-from joblib import Parallel
-from joblib import delayed
-
+from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
@@ -75,9 +72,6 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         """Collect results from forecaster.predict() calls."""
-        if return_pred_int:
-            raise NotImplementedError()
-
         return [
             forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
             for forecaster in self.forecasters_
