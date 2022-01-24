@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implmenents the scaled logit tranformation."""
+"""Implements the scaled logit tranformation."""
 
 __author__ = ["ltsaprounis"]
 __all__ = ["ScaledLogitTransformer"]
@@ -14,21 +14,23 @@ from sktime.transformations.base import BaseTransformer
 
 
 class ScaledLogitTransformer(BaseTransformer):
-    r"""Scaled logit transform.
+    r"""Scaled logit transform or Log transform.
+
+    If both lower_bound and upper_bound are not None, a scaled logit transform is
+    applied to the data. Otherwise, the transform applied is a log transform variation
+    that ensures the resulting values from the inverse transform are bounded
+    accordingly. The transform is applied to all scalar elements of the input array
+    individually.
 
     Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
-    If both lower_bound and upper_bound are not None, a scaled logit transform is
-    applied. Otherwise, it applies a log transform variation that ensures the
-    resulting forecast is bounded as specified. The transform is applied to all
-    scalar elements of the input array individually.
 
     Parameters
     ----------
     lower_bound : float
-        lower bound
+        lower bound of inverse transform function
     upper_bound : float
-        upper bound
+        upper bound of inverse transform function
 
     See Also
     --------
@@ -51,10 +53,12 @@ class ScaledLogitTransformer(BaseTransformer):
     | not None:
     |   :math:`log(\frac{x - a}{b - x})`, where a is the lower and b is the upper bound.
 
-    | If upper_bound is None and lower_bound is not the transform applied is:
+    | If upper_bound is None and lower_bound is not None the transform applied is
+    | a log transform of the form:
     |   :math:`log(x - a)`
 
-    | If lower_bound is None and upper_bound is not the transform applied is:
+    | If lower_bound is None and upper_bound is not None the transform applied is
+    | a log transform of the form:
     |   :math:`- log(b - x)`
 
     References
