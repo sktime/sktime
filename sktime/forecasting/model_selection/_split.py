@@ -259,21 +259,10 @@ class BaseSplitter:
     Using the above notation, for a single split it corresponds
     to the last index of the training window, :math:`t(k)`
 
-    Parameters
-    ----------
-    window_length : int or timedelta or pd.DateOffset
-        Length of rolling window
-    fh : array-like  or int, optional, (default=None)
-        Single step ahead or array of steps ahead to forecast.
-
-    Notes
-    -----
-    Depending on the type of the arguments, e.g. `window_length`,
-    the calculation of train/test window edges is different.
-
-    For example, for integer arguments `cutoff = 10` and `window_length = 6`,
-    we have `train_start = cutoff - window_length = 4`.
-
+    In order to illustrate the difference in integer/interval arithmetic
+    in calculating train/test indices, let us consider the following examples.
+    Suppose, the arguments of a splitter are `cutoff = 10` and `window_length = 6`.
+    Then, we have `train_start = cutoff - window_length = 4`.
     For timedelta-like values the logic is a bit more complicated.
     The time point corresponding to the `cutoff`
     (index value of the `y` series) is shifted back
@@ -285,6 +274,13 @@ class BaseSplitter:
     and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
     which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
     Similar timedelta arithmetic applies to other splitter arguments.
+
+    Parameters
+    ----------
+    window_length : int or timedelta or pd.DateOffset
+        Length of rolling window
+    fh : array-like  or int, optional, (default=None)
+        Single step ahead or array of steps ahead to forecast.
 
     """
 
