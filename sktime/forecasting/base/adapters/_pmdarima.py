@@ -240,9 +240,7 @@ class _PmdArimaAdapter(BaseForecaster):
 
         # prepare the return DataFrame - empty with correct cols
         var_names = ["Coverage"]
-        int_idx = pd.MultiIndex.from_product(
-            [var_names, coverage, ["lower", "upper"]]
-        )
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
         kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
