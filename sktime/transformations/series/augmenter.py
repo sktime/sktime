@@ -35,7 +35,7 @@ class _AugmenterTags:
     }
 
 
-class WhiteNoiseAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
+class WhiteNoiseAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
     """Augmenter adding Gaussian (i.e . white) noise to the time series.
 
     Parameters
@@ -62,10 +62,10 @@ class WhiteNoiseAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
             raise TypeError(
                 "Type of parameter 'scale' must be a float value or a distribution."
             )
-        return X + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
 
 
-class ReverseAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
+class ReverseAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
     """Augmenter reversing the time series."""
 
     def __init__(self):
@@ -75,7 +75,7 @@ class ReverseAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
         return X.loc[::-1].reset_index(drop=True, inplace=False)
 
 
-class InvertAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
+class InvertAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
     """Augmenter inverting the time series by multiplying it by -1)."""
 
     def __init__(self):
@@ -85,7 +85,7 @@ class InvertAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
         return X.mul(-1)
 
 
-class RandomSamplesAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
+class RandomSamplesAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
     """Draw random instances form panel data.
 
     As the implemented augmenters work stochastically, it is best practice to
@@ -142,5 +142,4 @@ class RandomSamplesAugmenter(_SeriesToSeriesTransformer, _AugmenterTags):
             Xt = random.sample(list(X.values), n)
         else:
             Xt = random.choices(X.values, k=n)
-
-        return pd.Series(Xt)
+        return pd.DataFrame(Xt)
