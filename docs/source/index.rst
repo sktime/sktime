@@ -40,6 +40,7 @@ Contents
 
    get_started
    users
+   installation
    api_reference
    get_involved
    developers
@@ -64,7 +65,7 @@ Contents
 
     ---
 
-    Users
+    User Guide
     ^^^^^
 
     Find user documentation.
@@ -73,7 +74,21 @@ Contents
 
     .. link-button:: users
             :type: ref
-            :text: Users
+            :text: User Guide
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Installation
+    ^^^^^
+
+    Installation Guide.
+
+    +++
+
+    .. link-button:: installation
+            :type: ref
+            :text: Installation
             :classes: btn-block btn-secondary stretched-link
 
     ---
