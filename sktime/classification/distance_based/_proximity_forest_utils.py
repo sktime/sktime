@@ -75,18 +75,6 @@ def maxs(array, getter=None):
     return pick_from_indices(array, indices)
 
 
-# find min value in array, randomly breaking ties
-def min(array, rand, getter=None):
-    """Proximity forest util function (deprecated)."""
-    warn(
-        "This function has moved to classification/distance_based/_proximity_forest as "
-        "a private function. This version will be removed in V0.10",
-        FutureWarning,
-    )
-    index = arg_min(array, rand, getter)
-    return array[index]
-
-
 # find index of max value in array, randomly breaking ties
 def arg_max(array, rand, getter=None):
     """Proximity forest util function (deprecated)."""
@@ -130,17 +118,6 @@ def arg_best(array, comparator, rand):
         FutureWarning,
     )
     return rand.choice(arg_bests(array, comparator))
-
-
-# find index of min value in array, randomly breaking ties
-def arg_min(array, rand, getter=None):
-    """Proximity forest util function (deprecated)."""
-    warn(
-        "This function has moved to classification/distance_based/_proximity_forest as "
-        "a private function. This version will be removed in V0.10",
-        FutureWarning,
-    )
-    return rand.choice(arg_mins(array, getter))
 
 
 # find indices of best value in array, randomly breaking ties
