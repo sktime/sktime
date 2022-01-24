@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Shapelet transformation.
+"""Shapelet transformation, old version.
 
-# TODO move to contrib in v0.10.0
 Transformer from the time domain into the shapelet domain. Standard full
 transform, a contracted version and a randoms sampler.
 """
@@ -49,14 +48,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # calculations
 #
 # TO-DO: add CI tests, comments, documentation, etc.
-
-
-@deprecated(
-    version="0.8.1",
-    reason="ShapeletTransform will move to contrib in V0.10 it has been replaced by "
-    "shapelet_transform.py",
-    category=FutureWarning,
-)
 class ShapeletTransform(_PanelToTabularTransformer):
     """Shapelet Transform.
 

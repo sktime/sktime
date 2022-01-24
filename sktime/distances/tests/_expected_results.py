@@ -3,7 +3,7 @@
 
 _expected_distance_results = {
     # Result structure:
-    # [single value series, univariate series, multivariate series, multivariate panel]
+    # [single value series, univariate series, multivariate series]
     "squared": [25.0, 6.93261, 50.31911],
     "euclidean": [5.0, 2.63298, 7.09359],
     "dtw": [25.0, 2.18037, 46.68062],
@@ -13,6 +13,7 @@ _expected_distance_results = {
     "lcss": [1.0, 0.1, 1.0],
     "edr": [1.0, 0.6, 1.0],
     "erp": [5.0, 5.03767, 20.78718],
+    "msm": [5.0, 3.09222, -1],
 }
 
 _expected_distance_results_params = {

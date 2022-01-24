@@ -11,6 +11,7 @@ from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
+from sktime.distances._msm import _MsmDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
     to_numba_pairwise_timeseries,
@@ -687,6 +688,36 @@ def dtw_distance(
     return distance(x, y, metric="dtw", **format_kwargs)
 
 
+def msm_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    c: float = 0.0,
+    **kwargs: Any,
+) -> float:
+    """Compute the msm distance.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    float
+        Msm distance between x and y.
+    """
+    format_kwargs = {
+        "c": c,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="msm", **format_kwargs)
+
+
 def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     r"""Compute the squared distance between two time series.
 
@@ -816,7 +847,8 @@ def distance(
     metric: str or Callable
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
+        'msm'
 
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
@@ -1089,6 +1121,12 @@ _METRIC_INFOS = [
         aka={"wddtw", "weighted derivative dynamic time warping"},
         dist_func=wddtw_distance,
         dist_instance=_WddtwDistance(),
+    ),
+    MetricInfo(
+        canonical_name="msm",
+        aka={"msm", "move-split-merge"},
+        dist_func=msm_distance,
+        dist_instance=_MsmDistance(),
     ),
 ]
 
