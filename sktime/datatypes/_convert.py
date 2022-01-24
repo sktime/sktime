@@ -157,10 +157,10 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     if obj is None:
         return None
 
+    # input checks on to_type, as_scitype
     _check_str_or_list_of_str(to_type, obj_name="to_type")
-
     if as_scitype is not None:
-        _check_str_or_list_of_str(to_type, obj_name="as_scitype")
+        _check_str_or_list_of_str(as_scitype, obj_name="as_scitype")
 
     from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
     as_scitype = mtype_to_scitype(from_type)
