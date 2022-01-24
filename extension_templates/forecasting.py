@@ -166,6 +166,12 @@ class MyForecaster(BaseForecaster):
 
         private _predict containing the core logic, called from predict
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
@@ -189,6 +195,9 @@ class MyForecaster(BaseForecaster):
         """Update time series to incremental training data.
 
         private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
 
         Writes to self:
             Sets fitted model attributes ending in "_", if update_params=True.
@@ -243,6 +252,12 @@ class MyForecaster(BaseForecaster):
         private _predict_quantiles containing the core logic,
             called from predict_quantiles and possibly predict_interval
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
@@ -276,6 +291,12 @@ class MyForecaster(BaseForecaster):
 
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
 
         Parameters
         ----------
