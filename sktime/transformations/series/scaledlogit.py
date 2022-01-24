@@ -65,6 +65,11 @@ class ScaledLogitTransformer(BaseTransformer):
     ----------
     .. [1] Hyndsight - Forecasting within limits:
         https://robjhyndman.com/hyndsight/forecasting-within-limits/
+    .. [2] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
+        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
+        Accessed on January 24th 2022.
+
+
 
     Examples
     --------
