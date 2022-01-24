@@ -214,31 +214,6 @@ def positive_dataframe_indices(X):
     return X
 
 
-def stdp(X):
-    """Proximity forest util function (deprecated)."""
-    warn(
-        "This function has moved to classification/distance_based/_proximity_forest as "
-        "a private function. This version will be removed in V0.10",
-        FutureWarning,
-    )
-    sum = 0
-    sum_sq = 0
-    num_instances = X.shape[0]
-    num_dimensions = X.shape[1]
-    num_values = 0
-    for instance_index in range(0, num_instances):
-        for dimension_index in range(0, num_dimensions):
-            instance = X.iloc[instance_index, dimension_index]
-            for value in instance:
-                num_values += 1
-                sum += value
-                sum_sq += value ** 2  # todo missing values NaN messes
-                # this up!
-    mean = sum / num_values
-    stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
-    return stdp
-
-
 def bin_instances_by_class(X, class_labels):
     """Proximity forest util function (deprecated)."""
     warn(
@@ -272,20 +247,3 @@ def max_instance_dimension_length(X, dimension):
         if len(instance) > max:
             max = len(instance)
     return max
-
-
-def max_instance_length(X):
-    """Proximity forest util function (deprecated)."""
-    warn(
-        "This function has moved to classification/distance_based/_proximity_forest as "
-        "a private function. This version will be removed in V0.10",
-        FutureWarning,
-    )
-    # todo use all dimensions / uneven length dataset
-    max_length = len(X.iloc[0, 0])
-    # max = -1
-    # for dimension in range(0, instances.shape[1]):
-    #     length = max_instance_dimension_length(instances, dimension)
-    #     if length > max:
-    #         max = length
-    return max_length

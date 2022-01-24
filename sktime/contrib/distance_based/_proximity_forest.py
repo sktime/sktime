@@ -24,10 +24,6 @@ from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
 from sktime.classification._base import BaseClassifier
-from sktime.classification.distance_based._proximity_forest_utils import (
-    max_instance_length,
-)
-from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
 from sktime.datatypes._panel._convert import (
     from_nested_to_2d_array,
     from_nested_to_3d_numpy,
@@ -52,10 +48,46 @@ from sktime.utils.validation.panel import check_X, check_X_y
 # todo duck-type functions
 
 
+def stdp(X):
+    """Proximity forest util function (deprecated)."""
+    warn(
+        "This function has moved to classification/distance_based/_proximity_forest as "
+        "a private function. This version will be removed in V0.10",
+        FutureWarning,
+    )
+    sum = 0
+    sum_sq = 0
+    num_instances = X.shape[0]
+    num_dimensions = X.shape[1]
+    num_values = 0
+    for instance_index in range(0, num_instances):
+        for dimension_index in range(0, num_dimensions):
+            instance = X.iloc[instance_index, dimension_index]
+            for value in instance:
+                num_values += 1
+                sum += value
+                sum_sq += value ** 2  # todo missing values NaN messes
+                # this up!
+    mean = sum / num_values
+    stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
+    return stdp
+
+
 # find index of min value in array, randomly breaking ties
 def _arg_min(array, rand, getter=None):
-    """Proximity forest util function (deprecated)."""
+    """Proximity forest util function."""
     return rand.choice(arg_mins(array, getter))
+
+
+def max_instance_length(X):
+    """Proximity forest util function."""
+    max_length = len(X.iloc[0, 0])
+    # max = -1
+    # for dimension in range(0, instances.shape[1]):
+    #     length = max_instance_dimension_length(instances, dimension)
+    #     if length > max:
+    #         max = length
+    return max_length
 
 
 class _CachedTransformer(_PanelToPanelTransformer):
