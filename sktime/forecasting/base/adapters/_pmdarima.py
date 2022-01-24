@@ -200,22 +200,24 @@ class _PmdArimaAdapter(BaseForecaster):
             return pd.Series(result[fh_idx], index=fh_abs)
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
-        """Compute/return prediction interval forecasts.
+        """Compute/return prediction quantiles for a forecast.
 
-        If coverage is iterable, multiple intervals will be calculated.
-
-            core logic
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
 
         State required:
             Requires state to be "fitted".
 
+        Accesses in self:
+            Fitted model attributes ending in "_".
+
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
-           Forecasting horizon, default = y.index (in-sample forecast)
+            Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
-           Exogenous time series
-        coverage : float or list, optional (default=0.95)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
         Returns
