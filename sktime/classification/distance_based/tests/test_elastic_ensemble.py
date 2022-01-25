@@ -26,19 +26,19 @@ def test_ee_on_unit_test_data():
 
     # assert probabilities are the same
     probas = ee.predict_proba(X_test.iloc[indices])
-    testing.assert_array_almost_equal(probas, ee_unit_test_probas, decimal=2)
+    testing.assert_array_almost_equal(probas, ee_unit_test_probas, decimal=4)
 
 
 ee_unit_test_probas = np.array(
     [
-        [0.14286, 0.85714],
+        [0.08130, 0.91870],
         [1.00000, 0.00000],
-        [0.14286, 0.85714],
+        [0.08130, 0.91870],
         [1.00000, 0.00000],
-        [0.57143, 0.42857],
+        [0.55285, 0.44715],
         [1.00000, 0.00000],
-        [0.85714, 0.14286],
-        [0.14286, 0.85714],
+        [0.86179, 0.13821],
+        [0.08130, 0.91870],
         [1.00000, 0.00000],
         [1.00000, 0.00000],
     ]
