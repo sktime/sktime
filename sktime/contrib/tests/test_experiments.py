@@ -42,5 +42,4 @@ expected_capabilities = {
     "CanonicalIntervalForest": TestStats(unit_test_acc=0.8636363636363636),
     "ShapeletTransformClassifier": TestStats(unit_test_acc=0.8636363636363636),
     "ROCKET": TestStats(unit_test_acc=0.9090909090909091, multivariate=True),
-    "MrSEQLClassifier": TestStats(unit_test_acc=0.8636363636363636),
 }

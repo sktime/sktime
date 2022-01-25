@@ -253,17 +253,6 @@ extensions = [
         language="c++",
         include_dirs=[numpy.get_include()],
     ),
-    Extension(
-        "sktime.classification.shapelet_based.mrseql.mrseql",
-        [
-            "sktime/classification/shapelet_based/mrseql/mrseql.pyx",
-            "sktime/classification/shapelet_based/mrseql/seql_learn.cpp",
-            "sktime/classification/shapelet_based/mrseql/SNode.cpp",
-        ],
-        extra_compile_args=["/d2FH4-", "-O2"] if sys.platform == "win32" else ["-O2"],
-        language="c++",
-        include_dirs=[numpy.get_include()],
-    ),
 ]
 
 
