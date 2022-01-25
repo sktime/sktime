@@ -120,7 +120,6 @@ EXCLUDE_ESTIMATORS = [
 
 
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["test_fit_idempotent"],
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
@@ -231,12 +230,6 @@ ESTIMATOR_TEST_PARAMS = {
         "max_shapelets": 5,
         "n_shapelet_samples": 50,
         "batch_size": 20,
-    },
-    ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
-    ShapeletTransform: {
-        "max_shapelets_to_store_per_class": 1,
-        "min_shapelet_length": 3,
-        "max_shapelet_length": 4,
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,

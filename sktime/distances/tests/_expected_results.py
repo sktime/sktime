@@ -13,7 +13,7 @@ _expected_distance_results = {
     "lcss": [1.0, 0.1, 1.0],
     "edr": [1.0, 0.6, 1.0],
     "erp": [5.0, 5.03767, 20.78718],
-    "msm": [5.0, 3.09222, -1],
+    "msm": [5.0, 3.09222, 16.17954],
 }
 
 _expected_distance_results_params = {
