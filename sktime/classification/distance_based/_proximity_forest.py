@@ -137,6 +137,7 @@ def distance_predefined_params(distance_measure, **params):
     return distance
 
 
+# CHANGE TO NUMBA WRAPPER, try with factory.
 def cython_wrapper(distance_measure):
     """Wrap a distance measure in cython conversion.
 
