@@ -19,7 +19,7 @@ kwargs = {
 
 y = load_airline()
 y_train, y_test = temporal_train_test_split(y)
-
+5
 
 transformer = LaggedWindowSummarizer(**kwargs)
 
@@ -31,10 +31,14 @@ y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
 y_grouped = pd.concat([y_group1, y_group2])
 
+Xt_univar = transformer.fit_transform(y_train)
+
 Xt_nongroup = transformer.fit_transform(y_group1)
 # print(Xt)
 
 Xt_group = transformer.fit_transform(y_grouped)
+
+test_univar = Xt_univar.columns.to_list()
 
 test_singlegroup = Xt_nongroup.columns.to_list()
 
@@ -44,6 +48,10 @@ test_multigroup = Xt_group.columns.to_list()
 @pytest.mark.parametrize(
     "test_input,expected",
     [
+        (
+            test_univar,
+            ["lag_1_1", "mean_1_1", "mean_5_1", "std_1_2"],
+        ),
         (
             test_singlegroup,
             ["lag_1_1", "mean_1_1", "mean_5_1", "std_1_2"],

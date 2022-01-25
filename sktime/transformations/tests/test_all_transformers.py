@@ -26,6 +26,7 @@ from sktime.utils._testing.estimator_checks import (
 )
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
+ALL_TRANSFORMERS = [ALL_TRANSFORMERS[25]]
 
 
 @pytest.mark.parametrize("Estimator", ALL_TRANSFORMERS)
@@ -232,3 +233,6 @@ def _yield_transformer_checks(Estimator):
 
     if Estimator.get_class_tag("transform-returns-same-time-index", False):
         yield check_transform_returns_same_time_index
+
+
+test_all_transformers(ALL_TRANSFORMERS[0])

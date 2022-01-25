@@ -9,7 +9,8 @@ __all__ = ["LaggedWindowSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sktime.transformations.base import _PanelToTabularTransformer
+# from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 
 # from sktime.utils.validation.panel import check_X
 # List of native pandas rolling window function.
@@ -65,7 +66,7 @@ def _window_feature(
     win = window[1]
 
     if win_summarizer in pd_rolling:
-        if isinstance(Z, pd.Series):
+        if isinstance(Z.index, pd.MultiIndex):
             feat = getattr(Z.shift(shift).rolling(win), win_summarizer)()
         else:
             feat = Z.apply(
@@ -73,17 +74,25 @@ def _window_feature(
             )
     else:
         feat = Z.shift(shift)
-        if isinstance(Z, pd.Series) and callable(win_summarizer):
+        if isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
             feat = feat.rolling(win).apply(win_summarizer, raw=True)
-        elif not isinstance(Z, pd.Series) and callable(win_summarizer):
+        elif not isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
             feat = feat.apply(lambda x: x.rolling(win).apply(win_summarizer, raw=True))
 
-    feat.rename(name + "_" + "_".join([str(item) for item in window]), inplace=True)
+    if isinstance(feat, pd.Series):
+        feat.rename(name + "_" + "_".join([str(item) for item in window]), inplace=True)
+    else:
+        feat.rename(
+            columns={
+                feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
+            },
+            inplace=True,
+        )
 
     return feat
 
 
-class _LaggedWindowExtractor(_PanelToTabularTransformer):
+class _LaggedWindowExtractor(BaseTransformer):
     """Base adapter class for transformations.
 
     The LaggedWindowSummarizer transforms input series to features
@@ -91,15 +100,15 @@ class _LaggedWindowExtractor(_PanelToTabularTransformer):
     and window lengths.
     """
 
-    _tags = {
-        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
-        "X_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
-    }
+    # _tags = {
+    #     "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+    #     "y_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
+    #     "X_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
+    # }
 
     def __init__(
         self,
-        functions,
+        functions=None,
         n_jobs=-1,
     ):
 
@@ -123,15 +132,21 @@ class _LaggedWindowExtractor(_PanelToTabularTransformer):
         -------
         self : an instance of self
         """
-        func_dict = pd.DataFrame(self.functions).T.reset_index()
-        func_dict.rename(
-            columns={"index": "name", 0: "win_summarizer", 1: "window"}, inplace=True
-        )
-        func_dict = func_dict.explode("window")
-
-        self._func_dict = func_dict
+        if self.functions is not None:
+            func_dict = pd.DataFrame(self.functions).T.reset_index()
+            func_dict.rename(
+                columns={"index": "name", 0: "win_summarizer", 1: "window"},
+                inplace=True,
+            )
+            func_dict = func_dict.explode("window")
+            self._func_dict = func_dict
+            self._truncate_start = (
+                func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+            )
+        else:
+            self._func_dict = None
+            self._truncate_start = None
         self._is_fitted = True
-        self._truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
 
         return self
 
@@ -185,21 +200,27 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
 
         """
         # input checks
-
-        if isinstance(X.index, pd.MultiIndex):
-            X_grouped = getattr(X.groupby("instances"), X.columns[0])
-            df = Parallel(n_jobs=self.n_jobs)(
-                delayed(_window_feature)(X_grouped, **kwargs)
-                for index, kwargs in self._func_dict.iterrows()
-            )
+        if self._func_dict is not None:
+            if isinstance(X.index, pd.MultiIndex):
+                X_grouped = getattr(X.groupby("instances"), X.columns[0])
+                df = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_window_feature)(X_grouped, **kwargs)
+                    for index, kwargs in self._func_dict.iterrows()
+                )
+            else:
+                for _index, kwargs in self._func_dict.iterrows():
+                    _window_feature(X, **kwargs)
+                df = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_window_feature)(X, **kwargs)
+                    for _index, kwargs in self._func_dict.iterrows()
+                )
+            if isinstance(df[0], pd.Series):
+                col_names = [o.name for o in df]
+                Xt = pd.concat(df, axis=1)
+                Xt.columns = col_names
+            else:
+                Xt = pd.concat(df, axis=1)
         else:
-            df = Parallel(n_jobs=self.n_jobs)(
-                delayed(_window_feature)(X, **kwargs)
-                for index, kwargs in self._func_dict.iterrows()
-            )
-
-        col_names = [o.name for o in df]
-        Xt = pd.concat(df, axis=1)
-        Xt.columns = col_names
+            Xt = X
 
         return Xt
