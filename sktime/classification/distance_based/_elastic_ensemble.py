@@ -4,7 +4,7 @@
 An ensemble of elastic nearest neighbour classifiers.
 """
 
-__author__ = ["jasonlines"]
+__author__ = ["jasonlines", "TonyBagnall"]
 __all__ = ["ElasticEnsemble"]
 
 import time
@@ -110,14 +110,14 @@ class ElasticEnsemble(BaseClassifier):
                 "wddtw",
                 "lcss",
                 "erp",
-                #                "msm",
+                "msm",
             ]
         else:
             self.distance_measures = distance_measures
         self.proportion_train_in_param_finding = proportion_train_in_param_finding
         self.proportion_of_param_options = proportion_of_param_options
         self.proportion_train_for_test = proportion_train_for_test
-        self.majority_vote = (majority_vote,)
+        self.majority_vote = majority_vote
         self.estimators_ = None
         self.train_accs_by_classifier = None
         self.n_jobs = n_jobs
@@ -438,12 +438,11 @@ class ElasticEnsemble(BaseClassifier):
         elif distance_measure == "lcss":
             train_std = np.std(train_x)
             epsilons = get_inclusive(train_std * 0.2, train_std, 10)
-            deltas = get_inclusive(int(len(train_x[0]) / 4), len(train_x[0]), 10)
-            deltas = [int(d) for d in deltas]
+            deltas = get_inclusive(0, 0.25, 10)
             a = list(product(epsilons, deltas))
             return {
                 "distance_params": [
-                    {"epsilon": a[x][0], "delta": a[x][1]} for x in range(0, len(a))
+                    {"epsilon": a[x][0], "window": a[x][1]} for x in range(0, len(a))
                 ]
             }
         elif distance_measure == "erp":
@@ -453,7 +452,7 @@ class ElasticEnsemble(BaseClassifier):
             b_and_g = list(product(band_sizes, g_vals))
             return {
                 "distance_params": [
-                    {"band_size": b_and_g[x][0], "g": b_and_g[x][1]}
+                    {"window": b_and_g[x][0], "g": b_and_g[x][1]}
                     for x in range(0, len(b_and_g))
                 ]
             }

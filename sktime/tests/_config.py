@@ -4,7 +4,6 @@ __author__ = ["mloning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-from contrib.shapelets import ContractedShapeletTransform, ShapeletTransform
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from pyod.models.knn import KNN
 from sklearn.ensemble import RandomForestClassifier
@@ -112,7 +111,6 @@ from sktime.transformations.series.summarize import SummaryTransformer
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
@@ -120,7 +118,6 @@ EXCLUDE_ESTIMATORS = [
 
 
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["test_fit_idempotent"],
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
@@ -232,12 +229,6 @@ ESTIMATOR_TEST_PARAMS = {
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
-    ShapeletTransform: {
-        "max_shapelets_to_store_per_class": 1,
-        "min_shapelet_length": 3,
-        "max_shapelet_length": 4,
-    },
     RandomShapeletTransform: {
         "max_shapelets": 5,
         "n_shapelet_samples": 50,
@@ -257,7 +248,7 @@ ESTIMATOR_TEST_PARAMS = {
         "proportion_of_param_options": 0.01,
         "proportion_train_for_test": 0.1,
         "majority_vote": True,
-        "distance_measures": ["euclidean"],
+        "distance_measures": ["dtw"],
     },
     Catch22Classifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
