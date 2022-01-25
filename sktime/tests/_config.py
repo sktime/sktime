@@ -44,7 +44,6 @@ from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
     RandomIntervalSpectralEnsemble,
-    RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
@@ -101,10 +100,6 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.shapelets import (
-    ContractedShapeletTransform,
-    ShapeletTransform,
-)
 from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.panel.tsfresh import (
@@ -125,7 +120,6 @@ EXCLUDE_ESTIMATORS = [
 
 
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["test_fit_idempotent"],
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
@@ -237,12 +231,6 @@ ESTIMATOR_TEST_PARAMS = {
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
-    ShapeletTransform: {
-        "max_shapelets_to_store_per_class": 1,
-        "min_shapelet_length": 3,
-        "max_shapelet_length": 4,
-    },
     RandomShapeletTransform: {
         "max_shapelets": 5,
         "n_shapelet_samples": 50,
@@ -327,7 +315,6 @@ ESTIMATOR_TEST_PARAMS = {
         "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
-    RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     RandomIntervalSpectralEnsemble: {
         "n_estimators": 3,
         "acf_lag": 10,
