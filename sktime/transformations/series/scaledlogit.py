@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements the scaled logit tranformation."""
+"""Implements the scaled logit transformation."""
 
 __author__ = ["ltsaprounis"]
 __all__ = ["ScaledLogitTransformer"]
