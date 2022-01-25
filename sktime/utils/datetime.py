@@ -28,7 +28,9 @@ def _coerce_duration_to_int(duration, freq=None):
     ret : int
         Duration in integer values for given unit
     """
-    if isinstance(duration, pd.tseries.offsets.DateOffset):
+    if isinstance(duration, int):
+        return duration
+    elif isinstance(duration, pd.tseries.offsets.DateOffset):
         return duration.n
     elif isinstance(duration, pd.Index) and isinstance(
         duration[0], pd.tseries.offsets.BaseOffset
