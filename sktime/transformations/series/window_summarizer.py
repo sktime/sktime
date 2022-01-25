@@ -132,6 +132,10 @@ class _LaggedWindowExtractor(BaseTransformer):
         -------
         self : an instance of self
         """
+        # check if dict is empty
+        if not bool(self.functions):
+            self.functions = None
+
         if self.functions is not None:
             func_dict = pd.DataFrame(self.functions).T.reset_index()
             func_dict.rename(
