@@ -16,8 +16,15 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.distances import dtw_distance, erp_distance, lcss_distance, wdtw_distance
-from sktime.distances.elastic_cython import msm_distance, twe_distance
+from sktime.distances import (
+    dtw_distance,
+    erp_distance,
+    lcss_distance,
+    msm_distance,
+    wdtw_distance,
+)
+
+# from sktime.distances.elastic_cython import twe_distance
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -484,28 +491,28 @@ def lcss_distance_measure_getter(X):
     }
 
 
-def twe_distance_measure_getter(X):
-    """Generate the twe distance measure.
-
-    :param X: dataset to derive parameter ranges from
-    :returns: distance measure and parameter range dictionary
-    """
-    return {
-        "distance_measure": [cython_wrapper(twe_distance)],
-        "penalty": [
-            0,
-            0.011111111,
-            0.022222222,
-            0.033333333,
-            0.044444444,
-            0.055555556,
-            0.066666667,
-            0.077777778,
-            0.088888889,
-            0.1,
-        ],
-        "stiffness": [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
-    }
+# def twe_distance_measure_getter(X):
+#     """Generate the twe distance measure.
+#
+#     :param X: dataset to derive parameter ranges from
+#     :returns: distance measure and parameter range dictionary
+#     """
+#     return {
+#         "distance_measure": [cython_wrapper(twe_distance)],
+#         "penalty": [
+#             0,
+#             0.011111111,
+#             0.022222222,
+#             0.033333333,
+#             0.044444444,
+#             0.055555556,
+#             0.066666667,
+#             0.077777778,
+#             0.088888889,
+#             0.1,
+#         ],
+#         "stiffness": [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
+#     }
 
 
 def wdtw_distance_measure_getter(X):
@@ -583,7 +590,7 @@ def setup_all_distance_measure_getter(proximity):
         msm_distance_measure_getter,
         lcss_distance_measure_getter,
         erp_distance_measure_getter,
-        twe_distance_measure_getter,
+        #        twe_distance_measure_getter,
     ]
 
     def pick_rand_distance_measure(proximity):

@@ -28,12 +28,11 @@ from sktime.datatypes._panel._convert import (
     from_nested_to_2d_array,
     from_nested_to_3d_numpy,
 )
-from sktime.distances.elastic_cython import (
+from sktime.distances import (  # twe_distance,
     dtw_distance,
     erp_distance,
     lcss_distance,
     msm_distance,
-    twe_distance,
     wdtw_distance,
 )
 from sktime.transformations.base import _PanelToPanelTransformer
@@ -636,7 +635,7 @@ def setup_all_distance_measure_getter(proximity):
         msm_distance_measure_getter,
         lcss_distance_measure_getter,
         erp_distance_measure_getter,
-        twe_distance_measure_getter,
+        #        twe_distance_measure_getter,
     ]
 
     def pick_rand_distance_measure(proximity):
