@@ -192,6 +192,17 @@ Box-Cox
     BoxCoxTransformer
     LogTransformer
 
+Scaled Logit
+~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.scaledlogit
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledLogitTransformer
+
 ClaSP
 ~~~~~
 
