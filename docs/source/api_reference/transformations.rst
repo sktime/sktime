@@ -141,18 +141,6 @@ Segment
     IntervalSegmenter
     RandomIntervalSegmenter
 
-Shapelet
-~~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.shapelets
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ShapeletTransform
-    ContractedShapeletTransform
-
 Signature
 ~~~~~~~~~
 
@@ -203,6 +191,17 @@ Box-Cox
 
     BoxCoxTransformer
     LogTransformer
+
+Scaled Logit
+~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.scaledlogit
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledLogitTransformer
 
 ClaSP
 ~~~~~
