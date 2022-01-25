@@ -729,12 +729,6 @@ def msm_distance(
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
 
-    Examples
-    --------
-    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
-    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> msm_distance(x_2d, y_2d)
-
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
