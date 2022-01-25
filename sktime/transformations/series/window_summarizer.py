@@ -184,6 +184,21 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
          or function definition
     window: list of integers
         Contains values for window shift and window length.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.window_summarizer \
+    >>> import LaggedWindowSummarizer
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> kwargs_variant = {
+    >>>     "functions": {
+    >>>     "mean": ["mean", [[1, 7], [8, 7]]],
+    >>>     "covar_feature": ["cov", [1, 28]],
+    >>>     }
+    >>> }
+    >>> transformer = LaggedWindowSummarizer(**kwargs)
+    >>> y = transformer.fit_transform(y)
     """
 
     def _transform(self, X, y=None):

@@ -40,6 +40,13 @@ kwargs_alternames = {
     }
 }
 
+kwargs_variant = {
+    "functions": {
+        "mean": ["mean", [[1, 7], [8, 7]]],
+        "covar_feature": ["cov", [[1, 28]]],
+    }
+}
+
 kwargs_empty = {"functions": {}}
 
 # Create transformer with kwargs
@@ -47,6 +54,9 @@ transformer = LaggedWindowSummarizer(**kwargs)
 
 # Create transformer with different set of kwargs
 transformer_alternames = LaggedWindowSummarizer(**kwargs_alternames)
+
+# Create transformer with another different set of kwargs
+transformer_variant = LaggedWindowSummarizer(**kwargs_variant)
 
 # Create empty transformer
 transformer_empty = LaggedWindowSummarizer(**kwargs_empty)
@@ -71,6 +81,10 @@ test_empty = Xt_empty.columns.to_list()
 Xt_alternames = transformer_alternames.fit_transform(y_grouped)
 test_alternames = Xt_alternames.columns.to_list()
 
+# Check if transformers works with univariate data and a function dictionary variant
+Xt_variant = transformer_variant.fit_transform(y_train)
+test_variant = Xt_variant.columns.to_list()
+
 
 @pytest.mark.parametrize(
     "test_input,expected",
@@ -92,6 +106,10 @@ test_alternames = Xt_alternames.columns.to_list()
             ["lag_1_1", "lag_2_1", "lag_4_1", "covar_1_1", "covar_2_1", "covar_4_1"],
         ),
         (test_empty, ["y"]),
+        (
+            test_variant,
+            ["mean_1_7", "mean_8_7", "covar_feature_1_28"],
+        ),
     ],
 )
 def test_eval(test_input, expected):
