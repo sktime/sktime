@@ -4,7 +4,6 @@ __author__ = ["mloning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-from contrib.shapelets import ContractedShapeletTransform, ShapeletTransform
 from hcrystalball.wrappers import HoltSmoothingWrapper
 from pyod.models.knn import KNN
 from sklearn.ensemble import RandomForestClassifier
