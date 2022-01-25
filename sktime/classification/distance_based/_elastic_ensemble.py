@@ -117,7 +117,7 @@ class ElasticEnsemble(BaseClassifier):
         self.proportion_train_in_param_finding = proportion_train_in_param_finding
         self.proportion_of_param_options = proportion_of_param_options
         self.proportion_train_for_test = proportion_train_for_test
-        self.majority_vote = (majority_vote,)
+        self.majority_vote = majority_vote
         self.estimators_ = None
         self.train_accs_by_classifier = None
         self.n_jobs = n_jobs

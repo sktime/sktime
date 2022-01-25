@@ -111,7 +111,6 @@ from sktime.transformations.series.summarize import SummaryTransformer
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
@@ -249,7 +248,7 @@ ESTIMATOR_TEST_PARAMS = {
         "proportion_of_param_options": 0.01,
         "proportion_train_for_test": 0.1,
         "majority_vote": True,
-        "distance_measures": ["euclidean"],
+        "distance_measures": ["dtw"],
     },
     Catch22Classifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
