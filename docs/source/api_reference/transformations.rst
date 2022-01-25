@@ -141,18 +141,6 @@ Segment
     IntervalSegmenter
     RandomIntervalSegmenter
 
-Shapelet
-~~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.shapelets
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ShapeletTransform
-    ContractedShapeletTransform
-
 Signature
 ~~~~~~~~~
 
