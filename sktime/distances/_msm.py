@@ -41,7 +41,8 @@ class _MsmDistance(NumbaDistance):
             If the input timeseries is not a numpy array.
             If the input timeseries doesn't have exactly 2 dimensions.
         """
-        # @njit(cache=True)
+
+        @njit(cache=True)
         def numba_msm_distance(
             _x: np.ndarray,
             _y: np.ndarray,
