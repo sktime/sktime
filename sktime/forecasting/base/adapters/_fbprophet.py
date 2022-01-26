@@ -12,7 +12,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import check_alpha, check_y_X
+from sktime.utils.validation.forecasting import check_y_X
 
 
 class _ProphetAdapter(BaseForecaster):
@@ -83,7 +83,7 @@ class _ProphetAdapter(BaseForecaster):
         fh : array-like
             The forecasters horizon with the steps ahead to to predict.
             Default is
-            one-step ahead forecast, i.e. np.arraygit r([1]).
+            one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional
             Exogenous data, by default None
 
@@ -109,18 +109,11 @@ class _ProphetAdapter(BaseForecaster):
             X = X.copy()
             df, X = _merge_X(df, X)
 
-        # setting uncertainty samples to zero avoids computing pred ints
-        # self._forecaster.uncertainty_samples = 0
-        """try:
-            yield
-        finally:
-            self._forecaster.uncertainty_samples = self.uncertainty_samples"""
         out = self._forecaster.predict(df)
 
         out.set_index("ds", inplace=True)
         y_pred = out.loc[:, "yhat"]
 
-        # y_pred.index.name = ""
         y_pred = pd.DataFrame(y_pred)
         y_pred.reset_index(inplace=True)
         y_pred.index = y_pred["ds"].values
@@ -152,9 +145,6 @@ class _ProphetAdapter(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        self.check_is_fitted()
-        alpha = check_alpha(alpha)
-
         fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
         if not isinstance(fh, pd.DatetimeIndex):
             raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
@@ -175,11 +165,6 @@ class _ProphetAdapter(BaseForecaster):
         if X is not None:
             X = X.copy()
             df, X = _merge_X(df, X)
-
-        """try:
-            yield
-        finally:
-            self._forecaster.uncertainty_samples = self.uncertainty_samples"""
 
         pred_quantiles = pd.DataFrame()
         for a, c in zip(alpha, coverage):
@@ -260,12 +245,14 @@ def _merge_X(df, X):
     """
     # Merging on the index is unreliable, possibly due to loss of freq information in fh
     X.columns = X.columns.astype(str)
-    if "ds" in X.columns:
-        raise ValueError("Column name 'ds' is reserved in fbprophet")
+    if "ds" in X.columns and pd.api.types.is_numeric_dtype(X["ds"]):
+        longest_column_name = max(X.columns, key=len)
+        X.loc[:, str(longest_column_name) + "_"] = X.loc[:, "ds"]
+        # raise ValueError("Column name 'ds' is reserved in fbprophet")
     X.loc[:, "ds"] = X.index
-    # df = df.merge(X, how="inner", on="ds", copy=False)
-    df = df.merge(X, how="inner", on="ds")
-    return df, X.drop(columns="ds")
+    df = df.merge(X, how="inner", on="ds", copy=True)
+    X = X.drop(columns="ds")
+    return df, X
 
 
 class _suppress_stdout_stderr(object):
