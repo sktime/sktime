@@ -67,6 +67,7 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
+from sktime.performance_metrics.base import BaseMetric
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import (
     BaseTransformer,
@@ -94,6 +95,9 @@ BASE_CLASS_REGISTER = [
         "pairwise transformer for panel data, distance or kernel",
     ),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
+    "metric",
+    BaseMetric,
+    "performance metric",
 ]
 
 BASE_CLASS_SCITYPE_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[0].tolist()
