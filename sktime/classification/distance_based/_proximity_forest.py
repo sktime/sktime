@@ -23,8 +23,6 @@ from sktime.distances import (
     msm_distance,
     wdtw_distance,
 )
-
-# from sktime.distances.elastic_cython import twe_distance
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.validation.panel import check_X, check_X_y

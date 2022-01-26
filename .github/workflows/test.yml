@@ -73,7 +73,7 @@ jobs:
         run: |
           conda install -c anaconda "pystan==2.19.1.1"
           conda install -c conda-forge "fbprophet>=0.7.1"
-          conda install -c conda-forge scipy cython matplotlib
+          conda install -c conda-forge scipy matplotlib
 
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
