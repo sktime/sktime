@@ -180,6 +180,7 @@ MeanAbsoluteScaledError_
 
 Documentation Build
 -------------------
+
 We use `sphinx`_ to build our documentation and `readthedocs`_ to host it.
 You can find our latest documentation `here <https://www.sktime.org/en/latest/>`_.
 
@@ -194,20 +195,16 @@ the ``index.rst`` file.
 
 To build the documentation locally, you need to install a few extra
 dependencies listed in
-`docs/requirements.txt <https://github.com/alan-turing-institute/sktime/blob/main/docs/requirements.txt>`__.
+`pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__.
 
-1. To install extra requirements from the root directory, run:
+1. To install extra dependencies from the root directory, run:
 
    .. code:: bash
 
-      pip install -r docs/requirements.txt
+      pip install .[docs]
 
 2. To build the website locally, run:
 
    .. code:: bash
 
       make docs
-
-You can find the generated files in the ``sktime/docs/_build/`` folder.
-To view the website, open ``sktime/docs/_build/html/index.html`` with
-your preferred web browser.

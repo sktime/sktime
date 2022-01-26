@@ -35,7 +35,7 @@ from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
     TEST_OOS_FHS,
-    TEST_STEP_LENGTHS,
+    TEST_STEP_LENGTHS_INT,
     TEST_WINDOW_LENGTHS,
     VALID_INDEX_FH_COMBINATIONS,
 )
@@ -454,7 +454,7 @@ def _check_update_predict_predicted_index(
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 @pytest.mark.parametrize("update_params", [False])
 def test_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
