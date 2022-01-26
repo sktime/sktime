@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """Install script for sktime."""
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
-# /setup.py
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/setup.py
 
 ####################
 
@@ -31,9 +30,7 @@ from distutils.errors import CompileError, LinkError
 from distutils.extension import Extension
 from distutils.sysconfig import customize_compiler
 
-import numpy
 import toml
-from Cython.Build import cythonize
 from numpy.distutils.ccompiler import new_compiler
 from setuptools import find_packages
 
@@ -246,13 +243,6 @@ extensions = [
         ["sktime/__check_build/_check_build.pyx"],
         extra_compile_args=["-O2"],
     ),
-    Extension(
-        "sktime.distances.elastic_cython",
-        ["sktime/distances/elastic_cython.pyx"],
-        extra_compile_args=["/d2FH4-", "-O2"] if sys.platform == "win32" else ["-O2"],
-        language="c++",
-        include_dirs=[numpy.get_include()],
-    ),
 ]
 
 
@@ -265,7 +255,6 @@ def setup_package():
         cmdclass=cmdclass,
         description=pyproject["project"]["description"],
         download_url=pyproject["project"]["urls"]["download"],
-        ext_modules=cythonize(extensions, language_level="3"),
         extras_require=pyproject["project"]["optional-dependencies"],
         include_package_data=True,
         install_requires=pyproject["project"]["dependencies"],
