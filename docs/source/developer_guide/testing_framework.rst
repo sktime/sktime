@@ -216,7 +216,7 @@ although this is meant for generic behaviour mainly.
 One-off escapes and similar should be avoided here, and instead dealt with ``xfail`` and similar.
 * the value of the fixture variables that appear earlier in ``fixture_sequence``, in ``kwargs``.
 For instance, the value of ``estimator_instance``, if this is a variable used in the test.
-This can be used to make the list of fixtures for ``variablename`` dependent on the value of other fixtures variables
+This can be used to make the list of fixtures for ``variable_name`` dependent on the value of other fixtures variables
 
 Adding or extending scenarios
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
