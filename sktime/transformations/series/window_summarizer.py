@@ -194,11 +194,11 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
     >>> kwargs_variant = {
     >>>     "functions": {
     >>>     "mean": ["mean", [[1, 7], [8, 7]]],
-    >>>     "covar_feature": ["cov", [1, 28]],
+    >>>     "covar_feature": ["cov", [[1, 28]]],
     >>>     }
-    >>> }
-    >>> transformer = LaggedWindowSummarizer(**kwargs)
-    >>> y = transformer.fit_transform(y)
+    >>>  }
+    >>> transformer = LaggedWindowSummarizer(**kwargs_variant)
+    >>> y_transformed = transformer.fit_transform(y)
     """
 
     def _transform(self, X, y=None):
