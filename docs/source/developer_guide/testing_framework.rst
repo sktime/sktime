@@ -206,7 +206,7 @@ This requires:
 * adding the new variable in the ``fixture_sequence`` list in ``pytest_generate_tests``
 
 The function ``_generate_[variablename](test_name, **kwargs)`` should return two objects:
-* a list of fixture to loop over, to substitute for ``variablename`` when appearing in a test signature
+* a list of fixture to loop over, to substitute for ``variable_name`` when appearing in a test signature
 * a list of names of equal length, i-th element used as a name for the i-th fixture in test logs
 
 The function has access to:
