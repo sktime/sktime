@@ -7,7 +7,7 @@ __author__ = ["Markus Löning", "lmmentel"]
 import codecs
 
 import toml
-from setuptools import find_packages
+from setuptools import find_packages, setup
 
 pyproject = toml.load("pyproject.toml")
 
@@ -27,7 +27,7 @@ pyproject = toml.load("pyproject.toml")
 
 def setup_package():
     """Set up package."""
-    metadata = dict(
+    setup(
         author_email=pyproject["project"]["authors"][0]["email"],
         author=pyproject["project"]["authors"][0]["name"],
         classifiers=pyproject["project"]["classifiers"],
@@ -64,10 +64,6 @@ def setup_package():
         version=pyproject["project"]["version"],
         zip_safe=False,
     )
-
-    from setuptools import setup
-
-    setup(**metadata)
 
 
 if __name__ == "__main__":
