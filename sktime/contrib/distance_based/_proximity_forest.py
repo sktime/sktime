@@ -23,7 +23,7 @@ from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification.base import BaseClassifier
 from sktime.datatypes._panel._convert import (
     from_nested_to_2d_array,
     from_nested_to_3d_numpy,
