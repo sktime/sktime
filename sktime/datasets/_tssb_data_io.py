@@ -9,7 +9,7 @@ import pandas as pd
 
 from sktime.datasets.tssb_dataset_names import tssb_dataset_names
 
-__all__ = []
+__all__ = ["load_tssb_dataset"]
 
 __author__ = [
     "ermshaua",
