@@ -6,7 +6,6 @@
 __author__ = ["aiwalter"]
 __all__ = ["Prophet"]
 
-
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -141,7 +140,6 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
-        interval_width=0,
     ):
         self.freq = freq
         self.add_seasonality = add_seasonality
@@ -164,7 +162,6 @@ class Prophet(_ProphetAdapter):
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
         self.verbose = verbose
-        self.interval_width = interval_width
 
         # import inside method to avoid hard dependency
         from fbprophet.forecaster import Prophet as _Prophet

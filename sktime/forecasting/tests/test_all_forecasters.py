@@ -273,7 +273,8 @@ def _check_pred_ints(
         # check time index
         _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
         # check values
-        assert np.all(pred_int["upper"] >= pred_int["lower"])
+        assert np.all(pred_int["upper"] > y_pred)
+        assert np.all(pred_int["lower"] < y_pred)
 
         # check if errors are weakly monotonically increasing
         # pred_errors = y_pred - pred_int["lower"]
@@ -313,7 +314,6 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             if f._has_predict_quantiles_been_refactored():
                 y_pred = f.predict()
                 pred_ints = f.predict_interval(fh, coverage=alpha)
-
                 pred_ints = f._convert_new_to_old_pred_int(pred_ints, alpha)
             else:
                 y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
