@@ -66,9 +66,9 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=T
 
     convert_align_to_align_loc(align_df, X)
     """
-    # todo: need to wait for datatypes PR to merge
-    # from sktime.datatypes import check_is_mtype
-    # check_is_mtype(align, "align-frame", var_name=df_name)
+    from sktime.datatypes import check_is_mtype
+
+    check_is_mtype(align, "alignment", scitype="Alignment", var_name=align_name)
 
     if not isinstance(X, list):
         raise ValueError(f"{df_name} must be a list of pandas.DataFrame")
@@ -91,7 +91,7 @@ def convert_align_to_align_loc(align, X, align_name="align", df_name="X", copy=T
 
         # reindex X to the alignment positions
         #  this also deals with np.nan indices
-        loc_series = pd.Series(Xi.index, dtype="Int64").reindex(align[indi], copy=copy)
+        loc_series = pd.Series(Xi.index).reindex(align[indi], copy=copy)
         align[indi] = loc_series.values
 
     return align

@@ -28,6 +28,7 @@ sktime/transformations/panel/signature_based/ @jambo6
 sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/difference.py @rnkuhns
 sktime/transformations/series/exponent.py @rnkuhns
+sktime/transformations/series/scaledlogit.py @ltsaprounis
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/naive.py @Flix6x
