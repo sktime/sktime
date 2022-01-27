@@ -11,7 +11,6 @@ import os
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_y_X
 
 
