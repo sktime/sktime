@@ -21,6 +21,7 @@ __all__ = [
     "load_electric_devices_segmentation",
     "load_acsf1",
     "load_macroeconomic",
+    "load_tssb_dataset",
 ]
 
 from sktime.datasets._data_io import (
@@ -43,3 +44,4 @@ from sktime.datasets._data_io import (
     load_unit_test,
     load_uschange,
 )
+from sktime.datasets._tssb_data_io import load_tssb_dataset

@@ -1,35 +1,33 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+"""Simple orchestration tests."""
+
+__author__ = ["Viktor Kazakov", "Markus Löning", "ermshaua"]
 
 import os
 
 import numpy as np
+import pandas as pd
 import pytest
+from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, make_scorer
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.pipeline import Pipeline
 
 # get data path for testing dataset loading from hard drive
 import sktime
-from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import make_scorer
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import Pipeline
-from sktime.benchmarking.data import RAMDataset
-from sktime.benchmarking.data import UEADataset
+from sktime.annotation.clasp import ClaSPSegmentation
+from sktime.benchmarking.data import RAMDataset, UEADataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import AggregateMetric
-from sktime.benchmarking.metrics import PairwiseMetric
+from sktime.benchmarking.metrics import AggregateMetric, PairwiseMetric
 from sktime.benchmarking.orchestration import Orchestrator
-from sktime.benchmarking.results import HDDResults
-from sktime.benchmarking.results import RAMResults
+from sktime.benchmarking.results import HDDResults, RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.datasets import load_arrow_head
-from sktime.datasets import load_gunpoint
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.datasets import load_arrow_head, load_gunpoint, load_tssb_dataset
+from sktime.performance_metrics.annotation import relative_change_point_distance
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformations.panel.reduce import Tabularizer
 
@@ -38,14 +36,14 @@ DATAPATH = os.path.join(REPOPATH, "datasets/data/")
 
 
 def make_reduction_pipeline(estimator):
-    """Helper function to use tabular estimators in time series setting"""
+    """Help function to use tabular estimators in time series setting."""
     pipeline = Pipeline([("transform", Tabularizer()), ("clf", estimator)])
     return pipeline
 
 
-# simple test of orchestration and metric evaluation
 @pytest.mark.parametrize("data_loader", [load_gunpoint, load_arrow_head])
 def test_automated_orchestration_vs_manual(data_loader):
+    """Simple test of orchestration and metric evaluation."""
     data = data_loader()
 
     dataset = RAMDataset(dataset=data, name="data")
@@ -111,6 +109,7 @@ def test_automated_orchestration_vs_manual(data_loader):
 def test_single_dataset_single_strategy_against_sklearn(
     dataset, cv, metric_func, estimator, results_cls, tmpdir
 ):
+    """Simple test of orchestration and metric evaluation."""
     # set up orchestration
     task = TSCTask(target="class_val")
 
@@ -162,8 +161,8 @@ def test_single_dataset_single_strategy_against_sklearn(
     np.testing.assert_array_equal(actual, expected)
 
 
-# simple test of sign test and ranks
 def test_stat():
+    """Simple test of sign test and ranks."""
     data = load_gunpoint(split="train")
     dataset = RAMDataset(dataset=data, name="gunpoint")
     task = TSCTask(target="class_val")
@@ -204,3 +203,26 @@ def test_stat():
     np.testing.assert_equal(
         [rank_array, sign_array], [rank_array_test, sign_array_test]
     )
+
+
+@pytest.mark.parametrize("name", ["ArrowHead", "InlineSkate", "Plane"])
+def test_tss_orchestration(name):
+    """
+    Simple test of time series segementation orchestration and metric evaluation.
+
+    ... which is not possible yet using a task, strategy, orchestrator and evaluator.
+    This test should be used to extend the aforementioned objects for annotation.
+    """
+    tssb = load_tssb_dataset(names=[name])
+    results = list()
+
+    for _, (ts_name, window_size, y_true, ts) in tssb.iterrows():
+        y_pred = ClaSPSegmentation(window_size, n_cps=y_true.shape[0]).fit_predict(ts)
+        error = relative_change_point_distance(y_true, y_pred, ts.shape[0])
+        results.append((ts_name, error))
+
+    results = pd.DataFrame.from_records(
+        results, columns=["Dataset", "Relative CP Distance"]
+    )
+    np.testing.assert_equal(1, results.shape[0])
+    np.testing.assert_equal(results.iloc[0].Dataset, name)
