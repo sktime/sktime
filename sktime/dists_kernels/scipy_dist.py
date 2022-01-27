@@ -7,6 +7,7 @@ Interface module to scipy.spatial's pairwise distance function cdist
 
 __author__ = ["fkiraly"]
 
+from unittest import expectedFailure
 import pandas as pd
 import numpy as np
 
@@ -102,3 +103,7 @@ class ScipyDist(BasePairwiseTransformer):
             distmat = cdist(XA=X, XB=X2, metric=metric)
 
         return distmat
+
+# test for weights might be 
+# if there is no weights distance is as expected
+# if there are weithgs provded - distance is different
