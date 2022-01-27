@@ -66,7 +66,6 @@ def test_col_ens_on_unit_test_data():
     col_ens.fit(X_train, y_train)
     # assert probabilities are the same
     probas = col_ens.predict_proba(X_test.iloc[indices])
-
     testing.assert_array_almost_equal(probas, col_ens_unit_test_probas, decimal=2)
 
 
