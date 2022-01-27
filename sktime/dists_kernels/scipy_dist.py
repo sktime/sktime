@@ -8,6 +8,7 @@ Interface module to scipy.spatial's pairwise distance function cdist
 __author__ = ["fkiraly"]
 
 import pandas as pd
+import numpy as np
 
 from scipy.spatial.distance import cdist
 
@@ -46,11 +47,12 @@ class ScipyDist(BasePairwiseTransformer):
         "symmetric": True,  # all the distances are symmetric
     }
 
-    def __init__(self, metric="euclidean", p=2, colalign="intersect"):
+    def __init__(self, metric="euclidean", p=2, colalign="intersect", weights=None):
 
         self.metric = metric
         self.p = p
         self.colalign = colalign
+        self.weights = weights
 
         super(ScipyDist, self).__init__()
 
@@ -78,12 +80,21 @@ class ScipyDist(BasePairwiseTransformer):
         """
         p = self.p
         metric = self.metric
+        weights = self.weights
 
         if isinstance(X, pd.DataFrame):
             X = X.select_dtypes("number").to_numpy(dtype="float")
 
         if isinstance(X2, pd.DataFrame):
             X2 = X2.select_dtypes("number").to_numpy(dtype="float")
+
+        if np.ndim(weights) == 1:
+            if len(weights) == len(X.columns) == len(X2.columns):
+                X = weights*X
+                X2 = weights*X2
+            else:
+                raise Exception(
+                    "weights vector length must be equal to X and X2 number of columns")
 
         if metric == "minkowski":
             distmat = cdist(XA=X, XB=X2, metric=metric, p=p)
