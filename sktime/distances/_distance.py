@@ -694,7 +694,15 @@ def msm_distance(
     c: float = 0.0,
     **kwargs: Any,
 ) -> float:
-    """Compute the msm distance.
+    """Compute the move-split-merge distance.
+
+    This metric uses as building blocks three fundamental operations: Move, Split,
+    and MergeA Move operation changes the value of a single element, a Split
+    operation converts a single element into two consecutive elements, and a Merge
+    operation merges two consecutive elements into one. Each operation has an
+    associated cost, and the MSM distance between two time series is defined to be
+    the cost of the cheapest sequence of operations that transforms the first time
+    series into the second one.
 
     Parameters
     ----------
@@ -709,6 +717,23 @@ def msm_distance(
     -------
     float
         Msm distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
+    for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
+    25(6):1425–1438, 2013.
     """
     format_kwargs = {
         "c": c,
