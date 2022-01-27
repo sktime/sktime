@@ -64,9 +64,6 @@ def test_col_ens_on_unit_test_data():
     estimators = [("FreshPrince", fp, [0])]
     col_ens = ColumnEnsembleClassifier(estimators=estimators)
     col_ens.fit(X_train, y_train)
-    # preds = col_ens.predict(X_test.iloc[indices])
-
-    # assert preds[0] == 2
     # assert probabilities are the same
     probas = col_ens.predict_proba(X_test.iloc[indices])
 
