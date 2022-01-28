@@ -11,11 +11,9 @@ import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests._config import (
-    TEST_OOS_FHS,
-    TEST_SPS,
-    TEST_WINDOW_LENGTHS_INT,
-)
+from sktime.forecasting.tests._config import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_SPS
+from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
@@ -37,7 +35,7 @@ def test_strategy_last(fh):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_mean(fh, window_length):
     """Test mean strategy."""
     f = NaiveForecaster(strategy="mean", window_length=window_length)
@@ -71,7 +69,7 @@ def test_strategy_last_seasonal(fh, sp):
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
-@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_mean_seasonal(fh, sp, window_length):
     """Test mean strategy on seasonal data."""
     if (window_length is not None and window_length > sp) or (window_length is None):
@@ -120,7 +118,7 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_unit_slope(fh, window_length):
     """Test drift strategy for constant slope 1."""
     if window_length != 1:
@@ -139,7 +137,7 @@ def test_strategy_drift_unit_slope(fh, window_length):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_flat_line(fh, window_length):
     """Test flat time series data."""
     if window_length != 1:
@@ -159,7 +157,7 @@ def test_strategy_drift_flat_line(fh, window_length):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS_INT, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_window_length(fh, window_length):
     """Test whether window_length is properly working."""
     if window_length != 1:
@@ -182,7 +180,7 @@ def test_strategy_drift_window_length(fh, window_length):
 
 
 @pytest.mark.parametrize("n", [3, 5])
-@pytest.mark.parametrize("window_length", list({4, 5, *TEST_WINDOW_LENGTHS_INT}))
+@pytest.mark.parametrize("window_length", list({4, 5, *TEST_WINDOW_LENGTHS}))
 @pytest.mark.parametrize("sp", list({3, 4, 8, *TEST_SPS}))
 @pytest.mark.parametrize("strategy", ["last", "mean"])
 def test_strategy_mean_and_last_seasonal_additional_combinations(

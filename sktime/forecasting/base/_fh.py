@@ -7,7 +7,6 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -19,7 +18,6 @@ RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -61,7 +59,7 @@ def _delegator(method):
     return delegated
 
 
-def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
+def _check_values(values):
     """Validate forecasting horizon values.
 
     Validation checks validity and also converts forecasting horizon values
@@ -139,11 +137,7 @@ class ForecastingHorizon:
             absolute, if not relative and values of supported absolute index type
     """
 
-    def __new__(
-        cls,
-        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = None,
-    ):
+    def __new__(cls, values=None, is_relative=None):
         """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
         # pandas index, but since subclassing pandas indices is not
@@ -155,11 +149,7 @@ class ForecastingHorizon:
             setattr(cls, method, _delegator(method))
         return object.__new__(cls)
 
-    def __init__(
-        self,
-        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = True,
-    ):
+    def __init__(self, values=None, is_relative=True):
         if is_relative is not None and not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean or None")
         values = _check_values(values)
@@ -186,11 +176,7 @@ class ForecastingHorizon:
         self._values = values
         self._is_relative = is_relative
 
-    def _new(
-        self,
-        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = None,
-    ):
+    def _new(self, values=None, is_relative=None):
         """Construct new ForecastingHorizon based on current object.
 
         Parameters
@@ -214,7 +200,7 @@ class ForecastingHorizon:
         return type(self)(values, is_relative)
 
     @property
-    def is_relative(self) -> bool:
+    def is_relative(self):
         """Whether forecasting horizon is relative to the end of the training series.
 
         Returns
@@ -223,7 +209,7 @@ class ForecastingHorizon:
         """
         return self._is_relative
 
-    def to_pandas(self) -> pd.Index:
+    def to_pandas(self):
         """Return forecasting horizon's underlying values as pd.Index.
 
         Returns
@@ -233,7 +219,7 @@ class ForecastingHorizon:
         """
         return self._values
 
-    def to_numpy(self, **kwargs) -> np.ndarray:
+    def to_numpy(self, **kwargs):
         """Return forecasting horizon's underlying values as np.array.
 
         Parameters

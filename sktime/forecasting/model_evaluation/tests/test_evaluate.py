@@ -1,11 +1,6 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for model evaluation module.
-
-In particular, function `evaluate`, that performs time series
-cross-validation, is tested with various configurations for correct output.
-"""
 
 __author__ = ["Martin Walter", "Markus Löning"]
 __all__ = [
@@ -18,16 +13,14 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
-
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    SlidingWindowSplitter,
-)
+from sktime.forecasting.model_selection import ExpandingWindowSplitter
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS_INT
+from sktime.forecasting.tests._config import TEST_FHS
+from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
@@ -83,7 +76,7 @@ def _check_evaluate_output(out, cv, y, scoring):
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", [7, 10])
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("strategy", ["refit", "update"])
 @pytest.mark.parametrize(
     "scoring",
@@ -93,7 +86,6 @@ def _check_evaluate_output(out, cv, y, scoring):
     ],
 )
 def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, scoring):
-    """Test evaluate common configs."""
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
     cv = CV(fh, window_length, step_length=step_length)
@@ -117,7 +109,6 @@ def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, s
 
 
 def test_evaluate_initial_window():
-    """Test evaluate initial window."""
     initial_window = 20
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
@@ -140,7 +131,7 @@ def test_evaluate_initial_window():
 
 
 def test_evaluate_no_exog_against_with_exog():
-    """Check that adding exogenous data produces different results."""
+    # Check that adding exogenous data produces different results
     y, X = load_longley()
     forecaster = ARIMA(suppress_warnings=True)
     cv = SlidingWindowSplitter()

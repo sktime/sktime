@@ -2,39 +2,35 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""Test grid search CV."""
-
 __author__ = ["Markus Löning"]
 __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
 from sklearn.base import clone
-from sklearn.model_selection import ParameterGrid, ParameterSampler
+from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterSampler
 
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ForecastingGridSearchCV,
-    ForecastingRandomizedSearchCV,
-    SingleWindowSplitter,
-    SlidingWindowSplitter,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import ForecastingRandomizedSearchCV
+from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests._config import (
-    TEST_N_ITERS,
-    TEST_OOS_FHS,
-    TEST_RANDOM_SEEDS,
-    TEST_WINDOW_LENGTHS_INT,
-)
+from sktime.forecasting.tests._config import TEST_N_ITERS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_RANDOM_SEEDS
+from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.performance_metrics.forecasting import (
     MeanAbsolutePercentageError,
     MeanSquaredError,
 )
 from sktime.transformations.series.detrend import Detrender
+
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 
@@ -69,7 +65,7 @@ def _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring):
 
 
 NAIVE = NaiveForecaster(strategy="mean")
-NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
+NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS}
 PIPE = TransformedTargetForecaster(
     [
         ("transformer", Detrender(PolynomialTrendForecaster())),
@@ -92,7 +88,6 @@ CVs = [
 @pytest.mark.parametrize("scoring", TEST_METRICS)
 @pytest.mark.parametrize("cv", CVs)
 def test_gscv(forecaster, param_grid, cv, scoring):
-    """Test ForecastingGridSearchCV."""
     y, X = load_longley()
     gscv = ForecastingGridSearchCV(
         forecaster, param_grid=param_grid, cv=cv, scoring=scoring
@@ -111,9 +106,7 @@ def test_gscv(forecaster, param_grid, cv, scoring):
 @pytest.mark.parametrize("n_iter", TEST_N_ITERS)
 @pytest.mark.parametrize("random_state", TEST_RANDOM_SEEDS)
 def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
-    """Test ForecastingRandomizedSearchCV.
-
-    Tests that ForecastingRandomizedSearchCV successfully searches the
+    """Tests that ForecastingRandomizedSearchCV successfully searches the
     parameter distributions to identify the best parameter set
     """
     y, X = load_longley()
