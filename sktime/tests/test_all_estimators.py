@@ -84,7 +84,7 @@ def pytest_generate_tests(metafunc):
             est for est in ALL_ESTIMATORS if not is_excluded(est)
         ]
         # parameterize test with the list of classes
-        metafunc.parametrize("estimator_class", estimator_classes_to_test[0:7])
+        metafunc.parametrize("estimator_class", estimator_classes_to_test[0:11])
 
     # if estimator test, construct all instances for the test
     if "estimator_instance" in metafunc.fixturenames:
