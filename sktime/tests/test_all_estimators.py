@@ -42,6 +42,7 @@ from sktime.tests._config import (
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
+    _assert_array_equal,
     _get_args,
     _has_capability,
     _list_required_methods,
@@ -558,49 +559,51 @@ def test_persistence_via_pickle(estimator_instance):
         )
 
 
-# def test_multiprocessing_idempotent(estimator_class):
-#     """Test that single and multi-process run results are identical.
+# todo: this needs to be diagnosed and fixed - temporary skip
+@pytest.mark.skip(reason="hangs on mac and unix remote tests")
+def test_multiprocessing_idempotent(estimator_class):
+    """Test that single and multi-process run results are identical.
 
-#     Check that running an estimator on a single process is no different to running
-#     it on multiple processes. We also check that we can set n_jobs=-1 to make use
-#     of all CPUs. The test is not really necessary though, as we rely on joblib for
-#     parallelization and can trust that it works as expected.
-#     """
-#     estimator = estimator_class.create_test_instance()
-#     params = estimator.get_params()
+    Check that running an estimator on a single process is no different to running
+    it on multiple processes. We also check that we can set n_jobs=-1 to make use
+    of all CPUs. The test is not really necessary though, as we rely on joblib for
+    parallelization and can trust that it works as expected.
+    """
+    estimator = estimator_class.create_test_instance()
+    params = estimator.get_params()
 
-#     if "n_jobs" in params:
-#         results = {}
-#         args = {}
+    if "n_jobs" in params:
+        results = {}
+        args = {}
 
-#         # run on a single process
-#         estimator = estimator_class.create_test_instance()
-#         estimator.set_params(n_jobs=1)
-#         set_random_state(estimator)
-#         args["fit"] = _make_args(estimator, "fit")
-#         estimator.fit(*args["fit"])
+        # run on a single process
+        estimator = estimator_class.create_test_instance()
+        estimator.set_params(n_jobs=1)
+        set_random_state(estimator)
+        args["fit"] = _make_args(estimator, "fit")
+        estimator.fit(*args["fit"])
 
-#         # compute and store results
-#         for method in NON_STATE_CHANGING_METHODS:
-#             if _has_capability(estimator, method):
-#                 args[method] = _make_args(estimator, method)
-#                 results[method] = getattr(estimator, method)(*args[method])
+        # compute and store results
+        for method in NON_STATE_CHANGING_METHODS:
+            if _has_capability(estimator, method):
+                args[method] = _make_args(estimator, method)
+                results[method] = getattr(estimator, method)(*args[method])
 
-#         # run on multiple processes, reusing the same input arguments
-#         estimator = estimator_class.create_test_instance()
-#         estimator.set_params(n_jobs=-1)
-#         set_random_state(estimator)
-#         estimator.fit(*args["fit"])
+        # run on multiple processes, reusing the same input arguments
+        estimator = estimator_class.create_test_instance()
+        estimator.set_params(n_jobs=-1)
+        set_random_state(estimator)
+        estimator.fit(*args["fit"])
 
-#         # compute and compare results
-#         for method, value in results.items():
-#             if hasattr(estimator, method):
-#                 result = getattr(estimator, method)(*args[method])
-#                 _assert_array_equal(
-#                     value,
-#                     result,
-#                     err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
-#                 )
+        # compute and compare results
+        for method, value in results.items():
+            if hasattr(estimator, method):
+                result = getattr(estimator, method)(*args[method])
+                _assert_array_equal(
+                    value,
+                    result,
+                    err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
+                )
 
 
 def test_valid_estimator_class_tags(estimator_class):
