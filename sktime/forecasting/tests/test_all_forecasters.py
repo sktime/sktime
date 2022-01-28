@@ -15,7 +15,7 @@ __all__ = [
     "test_y_multivariate_raises_error",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
-    "test_predict_pred_interval",
+    "test_predict_interval",
     "test_update_predict_single",
     "test_y_invalid_type_raises_error",
     "test_predict_time_index_with_X",
