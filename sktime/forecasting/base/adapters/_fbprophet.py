@@ -179,10 +179,15 @@ class _ProphetAdapter(BaseForecaster):
             # put the index (in ds column) back in the index
             out_prophet.set_index("ds", inplace=True)
             out_prophet.index.name = None
+            out_prophet = out_prophet[["yhat_lower", "yhat_upper"]]
 
             # retrieve lower/upper and write in pred_int return frame
-            pred_int[("Coverage", c, "lower")] = out_prophet["yhat_lower"]
-            pred_int[("Coverage", c, "upper")] = out_prophet["yhat_upper"]
+            # instead of writing lower to lower, upper to upper
+            #  we take the min/max for lower and upper
+            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  so if coverage is small, it can happen that upper < lower in prophet
+            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
+            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
 
         return pred_int
 
