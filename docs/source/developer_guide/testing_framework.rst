@@ -140,8 +140,7 @@ This section explains how to extend the testing module.
 Depending on the primary change that is tested, the changes to the testing module will
 be shallow or deep. In decreasing order of commonality:
 
-* When adding new estimators or utiliy functionality, it usually suffices to write only
-low level tests that check correctness of the estimator.
+* When adding new estimators or utility functionality, write low level tests that check correctness of the estimator.
 These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
 Adding a new estimator will typically *not* require changes to module level tests,
 as new estimators are automatically discovered and looped over by the existing tests.
