@@ -23,7 +23,7 @@ def test_tsfresh_classifier_on_unit_test_data():
     )
     tsfc.fit(X_train, y_train)
     score = tsfc.score(X_test.iloc[indices], y_test[indices])
-    assert score == 0.8
+    assert score >= 0.8
 
     # assert probabilities are the same
     # probas = tsfc.predict_proba(X_test.iloc[indices])
@@ -48,7 +48,7 @@ def test_tsfresh_classifier_on_basic_motions():
     )
     tsfc.fit(X_train.iloc[indices], y_train[indices])
     score = tsfc.score(X_test.iloc[indices], y_test[indices])
-    assert score == 0.9
+    assert score >= 0.9
 
     # assert probabilities are the same
     # probas = tsfc.predict_proba(X_test.iloc[indices])

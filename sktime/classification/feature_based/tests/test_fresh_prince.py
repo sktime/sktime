@@ -22,7 +22,7 @@ def test_fresh_prince_on_unit_test_data():
     )
     fp.fit(X_train, y_train)
     score = fp.score(X_test.iloc[indices], y_test[indices])
-    assert score == 0.8
+    assert score >= 0.8
 
     # test train estimate
     # train_probas = fp._get_train_probs(X_train, y_train)
