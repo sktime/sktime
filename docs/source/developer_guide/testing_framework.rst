@@ -117,7 +117,7 @@ A call ``result = scenario.run(estimator_instance)`` will:
 1. first, call ``estimator_instance.fit(y=_make_series(n_timepoints=20, random_state=RAND_SEED))``
 2. then, call ``estimator_instance.predict(fh=1)`` and return the  output too ``result``.
 
-The abstraction of "scenario" allows to easily specify multiple argument combinations across multiple methods.
+The abstraction of "scenario" allows to specify multiple argument combinations across multiple methods.
 
 The method ``run`` also has arguments (``method_sequence`` and ``arg_sequence``)
 that allow to override the method sequence, e.g.,
