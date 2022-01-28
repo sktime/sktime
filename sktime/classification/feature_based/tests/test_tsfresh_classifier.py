@@ -56,26 +56,6 @@ def test_tsfresh_classifier_on_basic_motions():
     # tsfresh_classifier_basic_motions_probas, decimal=2)
 
 
-tsfresh_classifier_unit_test_preds = np.array(
-    ["2", "1", "2", "1", "1", "1", "1", "1", "1", "1"]
-)
-
-tsfresh_classifier_basic_motions_preds = np.array(
-    [
-        "Walking",
-        "Badminton",
-        "Standing",
-        "Running",
-        "Walking",
-        "Walking",
-        "Walking",
-        "Standing",
-        "Running",
-        "Running",
-    ]
-)
-
-
 tsfresh_classifier_unit_test_probas = np.array(
     [
         [0.00000, 1.00000],
