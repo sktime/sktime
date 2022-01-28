@@ -9,6 +9,17 @@ from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
 
+
+def check_eval(test_input, expected):
+    """Test which columns are returned for different arguments.
+
+    For a detailed description what these arguments do,
+    and how theyinteract see docstring of DateTimeFeatures.
+    """
+    assert len(test_input) == len(expected)
+    assert all([a == b for a, b in zip(test_input, expected)])
+
+
 # Load data that will be basis of tests
 y = load_airline()
 
@@ -24,99 +35,46 @@ y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
 y_grouped = pd.concat([y_group1, y_group2])
 
-# Create sample function dictionaries
 kwargs = {
     "functions": {
-        "lag": ["lag", [[1, 1]]],
-        "mean": ["mean", [[1, 1], [5, 1]]],
-        "std": ["std", [[1, 2]]],
+        "lag": ["lag", [[1, 0]]],
+        "mean": ["mean", [[3, 0], [12, 0]]],
+        "std": ["std", [[4, 0]]],
     }
 }
 
 kwargs_alternames = {
     "functions": {
-        "lag": ["lag", [[1, 1], [2, 1], [4, 1]]],
-        "covar": ["cov", [[1, 1], [2, 1], [4, 1]]],
+        "lag": ["lag", [[3, 0], [12, 0]]],
     }
 }
 
 kwargs_variant = {
     "functions": {
-        "mean": ["mean", [[1, 7], [8, 7]]],
-        "covar_feature": ["cov", [[1, 28]]],
+        "mean": ["mean", [[7, 0], [7, 7]]],
+        "covar_feature": ["cov", [[28, 0]]],
     }
 }
 
 kwargs_empty = {"functions": {}}
 
-# Create transformer with kwargs
-transformer = LaggedWindowSummarizer(**kwargs)
-
-# Create transformer with different set of kwargs
-transformer_alternames = LaggedWindowSummarizer(**kwargs_alternames)
-
-# Create transformer with another different set of kwargs
-transformer_variant = LaggedWindowSummarizer(**kwargs_variant)
-
-# Create empty transformer
-transformer_empty = LaggedWindowSummarizer(**kwargs_empty)
-
-# Check if transformers works with non-Panel date
-Xt_univar = transformer.fit_transform(y_train)
-test_univar = Xt_univar.columns.to_list()
-
-# Check if transformers works with single instance Panel data
-Xt_singlegroup = transformer.fit_transform(y_group1)
-test_singlegroup = Xt_singlegroup.columns.to_list()
-
-# Check if transformers works with multi instance Panel data
-Xt_multigroup = transformer.fit_transform(y_grouped)
-test_multigroup = Xt_multigroup.columns.to_list()
-
-# Check if transformers works with Panel data and empty function dictionary
-Xt_empty = transformer_empty.fit_transform(y_grouped)
-test_empty = Xt_empty.columns.to_list()
-
-# Check if transformers works with Panel data and alternate function dictionary
-Xt_alternames = transformer_alternames.fit_transform(y_grouped)
-test_alternames = Xt_alternames.columns.to_list()
-
-# Check if transformers works with univariate data and a function dictionary variant
-Xt_variant = transformer_variant.fit_transform(y_train)
-test_variant = Xt_variant.columns.to_list()
-
 
 @pytest.mark.parametrize(
-    "test_input,expected",
+    "kwargs, column_names, y",
     [
-        (
-            test_univar,
-            ["lag_1_1", "mean_1_1", "mean_5_1", "std_1_2"],
-        ),
-        (
-            test_singlegroup,
-            ["lag_1_1", "mean_1_1", "mean_5_1", "std_1_2"],
-        ),
-        (
-            test_multigroup,
-            ["lag_1_1", "mean_1_1", "mean_5_1", "std_1_2"],
-        ),
-        (
-            test_alternames,
-            ["lag_1_1", "lag_2_1", "lag_4_1", "covar_1_1", "covar_2_1", "covar_4_1"],
-        ),
-        (test_empty, ["y"]),
-        (
-            test_variant,
-            ["mean_1_7", "mean_8_7", "covar_feature_1_28"],
-        ),
+        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_train),
+        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
+        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
+        # (kwargs_empty, ["y"], y_grouped),
+        (kwargs_alternames, ["lag_3_0", "lag_12_0"], y_train),
+        (kwargs_variant, ["mean_7_0", "mean_7_7", "covar_feature_28_0"], y_train),
     ],
 )
-def test_eval(test_input, expected):
-    """Tests which columns are returned for different arguments.
+def test_univariate(kwargs, column_names, y):
+    """Test columns match kwargs arguments."""
+    transformer = LaggedWindowSummarizer(**kwargs)
 
-    For a detailed description what these arguments do,
-    and how theyinteract see docstring of DateTimeFeatures.
-    """
-    assert len(test_input) == len(expected)
-    assert all([a == b for a, b in zip(test_input, expected)])
+    Xt = transformer.fit_transform(y_train)
+    Xt_columns = Xt.columns.to_list()
+
+    check_eval(Xt_columns, column_names)

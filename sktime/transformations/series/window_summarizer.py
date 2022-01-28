@@ -58,11 +58,11 @@ def _window_feature(
             * "cov",
             * "skew",
             * "sem"
-         or function definition
+         or function definition.
     window: list of integers
         Contains values for window shift and window length.
     """
-    shift = window[0]
+    shift = window[0] + 1
     win = window[1]
 
     if win_summarizer in pd_rolling:
@@ -100,11 +100,18 @@ class _LaggedWindowExtractor(BaseTransformer):
     and window lengths.
     """
 
-    # _tags = {
-    #     "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-    #     "y_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
-    #     "X_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
-    # }
+    _tags = {
+        # "scitype:transform-input": "Series",
+        # # what is the scitype of X: Series, or Panel
+        # "scitype:transform-output": "Series",
+        # # what scitype is returned: Primitives, Series, Panel
+        # "scitype:instancewise": True,  # is this an instance-wise transform?
+        # "X_inner_mtype": "pd.DataFrame",
+        # # which mtypes do _fit/_predict support for X?
+        # "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        # "univariate-only": False,
+        "fit-in-transform": False,
+    }
 
     def __init__(
         self,
@@ -118,7 +125,7 @@ class _LaggedWindowExtractor(BaseTransformer):
         super(_LaggedWindowExtractor, self).__init__()
 
     # Get extraction parameters
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit.
 
         Parameters
@@ -187,8 +194,7 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
 
     Examples
     --------
-    >>> from sktime.transformations.series.window_summarizer \
-    >>> import LaggedWindowSummarizer
+    >>> import sktime.transformations.series.window_summarizer as ws
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> kwargs_variant = {
@@ -197,7 +203,7 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
     >>>     "covar_feature": ["cov", [[1, 28]]],
     >>>     }
     >>>  }
-    >>> transformer = LaggedWindowSummarizer(**kwargs_variant)
+    >>> transformer = ws.LaggedWindowSummarizer(**kwargs_variant)
     >>> y_transformed = transformer.fit_transform(y)
     """
 
