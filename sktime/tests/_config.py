@@ -116,6 +116,8 @@ EXCLUDE_ESTIMATORS = [
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
+    "TSFreshFeatureExtractor",
+    "TSFreshRelevantFeatureExtractor",
 ]
 
 
