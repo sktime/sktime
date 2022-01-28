@@ -4,7 +4,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "kejsitake"]
 __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
