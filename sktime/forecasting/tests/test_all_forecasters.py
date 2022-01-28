@@ -286,7 +286,7 @@ def _check_pred_ints(
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-def test_predict_pred_interval(Forecaster, fh, alpha):
+def test_predict_interval(Forecaster, fh, alpha):
     """Check prediction intervals returned by predict.
 
     Arguments
