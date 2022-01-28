@@ -420,7 +420,8 @@ def test_fit_idempotent(estimator_instance):
 
     # Fit again
     set_random_state(estimator)
-    estimator.fit(*fit_args)
+    new_fit_args = _make_args(estimator, "fit")
+    estimator.fit(*new_fit_args)
 
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
