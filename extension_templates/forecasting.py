@@ -265,7 +265,7 @@ class MyForecaster(BaseForecaster):
         # implement here
 
     def _predict_var(self, fh, X=None, cov=False):
-        """Compute/return variance at future horizon.
+        """Forecast variance at future horizon.
 
         private _predict_var containing the core logic, called from predict_var
 
@@ -282,8 +282,8 @@ class MyForecaster(BaseForecaster):
 
         Returns
         -------
-        pred_var : DataFrame, 
-            Prediction variance where row indices (and in the case of cov=True, 
+        pred_var : DataFrame,
+            Prediction variance where row indices (and in the case of cov=True,
             column indices) are those of fh.
         """
         # implement here

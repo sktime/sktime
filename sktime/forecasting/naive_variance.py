@@ -118,28 +118,38 @@ class NaiveVariance(BaseForecaster):
         for id in residuals_matrix.columns:
             forecaster = clone(self.forecaster)
 
-            subset = self._y[:id]
+            subset = self._y[:id]  # subset on which we fit
             forecaster.fit(subset)
 
-            # predict_residuals not supported yet in many forecasters
-            y_true = self._y[id:]
-            y_hat = forecaster.predict(y_true.index, self._X)
-
-            residuals_matrix[id] = y_true - y_hat
+            y_true = self._y[id:]  # subset on which we predict
+            residuals_matrix[id] = forecaster.predict_residuals(y_true, self._X)
 
         residuals_matrix = residuals_matrix.T
-        variance = [
-            (np.diagonal(residuals_matrix, offset=offset) ** 2).mean()
-            for offset in fh.to_relative(self.cutoff)
-        ]
 
         if cov:
+            fh_size = len(fh)
+            fh_relative = fh.to_relative(self.cutoff)
+            covariance = np.zeros(shape=(fh_size, fh_size))
+
+            for i in range(fh_size):
+                i_residuals = np.diagonal(residuals_matrix, offset=fh_relative[i])
+                for j in range(fh_size):
+                    j_residuals = np.diagonal(residuals_matrix, offset=fh_relative[j])
+                    max_residuals = min(len(j_residuals), len(i_residuals))
+                    covariance[i, j] = covariance[j, i] = (
+                        i_residuals[:max_residuals] * j_residuals[:max_residuals]
+                    ).mean()
+
             pred_var = pd.DataFrame(
-                np.diag(variance),
+                covariance,
                 index=fh.to_absolute(self.cutoff),
                 columns=fh.to_absolute(self.cutoff),
             )
         else:
+            variance = [
+                (np.diagonal(residuals_matrix, offset=offset) ** 2).mean()
+                for offset in fh.to_relative(self.cutoff)
+            ]
             pred_var = pd.Series(
                 variance,
                 index=fh.to_absolute(self.cutoff),
