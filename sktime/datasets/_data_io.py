@@ -224,7 +224,12 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
 
     else:
         raise ValueError("Invalid `split` value =", split)
-    return X, y
+    # Return appropriately
+    if return_X_y:
+        return X, y
+    else:
+        X["class_val"] = pd.Series(y)
+        return X
 
 
 def _read_header(file, full_file_path_and_name):
