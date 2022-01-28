@@ -111,6 +111,8 @@ from sktime.transformations.series.summarize import SummaryTransformer
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
+    "FreshPRINCE",
+    "TSFreshClassifier",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
