@@ -39,10 +39,10 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
-from sktime.utils._testing.deep_equals import deep_equals
+# from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
-    _assert_array_equal,
+    # _assert_array_equal,
     _get_args,
     _has_capability,
     _list_required_methods,
