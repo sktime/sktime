@@ -408,15 +408,15 @@ def test_pred_int_tag(Forecaster):
     if not pred_int_works and Forecaster.get_class_tag("capability:pred_int", False):
         raise ValueError(
             f"{Forecaster.__name__} does not implement probabilistic forecasting, "
-            'but "capability:predict_int" flag has been set to True incorrectly. '
-            'The flag "capability:predict_int" should instead be set to False.'
+            'but "capability:pred_int" flag has been set to True incorrectly. '
+            'The flag "capability:pred_int" should instead be set to False.'
         )
 
     if pred_int_works and not Forecaster.get_class_tag("capability:pred_int", False):
         raise ValueError(
             f"{Forecaster.__name__} does implement probabilistic forecasting, "
-            'but "capability:predict_int" flag has been set to False incorrectly. '
-            'The flag "capability:predict_int" should instead be set to True.'
+            'but "capability:pred_int" flag has been set to False incorrectly. '
+            'The flag "capability:pred_int" should instead be set to True.'
         )
 
 
