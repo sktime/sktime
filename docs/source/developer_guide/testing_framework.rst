@@ -103,7 +103,7 @@ Currently, the ``sktime`` testing framework provides automated fixture parameter
 via ``mark.parameterize`` for the following fixtures, in module level tests:
 
 * ``estimator``: all estimator classes, inheriting from the base class of the given module.
-In ``test_all_estimators``, this loops over all estimators.
+In the package level tests ``test_all_estimators``, that base class is ``BaseEstimator``.
 * ``estimator_instance``: all estimator test instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
 * ``scenario``: test scenarios, applicable to ``estimator`` or ``estimator_instance``.
    The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
