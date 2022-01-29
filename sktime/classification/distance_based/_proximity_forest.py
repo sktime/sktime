@@ -23,8 +23,6 @@ from sktime.distances import (
     msm_distance,
     wdtw_distance,
 )
-
-# from sktime.distances.elastic_cython import twe_distance
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -144,26 +142,19 @@ def distance_predefined_params(distance_measure, **params):
     return distance
 
 
-# CHANGE TO NUMBA WRAPPER, try with factory.
-def cython_wrapper(distance_measure):
-    """Wrap a distance measure in cython conversion.
+def numba_wrapper(distance_measure):
+    """Wrap a numba distance measure with numpy conversion.
 
-     Converts to 1 column per dimension format.
+     Converts to 1 column per dimension format. Really would be better if the whole
+     thing worked directly with numpy arrays.
     :param distance_measure: distance measure to wrap
-    :returns: a distance measure which automatically formats data for cython
+    :returns: a distance measure which automatically formats data for numba
     distance measures
     """
 
     def distance(instance_a, instance_b, **params):
-        # find distance
-        instance_a = from_nested_to_2d_array(
-            instance_a, return_numpy=True
-        )  # todo use specific
-        # dimension rather than whole
-        # thing?
-        instance_b = from_nested_to_2d_array(
-            instance_b, return_numpy=True
-        )  # todo use specific
+        instance_a = from_nested_to_2d_array(instance_a, return_numpy=True)
+        instance_b = from_nested_to_2d_array(instance_b, return_numpy=True)
         # dimension rather than whole thing?
         instance_a = np.transpose(instance_a)
         instance_b = np.transpose(instance_b)
@@ -331,7 +322,7 @@ def dtw_distance_measure_getter(X):
     :returns: distance measure and parameter range dictionary
     """
     return {
-        "distance_measure": [cython_wrapper(dtw_distance)],
+        "distance_measure": [numba_wrapper(dtw_distance)],
         "window": stats.uniform(0, 0.25),
     }
 
@@ -344,7 +335,7 @@ def msm_distance_measure_getter(X):
     """
     n_dimensions = 1  # todo use other dimensions
     return {
-        "distance_measure": [cython_wrapper(msm_distance)],
+        "distance_measure": [numba_wrapper(msm_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "c": [
             0.01,
@@ -463,7 +454,7 @@ def erp_distance_measure_getter(X):
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
     return {
-        "distance_measure": [cython_wrapper(erp_distance)],
+        "distance_measure": [numba_wrapper(erp_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "g": stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
         "band_size": stats.randint(low=0, high=max_raw_warping_window + 1)
@@ -483,7 +474,7 @@ def lcss_distance_measure_getter(X):
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
     return {
-        "distance_measure": [cython_wrapper(lcss_distance)],
+        "distance_measure": [numba_wrapper(lcss_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "epsilon": stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
         # scipy stats randint is exclusive on the max value, hence + 1
@@ -522,7 +513,7 @@ def wdtw_distance_measure_getter(X):
     :returns: distance measure and parameter range dictionary
     """
     return {
-        "distance_measure": [cython_wrapper(wdtw_distance)],
+        "distance_measure": [numba_wrapper(wdtw_distance)],
         "g": stats.uniform(0, 1),
     }
 
@@ -533,7 +524,7 @@ def euclidean_distance_measure_getter(X):
     :param X: dataset to derive parameter ranges from
     :returns: distance measure and parameter range dictionary
     """
-    return {"distance_measure": [cython_wrapper(dtw_distance)], "w": [0]}
+    return {"distance_measure": [numba_wrapper(dtw_distance)], "w": [0]}
 
 
 def setup_wddtw_distance_measure_getter(transformer):
@@ -547,7 +538,7 @@ def setup_wddtw_distance_measure_getter(transformer):
     def getter(X):
         return {
             "distance_measure": [
-                _derivative_distance(cython_wrapper(wdtw_distance), transformer)
+                _derivative_distance(numba_wrapper(wdtw_distance), transformer)
             ],
             "g": stats.uniform(0, 1),
         }
@@ -566,7 +557,7 @@ def setup_ddtw_distance_measure_getter(transformer):
     def getter(X):
         return {
             "distance_measure": [
-                _derivative_distance(cython_wrapper(dtw_distance), transformer)
+                _derivative_distance(numba_wrapper(dtw_distance), transformer)
             ],
             "w": stats.uniform(0, 0.25),
         }

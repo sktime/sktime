@@ -23,7 +23,7 @@ from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
-from sktime.classification._base import BaseClassifier
+from sktime.classification.base import BaseClassifier
 from sktime.datatypes._panel._convert import (
     from_nested_to_2d_array,
     from_nested_to_3d_numpy,
@@ -190,7 +190,7 @@ def distance_predefined_params(distance_measure, **params):
     return distance
 
 
-def cython_wrapper(distance_measure):
+def numba_wrapper(distance_measure):
     """Wrap a distance measure in cython conversion.
 
     (to 1 column per dimension format)
@@ -376,7 +376,7 @@ def dtw_distance_measure_getter(X):
     :return: distance measure and parameter range dictionary
     """
     return {
-        "distance_measure": [cython_wrapper(dtw_distance)],
+        "distance_measure": [numba_wrapper(dtw_distance)],
         "w": stats.uniform(0, 0.25),
     }
 
@@ -389,7 +389,7 @@ def msm_distance_measure_getter(X):
     """
     n_dimensions = 1  # todo use other dimensions
     return {
-        "distance_measure": [cython_wrapper(dtw_distance)],
+        "distance_measure": [numba_wrapper(dtw_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "c": [
             0.01,
@@ -508,7 +508,7 @@ def erp_distance_measure_getter(X):
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
     return {
-        "distance_measure": [cython_wrapper(erp_distance)],
+        "distance_measure": [numba_wrapper(erp_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "g": stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
         "band_size": stats.randint(low=0, high=max_raw_warping_window + 1)
@@ -528,7 +528,7 @@ def lcss_distance_measure_getter(X):
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
     return {
-        "distance_measure": [cython_wrapper(lcss_distance)],
+        "distance_measure": [numba_wrapper(lcss_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "epsilon": stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
         # scipy stats randint is exclusive on the max value, hence + 1
@@ -543,7 +543,7 @@ def twe_distance_measure_getter(X):
     :return: distance measure and parameter range dictionary
     """
     return {
-        "distance_measure": [cython_wrapper(twe_distance)],
+        "distance_measure": [numba_wrapper(twe_distance)],
         "penalty": [
             0,
             0.011111111,
@@ -567,7 +567,7 @@ def wdtw_distance_measure_getter(X):
     :return: distance measure and parameter range dictionary
     """
     return {
-        "distance_measure": [cython_wrapper(weighted_dtw_distance)],
+        "distance_measure": [numba_wrapper(weighted_dtw_distance)],
         "g": stats.uniform(0, 1),
     }
 
@@ -578,7 +578,7 @@ def euclidean_distance_measure_getter(X):
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
-    return {"distance_measure": [cython_wrapper(dtw_distance)], "w": [0]}
+    return {"distance_measure": [numba_wrapper(dtw_distance)], "w": [0]}
 
 
 def setup_wddtw_distance_measure_getter(transformer):
@@ -592,7 +592,7 @@ def setup_wddtw_distance_measure_getter(transformer):
     def getter(X):
         return {
             "distance_measure": [
-                _derivative_distance(cython_wrapper(weighted_dtw_distance), transformer)
+                _derivative_distance(numba_wrapper(weighted_dtw_distance), transformer)
             ],
             "g": stats.uniform(0, 1),
         }
@@ -611,7 +611,7 @@ def setup_ddtw_distance_measure_getter(transformer):
     def getter(X):
         return {
             "distance_measure": [
-                _derivative_distance(cython_wrapper(dtw_distance), transformer)
+                _derivative_distance(numba_wrapper(dtw_distance), transformer)
             ],
             "w": stats.uniform(0, 0.25),
         }
