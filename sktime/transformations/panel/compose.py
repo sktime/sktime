@@ -239,7 +239,7 @@ class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer"""
 
     _required_parameters = ["transformer"]
-    _tags = {"fit-in-transform": True}
+    _tags = {"fit-is-empty": True}
 
     def __init__(self, transformer, check_transformer=True):
         self.transformer = transformer

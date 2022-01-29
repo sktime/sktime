@@ -58,7 +58,7 @@ class SAX(_PanelToPanelTransformer):
 
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {"univariate-only": True, "fit-is-empty": True}
 
     def __init__(
         self,

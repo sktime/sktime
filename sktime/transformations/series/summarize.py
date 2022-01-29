@@ -139,7 +139,7 @@ class SummaryTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": True,
+        "fit-is-empty": True,
     }
 
     def __init__(

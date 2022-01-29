@@ -42,7 +42,7 @@ class SignatureTransformer(_PanelToTabularTransformer):
 
     _tags = {
         "X_inner_mtype": "numpy3D",
-        "fit-in-transform": False,
+        "fit-is-empty": False,
     }
 
     def __init__(

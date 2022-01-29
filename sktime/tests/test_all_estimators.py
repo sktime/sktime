@@ -482,13 +482,13 @@ def test_methods_do_not_change_state(estimator_instance):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if method == "transform" and estimator.get_class_tag("fit-in-transform"):
+            if method == "transform" and estimator.get_class_tag("fit-is-empty"):
                 # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.
                 continue
 
-            if method == "predict" and estimator.get_class_tag("fit-in-predict"):
+            if method == "predict" and estimator.get_class_tag("fit-is-empty"):
                 # Some annotators fit during predict, as they apply
                 # some apply annotation to each series passed to predict,
                 # so predict will actually change the state of these annotators.

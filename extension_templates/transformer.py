@@ -102,7 +102,7 @@ class MyTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit-is-empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
     }
@@ -171,7 +171,7 @@ class MyTransformer(BaseTransformer):
         #
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
-        #   set "fit-in-transform" tag to True
+        #   set "fit-is-empty" tag to True
 
     # todo: implement this, mandatory
     def _transform(self, X, y=None):

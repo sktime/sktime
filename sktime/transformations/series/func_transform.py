@@ -84,7 +84,7 @@ class FunctionTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-in-transform": False,
+        "fit-is-empty": False,
         "handles-missing-data": True,
         "capability:inverse_transform": True,
     }
