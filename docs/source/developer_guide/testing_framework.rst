@@ -162,8 +162,7 @@ be shallow or deep. In decreasing order of commonality:
 
 * When adding new estimators or utility functionality, write low level tests that check correctness of the estimator.
 These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
-Adding a new estimator will typically *not* require changes to module level tests,
-as new estimators are automatically discovered and looped over by the existing tests.
+New estimators are also automatically discovered and looped over by the existing module and package level tests.
 * Introducing or changing base class level interface points will typically require addition of module level tests,
 and addition of, or modification to scenarios with functionality specific to these interface points.
 Rarely, this may require changes package level tests.
