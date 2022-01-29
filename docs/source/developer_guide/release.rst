@@ -6,13 +6,13 @@ Releases
 This section is for core developers. To make a new release, you need
 push-to-write access on our main branch.
 
-sktime is not a pure Python package and depends on some non-Python code
-including Cython and C. We distribute compiled files, called wheels, for
+`sktime` is distributed as the so-called wheels, for
 different operating systems and Python versions.
 
 .. note::
 
-   For more details, see the `Python guide for packaging <https://packaging.python.org/guides/>`__ and the `Cython guide on compilation/distribution <https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html>`_.
+   For more details, see the `Python guide for packaging <https://packaging.python.org/guides/>`__.
+
 
 We use :ref:`continuous integration <infrastructure>` services to automate the building of wheels on different platforms.
 The release process is triggered by pushing a non-annotated `tagged
