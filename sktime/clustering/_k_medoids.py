@@ -61,7 +61,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         self,
         n_clusters: int = 8,
         init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "euclidean",
+        metric: Union[str, Callable] = "dtw",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
@@ -128,3 +128,24 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
                     distance_matrix[j, k] = self._precomputed_pairwise[j, k]
             new_centers[i, :] = medoids(X[curr_indexes], self._precomputed_pairwise)
         return new_centers
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_clusters": 8,
+            "metric": "euclidean",
+            "n_init": 1,
+            "max_iter": 10,
+            "random_state": 0,
+        }
+        return params

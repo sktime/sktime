@@ -64,7 +64,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         self,
         n_clusters: int = 8,
         init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "euclidean",
+        metric: Union[str, Callable] = "dtw",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
