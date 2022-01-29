@@ -441,8 +441,8 @@ class BaseForecaster(BaseEstimator):
         pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
 
         # todo: remove if changing pred_interval format
-        if pred_int.columns.nlevels == 3:
-            pred_int = _convert_pred_interval_to_quantiles(pred_int)
+        # if pred_int.columns.nlevels == 3:
+        #     pred_int = _convert_pred_interval_to_quantiles(pred_int)
 
         return pred_int
 
@@ -1478,8 +1478,8 @@ class BaseForecaster(BaseEstimator):
         pred_int_old_format = [
             pd.DataFrame(
                 {
-                    "lower": pred_int_new[(name, 0.5 - (float(a) / 2))],
-                    "upper": pred_int_new[(name, 0.5 + (float(a) / 2))],
+                    "lower": pred_int_new[(name, "lower", a)],
+                    "upper": pred_int_new[(name, "upper", a)],
                 }
             )
             for a in alphas
