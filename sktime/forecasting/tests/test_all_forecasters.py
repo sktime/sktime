@@ -399,9 +399,9 @@ def test_pred_int_tag(Forecaster):
         this can be by direct implementation of _predict_interval or _predict_quantiles
         or by defaulting to each other and/or _predict_proba
     """
-    implements_interval = self._has_implementation_of("_predict_interval")
-    implements_quantiles = self._has_implementation_of("_predict_quantiles")
-    implements_proba = self._has_implementation_of("_predict_proba")
+    implements_interval = Forecaster._has_implementation_of("_predict_interval")
+    implements_quantiles = Forecaster._has_implementation_of("_predict_quantiles")
+    implements_proba = Forecaster._has_implementation_of("_predict_proba")
 
     pred_int_works = implements_interval or implements_quantiles or implements_proba
 
