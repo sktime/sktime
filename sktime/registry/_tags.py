@@ -60,13 +60,19 @@ ESTIMATOR_TAG_REGISTER = [
         "fit-in-transform",
         ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
     ),
     (
         "fit-in-predict",
         "estimator",
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
+    ),
+    (
+        "fit-is-empty",
+        "estimator",
+        "bool",
+        "does fit contain no logic and can be skipped?",
     ),
     (
         "transform-returns-same-time-index",
