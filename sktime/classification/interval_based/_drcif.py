@@ -245,8 +245,8 @@ class DrCIF(BaseClassifier):
             if n <= 0:
                 self._n_intervals[i] = 1
 
-        if self.att_subsample_size > 25:
-            self._att_subsample_size = 25
+        if self.att_subsample_size > 29:
+            self._att_subsample_size = 29
 
         if isinstance(self.min_interval, int):
             self._min_interval = [
@@ -267,9 +267,9 @@ class DrCIF(BaseClassifier):
 
         if self.max_interval is None:
             self._max_interval = [
-                self.series_length_ / 2,
-                X_p.shape[2] / 2,
-                X_d.shape[2] / 2,
+                int(self.series_length_ / 2),
+                int(X_p.shape[2] / 2),
+                int(X_d.shape[2] / 2),
             ]
         elif isinstance(self.max_interval, int):
             self._max_interval = [
@@ -446,7 +446,11 @@ class DrCIF(BaseClassifier):
         c22 = Catch22(outlier_norm=True)
         T = [X, X_p, X_d]
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
@@ -557,7 +561,11 @@ class DrCIF(BaseClassifier):
 
     def _train_probas_for_estimator(self, y, idx):
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         indices = range(self.n_instances_)
