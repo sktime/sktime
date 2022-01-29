@@ -56,17 +56,14 @@ def test_pred_errors_against_y_test(fh):
     f = ThetaForecaster()
     f.fit(y_train, fh=fh)
 
-    intervals = f.predict_interval(fh=fh, coverage=[0.9])
+    intervals = f.predict_interval(fh=fh, coverage=0.9)
 
     y_test = y_test.iloc[check_fh(fh) - 1]
 
     # Performance should be good enough that all point forecasts lie within the
     # prediction intervals.
-    for ints in intervals:
-        if ints[1] < 0.5:
-            assert np.all(y_test > intervals[ints].values)
-        else:
-            assert np.all(y_test <= intervals[ints].values)
+    assert np.all(y_test > intervals[("Coverage", 0.9, "lower")].values)
+    assert np.all(y_test < intervals[("Coverage", 0.9, "upper")].values)
 
 
 def test_forecaster_with_initial_level():
