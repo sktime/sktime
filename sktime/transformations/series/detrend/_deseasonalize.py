@@ -71,7 +71,7 @@ class Deseasonalizer(BaseTransformer):
         "X_inner_mtype": "pd.Series",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-is-empty": False,
+        "fit-in-transform": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
         "univariate-only": True,

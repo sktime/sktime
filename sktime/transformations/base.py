@@ -107,7 +107,7 @@ class BaseTransformer(BaseEstimator):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-is-empty": True,  # is fit empty and can be skipped? Yes = True
+        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
@@ -165,8 +165,8 @@ class BaseTransformer(BaseEstimator):
 
         self._is_fitted = False
 
-        # skip everything if fit-is-empty is True
-        if self.get_tag("fit-is-empty"):
+        # skip everything if fit-in-transform is True
+        if self.get_tag("fit-in-transform"):
             self._is_fitted = True
             return self
 
@@ -603,8 +603,8 @@ class BaseTransformer(BaseEstimator):
         if not update_params:
             return self
 
-        # skip everything if fit-is-empty is True
-        if self.get_tag("fit-is-empty"):
+        # skip everything if fit-in-transform is True
+        if self.get_tag("fit-in-transform"):
             return self
 
         # input checks and minor coercions on X, y
@@ -694,7 +694,7 @@ class BaseTransformer(BaseEstimator):
         )
 
         # depending on whether fitting happens, apply fitted or unfitted instances
-        if not self.get_tag("fit-is-empty"):
+        if not self.get_tag("fit-in-transform"):
             # these are the transformers-per-instance, fitted in fit
             transformers = self.transformers_
             if len(transformers) != len(X):

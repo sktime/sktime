@@ -69,7 +69,7 @@ class Imputer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-is-empty": True,
+        "fit-in-transform": True,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
         "univariate-only": False,

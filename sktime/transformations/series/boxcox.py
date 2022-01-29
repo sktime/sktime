@@ -103,7 +103,7 @@ class BoxCoxTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "fit-is-empty": False,
+        "fit-in-transform": False,
         "univariate-only": True,
         "capability:inverse_transform": True,
     }
@@ -225,7 +225,7 @@ class LogTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "fit-is-empty": True,
+        "fit-in-transform": True,
         "univariate-only": False,
         "capability:inverse_transform": True,
     }

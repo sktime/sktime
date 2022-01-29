@@ -79,7 +79,7 @@ class OptionalPassthrough(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
-        "fit-is-empty": False,
+        "fit-in-transform": False,
         "capability:inverse_transform": True,
     }
 
@@ -90,7 +90,7 @@ class OptionalPassthrough(BaseTransformer):
         self._is_fitted = False
         super(OptionalPassthrough, self).__init__()
 
-        # should be all tags, but not fit-is-empty
+        # should be all tags, but not fit-in-transform
         #   (_fit should not be skipped)
         tags_to_clone = [
             "scitype:transform-input",
@@ -235,7 +235,7 @@ class ColumnwiseTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
-        "fit-is-empty": False,
+        "fit-in-transform": False,
     }
 
     def __init__(self, transformer, columns=None):

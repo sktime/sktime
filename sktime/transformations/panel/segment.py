@@ -332,7 +332,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
     Proposed in the ShapeDTW algorithm.
     """
 
-    _tags = {"univariate-only": True, "fit-is-empty": True}
+    _tags = {"univariate-only": True, "fit-in-transform": True}
 
     def __init__(self, window_length=5):
         self.window_length = window_length

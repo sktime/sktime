@@ -214,7 +214,7 @@ class MatrixProfile(_PanelToTabularTransformer):
     corresponding time series.
     """
 
-    _tags = {"univariate-only": True, "fit-is-empty": True}
+    _tags = {"univariate-only": True, "fit-in-transform": True}
 
     def __init__(self, m=10):
         self.m = m  # subsequence length
