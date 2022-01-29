@@ -3,7 +3,7 @@
 """Theta forecaster."""
 
 __all__ = ["ThetaForecaster"]
-__author__ = ["big-o", "mloning"]
+__author__ = ["big-o", "mloning", "kejsitake", "fkiraly"]
 
 from warnings import warn
 
