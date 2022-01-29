@@ -66,9 +66,10 @@ Release versions - troubleshooting
 Module not found
 """"""""""""""""
 
-The most frequent reason for *module not found* errors is installing ``sktime`` with minimum dependencies
-and using an estimator which interfaces a package that has not been installed in the environment.
-To resolve this, install the missing package, or install ``sktime`` with maximum dependencies (see above).
+The most frequent reason for *module not found* errors is installing ``sktime`` with
+minimum dependencies and using an estimator which interfaces a package that has not
+been installed in the environment. To resolve this, install the missing package, or
+install ``sktime`` with maximum dependencies (see above).
 
 
 Facebook prophet
@@ -93,12 +94,6 @@ The remaining packages can be installed via ``pip`` or ``conda``.
        pip install pystan --no-cache
 
 - Option 3: If on Windows: use WSL (Windows Subsystem for Linux), see end of section `Windows 8.1 and higher`_.
-
-
-numpy or C related issues
-"""""""""""""""""""""""""
-
-``numpy`` and C related errors on Windows based systems are potentially resolved by installing Build Tools for Visual Studio 2019 or 2017.
 
 
 Development versions
@@ -177,7 +172,6 @@ This allows editing and extending the code in-place. See also
 
     every time the source code of a compiled extension is changed (for
     instance when switching branches or pulling changes from upstream).
-    Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
 Building binary packages and installers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,8 +223,6 @@ In the ``anaconda prompt`` terminal:
 6. If everything has worked you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.
-Note that a recent Windows update may affect compilation using Visual Studio (see `Windows update issue <https://developercommunity.visualstudio.com/content/problem/1207405/fmod-after-an-update-to-windows-2004-is-causing-a.html>`_).
-
 
 .. note::
 
