@@ -122,7 +122,7 @@ def test_kmedoids():
     assert np.array_equal(test_medoids_result, expected_results["medoids"])
     assert medoids_score == expected_score["medoids"]
     assert train_score == train_expected_score["medoids"]
-    assert kmedoids.inertia_ == expected_inertia["medoids"]
+    assert np.isclose(kmedoids.inertia_, expected_inertia["medoids"])
     assert kmedoids.n_iter_ == expected_iters["medoids"]
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])
     assert isinstance(kmedoids.cluster_centers_, np.ndarray)
