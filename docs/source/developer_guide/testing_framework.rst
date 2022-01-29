@@ -213,9 +213,12 @@ instead of creating and passing arguments directly. Scenarios will ensure consis
 Adding fixture variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-One-off fixture variables can be added using ``pytest`` basic functionality.
+One-off fixture variables (localized to one or a few tests)
+should be added using ``pytest`` basic functionality, such as immutable constants,
+``pytest.fixture`` or ``pytest.mark.parameterize``. Extending ``pytest_generate_tests``
+can also be considered in this case, if it makes the tests more (and not less) readable.
 
-Fixtures used throughout module or package level tests should be added to the
+In contrast, fixtures used throughout module or package level tests should typically be added to the
 fixture generation process called by ``pytest_generate_tests``.
 
 This requires:
