@@ -9,15 +9,11 @@ __all__ = [
 ]
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS, NON_STATE_CHANGING_METHODS
 from sktime.utils._testing.estimator_checks import _has_capability, _make_args
-
-ACCEPTED_OUTPUT_TYPES = (np.ndarray, pd.Series)
-
 
 CLASSIFIERS = all_estimators(
     "classifier", return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
@@ -90,13 +86,13 @@ def test_classifier_output(Estimator):
 
     # check predict
     y_pred = estimator.predict(X_new)
-    assert isinstance(y_pred, ACCEPTED_OUTPUT_TYPES)
+    assert isinstance(y_pred, np.ndarray)
     assert y_pred.shape == (X_new.shape[0],)
     assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
     # check predict proba
     if hasattr(estimator, "predict_proba"):
         y_proba = estimator.predict_proba(X_new)
-        assert isinstance(y_proba, ACCEPTED_OUTPUT_TYPES)
+        assert isinstance(y_proba, np.ndarray)
         assert y_proba.shape == (X_new.shape[0], N_CLASSES)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
