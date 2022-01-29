@@ -7,12 +7,10 @@ __author__ = ["mloning", "aiwalter"]
 __all__ = ["_ProphetAdapter"]
 
 import os
-from contextlib import contextmanager
 
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_y_X
 
 
@@ -76,7 +74,7 @@ class _ProphetAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -87,10 +85,6 @@ class _ProphetAdapter(BaseForecaster):
             one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional
             Exogenous data, by default None
-        return_pred_int : bool, optional
-            Returns a pd.DataFrame with confidence intervalls, by default False
-        alpha : float, optional
-            Alpha level for confidence intervalls, by default DEFAULT_ALPHA
 
         Returns
         -------
@@ -114,19 +108,88 @@ class _ProphetAdapter(BaseForecaster):
             X = X.copy()
             df, X = _merge_X(df, X)
 
-        # don't compute confidence intervals if not asked for
-        with self._return_pred_int(return_pred_int):
-            out = self._forecaster.predict(df)
+        out = self._forecaster.predict(df)
 
         out.set_index("ds", inplace=True)
         y_pred = out.loc[:, "yhat"]
 
-        if return_pred_int:
-            pred_int = out.loc[:, ["yhat_lower", "yhat_upper"]]
-            pred_int.columns = pred_int.columns.str.strip("yhat_")
-            return y_pred, pred_int
-        else:
-            return y_pred
+        y_pred = pd.DataFrame(y_pred)
+        y_pred.reset_index(inplace=True)
+        y_pred.index = y_pred["ds"].values
+        y_pred.drop("ds", axis=1, inplace=True)
+        return y_pred
+
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        fh = fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        if not isinstance(fh, pd.DatetimeIndex):
+            raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
+
+        # prepare the return DataFrame - empty with correct cols
+        var_names = ["Coverage"]
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        pred_int = pd.DataFrame(columns=int_idx)
+
+        # prepare the DataFrame to pass to prophet
+        df = pd.DataFrame({"ds": fh}, index=fh)
+        if X is not None:
+            X = X.copy()
+            df, X = _merge_X(df, X)
+
+        for c in coverage:
+            # override parameters in prophet - this is fine since only called in predict
+            self._forecaster.interval_width = c
+            self._forecaster.uncertainty_samples = self.uncertainty_samples
+
+            # call wrapped prophet, get prediction
+            out_prophet = self._forecaster.predict(df)
+            # put the index (in ds column) back in the index
+            out_prophet.set_index("ds", inplace=True)
+            out_prophet.index.name = None
+            out_prophet = out_prophet[["yhat_lower", "yhat_upper"]]
+
+            # retrieve lower/upper and write in pred_int return frame
+            # instead of writing lower to lower, upper to upper
+            #  we take the min/max for lower and upper
+            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  so if coverage is small, it can happen that upper < lower in prophet
+            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
+            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+
+        return pred_int
 
     def get_fitted_params(self):
         """Get fitted parameters.
@@ -162,17 +225,6 @@ class _ProphetAdapter(BaseForecaster):
             self.specified_changepoints = False
         return self
 
-    @contextmanager
-    def _return_pred_int(self, return_pred_int):
-        if not return_pred_int:
-            # setting uncertainty samples to zero avoids computing pred ints
-            self._forecaster.uncertainty_samples = 0
-        try:
-            yield
-        finally:
-            if not return_pred_int:
-                self._forecaster.uncertainty_samples = self.uncertainty_samples
-
 
 def _merge_X(df, X):
     """Merge X and df on the DatetimeIndex.
@@ -197,12 +249,14 @@ def _merge_X(df, X):
     """
     # Merging on the index is unreliable, possibly due to loss of freq information in fh
     X.columns = X.columns.astype(str)
-    if "ds" in X.columns:
-        raise ValueError("Column name 'ds' is reserved in fbprophet")
+    if "ds" in X.columns and pd.api.types.is_numeric_dtype(X["ds"]):
+        longest_column_name = max(X.columns, key=len)
+        X.loc[:, str(longest_column_name) + "_"] = X.loc[:, "ds"]
+        # raise ValueError("Column name 'ds' is reserved in fbprophet")
     X.loc[:, "ds"] = X.index
-    # df = df.merge(X, how="inner", on="ds", copy=False)
-    df = df.merge(X, how="inner", on="ds")
-    return df, X.drop(columns="ds")
+    df = df.merge(X, how="inner", on="ds", copy=True)
+    X = X.drop(columns="ds")
+    return df, X
 
 
 class _suppress_stdout_stderr(object):

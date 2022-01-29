@@ -3,8 +3,6 @@
 
 version: 2
 
-# We need to build sktime before building the docs because otherwise Sphinx
-#  cannot read the docstrings from Cython and C extension files
 python:
   install:
     - method: pip
