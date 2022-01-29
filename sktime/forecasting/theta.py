@@ -218,20 +218,11 @@ class ThetaForecaster(ExponentialSmoothing):
             self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
         )
 
-        errors = []
-        for a in alpha:
-            z = _zscore(1 - a)
-            error = z * sem
-            errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
-
         y_pred = super(ThetaForecaster, self).predict(fh, X)
 
         pred_quantiles = pd.DataFrame()
-        for a, error in zip(alpha, errors):
-            if a < 0.5:
-                pred_quantiles[a] = y_pred - error
-            else:
-                pred_quantiles[a] = y_pred + error
+        for a in alpha:
+            pred_quantiles[a] = y_pred + norm.ppf(a) * sem
 
         arrays = [len(alpha) * ["Quantiles"], alpha]
         index = pd.MultiIndex.from_tuples(list(zip(*arrays)))
@@ -248,24 +239,3 @@ class ThetaForecaster(ExponentialSmoothing):
             self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
-
-
-def _zscore(level: float, two_tailed: bool = True) -> float:
-    """Calculate a z-score from a confidence level.
-
-    Parameters
-    ----------
-    level : float
-        A confidence level, in the open interval (0, 1).
-    two_tailed : bool (default=True)
-        If True, return the two-tailed z score.
-
-    Returns
-    -------
-    z : float
-        The z score.
-    """
-    alpha = 1 - level
-    if two_tailed:
-        alpha /= 2
-    return -norm.ppf(alpha)
