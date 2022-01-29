@@ -108,3 +108,24 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             curr_indexes = np.where(assignment_indexes == i)[0]
             new_centers[i, :] = self._averaging_method(X[curr_indexes])
         return new_centers
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_clusters": 8,
+            "metric": "euclidean",
+            "n_init": 1,
+            "max_iter": 10,
+            "random_state": 0,
+        }
+        return params
