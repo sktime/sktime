@@ -1478,8 +1478,8 @@ class BaseForecaster(BaseEstimator):
         pred_int_old_format = [
             pd.DataFrame(
                 {
-                    "lower": pred_int_new[(name, "lower", a)],
-                    "upper": pred_int_new[(name, "upper", a)],
+                    "lower": pred_int_new[(name, a, "lower")],
+                    "upper": pred_int_new[(name, a, "upper")],
                 }
             )
             for a in alphas
