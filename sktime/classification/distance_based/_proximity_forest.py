@@ -782,7 +782,7 @@ class ProximityStump(BaseClassifier):
 
     def __init__(
         self,
-        random_state=None,
+        random_state=0,
         get_exemplars=get_one_exemplar_per_class_proximity,
         setup_distance_measure=setup_all_distance_measure_getter,
         get_distance_measure=None,
@@ -1053,7 +1053,7 @@ class ProximityTree(BaseClassifier):
         self,
         # note: any changes of these params must be reflected in
         # the fit method for building trees / clones
-        random_state=None,
+        random_state=0,
         get_exemplars=get_one_exemplar_per_class_proximity,
         distance_measure=None,
         get_distance_measure=None,
@@ -1304,7 +1304,7 @@ class ProximityForest(BaseClassifier):
 
     def __init__(
         self,
-        random_state=None,
+        random_state=0,
         n_estimators=100,
         distance_measure=None,
         get_distance_measure=None,
