@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for time series k-medoids."""
 import numpy as np
+from numpy import testing
 from sklearn import metrics
 
 from sktime.clustering._k_medoids import TimeSeriesKMedoids
@@ -113,7 +114,7 @@ def test_kmedoids():
     proba = kmedoids.predict_proba(X_test)
 
     assert np.array_equal(test_medoids_result, expected_results["medoids"])
-    assert medoids_score == expected_score["medoids"]
+    testing.assert_almost_equal(medoids_score, expected_score["medoids"], decimal=4)
     assert kmedoids.n_iter_ == 300
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])
     assert isinstance(kmedoids.cluster_centers_, np.ndarray)
