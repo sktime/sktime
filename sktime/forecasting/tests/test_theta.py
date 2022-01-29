@@ -40,7 +40,7 @@ def test_predictive_performance_on_airline():
 def test_pred_errors_against_y_test(fh):
     """Check prediction performance on airline dataset.
 
-    Y_test must lie in the prediction interval with coverage=0.1.
+    Y_test must lie in the prediction interval with coverage=0.9.
 
     Arguments
     ---------
@@ -56,7 +56,7 @@ def test_pred_errors_against_y_test(fh):
     f = ThetaForecaster()
     f.fit(y_train, fh=fh)
 
-    intervals = f.predict_interval(fh=fh, coverage=[0.1])
+    intervals = f.predict_interval(fh=fh, coverage=[0.9])
 
     y_test = y_test.iloc[check_fh(fh) - 1]
 
