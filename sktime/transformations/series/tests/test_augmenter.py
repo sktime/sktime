@@ -87,35 +87,35 @@ def test_invert():
     assert checksum == expected_checksum_invert
 
 
-# # Test RandomSamplesAugmenter
-# expected_checksums_random_samples = [
-#     17.757893,
-#     10.724962,
-#     -1.735086,
-#     25.029524,
-#     -2.455656,
-# ]
+# Test RandomSamplesAugmenter
+expected_checksums_random_samples = [
+    17.757893,
+    13.588425,
+    -0.121451,
+    10.684428,
+    -1.350097,
+]
 
 
-# @pytest.mark.parametrize(
-#     "parameter",
-#     [
-#         (
-#             {},
-#             {"n": 0.5, "without_replacement": True},
-#             {"n": 2, "without_replacement": True},
-#             {"n": 1.5, "without_replacement": False},
-#             {"n": 3, "without_replacement": False},
-#         ),
-#     ],
-# )
-# def test_random_samples(parameter):
-#     """Test of the White Noise Augmenter."""
-#     X = _load_test_data()
-#     checksums = []
-#     for para in parameter:
-#         augmenter = aug.RandomSamplesAugmenter(**para)
-#         Xt = augmenter.fit_transform(X)
-#         checksum = _calc_checksum(Xt)
-#         checksums.append(checksum)
-#     assert checksums == expected_checksums_random_samples
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        (
+            {},
+            {"n": 0.5, "without_replacement": True},
+            {"n": 2, "without_replacement": True},
+            {"n": 1.5, "without_replacement": False},
+            {"n": 3, "without_replacement": False},
+        ),
+    ],
+)
+def test_random_samples(parameter):
+    """Test of the White Noise Augmenter."""
+    X = _load_test_data()
+    checksums = []
+    for para in parameter:
+        augmenter = aug.RandomSamplesAugmenter(**para)
+        Xt = augmenter.fit_transform(X)
+        checksum = _calc_checksum(Xt)
+        checksums.append(checksum)
+    assert checksums == expected_checksums_random_samples

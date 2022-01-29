@@ -11,11 +11,10 @@ __all__ = [
 ]
 
 
-import random
-
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from sklearn.utils import check_random_state
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
 
@@ -128,8 +127,6 @@ class RandomSamplesAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
         self.n = n
         self.without_replacement = without_replacement
         self.random_state = random_state
-        np.random.seed(self.random_state)
-        random.seed(self.random_state)
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -138,8 +135,11 @@ class RandomSamplesAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
         else:
             n = self.n
 
+        rng = check_random_state(self.random_state)
+        values = np.concatenate(X.values)
         if self.without_replacement:
-            Xt = random.sample(list(X.values), n)
+            replace = False
         else:
-            Xt = random.choices(X.values, k=n)
+            replace = True
+        Xt = rng.choice(values, n, replace)
         return pd.DataFrame(Xt)
