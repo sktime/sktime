@@ -50,7 +50,6 @@ __all__ = ["BaseEstimator", "BaseObject"]
 
 import inspect
 import warnings
-
 from copy import deepcopy
 
 from sklearn import clone
@@ -467,9 +466,9 @@ class TagAliaserMixin:
         if len(deprecated_tags) > 0:
             tags_instead = [alias_dict[tag] for tag in deprecated_tags]
             msg = (
-                f'tags {deprecated_tags} will be deprecated in sktime versions '
-                f'{[self.deprecate_dict[tag] for tag in deprecated_tags]}, '
-                f'use the following tags instead: {tags_instead}'
+                f"tags {deprecated_tags} will be deprecated in sktime versions "
+                f"{[self.deprecate_dict[tag] for tag in deprecated_tags]}, "
+                f"use the following tags instead: {tags_instead}"
             )
             new_tag_dict = dict()
             for tag in tag_dict:
@@ -511,9 +510,9 @@ class TagAliaserMixin:
             if len(deprecated_tags) > 0:
                 tags_instead = [alias_dict[tag] for tag in deprecated_tags]
                 msg = (
-                    f'tags {deprecated_tags} will be deprecated in sktime versions '
-                    f'{[self.deprecate_dict[tag] for tag in deprecated_tags]}, '
-                    f'use the following tags instead: {tags_instead}'
+                    f"tags {deprecated_tags} will be deprecated in sktime versions "
+                    f"{[self.deprecate_dict[tag] for tag in deprecated_tags]}, "
+                    f"use the following tags instead: {tags_instead}"
                 )
                 new_tag_list = []
                 for tag in tag_names:
