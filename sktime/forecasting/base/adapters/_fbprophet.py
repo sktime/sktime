@@ -15,7 +15,7 @@ from sktime.utils.validation.forecasting import check_y_X
 
 
 class _ProphetAdapter(BaseForecaster):
-    """Base class for interfacing fbprophet and neuralprophet."""
+    """Base class for interfacing prophet and neuralprophet."""
 
     _tags = {
         "ignores-exogeneous-X": False,
@@ -252,7 +252,7 @@ def _merge_X(df, X):
     if "ds" in X.columns and pd.api.types.is_numeric_dtype(X["ds"]):
         longest_column_name = max(X.columns, key=len)
         X.loc[:, str(longest_column_name) + "_"] = X.loc[:, "ds"]
-        # raise ValueError("Column name 'ds' is reserved in fbprophet")
+        # raise ValueError("Column name 'ds' is reserved in prophet")
     X.loc[:, "ds"] = X.index
     df = df.merge(X, how="inner", on="ds", copy=True)
     X = X.drop(columns="ds")
