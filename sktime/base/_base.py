@@ -344,8 +344,7 @@ class BaseObject(_BaseEstimator):
         #   of classes and direct parents, "adjacent" classes in mro
         mro = inspect.getmro(cls)
         # collect all methods that are not none
-        methods = [getattr(c, method, None) for c in mro]
-        methods = [c for c in methods if c is not None]
+        methods = [getattr(c, method, None) for c in mro if c is not None]
 
         for i in range(len(methods) - 1):
             # the method has been overridden once iff
