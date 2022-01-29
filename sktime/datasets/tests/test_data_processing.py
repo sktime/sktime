@@ -19,8 +19,12 @@ from sktime.datatypes._panel._convert import (
     from_nested_to_long,
     from_nested_to_multi_index,
 )
-from sktime.series_as_features.tests._config import N_COLUMNS, N_INSTANCES, N_TIMEPOINTS
 from sktime.utils._testing.panel import make_classification_problem
+
+N_INSTANCES = [10, 15]
+N_COLUMNS = [3, 5]
+N_TIMEPOINTS = [3, 5]
+N_CLASSES = [2, 5]
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
