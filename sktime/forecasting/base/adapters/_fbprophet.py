@@ -11,7 +11,6 @@ import os
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_y_X
 
 
@@ -120,13 +119,18 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.drop("ds", axis=1, inplace=True)
         return y_pred
 
-    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
-        """
-        Compute/return prediction quantiles for a forecast.
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
 
-        If alpha is iterable, multiple quantiles will be calculated.
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
@@ -134,58 +138,58 @@ class _ProphetAdapter(BaseForecaster):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
-            A probability or list of, at which quantile forecasts are computed.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
-        quantiles : pd.DataFrame
+        pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        fh = fh.to_absolute(cutoff=self.cutoff).to_pandas()
         if not isinstance(fh, pd.DatetimeIndex):
             raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
 
-        # convert alpha to the one needed for predict intervals
-        coverage = []
-        for a in alpha:
-            if a < 0.5:
-                coverage.append((0.5 - a) * 2)
-            elif a > 0.5:
-                coverage.append((a - 0.5) * 2)
-            else:
-                coverage.append(0)
+        # prepare the return DataFrame - empty with correct cols
+        var_names = ["Coverage"]
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        pred_int = pd.DataFrame(columns=int_idx)
 
+        # prepare the DataFrame to pass to prophet
         df = pd.DataFrame({"ds": fh}, index=fh)
-
-        # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
             X = X.copy()
             df, X = _merge_X(df, X)
 
-        pred_quantiles = pd.DataFrame()
-        for a, c in zip(alpha, coverage):
+        for c in coverage:
+            # override parameters in prophet - this is fine since only called in predict
             self._forecaster.interval_width = c
             self._forecaster.uncertainty_samples = self.uncertainty_samples
-            out = self._forecaster.predict(df)
-            out.set_index("ds", inplace=True)
-            pred_int = out.loc[:, ["yhat_lower", "yhat_upper"]]
-            pred_int.columns = pred_int.columns.str.strip("yhat_")
-            pred_int.columns = ["lower", "upper"]
-            if a < 0.5:
-                pred_quantiles[a] = pred_int["lower"]
-            else:
-                pred_quantiles[a] = pred_int["upper"]
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
-        pred_quantiles.columns = index
-        # moves ds column to a lower index and then remove
-        pred_quantiles.reset_index(inplace=True)
-        pred_quantiles.index = pred_quantiles["ds"].values
-        pred_quantiles.drop("ds", axis=1, inplace=True)
-        return pred_quantiles
+
+            # call wrapped prophet, get prediction
+            out_prophet = self._forecaster.predict(df)
+            # put the index (in ds column) back in the index
+            out_prophet.set_index("ds", inplace=True)
+            out_prophet.index.name = None
+            out_prophet = out_prophet[["yhat_lower", "yhat_upper"]]
+
+            # retrieve lower/upper and write in pred_int return frame
+            # instead of writing lower to lower, upper to upper
+            #  we take the min/max for lower and upper
+            #  because prophet (erroneously?) uses MC indenendent for upper/lower
+            #  so if coverage is small, it can happen that upper < lower in prophet
+            pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
+            pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+
+        return pred_int
 
     def get_fitted_params(self):
         """Get fitted parameters.
