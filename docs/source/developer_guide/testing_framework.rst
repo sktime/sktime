@@ -61,10 +61,10 @@ Starting with an example:
 
 This test constitutes a loop over ``estimator_instance`` and ``scenario`` fixtures,
 where the loop is orchestrated by ``pytest`` parameterization in
-``pytest_generate_tests``, which automatically decorates every test by 
-a ``mark.parameterize`` based on the test arguments.
-This is in line with standard use of ``pytest_generate_tests``, also see the
-`pytest documentation on the topic <pytestgentests>`_.
+``pytest_generate_tests``, which automatically decorates the test with a suitable loop.
+Notably, loops in the test do not need to be written by the developer,
+if they use a fixture name (such as ``estimator_instance``) which already has a loop defined.
+See below for more details, or the `pytest documentation on the topic <pytestgentests>`_.
 
 The ``sktime`` plug-in for ``pytest`` generates the tuples of fixture values for this.
 In the above example, we loop over the following fixtures lists:
@@ -90,9 +90,17 @@ Parameterized fixtures
 
 ``sktime`` uses ``pytest`` fixture parameterization to execute tests in a loop over fixtures,
 for instance running all interface compatibility tests for all estimators.
-See the `pytest documentation on fixture parameterization <pytestfixtparam>`_ for an explanation of fixture parameterization.
+See the `pytest documentation on fixture parameterization <pytestfixtparam>`_ for an explanation of fixture parameterization
+in general.
 
-Currently, the ``sktime`` testing framework parameterizes the following fixtures in module level tests:
+Implementation-wise, loops over fixtures is orchestrated by ``pytest`` parameterization in
+``pytest_generate_tests``, which automatically decorates every test by 
+a ``mark.parameterize`` based on the test arguments (``estimator_instance`` and ``scenario`` in the above example).
+This is in line with standard use of ``pytest_generate_tests``, see the section in the ``pytest``
+documentation on `advanced fixture parameterization <pytestgentests>`_ using ``pytest_generate_tests``.
+
+Currently, the ``sktime`` testing framework provides automated fixture parameterization
+via ``mark.parameterize`` for the following fixtures, in module level tests:
 
 * ``estimator``: all estimator classes, inheriting from the base class of the given module.
 In ``test_all_estimators``, this loops over all estimators.
