@@ -94,7 +94,7 @@ See the `pytest documentation on fixture parameterization <pytestfixtparam>`_ fo
 in general.
 
 Implementation-wise, loops over fixtures is orchestrated by ``pytest`` parameterization in
-``pytest_generate_tests``, which automatically decorates every test by 
+``pytest_generate_tests``, which automatically decorates every test by
 a ``mark.parameterize`` based on the test arguments (``estimator_instance`` and ``scenario`` in the above example).
 This is in line with standard use of ``pytest_generate_tests``, see the section in the ``pytest``
 documentation on `advanced fixture parameterization <pytestgentests>`_ using ``pytest_generate_tests``.
