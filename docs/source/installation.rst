@@ -214,7 +214,7 @@ In the ``anaconda prompt`` terminal:
 4. Install required packages:
 
    1. :code:`conda install -c conda-forge install -c pystan`
-   2. :code:`conda install -c conda-forge install -c fbprophet`
+   2. :code:`conda install -c conda-forge install -c prophet`
    3. :code:`conda install -c conda-forge install -c scipy`
 
    If you fail to satisfy all the requirements see the troubleshooting section.
