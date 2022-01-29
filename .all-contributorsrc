@@ -1471,6 +1471,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "khrapovs",
+      "name": "Stanislav Khrapov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3774663?v=4",
+      "profile": "https://github.com/khrapovs",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
