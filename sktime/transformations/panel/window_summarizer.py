@@ -228,7 +228,7 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
     ...     "covar_feature": ["cov", [[1, 28]]],
     ...     }
     ...  }
-    >>> transformer = LaggedWindowSummarizer(n_jobs=1, **kwargs_variant)
+    >>> transformer = LaggedWindowSummarizer(**kwargs_variant)
     >>> y_transformed = transformer.fit_transform(y)
     """
 
