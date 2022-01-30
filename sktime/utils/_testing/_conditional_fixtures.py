@@ -104,6 +104,10 @@ def conditional_fixtures_and_names(
     def get_fixtures(fixture_var, **kwargs):
         """Call fixture generator from generator_dict, return fixture list.
 
+        Light wrapper around calls to generator_dict[key] functions that generate
+            conditional fixtures. get_fixtures adds default string names to the return
+            if generator_dict[key] does not return them.
+
         Parameters
         ----------
         fixture_var : str, name of fixture variable
