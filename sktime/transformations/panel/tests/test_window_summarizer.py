@@ -6,8 +6,9 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.datatypes import get_examples
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
+from sktime.transformations.panel.window_summarizer import LaggedWindowSummarizer
 
 
 def check_eval(test_input, expected):
@@ -16,13 +17,18 @@ def check_eval(test_input, expected):
     For a detailed description what these arguments do,
     and how theyinteract see docstring of DateTimeFeatures.
     """
-    assert len(test_input) == len(expected)
-    assert all([a == b for a, b in zip(test_input, expected)])
+    if test_input is not None:
+        assert len(test_input) == len(expected)
+        assert all([a == b for a, b in zip(test_input, expected)])
+    else:
+        assert expected is None
 
 
-# Load data that will be basis of tests
+# Load data that will be the basis of tests
 y = load_airline()
-
+y_pd = get_examples(mtype="pd.DataFrame", as_scitype="Series")[0]
+y_series = get_examples(mtype="pd.Series", as_scitype="Series")[0]
+y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
 # Y Train will be univariate data set
 y_train, y_test = temporal_train_test_split(y)
 
@@ -56,25 +62,34 @@ kwargs_variant = {
     }
 }
 
-kwargs_empty = {"functions": {}}
+transformer = LaggedWindowSummarizer()
+Xt = transformer.fit_transform(y_series)
 
 
 @pytest.mark.parametrize(
     "kwargs, column_names, y",
     [
         (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_train),
-        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
-        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
-        # (kwargs_empty, ["y"], y_grouped),
+        # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
+        # (kwargs, ["lag_1_0", "
+        # mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
+        (None, ["lag_1_0"], y_pd),
+        (None, ["lag_1_0"], y_series),
+        # (None, ["lag_1_0"], y_multi),
         (kwargs_alternames, ["lag_3_0", "lag_12_0"], y_train),
         (kwargs_variant, ["mean_7_0", "mean_7_7", "covar_feature_28_0"], y_train),
     ],
 )
-def test_univariate(kwargs, column_names, y):
+def test_windowsummarizer(kwargs, column_names, y):
     """Test columns match kwargs arguments."""
-    transformer = LaggedWindowSummarizer(**kwargs)
-
+    if kwargs is not None:
+        transformer = LaggedWindowSummarizer(**kwargs)
+    else:
+        transformer = LaggedWindowSummarizer()
     Xt = transformer.fit_transform(y_train)
-    Xt_columns = Xt.columns.to_list()
+    if Xt is not None:
+        Xt_columns = Xt.columns.to_list()
+    else:
+        Xt_columns = None
 
     check_eval(Xt_columns, column_names)

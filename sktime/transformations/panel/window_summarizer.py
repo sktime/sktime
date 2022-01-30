@@ -9,10 +9,8 @@ __all__ = ["LaggedWindowSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-# from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
 
-# from sktime.utils.validation.panel import check_X
 # List of native pandas rolling window function.
 # danbartl: investivate different engines for pandas
 pd_rolling = [
@@ -39,6 +37,9 @@ def _window_feature(
 ):
     """Compute window features and lag.
 
+    Apply functions passed over a certain window
+    of past observations, e.g. the mean of a window of length 7 days, lagged by 14 days.
+
     y: either pandas.core.groupby.generic.SeriesGroupBy
         Object create by grouping across groupBy columns.
     name : str, base string of the derived features
@@ -58,18 +59,19 @@ def _window_feature(
             * "cov",
             * "skew",
             * "sem"
-         or function definition.
+         or function definition. See for the native functions also
+         https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
         Contains values for window shift and window length.
     """
-    shift = window[0] + 1
-    win = window[1]
+    win = window[0]
+    shift = window[1] + 1
 
     if win_summarizer in pd_rolling:
         if isinstance(Z.index, pd.MultiIndex):
             feat = getattr(Z.shift(shift).rolling(win), win_summarizer)()
         else:
-            feat = Z.apply(
+            feat = pd.DataFrame(Z).apply(
                 lambda x: getattr(x.shift(shift).rolling(win), win_summarizer)()
             )
     else:
@@ -80,19 +82,19 @@ def _window_feature(
             feat = feat.apply(lambda x: x.rolling(win).apply(win_summarizer, raw=True))
 
     if isinstance(feat, pd.Series):
-        feat.rename(name + "_" + "_".join([str(item) for item in window]), inplace=True)
-    else:
-        feat.rename(
-            columns={
-                feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
-            },
-            inplace=True,
-        )
+        feat = pd.DataFrame(feat)
+
+    feat.rename(
+        columns={
+            feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
+        },
+        inplace=True,
+    )
 
     return feat
 
 
-class _LaggedWindowExtractor(BaseTransformer):
+class _LaggedWindowExtractor(_PanelToTabularTransformer):
     """Base adapter class for transformations.
 
     The LaggedWindowSummarizer transforms input series to features
@@ -101,47 +103,68 @@ class _LaggedWindowExtractor(BaseTransformer):
     """
 
     _tags = {
-        # "scitype:transform-input": "Series",
-        # # what is the scitype of X: Series, or Panel
-        # "scitype:transform-output": "Series",
-        # # what scitype is returned: Primitives, Series, Panel
-        # "scitype:instancewise": True,  # is this an instance-wise transform?
-        # "X_inner_mtype": "pd.DataFrame",
+        # todo: what is the scitype of X: Series, or Panel
+        # "scitype:transform-input": "Panel",
+        # todo: what scitype is returned: Primitives, Series, Panel
+        "scitype:transform-output": "Panel",
+        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:transform-labels": "None",
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        # "X_inner_mtype": ["pd.DataFrame"
         # # which mtypes do _fit/_predict support for X?
+        # # X_inner_mtype can be Panel mtype even if
+        # transform-input is Series, vectorized
         # "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        # "univariate-only": False,
-        "fit-in-transform": False,
+        "capability:inverse_transform": False,  # does transformer
+        # have inverse transform
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "handles-missing-data": True,  # can estimator handle missing data?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "transform-returns-same-time-index": False,
+        # does transform return have the same time index as input X
     }
 
     def __init__(
         self,
         functions=None,
         n_jobs=-1,
+        target_cols=None,
     ):
 
         self.functions = functions
         self.n_jobs = n_jobs
+        self.target_cols = target_cols
 
         super(_LaggedWindowExtractor, self).__init__()
 
     # Get extraction parameters
     def _fit(self, X, y=None):
-        """Fit.
+        """Fit transformer to X and y.
 
+        Private _fit containing the core logic, called from fit
         Parameters
         ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series or np.array
-            Target variable
+        X : Series or Panel
+        y : Series or Panel of same index
 
         Returns
         -------
-        self : an instance of self
+        self: reference to self
         """
         # check if dict is empty
-        if not bool(self.functions):
-            self.functions = None
+        if self.functions is None:
+            self.functions = {
+                "lag": ["lag", [[1, 0]]],
+            }
+
+        if self.target_cols is None:
+            self.target_cols = [X.columns.to_list()[0]]
+
+        if not all(x in X.columns.to_list() for x in self.target_cols):
+            raise ValueError("Invalid target select for transformation")
 
         if self.functions is not None:
             func_dict = pd.DataFrame(self.functions).T.reset_index()
@@ -208,44 +231,36 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
     """
 
     def _transform(self, X, y=None):
-        """Transform X.
+        """Transform X and return a transformed version.
 
         Parameters
         ----------
-        Z : pd.DataFrame with y as columns
-            and either single index or
-            MultiIndex conforming to
-            Panel default definition
-            (instances and timepoints columm)
-
+        X : Series or Panel
+        y : Series or Panel
         Returns
         -------
-        Zt : pandas DataFrame
-        Transformed pandas DataFrame
-
+        transformed version of X
         """
         # input checks
-        if self._func_dict is not None:
+        Xt_out = []
+        for cols in self.target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = getattr(X.groupby("instances"), X.columns[0])
+                X_grouped = getattr(X.groupby("instances"), X[cols])
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs)
                     for index, kwargs in self._func_dict.iterrows()
                 )
             else:
-                for _index, kwargs in self._func_dict.iterrows():
-                    _window_feature(X, **kwargs)
+                # for _index, kwargs in self._func_dict.iterrows():
+                #     _window_feature(X, **kwargs)
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X, **kwargs)
+                    delayed(_window_feature)(X[cols], **kwargs)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
-            if isinstance(df[0], pd.Series):
-                col_names = [o.name for o in df]
-                Xt = pd.concat(df, axis=1)
-                Xt.columns = col_names
-            else:
-                Xt = pd.concat(df, axis=1)
-        else:
-            Xt = X
+            Xt = pd.concat(df, axis=1)
+            if len(self.target_cols) > 1:
+                Xt = Xt.add_prefix(cols + "_")
+            Xt_out.append(Xt)
+        Xt_return = pd.concat(Xt_out, axis=1)
 
-        return Xt
+        return Xt_return
