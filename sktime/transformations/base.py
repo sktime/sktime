@@ -211,10 +211,14 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -644,10 +648,14 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
                 X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
@@ -671,10 +679,14 @@ class BaseTransformer(BaseEstimator):
         """Vectorized application of transform or inverse, and convert back."""
         if X_input_mtype is None:
             X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        if y is not None:
-            ValueError(
-                "no default behaviour if _fit does not support Panel, "
-                " but X is Panel and y is not None"
+        if y is not None and self.get_tag("y_inner_mtype") != "None":
+            raise ValueError(
+                f"{type(self).__name__} does not support Panel X if y is not None, "
+                f"since {type(self).__name__} supports only Series. "
+                "Auto-vectorization to extend Series X to Panel X can only be "
+                'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                "Consider extending _fit and _transform to handle the following "
+                "input types natively: Panel X and non-None y."
             )
 
         X = convert_to(
@@ -683,11 +695,13 @@ class BaseTransformer(BaseEstimator):
 
         # depending on whether fitting happens, apply fitted or unfitted instances
         if not self.get_tag("fit-in-transform"):
-            # these are the transformers-per-instanced, fitted in fit
+            # these are the transformers-per-instance, fitted in fit
             transformers = self.transformers_
             if len(transformers) != len(X):
                 raise RuntimeError(
-                    "found different number of instances in transform than in fit"
+                    "found different number of instances in transform than in fit. "
+                    f"number of instances seen in fit: {len(transformers)}; "
+                    f"number of instances seen in transform: {len(X)}"
                 )
             if inverse:
                 Xt = [transformers[i].inverse_transform(X[i]) for i in range(len(X))]

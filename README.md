@@ -12,7 +12,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 | Overview | |
 |---|---|
-| **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github)](https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test) [![!appveyor](https://img.shields.io/appveyor/ci/mloning/sktime/main?logo=appveyor)](https://ci.appveyor.com/project/mloning/sktime) [![!azure-devops](https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/main?logo=azure-pipelines)](https://dev.azure.com/mloning/sktime/_build) [![!codecov](https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/alan-turing-institute/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) |
+| **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github)](https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test) [![!codecov](https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/alan-turing-institute/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) |
 | **Code** |  [![!pypi](https://img.shields.io/pypi/v/sktime?color=orange)](https://pypi.org/project/sktime/) [![!conda](https://img.shields.io/conda/vn/conda-forge/sktime)](https://anaconda.org/conda-forge/sktime) [![!python-versions](https://img.shields.io/pypi/pyversions/sktime)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples) |
 | **Downloads**| [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=week&units=international_system&left_color=grey&right_color=blue&left_text=weekly%20(pypi))](https://pepy.tech/project/sktime) [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=month&units=international_system&left_color=grey&right_color=blue&left_text=monthly%20(pypi))](https://pepy.tech/project/sktime) [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/sktime) |
 | **Community** | [![!slack](https://img.shields.io/static/v1?logo=slack&label=slack&message=chat&color=lightgreen)](https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!gitter](https://img.shields.io/static/v1?logo=gitter&label=gitter&message=chat&color=lightgreen)](https://gitter.im/sktime/community) [![!twitter](https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social)](https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s) |
@@ -68,7 +68,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[fbprophet]: https://facebook.github.io/prophet/
+[prophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|
@@ -154,7 +154,7 @@ from sktime.datasets import load_arrow_head
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-X, y = load_arrow_head(return_X_y=True)
+X, y = load_arrow_head()
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 classifier = TimeSeriesForestClassifier()
 classifier.fit(X_train, y_train)

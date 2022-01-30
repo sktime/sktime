@@ -1,8 +1,6 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
@@ -27,12 +25,12 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
+from sktime.classification.distance_based import ElasticEnsemble
 from sktime.classification.early_classification import (
     ProbabilityThresholdEarlyClassifier,
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
-    FreshPRINCE,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
     SignatureClassifier,
@@ -44,7 +42,6 @@ from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
     RandomIntervalSpectralEnsemble,
-    RandomIntervalSpectralForest,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
@@ -101,10 +98,6 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.shapelets import (
-    ContractedShapeletTransform,
-    ShapeletTransform,
-)
 from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.panel.tsfresh import (
@@ -115,33 +108,15 @@ from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
-# What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
+# https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    "ElasticEnsemble",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
 ]
 
 
-# This is temporary until BaseObject is implemented
-DIST_KERNELS_IGNORE_TESTS = [
-    "test_fit_updates_state",
-    "_make_fit_args",
-    "test_fit_returns_self",
-    "test_raises_not_fitted_error",
-    "test_fit_idempotent",
-    "test_fit_does_not_overwrite_hyper_params",
-    "test_methods_do_not_change_state",
-    "test_persistence_via_pickle",
-]
-
-
 EXCLUDED_TESTS = {
-    "ContractedShapeletTransform": ["test_fit_idempotent"],
-    "ScipyDist": DIST_KERNELS_IGNORE_TESTS,
-    "AggrDist": DIST_KERNELS_IGNORE_TESTS,
-    "DistFromAligner": DIST_KERNELS_IGNORE_TESTS,
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
 }
 
@@ -253,12 +228,6 @@ ESTIMATOR_TEST_PARAMS = {
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    ContractedShapeletTransform: {"time_contract_in_mins": 0.025},
-    ShapeletTransform: {
-        "max_shapelets_to_store_per_class": 1,
-        "min_shapelet_length": 3,
-        "max_shapelet_length": 4,
-    },
     RandomShapeletTransform: {
         "max_shapelets": 5,
         "n_shapelet_samples": 50,
@@ -274,6 +243,12 @@ ESTIMATOR_TEST_PARAMS = {
         "depth": 3,
         "window_name": "global",
     },
+    ElasticEnsemble: {
+        "proportion_of_param_options": 0.01,
+        "proportion_train_for_test": 0.1,
+        "majority_vote": True,
+        "distance_measures": ["dtw"],
+    },
     Catch22Classifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
     },
@@ -282,10 +257,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
-        "default_fc_parameters": "minimal",
-    },
-    FreshPRINCE: {
-        "n_estimators": 3,
         "default_fc_parameters": "minimal",
     },
     RandomIntervals: {
@@ -343,7 +314,6 @@ ESTIMATOR_TEST_PARAMS = {
         "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
-    RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     RandomIntervalSpectralEnsemble: {
         "n_estimators": 3,
         "acf_lag": 10,
