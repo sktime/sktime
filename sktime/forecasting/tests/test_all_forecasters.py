@@ -4,7 +4,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "kejsitake"]
 __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
@@ -15,7 +15,7 @@ __all__ = [
     "test_y_multivariate_raises_error",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
-    "test_predict_pred_interval",
+    "test_predict_interval",
     "test_update_predict_single",
     "test_y_invalid_type_raises_error",
     "test_predict_time_index_with_X",
@@ -286,7 +286,7 @@ def _check_pred_ints(
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-def test_predict_pred_interval(Forecaster, fh, alpha):
+def test_predict_interval(Forecaster, fh, alpha):
     """Check prediction intervals returned by predict.
 
     Arguments
