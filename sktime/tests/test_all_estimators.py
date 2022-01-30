@@ -61,6 +61,7 @@ def is_excluded(test_name, est):
     """Shorthand to check whether test test_name is excluded for estimator est."""
     return test_name in EXCLUDED_TESTS.get(est.__name__, [])
 
+
 # the following functions define fixture generation logic used in pytest_generate_tests
 # each function is of signature (test_name:str, **kwargs) -> List of fixtures
 # function with name _generate_[fixture_var] returns list of values for fixture_var
@@ -122,6 +123,7 @@ generator_dict["estimator_instance"] = _generate_estimator_instance
 
 # pytest_generate_tests uses create_conditional_fixtures_and_names and generator_dict
 #   to create the fixtures for a parameterize decoration of all tests
+
 
 def pytest_generate_tests(metafunc):
     """Test parameterization routine for pytest.
