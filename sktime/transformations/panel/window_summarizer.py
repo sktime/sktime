@@ -217,16 +217,18 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
 
     Examples
     --------
-    >>> import sktime.transformations.series.window_summarizer as ws
+    >>> from sktime.transformations.panel.window_summarizer import (
+    ...    LaggedWindowSummarizer
+    ... )
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> kwargs_variant = {
-    >>>     "functions": {
-    >>>     "mean": ["mean", [[1, 7], [8, 7]]],
-    >>>     "covar_feature": ["cov", [[1, 28]]],
-    >>>     }
-    >>>  }
-    >>> transformer = ws.LaggedWindowSummarizer(**kwargs_variant)
+    ...     "functions": {
+    ...     "mean": ["mean", [[1, 7], [8, 7]]],
+    ...     "covar_feature": ["cov", [[1, 28]]],
+    ...     }
+    ...  }
+    >>> transformer = LaggedWindowSummarizer(n_jobs=1, **kwargs_variant)
     >>> y_transformed = transformer.fit_transform(y)
     """
 
