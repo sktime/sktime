@@ -7,8 +7,6 @@ ignore:
   - ".binder/*"
   - "extension_templates/*"
   - "sktime/contrib/**/*"
-  - "sktime/__check_build/*"
-  - "sktime/_build_utils/*"
   - "*.md"
   - "*.yml"
   - "*.yaml"
