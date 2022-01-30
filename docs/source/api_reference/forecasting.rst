@@ -218,7 +218,7 @@ Model Evaluation (Backtesting)
 
 VAR (Vector Autoregression)
 
-.. currentmodule:: sktime.forecasting.VAR
+.. currentmodule:: sktime.forecasting.var
 
 .. autosummary::
     :toctree: auto_generated/
