@@ -31,7 +31,6 @@ from sktime.classification.early_classification import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
-    FreshPRINCE,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
     SignatureClassifier,
@@ -258,10 +257,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
-        "default_fc_parameters": "minimal",
-    },
-    FreshPRINCE: {
-        "n_estimators": 3,
         "default_fc_parameters": "minimal",
     },
     RandomIntervals: {
