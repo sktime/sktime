@@ -1300,7 +1300,7 @@ class BaseForecaster(BaseEstimator):
             raise RuntimeError(
                 f"{self.__class__.__name__} does not implement "
                 "probabilistic forecasting, "
-                'but "capability:predict_int" flag has been set to True incorrectly. '
+                'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
@@ -1365,7 +1365,7 @@ class BaseForecaster(BaseEstimator):
             raise RuntimeError(
                 f"{self.__class__.__name__} does not implement "
                 "probabilistic forecasting, "
-                'but "capability:predict_int" flag has been set to True incorrectly. '
+                'but "capability:pred_int" flag has been set to True incorrectly. '
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
