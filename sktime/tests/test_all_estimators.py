@@ -39,7 +39,7 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
-from sktime.utils._testing._conditional_fixtures import conditional_fixtures_and_names
+from sktime.utils._testing._conditional_fixtures import create_conditional_fixtures_and_names
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
@@ -126,7 +126,7 @@ def pytest_generate_tests(metafunc):
 
     fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
 
-    fixture_param_str, fixture_prod, fixture_names = conditional_fixtures_and_names(
+    fixture_param_str, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
         test_name=test_name,
         fixture_vars=metafunc.fixturenames,
         generator_dict=generator_dict,
