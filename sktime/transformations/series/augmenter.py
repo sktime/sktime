@@ -106,8 +106,9 @@ class RandomSamplesAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
         Whether to draw without replacement. If True, between two
         subsequent draws of the same original instance, every other
         instance of X appears once or twice.
-    random_state: int
-        Random state seed.
+    random_state: int, RandomState instance or None, default=None
+        Controls the shuffling applied to the data before applying the split.
+        Pass an int for reproducible output across multiple function calls.
     """
 
     def __init__(
@@ -134,7 +135,6 @@ class RandomSamplesAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
             n = int(np.ceil(self.n * len(X)))
         else:
             n = self.n
-
         rng = check_random_state(self.random_state)
         values = np.concatenate(X.values)
         if self.without_replacement:
