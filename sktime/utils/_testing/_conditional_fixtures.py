@@ -24,10 +24,10 @@ class FixtureGenerationError(Exception):
 
 
 def create_conditional_fixtures_and_names(
-     test_name: str,
-     fixture_vars: List[str],
-     generator_dict: Dict[str: Callable],
-     fixture_sequence: List[str] = None,
+    test_name: str,
+    fixture_vars: List[str],
+    generator_dict: Dict[str: Callable],
+    fixture_sequence: List[str] = None,
 ):
     """Create conditional fixtures for pytest_generate_tests.
 
