@@ -12,7 +12,7 @@ from joblib import Parallel, delayed
 from sktime.transformations.base import _PanelToTabularTransformer
 
 # List of native pandas rolling window function.
-# danbartl: investivate different engines for pandas
+# In the future  different engines for pandas will be investigated
 pd_rolling = [
     "sum",
     "mean",
@@ -94,98 +94,7 @@ def _window_feature(
     return feat
 
 
-class _LaggedWindowExtractor(_PanelToTabularTransformer):
-    """Base adapter class for transformations.
-
-    The LaggedWindowSummarizer transforms input series to features
-    based on a provided dictionary of window summarizer, window shifts
-    and window lengths.
-    """
-
-    _tags = {
-        # todo: what is the scitype of X: Series, or Panel
-        # "scitype:transform-input": "Panel",
-        # todo: what scitype is returned: Primitives, Series, Panel
-        "scitype:transform-output": "Panel",
-        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:transform-labels": "None",
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        # "X_inner_mtype": ["pd.DataFrame"
-        # # which mtypes do _fit/_predict support for X?
-        # # X_inner_mtype can be Panel mtype even if
-        # transform-input is Series, vectorized
-        # "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": False,  # does transformer
-        # have inverse transform
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": True,  # can estimator handle missing data?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
-        "transform-returns-same-time-index": False,
-        # does transform return have the same time index as input X
-    }
-
-    def __init__(
-        self,
-        functions=None,
-        n_jobs=-1,
-        target_cols=None,
-    ):
-
-        self.functions = functions
-        self.n_jobs = n_jobs
-        self.target_cols = target_cols
-
-        super(_LaggedWindowExtractor, self).__init__()
-
-    # Get extraction parameters
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        Private _fit containing the core logic, called from fit
-        Parameters
-        ----------
-        X : Series or Panel
-        y : Series or Panel of same index
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # check if dict is empty
-        if self.functions is None:
-            self.functions = {
-                "lag": ["lag", [[1, 0]]],
-            }
-
-        if self.target_cols is None:
-            self.target_cols = [X.columns.to_list()[0]]
-
-        if not all(x in X.columns.to_list() for x in self.target_cols):
-            raise ValueError("Invalid target select for transformation")
-
-        if self.functions is not None:
-            func_dict = pd.DataFrame(self.functions).T.reset_index()
-            func_dict.rename(
-                columns={"index": "name", 0: "win_summarizer", 1: "window"},
-                inplace=True,
-            )
-            func_dict = func_dict.explode("window")
-            self._func_dict = func_dict
-            self._truncate_start = (
-                func_dict["window"].apply(lambda x: x[0] + x[1]).max()
-            )
-        else:
-            self._func_dict = None
-            self._truncate_start = None
-        self._is_fitted = True
-
-        return self
-
-
-class LaggedWindowSummarizer(_LaggedWindowExtractor):
+class LaggedWindowSummarizer(_PanelToTabularTransformer):
     """Transformer for extracting time series features.
 
     The LaggedWindowSummarizer transforms input series to features
@@ -232,6 +141,87 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
     >>> y_transformed = transformer.fit_transform(y)
     """
 
+    _tags = {
+        # todo: what is the scitype of X: Series, or Panel
+        # "scitype:transform-input": "Series",
+        # todo: what scitype is returned: Primitives, Series, Panel
+        "scitype:transform-output": "Panel",
+        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:transform-labels": "None",
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        # "X_inner_mtype": ["pd.DataFrame"
+        # # which mtypes do _fit/_predict support for X?
+        # # X_inner_mtype can be Panel mtype even if
+        # transform-input is Series, vectorized
+        # "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "capability:inverse_transform": False,  # does transformer
+        # have inverse transform
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "handles-missing-data": True,  # can estimator handle missing data?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "transform-returns-same-time-index": False,
+        # does transform return have the same time index as input X
+    }
+
+    def __init__(
+        self,
+        functions=None,
+        n_jobs=-1,
+        target_cols=None,
+    ):
+
+        self.functions = functions
+        self.n_jobs = n_jobs
+        self.target_cols = target_cols
+
+        super(_PanelToTabularTransformer, self).__init__()
+
+    # Get extraction parameters
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        Private _fit containing the core logic, called from fit
+        Parameters
+        ----------
+        X : Series or Panel
+        y : Series or Panel of same index
+
+        Returns
+        -------
+        self: reference to self
+        """
+        # check if dict is empty
+
+        if self.target_cols is None:
+            self._target_cols = [X.columns.to_list()[0]]
+        else:
+            self.target_cols = self._target_cols
+
+        if not all(x in X.columns.to_list() for x in self._target_cols):
+            raise ValueError("Invalid target select for transformation")
+
+        if self.functions is None:
+            func_dict = pd.DataFrame(
+                {
+                    "lag": ["lag", [[1, 0]]],
+                }
+            ).T.reset_index()
+        else:
+            func_dict = pd.DataFrame(self.functions).T.reset_index()
+
+        func_dict.rename(
+            columns={"index": "name", 0: "win_summarizer", 1: "window"},
+            inplace=True,
+        )
+        func_dict = func_dict.explode("window")
+        self._func_dict = func_dict
+        self._truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+
+        return self
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -245,7 +235,7 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
         """
         # input checks
         Xt_out = []
-        for cols in self.target_cols:
+        for cols in self._target_cols:
             if isinstance(X.index, pd.MultiIndex):
                 X_grouped = getattr(X.groupby("instances"), X[cols])
                 df = Parallel(n_jobs=self.n_jobs)(
@@ -260,7 +250,7 @@ class LaggedWindowSummarizer(_LaggedWindowExtractor):
                     for _index, kwargs in self._func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
-            if len(self.target_cols) > 1:
+            if len(self._target_cols) > 1:
                 Xt = Xt.add_prefix(cols + "_")
             Xt_out.append(Xt)
         Xt_return = pd.concat(Xt_out, axis=1)
