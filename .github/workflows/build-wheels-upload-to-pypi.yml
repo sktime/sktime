@@ -63,7 +63,7 @@ jobs:
           CIBW_PLATFORM: windows
           CIBW_SKIP: cp36-* pp* *-win32
           CIBW_BUILD_FRONTEND: "build"
-          # Windows causes install problems due to fbprophet so it's tested separately
+          # Windows causes install problems due to prophet so it's tested separately
         run: python -m cibuildwheel --platform windows --output-dir wheelhouse
 
       - name: Store wheels
@@ -115,8 +115,8 @@ jobs:
       - name: Install conda dependencies
         run: |
           conda install -c anaconda -n test -y "pystan==2.19.1.1"
-          conda install -c conda-forge -n test -y "fbprophet>=0.7.1"
-          conda install -c conda-forge -n test -y scipy cython matplotlib
+          conda install -c conda-forge -n test -y "prophet>=1.0.0"
+          conda install -c conda-forge -n test -y scipy matplotlib
 
       - name: Display downloaded artifacts
         run: ls -l wheelhouse

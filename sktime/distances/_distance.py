@@ -697,7 +697,7 @@ def msm_distance(
     """Compute the move-split-merge distance.
 
     This metric uses as building blocks three fundamental operations: Move, Split,
-    and MergeA Move operation changes the value of a single element, a Split
+    and Merge. A Move operation changes the value of a single element, a Split
     operation converts a single element into two consecutive elements, and a Merge
     operation merges two consecutive elements into one. Each operation has an
     associated cost, and the MSM distance between two time series is defined to be
