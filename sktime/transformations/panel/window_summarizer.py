@@ -9,7 +9,8 @@ __all__ = ["LaggedWindowSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-from sktime.transformations.base import _PanelToTabularTransformer
+# from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 
 # List of native pandas rolling window function.
 # In the future  different engines for pandas will be investigated
@@ -94,7 +95,7 @@ def _window_feature(
     return feat
 
 
-class LaggedWindowSummarizer(_PanelToTabularTransformer):
+class LaggedWindowSummarizer(BaseTransformer):
     """Transformer for extracting time series features.
 
     The LaggedWindowSummarizer transforms input series to features
@@ -143,9 +144,9 @@ class LaggedWindowSummarizer(_PanelToTabularTransformer):
 
     _tags = {
         # todo: what is the scitype of X: Series, or Panel
-        # "scitype:transform-input": "Series",
+        "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel
-        "scitype:transform-output": "Panel",
+        "scitype:transform-output": "Series",
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
@@ -173,11 +174,12 @@ class LaggedWindowSummarizer(_PanelToTabularTransformer):
         target_cols=None,
     ):
 
+        self._converter_store_X = dict()
         self.functions = functions
         self.n_jobs = n_jobs
         self.target_cols = target_cols
 
-        super(_PanelToTabularTransformer, self).__init__()
+        super(BaseTransformer, self).__init__()
 
     # Get extraction parameters
     def _fit(self, X, y=None):
@@ -186,11 +188,12 @@ class LaggedWindowSummarizer(_PanelToTabularTransformer):
         Private _fit containing the core logic, called from fit
         Parameters
         ----------
-        X : Series or Panel
-        y : Series or Panel of same index
+        X : pd.Series or pd.DataFrame
+        y : None
 
         Returns
         -------
+        X: pd.DataFrame
         self: reference to self
         """
         # check if dict is empty

@@ -62,8 +62,8 @@ kwargs_variant = {
     }
 }
 
-transformer = LaggedWindowSummarizer()
-Xt = transformer.fit_transform(y_series)
+transformer = LaggedWindowSummarizer(None)
+Xt = transformer.fit_transform(y_pd)
 
 
 @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ Xt = transformer.fit_transform(y_series)
         # (kwargs, ["lag_1_0", "
         # mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
         (None, ["lag_1_0"], y_pd),
-        (None, ["lag_1_0"], y_series),
+        (None, ["lag_1_0"], y_pd),
         # (None, ["lag_1_0"], y_multi),
         (kwargs_alternames, ["lag_3_0", "lag_12_0"], y_train),
         (kwargs_variant, ["mean_7_0", "mean_7_7", "covar_feature_28_0"], y_train),
@@ -86,9 +86,12 @@ def test_windowsummarizer(kwargs, column_names, y):
         transformer = LaggedWindowSummarizer(**kwargs)
     else:
         transformer = LaggedWindowSummarizer()
-    Xt = transformer.fit_transform(y_train)
+    Xt = transformer.fit_transform(y)
     if Xt is not None:
-        Xt_columns = Xt.columns.to_list()
+        if isinstance(Xt, pd.DataFrame):
+            Xt_columns = Xt.columns.to_list()
+        else:
+            Xt_columns = Xt.name
     else:
         Xt_columns = None
 
