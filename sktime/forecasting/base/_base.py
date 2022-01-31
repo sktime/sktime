@@ -565,6 +565,15 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
 
+        if return_pred_int:
+            warn(
+                "argument return_pred_int in update_predict() is deprecated "
+                "since version 0.10.0 and will be removed in version 0.11.0."
+                "please use update() then predict_interval() or predict_quantiles() "
+                "to generate predictive quantiles or prediction intervals.",
+                DeprecationWarning,
+            )
+
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
@@ -656,6 +665,15 @@ class BaseForecaster(BaseEstimator):
             warn(msg, category=DeprecationWarning)
         if y is None:
             raise ValueError("y must be of Series type and cannot be None")
+
+        if return_pred_int:
+            warn(
+                "argument return_pred_int in update_predict_single() is deprecated "
+                "since version 0.10.0 and will be removed in version 0.11.0."
+                "please use update() then predict_interval() or predict_quantiles() "
+                "to generate predictive quantiles or prediction intervals.",
+                DeprecationWarning,
+            )
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
