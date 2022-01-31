@@ -384,7 +384,7 @@ class NaiveForecaster(BaseForecaster):
             {"sp": 2},
             {"strategy": "mean"},
             {"strategy": "drift"},
-            {"strategy": "mean", "window_length": 5}
+            {"strategy": "mean", "window_length": 5},
         ]
 
         return params_list
