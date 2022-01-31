@@ -219,12 +219,12 @@ class BaseForecaster(BaseEstimator):
         # todo: deprecate in v 10
         else:
             warn(
-                "return_pred_int in predict() will be deprecated;"
+                "return_pred_int in predict() is deprecated since version 0.10.0 "
+                " and will be removed in version 0.11.0."
                 "please use predict_interval() instead to generate "
                 "prediction intervals.",
-                FutureWarning,
+                DeprecationWarning,
             )
-
             if not self._has_predict_quantiles_been_refactored():
                 # this means the method is not refactored
                 y_pred = self._predict(
@@ -621,7 +621,7 @@ class BaseForecaster(BaseEstimator):
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
         y_new : alias for y for downwards compatibility, pass only one of y, y_new
-            to be deprecated in version 0.10.0
+            deprecated since version 0.10.0 and will be removed in 0.11.0
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
@@ -642,13 +642,18 @@ class BaseForecaster(BaseEstimator):
         pred_ints : pd.DataFrame
             Prediction intervals
         """
-        # todo deprecate return_pred_int in v 0.10.1
+        # todo: remove return_pred_int in v0.11.0
         self.check_is_fitted()
         fh = self._check_fh(fh)
 
-        # handle input alias, deprecate in v 0.10.1
+        # handle input alias, remove in v 0.11.0
         if y is None:
             y = y_new
+            msg = (
+                "argument y_new in update_predict_single is deprecated since "
+                "version 0.10.0 and will be removed in version 0.11.0"
+            )
+            warn(msg, category=DeprecationWarning)
         if y is None:
             raise ValueError("y must be of Series type and cannot be None")
 
@@ -1459,7 +1464,7 @@ class BaseForecaster(BaseEstimator):
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
-    # TODO: remove in v0.10.0
+    # TODO: remove in v0.11.0
     def _has_predict_quantiles_been_refactored(self):
         """Check if specific forecaster implements one of the proba methods."""
         implements_interval = self._has_implementation_of("_predict_interval")
@@ -1470,7 +1475,7 @@ class BaseForecaster(BaseEstimator):
 
         return refactored
 
-    # TODO: remove in v0.10.0
+    # TODO: remove in v0.11.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
         name = pred_int_new.columns.get_level_values(0).unique()[0]
         alpha = check_alpha(alpha)
