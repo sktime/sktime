@@ -22,7 +22,6 @@ __all__ = [
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
-    "STLForecaster",
 ]
 
 from sktime.forecasting.compose._column_ensemble import ColumnEnsembleForecaster
@@ -47,4 +46,3 @@ from sktime.forecasting.compose._reduce import (
     make_reduction,
 )
 from sktime.forecasting.compose._stack import StackingForecaster
-from sktime.forecasting.compose._stl import STLForecaster
