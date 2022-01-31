@@ -58,8 +58,8 @@ INVALID_X_INPUT_TYPES = [list(), tuple()]
 INVALID_y_INPUT_TYPES = [list(), tuple()]
 
 # testing data
-y = make_forecasting_problem()
-y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+y = make_forecasting_problem(n_timepoints=50)
+y_train, y_test = temporal_train_test_split(y, train_size=40)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)

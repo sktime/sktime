@@ -41,9 +41,6 @@ class STLForecaster(BaseForecaster):
         Forecaster to be fitted on resid_ component of the
         STL, by default None. If None, then
         a NaiveForecaster(strategy="mean") is used.
-    stl : statsmodels.tsa.STL, optional
-        Transformer to decompose series into trend, seasonal and
-        residual component, by default None.
 
     Attributes
     ----------
@@ -65,7 +62,7 @@ class STLForecaster(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.compose import STLForecaster
+    >>> from sktime.forecasting.stl import STLForecaster
     >>> y = load_airline()
     >>> forecaster = STLForecaster(sp=12)
     >>> forecaster.fit(y)
