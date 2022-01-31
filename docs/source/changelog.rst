@@ -14,6 +14,18 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+[0.10.0] - 2022-02-01
+---------------------
+
+Highlights
+~~~~~~~~~~
+
+* Switch from `fbprophet` to `prophet`
+* Updated code dependency version, i.e. numpy and statsmodels to reduce dependency conflicts.
+* CI/CD
+
+
+
 [0.9.0] - 2021-12-08
 --------------------
 
