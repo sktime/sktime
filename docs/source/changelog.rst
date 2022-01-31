@@ -20,12 +20,21 @@ For our long-term plan, see our :ref:`roadmap`.
 Highlights
 ~~~~~~~~~~
 
-* Python 3.6 is no longer support from 0.10.0 onwards due to it's end of life. Last `sktime` version to support python 3.6 was 0.9.0.
-* [ENH] Add predict_quantiles to FBprophet (:pr:`1910`) :user:`kejsitake`.
-* [ENH] Scaled Logit Transformer (:pr:`1913`) :user:`ltsaprounis`.
-* [ENH] Add predict_quantiles to ets, pmdarima adapter (:pr:`1874`) :user:`kejsitake`.
-* [ENH] New transformation based pipeline classifiers (:pr:`1721`)
-* [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`)
+* `sktime` now supports python 3.7-3.9. Python 3.6 is no longer supported, due to end of life. Last `sktime` version to support python 3.6 was 0.9.0.
+* `sktime` now supports, and requires, `numpy>=1.21.0`
+* overhaul of docs for installation and first-time developers (:pr:`1707`) :user:`amrith-shell`
+* all probabilistic forecasters now provide `predict_interval` and `predict_quantiles` interfaces
+  (:pr:`1842`, :pr:`1874`, :pr:`1879`, :pr:`1910`, :pr:`1961`) :user:`fkiraly` :user:`k1m190r` :user:`kejsitake`
+* new transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
+* developer install for `sktime` no longer requires C compilers and `cython` (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
+* CI/CD moved completely to GitHub actions (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
+
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+* `sktime` now supports `python` 3.7-3.9 on windows, mac, and unix-based systems
+* `sktime` now supports, and requires, `numpy>=1.21.0`
+* `sktime` `Prophet` interface now uses `prophet` instead of deprecated `fbprophet`
 
 
 Core interface changes
@@ -86,23 +95,62 @@ Transformations
 series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`, :pr:`1730`)
 
 
-
 Added
 ~~~~~
-
 
 Documentation
 ^^^^^^^^^^^^^
 
-* Added VAR to API docs (:pr:`1964`) :user:`aiwalter`
-* Classification notebook (:pr:`1885`)
-* [DOC] updates to forecaster and transformer extension template (:pr:`1853`)
+* [DOC] updates to forecaster and transformer extension template (:pr:`1774`, :pr:`1853`)
 * [DOC] Update Prophet and ETS docstrings (:pr:`1698`)
 * [DOC] updated `get_test_params` extension template docs regarding imports	(:pr:`1811`)
 * [DOC] reformatted the documentation structure (:pr:`1707`) :user:`amrith-shell`.
-* [DOC] missing get_test_params in transformer extension template	transformer_template_missing_test_params (:pr:`1774`)
 * [DOC] Update changelog (:pr:`1726`)
+* Added VAR to API docs (:pr:`1964`) :user:`aiwalter`
+* Updated lassification notebook (:pr:`1885`)
 * Add lmmentel to the team page :tada: (:pr:`1836`) :user:`lmmentel`.
+
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* check_is_scitype, cleaning up dists_kernels input checks/conversions	dist_kernels_input (:pr:`1704`)
+* [ENH] `Table` scitype and refactor of `convert` module	refactor-convert (:pr:`1745`)
+* [ENH] estimator scitype utility	est_scitype (:pr:`1838`)
+* [ENH] experimental: hierarchical time series scitype	hierarchical_scitype (:pr:`1786`)
+* [ENH] upgraded mtype_to_scitype to list-like args	mtype_to_scitype_extended (:pr:`1807`)
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] FreshPRINCE params moved from _config into estimator	freshprince_test_params (:pr:`1944`)
+* [ENH] user selected return for classification problems data loading functions	data_load_return_type (:pr:`1799`)
+* [ENH] TSC Compose refactor	compose_refactor (:pr:`1852`)
+* [ENH] TSC refactor: TSF, RSF	tsf_rsf_refactor (:pr:`1851`)
+* [ENH] New transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
+
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Scaled Logit Transformer (:pr:`1913`) :user:`ltsaprounis`.
+* [ENH] Add predict_quantiles to FBprophet (:pr:`1910`) :user:`kejsitake`.
+* [ENH] Additions to PR 1879 (probabilistic prediction defaults) arising from aiwalter's review	predict_proba_defaults (:pr:`1961`)
+* [ENH] Defaults for `_predict_interval` and `_predict_coverage`	predict_proba_defaults (:pr:`1879`)
+* refactored column ensemble forecaster	Aparna-Sakshi:estimator_tests_refactor (:pr:`1764`)
+* [ENH] Forecaster convenience method to return forecast residuals	predict_residuals (:pr:`1770`)
+* Update extension template for predict_quantiles	kejsitake:template-quantiles (:pr:`1780`)
+* [ENH] Prediction intervals refactor: BATS/TBATS; bugfix for #1625; base class updates on `predict_quantiles`	k1m190r:main (:pr:`1842`)
+* [ENH] Change `_set_fh` to a `_check_fh` that returns `self._fh`	set-fh-to-check-fh (:pr:`1823`)
+
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Transformers module full refactor - part I, `series` module	trafos-refactor	(:pr:`1795`)
+* [ENH] Transformer base class DRY-ing, and `inverse_transform`	trafo-base-refactor	(:pr:`1790`)
+* [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`)
+
 
 
 Maintenance
@@ -146,6 +194,7 @@ Maintenance
 * polymorphic data loader in contrib	data_loader_in_contrib (:pr:`1840`)
 * [ENH] introduce msm distance and adapt KNN classifier to use it.	knn_changes_msm (:pr:`1926`)
 * [ENH] Generalize splitters to accept timedeltas (equally spaced) (:pr:`1758`) :user:`khrapovs`.
+* [ENH] Add predict_quantiles to ets, pmdarima adapter (:pr:`1874`) :user:`kejsitake`.
 
 Fixed
 ~~~~~
@@ -174,44 +223,6 @@ Fixed
 * Fix DeprecationWarning of `pd.Series` in sktime/utils/tests/test_datetime.py:21	khrapovs:silence-deprecationwarning-in-test-datetime (:pr:`1743`)
 * [ENH] bugfix in BaseClassifier, updated base class docstrings	classif-baseclass-fixes (:pr:`1804`)
 
-
-Data types, checks, conversions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* check_is_scitype, cleaning up dists_kernels input checks/conversions	dist_kernels_input (:pr:`1704`)
-* [ENH] `Table` scitype and refactor of `convert` module	refactor-convert (:pr:`1745`)
-* [ENH] estimator scitype utility	est_scitype (:pr:`1838`)
-* [ENH] experimental: hierarchical time series scitype	hierarchical_scitype (:pr:`1786`)
-* [ENH] upgraded mtype_to_scitype to list-like args	mtype_to_scitype_extended (:pr:`1807`)
-
-
-
-
-Classification
-^^^^^^^^^^^^^^
-
-* [ENH] FreshPRINCE params moved from _config into estimator	freshprince_test_params (:pr:`1944`)
-* [ENH] user selected return for classification problems data loading functions	data_load_return_type (:pr:`1799`)
-* [ENH] TSC Compose refactor	compose_refactor (:pr:`1852`)
-* [ENH] TSC refactor: TSF, RSF	tsf_rsf_refactor (:pr:`1851`)
-
-Forecasting
-^^^^^^^^^^^
-
-* [ENH] Additions to PR 1879 (probabilistic prediction defaults) arising from aiwalter's review	predict_proba_defaults (:pr:`1961`)
-* [ENH] Defaults for `_predict_interval` and `_predict_coverage`	predict_proba_defaults (:pr:`1879`)
-* refactored column ensemble forecaster	Aparna-Sakshi:estimator_tests_refactor (:pr:`1764`)
-* [ENH] Forecaster convenience method to return forecast residuals	predict_residuals (:pr:`1770`)
-* Update extension template for predict_quantiles	kejsitake:template-quantiles (:pr:`1780`)
-* [ENH] Prediction intervals refactor: BATS/TBATS; bugfix for #1625; base class updates on `predict_quantiles`	k1m190r:main (:pr:`1842`)
-* [ENH] Change `_set_fh` to a `_check_fh` that returns `self._fh`	set-fh-to-check-fh (:pr:`1823`)
-
-
-Transformations
-^^^^^^^^^^^^^^^
-
-* [ENH] Transformers module full refactor - part I, `series` module	trafos-refactor	(:pr:`1795`)
-* [ENH] Transformer base class DRY-ing, and `inverse_transform`	trafo-base-refactor	(:pr:`1790`)
 
 
 [0.9.0] - 2021-12-08
