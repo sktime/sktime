@@ -19,6 +19,7 @@ from sktime.forecasting.model_selection import (
     temporal_train_test_split,
 )
 from sktime.forecasting.tests._config import (
+    TEST_CUTOFFS,
     TEST_FHS,
     TEST_INITIAL_WINDOW,
     TEST_OOS_FHS,
@@ -34,7 +35,6 @@ from sktime.utils.validation import is_int, is_timedelta_or_date_offset
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
-CUTOFFS = [np.array([21, 22]), np.array([3, 7, 10])]
 
 
 def _get_windows(cv, y):
@@ -151,7 +151,7 @@ def test_single_window_splitter_default_window_length(y, fh):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("cutoffs", CUTOFFS)
+@pytest.mark.parametrize("cutoffs", TEST_CUTOFFS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
