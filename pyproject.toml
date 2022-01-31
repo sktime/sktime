@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.9.0"
+version = "0.10.0"
 description = "A unified framework for machine learning with time series"
 license = "BSD-3-Clause"
 authors = [
