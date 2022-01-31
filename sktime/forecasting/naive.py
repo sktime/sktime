@@ -379,7 +379,12 @@ class NaiveForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {}
-        params2 = {"sp": 2}
+        params_list = [
+            {},
+            {"sp": 2},
+            {"strategy": "mean"},
+            {"strategy": "drift"},
+            {"strategy": "mean", "window_length": 5}
+        ]
 
-        return [params1, params2]
+        return params_list
