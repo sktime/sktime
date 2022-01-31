@@ -113,11 +113,17 @@ EXCLUDE_ESTIMATORS = [
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
+    # ConditionalDeseasonalizer and STLtransformer still need refactoring
+    #  (see PR 1773, blocked through open discussion) escaping until then
+    "ConditionalDeseasonalizer",
+    "STLforecaster",
+    "STLTransformer",
 ]
 
 
 EXCLUDED_TESTS = {
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
+    "StackingForecaster": ["test_predict_time_index_with_X"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
