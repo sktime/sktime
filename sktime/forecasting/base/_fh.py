@@ -13,9 +13,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
+from sktime.utils.validation import is_timedelta_or_date_offset
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
-RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
+RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
@@ -95,9 +96,12 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     elif isinstance(values, (int, np.integer)):
         return pd.Int64Index([values], dtype=int)
 
+    elif is_timedelta_or_date_offset(values):
+        return pd.Index([values])
+
     # convert np.array or list to pandas index
     elif isinstance(values, (list, np.ndarray)):
-        values = pd.Int64Index(values, dtype=int)
+        values = pd.Index(values)
 
     # otherwise, raise type error
     else:

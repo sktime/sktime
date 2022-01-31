@@ -47,6 +47,11 @@ def is_timedelta(x) -> bool:
     return isinstance(x, ACCEPTED_TIMEDELTA_TYPES)
 
 
+def is_datetime(x) -> bool:
+    """Check if x is of datetime type."""
+    return isinstance(x, (np.datetime64, pd.Timestamp))
+
+
 def is_date_offset(x) -> bool:
     """Check if x is of pd.DateOffset type."""
     return isinstance(x, ACCEPTED_DATEOFFSET_TYPES)
@@ -55,6 +60,21 @@ def is_date_offset(x) -> bool:
 def is_timedelta_or_date_offset(x) -> bool:
     """Check if x is of timedelta or pd.DateOffset type."""
     return is_timedelta(x=x) or is_date_offset(x=x)
+
+
+def array_is_int(x) -> bool:
+    """Check if array is of integer type."""
+    return all([is_int(value) for value in x])
+
+
+def array_is_datetime64(x) -> bool:
+    """Check if array is of np.datetime64 type."""
+    return all([is_datetime(value) for value in x])
+
+
+def array_is_timedelta64(x) -> bool:
+    """Check if array is of np.timedelta64 type."""
+    return all([is_timedelta_or_date_offset(value) for value in x])
 
 
 def check_n_jobs(n_jobs: int) -> int:

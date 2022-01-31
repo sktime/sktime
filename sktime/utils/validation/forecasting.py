@@ -25,7 +25,13 @@ import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sktime.utils.validation import is_date_offset, is_int, is_timedelta
+from sktime.utils.validation import (
+    array_is_datetime64,
+    array_is_int,
+    is_date_offset,
+    is_int,
+    is_timedelta,
+)
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
 
@@ -341,9 +347,9 @@ def check_cutoffs(cutoffs: Union[np.ndarray, pd.Index]) -> np.ndarray:
     """
     if not isinstance(cutoffs, (np.ndarray, pd.Index)):
         raise ValueError(
-            f"`cutoffs` must be a np.array or pd.Index, " f"but found: {type(cutoffs)}"
+            f"`cutoffs` must be a np.array or pd.Index, but found: {type(cutoffs)}"
         )
-    assert np.issubdtype(cutoffs.dtype, np.integer)
+    assert array_is_int(cutoffs) or array_is_datetime64(cutoffs)
 
     if len(cutoffs) == 0:
         raise ValueError("Found empty `cutoff` array")

@@ -29,7 +29,13 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
+    array_is_datetime64,
+    array_is_int,
+    array_is_timedelta64,
     check_window_length,
+    is_datetime,
+    is_int,
+    is_timedelta,
     is_timedelta_or_date_offset,
 )
 from sktime.utils.validation.forecasting import (
@@ -404,23 +410,74 @@ class CutoffSplitter(BaseSplitter):
         super(CutoffSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        cutoffs = check_cutoffs(self.cutoffs)
-        if np.max(cutoffs) >= y.shape[0]:
-            raise ValueError("`cutoffs` are incompatible with given `y`.")
-
-        fh = _check_fh(self.fh)
         n_timepoints = y.shape[0]
-
-        if np.max(cutoffs) + np.max(fh) > y.shape[0]:
-            raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
+        cutoffs = check_cutoffs(self.cutoffs)
+        fh = _check_fh(self.fh)
         window_length = check_window_length(self.window_length, n_timepoints)
+
+        all_int = (
+            array_is_int(cutoffs)
+            and array_is_int(fh.to_pandas())
+            and is_int(window_length)
+        )
+        all_dates = (
+            array_is_datetime64(cutoffs)
+            and array_is_timedelta64(fh.to_pandas())
+            and is_timedelta_or_date_offset(window_length)
+        )
+        if not (all_int or all_dates):
+            raise ValueError("Unsupported combination of types")
+
+        max_cutoff = np.max(cutoffs)
+        if array_is_int(cutoffs):
+            if max_cutoff >= y.shape[0]:
+                raise ValueError(
+                    "`cutoffs` are incompatible with given `y`. "
+                    "Maximum cutoff is not smaller than the number of observations."
+                )
+        elif array_is_datetime64(cutoffs):
+            if max_cutoff >= np.max(y):
+                raise ValueError(
+                    "`cutoffs` are incompatible with given `y`. "
+                    "Maximum cutoff is not smaller than the maximum index value of `y`."
+                )
+        else:
+            raise ValueError("Unsupported type of `cutoffs`")
+
+        max_fh = np.max(fh)
+
+        if is_int(x=max_cutoff) and is_int(x=max_fh):
+            if max_cutoff + max_fh > n_timepoints:
+                raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
+        elif is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
+            if max_cutoff + max_fh > y.max():
+                raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
+
         for cutoff in cutoffs:
-            if is_timedelta_or_date_offset(x=window_length):
-                train_start = y.get_loc(max(y[0], y[cutoff] - window_length))
-            else:
+            if is_int(x=window_length) and is_int(x=cutoff):
                 train_start = cutoff - window_length
-            training_window = np.arange(train_start, cutoff) + 1
-            test_window = cutoff + fh
+            elif is_timedelta_or_date_offset(x=window_length) and is_int(x=cutoff):
+                train_start = y.get_loc(max(y[0], y[cutoff] - window_length))
+            elif is_timedelta_or_date_offset(x=window_length) and is_datetime(x=cutoff):
+                train_start = y.get_loc(max(y[0], cutoff - window_length))
+            else:
+                raise ValueError(
+                    f"Unsupported combination of types: "
+                    f"`window_length`: {type(window_length)}, "
+                    f"`cutoff`: {type(cutoff)}"
+                )
+
+            if is_int(cutoff):
+                training_window = np.arange(train_start, cutoff) + 1
+            else:
+                training_window = np.arange(train_start, y.get_loc(cutoff)) + 1
+
+            test_window = cutoff + fh.to_numpy()
+            if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
+                test_window = test_window[test_window >= y.min()]
+                test_window = np.array(
+                    [y.get_loc(timestamp) for timestamp in test_window]
+                )
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
