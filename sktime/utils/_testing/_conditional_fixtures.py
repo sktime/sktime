@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """Testing utility for easy generation of conditional fixtures in pytest_generate_tests.
 
-Exports conditional_fixtures_and_names utility
+Exports create_conditional_fixtures_and_names utility
 """
 
 __author__ = ["fkiraly"]
 
-__all__ = ["conditional_fixtures_and_names"]
+__all__ = ["create_conditional_fixtures_and_names"]
 
 from copy import deepcopy
+from typing import Callable, Dict, List
 
 import numpy as np
 
@@ -22,8 +23,11 @@ class FixtureGenerationError(Exception):
         super().__init__(f"fixture {fixture_name}failed to generate")
 
 
-def conditional_fixtures_and_names(
-    test_name, fixture_vars, generator_dict, fixture_sequence=None
+def create_conditional_fixtures_and_names(
+    test_name: str,
+    fixture_vars: List[str],
+    generator_dict: Dict[str, Callable],
+    fixture_sequence: List[str] = None,
 ):
     """Create conditional fixtures for pytest_generate_tests.
 
@@ -48,7 +52,7 @@ def conditional_fixtures_and_names(
     ----------
     test_name : str, name of the test, from pytest_generate_tests
     fixture_vars : list of str
-        fixture variables to loop over
+        fixture variable names used in parameterization of tests
     generator_dict : dict of generator functions
         keys are possible str in fixture_vars, expected signature is
             (test_name: str, **kwargs) -> fixtures: Listof[object], or
@@ -103,6 +107,10 @@ def conditional_fixtures_and_names(
 
     def get_fixtures(fixture_var, **kwargs):
         """Call fixture generator from generator_dict, return fixture list.
+
+        Light wrapper around calls to generator_dict[key] functions that generate
+            conditional fixtures. get_fixtures adds default string names to the return
+            if generator_dict[key] does not return them.
 
         Parameters
         ----------
