@@ -27,6 +27,70 @@ Highlights
 * [ENH] New transformation based pipeline classifiers (:pr:`1721`)
 * [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`)
 
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+New probabilistic forecasting interface:
+
+* for all forecasters with probabilistic forecasting capability, i.e., `capability:pred_int` tag
+* new method `predict_interval(fh, X, coverage)` for interval forecasts
+* new method `predict_quantiles(fh, X, alpha)` for quantile forecasts
+* both vectorized in `coverage`, `alpha` and applicable to multivariate forecasting
+* old `return_pred_int` interface is deprecated and will be removed in 0.11.0
+* see forecaster base API and forecaster extension template
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Base interface refactor rolled out to series transformers (:pr:`1790`, :pr:`1795`):
+
+* `fit`, `transform`, `fit_transform` now accept both `Series` and `Panel` as argument
+* if `Panel` is passed to a series transformer, it is applied to all instances
+* all transformers now have signature `transform(X, y=None)` and `inverse_transform(X, y=None)`. This is enforced by the new base interface.
+* `Z` (former first argument) aliases `X` until 0.11.0 in series transformers, will then be removed
+* `X` (former second argument) was not used in those transformers where it changed to `Z`
+* see transformer base API and transformer extension template
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* deprecated, scheduled for removal in 0.11.0: `check_is` renamed to `check_is_mtype`,
+`check_is` to be removed in 0.11.0 (:pr:`1692`) :user:`mloning`
+
+Forecasting
+^^^^^^^^^^^
+
+* deprecated, scheduled for removal in 0.11.0:
+`return_pred_int` arguement in forecaster `predict`, `fit_predict`, `update_predict_single`.
+Replaced by `predict_interval` and `predict_quantiles` interface.
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Removed: MrSEQL time series classifier (:pr:`1548`) :user:`TonyBagnall`
+* Removed RISF and shapelet classifier (:pr:`1907`) :user:`TonyBagnall`
+* `data.io` module moved to `datasets` (:pr:`1907`)
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* deprecated, scheduled for removal in 0.11.0:
+series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`, :pr:`1730`)
+
+
+
+Added
+~~~~~
+
+
 Documentation
 ^^^^^^^^^^^^^
 
@@ -83,8 +147,8 @@ Maintenance
 * [ENH] introduce msm distance and adapt KNN classifier to use it.	knn_changes_msm (:pr:`1926`)
 * [ENH] Generalize splitters to accept timedeltas (equally spaced) (:pr:`1758`) :user:`khrapovs`.
 
-Bugfixes
-^^^^^^^^
+Fixed
+~~~~~
 
 * [DOC] Fixed a typo in transformer extension template (:pr:`1901`) :user:`rakshitha123`.
 * [BUG] Fix incorrect "uses `X`" tag for ARIMA and `TrendForecaster` (:pr:`1895`) :user:`ngupta23`.
@@ -122,11 +186,6 @@ Data types, checks, conversions
 
 
 
-Deprecations
-^^^^^^^^^^^^
-
-* Deprecate code tagged in 0.9: MrSEQL, data.io, risf and shapelet (:pr:`1907`)
-* Add deprecation message to ambiguous arg reference in `ForecastingPipeline`, removed `Z` kwarg (:pr:`1730`)
 
 Classification
 ^^^^^^^^^^^^^^
@@ -190,7 +249,7 @@ Base interface refactor (:pr:`1365`, :pr:`1663`, :pr:`1706`):
 * all transformers now use `X` as their first argument, `y` as their second argument. This is enforced by the new base interface.
 * This was inconsistent previously between types of transformers: the series-to-series transformers were using `Z` as first argument, `X` as second argument.
 * `Z` (former first argument) aliases `X` until 0.10.0 in series transformers, will then be deprecated
-* `X` (former second argument) was not used in those transformers where it changed to `Z`
+* `X` (former second argument) was not used in those transformers where it changed to `y`
 * see new transformer extension template
 * these changes will gradually be rolled out to all transformers through 0.9.X versions
 
