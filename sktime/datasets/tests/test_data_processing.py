@@ -3,25 +3,28 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.series_as_features.tests._config import N_COLUMNS
-from sktime.series_as_features.tests._config import N_INSTANCES
-from sktime.series_as_features.tests._config import N_TIMEPOINTS
-from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.data_io import make_multi_index_dataframe, generate_example_long_table
+
+from sktime.datasets import generate_example_long_table, make_multi_index_dataframe
+from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
 from sktime.datatypes._panel._convert import (
-    from_3d_numpy_to_2d_array,
-    from_3d_numpy_to_nested,
-    from_nested_to_2d_array,
     from_2d_array_to_nested,
-    from_nested_to_3d_numpy,
-    from_nested_to_long,
+    from_3d_numpy_to_2d_array,
+    from_3d_numpy_to_multi_index,
+    from_3d_numpy_to_nested,
     from_long_to_nested,
     from_multi_index_to_3d_numpy,
-    from_3d_numpy_to_multi_index,
     from_multi_index_to_nested,
+    from_nested_to_2d_array,
+    from_nested_to_3d_numpy,
+    from_nested_to_long,
     from_nested_to_multi_index,
 )
-from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
+from sktime.utils._testing.panel import make_classification_problem
+
+N_INSTANCES = [10, 15]
+N_COLUMNS = [3, 5]
+N_TIMEPOINTS = [3, 5]
+N_CLASSES = [2, 5]
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)

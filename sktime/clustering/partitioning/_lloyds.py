@@ -2,7 +2,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
-from typing import Callable, Union
+from typing import Callable, Tuple, Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -178,7 +178,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     max_iter: int, defaults = 30
         Maximum number of iterations of the k-means algorithm for a single
         run.
-    tol: float, defaults = 1e-4
+    tol: float, defaults = 1e-6
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
@@ -217,11 +217,11 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "kmeans++",
-        metric: Union[str, Callable] = "dtw",
+        init_algorithm: Union[str, Callable] = "random",
+        metric: Union[str, Callable] = "euclidean",
         n_init: int = 10,
         max_iter: int = 300,
-        tol: float = 1e-4,
+        tol: float = 1e-6,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
         distance_params: dict = None,
@@ -296,17 +296,23 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Fitted estimator.
         """
         self._check_params(X)
-        self.cluster_centers_ = self._init_algorithm(
-            X, self.n_clusters, self._random_state
-        )
-        for _ in range(self.max_iter):
-            cluster_assignment_indexes = self._assign_clusters(X)
-            self.cluster_centers_ = self._compute_new_cluster_centers(
-                X, cluster_assignment_indexes
-            )
-            self.n_iter_ += 1
 
-        self.labels_ = self._assign_clusters(X)
+        best_centers = None
+        best_inertia = np.inf
+        best_labels = None
+        best_iters = self.max_iter
+        for _ in range(self.n_init):
+            labels, centers, inertia, n_iters = self._fit_one_init(X)
+            if inertia < best_inertia:
+                best_centers = centers
+                best_labels = labels
+                best_inertia = inertia
+                best_iters = n_iters
+
+        self.labels_ = best_labels
+        self.inertia_ = best_inertia
+        self.cluster_centers_ = best_centers
+        self.n_iter_ = best_iters
 
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
@@ -323,12 +329,81 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        return self._assign_clusters(X)
+        return self._assign_clusters(X, self.cluster_centers_)[0]
+
+    def _fit_one_init(self, X) -> Tuple[np.ndarray, np.ndarray, float, int]:
+        """Perform one pass of kmeans.
+
+        This is done because the initial center assignment greatly effects the final
+        result so we perform multiple passes at kmeans with different initial center
+        assignments and keep the best results going froward.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
+            Training time series instances to cluster.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        np.ndarray (1d array of shape (n_instance,))
+            Labels that is the index each time series belongs to.
+        np.ndarray (3d array of shape (n_clusters, n_dimensions,
+            series_length))
+            Time series that represent each of the cluster centers. If the algorithm
+            stops before fully converging these will not be consistent with labels.
+        float
+            Sum of squared distances of samples to their closest cluster center,
+            weighted by the sample weights if provided.
+        """
+        cluster_centers = self._init_algorithm(X, self.n_clusters, self._random_state)
+
+        old_inertia = np.inf
+        old_labels = None
+        for i in range(self.max_iter):
+            labels, inertia = self._assign_clusters(
+                X,
+                cluster_centers,
+            )
+
+            if np.abs(old_inertia - inertia) < self.tol:
+                break
+            old_inertia = inertia
+
+            if np.array_equal(labels, old_labels):
+                if self.verbose:
+                    print(  # noqa: T001
+                        f"Converged at iteration {i}: strict convergence."
+                    )
+                break
+            elif old_labels is not None:
+                # No strict convergence, check for tol based convergence.
+                center_shift = pairwise_distance(
+                    labels, old_labels, metric=self.metric, **self._distance_params
+                ).sum()
+                if center_shift <= self.tol:
+                    if self.verbose:
+                        print(  # noqa: T001
+                            f"Converged at iteration {i}: inertia "
+                            f"{inertia} within tolerance {self.tol}."
+                        )
+                    break
+            old_labels = labels
+
+            cluster_centers = self._compute_new_cluster_centers(X, labels)
+
+            if self.verbose is True:
+                print(f"Iteration {i}, inertia {inertia}.")  # noqa: T001
+
+        labels, inertia = self._assign_clusters(X, cluster_centers)
+        centers = cluster_centers
+
+        return labels, centers, inertia, i + 1
 
     def _assign_clusters(
-        self,
-        X: np.ndarray,
-    ):
+        self, X: np.ndarray, cluster_centers: np.ndarray
+    ) -> Tuple[np.ndarray, float]:
         """Assign each instance to a cluster.
 
         This is done by computing the distance between each instance and
@@ -337,18 +412,24 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
 
         Parameters
         ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
+        X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
             Time series instances to predict their cluster indexes.
+        cluster_centers: np.ndarray (3d array of shape
+                                        (n_clusters, n_dimensions, series_length))
+            Cluster centers to assign to.
 
         Returns
         -------
         np.ndarray (1d array of shape (n_instance,))
             Array of indexes of each instance closest cluster.
+        float
+            Only returned when return_inertia is true. Float representing inertia of
+            the assigned clusters.
         """
-        return pairwise_distance(
-            X, self.cluster_centers_, metric=self.metric, **self._distance_params
-        ).argmin(axis=1)
+        pairwise = pairwise_distance(
+            X, cluster_centers, metric=self.metric, **self._distance_params
+        )
+        return pairwise.argmin(axis=1), pairwise.min(axis=1).sum()
 
     @abstractmethod
     def _compute_new_cluster_centers(

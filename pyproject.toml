@@ -45,8 +45,8 @@ requires-python = ">=3.7,<3.10"
 dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
-    "numpy==1.19.3",
-    "pandas>=1.1.0,<1.4.0",
+    "numpy>=1.21.0,<1.22",
+    "pandas>=1.1.0,<1.5.0",
     "scikit-learn>=0.24.0",
     "statsmodels>=0.12.1",
 ]
@@ -55,7 +55,7 @@ dependencies = [
 all_extras = [
     "dtw-python",
     "esig==0.9.7",
-    "fbprophet>=0.7.1",
+    "prophet>=1.0",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
@@ -69,7 +69,6 @@ all_extras = [
 ]
 
 dev = [
-    "cython",
     "pre-commit",
     "pytest",
     "pytest-cov",
@@ -101,5 +100,5 @@ documentation = "https://www.sktime.org"
 download = "https://pypi.org/project/sktime/#files"
 
 [build-system]
-requires = ["setuptools", "cython>=0.29.0", "wheel", "numpy==1.19.3", "toml", "build"]
+requires = ["setuptools", "wheel", "numpy==1.21.0", "toml", "build"]
 build-backend = "setuptools.build_meta"
