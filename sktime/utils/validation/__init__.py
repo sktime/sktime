@@ -21,6 +21,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+ACCEPTED_DATETIME_TYPES = np.datetime64, pd.Timestamp
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
 ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
 ACCEPTED_WINDOW_LENGTH_TYPES = Union[
@@ -29,6 +30,11 @@ ACCEPTED_WINDOW_LENGTH_TYPES = Union[
 NON_FLOAT_WINDOW_LENGTH_TYPES = Union[
     int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
 ]
+
+
+def is_array(x) -> bool:
+    """Check if x is either a list or np.ndarray."""
+    return isinstance(x, (list, np.ndarray))
 
 
 def is_int(x) -> bool:
@@ -49,7 +55,7 @@ def is_timedelta(x) -> bool:
 
 def is_datetime(x) -> bool:
     """Check if x is of datetime type."""
-    return isinstance(x, (np.datetime64, pd.Timestamp))
+    return isinstance(x, ACCEPTED_DATETIME_TYPES)
 
 
 def is_date_offset(x) -> bool:

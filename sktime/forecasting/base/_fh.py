@@ -13,7 +13,13 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
-from sktime.utils.validation import is_timedelta_or_date_offset
+from sktime.utils.validation import (
+    array_is_int,
+    array_is_timedelta64,
+    is_array,
+    is_int,
+    is_timedelta_or_date_offset,
+)
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
@@ -84,24 +90,26 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
         Sorted and validated forecasting horizon values.
     """
     # if values are one of the supported pandas index types, we don't have
-    # to do
-    # anything as the forecasting horizon directly wraps the index, note that
-    # isinstance() does not work here, because index types inherit from each
-    # other,
+    # to do anything as the forecasting horizon directly wraps the index,
+    # note that isinstance() does not work here,
+    # because index types inherit from each other,
     # hence we check for type equality here
     if type(values) in VALID_INDEX_TYPES:
         pass
 
     # convert single integer to pandas index, no further checks needed
-    elif isinstance(values, (int, np.integer)):
+    elif is_int(values):
         return pd.Int64Index([values], dtype=int)
 
     elif is_timedelta_or_date_offset(values):
         return pd.Index([values])
 
     # convert np.array or list to pandas index
-    elif isinstance(values, (list, np.ndarray)):
+    elif is_array(values) and array_is_int(values):
         values = pd.Int64Index(values, dtype=int)
+
+    elif is_array(values) and array_is_timedelta64(values):
+        values = pd.Index(values)
 
     # otherwise, raise type error
     else:
