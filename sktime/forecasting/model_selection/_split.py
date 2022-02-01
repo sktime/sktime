@@ -398,7 +398,7 @@ class CutoffSplitter(BaseSplitter):
     cutoffs : np.array or pd.Index
         cutoff points, positive and integer- or datetime-index like,
         usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
-    fh : int, list or np.array
+    fh : int, timedelta, list or np.array of ints or timedeltas
     window_length : int or timedelta or pd.DateOffset
     """
 
