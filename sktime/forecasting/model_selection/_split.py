@@ -415,14 +415,10 @@ class CutoffSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
         window_length = check_window_length(self.window_length, n_timepoints)
 
-        all_int = (
-            array_is_int(cutoffs)
-            and array_is_int(fh.to_pandas())
-            and is_int(window_length)
-        )
+        all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
         all_dates = (
             array_is_datetime64(cutoffs)
-            and array_is_timedelta64(fh.to_pandas())
+            and array_is_timedelta64(fh)
             and is_timedelta_or_date_offset(window_length)
         )
         if not (all_int or all_dates):
