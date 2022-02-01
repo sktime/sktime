@@ -4,6 +4,7 @@
 
 __author__ = ["IlyasMoutawwakil"]
 
+import sys
 
 import numpy as np
 import pandas as pd
@@ -112,47 +113,52 @@ class NaiveVariance(BaseForecaster):
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-        residuals_matrix = pd.DataFrame(
-            columns=self._y.index[1:], index=self._y.index[1:]
-        )
-        for id in residuals_matrix.columns:
-            forecaster = clone(self.forecaster)
+        y_index = self._y.index
+        fh_relative = fh.to_relative(self.cutoff)
+        fh_absolute = fh.to_absolute(self.cutoff)
 
+        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+        for id in y_index:
+            forecaster = clone(self.forecaster)
             subset = self._y[:id]  # subset on which we fit
-            forecaster.fit(subset)
+
+            try:
+                forecaster.fit(subset)
+            except ValueError:
+                sys.stdout(
+                    f"Couldn't fit the model on time series of length {len(subset)}."
+                )
+                continue
 
             y_true = self._y[id:]  # subset on which we predict
-            residuals_matrix[id] = forecaster.predict_residuals(y_true, self._X)
+            residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
 
-        residuals_matrix = residuals_matrix.T
+        # return residuals_matrix
 
         if cov:
             fh_size = len(fh)
-            fh_relative = fh.to_relative(self.cutoff)
-            covariance = np.zeros(shape=(fh_size, fh_size))
-
+            covariance = np.zeros(shape=(len(fh), fh_size))
             for i in range(fh_size):
                 i_residuals = np.diagonal(residuals_matrix, offset=fh_relative[i])
-                for j in range(fh_size):
+                for j in range(i, fh_size):  # since the matrix is symmetric
                     j_residuals = np.diagonal(residuals_matrix, offset=fh_relative[j])
                     max_residuals = min(len(j_residuals), len(i_residuals))
-                    covariance[i, j] = covariance[j, i] = (
+                    covariance[i, j] = covariance[j, i] = np.nanmean(
                         i_residuals[:max_residuals] * j_residuals[:max_residuals]
-                    ).mean()
-
+                    )
             pred_var = pd.DataFrame(
                 covariance,
-                index=fh.to_absolute(self.cutoff),
-                columns=fh.to_absolute(self.cutoff),
+                index=fh_absolute,
+                columns=fh_absolute,
             )
         else:
             variance = [
-                (np.diagonal(residuals_matrix, offset=offset) ** 2).mean()
-                for offset in fh.to_relative(self.cutoff)
+                np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
+                for offset in fh_relative
             ]
             pred_var = pd.Series(
                 variance,
-                index=fh.to_absolute(self.cutoff),
+                index=fh_absolute,
             )
 
         return pred_var
