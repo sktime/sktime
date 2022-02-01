@@ -66,7 +66,7 @@ Base interface refactor rolled out to series transformers (:pr:`1790`, :pr:`1795
 * if `Panel` is passed to a series transformer, it is applied to all instances
 * all transformers now have signature `transform(X, y=None)` and `inverse_transform(X, y=None)`. This is enforced by the new base interface.
 * `Z` (former first argument) aliases `X` until 0.11.0 in series transformers, will then be removed
-* `X` (former second argument) was not used in those transformers where it changed to `Z`
+* `X` (former second argument) was not used in those transformers, was changed to `y`
 * see transformer base API and transformer extension template
 
 Deprecations and removals
