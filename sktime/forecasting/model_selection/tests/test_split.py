@@ -199,7 +199,7 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
     else:
         match = "Unsupported combination of types"
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(TypeError, match=match):
             _check_cv(cv, y)
 
 

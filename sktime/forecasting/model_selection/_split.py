@@ -254,7 +254,7 @@ def _check_cutoffs_fh_window_length(
     if not _cutoffs_fh_window_length_types_are_supported(
         cutoffs=cutoffs, fh=fh, window_length=window_length
     ):
-        raise ValueError("Unsupported combination of types")
+        raise TypeError("Unsupported combination of types")
 
 
 def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> None:
@@ -493,7 +493,7 @@ class CutoffSplitter(BaseSplitter):
             elif is_timedelta_or_date_offset(x=window_length) and is_datetime(x=cutoff):
                 train_start = y.get_loc(max(y[0], cutoff - window_length))
             else:
-                raise ValueError(
+                raise TypeError(
                     f"Unsupported combination of types: "
                     f"`window_length`: {type(window_length)}, "
                     f"`cutoff`: {type(cutoff)}"
