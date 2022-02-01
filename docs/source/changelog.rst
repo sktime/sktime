@@ -75,15 +75,12 @@ Deprecations and removals
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* deprecated, scheduled for removal in 0.11.0: ``check_is`` renamed to ``check_is_mtype``,
-``check_is`` to be removed in 0.11.0 (:pr:`1692`) :user:`mloning`
+* deprecated, scheduled for removal in 0.11.0: ``check_is`` renamed to ``check_is_mtype``, ``check_is`` to be removed in 0.11.0 (:pr:`1692`) :user:`mloning`
 
 Forecasting
 ^^^^^^^^^^^
 
-* deprecated, scheduled for removal in 0.11.0:
-``return_pred_int`` argument in forecaster ``predict``, ``fit_predict``, ``update_predict_single``.
-Replaced by ``predict_interval`` and ``predict_quantiles`` interface.
+* deprecated, scheduled for removal in 0.11.0: ``return_pred_int`` argument in forecaster ``predict``, ``fit_predict``, ``update_predict_single``. Replaced by ``predict_interval`` and ``predict_quantiles`` interface.
 
 
 Time series classification
@@ -96,9 +93,7 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
-* deprecated, scheduled for removal in 0.11.0:
-series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`, :pr:`1730`)
-
+* deprecated, scheduled for removal in 0.11.0: series transformers will no longer accept a `Z` argument - first argument `Z` replaced by `X` (:pr:`1365`, :pr:`1730`)
 
 Added
 ~~~~~
