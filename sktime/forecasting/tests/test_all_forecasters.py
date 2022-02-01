@@ -4,7 +4,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "kejsitake"]
 __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
@@ -15,7 +15,7 @@ __all__ = [
     "test_y_multivariate_raises_error",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
-    "test_predict_pred_interval",
+    "test_predict_interval",
     "test_update_predict_single",
     "test_y_invalid_type_raises_error",
     "test_predict_time_index_with_X",
@@ -273,8 +273,7 @@ def _check_pred_ints(
         # check time index
         _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
         # check values
-        assert np.all(pred_int["upper"] > y_pred)
-        assert np.all(pred_int["lower"] < y_pred)
+        assert np.all(pred_int["upper"] >= pred_int["lower"])
 
         # check if errors are weakly monotonically increasing
         # pred_errors = y_pred - pred_int["lower"]
@@ -287,7 +286,7 @@ def _check_pred_ints(
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-def test_predict_pred_interval(Forecaster, fh, alpha):
+def test_predict_interval(Forecaster, fh, alpha):
     """Check prediction intervals returned by predict.
 
     Arguments
@@ -314,6 +313,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             if f._has_predict_quantiles_been_refactored():
                 y_pred = f.predict()
                 pred_ints = f.predict_interval(fh, coverage=alpha)
+
                 pred_ints = f._convert_new_to_old_pred_int(pred_ints, alpha)
             else:
                 y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
