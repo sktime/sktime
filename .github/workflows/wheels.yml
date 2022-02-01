@@ -31,6 +31,7 @@ jobs:
 
   test_wheels:
     name: Build wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-20.04, macOS-10.15]
