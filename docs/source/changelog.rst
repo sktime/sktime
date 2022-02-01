@@ -207,14 +207,13 @@ Maintenance
 * [MNT] Switch the extra dependency from `fbprophet` to `prophet` (:pr:`1958`) :user:`lmmentel`
 * [MNT] Updated code dependency version, i.e. `numpy` and `statsmodels` to reduce dependency conflicts (:pr:`1921`) :user:`lmmentel`.
 * [MNT] Move all the CI/CD worfklows over to github actions and drop azure pipelines and appveyor (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
-* [MNT] Refactor legacy test config	(:pr:`1792`) :user:`lmmentel` 
-* [FIX] Add missing init files (:pr:`1695`) :user:`mloning` 
-* [MNT] Add shellcheck to pre-commit (:pr:`1703`) :user:`mloning` 
-* [MNT] Remove assign-contributor workflow (:pr:`1702`) :user:`mloning` 
-* [MNT] Fail CI on missing init files (:pr:`1699`) :user:`mloning` 
+* [MNT] Refactor legacy test config	(:pr:`1792`) :user:`lmmentel`
+* [FIX] Add missing init files (:pr:`1695`) :user:`mloning`
+* [MNT] Add shellcheck to pre-commit (:pr:`1703`) :user:`mloning`
+* [MNT] Remove assign-contributor workflow (:pr:`1702`) :user:`mloning`
+* [MNT] Fail CI on missing init files (:pr:`1699`) :user:`mloning`
 * [ENH] replace deprecated `np.int`, `np.float` (:pr:`1734`) :user:`fkiraly`
-* [MNT] Correct the bash error propagation for running notebook examples (:pr:`1816`) :user:`lmmentel` 
-
+* [MNT] Correct the bash error propagation for running notebook examples (:pr:`1816`) :user:`lmmentel`
 
 Fixed
 ~~~~~
@@ -240,7 +239,6 @@ Fixed
 * [BUG] Fixes prophet bug concerning the internal change of exogenous X	 (:pr:`1711`) :user:`kejsitake`
 * [BUG] Fix DeprecationWarning of `pd.Series` in sktime/utils/tests/test_datetime.py:21	(:pr:`1743`) :user:`khrapovs`
 * [BUG] bugfixes in `BaseClassifier`, updated base class docstrings (:pr:`1804`) :user:`fkiraly`
-
 
 [0.9.0] - 2021-12-08
 --------------------
