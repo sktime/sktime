@@ -34,6 +34,8 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
+VALID_CUTOFF_TYPES = Union[np.ndarray, pd.Index]
+
 
 def check_y_X(
     y,
@@ -327,7 +329,7 @@ def check_alpha(alpha):
     return alpha
 
 
-def check_cutoffs(cutoffs: Union[np.ndarray, pd.Index]) -> np.ndarray:
+def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     """Validate the cutoff.
 
     Parameters

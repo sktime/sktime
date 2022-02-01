@@ -39,6 +39,7 @@ from sktime.utils.validation import (
     is_timedelta_or_date_offset,
 )
 from sktime.utils.validation.forecasting import (
+    VALID_CUTOFF_TYPES,
     check_cutoffs,
     check_fh,
     check_step_length,
@@ -402,7 +403,7 @@ class CutoffSplitter(BaseSplitter):
 
     def __init__(
         self,
-        cutoffs: Union[np.ndarray, pd.Index],
+        cutoffs: VALID_CUTOFF_TYPES,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
