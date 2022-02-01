@@ -8,7 +8,7 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.datatypes import get_examples
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.panel.window_summarizer import LaggedWindowSummarizer
+from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
 
 
 def check_eval(test_input, expected):
@@ -62,8 +62,9 @@ kwargs_variant = {
     }
 }
 
-transformer = LaggedWindowSummarizer(None)
-Xt = transformer.fit_transform(y_pd)
+estimator_instance = LaggedWindowSummarizer(functions=None, n_jobs=-1, target_cols=None)
+Xt = estimator_instance.fit_transform(y_pd)
+Xt = estimator_instance.fit_transform(y_pd)
 
 
 @pytest.mark.parametrize(

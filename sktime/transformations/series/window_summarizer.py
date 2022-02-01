@@ -143,12 +143,9 @@ class LaggedWindowSummarizer(BaseTransformer):
     """
 
     _tags = {
-        # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # todo: what scitype is returned: Primitives, Series, Panel
         "scitype:transform-output": "Series",
-        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
-        "scitype:transform-labels": "None",
+        # "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         # "X_inner_mtype": ["pd.DataFrame"
         # # which mtypes do _fit/_predict support for X?
@@ -157,7 +154,7 @@ class LaggedWindowSummarizer(BaseTransformer):
         # "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,  # does transformer
         # have inverse transform
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
@@ -174,12 +171,12 @@ class LaggedWindowSummarizer(BaseTransformer):
         target_cols=None,
     ):
 
-        self._converter_store_X = dict()
+        # self._converter_store_X = dict()
         self.functions = functions
         self.n_jobs = n_jobs
         self.target_cols = target_cols
 
-        super(BaseTransformer, self).__init__()
+        super(LaggedWindowSummarizer, self).__init__()
 
     # Get extraction parameters
     def _fit(self, X, y=None):
@@ -199,7 +196,13 @@ class LaggedWindowSummarizer(BaseTransformer):
         # check if dict is empty
 
         if self.target_cols is None:
-            self._target_cols = [X.columns.to_list()[0]]
+            if isinstance(X, pd.DataFrame):
+                self._target_cols = [X.columns.to_list()[0]]
+            else:
+                if X.name is not None:
+                    self._target_cols = [X.name[0]]
+                else:
+                    self._target_cols = "var_0"
         else:
             self.target_cols = self._target_cols
 
@@ -238,9 +241,10 @@ class LaggedWindowSummarizer(BaseTransformer):
         """
         # input checks
         Xt_out = []
+        Xin = X.copy()
         for cols in self._target_cols:
-            if isinstance(X.index, pd.MultiIndex):
-                X_grouped = getattr(X.groupby("instances"), X[cols])
+            if isinstance(Xin.index, pd.MultiIndex):
+                X_grouped = getattr(Xin.groupby("instances"), Xin[cols])
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs)
                     for index, kwargs in self._func_dict.iterrows()
@@ -249,7 +253,7 @@ class LaggedWindowSummarizer(BaseTransformer):
                 # for _index, kwargs in self._func_dict.iterrows():
                 #     _window_feature(X, **kwargs)
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X[cols], **kwargs)
+                    delayed(_window_feature)(Xin[cols], **kwargs)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
