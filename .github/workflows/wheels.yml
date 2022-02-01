@@ -31,7 +31,7 @@ jobs:
 
   test_wheels:
     needs: build_wheels
-    name: Build wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
+    name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -59,7 +59,7 @@ jobs:
 
   test_windows_wheels:
     needs: build_wheels
-    name: Test windows wheels
+    name: Test wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: windows-2019
     strategy:
       matrix:
