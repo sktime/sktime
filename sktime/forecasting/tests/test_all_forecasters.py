@@ -385,6 +385,42 @@ def test_predict_quantiles(Forecaster, fh, alpha):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_pred_int_tag(Forecaster):
+    """Checks whether the capability:pred_int tag is correctly set.
+
+    Arguments
+    ---------
+    Forecaster: BaseEstimator class descendant, forecaster to test
+
+    Raises
+    ------
+    ValueError - if capability:pred_int is True, but neither
+        predict_interval nor predict_quantiles have implemented content
+        this can be by direct implementation of _predict_interval or _predict_quantiles
+        or by defaulting to each other and/or _predict_proba
+    """
+    implements_interval = Forecaster._has_implementation_of("_predict_interval")
+    implements_quantiles = Forecaster._has_implementation_of("_predict_quantiles")
+    implements_proba = Forecaster._has_implementation_of("_predict_proba")
+
+    pred_int_works = implements_interval or implements_quantiles or implements_proba
+
+    if not pred_int_works and Forecaster.get_class_tag("capability:pred_int", False):
+        raise ValueError(
+            f"{Forecaster.__name__} does not implement probabilistic forecasting, "
+            'but "capability:pred_int" flag has been set to True incorrectly. '
+            'The flag "capability:pred_int" should instead be set to False.'
+        )
+
+    if pred_int_works and not Forecaster.get_class_tag("capability:pred_int", False):
+        raise ValueError(
+            f"{Forecaster.__name__} does implement probabilistic forecasting, "
+            'but "capability:pred_int" flag has been set to False incorrectly. '
+            'The flag "capability:pred_int" should instead be set to True.'
+        )
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_score(Forecaster, fh):
     """Check score method."""
