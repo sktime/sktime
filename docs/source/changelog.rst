@@ -91,7 +91,7 @@ Time series classification
 
 * Removed: `MrSEQL`` time series classifier (:pr:`1548`) :user:`TonyBagnall`
 * Removed `RISF`` and shapelet classifier (:pr:`1907`) :user:`TonyBagnall`
-* `data.io` module moved to `datasets` (:pr:`1907`)
+* `data.io` module moved to `datasets` (:pr:`1907`) :user:`TonyBagnall`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -106,13 +106,12 @@ Added
 Documentation
 ^^^^^^^^^^^^^
 
-* [DOC] updates to forecaster and transformer extension template (:pr:`1774`, :pr:`1853`)
-* [DOC] Update Prophet and ETS docstrings (:pr:`1698`)
-* [DOC] updated `get_test_params` extension template docs regarding imports	(:pr:`1811`)
+* [DOC] updates to forecaster and transformer extension template (:pr:`1774`, :pr:`1853`) :user:`fkiraly`
+* [DOC] Update Prophet and ETS docstrings (:pr:`1698`) :user:`mloning`
+* [DOC] updated `get_test_params` extension template docs regarding imports	(:pr:`1811`) :user:`fkiraly`
 * [DOC] reformatted the documentation structure (:pr:`1707`) :user:`amrith-shell`
-* [DOC] Update changelog (:pr:`1726`)
 * [DOC] Added VAR to API docs (:pr:`1964`) :user:`aiwalter`
-* [DOC] Updated classification notebook (:pr:`1885`)
+* [DOC] Updated classification notebook (:pr:`1885`) :user:`TonyBagnall`
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
