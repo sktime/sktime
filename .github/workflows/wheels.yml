@@ -30,6 +30,7 @@ jobs:
           path: wheelhouse/*
 
   test_wheels:
+    needs: build_wheels
     name: Build wheels on ${{ matrix.os }} with ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,7 +58,7 @@ jobs:
         run: make test
 
   test_windows_wheels:
-    needs: build_windows_wheels
+    needs: build_wheels
     name: Test windows wheels
     runs-on: windows-2019
     strategy:
