@@ -178,3 +178,23 @@ class ScaledLogitTransformer(BaseTransformer):
             X_inv_transformed = deepcopy(X)
 
         return X_inv_transformed
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        test_params = [
+            {"lower_bound": None, "upper_bound": None},
+            {"lower_bound": -(10 ** 6), "upper_bound": None},
+            {"lower_bound": None, "upper_bound": 10 ** 6},
+            {"lower_bound": -(10 ** 6), "upper_bound": 10 ** 6},
+        ]
+        return test_params
