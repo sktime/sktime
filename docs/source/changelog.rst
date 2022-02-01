@@ -26,8 +26,8 @@ Highlights
 * all probabilistic forecasters now provide `predict_interval` and `predict_quantiles` interfaces
   (:pr:`1842`, :pr:`1874`, :pr:`1879`, :pr:`1910`, :pr:`1961`) :user:`fkiraly` :user:`k1m190r` :user:`kejsitake`
 * new transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
-* developer install for `sktime` no longer requires C compilers and `cython` (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
-* CI/CD moved completely to GitHub actions (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
+* developer install for `sktime` no longer requires C compilers and `cython` (:pr:`1620`, :pr:`1920`) :user:`lmmentel`
+* CI/CD moved completely to GitHub actions (:pr:`1620`, :pr:`1920`) :user:`lmmentel`
 
 
 Dependency changes
@@ -35,7 +35,7 @@ Dependency changes
 * `sktime` now supports `python` 3.7-3.9 on windows, mac, and unix-based systems
 * `sktime` now supports, and requires, `numpy>=1.21.0`
 * `sktime` `Prophet` interface now uses `prophet` instead of deprecated `fbprophet`
-
+* developer install for `sktime` no longer requires C compilers and `cython`
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -43,7 +43,7 @@ Core interface changes
 Forecasting
 ^^^^^^^^^^^
 
-New probabilistic forecasting interface:
+New probabilistic forecasting interface for quantiles and predictive intervals:
 
 * for all forecasters with probabilistic forecasting capability, i.e., `capability:pred_int` tag
 * new method `predict_interval(fh, X, coverage)` for interval forecasts
@@ -51,6 +51,11 @@ New probabilistic forecasting interface:
 * both vectorized in `coverage`, `alpha` and applicable to multivariate forecasting
 * old `return_pred_int` interface is deprecated and will be removed in 0.11.0
 * see forecaster base API and forecaster extension template
+
+Convenience method to return residuals:
+
+* all forecasters now have a method `predict_residuals(y, X, fh)`
+* if `fh` is not passed, in-sample residuals are computed
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -104,44 +109,62 @@ Documentation
 * [DOC] updates to forecaster and transformer extension template (:pr:`1774`, :pr:`1853`)
 * [DOC] Update Prophet and ETS docstrings (:pr:`1698`)
 * [DOC] updated `get_test_params` extension template docs regarding imports	(:pr:`1811`)
-* [DOC] reformatted the documentation structure (:pr:`1707`) :user:`amrith-shell`.
+* [DOC] reformatted the documentation structure (:pr:`1707`) :user:`amrith-shell`
 * [DOC] Update changelog (:pr:`1726`)
-* Added VAR to API docs (:pr:`1964`) :user:`aiwalter`
-* Updated lassification notebook (:pr:`1885`)
-* Add lmmentel to the team page :tada: (:pr:`1836`) :user:`lmmentel`.
-
+* [DOC] Added VAR to API docs (:pr:`1964`) :user:`aiwalter`
+* [DOC] Updated classification notebook (:pr:`1885`)
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* check_is_scitype, cleaning up dists_kernels input checks/conversions	dist_kernels_input (:pr:`1704`)
-* [ENH] `Table` scitype and refactor of `convert` module	refactor-convert (:pr:`1745`)
-* [ENH] estimator scitype utility	est_scitype (:pr:`1838`)
-* [ENH] experimental: hierarchical time series scitype	hierarchical_scitype (:pr:`1786`)
-* [ENH] upgraded mtype_to_scitype to list-like args	mtype_to_scitype_extended (:pr:`1807`)
+* [ENH] `check_is_scitype`, cleaning up dists_kernels input checks/conversions (:pr:`1704`) :user:`fkiraly`
+* [ENH] `Table` scitype and refactor of `convert` module (:pr:`1745`) :user:`fkiraly`
+* [ENH] estimator scitype utility (:pr:`1838`) :user:`fkiraly`
+* [ENH] experimental: hierarchical time series scitype	hierarchical_scitype (:pr:`1786`) :user:`fkiraly`
+* [ENH] upgraded `mtype_to_scitype` to list-like args (:pr:`1807`) :user:`fkiraly`
+* [ENH] `check_is_mtype` to return scitype (:pr:`1789`) :user:`fkiraly`
 
-Time series classification
+Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] FreshPRINCE params moved from _config into estimator	freshprince_test_params (:pr:`1944`)
-* [ENH] user selected return for classification problems data loading functions	data_load_return_type (:pr:`1799`)
-* [ENH] TSC Compose refactor	compose_refactor (:pr:`1852`)
-* [ENH] TSC refactor: TSF, RSF	tsf_rsf_refactor (:pr:`1851`)
-* [ENH] New transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
+* [ENH] Update dataset headers (:pr:`1752`) :user:`tonybagnall`
+* [ENH] Classification dataset tidy-up (:pr:`1785`) :user:`tonybagnall`
+* [ENH] polymorphic data loader in contrib (:pr:`1840`) :user:`tonybagnall`
 
+Clustering
+^^^^^^^^^^
+
+* [ENH] Clustering module refactor (:pr:`1864`) :user:`chrisholder`
+* [ENH] `fit` repeated initialization in Lloyd's algorithm	lloyds-refinement (:pr:`1897`) :user:`chrisholder`
+
+Distances, kernels
+^^^^^^^^^^^^^^^^^^
+
+* [ENH] Composable distances interface prototype for numba distance module	distance-base-refacator (:pr:`1858`)
 
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] Scaled Logit Transformer (:pr:`1913`) :user:`ltsaprounis`.
-* [ENH] Add predict_quantiles to FBprophet (:pr:`1910`) :user:`kejsitake`.
-* [ENH] Additions to PR 1879 (probabilistic prediction defaults) arising from aiwalter's review	predict_proba_defaults (:pr:`1961`)
-* [ENH] Defaults for `_predict_interval` and `_predict_coverage`	predict_proba_defaults (:pr:`1879`)
-* refactored column ensemble forecaster	Aparna-Sakshi:estimator_tests_refactor (:pr:`1764`)
-* [ENH] Forecaster convenience method to return forecast residuals	predict_residuals (:pr:`1770`)
-* Update extension template for predict_quantiles	kejsitake:template-quantiles (:pr:`1780`)
-* [ENH] Prediction intervals refactor: BATS/TBATS; bugfix for #1625; base class updates on `predict_quantiles`	k1m190r:main (:pr:`1842`)
-* [ENH] Change `_set_fh` to a `_check_fh` that returns `self._fh`	set-fh-to-check-fh (:pr:`1823`)
+* [ENH] Scaled Logit Transformer (:pr:`1913`, :pr:`1965`) :user:`ltsaprounis`.
+* [ENH] add `fit` parameters to `statsmodels` Holt-Winters exponential smoothing interface (:pr:`1849`) :user:`fkiraly`
+* [ENH] Add `predict_quantiles` to FBprophet (:pr:`1910`) :user:`kejsitake`.
+* [ENH] Defaults for `_predict_interval` and `_predict_coverage` (:pr:`1879`, :pr:`1961`) :user:`fkiraly`
+* [ENH] refactored column ensemble forecaster (:pr:`1764`) :user:`Aparna-Sakshi`
+* [ENH] Forecaster convenience method to return forecast residuals (:pr:`1770`) :user:`fkiraly`
+* [ENH] Update extension template for predict_quantiles (:pr:`1780`) :user:`kejsitake`
+* [ENH] Prediction intervals refactor: BATS/TBATS; bugfix for #1625; base class updates on `predict_quantiles`(:pr:`1842`) :user:`k1m190r`
+* [ENH] Change `_set_fh` to a `_check_fh` that returns `self._fh` (:pr:`1823`) :user:`fkiraly`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] New transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
+* [ENH] `FreshPRINCE` params moved from `_config` into estimator (:pr:`1944`) :user:`fkiraly`
+* [ENH] user selected return for classification problems data loading functions (:pr:`1799`) :user:`tonybagnall`
+* [ENH] TSC refactor: `compose` sub-module (:pr:`1852`) :user:`tonybagnall`
+* [ENH] TSC refactor: TSC column ensemble (:pr:`1859`) :user:`tonybagnall`
+* [ENH] TSC refactor: TSF, RSF (:pr:`1851`) :user:`tonybagnall`
+* [ENH] Replace C extensions and Cython with numba based distance calculations (:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`.
 
 
 Transformations
@@ -151,38 +174,42 @@ Transformations
 * [ENH] Transformer base class DRY-ing, and `inverse_transform`	trafo-base-refactor	(:pr:`1790`)
 * [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`)
 
+Testing module
+^^^^^^^^^^^^^^
+
+* [ENH] Test refactor with scenarios (:pr:`1833`) :user:`fkiraly`
+* [ENH] pytest conditional fixtures	(:pr:`1839`) :user:`fkiraly`
+* [ENH] Test enhacements documentation (:pr:`1922`) :user:`fkiraly`
+* [ENH] split tests in series_as_features into classification and regression (:pr:`1959`) :user:`tonybagnall`
+* [ENH] Testing for metadata returns of `check_is_mtype` (:pr:`1748`) :user:`fkiraly`
+
+Governance
+^^^^^^^^^^
+
+* new CC composition, updated codeowners (:pr:`1796`)
+* Add core developer: :user:`lmmentel` (:pr:`1836`)
 
 
 Maintenance
 ^^^^^^^^^^^
 
-* Switch the extra dependency from `fbprophet` to `prophet` (:pr:`1958`) :user:`lmmentel`.
-* Updated code dependency version, i.e. `numpy` and `statsmodels` to reduce dependency conflicts (:pr:`1921`) :user:`lmmentel`.
-* Move all the CI/CD worfklows over to github actions and drop azure pipelines and appveyor (:pr:`1620`, :pr:`1920`) :user:`lmemntel`.
-* Scaled logit test params (:pr:`1965`) :user:`ltsaprounis`
-* Test enhacements (:pr:``) documentation (:pr:`1922`) :user:`fkiraly`.
-* Replace C extensions and Cython with numba based distance calculations (:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`.
-* [ENH] Clustering module refactor	clustering-update (:pr:`1864`)
-* TSC column ensemble refactor	column_ensemble_refactor (:pr:`1859`)
-* [ENH] Composable distances interface prototype for numba distance module	distance-base-refacator (:pr:`1858`)
-* [ENH] Test refactor with scenarios	test-refactor-with-scenarios (:pr:`1833`)
-* [ENH] pytest conditional fixtures	pytest-conditional-fixtures (:pr:`1839`)
-* [MNT] Refactor legacy test config	lmmentel:mnt/refactor-legacy-test-config (:pr:`1792`)
-* [FIX] Add missing init files	add-missing-inits (:pr:`1695`)
-* [MNT] updated codeowners	update-codeowners (:pr:`1796`)
-* [MNT] Add shellcheck to pre-commit	add-shellcheck (:pr:`1703`)
-* [MNT] Remove assign-contributor workflow	remove-assign-workflow (:pr:`1702`)
-* [MNT] Fail CI on missing init files (:pr:`1699`)
-* [ENH] split tests in series_as_features into classification and regression	testing_by_module (:pr:`1959`)
-* [ENH] `fit` repeated initialization in Lloyd's algorithm	lloyds-refinement (:pr:`1897`)
+* [MNT] Switch the extra dependency from `fbprophet` to `prophet` (:pr:`1958`) :user:`lmmentel`
+* [MNT] Updated code dependency version, i.e. `numpy` and `statsmodels` to reduce dependency conflicts (:pr:`1921`) :user:`lmmentel`.
+* [MNT] Move all the CI/CD worfklows over to github actions and drop azure pipelines and appveyor (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
+* [MNT] Refactor legacy test config	(:pr:`1792`) :user:`lmmentel` 
+* [FIX] Add missing init files (:pr:`1695`) :user:`mloning` 
+* [MNT] Add shellcheck to pre-commit (:pr:`1703`) :user:`mloning` 
+* [MNT] Remove assign-contributor workflow (:pr:`1702`) :user:`mloning` 
+* [MNT] Fail CI on missing init files (:pr:`1699`) :user:`mloning` 
+
+
 * Comment removal for individual classifier tests	test_fix (:pr:`1800`)
 * copy functions and tests from utils/data_io to datasets/_data_io	data_io_v2 (:pr:`1777`)
 * [ENH] Testing all test instances in testing framework	testing-all-instances (:pr:`1732`)
 * [ENH] Test scenarios for advanced testing	test-scenario (:pr:`1819`)
 * [ENH] replace deprecated np.int, np.float	np-int-deprec (:pr:`1734`)
-* [ENH] Testing for metadata returns of `check_is_mtype`	refactor-convert (:pr:`1748`)
-* Update dataset headers	classification_datasets (:pr:`1752`)
-* Classification dataset tidy	dataset_tidy (:pr:`1785`)
+
+
 * [ENH] Efficiency improvements for HC2	interval_speedup (:pr:`1754`)
 * Update .all-contributorsrc	ishannangia001:idea-ETS-contributor (:pr:`1848`)
 * [ENH] Extended deep_equals, with precise indication of why equality fails	extended-deep-equals (:pr:`1844`)
@@ -190,8 +217,8 @@ Maintenance
 * [ENH] test for `test_create_test_instances_and_names`	test-create-all-test-instances (:pr:`1829`)
 * [ENH] Utils module housekeeping varia	utils-housekeeping (:pr:`1820`)
 * [ENH] vectorization/iteration utility for `sktime` time series formats	datatypes-vectorizer (:pr:`1806`)
-* Correct the bash error propagation for running notebook examples	lmmentel:bugfix/run-notebooks (:pr:`1816`)
-* polymorphic data loader in contrib	data_loader_in_contrib (:pr:`1840`)
+* [MNT] Correct the bash error propagation for running notebook examples (:pr:`1816`) :user:`lmmentel` 
+
 * [ENH] introduce msm distance and adapt KNN classifier to use it.	knn_changes_msm (:pr:`1926`)
 * [ENH] Generalize splitters to accept timedeltas (equally spaced) (:pr:`1758`) :user:`khrapovs`.
 * [ENH] Add predict_quantiles to ets, pmdarima adapter (:pr:`1874`) :user:`kejsitake`.
@@ -199,29 +226,28 @@ Maintenance
 Fixed
 ~~~~~
 
-* [DOC] Fixed a typo in transformer extension template (:pr:`1901`) :user:`rakshitha123`.
-* [BUG] Fix incorrect "uses `X`" tag for ARIMA and `TrendForecaster` (:pr:`1895`) :user:`ngupta23`.
-* fix error when concatenating train and test	data_io_bug (:pr:`1892`)
+* [DOC] Fixed a typo in transformer extension template (:pr:`1901`) :user:`rakshitha123`
+* [DOC] Fix typo in Setting up a development environment section (:pr:`1872`) :user:`shubhamkarande13`
+* [BUG] Fix incorrect "uses `X`" tag for ARIMA and `TrendForecaster` (:pr:`1895`) :user:`ngupta23`
+* [BUG] fix error when concatenating train and test (:pr:`1892`) :user:`tonybagnall`
 * [BUG] Knn bugfix to allow GridsearchCV and usage with column ensemble.	knn_changes (:pr:`1903`)
-* Fix typo in Setting up a development environment section	shubhamkarande13:patch-1 (:pr:`1872`)
+
 * Fix for #1866 and #1826	mm-bugfix	 (:pr:`1869`)
-* [BUG] fixing mixup of internal variables in detrender	detrender-refactor-fix (:pr:`1863`)
-* [ENH] add missing `fit` parameters to `statsmodels` Holt-Winters exponential smoothing interface	holtwinters-moreparams (:pr:`1849`)
-* [BUG] transformer base class changes and bugfixes	transformer-refactor-bugfixes (:pr:`1855`)
+* [BUG] fixing mixup of internal variables in detrender	(:pr:`1863`) :user:`fkiraly`
+* [BUG] transformer base class changes and bugfixes	(:pr:`1855`) :user:`fkiraly`
 * [BUG] erroneous index coercion in `convert_align_to_align_loc`	bugfix-convert_align_to_align_loc (:pr:`1911`)
 * [BUG] bugfixes for various bugs discovered in scenario testing	bugfixes-from-scenario-testing (:pr:`1846`)
-* [BUG] 1523 fixing `ForecastHorizon.to_absolute` for freqs with anchorings	eenticott-shell:1523-fixing-forecast-horizon-bug (:pr:`1830`)
-* [BUG] remove duplicated input checks from `BaseClassifier.score`	fix-baseclassifier-score (:pr:`1813`)
-* [BUG] fixed mtype return field in `check_is_scitype`	bugfix-check-is-scitype (:pr:`1805`)
-* [BUG] `check_is_mtype` to return scitype	check_is_mtype_scitype_return (:pr:`1789`)
+* [BUG] 1523 fixing `ForecastHorizon.to_absolute` for freqs with anchorings	(:pr:`1830`) :user:`eenticott-shell`
+* [BUG] remove duplicated input checks from `BaseClassifier.score` (:pr:`1813`) :user:`fkiraly`
+* [BUG] fixed mtype return field in `check_is_scitype` (:pr:`1805`) :user:`fkiraly`
 * [BUG] fix fh -> self.fh in `predict_interval` and `predict_quantiles`	bugfix_fh_predict_quantiles (:pr:`1775`)
 * [BUG] incorrect docstrings and resolving confusion unequal length/spaced in panel metadata inference	fix-metadata-panel-unequal-length (:pr:`1768`)
 * [BUG] hotfix for bug when passing multivariate `y` to boxcox transformer	hotfix-boxcox (:pr:`1724`)
 * [BUG] CIF Bugfix	cif-bugfix (:pr:`1709`)
 * Correct the `examples/catch22.ipynb` call to `transform_single_feature`	lmmentel:bugfix/catch22-notebook (:pr:`1793`)
 * Fixes prophet bug concerning the internal change of exogenous X	kejsitake:fix_prophet_wrapper_bug (:pr:`1711`)
-* Fix DeprecationWarning of `pd.Series` in sktime/utils/tests/test_datetime.py:21	khrapovs:silence-deprecationwarning-in-test-datetime (:pr:`1743`)
-* [ENH] bugfix in BaseClassifier, updated base class docstrings	classif-baseclass-fixes (:pr:`1804`)
+* [BUG] Fix DeprecationWarning of `pd.Series` in sktime/utils/tests/test_datetime.py:21	(:pr:`1743`) :user:`khrapovs`
+* [BUG] bugfixes in `BaseClassifier`, updated base class docstrings (:pr:`1804`) :user:`fkiraly`
 
 
 
