@@ -21,19 +21,19 @@ Highlights
 ~~~~~~~~~~
 
 * `sktime` now supports python 3.7-3.9. Python 3.6 is no longer supported, due to end of life. Last `sktime` version to support python 3.6 was 0.9.0.
-* `sktime` now supports, and requires, `numpy>=1.21.0`
+* `sktime` now supports, and requires, `numpy>=1.21.0` and `statsmodels>=0.12.1`
 * overhaul of docs for installation and first-time developers (:pr:`1707`) :user:`amrith-shell`
 * all probabilistic forecasters now provide `predict_interval` and `predict_quantiles` interfaces
   (:pr:`1842`, :pr:`1874`, :pr:`1879`, :pr:`1910`, :pr:`1961`) :user:`fkiraly` :user:`k1m190r` :user:`kejsitake`
 * new transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
-* developer install for `sktime` no longer requires C compilers and `cython` (:pr:`1620`, :pr:`1920`) :user:`lmmentel`
+* developer install for `sktime` no longer requires C compilers and `cython`(:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`
 * CI/CD moved completely to GitHub actions (:pr:`1620`, :pr:`1920`) :user:`lmmentel`
 
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 * `sktime` now supports `python` 3.7-3.9 on windows, mac, and unix-based systems
-* `sktime` now supports, and requires, `numpy>=1.21.0`
+* `sktime` now supports, and requires, `numpy>=1.21.0` and `statsmodels>=0.12.1`
 * `sktime` `Prophet` interface now uses `prophet` instead of deprecated `fbprophet`
 * developer install for `sktime` no longer requires C compilers and `cython`
 
@@ -82,15 +82,15 @@ Forecasting
 ^^^^^^^^^^^
 
 * deprecated, scheduled for removal in 0.11.0:
-`return_pred_int` arguement in forecaster `predict`, `fit_predict`, `update_predict_single`.
+`return_pred_int` argument in forecaster `predict`, `fit_predict`, `update_predict_single`.
 Replaced by `predict_interval` and `predict_quantiles` interface.
 
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Removed: MrSEQL time series classifier (:pr:`1548`) :user:`TonyBagnall`
-* Removed RISF and shapelet classifier (:pr:`1907`) :user:`TonyBagnall`
+* Removed: `MrSEQL`` time series classifier (:pr:`1548`) :user:`TonyBagnall`
+* Removed `RISF`` and shapelet classifier (:pr:`1907`) :user:`TonyBagnall`
 * `data.io` module moved to `datasets` (:pr:`1907`)
 
 Transformations
@@ -170,8 +170,8 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [ENH] Transformers module full refactor - part I, `series` module	trafos-refactor	(:pr:`1795`)
-* [ENH] Transformer base class DRY-ing, and `inverse_transform`	trafo-base-refactor	(:pr:`1790`)
+* [ENH] Transformers module full refactor - part I, `series` module	(:pr:`1795`)
+* [ENH] Transformer base class DRY-ing, and `inverse_transform`	(:pr:`1790`)
 * [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`)
 
 Testing module
