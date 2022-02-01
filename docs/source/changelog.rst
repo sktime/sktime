@@ -131,6 +131,7 @@ Data sets and data loaders
 * [ENH] Update dataset headers (:pr:`1752`) :user:`tonybagnall`
 * [ENH] Classification dataset tidy-up (:pr:`1785`) :user:`tonybagnall`
 * [ENH] polymorphic data loader in contrib (:pr:`1840`) :user:`tonybagnall`
+* [ENH] move functions and tests from `utils/data_io` to `datasets/_data_io` (:pr:`1777`) :user:`tonybagnall`
 
 Clustering
 ^^^^^^^^^^
@@ -170,6 +171,7 @@ Time series classification
 * [ENH] Replace C extensions and Cython with numba based distance calculations (:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`.
 * [ENH] introduce msm distance and adapt KNN classifier to use it (:pr:`1926`) :user:`tonybagnall`
 * [ENH] Efficiency improvements for HC2	interval_speedup (:pr:`1754`) :user:`MatthewMiddlehurst`
+* [ENH] classifier tests: removes replace_X_y, comments, and add contracting tests (:pr:`1800`) :user:`MatthewMiddlehurst`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -182,6 +184,7 @@ Testing module
 ^^^^^^^^^^^^^^
 
 * [ENH] Test refactor with scenarios (:pr:`1833`) :user:`fkiraly`
+* [ENH] Test scenarios for advanced testing	(:pr:`1819`) :user:`fkiraly`
 * [ENH] pytest conditional fixtures	(:pr:`1839`) :user:`fkiraly`
 * [ENH] Test enhacements documentation (:pr:`1922`) :user:`fkiraly`
 * [ENH] split tests in series_as_features into classification and regression (:pr:`1959`) :user:`tonybagnall`
@@ -189,6 +192,7 @@ Testing module
 * [ENH] Extended deep_equals, with precise indication of why equality fails	(:pr:`1844`) :user:`fkiraly`
 * [ENH] test for `test_create_test_instances_and_names`	fixture generation method (:pr:`1829`) :user:`fkiraly`
 * [ENH] Utils module housekeeping varia	utils-housekeeping (:pr:`1820`) :user:`fkiraly`
+* [ENH] Extend testing framework to test multiple instance fixtures per estimator (:pr:`1732`) :user:`fkiraly`
 
 Governance
 ^^^^^^^^^^
@@ -208,18 +212,7 @@ Maintenance
 * [MNT] Add shellcheck to pre-commit (:pr:`1703`) :user:`mloning` 
 * [MNT] Remove assign-contributor workflow (:pr:`1702`) :user:`mloning` 
 * [MNT] Fail CI on missing init files (:pr:`1699`) :user:`mloning` 
-
-* Comment removal for individual classifier tests	test_fix (:pr:`1800`)
-* copy functions and tests from utils/data_io to datasets/_data_io	data_io_v2 (:pr:`1777`)
-* [ENH] Testing all test instances in testing framework	testing-all-instances (:pr:`1732`)
-* [ENH] Test scenarios for advanced testing	test-scenario (:pr:`1819`)
-* [ENH] replace deprecated np.int, np.float	np-int-deprec (:pr:`1734`)
-
-
-* Update .all-contributorsrc	ishannangia001:idea-ETS-contributor (:pr:`1848`)
-
-
-
+* [ENH] replace deprecated `np.int`, `np.float` (:pr:`1734`) :user:`fkiraly`
 * [MNT] Correct the bash error propagation for running notebook examples (:pr:`1816`) :user:`lmmentel` 
 
 
