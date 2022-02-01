@@ -136,12 +136,13 @@ Clustering
 ^^^^^^^^^^
 
 * [ENH] Clustering module refactor (:pr:`1864`) :user:`chrisholder`
-* [ENH] ``fit`` repeated initialization in Lloyd's algorithm	lloyds-refinement (:pr:`1897`) :user:`chrisholder`
+* [ENH] ``fit`` repeated initialization in Lloyd's algorithm (:pr:`1897`) :user:`chrisholder`
+
 
 Distances, kernels
 ^^^^^^^^^^^^^^^^^^
 
-* [ENH] Composable distances interface prototype for numba distance module	distance-base-refacator (:pr:`1858`)
+* [ENH] Composable distances interface prototype for numba distance module (:pr:`1858`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^
@@ -175,9 +176,9 @@ Time series classification
 Transformations
 ^^^^^^^^^^^^^^^
 
-* [ENH] Transformers module full refactor - part I, `series` module	(:pr:`1795`)
-* [ENH] Transformer base class DRY-ing, and ``inverse_transform``	(:pr:`1790`)
-* [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`)
+* [ENH] Transformers module full refactor - part I, ``series`` module	(:pr:`1795`) :user:`fkiraly`
+* [ENH] Transformer base class DRY-ing, and ``inverse_transform``	(:pr:`1790`) :user:`fkiraly`
+* [ENH] transformer base class to allow multivariate output if input is always univariate (:pr:`1706`) :user:`fkiraly`
 
 Testing module
 ^^^^^^^^^^^^^^
@@ -198,13 +199,13 @@ Governance
 
 * new CC composition, updated codeowners (:pr:`1796`)
 * Add core developer: :user:`lmmentel` (:pr:`1836`)
-* corrected mistakes in core developer list (:pr:`1841`) :user:`sumit-158`
+* updated core developer list (:pr:`1841`) :user:`sumit-158`
 
 Maintenance
 ^^^^^^^^^^^
 
 * [MNT] Switch the extra dependency from `fbprophet` to `prophet` (:pr:`1958`) :user:`lmmentel`
-* [MNT] Updated code dependency version, i.e. `numpy` and `statsmodels` to reduce dependency conflicts (:pr:`1921`) :user:`lmmentel`.
+* [MNT] Updated code dependency version, i.e. `numpy` and `statsmodels` to reduce dependency conflicts (:pr:`1921`) :user:`lmmentel`
 * [MNT] Move all the CI/CD worfklows over to github actions and drop azure pipelines and appveyor (:pr:`1620`, :pr:`1920`) :user:`lmemntel`
 * [MNT] Refactor legacy test config	(:pr:`1792`) :user:`lmmentel`
 * [FIX] Add missing init files (:pr:`1695`) :user:`mloning`
@@ -238,6 +239,31 @@ Fixed
 * [BUG] Fixes prophet bug concerning the internal change of exogenous X	 (:pr:`1711`) :user:`kejsitake`
 * [BUG] Fix DeprecationWarning of ``pd.Series`` in sktime/utils/tests/test_datetime.py:21	(:pr:`1743`) :user:`khrapovs`
 * [BUG] bugfixes in ``BaseClassifier``, updated base class docstrings (:pr:`1804`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`amrith-shell`,
+:user:`Aparna-Sakshi`,
+:user:`AreloTanoh`,
+:user:`chrisholder`,
+:user:`eenticott-shell`,
+:user:`fkiraly`,
+:user:`k1m190r`,
+:user:`kejsitake`,
+:user:`khrapovs`,
+:user:`lmmentel`,
+:user:`ltsaprounis`,
+:user:`MatthewMiddlehurst`,
+:user:`MrPr3ntice`,
+:user:`mloning`,
+:user:`ngupta23`,
+:user:`rakshitha123`,
+:user:`RNKuhns`,
+:user:`shubhamkarande13`,
+:user:`sumit-158`,
+:user:`TonyBagnall`,
 
 [0.9.0] - 2021-12-08
 --------------------
