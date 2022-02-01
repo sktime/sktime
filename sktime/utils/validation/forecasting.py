@@ -34,7 +34,8 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
-VALID_CUTOFF_TYPES = Union[np.ndarray, pd.Index]
+ACCEPTED_CUTOFF_TYPES = np.ndarray, pd.Index
+VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
 
 
 def check_y_X(
@@ -347,7 +348,7 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
         If cutoffs array is empty.
 
     """
-    if not isinstance(cutoffs, (np.ndarray, pd.Index)):
+    if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
         raise ValueError(
             f"`cutoffs` must be a np.array or pd.Index, but found: {type(cutoffs)}"
         )

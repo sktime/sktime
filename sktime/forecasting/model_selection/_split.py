@@ -386,7 +386,8 @@ class CutoffSplitter(BaseSplitter):
 
     Here the user is expected to provide a set of cutoffs (train set endpoints),
     which using the notation provided in :class:`BaseSplitter`,
-    can be written as :math:`\{t(k_1),\ldots,t(k_n)\}`.
+    can be written as :math:`\{k_1,\ldots,k_n\}` for integer based indexing,
+    or :math:`\{t(k_1),\ldots,t(k_n)\}` for datetime based indexing.
     The number of splits returned by `.get_n_splits`
     is then trivially equal to :math:`n`.
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
@@ -395,8 +396,8 @@ class CutoffSplitter(BaseSplitter):
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer-index like, usable with pandas
-        .iloc[] indexing
+        cutoff points, positive and integer- or datetime-index like,
+        usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
     fh : int, list or np.array
     window_length : int or timedelta or pd.DateOffset
     """
