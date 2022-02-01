@@ -7,7 +7,7 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -101,7 +101,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
 
     # convert np.array or list to pandas index
     elif isinstance(values, (list, np.ndarray)):
-        values = pd.Index(values)
+        values = pd.Int64Index(values, dtype=int)
 
     # otherwise, raise type error
     else:
@@ -162,7 +162,7 @@ class ForecastingHorizon:
     def __init__(
         self,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = True,
+        is_relative: Optional[bool] = True,
     ):
         if is_relative is not None and not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean or None")
@@ -179,7 +179,7 @@ class ForecastingHorizon:
             elif type(values) in ABSOLUTE_TYPES:
                 is_relative = False
             else:
-                raise TypeError(type(values) + "is not a supported fh index type")
+                raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
             if not type(values) in RELATIVE_TYPES:
                 raise TypeError(error_msg)
