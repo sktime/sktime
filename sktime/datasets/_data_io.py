@@ -1680,7 +1680,7 @@ def write_ndarray_to_tsfile(
     file.close()
 
 
-def convert_tsf_to_dataframe(
+def load_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     value_column_name="series_value",

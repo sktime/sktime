@@ -24,6 +24,7 @@ from sktime.datasets import (
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
+    load_tsf_to_dataframe,
     load_uschange,
     write_dataframe_to_tsfile,
 )
@@ -1080,3 +1081,41 @@ def test_write_dataframe_to_ts_fail(tmp_path):
             path=str(tmp_path),
             problem_name="GunPoint",
         )
+
+
+def test_convert_tsf_to_dataframe():
+    """Test function for loading tsf format."""
+    data_path = MODULE + "/data/UnitTest/UnitTest_Tsf_Loader.tsf"
+    df, frequency, horizon, missing_values, equal_length = load_tsf_to_dataframe(
+        data_path
+    )
+
+    test_df = pd.DataFrame(
+        {
+            "series_name": ["T1", "T2", "T3"],
+            "start_timestamp": [
+                pd.Timestamp(year=1979, month=1, day=1),
+                pd.Timestamp(year=1979, month=1, day=1),
+                pd.Timestamp(year=1973, month=1, day=1),
+            ],
+            "series_value": [
+                [
+                    25092.2284,
+                    24271.5134,
+                    25828.9883,
+                    27697.5047,
+                    27956.2276,
+                    29924.4321,
+                    30216.8321,
+                ],
+                [887896.51, 887068.98, 971549.04],
+                [227921, 230995, 183635, 238605, 254186],
+            ],
+        }
+    )
+
+    assert_frame_equal(df, test_df)
+    assert frequency == "yearly"
+    assert horizon == 4
+    assert missing_values is False
+    assert equal_length is False
