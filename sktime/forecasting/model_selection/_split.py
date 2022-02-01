@@ -229,6 +229,23 @@ def _check_window_lengths(
                 raise ValueError(error_msg_for_incompatible_types)
 
 
+def _cutoffs_fh_window_length_types_are_supported(
+    cutoffs: VALID_CUTOFF_TYPES,
+    fh: FORECASTING_HORIZON_TYPES,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+) -> bool:
+    all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
+    all_dates = (
+        array_is_datetime64(cutoffs)
+        and array_is_timedelta64(fh)
+        and is_timedelta_or_date_offset(window_length)
+    )
+    if all_int or all_dates:
+        return True
+    else:
+        return False
+
+
 class BaseSplitter:
     r"""Base class for temporal cross-validation splitters.
 
@@ -417,13 +434,9 @@ class CutoffSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
         window_length = check_window_length(self.window_length, n_timepoints)
 
-        all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
-        all_dates = (
-            array_is_datetime64(cutoffs)
-            and array_is_timedelta64(fh)
-            and is_timedelta_or_date_offset(window_length)
-        )
-        if not (all_int or all_dates):
+        if not _cutoffs_fh_window_length_types_are_supported(
+            cutoffs=cutoffs, fh=fh, window_length=window_length
+        ):
             raise ValueError("Unsupported combination of types")
 
         max_cutoff = np.max(cutoffs)

@@ -18,6 +18,9 @@ from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
+from sktime.forecasting.model_selection._split import (
+    _cutoffs_fh_window_length_types_are_supported,
+)
 from sktime.forecasting.tests._config import (
     TEST_CUTOFFS,
     TEST_FHS,
@@ -189,17 +192,9 @@ def test_single_window_splitter_default_window_length(y, fh):
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
     cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
-    all_int = (
-        array_is_int(cutoffs)
-        and array_is_int(ForecastingHorizon(fh).to_pandas())
-        and is_int(window_length)
-    )
-    all_dates = (
-        array_is_datetime64(cutoffs)
-        and array_is_timedelta64(ForecastingHorizon(fh).to_pandas())
-        and is_timedelta_or_date_offset(window_length)
-    )
-    if all_int or all_dates:
+    if _cutoffs_fh_window_length_types_are_supported(
+        cutoffs=cutoffs, fh=ForecastingHorizon(fh), window_length=window_length
+    ):
         train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
     else:
