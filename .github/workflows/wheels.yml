@@ -1,8 +1,12 @@
 name: Build wheels and publish to PyPI
 
 on:
-  release:
-    types: [published]
+  # TODO: uncomment before merge
+  # release:
+  #   types: [published]
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build_wheels:
