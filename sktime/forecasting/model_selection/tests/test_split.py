@@ -89,7 +89,7 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     fh = check_fh(fh)
     if is_int(fh[-1]):
         expected = np.array([window[-1] - fh[-1] for window in windows])
-    elif array_is_timedelta64(fh.to_pandas()):
+    elif array_is_timedelta64(fh):
         expected = np.array(
             [(y.index[window[-1]] - fh[-1]).to_datetime64() for window in windows]
         )
