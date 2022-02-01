@@ -26,7 +26,7 @@ Highlights
 * all probabilistic forecasters now provide `predict_interval` and `predict_quantiles` interfaces
   (:pr:`1842`, :pr:`1874`, :pr:`1879`, :pr:`1910`, :pr:`1961`) :user:`fkiraly` :user:`k1m190r` :user:`kejsitake`
 * new transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
-* developer install for `sktime` no longer requires C compilers and `cython`(:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`
+* developer install for `sktime` no longer requires C compilers and `cython` (:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`
 * CI/CD moved completely to GitHub actions (:pr:`1620`, :pr:`1920`) :user:`lmmentel`
 
 
