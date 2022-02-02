@@ -19,18 +19,15 @@ param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["jasonlines", "TonyBagnall"]
+__author__ = ["jasonlines", "TonyBagnall", "chrisholder"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
-import warnings
 from functools import partial
 
 import numpy as np
 from joblib import effective_n_jobs
 from scipy import stats
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights, _get_weights
 from sklearn.utils.extmath import weighted_mode
@@ -38,19 +35,9 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
 
 from sktime.classification.base import BaseClassifier
-from sktime.distances.elastic import euclidean_distance
-from sktime.distances.elastic_cython import (
-    ddtw_distance,
-    dtw_distance,
-    erp_distance,
-    lcss_distance,
-    msm_distance,
-    twe_distance,
-    wddtw_distance,
-    wdtw_distance,
-)
-from sktime.distances.mpdist import mpdist
-from sktime.utils.validation.panel import check_X, check_X_y
+
+# New imports using Numba
+from sktime.distances import distance_factory
 
 
 class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
@@ -94,9 +81,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-    >>> from sktime.datasets import load_basic_motions
-    >>> X_train, y_train = load_basic_motions(return_X_y=True, split="train")
-    >>> X_test, y_test = load_basic_motions(return_X_y=True, split="test")
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
+    >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
     >>> classifier = KNeighborsTimeSeriesClassifier()
     >>> classifier.fit(X_train, y_train)
     KNeighborsTimeSeriesClassifier(...)
@@ -115,68 +102,33 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         distance_params=None,
         **kwargs
     ):
-        self._cv_for_params = False
+        self._distance_params = distance_params
+        if distance_params is None:
+            self._distance_params = {}
         self.distance = distance
         self.distance_params = distance_params
 
-        if distance == "euclidean":  # Euclidean will default to the base class distance
-            distance = euclidean_distance
-        elif distance == "dtw":
-            distance = dtw_distance
-        elif distance == "dtwcv":  # special case to force loocv grid search
-            # cv in training
-            if distance_params is not None:
-                warnings.warn(
-                    "Warning: measure parameters have been specified for "
-                    "dtwcv. "
-                    "These will be ignored and parameter values will be "
-                    "found using LOOCV."
-                )
-            distance = dtw_distance
-            self._cv_for_params = True
-            self._param_matrix = {
-                "distance_params": [{"w": x / 100} for x in range(0, 100)]
-            }
-        elif distance == "ddtw":
-            distance = ddtw_distance
-        elif distance == "wdtw":
-            distance = wdtw_distance
-        elif distance == "wddtw":
-            distance = wddtw_distance
-        elif distance == "lcss":
-            distance = lcss_distance
-        elif distance == "erp":
-            distance = erp_distance
-        elif distance == "msm":
-            distance = msm_distance
-        elif distance == "twe":
-            distance = twe_distance
-        elif distance == "mpdist":
-            distance = mpdist
-            # When mpdist is used, the subsequence length (parameter m) must be set
-            # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-            # metric='mpdist', metric_params={'m':30})
-        else:
-            if type(distance) is str:
-                raise ValueError(
-                    "Unrecognised distance measure: " + distance + ". Allowed values "
-                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
-                    "please pass a callable distance measure into the constuctor"
-                )
+        if isinstance(self.distance, str):
+            distance = distance_factory(metric=self.distance)
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm="brute",
             metric=distance,
-            metric_params=distance_params,
+            metric_params=None,  # Extra distance params handled in _fit
             **kwargs
         )
+        BaseClassifier.__init__(self)
         self.weights = _check_weights(weights)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit(self, X, y):
+    def fit(self, X, y, **kwargs):
+        """Override fit is required to sort out the multiple inheritance."""
+        return BaseClassifier.fit(self, X, y, **kwargs)
+
+    def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
         Parameters
@@ -187,42 +139,17 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
         """
-        X, y = check_X_y(
-            X,
-            y,
-            enforce_univariate=not self._tags["capability:multivariate"],
-            coerce_to_numpy=True,
-        )
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
 
+        if isinstance(self.distance, str):
+            self.metric = distance_factory(
+                X[0], X[0], metric=self.distance, **self._distance_params
+            )
+
         y = np.asarray(y)
         check_classification_targets(y)
-        # if internal cv is desired, the relevant flag forces a grid search
-        # to evaluate the possible values,
-        # find the best, and then set this classifier's params to match
-        if self._cv_for_params:
-            grid = GridSearchCV(
-                estimator=KNeighborsTimeSeriesClassifier(
-                    distance=self.metric, n_neighbors=1
-                ),
-                param_grid=self._param_matrix,
-                cv=LeaveOneOut(),
-                scoring="accuracy",
-            )
-            grid.fit(X, y)
-            self.distance_params = grid.best_params_["distance_params"]
-
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            if y.ndim != 1:
-                warnings.warn(
-                    "IN TS-KNN: A column-vector y was passed when a 1d array "
-                    "was expected. Please change the shape of y to "
-                    "(n_samples, ), for example using ravel().",
-                    DataConversionWarning,
-                    stacklevel=2,
-                )
-
             self.outputs_2d_ = False
             y = y.reshape((-1, 1))
         else:
@@ -244,9 +171,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
-        #  this not fx = self._fit(X, self_y) in order to maintain backward
+        #  this is not fx = self._fit(X, y) in order to maintain backward
         # compatibility with scikit learn 0.23, where _fit does not take an arg y
-        fx = self._fit(X)
+        fx = super()._fit(X)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
@@ -290,11 +217,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(
-            X,
-            enforce_univariate=not self._tags["capability:multivariate"],
-            coerce_to_numpy=True,
-        )
         # Transpose to work correctly with distance functions
         X = X.transpose((0, 2, 1))
 
@@ -388,7 +310,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 return dist, neigh_ind
             return neigh_ind
 
-    def predict(self, X):
+    def predict(self, X, **kwargs):
+        """Predict wrapper."""
+        return BaseClassifier.predict(self, X, **kwargs)
+
+    def _predict(self, X):
         """Predict the class labels for the provided data.
 
         Parameters
@@ -440,15 +366,17 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = temp
         return y_pred
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, **kwargs):
+        """Predict proba wrapper."""
+        return BaseClassifier.predict_proba(self, X, **kwargs)
+
+    def _predict_proba(self, X):
         """Return probability estimates for the test data X.
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe or array-like, shape (n_query,
-        n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            Test samples.
+        X : 3D numpy array dimensions (n,d,m) or (n_query, n_indexed) if metric ==
+        'precomputed' Test samples.
 
         Returns
         -------

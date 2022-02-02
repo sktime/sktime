@@ -137,6 +137,10 @@ def _validate_pairwise_result(
         f"metric={distance_function} is {metric_dist_func_result}."
     )
 
+    metric_dist_self_func_result = pairwise_distance(
+        x, metric=distance_function, **kwargs_dict
+    )
+
     metric_str_result_to_self = pairwise_distance(
         x, x, metric=metric_str, **kwargs_dict
     )
@@ -147,6 +151,8 @@ def _validate_pairwise_result(
             f"(np.trace(result)). Instead for the pairwise metric given where "
             f"metric={metric_str} is {metric_str_result_to_self.trace()}"
         )
+
+    assert np.array_equal(metric_dist_self_func_result, metric_str_result_to_self)
 
     assert _check_symmetric(metric_str_result_to_self) is True, (
         f"The pairwise distance when given two of the same timeseries e.g."

@@ -6,25 +6,25 @@
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
+import numbers
 from warnings import warn
 
 import numpy as np
 from joblib import Parallel, delayed
-import numbers
-
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble._forest import (
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
-from sktime.transformations.panel.summarize import (
-    RandomIntervalFeatureExtractor,
-)
-from sklearn.ensemble._forest import _generate_unsampled_indices
-from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.utils.slope_and_trend import _slope
-from sktime.utils.validation.panel import check_X, check_X_y
+from sklearn.tree import DecisionTreeRegressor
+
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
+from sktime.utils.slope_and_trend import _slope
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
@@ -286,6 +286,14 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # Set renamed estimator parameters
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
+
+    def fit(self, X, y, **kwargs):
+        """Wrap BaseForest._fit.
+
+        This is a temporary measure prior to the BaseRegressor refactor.
+        """
+        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
+        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
 
     def predict(self, X):
         """Predict regression target for X.
