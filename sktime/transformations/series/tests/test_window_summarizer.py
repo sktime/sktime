@@ -2,10 +2,33 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["Daniel Bartling"]
 
+# from sklearn.preprocessing import MinMaxScaler
+
+# from sktime.datasets import load_longley
+# from sktime.forecasting.base import ForecastingHorizon
+# from sktime.forecasting.compose import ForecastingPipeline
+# from sktime.forecasting.model_selection import temporal_train_test_split
+# from sktime.forecasting.naive import NaiveForecaster
+# from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+# from sktime.transformations.series.impute import Imputer
+# from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
+
+# y, X = load_longley()
+# y_train, _, X_train, X_test = temporal_train_test_split(y, X)
+# fh = ForecastingHorizon(X_test.index, is_relative=False)
+# pipe = ForecastingPipeline(
+#     steps=[
+#         ("imputer", LaggedWindowSummarizer(target_cols=["GNPDEFL", "GNP"])),
+#         ("forecaster", NaiveForecaster(strategy="drift")),
+#     ]
+# )
+# pipe.fit(y_train, X_train)
+# y_pred = pipe.predict(fh=fh, X=X_test)
+
 import pandas as pd
 import pytest
 
-from sktime.datasets import load_airline
+from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
@@ -41,6 +64,9 @@ y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
 y_grouped = pd.concat([y_group1, y_group2])
 
+y_ll, X_ll = load_longley()
+y_ll_train, _, X_ll_train, X_ll_test = temporal_train_test_split(y_ll, X_ll)
+
 kwargs = {
     "functions": {
         "lag": ["lag", [[1, 0]]],
@@ -51,7 +77,7 @@ kwargs = {
 
 kwargs_alternames = {
     "functions": {
-        "lag": ["lag", [[3, 0], [12, 0]]],
+        "lag": ["lag", [[3, 0], [6, 0]]],
     }
 }
 
@@ -62,27 +88,34 @@ kwargs_variant = {
     }
 }
 
+# into = LaggedWindowSummarizer(**kwargs_alternames,target_cols=["POP","GNP"])
+# Xt = into.fit_transform(X_train)
+
+Xt_test = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
+Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
+
 
 @pytest.mark.parametrize(
-    "kwargs, column_names, y",
+    "kwargs, column_names, y, target_cols",
     [
-        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_train),
+        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_train, None),
+        (kwargs_alternames, Xt_test, X_ll_train, ["POP", "GNP"]),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
         # (kwargs, ["lag_1_0", "
         # mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
-        (None, ["lag_1_0"], y_pd),
-        (None, ["lag_1_0"], y_pd),
+        (None, ["lag_1_0"], y_pd, None),
+        (None, ["lag_1_0"], y_pd, None),
         # (None, ["lag_1_0"], y_multi),
-        (kwargs_alternames, ["lag_3_0", "lag_12_0"], y_train),
-        (kwargs_variant, ["mean_7_0", "mean_7_7", "covar_feature_28_0"], y_train),
+        (kwargs_alternames, ["lag_3_0", "lag_6_0"], y_train, None),
+        (kwargs_variant, ["mean_7_0", "mean_7_7", "covar_feature_28_0"], y_train, None),
     ],
 )
-def test_windowsummarizer(kwargs, column_names, y):
+def test_windowsummarizer(kwargs, column_names, y, target_cols):
     """Test columns match kwargs arguments."""
     if kwargs is not None:
-        transformer = LaggedWindowSummarizer(**kwargs)
+        transformer = LaggedWindowSummarizer(**kwargs, target_cols=target_cols)
     else:
-        transformer = LaggedWindowSummarizer()
+        transformer = LaggedWindowSummarizer(target_cols=target_cols)
     Xt = transformer.fit_transform(y)
     if Xt is not None:
         if isinstance(Xt, pd.DataFrame):

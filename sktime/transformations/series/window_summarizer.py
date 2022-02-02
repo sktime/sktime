@@ -127,7 +127,7 @@ class LaggedWindowSummarizer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.window_summarizer import (
+    >>> from sktime.transformations.series.window_summarizer import (
     ...    LaggedWindowSummarizer
     ... )
     >>> from sktime.datasets import load_airline
@@ -196,7 +196,7 @@ class LaggedWindowSummarizer(BaseTransformer):
                 else:
                     self._target_cols = "var_0"
         else:
-            self.target_cols = self._target_cols
+            self._target_cols = self.target_cols
 
         if not all(x in X.columns.to_list() for x in self._target_cols):
             raise ValueError("Invalid target select for transformation")
@@ -233,10 +233,9 @@ class LaggedWindowSummarizer(BaseTransformer):
         """
         # input checks
         Xt_out = []
-        Xin = X.copy()
         for cols in self._target_cols:
-            if isinstance(Xin.index, pd.MultiIndex):
-                X_grouped = getattr(Xin.groupby("instances"), Xin[cols])
+            if isinstance(X.index, pd.MultiIndex):
+                X_grouped = getattr(X.groupby("instances"), X[cols])
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs)
                     for index, kwargs in self._func_dict.iterrows()
@@ -245,13 +244,13 @@ class LaggedWindowSummarizer(BaseTransformer):
                 # for _index, kwargs in self._func_dict.iterrows():
                 #     _window_feature(X, **kwargs)
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(Xin[cols], **kwargs)
+                    delayed(_window_feature)(X[cols], **kwargs)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
             if len(self._target_cols) > 1:
                 Xt = Xt.add_prefix(cols + "_")
             Xt_out.append(Xt)
-        Xt_return = pd.concat(Xt_out, axis=1)
-
+        Xt_out_df = pd.concat(Xt_out, axis=1)
+        Xt_return = pd.concat([Xt_out_df, X.drop(self._target_cols, axis=1)], axis=1)
         return Xt_return
