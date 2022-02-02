@@ -6,7 +6,6 @@ __pycache__/
 # C extensions
 *.so
 *.c
-*mrseql.cpp
 
 # Distribution / packaging
 .Python
@@ -33,7 +32,7 @@ results/
 MANIFEST
 
 #downloaded datasets
-sktime/datasets/data/
+sktime/datasets/local_data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

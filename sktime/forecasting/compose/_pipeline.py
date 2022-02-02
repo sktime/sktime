@@ -148,7 +148,7 @@ class _Pipeline(
 
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
 
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
@@ -157,7 +157,7 @@ class _Pipeline(
         params1 = {"steps": STEPS1}
 
         STEPS2 = [
-            ("transformer", BoxCoxTransformer()),
+            ("transformer", ExponentTransformer()),
             ("forecaster", NaiveForecaster()),
         ]
         params2 = {"steps": STEPS2}
@@ -273,8 +273,8 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                # todo: deprecation in 0.10.0
-                # add kwarg X= after deprecation of old trafo interface
+                # todo: remove in 0.11.0
+                # add kwarg X= after removal of old trafo interface
                 X = transformer.transform(X)
 
         return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
