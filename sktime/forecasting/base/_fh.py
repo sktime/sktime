@@ -268,13 +268,15 @@ class ForecastingHorizon:
                 # coerce to pd.Period for reliable arithmetics and computations of
                 # time deltas
                 absolute = _coerce_to_period(absolute, freq)
-                cutoff = _coerce_to_period(cutoff, freq)
+                cutoff = pd.PeriodIndex([cutoff], freq=freq)
 
             # Compute relative values
-            relative = absolute - cutoff
+            relative = pd.TimedeltaIndex(absolute - cutoff, freq=_get_freq(cutoff))
 
             # Coerce durations (time deltas) into integer values for given frequency
-            if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
+            if isinstance(
+                absolute, (pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
+            ):
                 relative = _coerce_duration_to_int(relative, freq=_get_freq(cutoff))
 
             return self._new(relative, is_relative=True)
@@ -505,7 +507,7 @@ def _check_start(start, index):
 
 
 def _coerce_to_period(x, freq=None):
-    """Coerce pandas time index to a alternative pandas time index.
+    """Coerce pandas tiRme index to a alternative pandas time index.
 
     This coerces pd.Timestamp to pd.Period or pd.DatetimeIndex to
     pd.PeriodIndex, because pd.Period and pd.PeriodIndex allow more reliable
