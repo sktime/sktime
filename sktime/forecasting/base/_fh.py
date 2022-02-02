@@ -337,16 +337,19 @@ class ForecastingHorizon:
         """
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
-        absolute = self.to_absolute(cutoff).to_pandas()
-        _check_start(start, absolute)
+        absolute = self.to_absolute(cutoff)
+        # _check_start(start, absolute)
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
         # `update_predict` and incomplete time indices where the `freq` information
         # is lost, see comment on issue #534
-        integers = absolute - start
+        start = pd.PeriodIndex([start], freq=_get_freq(cutoff))
+        integers = pd.TimedeltaIndex(absolute - start)
 
-        if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
+        if isinstance(
+            integers, (pd.PeriodIndex, pd.DatetimeIndex, pd.Index, pd.TimedeltaIndex)
+        ):
             integers = _coerce_duration_to_int(integers, freq=_get_freq(cutoff))
 
         return self._new(integers, is_relative=False)
