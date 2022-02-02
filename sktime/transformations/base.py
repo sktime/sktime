@@ -221,7 +221,8 @@ class BaseTransformer(BaseEstimator):
                     "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list",
+                X,
+                to_type="df-list",
                 as_scitype="Panel",
                 store=self._converter_store_X,
                 store_behaviour="reset",

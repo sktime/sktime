@@ -65,10 +65,10 @@ __all__ = [
     "convert_to",
 ]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
-
-from copy import deepcopy
 
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._hierarchical import convert_dict_Hierarchical
