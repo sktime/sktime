@@ -62,10 +62,6 @@ kwargs_variant = {
     }
 }
 
-estimator_instance = LaggedWindowSummarizer(functions=None, n_jobs=-1, target_cols=None)
-Xt = estimator_instance.fit_transform(y_pd)
-Xt = estimator_instance.fit_transform(y_pd)
-
 
 @pytest.mark.parametrize(
     "kwargs, column_names, y",

@@ -143,17 +143,9 @@ class LaggedWindowSummarizer(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
-        # "scitype:transform-labels": "None",
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        # "X_inner_mtype": ["pd.DataFrame"
-        # # which mtypes do _fit/_predict support for X?
-        # # X_inner_mtype can be Panel mtype even if
-        # transform-input is Series, vectorized
-        # "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": False,  # does transformer
-        # have inverse transform
+        "scitype:transform-output": "Panel",
+        "scitype:instancewise": True,
+        "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
