@@ -210,6 +210,7 @@ class BaseForecaster(BaseEstimator):
                 self._y_mtype_last_seen,
                 as_scitype="Series",
                 store=self._converter_store_y,
+                store_behaviour="freeze",
             )
 
             return y_out
@@ -260,6 +261,7 @@ class BaseForecaster(BaseEstimator):
                 self._y_mtype_last_seen,
                 as_scitype="Series",
                 store=self._converter_store_y,
+                store_behaviour="freeze",
             )
 
             return (y_out, pred_int)
@@ -868,6 +870,7 @@ class BaseForecaster(BaseEstimator):
             to_type=y_inner_mtype,
             as_scitype="Series",  # we are dealing with series
             store=self._converter_store_y,
+            store_behaviour="reset",
         )
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
