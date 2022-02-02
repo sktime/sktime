@@ -134,7 +134,7 @@ def convert(
         raise TypeError("as_scitype must be str or None")
     if store is not None and not isinstance(store, dict):
         raise TypeError("store must be a dict or None")
-    if store_behaviour is not isinstance(store_behaviour, str):
+    if store_behaviour is not None and not isinstance(store_behaviour, str):
         raise TypeError("store_behaviour must be a str or None")
     elif store_behaviour not in [None, "reset", "freeze", "update"]:
         raise ValueError('store_behaviour must be one of "reset", "freeze", "update"')
