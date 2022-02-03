@@ -237,9 +237,9 @@ def test_to_absolute_freq(freqstr):
     assert abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
-def test_absolute_to_absolute(freqstr):
-    """Test converting between absolute and relative."""
+@pytest.mark.parametrize("freqstr", ["D", "W-WED", "W-SUN", "W-SAT", "M"])
+def test_absolute_to_absolute_with_integer_horizon(freqstr):
+    """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
@@ -250,9 +250,22 @@ def test_absolute_to_absolute(freqstr):
     assert converted_abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
-def test_relative_to_relative(freqstr):
-    """Test converting between relative and absolute."""
+@pytest.mark.parametrize("freqstr", ["H", "D"])
+def test_absolute_to_absolute_with_timdelta_horizon(freqstr):
+    """Test converting between absolute and relative."""
+    # Converts from absolute to relative and back to absolute
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    fh = ForecastingHorizon(pd.timedelta_range("1 days", freq=freqstr, periods=3))
+    abs_fh = fh.to_absolute(train.index[-1])
+
+    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    assert_array_equal(abs_fh, converted_abs_fh)
+    assert converted_abs_fh._values.freqstr == freqstr
+
+
+@pytest.mark.parametrize("freqstr", ["D", "W-WED", "W-SUN", "W-SAT", "M"])
+def test_relative_to_relative_with_integer_horizon(freqstr):
+    """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
@@ -260,6 +273,18 @@ def test_relative_to_relative(freqstr):
 
     converted_rel_fh = abs_fh.to_relative(train.index[-1])
     assert_array_equal(fh, converted_rel_fh)
+
+
+@pytest.mark.parametrize("freqstr", ["D"])
+def test_relative_to_relative_with_timdelta_horizon(freqstr):
+    """Test converting between relative and absolute with timedelta horizons."""
+    # Converts from relative to absolute and back to relative
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    fh = ForecastingHorizon(pd.timedelta_range("1 days", freq=freqstr, periods=3))
+    abs_fh = fh.to_absolute(train.index[-1])
+
+    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    assert_array_equal(converted_rel_fh, np.arange(1, 4))
 
 
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
