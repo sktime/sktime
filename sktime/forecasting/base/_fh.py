@@ -273,23 +273,23 @@ class ForecastingHorizon:
             absolute = self.to_pandas()
             _check_cutoff(cutoff, absolute)
 
-            if isinstance(absolute, pd.DatetimeIndex):
-                # We cannot use the freq from the the ForecastingHorizon itself (or its
-                # wrapped pd.DatetimeIndex) because it may be none for non-regular
-                # indices, so instead we use the freq of cutoff.
-                freq = _get_freq(cutoff)
+            # We cannot use the freq from the ForecastingHorizon itself (or its
+            # wrapped pd.DatetimeIndex) because it may be none for non-regular
+            # indices, so instead we use the freq of cutoff.
+            freq = _get_freq(cutoff)
 
+            if isinstance(absolute, pd.DatetimeIndex):
                 # coerce to pd.Period for reliable arithmetics and computations of
                 # time deltas
-                absolute = _coerce_to_period(absolute, freq)
-                cutoff = _coerce_to_period(cutoff, freq)
+                absolute = _coerce_to_period(absolute, freq).to_timestamp()
+                cutoff = _coerce_to_period(cutoff, freq).to_timestamp()
 
             # Compute relative values
             relative = absolute - cutoff
 
             # Coerce durations (time deltas) into integer values for given frequency
             if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-                relative = _coerce_duration_to_int(relative, freq=_get_freq(cutoff))
+                relative = _coerce_duration_to_int(relative, freq=freq)
 
             return self._new(relative, is_relative=True)
 
