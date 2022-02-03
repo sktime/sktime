@@ -106,7 +106,7 @@ def convert(
         is updated by side effect if not None and store_behaviour="reset" or "update"
     store_behaviour : str, optional, one of None (default), "reset", "freeze", "update"
         "reset" - store is emptied and then updated from conversion
-        "freeze" - store is unchanged, may be read/used by conversion
+        "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
         None - automatic: if store is empty and not None, "update"; otherwise, "freeze"
 
@@ -190,7 +190,7 @@ def convert_to(
         is updated by side effect if not None and store_behaviour="reset" or "update"
     store_behaviour : str, optional, one of None (default), "reset", "freeze", "update"
         "reset" - store is emptied and then updated from conversion
-        "freeze" - store is unchanged, may be read/used by conversion
+        "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
         None - automatic: if store is empty and not None, "update"; otherwise, "freeze"
 
