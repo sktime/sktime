@@ -554,8 +554,12 @@ class CutoffSplitter(BaseSplitter):
     which using the notation provided in :class:`BaseSplitter`,
     can be written as :math:`\{k_1,\ldots,k_n\}` for integer based indexing,
     or :math:`\{t(k_1),\ldots,t(k_n)\}` for datetime based indexing.
+    Training window's last point is equal to the cutoff,
+    while test window starts from the next observation in `y`.
+
     The number of splits returned by `.get_n_splits`
     is then trivially equal to :math:`n`.
+
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
     :math:`\{t(k_1),\ldots,t(k_n)\}` with :math:`k_i<k_{i+1}`.
 
