@@ -178,9 +178,7 @@ class ForecastingHorizon:
 
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
-        error_msg = (
-            f"`values` type is not compatible with `is_relative=" f"{is_relative}`."
-        )
+        error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
             if type(values) in RELATIVE_TYPES:
                 is_relative = True
