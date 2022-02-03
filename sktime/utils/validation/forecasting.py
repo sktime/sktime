@@ -15,7 +15,7 @@ __all__ = [
     "check_sp",
     "check_regressor",
 ]
-__author__ = ["mloning", "@big-o"]
+__author__ = ["mloning", "@big-o", "khrapovs"]
 
 from datetime import timedelta
 from typing import Optional, Union
