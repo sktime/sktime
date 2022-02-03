@@ -251,7 +251,7 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
 
 @pytest.mark.parametrize("freqstr", ["H", "D"])
-def test_absolute_to_absolute_with_timdelta_horizon(freqstr):
+def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
@@ -276,7 +276,7 @@ def test_relative_to_relative_with_integer_horizon(freqstr):
 
 
 @pytest.mark.parametrize("freqstr", ["D"])
-def test_relative_to_relative_with_timdelta_horizon(freqstr):
+def test_relative_to_relative_with_timedelta_horizon(freqstr):
     """Test converting between relative and absolute with timedelta horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
