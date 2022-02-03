@@ -352,6 +352,11 @@ class ForecastingHorizon:
         absolute = self.to_absolute(cutoff).to_pandas()
         _check_start(start, absolute)
 
+        if isinstance(absolute, pd.PeriodIndex):
+            absolute = absolute.to_timestamp()
+        if isinstance(start, pd.Period):
+            start = start.to_timestamp()
+
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
         # `update_predict` and incomplete time indices where the `freq` information
