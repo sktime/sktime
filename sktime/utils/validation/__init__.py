@@ -78,8 +78,8 @@ def array_is_datetime64(x) -> bool:
     return all([is_datetime(value) for value in x])
 
 
-def array_is_timedelta64(x) -> bool:
-    """Check if array is of np.timedelta64 type."""
+def array_is_timedelta_or_date_offset(x) -> bool:
+    """Check if array is timedelta or pd.DateOffset type."""
     return all([is_timedelta_or_date_offset(value) for value in x])
 
 

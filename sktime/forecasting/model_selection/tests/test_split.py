@@ -38,7 +38,7 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     array_is_datetime64,
     array_is_int,
-    array_is_timedelta64,
+    array_is_timedelta_or_date_offset,
     is_int,
     is_timedelta_or_date_offset,
 )
@@ -89,7 +89,7 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     fh = check_fh(fh)
     if is_int(fh[-1]):
         expected = np.array([window[-1] - fh[-1] for window in windows])
-    elif array_is_timedelta64(fh):
+    elif array_is_timedelta_or_date_offset(fh):
         expected = np.array(
             [(y.index[window[-1]] - fh[-1]).to_datetime64() for window in windows]
         )

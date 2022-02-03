@@ -15,7 +15,7 @@ import pandas as pd
 from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation import (
     array_is_int,
-    array_is_timedelta64,
+    array_is_timedelta_or_date_offset,
     is_array,
     is_int,
     is_timedelta_or_date_offset,
@@ -108,7 +108,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     elif is_array(values) and array_is_int(values):
         values = pd.Int64Index(values, dtype=int)
 
-    elif is_array(values) and array_is_timedelta64(values):
+    elif is_array(values) and array_is_timedelta_or_date_offset(values):
         values = pd.Index(values)
 
     # otherwise, raise type error

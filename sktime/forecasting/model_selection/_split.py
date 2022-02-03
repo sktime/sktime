@@ -31,7 +31,7 @@ from sktime.utils.validation import (
     NON_FLOAT_WINDOW_LENGTH_TYPES,
     array_is_datetime64,
     array_is_int,
-    array_is_timedelta64,
+    array_is_timedelta_or_date_offset,
     check_window_length,
     is_datetime,
     is_int,
@@ -237,7 +237,7 @@ def _cutoffs_fh_window_length_types_are_supported(
     all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
     all_dates = (
         array_is_datetime64(cutoffs)
-        and array_is_timedelta64(fh)
+        and array_is_timedelta_or_date_offset(fh)
         and is_timedelta_or_date_offset(window_length)
     )
     if all_int or all_dates:
