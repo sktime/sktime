@@ -273,8 +273,7 @@ def _cutoffs_fh_window_length_types_are_supported(
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like,
-        usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
+        cutoff points, positive and integer- or datetime-index like
     fh : int, timedelta, list or np.array of ints or timedeltas
     window_length : int or timedelta or pd.DateOffset
 
@@ -307,8 +306,7 @@ def _check_cutoffs_fh_window_length(
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like,
-        usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
+        cutoff points, positive and integer- or datetime-index like
     fh : int, timedelta, list or np.array of ints or timedeltas
     window_length : int or timedelta or pd.DateOffset
 
@@ -329,8 +327,7 @@ def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> No
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like,
-        usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
+        cutoff points, positive and integer- or datetime-index like
     y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
         coerced and checked version of input y
 
@@ -367,8 +364,7 @@ def _check_cutoffs_fh_y(
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like,
-        usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
+        cutoff points, positive and integer- or datetime-index like
     fh : int, timedelta, list or np.array of ints or timedeltas
     y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
         coerced and checked version of input y
@@ -566,8 +562,7 @@ class CutoffSplitter(BaseSplitter):
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like,
-        usable with pandas `.iloc[]` or `.loc[]` indexing, respectively
+        cutoff points, positive and integer- or datetime-index like
     fh : int, timedelta, list or np.array of ints or timedeltas
     window_length : int or timedelta or pd.DateOffset
     """
