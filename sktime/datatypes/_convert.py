@@ -108,7 +108,7 @@ def convert(
         "reset" - store is emptied and then updated from conversion
         "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
-        None - automatic: if store is empty and not None, "update"; otherwise, "freeze"
+        None - automatic: "update" if store is empty and not None; "freeze", otherwise
 
     Returns
     -------
@@ -192,7 +192,7 @@ def convert_to(
         "reset" - store is emptied and then updated from conversion
         "freeze" - store is read-only, may be read/used by conversion but not changed
         "update" - store is updated from conversion and retains previous contents
-        None - automatic: if store is empty and not None, "update"; otherwise, "freeze"
+        None - automatic: "update" if store is empty and not None; "freeze", otherwise
 
     Returns
     -------
