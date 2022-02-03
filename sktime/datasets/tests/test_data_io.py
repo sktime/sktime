@@ -1083,9 +1083,13 @@ def test_write_dataframe_to_ts_fail(tmp_path):
         )
 
 
-def test_convert_tsf_to_dataframe():
+def test_load_tsf_to_dataframe():
     """Test function for loading tsf format."""
-    data_path = MODULE + "/data/UnitTest/UnitTest_Tsf_Loader.tsf"
+    data_path = os.path.join(
+        os.path.dirname(sktime.__file__),
+        "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
+    )
+
     df, frequency, horizon, missing_values, equal_length = load_tsf_to_dataframe(
         data_path
     )

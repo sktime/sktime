@@ -1688,6 +1688,10 @@ def load_tsf_to_dataframe(
     """
     Convert the contents in a .tsf file into a dataframe.
 
+    This code was extracted from
+    https://github.com/rakshitha123/TSForecasting/blob
+    /master/utils/data_loader.py.
+
     Parameters
     ----------
     full_file_path_and_name: str
