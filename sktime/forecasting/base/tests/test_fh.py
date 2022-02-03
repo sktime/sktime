@@ -134,7 +134,7 @@ def test_check_fh_values_duplicate_input_values(arg):
         ForecastingHorizon(arg)
 
 
-GOOD_INPUT_ARGS = (
+GOOD_ABSOLUTE_INPUT_ARGS = (
     pd.Int64Index([1, 2, 3]),
     pd.period_range("2000-01-01", periods=3, freq="D"),
     pd.date_range("2000-01-01", periods=3, freq="M"),
@@ -144,10 +144,20 @@ GOOD_INPUT_ARGS = (
 )
 
 
-@pytest.mark.parametrize("arg", GOOD_INPUT_ARGS)
-def test_check_fh_values_input_conversion_to_pandas_index(arg):
-    """Test conversion to pandas index."""
+@pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
+def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
+    """Test conversion of absolute horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
+    assert type(output) in VALID_INDEX_TYPES
+
+
+GOOD_RELATIVE_INPUT_ARGS = [pd.timedelta_range(1, periods=3, freq="D")]
+
+
+@pytest.mark.parametrize("arg", GOOD_RELATIVE_INPUT_ARGS)
+def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
+    """Test conversion of relative horizons to pandas index."""
+    output = ForecastingHorizon(arg, is_relative=True).to_pandas()
     assert type(output) in VALID_INDEX_TYPES
 
 
