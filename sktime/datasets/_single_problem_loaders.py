@@ -34,6 +34,7 @@ __all__ = [
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
     "load_macroeconomic",
+    "load_unit_test_tsf",
 ]
 
 import os
@@ -42,7 +43,11 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from sktime.datasets._data_io import _load_dataset, _load_provided_dataset
+from sktime.datasets._data_io import (
+    _load_dataset,
+    _load_provided_dataset,
+    load_tsf_to_dataframe,
+)
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -863,3 +868,40 @@ def load_macroeconomic():
     y = y.drop(columns=["year", "quarter", "time"])
     y.name = "US Macroeconomic Data"
     return y
+
+
+def load_unit_test_tsf():
+    """
+    Load tsf UnitTest dataset.
+
+    Returns
+    -------
+    loaded_data: pd.DataFrame
+        The converted dataframe containing the time series.
+    frequency: str
+        The frequency of the dataset.
+    forecast_horizon: int
+        The expected forecast horizon of the dataset.
+    contain_missing_values: bool
+        Whether the dataset contains missing values or not.
+    contain_equal_length: bool
+        Whether the series have equal lengths or not.
+    """
+    name = "UnitTest"
+    fname = "UnitTest_Tsf_Loader.tsf"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    (
+        loaded_data,
+        frequency,
+        forecast_horizon,
+        contain_missing_values,
+        contain_equal_length,
+    ) = load_tsf_to_dataframe(path)
+
+    return (
+        loaded_data,
+        frequency,
+        forecast_horizon,
+        contain_missing_values,
+        contain_equal_length,
+    )
