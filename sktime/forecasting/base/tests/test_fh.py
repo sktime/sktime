@@ -256,7 +256,7 @@ def test_absolute_to_absolute(freqstr):
     assert converted_abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+@pytest.mark.parametrize("freqstr", ["H", "2H", "W-WED", "W-SUN", "W-SAT"])
 def test_relative_to_relative(freqstr):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
@@ -266,6 +266,22 @@ def test_relative_to_relative(freqstr):
 
     converted_rel_fh = abs_fh.to_relative(train.index[-1])
     assert_array_equal(fh, converted_rel_fh)
+
+
+@pytest.mark.parametrize(
+    "freq", ["10Min", "H", "1D", "2D", "W-WED", "W-SUN", "W-SAT", "M"]
+)
+def test_to_relative(freq: str):
+    """Test conversion to relative.
+
+    Fixes bug in
+    https://github.com/alan-turing-institute/sktime/issues/1935#issue-1114814142
+    """
+    freq = "2H"
+    t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
+    fh_abs = ForecastingHorizon(t, is_relative=False)
+    fh_rel = fh_abs.to_relative(cutoff=t.min())
+    assert_array_equal(fh_rel, np.arange(5))
 
 
 @pytest.mark.parametrize("idx", range(5))
