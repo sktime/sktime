@@ -95,6 +95,7 @@ def create_conditional_fixtures_and_names(
         fixture names correspond to fixtures with the same indices at picks (from lists)
     """
     fixture_vars = _check_list_of_str(fixture_vars, name="fixture_vars")
+    fixture_vars = [var for var in fixture_vars if var in generator_dict.keys()]
 
     # order fixture_vars according to fixture_sequence if provided
     if fixture_sequence is not None:
