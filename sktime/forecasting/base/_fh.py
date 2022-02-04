@@ -347,7 +347,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        freq = cutoff.freqstr
+        freq = _get_freq(cutoff)
         if isinstance(cutoff, pd.Timestamp):
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
@@ -355,7 +355,7 @@ class ForecastingHorizon:
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
         absolute = self.to_absolute(cutoff).to_pandas()
-        if not isinstance(start, pd.Period):
+        if not isinstance(start, (int, pd.Period)):
             start = _coerce_to_period(start, freq=freq)
         _check_start(start, absolute)
 
