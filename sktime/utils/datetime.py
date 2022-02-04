@@ -35,7 +35,14 @@ def _coerce_duration_to_int(duration, freq=None):
     elif isinstance(duration, pd.Index) and isinstance(
         duration[0], pd.tseries.offsets.BaseOffset
     ):
-        return pd.Int64Index([d.n for d in duration])
+        if freq is None:
+            raise ValueError("frequency is missing")
+        m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
+        if not m:
+            raise ValueError("pandas frequency %s not understood." % freq)
+        count, unit = m.groups()
+        count = 1 if not count else int(count)
+        return pd.Int64Index([d.n / count for d in duration])
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
         if freq is None:
             raise ValueError("`unit` missing")

@@ -281,11 +281,11 @@ class ForecastingHorizon:
             if isinstance(absolute, pd.DatetimeIndex):
                 # coerce to pd.Period for reliable arithmetics and computations of
                 # time deltas
-                absolute = _coerce_to_period(absolute, freq).to_timestamp()
-                cutoff = _coerce_to_period(cutoff, freq).to_timestamp()
+                absolute = _coerce_to_period(absolute, freq)
+                cutoff = _coerce_to_period(cutoff, freq)
 
             # Compute relative values
-            relative = absolute - cutoff
+            relative = pd.Index([date - cutoff for date in absolute])
 
             # Coerce durations (time deltas) into integer values for given frequency
             if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
@@ -347,21 +347,23 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
+        freq = cutoff.freqstr
+        if isinstance(cutoff, pd.Timestamp):
+            # coerce to pd.Period for reliable arithmetic operations and
+            # computations of time deltas
+            cutoff = _coerce_to_period(cutoff, freq=freq)
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
         absolute = self.to_absolute(cutoff).to_pandas()
+        if not isinstance(start, pd.Period):
+            start = _coerce_to_period(start, freq=freq)
         _check_start(start, absolute)
-
-        if isinstance(absolute, pd.PeriodIndex):
-            absolute = absolute.to_timestamp()
-        if isinstance(start, pd.Period):
-            start = start.to_timestamp()
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
         # `update_predict` and incomplete time indices where the `freq` information
         # is lost, see comment on issue #534
-        integers = absolute - start
+        integers = pd.Index([date - start for date in absolute])
 
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
             integers = _coerce_duration_to_int(integers, freq=_get_freq(cutoff))
