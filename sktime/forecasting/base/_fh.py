@@ -352,12 +352,16 @@ class ForecastingHorizon:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=freq)
+        absolute = self.to_absolute(cutoff).to_pandas()
+        if isinstance(absolute, pd.DatetimeIndex):
+            # coerce to pd.Period for reliable arithmetics and computations of
+            # time deltas
+            absolute = _coerce_to_period(absolute, freq=freq)
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
-        absolute = self.to_absolute(cutoff).to_pandas()
         if not isinstance(start, (int, pd.Period)):
             start = _coerce_to_period(start, freq=freq)
-        _check_start(start, absolute)
+        # _check_start(start, absolute)
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
