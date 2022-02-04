@@ -359,9 +359,9 @@ class ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=freq)
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
-        if not isinstance(start, (int, pd.Period)):
+        if isinstance(start, pd.Timestamp):
             start = _coerce_to_period(start, freq=freq)
-        # _check_start(start, absolute)
+        _check_start(start, absolute)
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
