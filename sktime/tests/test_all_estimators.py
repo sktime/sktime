@@ -108,7 +108,7 @@ class BaseFixtureGenerator:
         # get name of the test
         test_name = metafunc.function.__name__
 
-        fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
+        fixture_sequence = self.fixture_sequence
 
         fixture_vars = getfullargspec(metafunc.function)[0]
 
