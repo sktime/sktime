@@ -264,7 +264,7 @@ class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
     def run_tests(
-        self, est, return_exceptions=True, tests_to_run=None, fixtures_to_run=None
+        self, estimator, return_exceptions=True, tests_to_run=None, fixtures_to_run=None
     ):
         """Run all tests on one single estimator.
 
@@ -276,7 +276,7 @@ class QuickTester:
 
         Parameters
         ----------
-        est : estimator class or estimator instance
+        estimator : estimator class or estimator instance
         return_exception : bool, optional, default=True
             whether to return exceptions/failures, or raise them
                 if True: returns exceptions in results
@@ -331,23 +331,23 @@ class QuickTester:
         #  the remaining fixtures are generated conditionally, without change
         temp_generator_dict = deepcopy(self.generator_dict())
 
-        if isclass(est):
-            estimator_class = est
+        if isclass(estimator):
+            estimator_class = estimator
         else:
-            estimator_class = type(est)
+            estimator_class = type(estimator)
 
         def _generate_estimator_class(test_name, **kwargs):
             return [estimator_class], [estimator_class.__name__]
 
         def _generate_estimator_instance(test_name, **kwargs):
-            return [est], [estimator_class.__name__]
+            return [estimator], [estimator_class.__name__]
 
         def _generate_estimator_instance_cls(test_name, **kwargs):
             return estimator_class.create_test_instances_and_names()
 
         temp_generator_dict["estimator_class"] = _generate_estimator_class
 
-        if not isclass(est):
+        if not isclass(estimator):
             temp_generator_dict["estimator_instance"] = _generate_estimator_instance
         else:
             temp_generator_dict["estimator_instance"] = _generate_estimator_instance_cls
