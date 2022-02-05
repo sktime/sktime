@@ -54,7 +54,7 @@ def check_estimator(
     if return_exception=False, raises any exception produced by the tests directly
     """
     results = TestAllEstimators().run_tests(
-        est=estimator,
+        estimator=estimator,
         return_exceptions=return_exceptions,
         tests_to_run=tests_to_run,
         fixtures_to_run=fixtures_to_run,
@@ -64,7 +64,7 @@ def check_estimator(
 
     if scitype_of_estimator in testclass_dict.keys():
         results_scitype = testclass_dict[scitype_of_estimator]().run_tests(
-            est=estimator,
+            estimator=estimator,
             return_exceptions=return_exceptions,
             tests_to_run=tests_to_run,
             fixtures_to_run=fixtures_to_run,
