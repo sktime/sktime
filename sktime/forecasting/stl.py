@@ -19,28 +19,67 @@ class STLForecaster(BaseForecaster):
 
     The STLForecaster is using an STL to decompose the given
     series y into the three components trend, season and residuals [1]_. Then,
-    the trend_forecaster, seasonal_forecaster and resid_forecaster are fitted
+    the forecaster_trend, forecaster_seasonal and forecaster_resid are fitted
     on the components individually to forecast them also individually. The
     final forecast is then the sum of the three component forecasts.
 
     Parameters
     ----------
-    sp : int, optional
-        Seasonal period for defaulting forecasters and/or STL,
-        by default None. Can only be used if at least on the forecasters
-        or the stl is None.
-    trend_forecaster : sktime forecaster, optional
+    forecaster_trend : sktime forecaster, optional
         Forecaster to be fitted on trend_ component of the
         STL, by default None. If None, then
         a NaiveForecaster(strategy="drift") is used.
-    seasonal_forecaster : sktime forecaster, optional
+    forecaster_seasonal : sktime forecaster, optional
         Forecaster to be fitted on seasonal_ component of the
         STL, by default None. If None, then
         a NaiveForecaster(strategy="last") is used.
-    resid_forecaster : sktime forecaster, optional
+    forecaster_resid : sktime forecaster, optional
         Forecaster to be fitted on resid_ component of the
         STL, by default None. If None, then
         a NaiveForecaster(strategy="mean") is used.
+    sp : int, optional
+        Seasonal period for defaulting forecasters and/or STL.period param,
+        by default None. Can only be used if at least on the forecasters
+        or the stl is None.
+    period : {int, None}, optional
+        Periodicity of the sequence. If None and endog is a pandas Series or
+        DataFrame, attempts to determine from endog. If endog is a ndarray,
+        period must be provided.
+    seasonal : int, optional
+        Length of the seasonal smoother. Must be an odd integer, and should
+        normally be >= 7 (default).
+    trend : {int, None}, optional
+        Length of the trend smoother. Must be an odd integer. If not provided
+        uses the smallest odd integer greater than
+        1.5 * period / (1 - 1.5 / seasonal), following the suggestion in
+        the original implementation.
+    low_pass : {int, None}, optional
+        Length of the low-pass filter. Must be an odd integer >=3. If not
+        provided, uses the smallest odd integer > period.
+    seasonal_deg : int, optional
+        Degree of seasonal LOESS. 0 (constant) or 1 (constant and trend).
+    trend_deg : int, optional
+        Degree of trend LOESS. 0 (constant) or 1 (constant and trend).
+    low_pass_deg : int, optional
+        Degree of low pass LOESS. 0 (constant) or 1 (constant and trend).
+    robust : bool, optional
+        Flag indicating whether to use a weighted version that is robust to
+        some forms of outliers.
+    seasonal_jump : int, optional
+        Positive integer determining the linear interpolation step. If larger
+        than 1, the LOESS is used every seasonal_jump points and linear
+        interpolation is between fitted points. Higher values reduce
+        estimation time.
+    trend_jump : int, optional
+        Positive integer determining the linear interpolation step. If larger
+        than 1, the LOESS is used every trend_jump points and values between
+        the two are linearly interpolated. Higher values reduce estimation
+        time.
+    low_pass_jump : int, optional
+        Positive integer determining the linear interpolation step. If larger
+        than 1, the LOESS is used every low_pass_jump points and values between
+        the two are linearly interpolated. Higher values reduce estimation
+        time.
 
     Attributes
     ----------
@@ -50,11 +89,11 @@ class STLForecaster(BaseForecaster):
         Seasonal component.
     resid_ : pd.Series
         Residuals component.
-    trend_forecaster_ : sktime forecaster
+    forecaster_trend_ : sktime forecaster
         Fitted trend forecaster.
-    seasonal_forecaster_ : sktime forecaster
+    forecaster_seasonal_ : sktime forecaster
         Fitted seasonal forecaster.
-    resid_forecaster_ : sktime forecaster
+    forecaster_resid_ : sktime forecaster
         Fitted residual forecaster.
     stl_ : STL
         Fitted statsmodels.STL
@@ -91,9 +130,9 @@ class STLForecaster(BaseForecaster):
 
     def __init__(
         self,
-        trend_forecaster=None,
-        seasonal_forecaster=None,
-        resid_forecaster=None,
+        forecaster_trend=None,
+        forecaster_seasonal=None,
+        forecaster_resid=None,
         sp=2,
         seasonal=7,
         trend=None,
@@ -106,9 +145,9 @@ class STLForecaster(BaseForecaster):
         trend_jump=1,
         low_pass_jump=1,
     ):
-        self.trend_forecaster = trend_forecaster
-        self.seasonal_forecaster = seasonal_forecaster
-        self.resid_forecaster = resid_forecaster
+        self.forecaster_trend = forecaster_trend
+        self.forecaster_seasonal = forecaster_seasonal
+        self.forecaster_resid = forecaster_resid
         self.sp = sp
         self.seasonal = seasonal
         self.trend = trend
@@ -157,26 +196,26 @@ class STLForecaster(BaseForecaster):
         self.trend_ = pd.Series(self.stl_.trend, index=y.index)
 
         # setting defualt forecasters if required
-        self.seasonal_forecaster_ = (
+        self.forecaster_seasonal_ = (
             NaiveForecaster(sp=self.sp, strategy="last")
-            if self.seasonal_forecaster is None
-            else clone(self.seasonal_forecaster)
+            if self.forecaster_seasonal is None
+            else clone(self.forecaster_seasonal)
         )
-        self.trend_forecaster_ = (
+        self.forecaster_trend_ = (
             NaiveForecaster(strategy="drift")
-            if self.trend_forecaster is None
-            else clone(self.trend_forecaster)
+            if self.forecaster_trend is None
+            else clone(self.forecaster_trend)
         )
-        self.resid_forecaster_ = (
+        self.forecaster_resid_ = (
             NaiveForecaster(sp=self.sp, strategy="mean")
-            if self.resid_forecaster is None
-            else clone(self.resid_forecaster)
+            if self.forecaster_resid is None
+            else clone(self.forecaster_resid)
         )
 
         # fitting forecasters to different components
-        self.seasonal_forecaster_.fit(y=self.seasonal_, X=X, fh=fh)
-        self.trend_forecaster_.fit(y=self.trend_, X=X, fh=fh)
-        self.resid_forecaster_.fit(y=self.resid_, X=X, fh=fh)
+        self.forecaster_seasonal_.fit(y=self.seasonal_, X=X, fh=fh)
+        self.forecaster_trend_.fit(y=self.trend_, X=X, fh=fh)
+        self.forecaster_resid_.fit(y=self.resid_, X=X, fh=fh)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast time series at future horizon.
@@ -196,8 +235,8 @@ class STLForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        y_pred_seasonal = self.seasonal_forecaster_.predict(fh=fh, X=X)
-        y_pred_trend = self.trend_forecaster_.predict(fh=fh, X=X)
-        y_pred_resid = self.resid_forecaster_.predict(fh=fh, X=X)
+        y_pred_seasonal = self.forecaster_seasonal_.predict(fh=fh, X=X)
+        y_pred_trend = self.forecaster_trend_.predict(fh=fh, X=X)
+        y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
         return y_pred
