@@ -206,7 +206,6 @@ class BaseFixtureGenerator:
 
         return estimator_instances_to_test, estimator_instance_names
 
-    @staticmethod
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
 
