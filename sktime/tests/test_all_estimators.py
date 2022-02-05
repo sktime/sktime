@@ -310,12 +310,12 @@ class QuickTester:
         ...     NaiveForecaster,
         ...     tests_to_run=["test_create_test_instance", "test_required_params"]
         ... )
-        {'test_required_params[NaiveForecaster]': 'PASSED', 'test_create_test_instance[NaiveForecaster]': 'PASSED'}  # noqa: E501
+        {'test_required_params[NaiveForecaster]': 'PASSED', 'test_create_test_instance[NaiveForecaster]': 'PASSED'}
         >>> TestAllEstimators().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
-        """
+        """  # noqa: E501
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
