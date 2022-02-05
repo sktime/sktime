@@ -62,14 +62,15 @@ def is_excluded(test_name, est):
     """Shorthand to check whether test test_name is excluded for estimator est."""
     return test_name in EXCLUDED_TESTS.get(est.__name__, [])
 
-    # the following functions define fixture generation logic for pytest_generate_tests
-    # each function is of signature (test_name:str, **kwargs) -> List of fixtures
-    # function with name _generate_[fixture_var] returns list of values for fixture_var
-    #   where fixture_var is a fixture variable used in tests
-    # the list is conditional on values of other fixtures which can be passed in kwargs
-    #
-    # functions _generate_[fixture_var] are stored in generator_dict at key fixture_var
-    #   for use by the _conditional_fixture plug-in to pytest_generate_tests
+
+# the following functions define fixture generation logic for pytest_generate_tests
+# each function is of signature (test_name:str, **kwargs) -> List of fixtures
+# function with name _generate_[fixture_var] returns list of values for fixture_var
+#   where fixture_var is a fixture variable used in tests
+# the list is conditional on values of other fixtures which can be passed in kwargs
+#
+# functions _generate_[fixture_var] are stored in generator_dict at key fixture_var
+#   for use by the _conditional_fixture plug-in to pytest_generate_tests
 
 
 generator_dict = dict()
@@ -145,9 +146,6 @@ def _generate_scenario(test_name, **kwargs):
 
 generator_dict["scenario"] = _generate_scenario
 
-# pytest_generate_tests uses create_conditional_fixtures_and_names and generator_dict
-#   to create the fixtures for a parameterize decoration of all tests
-
 
 def _excluded_scenario(test_name, scenario):
     """Skip list generator for scenarios to skip in test_name.
@@ -200,7 +198,11 @@ class BaseFixtureGenerator:
     fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
 
     def pytest_generate_tests(self, metafunc):
-        """Test parameterization routine for pytest."""
+        """Test parameterization routine for pytest.
+        
+        This uses create_conditional_fixtures_and_names and generator_dict
+        to create the fixtures for a mark.parameterize decoration of all tests.
+        """
         # get name of the test
         test_name = metafunc.function.__name__
 
