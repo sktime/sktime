@@ -134,7 +134,7 @@ class BaseFixtureGenerator:
         )
 
     def generator_dict(self):
-        """Return dict with methods _generate_[variable] as dict.
+        """Return dict with methods _generate_[variable] collected in a dict.
 
         The returned dict is the one required by create_conditional_fixtures_and_names,
             used in this _conditional_fixture plug-in to pytest_generate_tests, above.
