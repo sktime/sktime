@@ -308,14 +308,14 @@ class QuickTester:
         >>> from sktime.tests.test_all_estimators import TestAllEstimators
         >>> TestAllEstimators().run_tests(
         ...     NaiveForecaster,
-        ...     tests_to_run=["test_create_test_instance", "test_required_params"]
+        ...     tests_to_run="test_required_params"
         ... )
-        {'test_create_test_instance[NaiveForecaster]': 'PASSED', 'test_required_params[NaiveForecaster]': 'PASSED'}
+        {'test_required_params[NaiveForecaster]': 'PASSED'}
         >>> TestAllEstimators().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
-        """  # noqa: E501
+        """
         tests_to_run = self._check_None_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
