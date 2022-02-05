@@ -30,6 +30,18 @@ pd_rolling = [
 ]
 
 
+def get_name_list(Z):
+    """Get names of pd.Series or pd.Dataframe."""
+    if isinstance(Z, pd.DataFrame):
+        Z_name = Z.columns.to_list()
+    else:
+        if Z.name is not None:
+            Z_name = [Z.name]
+        else:
+            Z_name = None
+    return Z_name
+
+
 def _window_feature(
     Z,
     name=None,
@@ -124,6 +136,9 @@ class LaggedWindowSummarizer(BaseTransformer):
          or function definition
     window: list of integers
         Contains values for window shift and window length.
+    target_cols: list of str,
+        Specifies which columns in y or X to target. If set to None will
+        target first column in X.
 
     Examples
     --------
@@ -142,10 +157,20 @@ class LaggedWindowSummarizer(BaseTransformer):
     >>> y_transformed = transformer.fit_transform(y)
     """
 
+    #
     _tags = {
         "scitype:transform-output": "Panel",
         "scitype:instancewise": True,
         "capability:inverse_transform": False,
+        "scitype:transform-labels": "Series",
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+        ],  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+        ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
@@ -187,19 +212,45 @@ class LaggedWindowSummarizer(BaseTransformer):
         """
         # check if dict is empty
 
-        if self.target_cols is None:
-            if isinstance(X, pd.DataFrame):
-                self._target_cols = [X.columns.to_list()[0]]
+        X_name = get_name_list(X)
+
+        if X_name is None:
+            self._X_rename = "var_0"
+            X_name = ["var_0"]
+        else:
+            self._X_rename = None
+
+        if y is not None:
+            y_name = get_name_list(y)
+            if y_name is None:
+                self._y_rename = "y"
+                y_name = ["y"]
             else:
-                if X.name is not None:
-                    self._target_cols = [X.name[0]]
-                else:
-                    self._target_cols = "var_0"
+                self._y_rename = None
+            Z_name = X_name + y_name
+        else:
+            Z_name = X_name
+            self._y_rename = None
+
+        if self.target_cols is None:
+            self._target_cols = [Z_name][0]
         else:
             self._target_cols = self.target_cols
 
-        if not all(x in X.columns.to_list() for x in self._target_cols):
-            raise ValueError("Invalid target select for transformation")
+        if y is not None:
+            if not len(y_name + X_name) == len(set(y_name + X_name)):
+                raise ValueError(
+                    "Please make sure that names across X and y are not"
+                    + " duplicate. If unnamed X/y Series are provided, X will be"
+                    + " renamed to 'X_var_0' and y will be renamed to 'y'."
+                    + " This could also be result of this error if e.g. X"
+                    + " contained a named column y and an unnamed y Series"
+                    + " was renamed to 'y'."
+                )
+
+        if self.target_cols is not None:
+            if not all(x in Z_name for x in self.target_cols):
+                raise ValueError("target_X targets non-existing column in X")
 
         if self.functions is None:
             func_dict = pd.DataFrame(
@@ -232,25 +283,39 @@ class LaggedWindowSummarizer(BaseTransformer):
         transformed version of X
         """
         # input checks
-        Xt_out = []
+        if not isinstance(y, pd.DataFrame):
+            y = pd.DataFrame(y)
+
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
+        if self._y_rename is not None:
+            y.columns = [self._y_rename]
+
+        if self._X_rename is not None:
+            X.columns = [self._X_rename]
+
+        Z = pd.concat([X, y], axis=1)
+
+        Zt_out = []
         for cols in self._target_cols:
-            if isinstance(X.index, pd.MultiIndex):
-                X_grouped = getattr(X.groupby("instances"), X[cols])
+            if isinstance(Z.index, pd.MultiIndex):
+                Z_grouped = getattr(Z.groupby("instances"), Z[cols])
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X_grouped, **kwargs)
+                    delayed(_window_feature)(Z_grouped, **kwargs)
                     for index, kwargs in self._func_dict.iterrows()
                 )
             else:
                 # for _index, kwargs in self._func_dict.iterrows():
                 #     _window_feature(X, **kwargs)
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X[cols], **kwargs)
+                    delayed(_window_feature)(Z[cols], **kwargs)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
-            Xt = pd.concat(df, axis=1)
-            if len(self._target_cols) > 1:
-                Xt = Xt.add_prefix(cols + "_")
-            Xt_out.append(Xt)
-        Xt_out_df = pd.concat(Xt_out, axis=1)
-        Xt_return = pd.concat([Xt_out_df, X.drop(self._target_cols, axis=1)], axis=1)
-        return Xt_return
+            Zt = pd.concat(df, axis=1)
+            # if len(self._target_cols) > 1:
+            Zt = Zt.add_prefix(cols + "_")
+            Zt_out.append(Zt)
+        Zt_out_df = pd.concat(Zt_out, axis=1)
+        Zt_return = pd.concat([Zt_out_df, Z.drop(self._target_cols, axis=1)], axis=1)
+        return Zt_return

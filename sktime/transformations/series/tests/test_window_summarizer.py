@@ -4,34 +4,33 @@ __author__ = ["Daniel Bartling"]
 
 # from sklearn.preprocessing import MinMaxScaler
 
-# from sktime.datasets import load_longley
+import pandas as pd
+import pytest
+
+from sktime.datasets import load_airline, load_longley
+from sktime.datatypes import get_examples
+
 # from sktime.forecasting.base import ForecastingHorizon
 # from sktime.forecasting.compose import ForecastingPipeline
-# from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.model_selection import temporal_train_test_split
+
 # from sktime.forecasting.naive import NaiveForecaster
 # from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 # from sktime.transformations.series.impute import Imputer
-# from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
+from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
 
 # y, X = load_longley()
 # y_train, _, X_train, X_test = temporal_train_test_split(y, X)
 # fh = ForecastingHorizon(X_test.index, is_relative=False)
 # pipe = ForecastingPipeline(
 #     steps=[
-#         ("imputer", LaggedWindowSummarizer(target_cols=["GNPDEFL", "GNP"])),
+#         ("imp1", LaggedWindowSummarizer(target_cols=["POP", "GNP","TOTEMP"])),
+#         ("imp2", LaggedWindowSummarizer(target_cols=["GNPDEFL"])),
 #         ("forecaster", NaiveForecaster(strategy="drift")),
 #     ]
 # )
 # pipe.fit(y_train, X_train)
 # y_pred = pipe.predict(fh=fh, X=X_test)
-
-import pandas as pd
-import pytest
-
-from sktime.datasets import load_airline, load_longley
-from sktime.datatypes import get_examples
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
 
 
 def check_eval(test_input, expected):
@@ -88,26 +87,44 @@ kwargs_variant = {
     }
 }
 
-# into = LaggedWindowSummarizer(**kwargs_alternames,target_cols=["POP","GNP"])
-# Xt = into.fit_transform(X_train)
+y_train.name = None
+
+# into = LaggedWindowSummarizer()
+# Xt = into.fit_transform(y_train)
+# into = LaggedWindowSummarizer(**kwargs_alternames)
+# Xt = into.fit_transform(y_train)
+
 
 Xt_test = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
 Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
+
+y_train_named = y_train.copy()
+y_train_named.name = "y"
 
 
 @pytest.mark.parametrize(
     "kwargs, column_names, y, target_cols",
     [
-        (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_train, None),
+        (
+            kwargs,
+            ["y_lag_1_0", "y_mean_3_0", "y_mean_12_0", "y_std_4_0"],
+            y_train_named,
+            None,
+        ),
         (kwargs_alternames, Xt_test, X_ll_train, ["POP", "GNP"]),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
         # (kwargs, ["lag_1_0", "
         # mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
-        (None, ["lag_1_0"], y_pd, None),
-        (None, ["lag_1_0"], y_pd, None),
+        (None, ["var_0_lag_1_0"], y_train, None),
+        (None, ["a_lag_1_0"], y_pd, None),
         # (None, ["lag_1_0"], y_multi),
-        (kwargs_alternames, ["lag_3_0", "lag_6_0"], y_train, None),
-        (kwargs_variant, ["mean_7_0", "mean_7_7", "covar_feature_28_0"], y_train, None),
+        (kwargs_alternames, ["var_0_lag_3_0", "var_0_lag_6_0"], y_train, None),
+        (
+            kwargs_variant,
+            ["var_0_mean_7_0", "var_0_mean_7_7", "var_0_covar_feature_28_0"],
+            y_train,
+            None,
+        ),
     ],
 )
 def test_windowsummarizer(kwargs, column_names, y, target_cols):
