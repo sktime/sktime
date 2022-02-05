@@ -255,7 +255,34 @@ class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
     def run_tests(self, est, return_exceptions=True):
+        """Run all tests on one single estimator.
 
+        All tests in self are run on the following estimator type fixtures:
+            if est is a class, then estimator_class = est, and
+                estimator_instance loops over est.create_test_instance()
+            if est is an object, then estimator_class = est.__class__, and
+                estimator_instance = est
+
+        Parameters
+        ----------
+        est : estimator class or estimator instance
+        return_exception : bool, optional, default=True
+            whether to return exceptions/failures, or raise them
+                if True: returns exceptions in results
+                if False: raises exceptions as they occur
+
+        Returns
+        -------
+        results : dict of results of the tests in self
+            keys are test/fixture strings, identical as in pytest, e.g., test[fixture]
+            entries are the string "PASSED" if the test passed,
+                or the exception raised if the test did not pass
+            returned only if all tests pass, or return_exceptions=True
+
+        Raises
+        ------
+        if return_exception=False, raises any exception produced by the tests directly
+        """
         test_names = [attr for attr in dir(self) if attr.startswith("test")]
         results = dict()
 
