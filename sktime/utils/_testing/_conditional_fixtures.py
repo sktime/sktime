@@ -133,7 +133,7 @@ def create_conditional_fixtures_and_names(
         """
         try:
             res = generator_dict[fixture_var](test_name, **kwargs)
-            if len(res) == 2:
+            if isinstance(res, tuple) and len(res) == 2:
                 fixture_prod = res[0]
                 fixture_names = res[1]
             else:
