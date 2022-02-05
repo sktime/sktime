@@ -212,6 +212,10 @@ def _excluded_scenario(test_name, scenario):
 
 class BaseFixtureGenerator:
 
+    generator_dict = deepcopy(generator_dict)
+    fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
+
+
 
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
@@ -247,7 +251,68 @@ class BaseFixtureGenerator:
         metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
 
 
-class TestAllEstimators(BaseFixtureGenerator):
+class QuickTester:
+
+    def run_tests(self, est):
+
+        test_names = [attr for attr in dir(self) if attr.startswith("test")]
+        results = dict()
+
+        temp_generator_dict = deepcopy(self.generator_dict)
+
+        if isclass(est):
+            estimator_class = est
+        else:
+            estimator_class = type(est)
+
+        def _generate_estimator_class(test_name, **kwargs):
+            return [estimator_class], [estimator_class.__name__]
+
+        def _generate_estimator_instance(test_name, **kwargs):
+            return [est], [estimator_class.__name__]
+
+        def _generate_estimator_instance_cls(test_name, **kwargs):
+            return estimator_class.create_test_instances_and_names()
+
+        temp_generator_dict["estimator_class"] = _generate_estimator_class
+
+        if not isclass(est):
+            temp_generator_dict["estimator_instance"] = _generate_estimator_instance
+        else:
+            temp_generator_dict["estimator_instance"] = _generate_estimator_instance_cls
+
+        for test_name in test_names:
+
+            test_fun = getattr(self, test_name)
+            fixture_sequence = self.fixture_sequence
+
+            # all arguments except the first one (self)
+            fixture_vars = getfullargspec(test_fun)[0][1:]
+            fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
+
+            _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
+                test_name=test_name,
+                fixture_vars=fixture_vars,
+                generator_dict=temp_generator_dict,
+                fixture_sequence=fixture_sequence,
+            )
+
+            for params, fixt_name in zip(fixture_prod, fixture_names):
+                # this is needed because pytest unwraps 1-tuples automatically
+                # but subsequent code assumes params is k-tuple, no matter what k is
+                if len(fixture_vars) == 1:
+                    params = (params, )
+                key = f"{test_name}[{fixt_name}]"
+                args = dict(zip(fixture_vars, params))
+                try:
+                    test_fun(*args)
+                    results[key] = "PASSED"
+                except Exception as err:
+                    results[key] = err
+
+        return results
+
+class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     def test_create_test_instance(self, estimator_class):
         """Check first that create_test_instance logic works."""
