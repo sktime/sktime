@@ -4,23 +4,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["mloning", "kejsitake"]
-__all__ = [
-    "test_raises_not_fitted_error",
-    "test_score",
-    "test_predict_time_index",
-    "test_predict_quantiles",
-    "test_update_predict_predicted_index",
-    "test_update_predict_predicted_index_update_params",
-    "test_y_multivariate_raises_error",
-    "test_get_fitted_params",
-    "test_predict_time_index_in_sample_full",
-    "test_predict_interval",
-    "test_update_predict_single",
-    "test_y_invalid_type_raises_error",
-    "test_predict_time_index_with_X",
-    "test_X_invalid_type_raises_error",
-]
+__author__ = ["mloning", "kejsitake", "fkiraly"]
 
 import numpy as np
 import pandas as pd
@@ -41,6 +25,7 @@ from sktime.forecasting.tests._config import (
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.registry import all_estimators
+from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
@@ -62,17 +47,24 @@ y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_get_fitted_params(Forecaster):
-    """Test get_fitted_params."""
-    f = Forecaster.create_test_instance()
-    columns = _get_n_columns(f.get_tag("scitype:y"))
-    for n_columns in columns:
-        f = Forecaster.create_test_instance()
-        y_train = _make_series(n_columns=n_columns)
-        f.fit(y_train, fh=FH0)
+class ForecasterFixtureGenerator(BaseFixtureGenerator):
+    """Fixture generator for forecasting tests."""
+
+    # note: this should be separate from TestAllForecasters
+    #   additional fixtures, parameters, etc should be added here
+    #   TestAllForecasters should contain the tests only
+
+    estimator_type_filter = "forecaster"
+
+
+class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
+    """Module level tests for all sktime forecasters."""
+
+    def test_get_fitted_params(self, estimator_instance, scenario):
+        """Test get_fitted_params."""
+        scenario.run(estimator_instance, method_sequence=["fit"])
         try:
-            params = f.get_fitted_params()
+            params = estimator_instance.get_fitted_params()
             assert isinstance(params, dict)
 
         except NotImplementedError:
@@ -516,9 +508,9 @@ def test_update_predict_predicted_index_update_params(
     )
 
 
-# test that _y is updated when forecaster is refitted
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test__y_when_refitting(Forecaster):
+    """Test that _y is updated when forecaster is refitted."""
     f = Forecaster.create_test_instance()
     columns = _get_n_columns(f.get_tag("scitype:y"))
     for n_columns in columns:
