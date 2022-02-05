@@ -99,7 +99,6 @@ class BaseFixtureGenerator:
     # which sequence the conditional fixtures are generated in
     fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
 
-
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
 
