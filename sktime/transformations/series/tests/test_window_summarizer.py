@@ -2,35 +2,13 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["Daniel Bartling"]
 
-# from sklearn.preprocessing import MinMaxScaler
-
 import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
-
-# from sktime.forecasting.base import ForecastingHorizon
-# from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.model_selection import temporal_train_test_split
-
-# from sktime.forecasting.naive import NaiveForecaster
-# from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-# from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
-
-# y, X = load_longley()
-# y_train, _, X_train, X_test = temporal_train_test_split(y, X)
-# fh = ForecastingHorizon(X_test.index, is_relative=False)
-# pipe = ForecastingPipeline(
-#     steps=[
-#         ("imp1", LaggedWindowSummarizer(target_cols=["POP", "GNP","TOTEMP"])),
-#         ("imp2", LaggedWindowSummarizer(target_cols=["GNPDEFL"])),
-#         ("forecaster", NaiveForecaster(strategy="drift")),
-#     ]
-# )
-# pipe.fit(y_train, X_train)
-# y_pred = pipe.predict(fh=fh, X=X_test)
 
 
 def check_eval(test_input, expected):
@@ -51,7 +29,7 @@ y = load_airline()
 y_pd = get_examples(mtype="pd.DataFrame", as_scitype="Series")[0]
 y_series = get_examples(mtype="pd.Series", as_scitype="Series")[0]
 y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
-# Y Train will be univariate data set
+# y Train will be univariate data set
 y_train, y_test = temporal_train_test_split(y)
 
 # Create Panel sample data
@@ -66,40 +44,21 @@ y_grouped = pd.concat([y_group1, y_group2])
 y_ll, X_ll = load_longley()
 y_ll_train, _, X_ll_train, X_ll_test = temporal_train_test_split(y_ll, X_ll)
 
-kwargs = {
-    "functions": {
-        "lag": ["lag", [[1, 0]]],
-        "mean": ["mean", [[3, 0], [12, 0]]],
-        "std": ["std", [[4, 0]]],
-    }
-}
+# Get different WindowSummarizer functions
+kwargs = LaggedWindowSummarizer.get_test_params()[0]
+kwargs_alternames = LaggedWindowSummarizer.get_test_params()[1]
+kwargs_variant = LaggedWindowSummarizer.get_test_params()[2]
 
-kwargs_alternames = {
-    "functions": {
-        "lag": ["lag", [[3, 0], [6, 0]]],
-    }
-}
-
-kwargs_variant = {
-    "functions": {
-        "mean": ["mean", [[7, 0], [7, 7]]],
-        "covar_feature": ["cov", [[28, 0]]],
-    }
-}
-
+# Generate named and unnamed y
 y_train.name = None
+y_train_named = y_train.copy()
+y_train_named.name = "y"
 
-into = LaggedWindowSummarizer()
-Xt = into.fit_transform(y_train)
-# into = LaggedWindowSummarizer(**kwargs_alternames)
-# Xt = into.fit_transform(y_train)
-
-
+# Target for multivariate extraction
 Xt_test = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
 Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
 
-y_train_named = y_train.copy()
-y_train_named.name = "y"
+# Some tests are commented out until hierarchical PR works
 
 
 @pytest.mark.parametrize(
@@ -113,11 +72,10 @@ y_train_named.name = "y"
         ),
         (kwargs_alternames, Xt_test, X_ll_train, ["POP", "GNP"]),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
-        # (kwargs, ["lag_1_0", "
-        # mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
+        # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
+        # (None, ["lag_1_0"], y_multi),
         (None, None, y_train, None),
         (None, ["a_lag_1_0"], y_pd, None),
-        # (None, ["lag_1_0"], y_multi),
         (kwargs_alternames, ["var_0_lag_3_0", "var_0_lag_6_0"], y_train, None),
         (
             kwargs_variant,

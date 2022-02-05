@@ -320,3 +320,38 @@ class LaggedWindowSummarizer(BaseTransformer):
         Zt_out_df = pd.concat(Zt_out, axis=1)
         Zt_return = pd.concat([Zt_out_df, Z.drop(self._target_cols, axis=1)], axis=1)
         return Zt_return
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params1 = {
+            "functions": {
+                "lag": ["lag", [[1, 0]]],
+                "mean": ["mean", [[3, 0], [12, 0]]],
+                "std": ["std", [[4, 0]]],
+            }
+        }
+
+        params2 = {
+            "functions": {
+                "lag": ["lag", [[3, 0], [6, 0]]],
+            }
+        }
+
+        params3 = {
+            "functions": {
+                "mean": ["mean", [[7, 0], [7, 7]]],
+                "covar_feature": ["cov", [[28, 0]]],
+            }
+        }
+
+        return [params1, params2, params3]
