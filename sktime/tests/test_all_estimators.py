@@ -252,8 +252,9 @@ class BaseFixtureGenerator:
 
 
 class QuickTester:
+    """Mixin class which adds the run_tests method to run tests on one estimator."""
 
-    def run_tests(self, est):
+    def run_tests(self, est, return_exceptions=True):
 
         test_names = [attr for attr in dir(self) if attr.startswith("test")]
         results = dict()
@@ -304,15 +305,22 @@ class QuickTester:
                     params = (params, )
                 key = f"{test_name}[{fixt_name}]"
                 args = dict(zip(fixture_vars, params))
-                try:
-                    test_fun(*args)
+
+                if return_exceptions:
+                    try:
+                        test_fun(**args)
+                        results[key] = "PASSED"
+                    except Exception as err:
+                        results[key] = err
+                else:
+                    test_fun(**args)
                     results[key] = "PASSED"
-                except Exception as err:
-                    results[key] = err
 
         return results
 
+
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
+    """Package level tests for all sktime estimators."""
 
     def test_create_test_instance(self, estimator_class):
         """Check first that create_test_instance logic works."""
