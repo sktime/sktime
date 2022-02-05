@@ -265,7 +265,7 @@ class QuickTester:
 
     def run_tests(
         self, est, return_exceptions=True, tests_to_run=None, fixtures_to_run=None
-    ):  # noqa: E501
+    ):
         """Run all tests on one single estimator.
 
         All tests in self are run on the following estimator type fixtures:
@@ -310,7 +310,7 @@ class QuickTester:
         ...     NaiveForecaster,
         ...     tests_to_run=["test_create_test_instance", "test_required_params"]
         ... )
-        {'test_required_params[NaiveForecaster]': 'PASSED', 'test_create_test_instance[NaiveForecaster]': 'PASSED'}
+        {'test_required_params[NaiveForecaster]': 'PASSED', 'test_create_test_instance[NaiveForecaster]': 'PASSED'}  # noqa: E501
         >>> TestAllEstimators().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
