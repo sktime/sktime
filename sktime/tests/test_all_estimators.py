@@ -265,7 +265,7 @@ class QuickTester:
 
     def run_tests(
         self, est, return_exceptions=True, tests_to_run=None, fixtures_to_run=None
-    ):
+    ):  # noqa: E501
         """Run all tests on one single estimator.
 
         All tests in self are run on the following estimator type fixtures:
