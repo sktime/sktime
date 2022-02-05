@@ -11,7 +11,7 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
-from inspect import isclass, signature, getfullargspec
+from inspect import getfullargspec, isclass, signature
 
 import joblib
 import numpy as np
@@ -300,7 +300,7 @@ class QuickTester:
                 # this is needed because pytest unwraps 1-tuples automatically
                 # but subsequent code assumes params is k-tuple, no matter what k is
                 if len(fixture_vars) == 1:
-                    params = (params, )
+                    params = (params,)
                 key = f"{test_name}[{fixt_name}]"
                 args = dict(zip(fixture_vars, params))
 
@@ -493,14 +493,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # No logic/interaction with other parameters
         def param_filter(p):
             """Identify hyper parameters of an estimator."""
-            return (
-                p.name != "self" and p.kind not in [p.VAR_KEYWORD, p.VAR_POSITIONAL]
-            )
+            return (p.name != "self" and p.kind not in [p.VAR_KEYWORD, p.VAR_POSITIONAL])
 
         init_params = [
-            p for p in signature(
-                estimator.__init__
-            ).parameters.values() if param_filter(p)
+            p
+            for p in signature(estimator.__init__).parameters.values()
+            if param_filter(p)
         ]
 
         params = estimator.get_params()
