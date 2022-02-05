@@ -72,6 +72,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "scenario",
         "fh",
         "fh_oos",
+        "alpha",
     ]
 
     def _generate_n_columns(self, test_name, **kwargs):
@@ -119,6 +120,17 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             integer arrays that define out-of-sample forecasting horizons
         """
         return TEST_OOS_FHS
+
+    def _generate_alpha(self, test_name, **kwargs):
+        """Return test ForecastingHorizon input.
+
+        Fixtures parameterized
+        ----------------------
+        alpha: float
+            TEST_ALPHA from sktime.forecasting.tests._config
+            alpha values between 0 and 1 (exclusive) for coverage or quantiles
+        """
+        return TEST_ALPHAS
 
 
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
@@ -303,7 +315,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
             # )
 
-    @pytest.mark.parametrize("alpha", TEST_ALPHAS)
     def test_predict_interval(self, estimator_instance, n_columns, fh_oos, alpha):
         """Check prediction intervals returned by predict.
 
@@ -367,7 +378,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 for index in range(len(pred_quantiles.index)):
                     assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
-    @pytest.mark.parametrize("alpha", TEST_ALPHAS)
     def test_predict_quantiles(self, estimator_instance, n_columns, fh_oos, alpha):
         """Check prediction quantiles returned by predict.
 
