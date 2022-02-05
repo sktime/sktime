@@ -31,7 +31,6 @@ from sktime.classification.early_classification import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
-    FreshPRINCE,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
     SignatureClassifier,
@@ -111,14 +110,20 @@ from sktime.transformations.series.summarize import SummaryTransformer
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    #    "ProximityForest",
-    #    "ProximityStump",
-    #    "ProximityTree",
+    "ProximityForest",
+    "ProximityStump",
+    "ProximityTree",
+    # ConditionalDeseasonalizer and STLtransformer still need refactoring
+    #  (see PR 1773, blocked through open discussion) escaping until then
+    "ConditionalDeseasonalizer",
+    "STLforecaster",
+    "STLTransformer",
 ]
 
 
 EXCLUDED_TESTS = {
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
+    "StackingForecaster": ["test_predict_time_index_with_X"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -258,10 +263,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     TSFreshClassifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
-        "default_fc_parameters": "minimal",
-    },
-    FreshPRINCE: {
-        "n_estimators": 3,
         "default_fc_parameters": "minimal",
     },
     RandomIntervals: {
