@@ -199,7 +199,7 @@ class BaseFixtureGenerator:
 
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
-        
+
         This uses create_conditional_fixtures_and_names and generator_dict
         to create the fixtures for a mark.parameterize decoration of all tests.
         """
@@ -495,7 +495,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # No logic/interaction with other parameters
         def param_filter(p):
             """Identify hyper parameters of an estimator."""
-            return (p.name != "self" and p.kind not in [p.VAR_KEYWORD, p.VAR_POSITIONAL])
+            return p.name != "self" and p.kind not in [p.VAR_KEYWORD, p.VAR_POSITIONAL]
 
         init_params = [
             p
