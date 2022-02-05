@@ -263,7 +263,13 @@ class BaseFixtureGenerator:
 class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
-    def run_tests(self, est, return_exceptions=True):
+    def run_tests(
+        self,
+        est,
+        return_exceptions=True,
+        tests_to_run=None,
+        fixtures_to_run=None
+    ):
         """Run all tests on one single estimator.
 
         All tests in self are run on the following estimator type fixtures:
@@ -279,6 +285,14 @@ class QuickTester:
             whether to return exceptions/failures, or raise them
                 if True: returns exceptions in results
                 if False: raises exceptions as they occur
+        tests_to_run : str or list of str, names of tests to run. default = all tests
+            sub-sets tests that are run to the tests given here.
+        fixtures_to_run : str or list of str, pytest test-fixture combination codes.
+            which test-fixture combinations to run. Default = run all of them.
+            sub-sets tests and fixtures to run to the list given here.
+            If both tests_to_run and fixtures_to_run are provided, runs the *union*,
+            i.e., all test-fixture combinations for tests in tests_to_run,
+                plus all test-fixture combinations in fixtures_to_run.
 
         Returns
         -------
@@ -291,11 +305,36 @@ class QuickTester:
         Raises
         ------
         if return_exception=False, raises any exception produced by the tests directly
-        """
-        test_names = [attr for attr in dir(self) if attr.startswith("test")]
-        results = dict()
 
-        temp_generator_dict = deepcopy(self.generator_dict)
+        Examples
+        --------
+        >>> from sktime.forecasting.naive import NaiveForecaster
+        >>> from sktime.tests.test_all_estimators import TestAllEstimators
+        >>> TestAllEstimators().run_tests(
+        ...     NaiveForecaster,
+        ...     tests_to_run=["test_create_test_instance", "test_required_params"]
+        ... )
+        {'test_required_params[NaiveForecaster]': 'PASSED',
+        'test_create_test_instance[NaiveForecaster]': 'PASSED'}
+        >>> TestAllEstimators().run_tests(
+        ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
+        ... )
+        {'test_repr[NaiveForecaster-2]': 'PASSED'}
+        """
+        tests_to_run = self._check_None_str_or_list_of_str(
+            tests_to_run, var_name="tests_to_run"
+        )
+        fixtures_to_run = self._check_None_str_or_list_of_str(
+            fixtures_to_run, var_name="fixtures_to_run"
+        )
+
+        # retrieve tests from self
+        test_names = [attr for attr in dir(self) if attr.startswith("test")]
+
+        # we override the generator_dict, by replacing it with temp_generator_dict:
+        #  the only estimator (class or instance) is est, this is overridden
+        #  the remaining fixtures are generated conditionally, without change
+        temp_generator_dict = deepcopy(self.generator_dict())
 
         if isclass(est):
             estimator_class = est
@@ -317,8 +356,25 @@ class QuickTester:
             temp_generator_dict["estimator_instance"] = _generate_estimator_instance
         else:
             temp_generator_dict["estimator_instance"] = _generate_estimator_instance_cls
+        # override of generator_dict end, temp_generator_dict is now prepared
 
-        for test_name in test_names:
+        # sub-setting to specific tests to run, if tests or fixtures were speified
+        if tests_to_run is None and fixtures_to_run is None:
+            test_names_subset = test_names
+        else:
+            test_names_subset = []
+            if tests_to_run is not None:
+                test_names_subset += list(set(test_names).intersection(tests_to_run))
+            if fixtures_to_run is not None:
+                # fixture codes contain the test as substring until the first "["
+                tests_from_fixt = [fixt.split("[")[0] for fixt in fixtures_to_run]
+                test_names_subset += list(set(test_names).intersection(tests_from_fixt))
+            test_names_subset = list(set(test_names_subset))
+
+        # the below loops run all the tests and collect the results here:
+        results = dict()
+        # loop A: we loop over all the tests
+        for test_name in test_names_subset:
 
             test_fun = getattr(self, test_name)
             fixture_sequence = self.fixture_sequence
@@ -327,6 +383,8 @@ class QuickTester:
             fixture_vars = getfullargspec(test_fun)[0][1:]
             fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
 
+            # this call retrieves the conditional fixtures
+            #  for the test test_name, and the estimator
             _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
                 test_name=test_name,
                 fixture_vars=fixture_vars,
@@ -334,13 +392,20 @@ class QuickTester:
                 fixture_sequence=fixture_sequence,
             )
 
+            # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
+
                 # this is needed because pytest unwraps 1-tuples automatically
                 # but subsequent code assumes params is k-tuple, no matter what k is
                 if len(fixture_vars) == 1:
                     params = (params,)
                 key = f"{test_name}[{fixt_name}]"
                 args = dict(zip(fixture_vars, params))
+
+                # we subset to test-fixtures to run by this, if given
+                #  key is identical to the pytest test-fixture string identifier
+                if fixtures_to_run is not None and key not in fixtures_to_run:
+                    continue
 
                 if return_exceptions:
                     try:
@@ -353,6 +418,19 @@ class QuickTester:
                     results[key] = "PASSED"
 
         return results
+
+    @staticmethod
+    def _check_None_str_or_list_of_str(obj, var_name="obj"):
+        """Check that obj is None, str, or list of str, and coerce to list of str."""
+        if obj is not None:
+            msg = f"{var_name} must be None, str, or list of str"
+            if isinstance(obj, str):
+                obj = [obj]
+            if not isinstance(obj, list):
+                raise ValueError(msg)
+            if not np.all(isinstance(x, str) for x in obj):
+                raise ValueError(msg)
+        return obj
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
