@@ -315,7 +315,7 @@ class LaggedWindowSummarizer(BaseTransformer):
                 )
             Zt = pd.concat(df, axis=1)
             # if len(self._target_cols) > 1:
-            Zt = Zt.add_prefix(cols + "_")
+            Zt = Zt.add_prefix(str(cols) + "_")
             Zt_out.append(Zt)
         Zt_out_df = pd.concat(Zt_out, axis=1)
         Zt_return = pd.concat([Zt_out_df, Z.drop(self._target_cols, axis=1)], axis=1)
