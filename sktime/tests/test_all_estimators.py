@@ -77,7 +77,7 @@ class BaseFixtureGenerator:
                 individual skips should go on the EXCLUDED_TESTS list in _config
             requires _generate_estimator_class and _generate_estimator_instance as is
         _excluded_scenario: static method (test_name: str, scenario) -> bool
-            whether scenario should be skipped in test with test_name test_name 
+            whether scenario should be skipped in test with test_name test_name
             requires _generate_estimator_scenario as is
 
     Fixtures parameterized
@@ -175,7 +175,9 @@ class BaseFixtureGenerator:
             ranges over all estimator classes not excluded by EXCLUDED_TESTS
         """
         estimator_classes_to_test = [
-            est for est in self._all_estimators() if not self.is_excluded(test_name, est)
+            est
+            for est in self._all_estimators()
+            if not self.is_excluded(test_name, est)
         ]
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
 
