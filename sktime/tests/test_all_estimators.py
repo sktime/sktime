@@ -108,7 +108,7 @@ class BaseFixtureGenerator:
         # get name of the test
         test_name = metafunc.function.__name__
 
-        fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
+        fixture_sequence = self.fixture_sequence
 
         fixture_vars = getfullargspec(metafunc.function)[0]
 
@@ -310,7 +310,7 @@ class QuickTester:
         ...     NaiveForecaster,
         ...     tests_to_run=["test_create_test_instance", "test_required_params"]
         ... )
-        {'test_required_params[NaiveForecaster]': 'PASSED', 'test_create_test_instance[NaiveForecaster]': 'PASSED'}
+        {'test_create_test_instance[NaiveForecaster]': 'PASSED', 'test_required_params[NaiveForecaster]': 'PASSED'}
         >>> TestAllEstimators().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
