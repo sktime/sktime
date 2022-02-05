@@ -62,7 +62,7 @@ class BaseFixtureGenerator:
 
     Descendants can override:
         estimator_type_filter: str, class variable; None or scitype string
-            e.g., "forecaster", "transformer", "classifier", from BASE_CLASS_SCITYPE_LIST
+            e.g., "forecaster", "transformer", "classifier", see BASE_CLASS_SCITYPE_LIST
             which estimators are being retrieved and tested
         fixture_sequence: list of str
             sequence of fixture variable names in conditional fixture generation
@@ -252,7 +252,7 @@ class BaseFixtureGenerator:
                 return True
 
         # this line excludes all scenarios that are not 1:1 to the "pre-scenario" state
-        #   pre-refactor, all tests pass, so all post-refactor tests should with these lines
+        #   pre-refactor, all tests pass, so all post-refactor tests should with below
         # comment out to run the full test suite with new scenarios
         if not scenario.get_tag("pre-refactor", False, raise_error=False):
             return True
