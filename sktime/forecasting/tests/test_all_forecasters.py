@@ -68,7 +68,10 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "forecaster"
 
     fixture_sequence = [
-        "estimator_class", "estimator_instance", "n_columns", "scenario"
+        "estimator_class",
+        "estimator_instance",
+        "n_columns",
+        "scenario",
     ]
 
     def _generate_n_columns(self, test_name, **kwargs):
