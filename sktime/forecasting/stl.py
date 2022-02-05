@@ -21,7 +21,8 @@ class STLForecaster(BaseForecaster):
     series y into the three components trend, season and residuals [1]_. Then,
     the forecaster_trend, forecaster_seasonal and forecaster_resid are fitted
     on the components individually to forecast them also individually. The
-    final forecast is then the sum of the three component forecasts.
+    final forecast is then the sum of the three component forecasts. The STL
+    decomposition is done by means of using the package statsmodels [2]_.
 
     Parameters
     ----------
@@ -117,6 +118,7 @@ class STLForecaster(BaseForecaster):
     .. [1] R. B. Cleveland, W. S. Cleveland, J.E. McRae, and I. Terpenning (1990)
        STL: A Seasonal-Trend Decomposition Procedure Based on LOESS.
        Journal of Official Statistics, 6, 3-73.
+    .. [2] https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html
     """
 
     _tags = {
