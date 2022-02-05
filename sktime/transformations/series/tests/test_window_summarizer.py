@@ -89,8 +89,8 @@ kwargs_variant = {
 
 y_train.name = None
 
-# into = LaggedWindowSummarizer()
-# Xt = into.fit_transform(y_train)
+into = LaggedWindowSummarizer()
+Xt = into.fit_transform(y_train)
 # into = LaggedWindowSummarizer(**kwargs_alternames)
 # Xt = into.fit_transform(y_train)
 
@@ -115,7 +115,7 @@ y_train_named.name = "y"
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
         # (kwargs, ["lag_1_0", "
         # mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
-        (None, ["var_0_lag_1_0"], y_train, None),
+        (None, None, y_train, None),
         (None, ["a_lag_1_0"], y_pd, None),
         # (None, ["lag_1_0"], y_multi),
         (kwargs_alternames, ["var_0_lag_3_0", "var_0_lag_6_0"], y_train, None),

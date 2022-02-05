@@ -159,7 +159,8 @@ class LaggedWindowSummarizer(BaseTransformer):
 
     #
     _tags = {
-        "scitype:transform-output": "Panel",
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "capability:inverse_transform": False,
         "scitype:transform-labels": "Series",
