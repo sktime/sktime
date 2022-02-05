@@ -264,11 +264,7 @@ class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
     def run_tests(
-        self,
-        est,
-        return_exceptions=True,
-        tests_to_run=None,
-        fixtures_to_run=None
+        self, est, return_exceptions=True, tests_to_run=None, fixtures_to_run=None
     ):
         """Run all tests on one single estimator.
 
