@@ -197,6 +197,7 @@ class STLForecaster(BaseForecaster):
         self.resid_ = pd.Series(self.stl_.resid, index=y.index)
         self.trend_ = pd.Series(self.stl_.trend, index=y.index)
 
+        # TODO: set sp=self.sp after NaiveForecaster bug fix
         # setting defualt forecasters if required
         self.forecaster_seasonal_ = (
             NaiveForecaster(sp=1, strategy="last")
