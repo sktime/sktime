@@ -132,7 +132,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         # translate distance strings into distance callables
         if distance in DISTANCE_DICT.keys():
-            _distance = DISTANCE_DICT[distance]
+            distance = DISTANCE_DICT[distance]
         elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
             if distance_params is not None:
@@ -142,7 +142,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                     "These will be ignored and parameter values will be "
                     "found using LOOCV."
                 )
-            _distance = dtw_distance
+            distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
                 "distance_params": [{"w": x / 100} for x in range(0, 100)]
@@ -155,7 +155,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                 "Alternatively, pass a callable distance measure into the constuctor."
             )
 
-        self._distance = _distance
+        self._distance = distance
 
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
