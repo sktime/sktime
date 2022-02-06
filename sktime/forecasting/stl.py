@@ -259,7 +259,4 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.forecaster_seasonal_.update(y=y, X=X, update_params=update_params)
-        self.forecaster_trend_.update(y=y, X=X, update_params=update_params)
-        self.forecaster_resid_.update(y=y, X=X, update_params=update_params)
-        return self
+        raise NotImplementedError("update method not implemented")
