@@ -71,7 +71,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "n_columns",
         "scenario",
         # "fh",
-        "fh_int"
+        "fh_int",
         "fh_int_oos",
         "alpha",
         "update_params",
