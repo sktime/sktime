@@ -242,3 +242,24 @@ class STLForecaster(BaseForecaster):
         y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
         return y_pred
+
+    def _update(self, y, X=None, update_params=True):
+        """Update cutoff value and, optionally, fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self.forecaster_seasonal_.update(y=y, X=X, update_params=update_params)
+        self.forecaster_trend_.update(y=y, X=X, update_params=update_params)
+        self.forecaster_resid_.update(y=y, X=X, update_params=update_params)
+        return self
