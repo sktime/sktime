@@ -56,7 +56,7 @@ class PaddingTransformer(_PanelToPanelTransformer):
         return self
 
     def _create_pad(self, series):
-        out = np.full(self.pad_length_, self.fill_value, np.float)
+        out = np.full(self.pad_length_, self.fill_value, float)
         out[: len(series)] = series.iloc[: len(series)]
         return out
 
