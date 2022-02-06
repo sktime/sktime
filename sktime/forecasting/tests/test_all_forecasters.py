@@ -112,7 +112,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             TEST_FHS from sktime.forecasting.tests._config
             integer arrays that define forecasting horizons
         """
-        return TEST_FHS
+        return TEST_FHS, [f"fh={fh}" for fh in TEST_FHS]
 
     def _generate_fh_int_oos(self, test_name, **kwargs):
         """Return test integer forecasting horizon input (out of sample only).
@@ -123,7 +123,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             TEST_OOS_FHS from sktime.forecasting.tests._config
             integer arrays that define out-of-sample forecasting horizons
         """
-        return TEST_OOS_FHS
+        return TEST_OOS_FHS, [f"fh={fh}" for fh in TEST_OOS_FHS]
 
     def _generate_alpha(self, test_name, **kwargs):
         """Return test alphas for predict_interval and predict_coverage.
@@ -134,7 +134,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             TEST_ALPHA from sktime.forecasting.tests._config
             alpha values between 0 and 1 (exclusive) for coverage or quantiles
         """
-        return TEST_ALPHAS
+        return TEST_ALPHAS, [f"alpha={a}" for a in TEST_ALPHAS]
 
     def _generate_update_params(self, test_name, **kwargs):
         """Return update_params for update calls.
@@ -145,7 +145,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             whether to update parameters in update; ranges over True, False
             alpha values between 0 and 1 (exclusive) for coverage or quantiles
         """
-        return [True, False]
+        return [True, False], ["update_params=True", "update_params=False"]
 
     def _generate_step_length(self, test_name, **kwargs):
         """Return step length for window.
@@ -157,9 +157,9 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         """
         update_params = kwargs["update_params"]
         if update_params:
-            return [1]
+            return [1], [""]
         else:
-            return TEST_STEP_LENGTHS_INT
+            return TEST_STEP_LENGTHS_INT, [f"step={a}" for a in TEST_STEP_LENGTHS_INT]
 
     def _generate_window_length(self, test_name, **kwargs):
         """Return window length for window.
@@ -169,7 +169,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         window_length: int
             TEST_WINDOW_LENGTHS from sktime.forecasting.tests._config
         """
-        return TEST_WINDOW_LENGTHS
+        return TEST_WINDOW_LENGTHS, [f"window={a}" for a in TEST_WINDOW_LENGTHS]
 
 
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
