@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Padding transformer."""
 import numpy as np
 import pandas as pd
+
 from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
 __all__ = ["PaddingTransformer"]
-__author__ = ["Aaron Bostrom"]
+__author__ = ["abostrom"]
 
 
 class PaddingTransformer(_PanelToPanelTransformer):
-    """PaddingTransformer docstring
+    """Padding transformer.
 
     Pads the input dataset to either a optional fixed length
     (longer than the longest series).
