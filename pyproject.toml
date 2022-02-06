@@ -79,6 +79,7 @@ dev = [
 
 binder = [
     "jupyter",
+    "pytest",
 ]
 
 docs = [
