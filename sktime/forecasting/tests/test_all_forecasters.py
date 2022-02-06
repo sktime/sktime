@@ -77,6 +77,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "update_params",
         "step_length",
         "window_length",
+        "index_fh_comb",
     ]
 
     def _generate_n_columns(self, test_name, **kwargs):
@@ -171,6 +172,17 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         """
         return TEST_WINDOW_LENGTHS, [f"window={a}" for a in TEST_WINDOW_LENGTHS]
 
+    def _generate_index_fh_comb(self, test_name, **kwargs):
+        """Return valid index/fh combinations.
+
+        Fixtures parameterized
+        ----------------------
+        index_fh_comb: tuple of index_type: type, fh_type: type, is_relative: bool
+            VALID_INDEX_FH_COMBINATION from sktime.forecasting.tests._config
+        """
+        names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
+        return VALID_INDEX_FH_COMBINATIONS, names
+
 
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
@@ -237,13 +249,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             assert "exogenous" in msg
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
     def test_predict_time_index(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative, fh_int
+        self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
         """Check that predicted time index matches forecasting horizon."""
+        index_type, fh_type, is_relative = index_fh_comb
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -257,13 +267,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
     def test_predict_residuals(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative, fh_int
+        self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
         """Check that predict_residuals method works as expected."""
+        index_type, fh_type, is_relative = index_fh_comb
+
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -282,19 +291,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
     def test_predict_time_index_with_X(
-        self,
-        estimator_instance,
-        n_columns,
-        index_type,
-        fh_type,
-        is_relative,
-        fh_int_oos,
+        self, estimator_instance, n_columns, index_fh_comb, fh_int_oos,
     ):
         """Check that predicted time index matches forecasting horizon."""
+        index_type, fh_type, is_relative = index_fh_comb
+
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
         # Some estimators may not support all time index types and fh types, hence we
@@ -312,13 +314,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
     def test_predict_time_index_in_sample_full(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative
+        self, estimator_instance, n_columns, index_fh_comb
     ):
         """Check that predicted time index equals fh for full in-sample predictions."""
+        index_type, fh_type, is_relative = index_fh_comb
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
