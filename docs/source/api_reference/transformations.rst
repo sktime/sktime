@@ -302,7 +302,7 @@ Lagged Window Summarizer
     :toctree: auto_generated/
     :template: class.rst
 
-    LaggedWindowSummarizer
+    WindowSummarizer
 
 Outlier detection
 ~~~~~~~~~~~~~~~~~

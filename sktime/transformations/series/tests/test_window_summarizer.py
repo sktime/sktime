@@ -8,7 +8,7 @@ import pytest
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.window_summarizer import LaggedWindowSummarizer
+from sktime.transformations.series.window_summarizer import WindowSummarizer
 
 
 def check_eval(test_input, expected):
@@ -45,9 +45,9 @@ y_ll, X_ll = load_longley()
 y_ll_train, _, X_ll_train, X_ll_test = temporal_train_test_split(y_ll, X_ll)
 
 # Get different WindowSummarizer functions
-kwargs = LaggedWindowSummarizer.get_test_params()[0]
-kwargs_alternames = LaggedWindowSummarizer.get_test_params()[1]
-kwargs_variant = LaggedWindowSummarizer.get_test_params()[2]
+kwargs = WindowSummarizer.get_test_params()[0]
+kwargs_alternames = WindowSummarizer.get_test_params()[1]
+kwargs_variant = WindowSummarizer.get_test_params()[2]
 
 # Generate named and unnamed y
 y_train.name = None
@@ -59,6 +59,9 @@ Xt_test = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
 Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
 
 # Some tests are commented out until hierarchical PR works
+
+into = WindowSummarizer(**kwargs_alternames)
+Xt = into.fit_transform(y_train)
 
 
 @pytest.mark.parametrize(
@@ -76,10 +79,10 @@ Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
         # (None, ["lag_1_0"], y_multi),
         (None, None, y_train, None),
         (None, ["a_lag_1_0"], y_pd, None),
-        (kwargs_alternames, ["var_0_lag_3_0", "var_0_lag_6_0"], y_train, None),
+        (kwargs_alternames, ["0_lag_3_0", "0_lag_6_0"], y_train, None),
         (
             kwargs_variant,
-            ["var_0_mean_7_0", "var_0_mean_7_7", "var_0_covar_feature_28_0"],
+            ["0_mean_7_0", "0_mean_7_7", "0_covar_feature_28_0"],
             y_train,
             None,
         ),
@@ -88,9 +91,9 @@ Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
 def test_windowsummarizer(kwargs, column_names, y, target_cols):
     """Test columns match kwargs arguments."""
     if kwargs is not None:
-        transformer = LaggedWindowSummarizer(**kwargs, target_cols=target_cols)
+        transformer = WindowSummarizer(**kwargs, target_cols=target_cols)
     else:
-        transformer = LaggedWindowSummarizer(target_cols=target_cols)
+        transformer = WindowSummarizer(target_cols=target_cols)
     Xt = transformer.fit_transform(y)
     if Xt is not None:
         if isinstance(Xt, pd.DataFrame):
