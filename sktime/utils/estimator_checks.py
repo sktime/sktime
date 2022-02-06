@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Estimator checker for extendsion."""
+"""Estimator checker for extension."""
 
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
-
-from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
-from sktime.registry import scitype
-from sktime.tests.test_all_estimators import TestAllEstimators
-
-testclass_dict = dict()
-testclass_dict["forecaster"] = TestAllForecasters
 
 
 def check_estimator(
@@ -59,6 +52,13 @@ def check_estimator(
     >>> check_estimator(ARIMA, fixtures_to_run="test_score[ARIMA--fh=1]")
     {'test_score[ARIMA--fh=1]': 'PASSED'}
     """
+    from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+    from sktime.registry import scitype
+    from sktime.tests.test_all_estimators import TestAllEstimators
+
+    testclass_dict = dict()
+    testclass_dict["forecaster"] = TestAllForecasters
+
     results = TestAllEstimators().run_tests(
         estimator=estimator,
         return_exceptions=return_exceptions,
