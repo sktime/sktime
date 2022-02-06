@@ -162,7 +162,7 @@ class Catch22(_PanelToTabularTransformer):
         Numpy array containing a catch22 feature for each input series.
         """
         if isinstance(feature, (int, np.integer)) or isinstance(
-            feature, (float, np.float)
+            feature, (float, float)
         ):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")
