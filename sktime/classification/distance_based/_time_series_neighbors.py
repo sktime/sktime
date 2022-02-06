@@ -17,7 +17,7 @@ param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["jasonlines", "TonyBagnall", "fkiraly"]
+__author__ = ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 import warnings
