@@ -517,9 +517,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         update_params,
     ):
         """Check predicted index in update_predict."""
-        y = _make_series(
-            n_columns=n_columns, all_positive=True, index_type="datetime"
-        )
+        y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
         y_train, y_test = temporal_train_test_split(y)
         cv = SlidingWindowSplitter(
             fh_int_oos,
