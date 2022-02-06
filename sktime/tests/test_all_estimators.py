@@ -396,7 +396,9 @@ class QuickTester:
                 if len([x for x in test_fun.pytestmark if x.name == "parametrize"]) > 0:
                     # get the three lists from pytest
                     (
-                        pytest_fixture_vars, pytest_fixture_prod, pytest_fixture_names
+                        pytest_fixture_vars,
+                        pytest_fixture_prod,
+                        pytest_fixture_names,
                     ) = self._get_pytest_mark_args(test_fun)
                     # add them to the three lists from conditional fixtures
                     fixture_vars, fixture_prod, fixture_names = self._product_fixtures(
