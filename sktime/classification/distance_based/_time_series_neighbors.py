@@ -81,9 +81,14 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             this will substitute a hard-coded distance metric from sktime.distances
         if callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
             output must be mxn array if X is Panel of m Series, X2 of n Series
+            if distance_mtype is not set, must be able to take
+                X, X2 which are pd_multiindex and numpy3D mtype
         can be pairwise panel transformer inheriting from BasePairwiseTransformerPanel
     distance_params : dict, optional. default = None.
         dictionary for metric parameters , in case that distane is a str
+    distance_mtype : str, or list of str optional. default = None.
+        mtype that distance expects for X and X2, if a callable
+            only set this if distance is not BasePairwiseTransformerPanel descendant
 
     Examples
     --------
@@ -99,7 +104,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "X_inner_mtype": ["pd_multiindex", "df-list", "numpy3D", "nested_univ"],
+        "X_inner_mtype": ["pd_multiindex", "numpy3D"],
     }
 
     def __init__(
@@ -108,11 +113,13 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         weights="uniform",
         distance="dtw",
         distance_params=None,
+        distance_mtype=None,
         **kwargs
     ):
         self._cv_for_params = False
         self.distance = distance
         self.distance_params = distance_params
+        self.distance_mtype = distance_mtype
 
         if distance == "euclidean":  # Euclidean will default to the base class distance
             distance = euclidean_distance
@@ -147,18 +154,19 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             # When mpdist is used, the subsequence length (parameter m) must be set
             # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
             # metric='mpdist', metric_params={'m':30})
-        else:
-            if type(distance) is str:
-                raise ValueError(
-                    "Unrecognised distance measure: " + distance + ". Allowed values "
-                    "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
-                    "please pass a callable distance measure into the constuctor"
-                )
+        elif isinstance(distance, str):
+            raise ValueError(
+                "Unrecognised distance measure: " + distance + ". Allowed values "
+                "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                "please pass a callable distance measure into the constuctor"
+            )
 
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok
         if isinstance(distance, str):
             self.set_tags(X_inner_mtype="numpy3D")
+        elif distance_mtype is not None:
+            self.set_tags(X_inner_mtype=distance_mtype)
 
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
@@ -169,8 +177,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         )
         self.weights = _check_weights(weights)
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        super(KNeighborsTimeSeriesClassifier, self).__init__()
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
