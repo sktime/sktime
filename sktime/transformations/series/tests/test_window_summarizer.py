@@ -60,9 +60,6 @@ Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
 
 # Some tests are commented out until hierarchical PR works
 
-into = WindowSummarizer(**kwargs_alternames)
-Xt = into.fit_transform(y_train)
-
 
 @pytest.mark.parametrize(
     "kwargs, column_names, y, target_cols",

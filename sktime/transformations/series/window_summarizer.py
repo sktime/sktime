@@ -9,7 +9,6 @@ __all__ = ["WindowSummarizer"]
 import pandas as pd
 from joblib import Parallel, delayed
 
-# from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import BaseTransformer
 
 
