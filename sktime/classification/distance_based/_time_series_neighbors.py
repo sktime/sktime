@@ -28,11 +28,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
-from sktime.distances.elastic import euclidean_distance
 from sktime.distances import (
     ddtw_distance,
     dtw_distance,
     erp_distance,
+    euclidean_distance,
     lcss_distance,
     wddtw_distance,
     wdtw_distance,
