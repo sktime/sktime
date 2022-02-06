@@ -171,9 +171,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
-        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
-
+        X : sktime-compatible data format, Panel or Series, with n_samples series
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
         """
@@ -193,8 +191,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
-        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
+        X : sktime-compatible data format, Panel or Series, with n_samples series
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
         n_neighbors : int
@@ -225,9 +222,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-format pandas dataframe or array-like, shape (n_query,
-        n_features), or (n_query, n_indexed) if metric == 'precomputed' test samples.
-
+        X : sktime-compatible data format, Panel or Series, with n_samples series
         Returns
         -------
         y : array of shape [n_samples] or [n_samples, n_outputs]
@@ -237,5 +232,26 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         dist_mat = self.distance(X, self._X)
 
         y_pred = self.knn_estimator_.predict(dist_mat)
+
+        return y_pred
+
+    def _predict_proba(self, X):
+        """Return probability estimates for the test data X.
+
+        Parameters
+        ----------
+        X : sktime-compatible data format, Panel or Series, with n_samples series
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            of such arrays if n_outputs > 1.
+            The class probabilities of the input samples. Classes are ordered
+            by lexicographic order.
+        """
+        # self._X should be the stored _X
+        dist_mat = self.distance(X, self._X)
+
+        y_pred = self.knn_estimator_.predict_proba(dist_mat)
 
         return y_pred
