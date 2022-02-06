@@ -123,13 +123,6 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         self._cv_for_params = False
 
-        # the distances in sktime.distances want numpy3D
-        #   otherwise all Panel formats are ok
-        if isinstance(distance, str):
-            self.set_tags(X_inner_mtype="numpy3D")
-        elif distance_mtype is not None:
-            self.set_tags(X_inner_mtype=distance_mtype)
-
         # translate distance strings into distance callables
         if distance in DISTANCE_DICT.keys():
             distance = DISTANCE_DICT[distance]
@@ -167,6 +160,13 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.weights = _check_weights(weights)
 
         super(KNeighborsTimeSeriesClassifier, self).__init__()
+
+        # the distances in sktime.distances want numpy3D
+        #   otherwise all Panel formats are ok
+        if isinstance(self.distance, str):
+            self.set_tags(X_inner_mtype="numpy3D")
+        elif distance_mtype is not None:
+            self.set_tags(X_inner_mtype=distance_mtype)
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
