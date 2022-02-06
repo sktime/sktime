@@ -13,6 +13,7 @@ __all__ = [
     "wddtw_distance",
     "edr_distance",
     "erp_distance",
+    "msm_distance",
     "lcss_distance",
     "LowerBounding",
 ]
@@ -26,6 +27,7 @@ from sktime.distances._distance import (
     erp_distance,
     euclidean_distance,
     lcss_distance,
+    msm_distance,
     pairwise_distance,
     squared_distance,
     wddtw_distance,

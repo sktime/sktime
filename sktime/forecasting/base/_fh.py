@@ -3,10 +3,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "eenticott-shell"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -18,6 +19,7 @@ RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
+VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -59,7 +61,7 @@ def _delegator(method):
     return delegated
 
 
-def _check_values(values):
+def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     """Validate forecasting horizon values.
 
     Validation checks validity and also converts forecasting horizon values
@@ -137,7 +139,11 @@ class ForecastingHorizon:
             absolute, if not relative and values of supported absolute index type
     """
 
-    def __new__(cls, values=None, is_relative=None):
+    def __new__(
+        cls,
+        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
+        is_relative: bool = None,
+    ):
         """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
         # pandas index, but since subclassing pandas indices is not
@@ -149,7 +155,11 @@ class ForecastingHorizon:
             setattr(cls, method, _delegator(method))
         return object.__new__(cls)
 
-    def __init__(self, values=None, is_relative=True):
+    def __init__(
+        self,
+        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
+        is_relative: bool = True,
+    ):
         if is_relative is not None and not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean or None")
         values = _check_values(values)
@@ -176,7 +186,11 @@ class ForecastingHorizon:
         self._values = values
         self._is_relative = is_relative
 
-    def _new(self, values=None, is_relative=None):
+    def _new(
+        self,
+        values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
+        is_relative: bool = None,
+    ):
         """Construct new ForecastingHorizon based on current object.
 
         Parameters
@@ -200,7 +214,7 @@ class ForecastingHorizon:
         return type(self)(values, is_relative)
 
     @property
-    def is_relative(self):
+    def is_relative(self) -> bool:
         """Whether forecasting horizon is relative to the end of the training series.
 
         Returns
@@ -209,7 +223,7 @@ class ForecastingHorizon:
         """
         return self._is_relative
 
-    def to_pandas(self):
+    def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
 
         Returns
@@ -219,7 +233,7 @@ class ForecastingHorizon:
         """
         return self._values
 
-    def to_numpy(self, **kwargs):
+    def to_numpy(self, **kwargs) -> np.ndarray:
         """Return forecasting horizon's underlying values as np.array.
 
         Parameters
@@ -305,13 +319,13 @@ class ForecastingHorizon:
             if is_timestamp:
                 # coerce to pd.Period for reliable arithmetic operations and
                 # computations of time deltas
-                cutoff = _coerce_to_period(cutoff)
+                cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
 
             absolute = cutoff + relative
 
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
-                freq = _get_freq(cutoff)
+                freq = cutoff.freqstr
                 absolute = absolute.to_timestamp(freq)
 
             return self._new(absolute, is_relative=False)

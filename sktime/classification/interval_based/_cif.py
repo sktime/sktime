@@ -19,7 +19,7 @@ from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._continuous_interval_tree import (
     ContinuousIntervalTree,
-    _cif_feature,
+    _drcif_feature,
 )
 from sktime.transformations.panel.catch22 import Catch22
 
@@ -128,7 +128,7 @@ class CanonicalIntervalForest(BaseClassifier):
         att_subsample_size=8,
         min_interval=3,
         max_interval=None,
-        base_estimator="DTC",
+        base_estimator="CIT",
         n_jobs=1,
         random_state=None,
     ):
@@ -162,9 +162,9 @@ class CanonicalIntervalForest(BaseClassifier):
     def _fit(self, X, y):
         self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
-        if self.base_estimator == "DTC":
+        if self.base_estimator.lower() == "dtc":
             self._base_estimator = DecisionTreeClassifier(criterion="entropy")
-        elif self.base_estimator == "CIT":
+        elif self.base_estimator.lower() == "cit":
             self._base_estimator = ContinuousIntervalTree()
         elif isinstance(self.base_estimator, BaseEstimator):
             self._base_estimator = self.base_estimator
@@ -240,7 +240,11 @@ class CanonicalIntervalForest(BaseClassifier):
     def _fit_estimator(self, X, y, idx):
         c22 = Catch22(outlier_norm=True)
         rs = 255 if self.random_state == 0 else self.random_state
-        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        rs = (
+            None
+            if self.random_state is None
+            else (rs * 37 * (idx + 1)) % np.iinfo(np.int32).max
+        )
         rng = check_random_state(rs)
 
         transformed_x = np.empty(
@@ -283,14 +287,19 @@ class CanonicalIntervalForest(BaseClassifier):
                 intervals[j][0] = intervals[j][1] - length
 
             for a in range(0, self._att_subsample_size):
-                transformed_x[self._att_subsample_size * j + a] = _cif_feature(
-                    X, intervals[j], dims[j], atts[a], c22
+                transformed_x[self._att_subsample_size * j + a] = _drcif_feature(
+                    X, intervals[j], dims[j], atts[a], c22, case_id=j
                 )
 
         tree = _clone_estimator(self._base_estimator, random_state=rs)
         transformed_x = transformed_x.T
         transformed_x = transformed_x.round(8)
-        transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
+        if self.base_estimator == "CIT":
+            transformed_x = np.nan_to_num(
+                transformed_x, False, posinf=np.nan, neginf=np.nan
+            )
+        else:
+            transformed_x = np.nan_to_num(transformed_x, False, 0, 0, 0)
         tree.fit(transformed_x, y)
 
         return [tree, intervals, dims, atts]
@@ -307,8 +316,8 @@ class CanonicalIntervalForest(BaseClassifier):
 
             for j in range(0, self._n_intervals):
                 for a in range(0, self._att_subsample_size):
-                    transformed_x[self._att_subsample_size * j + a] = _cif_feature(
-                        X, intervals[j], dims[j], atts[a], c22
+                    transformed_x[self._att_subsample_size * j + a] = _drcif_feature(
+                        X, intervals[j], dims[j], atts[a], c22, case_id=j
                     )
 
             transformed_x = transformed_x.T
