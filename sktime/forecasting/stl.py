@@ -259,4 +259,28 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        raise NotImplementedError("update method not implemented")
+        # TODO: remove _update method after refactor of update methods in base class.
+        # This method is only required to pass tests.
+        self.stl_ = _STL(
+            y.values,
+            period=self.sp,
+            seasonal=self.seasonal,
+            trend=self.trend,
+            low_pass=self.low_pass,
+            seasonal_deg=self.seasonal_deg,
+            trend_deg=self.trend_deg,
+            low_pass_deg=self.low_pass_deg,
+            robust=self.robust,
+            seasonal_jump=self.seasonal_jump,
+            trend_jump=self.trend_jump,
+            low_pass_jump=self.low_pass_jump,
+        ).fit()
+
+        self.seasonal_ = pd.Series(self.stl_.seasonal, index=y.index)
+        self.resid_ = pd.Series(self.stl_.resid, index=y.index)
+        self.trend_ = pd.Series(self.stl_.trend, index=y.index)
+
+        self.forecaster_seasonal_.update(y=y, X=X, update_params=update_params)
+        self.forecaster_trend_.update(y=y, X=X, update_params=update_params)
+        self.forecaster_resid_.update(y=y, X=X, update_params=update_params)
+        return self
