@@ -24,7 +24,6 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
-from sktime.registry import all_estimators
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
     _assert_correct_pred_time_index,
@@ -37,7 +36,6 @@ from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
-FORECASTERS = all_estimators(estimator_types="forecaster", return_names=False)
 FH0 = 1
 INVALID_X_INPUT_TYPES = [list(), tuple()]
 INVALID_y_INPUT_TYPES = [list(), tuple()]
@@ -72,6 +70,14 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "estimator_instance",
         "n_columns",
         "scenario",
+        # "fh",
+        "fh_int",
+        "fh_int_oos",
+        "alpha",
+        "update_params",
+        "step_length",
+        "window_length",
+        "index_fh_comb",
     ]
 
     def _generate_n_columns(self, test_name, **kwargs):
@@ -97,6 +103,85 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             n_columns_names = [f"y:{x}cols" for x in n_columns_list]
 
         return n_columns_list, n_columns_names
+
+    def _generate_fh_int(self, test_name, **kwargs):
+        """Return test integer forecasting horizon input.
+
+        Fixtures parameterized
+        ----------------------
+        fh_int: array of int
+            TEST_FHS from sktime.forecasting.tests._config
+            integer arrays that define forecasting horizons
+        """
+        return TEST_FHS, [f"fh={fh}" for fh in TEST_FHS]
+
+    def _generate_fh_int_oos(self, test_name, **kwargs):
+        """Return test integer forecasting horizon input (out of sample only).
+
+        Fixtures parameterized
+        ----------------------
+        fh_int_oos: array of int
+            TEST_OOS_FHS from sktime.forecasting.tests._config
+            integer arrays that define out-of-sample forecasting horizons
+        """
+        return TEST_OOS_FHS, [f"fh={fh}" for fh in TEST_OOS_FHS]
+
+    def _generate_alpha(self, test_name, **kwargs):
+        """Return test alphas for predict_interval and predict_coverage.
+
+        Fixtures parameterized
+        ----------------------
+        alpha: float
+            TEST_ALPHA from sktime.forecasting.tests._config
+            alpha values between 0 and 1 (exclusive) for coverage or quantiles
+        """
+        return TEST_ALPHAS, [f"alpha={a}" for a in TEST_ALPHAS]
+
+    def _generate_update_params(self, test_name, **kwargs):
+        """Return update_params for update calls.
+
+        Fixtures parameterized
+        ----------------------
+        update_params: bool
+            whether to update parameters in update; ranges over True, False
+            alpha values between 0 and 1 (exclusive) for coverage or quantiles
+        """
+        return [True, False], ["update_params=True", "update_params=False"]
+
+    def _generate_step_length(self, test_name, **kwargs):
+        """Return step length for window.
+
+        Fixtures parameterized
+        ----------------------
+        step_length: int
+            1 if update_params=True; TEST_STEP_LENGTH_INT if update_params=False
+        """
+        update_params = kwargs["update_params"]
+        if update_params:
+            return [1], [""]
+        else:
+            return TEST_STEP_LENGTHS_INT, [f"step={a}" for a in TEST_STEP_LENGTHS_INT]
+
+    def _generate_window_length(self, test_name, **kwargs):
+        """Return window length for window.
+
+        Fixtures parameterized
+        ----------------------
+        window_length: int
+            TEST_WINDOW_LENGTHS from sktime.forecasting.tests._config
+        """
+        return TEST_WINDOW_LENGTHS, [f"window={a}" for a in TEST_WINDOW_LENGTHS]
+
+    def _generate_index_fh_comb(self, test_name, **kwargs):
+        """Return valid index/fh combinations.
+
+        Fixtures parameterized
+        ----------------------
+        index_fh_comb: tuple of index_type: type, fh_type: type, is_relative: bool
+            VALID_INDEX_FH_COMBINATION from sktime.forecasting.tests._config
+        """
+        names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
+        return VALID_INDEX_FH_COMBINATIONS, names
 
 
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
@@ -164,40 +249,35 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             assert "exogenous" in msg
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
-    @pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
     def test_predict_time_index(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative, steps
+        self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
         """Check that predicted time index matches forecasting horizon."""
+        index_type, fh_type, is_relative = index_fh_comb
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
         cutoff = y_train.index[-1]
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh)
+            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh_int)
         except NotImplementedError:
             pass
 
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
-    @pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
     def test_predict_residuals(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative, steps
+        self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
         """Check that predict_residuals method works as expected."""
+        index_type, fh_type, is_relative = index_fh_comb
+
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
         cutoff = y_train.index[-1]
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
@@ -211,21 +291,23 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
-    @pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
     def test_predict_time_index_with_X(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative, steps
+        self,
+        estimator_instance,
+        n_columns,
+        index_fh_comb,
+        fh_int_oos,
     ):
         """Check that predicted time index matches forecasting horizon."""
+        index_type, fh_type, is_relative = index_fh_comb
+
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y.index[len(y) // 2]
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
@@ -236,13 +318,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
-    @pytest.mark.parametrize(
-        "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
-    )
     def test_predict_time_index_in_sample_full(
-        self, estimator_instance, n_columns, index_type, fh_type, is_relative
+        self, estimator_instance, n_columns, index_fh_comb
     ):
         """Check that predicted time index equals fh for full in-sample predictions."""
+        index_type, fh_type, is_relative = index_fh_comb
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
@@ -256,7 +336,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             pass
 
     def _check_pred_ints(
-        self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh
+        self, pred_ints: pd.DataFrame, y_train: pd.Series, y_pred: pd.Series, fh_int
     ):
         # make iterable
         if isinstance(pred_ints, pd.DataFrame):
@@ -267,7 +347,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             assert list(pred_int.columns) == ["lower", "upper"]
 
             # check time index
-            _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
+            _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh_int)
             # check values
             assert np.all(pred_int["upper"] >= pred_int["lower"])
 
@@ -278,9 +358,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
             # )
 
-    @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-    @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-    def test_predict_interval(self, estimator_instance, n_columns, fh, alpha):
+    def test_predict_interval(self, estimator_instance, n_columns, fh_int_oos, alpha):
         """Check prediction intervals returned by predict.
 
         Arguments
@@ -297,11 +375,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 and no NotImplementedError is raised when asking predict for pred.int
         """
         y_train = _make_series(n_columns=n_columns)
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
             if estimator_instance._has_predict_quantiles_been_refactored():
                 y_pred = estimator_instance.predict()
-                pred_ints = estimator_instance.predict_interval(fh, coverage=alpha)
+                pred_ints = estimator_instance.predict_interval(
+                    fh_int_oos, coverage=alpha
+                )
 
                 pred_ints = estimator_instance._convert_new_to_old_pred_int(
                     pred_ints, alpha
@@ -310,7 +390,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 y_pred, pred_ints = estimator_instance.predict(
                     return_pred_int=True, alpha=alpha
                 )
-            self._check_pred_ints(pred_ints, y_train, y_pred, fh)
+            self._check_pred_ints(pred_ints, y_train, y_pred, fh_int_oos)
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
@@ -343,9 +423,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 for index in range(len(pred_quantiles.index)):
                     assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
-    @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-    @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-    def test_predict_quantiles(self, estimator_instance, n_columns, fh, alpha):
+    def test_predict_quantiles(self, estimator_instance, n_columns, fh_int_oos, alpha):
         """Check prediction quantiles returned by predict.
 
         Arguments
@@ -362,10 +440,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 and no NotImplementedError is raised when asking predict for pred.int
         """
         y_train = _make_series(n_columns=n_columns)
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         try:
-            quantiles = estimator_instance.predict_quantiles(fh=fh, alpha=alpha)
-            self._check_predict_quantiles(quantiles, y_train, fh, alpha)
+            quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
+            self._check_predict_quantiles(quantiles, y_train, fh_int_oos, alpha)
         except NotImplementedError:
             pass
 
@@ -404,89 +482,63 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 'The flag "capability:pred_int" should instead be set to True.'
             )
 
-    @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-    def test_score(self, estimator_instance, n_columns, fh):
+    def test_score(self, estimator_instance, n_columns, fh_int_oos):
         """Check score method."""
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.predict()
 
-        fh_idx = check_fh(fh).to_indexer()  # get zero based index
-        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh)
+        fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
+        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         expected = mean_absolute_percentage_error(
             y_pred, y_test.iloc[fh_idx], symmetric=True
         )
 
         # compare expected score with actual score
-        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh)
+        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         assert actual == expected
 
-    @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-    @pytest.mark.parametrize("update_params", [True, False])
     def test_update_predict_single(
-        self, estimator_instance, n_columns, fh, update_params
+        self, estimator_instance, n_columns, fh_int_oos, update_params
     ):
         """Check correct time index of update-predict."""
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.update_predict_single(
             y_test, update_params=update_params
         )
-        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
+        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh_int_oos)
 
-    def _check_update_predict_predicted_index(
-        self, Forecaster, fh, window_length, step_length, update_params
-    ):
-        f = Forecaster.create_test_instance()
-        n_columns_list = _get_n_columns(f.get_tag("scitype:y"))
-
-        for n_columns in n_columns_list:
-            f = Forecaster.create_test_instance()
-            y = _make_series(
-                n_columns=n_columns, all_positive=True, index_type="datetime"
-            )
-            y_train, y_test = temporal_train_test_split(y)
-            cv = SlidingWindowSplitter(
-                fh,
-                window_length=window_length,
-                step_length=step_length,
-                start_with_window=False,
-            )
-            f.fit(y_train, fh=fh)
-            y_pred = f.update_predict(y_test, cv=cv, update_params=update_params)
-            assert isinstance(y_pred, (pd.Series, pd.DataFrame))
-            expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
-            actual = y_pred.index
-            np.testing.assert_array_equal(actual, expected)
-
-    # todo: next two tests seem a case for joining by proper fixture parameterization
-    # test with update_params=False and different values for steps_length
-    @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-    @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
-    @pytest.mark.parametrize("update_params", [False])
     def test_update_predict_predicted_index(
-        self, estimator_instance, fh, window_length, step_length, update_params
+        self,
+        estimator_instance,
+        n_columns,
+        fh_int_oos,
+        window_length,
+        step_length,
+        update_params,
     ):
-        """Check predicted index in update_predict with update_params=False."""
-        self._check_update_predict_predicted_index(
-            estimator_instance, fh, window_length, step_length, update_params
+        """Check predicted index in update_predict."""
+        y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
+        y_train, y_test = temporal_train_test_split(y)
+        cv = SlidingWindowSplitter(
+            fh_int_oos,
+            window_length=window_length,
+            step_length=step_length,
+            start_with_window=False,
         )
-
-    # test with update_params=True and step_length=1
-    @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-    @pytest.mark.parametrize("step_length", [1])
-    @pytest.mark.parametrize("update_params", [True])
-    def test_update_predict_predicted_index_update_params(
-        self, estimator_instance, fh, window_length, step_length, update_params
-    ):
-        """Check predicted index in update_predict with update_params=True."""
-        self._check_update_predict_predicted_index(
-            estimator_instance, fh, window_length, step_length, update_params
+        estimator_instance.fit(y_train, fh=fh_int_oos)
+        y_pred = estimator_instance.update_predict(
+            y_test, cv=cv, update_params=update_params
         )
+        assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+        expected = _get_expected_index_for_update_predict(
+            y_test, fh_int_oos, step_length
+        )
+        actual = y_pred.index
+        np.testing.assert_array_equal(actual, expected)
 
     def test__y_when_refitting(self, estimator_instance, n_columns):
         """Test that _y is updated when forecaster is refitted."""

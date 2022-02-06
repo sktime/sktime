@@ -274,6 +274,9 @@ class QuickTester:
             if est is an object, then estimator_class = est.__class__, and
                 estimator_instance = est
 
+        This is compatible with pytest.mark.parametrize decoration,
+            but currently only with multiple *single variable* annotations.
+
         Parameters
         ----------
         estimator : estimator class or estimator instance
@@ -387,6 +390,26 @@ class QuickTester:
                 fixture_sequence=fixture_sequence,
             )
 
+            # if function is decorated with mark.parameterize, add variable settings
+            # NOTE: currently this works only with single-variable mark.parameterize
+            if hasattr(test_fun, "pytestmark"):
+                if len([x for x in test_fun.pytestmark if x.name == "parametrize"]) > 0:
+                    # get the three lists from pytest
+                    (
+                        pytest_fixture_vars,
+                        pytest_fixture_prod,
+                        pytest_fixture_names,
+                    ) = self._get_pytest_mark_args(test_fun)
+                    # add them to the three lists from conditional fixtures
+                    fixture_vars, fixture_prod, fixture_names = self._product_fixtures(
+                        fixture_vars,
+                        fixture_prod,
+                        fixture_names,
+                        pytest_fixture_vars,
+                        pytest_fixture_prod,
+                        pytest_fixture_names,
+                    )
+
             # loop B: for each test, we loop over all fixtures
             for params, fixt_name in zip(fixture_prod, fixture_names):
 
@@ -426,6 +449,72 @@ class QuickTester:
             if not np.all(isinstance(x, str) for x in obj):
                 raise ValueError(msg)
         return obj
+
+    # todo: surely there is a pytest method that can be called instead of this?
+    #   find and replace if it exists
+    @staticmethod
+    def _get_pytest_mark_args(fun):
+        """Get args from pytest mark annotation of function.
+
+        Parameters
+        ----------
+        fun: callable, any function
+
+        Returns
+        -------
+        pytest_fixture_vars: list of str
+            names of args participating in mark.parameterize marks, in pytest order
+        pytest_fixt_list: list of tuple
+            list of value tuples from the mark parameterization
+            i-th value in each tuple corresponds to i-th arg name in pytest_fixture_vars
+        pytest_fixt_names: list of str
+            i-th element is display name for i-th fixture setting in pytest_fixt_list
+        """
+        from itertools import product
+
+        marks = [x for x in fun.pytestmark if x.name == "parametrize"]
+
+        def to_str(obj):
+            return [str(x) for x in obj]
+
+        pytest_fixture_vars = [x.args[0] for x in marks]
+        pytest_fixt_raw = [x.args[1] for x in marks]
+        pytest_fixt_list = product(*pytest_fixt_raw)
+        pytest_fixt_names_raw = [to_str(range(len(x.args[1]))) for x in marks]
+        pytest_fixt_names = product(*pytest_fixt_names_raw)
+        pytest_fixt_names = ["-".join(x) for x in pytest_fixt_names]
+
+        return pytest_fixture_vars, pytest_fixt_list, pytest_fixt_names
+
+    @staticmethod
+    def _product_fixtures(
+        fixture_vars,
+        fixture_prod,
+        fixture_names,
+        pytest_fixture_vars,
+        pytest_fixture_prod,
+        pytest_fixture_names,
+    ):
+        """Compute products of two sets of fixture vars, values, names."""
+        from itertools import product
+
+        # product of fixture variable names = concatenation
+        fixture_vars_return = fixture_vars + pytest_fixture_vars
+
+        # this is needed because pytest unwraps 1-tuples automatically
+        # but subsequent code assumes params is k-tuple, no matter what k is
+        if len(fixture_vars) == 1:
+            fixture_prod = [(x,) for x in fixture_prod]
+
+        # product of fixture products = Cartesian product plus append tuples
+        fixture_prod_return = product(fixture_prod, pytest_fixture_prod)
+        fixture_prod_return = [sum(x, ()) for x in fixture_prod_return]
+
+        # product of fixture names = Cartesian product plus concat
+        fixture_names_return = product(fixture_names, pytest_fixture_names)
+        fixture_names_return = [".".join(x) for x in fixture_names_return]
+
+        return fixture_vars_return, fixture_prod_return, fixture_names_return
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
