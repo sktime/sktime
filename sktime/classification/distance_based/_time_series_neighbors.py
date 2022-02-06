@@ -2,7 +2,7 @@
 """KNN time series classification.
 
 This class is a KNN classifier which supports time series distance measures.
-The class has hardcoded string references to numba based distances in sktime.distances. 
+The class has hardcoded string references to numba based distances in sktime.distances.
 It can also be used with callables, or sktime (pairwise transformer) estimators.
 
 This is a direct wrap or sklearn KNeighbors, with added functionality that allows
@@ -44,25 +44,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     An adapted version of the scikit-learn KNeighborsClassifier to work with
     time series data.
 
-    Necessary changes required for time series data:
-        -   calls to X.shape in kneighbors, predict and predict_proba.
-            In the base class, these methods contain:
-                n_samples, _ = X.shape
-            This however assumes that data must be 2d (a set of multivariate
-            time series is 3d). Therefore these methods
-            needed to be overridden to change this call to the following to
-            support 3d data:
-                n_samples = X.shape[0]
-        -   check array has been disabled. This method allows nd data via an
-        argument in the method header. However, there
-            seems to be no way to set this in the classifier and allow it to
-            propagate down to the method. Therefore, this
-            method has been temporarily disabled (and then re-enabled). It
-            is unclear how to fix this issue without either
-            writing a new classifier from scratch or changing the
-            scikit-learn implementation. TO-DO: find permanent
-            resolution to this issue (raise as an issue on sklearn GitHub?)
-
+    This class is a KNN classifier which supports time series distance measures.
+    It has hardcoded string references to numba based distances in sktime.distances,
+    and can also be used with callables, or sktime (pairwise transformer) estimators.
 
     Parameters
     ----------
