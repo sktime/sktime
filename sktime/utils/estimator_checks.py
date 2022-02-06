@@ -4,12 +4,12 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
-# from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
 from sktime.registry import scitype
 from sktime.tests.test_all_estimators import TestAllEstimators
 
 testclass_dict = dict()
-# testclass_dict["forecaster"] = TestAllForecasters
+testclass_dict["forecaster"] = TestAllForecasters
 
 
 def check_estimator(
