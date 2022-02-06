@@ -38,6 +38,20 @@ from sktime.distances import (
 from sktime.distances.mpdist import mpdist
 
 
+# add new distance string codes here
+DISTANCE_DICT = {
+    "euclidean": euclidean_distance,
+    # Euclidean will default to the base class distance
+    "dtw": dtw_distance,
+    "ddtw": ddtw_distance,
+    "wdtw": wdtw_distance,
+    "wddtw": wddtw_distance,
+    "lcss": lcss_distance,
+    "erp": erp_distance,
+    "mpdist": mpdist,
+}
+
+
 class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """KNN Time Series Classifier.
 
@@ -58,8 +72,12 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
-        if str, one of {'dtw','ddtw', 'wdtw','lcss','erp','msm','twe'}: default ='dtw'
+        if str, one of {'euclidean', 'dtw', 'dtwcv', 'ddtw', 'wdtw', 'wddtw', 'lcss',
+                'erp', 'mpdist'}
             this will substitute a hard-coded distance metric from sktime.distances
+        When mpdist is used, the subsequence length (parameter m) must be set
+            Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
+                                metric='mpdist', metric_params={'m':30})
         if callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
             output must be mxn array if X is Panel of m Series, X2 of n Series
             if distance_mtype is not set, must be able to take
@@ -106,10 +124,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         self._cv_for_params = False
 
-        if distance == "euclidean":  # Euclidean will default to the base class distance
+        # translate distance strings into distance callables
+        if distance in DISTANCE_DICT.keys():
             distance = euclidean_distance
-        elif distance == "dtw":
-            distance = dtw_distance
         elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
             if distance_params is not None:
@@ -124,26 +141,12 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             self._param_matrix = {
                 "distance_params": [{"w": x / 100} for x in range(0, 100)]
             }
-        elif distance == "ddtw":
-            distance = ddtw_distance
-        elif distance == "wdtw":
-            distance = wdtw_distance
-        elif distance == "wddtw":
-            distance = wddtw_distance
-        elif distance == "lcss":
-            distance = lcss_distance
-        elif distance == "erp":
-            distance = erp_distance
-        elif distance == "mpdist":
-            distance = mpdist
-            # When mpdist is used, the subsequence length (parameter m) must be set
-            # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-            # metric='mpdist', metric_params={'m':30})
         elif isinstance(distance, str):
+            allowed_vals = list(DISTANCE_DICT.keys()) + ["dtwcv"]
             raise ValueError(
-                "Unrecognised distance measure: " + distance + ". Allowed values "
-                "are names from [euclidean,dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
-                "please pass a callable distance measure into the constuctor"
+                f"Unrecognised distance measure string: {distance}. "
+                f"Allowed values for string codes are: {allowed_vals}. "
+                "Alternatively, pass a callable distance measure into the constuctor."
             )
 
         self._distance = distance
