@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder]
+          python -m pip install .[all_extras,binder,dev]
       - name: Run example notebooks
         run: build_tools/run_examples.sh
         shell: bash
