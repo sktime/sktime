@@ -92,15 +92,19 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
+        algorithm="brute",
         distance="dtw",
         distance_params=None,
         distance_mtype=None,
         **kwargs
     ):
-        self._cv_for_params = False
+        self.n_neighbors = n_neighbors
+        self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
+
+        self._cv_for_params = False
 
         if distance == "euclidean":  # Euclidean will default to the base class distance
             distance = euclidean_distance
@@ -142,6 +146,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                 "please pass a callable distance measure into the constuctor"
             )
 
+        self._distance = distance
+
         # the distances in sktime.distances want numpy3D
         #   otherwise all Panel formats are ok
         if isinstance(distance, str):
@@ -151,7 +157,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
-            algorithm="brute",
+            algorithm=algorithm,
             metric="precomputed",
             metric_params=distance_params,
             **kwargs
@@ -172,7 +178,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         # store full data as indexed X
         self._X = X
 
-        dist_mat = self.distance(X)
+        dist_mat = self._distance(X)
 
         self.knn_estimator_.fit(dist_mat, y)
 
@@ -203,7 +209,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         # self._X should be the stored _X
-        dist_mat = self.distance(X, self._X)
+        dist_mat = self._distance(X, self._X)
 
         neigh_ind = self.knn_estimator_.kneighbors(
             dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
@@ -224,7 +230,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             Class labels for each data sample.
         """
         # self._X should be the stored _X
-        dist_mat = self.distance(X, self._X)
+        dist_mat = self._distance(X, self._X)
 
         y_pred = self.knn_estimator_.predict(dist_mat)
 
@@ -245,7 +251,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             by lexicographic order.
         """
         # self._X should be the stored _X
-        dist_mat = self.distance(X, self._X)
+        dist_mat = self._distance(X, self._X)
 
         y_pred = self.knn_estimator_.predict_proba(dist_mat)
 
