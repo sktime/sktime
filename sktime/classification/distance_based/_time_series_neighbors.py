@@ -99,7 +99,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "X_inner_mtype": "numpy3D",
+        "X_inner_mtype": ["pd_multiindex", "df-list", "numpy3D", "nested_univ"],
     }
 
     def __init__(
@@ -155,6 +155,11 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                     "please pass a callable distance measure into the constuctor"
                 )
 
+        # the distances in sktime.distances want numpy3D
+        #   otherwise all Panel formats are ok
+        if isinstance(distance, str):
+            self.set_tags(X_inner_mtype="numpy3D")
+
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
             algorithm="brute",
@@ -172,7 +177,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-compatible data format, Panel or Series, with n_samples series
+        X : sktime-compatible Panel data format, with n_samples series
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples]
         """
@@ -223,7 +228,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-compatible data format, Panel or Series, with n_samples series
+        X : sktime-compatible Panel data format, with n_samples series
+
         Returns
         -------
         y : array of shape [n_samples] or [n_samples, n_outputs]
@@ -241,7 +247,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : sktime-compatible data format, Panel or Series, with n_samples series
+        X : sktime-compatible Panel data format, with n_samples series
 
         Returns
         -------
