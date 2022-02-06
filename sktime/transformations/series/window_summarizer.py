@@ -25,7 +25,7 @@ class WindowSummarizer(BaseTransformer):
     index : str, base string of the derived features
             final name will also contain
             window shift and window length.
-    win_summarizer: either str corresponding to implemented pandas function, currently
+    summarizer: either str corresponding to implemented pandas function, currently
             * "sum",
             * "mean",
             * "median",
@@ -42,7 +42,7 @@ class WindowSummarizer(BaseTransformer):
     window: list of integers
         Contains values for window shift and window length.
     target_cols: list of str,
-        Specifies which columns in y or X to target. If set to None will
+        Specifies which columns in X to target. If set to None will
         target first column in X.
 
     Examples
@@ -85,7 +85,6 @@ class WindowSummarizer(BaseTransformer):
     >>> y_pred2 = pipe_return.predict(fh=fh, X=Z_test)
     """
 
-    #
     _tags = {
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Series",
@@ -93,7 +92,6 @@ class WindowSummarizer(BaseTransformer):
         "capability:inverse_transform": False,
         "scitype:transform-labels": "Series",
         "X_inner_mtype": [
-            # "pd.Series",
             "pd.DataFrame",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -108,13 +106,13 @@ class WindowSummarizer(BaseTransformer):
 
     def __init__(
         self,
-        functions=None,
+        summarizer=None,
         n_jobs=-1,
         target_cols=None,
     ):
 
         # self._converter_store_X = dict()
-        self.functions = functions
+        self.summarizer = summarizer
         self.n_jobs = n_jobs
         self.target_cols = target_cols
 
@@ -136,8 +134,6 @@ class WindowSummarizer(BaseTransformer):
         X: pd.DataFrame
         self: reference to self
         """
-        # check if dict is empty
-
         X_name = get_name_list(X)
 
         if X_name is None:
@@ -146,33 +142,10 @@ class WindowSummarizer(BaseTransformer):
         else:
             self._X_rename = None
 
-        # if y is not None:
-        #     y_name = get_name_list(y)
-        #     if y_name is None:
-        #         self._y_rename = "y"
-        #         y_name = ["y"]
-        #     else:
-        #         self._y_rename = None
-        #     Z_name = X_name + y_name
-        # else:
-        #     Z_name = X_name
-        #     self._y_rename = None
-
         if self.target_cols is None:
-            self._target_cols = [X_name][0]
+            self._target_cols = [X_name[0]]
         else:
             self._target_cols = self.target_cols
-
-        # if y is not None:
-        #     if not len(y_name + X_name) == len(set(y_name + X_name)):
-        #         raise ValueError(
-        #             "Please make sure that names across X and y are not"
-        #             + " duplicate. If unnamed X/y Series are provided, X will be"
-        #             + " renamed to 'X_var_0' and y will be renamed to 'y'."
-        #             + " This could also be result of this error if e.g. X"
-        #             + " contained a named column y and an unnamed y Series"
-        #             + " was renamed to 'y'."
-        #         )
 
         if self.target_cols is not None:
             if not all(x in X_name for x in self.target_cols):
@@ -183,14 +156,14 @@ class WindowSummarizer(BaseTransformer):
                     + " specified that do neither exist in X (or y resp.)"
                 )
 
-        if self.functions is None:
+        if self.summarizer is None:
             func_dict = pd.DataFrame(
                 {
                     "lag": ["lag", [[1, 0]]],
                 }
             ).T.reset_index()
         else:
-            func_dict = pd.DataFrame(self.functions).T.reset_index()
+            func_dict = pd.DataFrame(self.summarizer).T.reset_index()
 
         func_dict.rename(
             columns={"index": "name", 0: "win_summarizer", 1: "window"},
@@ -266,7 +239,7 @@ class WindowSummarizer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {
-            "functions": {
+            "summarizer": {
                 "lag": ["lag", [[1, 0]]],
                 "mean": ["mean", [[3, 0], [12, 0]]],
                 "std": ["std", [[4, 0]]],
@@ -274,13 +247,13 @@ class WindowSummarizer(BaseTransformer):
         }
 
         params2 = {
-            "functions": {
+            "summarizer": {
                 "lag": ["lag", [[3, 0], [6, 0]]],
             }
         }
 
         params3 = {
-            "functions": {
+            "summarizer": {
                 "mean": ["mean", [[7, 0], [7, 7]]],
                 "covar_feature": ["cov", [[28, 0]]],
             }
@@ -328,7 +301,7 @@ def _window_feature(
 ):
     """Compute window features and lag.
 
-    Apply functions passed over a certain window
+    Apply summarizer passed over a certain window
     of past observations, e.g. the mean of a window of length 7 days, lagged by 14 days.
 
     y: either pandas.core.groupby.generic.SeriesGroupBy
@@ -370,7 +343,9 @@ def _window_feature(
         if isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
             feat = feat.rolling(win).apply(win_summarizer, raw=True)
         elif not isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
-            feat = feat.apply(lambda x: x.rolling(win).apply(win_summarizer, raw=True))
+            feat = pd.DataFrame(feat).apply(
+                lambda x: x.rolling(win).apply(win_summarizer, raw=True)
+            )
 
     if isinstance(feat, pd.Series):
         feat = pd.DataFrame(feat)

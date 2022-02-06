@@ -2,6 +2,7 @@
 """Test extraction of features across (shifted) windows."""
 __author__ = ["Daniel Bartling"]
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -49,14 +50,27 @@ kwargs = WindowSummarizer.get_test_params()[0]
 kwargs_alternames = WindowSummarizer.get_test_params()[1]
 kwargs_variant = WindowSummarizer.get_test_params()[2]
 
+
+def count_gt100(x):
+    """Count how many observations lie above threshold 100."""
+    return np.sum((x > 100)[::-1])
+
+
+# Cannot be pickled in get_test_params, therefore here explicit
+kwargs_custom = {
+    "summarizer": {
+        "cgt100": [count_gt100, [[3, 0]]],
+    }
+}
 # Generate named and unnamed y
 y_train.name = None
 y_train_named = y_train.copy()
 y_train_named.name = "y"
 
 # Target for multivariate extraction
-Xt_test = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
-Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
+Xtmvar = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
+Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
+Xtmvar_none = ["GNPDEFL_lag_3_0", "GNPDEFL_lag_6_0", "GNP", "UNEMP", "ARMED", "POP"]
 
 # Some tests are commented out until hierarchical PR works
 
@@ -70,12 +84,14 @@ Xt_test = Xt_test + ["GNPDEFL", "UNEMP", "ARMED"]
             y_train_named,
             None,
         ),
-        (kwargs_alternames, Xt_test, X_ll_train, ["POP", "GNP"]),
+        (kwargs_alternames, Xtmvar, X_ll_train, ["POP", "GNP"]),
+        (kwargs_alternames, Xtmvar_none, X_ll_train, None),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
         # (None, ["lag_1_0"], y_multi),
         (None, None, y_train, None),
         (None, ["a_lag_1_0"], y_pd, None),
+        (kwargs_custom, ["a_cgt100_3_0"], y_pd, None),
         (kwargs_alternames, ["0_lag_3_0", "0_lag_6_0"], y_train, None),
         (
             kwargs_variant,
