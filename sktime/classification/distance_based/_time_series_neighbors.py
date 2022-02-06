@@ -180,7 +180,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         # store full data as indexed X
         self._X = X
 
-        dist_mat = self._distance(X)
+        dist_mat = self._distance(X, X)
 
         self.knn_estimator_.fit(dist_mat, y)
 
