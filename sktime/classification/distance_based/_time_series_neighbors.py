@@ -123,9 +123,16 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         self._cv_for_params = False
 
+        # the distances in sktime.distances want numpy3D
+        #   otherwise all Panel formats are ok
+        if isinstance(distance, str):
+            self.set_tags(X_inner_mtype="numpy3D")
+        elif distance_mtype is not None:
+            self.set_tags(X_inner_mtype=distance_mtype)
+
         # translate distance strings into distance callables
         if distance in DISTANCE_DICT.keys():
-            distance = euclidean_distance
+            _distance = DISTANCE_DICT[distance]
         elif distance == "dtwcv":  # special case to force loocv grid search
             # cv in training
             if distance_params is not None:
@@ -135,7 +142,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                     "These will be ignored and parameter values will be "
                     "found using LOOCV."
                 )
-            distance = dtw_distance
+            _distance = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
                 "distance_params": [{"w": x / 100} for x in range(0, 100)]
@@ -148,14 +155,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                 "Alternatively, pass a callable distance measure into the constuctor."
             )
 
-        self._distance = distance
-
-        # the distances in sktime.distances want numpy3D
-        #   otherwise all Panel formats are ok
-        if isinstance(distance, str):
-            self.set_tags(X_inner_mtype="numpy3D")
-        elif distance_mtype is not None:
-            self.set_tags(X_inner_mtype=distance_mtype)
+        self._distance = _distance
 
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
