@@ -292,7 +292,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             pass
 
     def test_predict_time_index_with_X(
-        self, estimator_instance, n_columns, index_fh_comb, fh_int_oos,
+        self,
+        estimator_instance,
+        n_columns,
+        index_fh_comb,
+        fh_int_oos,
     ):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
