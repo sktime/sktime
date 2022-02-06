@@ -41,8 +41,7 @@ from sktime.distances.mpdist import mpdist
 class KNeighborsTimeSeriesClassifier(BaseClassifier):
     """KNN Time Series Classifier.
 
-    An adapted version of the scikit-learn KNeighborsClassifier to work with
-    time series data.
+    An adapted version of the scikit-learn KNeighborsClassifier for time series data.
 
     This class is a KNN classifier which supports time series distance measures.
     It has hardcoded string references to numba based distances in sktime.distances,
