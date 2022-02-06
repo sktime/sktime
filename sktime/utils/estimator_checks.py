@@ -57,7 +57,7 @@ def check_estimator(
     >>> check_estimator(ARIMA, tests_to_run="test_pred_int_tag")
     {'test_pred_int_tag[ARIMA]': 'PASSED'}
     >>> check_estimator(ARIMA, fixtures_to_run="test_score[ARIMA--1]")
-    {'test_score[ARIMA--1]': 'PASSED'}
+    {'test_score[ARIMA--fh=1]': 'PASSED'}
     """
     results = TestAllEstimators().run_tests(
         estimator=estimator,
