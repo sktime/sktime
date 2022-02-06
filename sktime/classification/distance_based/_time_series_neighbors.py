@@ -23,34 +23,21 @@ __author__ = ["jasonlines", "TonyBagnall"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 import warnings
-from functools import partial
 
-import numpy as np
-from joblib import effective_n_jobs
-from scipy import stats
-from sklearn.exceptions import DataConversionWarning
-from sklearn.metrics import pairwise_distances_chunked
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors._base import _check_weights, _get_weights
-from sklearn.utils.extmath import weighted_mode
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_array
+from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.elastic import euclidean_distance
-from sktime.distances.elastic_cython import (
+from sktime.distances import (
     ddtw_distance,
     dtw_distance,
     erp_distance,
     lcss_distance,
-    msm_distance,
-    twe_distance,
     wddtw_distance,
     wdtw_distance,
 )
 from sktime.distances.mpdist import mpdist
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class KNeighborsTimeSeriesClassifier(BaseClassifier):
@@ -81,15 +68,22 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     Parameters
     ----------
-    n_neighbors     : int, set k for knn (default =1)
-    weights         : string or callable function, optional, default ==' uniform'
-                      mechanism for weighting a vote, one of: 'uniform', 'distance'
-                      or a callable function
-    algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
-    ‘kd_tree’, ‘brute’}: default = 'brute'
-    distance          : distance measure for time series: {'dtw','ddtw',
-    'wdtw','lcss','erp','msm','twe'}: default ='dtw'
-    distance_params   : dictionary for metric parameters: default = None
+    n_neighbors : int, set k for knn (default =1)
+    weights : string or callable function, optional. default = 'uniform'
+        mechanism for weighting a vot
+        one of: 'uniform', 'distance', or a callable function
+    algorithm : str, optional. default = 'brute'
+        search method for neighbours
+        one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
+    distance : str or callable, optional. default ='dtw'
+        distance measure between time series
+        if str, one of {'dtw','ddtw', 'wdtw','lcss','erp','msm','twe'}: default ='dtw'
+            this will substitute a hard-coded distance metric from sktime.distances
+        if callable, must be of signature (X: Panel, X2: Panel) -> np.ndarray
+            output must be mxn array if X is Panel of m Series, X2 of n Series
+        can be pairwise panel transformer inheriting from BasePairwiseTransformerPanel
+    distance_params : dict, optional. default = None.
+        dictionary for metric parameters , in case that distane is a str
 
     Examples
     --------
@@ -147,10 +141,6 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             distance = lcss_distance
         elif distance == "erp":
             distance = erp_distance
-        elif distance == "msm":
-            distance = msm_distance
-        elif distance == "twe":
-            distance = twe_distance
         elif distance == "mpdist":
             distance = mpdist
             # When mpdist is used, the subsequence length (parameter m) must be set
@@ -224,7 +214,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         # self._X should be the stored _X
         dist_mat = self.distance(X, self._X)
 
-        neigh_ind = self.knn_estimator_.kneighbors(dist_mat, n_neighbors=n_neighbors, return_distance=return_distance)
+        neigh_ind = self.knn_estimator_.kneighbors(
+            dist_mat, n_neighbors=n_neighbors, return_distance=return_distance
+        )
 
         return neigh_ind
 
