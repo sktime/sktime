@@ -37,7 +37,6 @@ from sktime.distances import (
 )
 from sktime.distances.mpdist import mpdist
 
-
 # add new distance string codes here
 DISTANCE_DICT = {
     "euclidean": euclidean_distance,
