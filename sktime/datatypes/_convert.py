@@ -137,7 +137,7 @@ def convert(
     if store_behaviour not in [None, "reset", "freeze", "update"]:
         raise ValueError(
             'store_behaviour must be one of "reset", "freeze", "update", or None'
-    )
+        )
     if store_behaviour is None and store == {}:
         store_behaviour = "update"
     if store_behaviour is None and store != {}:
