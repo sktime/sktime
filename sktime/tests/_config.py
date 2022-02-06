@@ -121,6 +121,18 @@ EXCLUDE_ESTIMATORS = [
 EXCLUDED_TESTS = {
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
     "StackingForecaster": ["test_predict_time_index_with_X"],
+    "ProximityForest": [
+        "test_fit_does_not_overwrite_hyper_params",
+        "test_persistence_via_pickle",
+    ],
+    "ProximityTree": [
+        "test_fit_does_not_overwrite_hyper_params",
+        "test_persistence_via_pickle",
+    ],
+    "ProximityStump": [
+        "test_fit_does_not_overwrite_hyper_params",
+        "test_persistence_via_pickle",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of

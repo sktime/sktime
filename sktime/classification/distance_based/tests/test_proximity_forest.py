@@ -20,7 +20,7 @@ def test_pf_on_unit_test_data():
 
     # assert probabilities are the same
     probas = pf.predict_proba(X_test.iloc[indices])
-    testing.assert_array_almost_equal(probas, pf_unit_test_probas, decimal=2)
+    testing.assert_array_almost_equal(probas, pf_unit_test_probas, decimal=4)
 
 
 pf_unit_test_probas = np.array(
