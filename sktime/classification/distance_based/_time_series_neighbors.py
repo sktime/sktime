@@ -102,7 +102,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
-        "X_inner_mtype": ["pd_multiindex", "numpy3D"],
+        "X_inner_mtype": ["pd-multiindex", "numpy3D"],
     }
 
     def __init__(
