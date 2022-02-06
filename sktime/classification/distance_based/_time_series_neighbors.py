@@ -114,7 +114,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         distance="dtw",
         distance_params=None,
         distance_mtype=None,
-        **kwargs
+        **kwargs,
     ):
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
@@ -163,7 +163,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             algorithm=algorithm,
             metric="precomputed",
             metric_params=distance_params,
-            **kwargs
+            **kwargs,
         )
         self.weights = _check_weights(weights)
 
