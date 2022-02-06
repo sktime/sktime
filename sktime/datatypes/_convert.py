@@ -136,7 +136,7 @@ def convert(
         raise TypeError("store must be a dict or None")
     if store_behaviour not in [None, "reset", "freeze", "update"]:
         raise ValueError(
-            'store_behaviour must be None or one of "reset", "freeze", "update"'
+            'store_behaviour must be one of "reset", "freeze", "update", or None'
     )
     if store_behaviour is None and store == {}:
         store_behaviour = "update"
