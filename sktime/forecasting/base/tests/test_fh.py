@@ -310,6 +310,7 @@ def test_estimator_fh(freqstr):
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
 
 
+# TODO: Replace this long running test with fast unit test
 def test_auto_ets():
     """Fix bug in 1435.
 
@@ -329,6 +330,7 @@ def test_auto_ets():
     )
 
 
+# TODO: Replace this long running test with fast unit test
 def test_exponential_smoothing():
     """Test bug in 1876.
 
@@ -353,6 +355,7 @@ def test_exponential_smoothing():
     )
 
 
+# TODO: Replace this long running test with fast unit test
 def test_theta_forecaster():
     """Test example in notebook.
 
@@ -374,6 +377,7 @@ def test_theta_forecaster():
     )
 
 
+# TODO: Replace this long running test with fast unit test
 def test_auto_arima():
     """Test bug in 805.
 

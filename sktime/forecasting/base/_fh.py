@@ -285,6 +285,12 @@ class ForecastingHorizon:
                 cutoff = _coerce_to_period(cutoff, freq)
 
             # Compute relative values
+            # The following line circumvents the bug in pandas
+            # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+            # periods - periods[0]
+            # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+            # [v - periods[0] for v in periods]
+            # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
             relative = pd.Index([date - cutoff for date in absolute])
 
             # Coerce durations (time deltas) into integer values for given frequency
@@ -325,8 +331,7 @@ class ForecastingHorizon:
 
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
-                freq = cutoff.freqstr
-                absolute = absolute.to_timestamp(freq)
+                absolute = absolute.to_timestamp(cutoff.freqstr)
 
             return self._new(absolute, is_relative=False)
 
@@ -348,15 +353,18 @@ class ForecastingHorizon:
             integer index.
         """
         freq = _get_freq(cutoff)
+
         if isinstance(cutoff, pd.Timestamp):
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
             cutoff = _coerce_to_period(cutoff, freq=freq)
+
         absolute = self.to_absolute(cutoff).to_pandas()
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
             absolute = _coerce_to_period(absolute, freq=freq)
+
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
         if isinstance(start, pd.Timestamp):
@@ -367,6 +375,12 @@ class ForecastingHorizon:
         # operations as in `to_relative` but currently doesn't work with
         # `update_predict` and incomplete time indices where the `freq` information
         # is lost, see comment on issue #534
+        # The following line circumvents the bug in pandas
+        # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+        # periods - periods[0]
+        # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+        # [v - periods[0] for v in periods]
+        # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
         integers = pd.Index([date - start for date in absolute])
 
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
