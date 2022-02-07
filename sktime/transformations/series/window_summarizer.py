@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract features across (shifted) windows from provided series."""
 
-__author__ = ["Daniel Bartling"]
+__author__ = ["danbartl"]
 __all__ = ["WindowSummarizer"]
 
 import pandas as pd
@@ -47,37 +47,38 @@ class WindowSummarizer(BaseTransformer):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> from sktime.transformations.series.window_summarizer import WindowSummarizer
     >>> from sktime.datasets import load_airline, load_longley
-    >>> y = load_airline()
-    >>> kwargs = WindowSummarizer.get_test_params()[0]
-    >>> transformer = WindowSummarizer(**kwargs)
-    >>> y_transformed = transformer.fit_transform(y)
-    >>> #Example y univariate
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> y = load_airline()
+    >>> kwargs = WindowSummarizer.get_test_params()[0]
+    >>> transformer = WindowSummarizer(**kwargs)
+    >>> y_transformed = transformer.fit_transform(y)
+    >>> # Example y univariate
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
     >>> # Example transforming only X
     >>> pipe = ForecastingPipeline(
     ...     steps=[
-    ...         ("a", WindowSummarizer(n_jobs=1,target_cols=["POP", "GNPDEFL"])),
-    ...         ("b", WindowSummarizer(n_jobs=1,target_cols=["GNP"],**kwargs)),
+    ...         ("a", WindowSummarizer(n_jobs=1, target_cols=["POP", "GNPDEFL"])),
+    ...         ("b", WindowSummarizer(n_jobs=1, target_cols=["GNP"], **kwargs)),
     ...         ("forecaster", NaiveForecaster(strategy="drift")),
     ...     ]
     ... )
     >>> pipe_return = pipe.fit(y_train, X_train)
     >>> y_pred1 = pipe_return.predict(fh=fh, X=X_test)
     >>> # Example transforming X and y ("TOTEMP") - will result in first lag of y
-    >>> Z_train = pd.concat([X_train,y_train],axis=1)
-    >>> Z_test = pd.concat([X_test,y_test],axis=1)
+    >>> Z_train = pd.concat([X_train, y_train], axis=1)
+    >>> Z_test = pd.concat([X_test, y_test], axis=1)
     >>> pipe = ForecastingPipeline(
     ...     steps=[
-    ...         ("a", WindowSummarizer(n_jobs=1,target_cols=["POP", "TOTEMP"])),
-    ...         ("b", WindowSummarizer(n_jobs=1,target_cols=["GNP"],**kwargs)),
+    ...         ("a", WindowSummarizer(n_jobs=1, target_cols=["POP", "TOTEMP"])),
+    ...         ("b", WindowSummarizer(n_jobs=1, target_cols=["GNP"], **kwargs)),
     ...         ("forecaster", NaiveForecaster(strategy="drift")),
     ...     ]
     ... )
@@ -90,10 +91,8 @@ class WindowSummarizer(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "capability:inverse_transform": False,
-        "scitype:transform-labels": "Series",
-        "X_inner_mtype": [
-            "pd.DataFrame",
-        ],  # which mtypes do _fit/_predict support for X?
+        "scitype:transform-labels": None,
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
@@ -137,10 +136,7 @@ class WindowSummarizer(BaseTransformer):
         X_name = get_name_list(X)
 
         if X_name is None:
-            self._X_rename = "var_0"
             X_name = ["var_0"]
-        else:
-            self._X_rename = None
 
         if self.target_cols is None:
             self._target_cols = [X_name[0]]
@@ -187,44 +183,27 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
-        # input checks
-        # if not isinstance(y, pd.DataFrame):
-        #     y = pd.DataFrame(y)
-
-        # if not isinstance(X, pd.DataFrame):
-        #     X = pd.DataFrame(X)
-
-        # if self._y_rename is not None:
-        #     y.columns = [self._y_rename]
         X.columns = X.columns.map(str)
 
-        if self._X_rename is not None:
-            X.columns = [self._X_rename]
-
-        Z = X
-
-        Zt_out = []
+        Xt_out = []
         for cols in self._target_cols:
-            if isinstance(Z.index, pd.MultiIndex):
-                Z_grouped = getattr(Z.groupby("instances"), Z[cols])
+            if isinstance(X.index, pd.MultiIndex):
+                X_grouped = getattr(X.groupby("instances"), X[cols])
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(Z_grouped, **kwargs)
+                    delayed(_window_feature)(X_grouped, **kwargs)
                     for index, kwargs in self._func_dict.iterrows()
                 )
             else:
-                # for _index, kwargs in self._func_dict.iterrows():
-                #     _window_feature(X, **kwargs)
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(Z[cols], **kwargs)
+                    delayed(_window_feature)(X[cols], **kwargs)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
-            Zt = pd.concat(df, axis=1)
-            # if len(self._target_cols) > 1:
-            Zt = Zt.add_prefix(str(cols) + "_")
-            Zt_out.append(Zt)
-        Zt_out_df = pd.concat(Zt_out, axis=1)
-        Zt_return = pd.concat([Zt_out_df, Z.drop(self._target_cols, axis=1)], axis=1)
-        return Zt_return
+            Xt = pd.concat(df, axis=1)
+            Xt = Xt.add_prefix(str(cols) + "_")
+            Xt_out.append(Xt)
+        Xt_out_df = pd.concat(Xt_out, axis=1)
+        Xt_return = pd.concat([Xt_out_df, X.drop(self._target_cols, axis=1)], axis=1)
+        return Xt_return
 
     @classmethod
     def get_test_params(cls):
