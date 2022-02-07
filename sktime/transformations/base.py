@@ -155,7 +155,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -221,7 +221,11 @@ class BaseTransformer(BaseEstimator):
                     "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+                X,
+                to_type="df-list",
+                as_scitype="Panel",
+                store=self._converter_store_X,
+                store_behaviour="reset",
             )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
@@ -262,7 +266,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -404,7 +408,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -466,7 +470,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -588,7 +592,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
         update_params : bool, default=True
             whether the model is updated. Yes if true, if false, simply skips call.
             argument exists for compatibility with forecasting module.
@@ -658,7 +662,11 @@ class BaseTransformer(BaseEstimator):
                     "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+                X,
+                to_type="df-list",
+                as_scitype="Panel",
+                store=self._converter_store_X,
+                store_behaviour="reset",
             )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
@@ -690,7 +698,11 @@ class BaseTransformer(BaseEstimator):
             )
 
         X = convert_to(
-            X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+            X,
+            to_type="df-list",
+            as_scitype="Panel",
+            store=self._converter_store_X,
+            store_behaviour="reset",
         )
 
         # depending on whether fitting happens, apply fitted or unfitted instances
@@ -728,6 +740,7 @@ class BaseTransformer(BaseEstimator):
                 to_type=X_input_mtype,
                 as_scitype="Panel",
                 store=self._converter_store_X,
+                store_behaviour="freeze",
             )
 
         # if the output is Primitives, we have a list of one-row dataframes
@@ -769,6 +782,7 @@ class BaseTransformer(BaseEstimator):
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
             store=self._converter_store_X,
+            store_behaviour="reset",
         )
 
         if y_inner_mtype != ["None"]:
@@ -824,6 +838,7 @@ class BaseTransformer(BaseEstimator):
                 to_type=X_output_mtype,
                 as_scitype=X_input_scitype,
                 store=self._converter_store_X,
+                store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
@@ -958,10 +973,11 @@ def _handle_alias(X, Z):
     if Z is None:
         return X
     elif X is None:
-        warnings.warn(
-            "argument Z will be deprecated in transformers, sktime version 0.10.0",
-            category=DeprecationWarning,
+        msg = (
+            "argument Z will in transformers is deprecated since version 0.10.0 "
+            "and will be removed in version 0.11.0"
         )
+        warnings.warn(msg, category=DeprecationWarning)
         return Z
     else:
         raise ValueError("X and Z are aliases, at most one of them should be passed")

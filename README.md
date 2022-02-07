@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.9.0 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
+:rocket: **Version 0.10.0 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.org/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -50,13 +50,16 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :bug: **Bug Reports**              | [GitHub Issue Tracker]                  |
 | :sparkles: **Feature Requests & Ideas** | [GitHub Issue Tracker]                       |
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
-| :speech_balloon: **General Discussion**        | [GitHub Discussions] · [Gitter] · [Discord]          |
+| :speech_balloon: **General Discussion**        | [GitHub Discussions] · [Gitter] |
+| :factory: **Contribution & Development** | [Slack], contributors channel · [Discord] |
+| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 1pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/alan-turing-institute/sktime/issues
 [github discussions]: https://github.com/alan-turing-institute/sktime/discussions
 [stack overflow]: https://stackoverflow.com/questions/tagged/sktime
 [gitter]: https://gitter.im/sktime/community
 [discord]: https://discord.com/invite/gqSab2K
+[slack]: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
 
 ## :dizzy: Features
 Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.org/en/stable/estimator_overview.html) and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
@@ -93,7 +96,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.org/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
-- **Python version**: Python 3.6, 3.7 and 3.8 (only 64 bit)
+- **Python version**: Python 3.7, 3.8 and 3.9 (only 64 bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
 [pip]: https://pip.pypa.io/en/stable/
