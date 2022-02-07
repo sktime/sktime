@@ -42,7 +42,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from sktime.datasets._data_io import _load_dataset
+from sktime.datasets._data_io import _load_dataset, _load_provided_dataset
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -286,7 +286,7 @@ def load_unit_test(split=None, return_X_y=True):
     Number of classes:  2
     """
     name = "UnitTest"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y)
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
@@ -341,7 +341,7 @@ def load_japanese_vowels(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=True):
+def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
     """
     Load the ArrowHead time series classification problem and returns X and y.
 
@@ -386,7 +386,9 @@ def load_arrow_head(split=None, return_X_y=True):
     ?Dataset=ArrowHead
     """
     name = "ArrowHead"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
+    )
 
 
 def load_acsf1(split=None, return_X_y=True):
@@ -434,7 +436,7 @@ def load_acsf1(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=True):
+def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
     """
     Load the  BasicMotions time series classification problem and returns X and y.
 
@@ -474,7 +476,9 @@ def load_basic_motions(split=None, return_X_y=True):
     =BasicMotions
     """
     name = "BasicMotions"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
+    )
 
 
 # forecasting data sets
@@ -508,7 +512,7 @@ def load_shampoo_sales():
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of shampoo sales"
     return y
@@ -562,7 +566,7 @@ def load_longley(y_name="TOTEMP"):
     data = pd.read_csv(path, index_col=0)
     data = data.set_index("YEAR")
     data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
-    data = data.astype(np.float)
+    data = data.astype(float)
 
     # Get target series
     y = data.pop(y_name)
@@ -609,7 +613,7 @@ def load_lynx():
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
     y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
     y.name = "Number of Lynx trappings"
     return y
@@ -646,7 +650,7 @@ def load_airline():
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
@@ -813,7 +817,7 @@ def load_PBS_dataset():
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")

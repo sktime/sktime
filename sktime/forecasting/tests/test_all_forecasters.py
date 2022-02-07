@@ -4,7 +4,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "kejsitake"]
 __all__ = [
     "test_raises_not_fitted_error",
     "test_score",
@@ -15,7 +15,7 @@ __all__ = [
     "test_y_multivariate_raises_error",
     "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
-    "test_predict_pred_interval",
+    "test_predict_interval",
     "test_update_predict_single",
     "test_y_invalid_type_raises_error",
     "test_predict_time_index_with_X",
@@ -35,7 +35,7 @@ from sktime.forecasting.tests._config import (
     TEST_ALPHAS,
     TEST_FHS,
     TEST_OOS_FHS,
-    TEST_STEP_LENGTHS,
+    TEST_STEP_LENGTHS_INT,
     TEST_WINDOW_LENGTHS,
     VALID_INDEX_FH_COMBINATIONS,
 )
@@ -272,10 +272,8 @@ def _check_pred_ints(
 
         # check time index
         _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
-
         # check values
-        assert np.all(pred_int["upper"] > y_pred)
-        assert np.all(pred_int["lower"] < y_pred)
+        assert np.all(pred_int["upper"] >= pred_int["lower"])
 
         # check if errors are weakly monotonically increasing
         # pred_errors = y_pred - pred_int["lower"]
@@ -288,7 +286,7 @@ def _check_pred_ints(
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("alpha", TEST_ALPHAS)
-def test_predict_pred_interval(Forecaster, fh, alpha):
+def test_predict_interval(Forecaster, fh, alpha):
     """Check prediction intervals returned by predict.
 
     Arguments
@@ -315,6 +313,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
             if f._has_predict_quantiles_been_refactored():
                 y_pred = f.predict()
                 pred_ints = f.predict_interval(fh, coverage=alpha)
+
                 pred_ints = f._convert_new_to_old_pred_int(pred_ints, alpha)
             else:
                 y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
@@ -383,6 +382,42 @@ def test_predict_quantiles(Forecaster, fh, alpha):
             _check_predict_quantiles(quantiles, y_train, fh, alpha)
         except NotImplementedError:
             pass
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_pred_int_tag(Forecaster):
+    """Checks whether the capability:pred_int tag is correctly set.
+
+    Arguments
+    ---------
+    Forecaster: BaseEstimator class descendant, forecaster to test
+
+    Raises
+    ------
+    ValueError - if capability:pred_int is True, but neither
+        predict_interval nor predict_quantiles have implemented content
+        this can be by direct implementation of _predict_interval or _predict_quantiles
+        or by defaulting to each other and/or _predict_proba
+    """
+    implements_interval = Forecaster._has_implementation_of("_predict_interval")
+    implements_quantiles = Forecaster._has_implementation_of("_predict_quantiles")
+    implements_proba = Forecaster._has_implementation_of("_predict_proba")
+
+    pred_int_works = implements_interval or implements_quantiles or implements_proba
+
+    if not pred_int_works and Forecaster.get_class_tag("capability:pred_int", False):
+        raise ValueError(
+            f"{Forecaster.__name__} does not implement probabilistic forecasting, "
+            'but "capability:pred_int" flag has been set to True incorrectly. '
+            'The flag "capability:pred_int" should instead be set to False.'
+        )
+
+    if pred_int_works and not Forecaster.get_class_tag("capability:pred_int", False):
+        raise ValueError(
+            f"{Forecaster.__name__} does implement probabilistic forecasting, "
+            'but "capability:pred_int" flag has been set to False incorrectly. '
+            'The flag "capability:pred_int" should instead be set to True.'
+        )
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -455,7 +490,7 @@ def _check_update_predict_predicted_index(
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS_INT)
 @pytest.mark.parametrize("update_params", [False])
 def test_update_predict_predicted_index(
     Forecaster, fh, window_length, step_length, update_params
