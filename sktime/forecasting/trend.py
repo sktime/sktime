@@ -299,7 +299,8 @@ class STLForecaster(BaseForecaster):
     forecaster_resid_ : sktime forecaster
         Fitted residual forecaster.
     stl_ : STL
-        Fitted statsmodels.STL
+        Results object from statsmodels.STL after
+        doing stl_ = STL(...).fit().
 
     Examples
     --------
