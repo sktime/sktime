@@ -36,7 +36,6 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
-from deprecated.sphinx import deprecated
 
 check_dict = dict()
 
@@ -104,27 +103,6 @@ def check_align(align_df, name="align_df", index="iloc"):
 
     return True, ""
 
-#  TODO: remove in v0.11.0
-@deprecated(
-    version="v0.10.0",
-    reason=(
-        "check_alignment_Alignment is deprecated since v0.10.0 and will be removed in v0.11.0."
-        "Please use check_alignment_alignment instead."
-    ),
-    category=FutureWarning,
-)
-def check_alignment_Alignment(obj, return_metadata=False, var_name="obj"):
-    """Check whether object has mtype `alignment` for scitype `Alignment`."""
-    valid, msg = check_align(obj, name=var_name, index="iloc")
-
-    if return_metadata:
-        return valid, msg, dict()
-    else:
-        return valid
-
-
-check_dict[("alignment", "Alignment")] = check_alignment_Alignment
-
 def check_alignment_alignment(obj, return_metadata=False, var_name="obj"):
     """Check whether object has mtype `alignment` for scitype `Alignment`."""
     valid, msg = check_align(obj, name=var_name, index="iloc")
@@ -137,24 +115,6 @@ def check_alignment_alignment(obj, return_metadata=False, var_name="obj"):
 
 check_dict[("alignment", "Alignment")] = check_alignment_alignment
 
-#  TODO: remove in v0.11.0
-@deprecated(
-    version="v0.10.0",
-    reason=(
-        "check_alignment_loc_Alignment is deprecated since v0.10.0 and will be removed in v0.11.0."
-        "Please use check_alignment_loc_alignment instead."
-    ),
-    category=FutureWarning,
-)
-def check_alignment_loc_Alignment(obj, return_metadata=False, var_name="obj"):
-    """Check whether object has mtype `alignment_loc` for scitype `Alignment`."""
-    valid, msg = check_align(obj, name=var_name, index="loc")
-
-    if return_metadata:
-        return valid, msg, dict()
-    else:
-        return valid
-
 def check_alignment_loc_alignment(obj, return_metadata=False, var_name="obj"):
     """Check whether object has mtype `alignment_loc` for scitype `Alignment`."""
     valid, msg = check_align(obj, name=var_name, index="loc")
@@ -164,5 +124,4 @@ def check_alignment_loc_alignment(obj, return_metadata=False, var_name="obj"):
     else:
         return valid
 
-check_dict[("alignment_loc", "Alignment")] = check_alignment_loc_Alignment
 check_dict[("alignment_loc", "Alignment")] = check_alignment_loc_alignment
