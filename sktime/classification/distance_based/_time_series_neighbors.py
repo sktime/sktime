@@ -111,18 +111,12 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.distance_mtype = distance_mtype
 
         # translate distance strings into distance callables
-        if distance in DISTANCES_SUPPORTED:
-            self._distance = self._curry_distance(
-                pairwise_distance, distance, distance_params
-            )
-        elif isinstance(distance, str):
+        if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
                 f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
                 "Alternatively, pass a callable distance measure into the constuctor."
             )
-        else:
-            self._distance = distance
 
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
@@ -142,15 +136,17 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         elif distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
 
-    def _curry_distance(self, numba_dist, metric, distance_params=None):
-        """Curry metric, distance_params from numba_dist."""
+    def _distance(self, X, X2):
+        """Compute distance - unified interface to str code and callable."""
+        distance = self.distance
+        distance_params = self.distance_params
         if distance_params is None:
             distance_params = {}
 
-        def curried_dist(x, y):
-            return numba_dist(x, y, metric, **distance_params)
-
-        return curried_dist
+        if isinstance(distance, str):
+            return pairwise_distance(X, X2, distance, **distance_params)
+        else:
+            return distance(X, X2)
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
