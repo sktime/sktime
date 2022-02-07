@@ -13,18 +13,32 @@ Based on:
 - paper available at: https://stanford.edu/~boyd/papers/pdf/ggs.pdf
 """
 
+import abc
 import logging
 import math
 import random
 from typing import List, Tuple
 
 import numpy as np
-from sklearn.base import BaseEstimator
 
 logger = logging.getLogger(__name__)
 
 
-class GGS(BaseEstimator):
+class SklearnBaseEstimator(metaclass=abc.ABCMeta):
+    """Define the domain-specific interface that Client uses."""
+
+    @abc.abstractmethod
+    def fit(self):
+        """Fit."""
+        pass
+
+    @abc.abstractmethod
+    def predict(self):
+        """Predict."""
+        pass
+
+
+class GGS:
     """
     Greedy Gaussian Segmentation.
 
@@ -44,16 +58,10 @@ class GGS(BaseEstimator):
         self.max_shuffles = max_shuffles
         self.verbose = verbose
 
-    def fit(self, X, y=None):
+    def initialize_intermediates(self):
         """Fit."""
         self.intermediate_change_points = []
         self.intermediate_ll = []
-
-        return self
-
-    def predict(self, X):
-        """Predict."""
-        return self.fitX(X).predict(X)
 
     def log_likelihood(self, cov: float, nrows: int, ncols: int) -> float:
         """
@@ -268,3 +276,21 @@ class GGS(BaseEstimator):
             self.intermediate_ll.append(ll)
 
         return change_points
+
+
+class GGSEstimator(SklearnBaseEstimator):
+    """Sklearn Adapter."""
+
+    def __init__(self, **kwargs):
+        self.adaptee_class = GGS
+        self.kwargs = kwargs
+
+    def fit(self, X, y=None):
+        """Fit."""
+        self.adaptee = self.adaptee_class(**self.kwargs)
+        self.adaptee.initialize_intermediates()
+        return self.adaptee
+
+    def predict(self, X, y=None):
+        """Predict."""
+        return self.fit(X, y).find_change_points(X)
