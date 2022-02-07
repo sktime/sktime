@@ -20,9 +20,6 @@ param_names=None)
 __author__ = ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
-from math import dist
-import warnings
-
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 
