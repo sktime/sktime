@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Test extraction of features across (shifted) windows."""
-__author__ = ["Daniel Bartling"]
+__author__ = ["danbartl"]
 
 import numpy as np
 import pandas as pd
@@ -117,3 +117,11 @@ def test_windowsummarizer(kwargs, column_names, y, target_cols):
         Xt_columns = None
 
     check_eval(Xt_columns, column_names)
+
+
+@pytest.mark.xfail(raises=ValueError)
+def test_wrong_column():
+    """Test mismatch between X column names and target_cols."""
+    transformer = WindowSummarizer(target_cols=["dummy"])
+    Xt = transformer.fit_transform(X_ll_train)
+    return Xt

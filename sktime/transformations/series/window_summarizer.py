@@ -188,14 +188,14 @@ class WindowSummarizer(BaseTransformer):
         Xt_out = []
         for cols in self._target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = getattr(X.groupby("instances"), X[cols])
+                X_grouped = getattr(X.groupby("instances"), X.loc[:, [cols]])
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs)
                     for index, kwargs in self._func_dict.iterrows()
                 )
             else:
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X[cols], **kwargs)
+                    delayed(_window_feature)(X.loc[:, [cols]], **kwargs)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
@@ -314,7 +314,7 @@ def _window_feature(
         if isinstance(Z.index, pd.MultiIndex):
             feat = getattr(Z.shift(shift).rolling(win), win_summarizer)()
         else:
-            feat = pd.DataFrame(Z).apply(
+            feat = Z.apply(
                 lambda x: getattr(x.shift(shift).rolling(win), win_summarizer)()
             )
     else:
@@ -322,12 +322,7 @@ def _window_feature(
         if isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
             feat = feat.rolling(win).apply(win_summarizer, raw=True)
         elif not isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
-            feat = pd.DataFrame(feat).apply(
-                lambda x: x.rolling(win).apply(win_summarizer, raw=True)
-            )
-
-    if isinstance(feat, pd.Series):
-        feat = pd.DataFrame(feat)
+            feat = feat.apply(lambda x: x.rolling(win).apply(win_summarizer, raw=True))
 
     feat.rename(
         columns={
