@@ -484,7 +484,9 @@ class STLForecaster(BaseForecaster):
         self.resid_ = pd.Series(self.stl_.resid, index=y.index)
         self.trend_ = pd.Series(self.stl_.trend, index=y.index)
 
-        self.forecaster_seasonal_.update(y=y, X=X, update_params=update_params)
-        self.forecaster_trend_.update(y=y, X=X, update_params=update_params)
-        self.forecaster_resid_.update(y=y, X=X, update_params=update_params)
+        self.forecaster_seasonal_.update(
+            y=self.seasonal_, X=X, update_params=update_params
+        )
+        self.forecaster_trend_.update(y=self.trend_, X=X, update_params=update_params)
+        self.forecaster_resid_.update(y=self.resid_, X=X, update_params=update_params)
         return self
