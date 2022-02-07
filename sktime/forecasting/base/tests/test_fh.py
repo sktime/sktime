@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for ForecastingHorizon object."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "khrapovs"]
 
 import numpy as np
 import pandas as pd

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Time format related utilities."""
 
-__author__ = ["mloning", "xiaobenbenecho"]
+__author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 import re
