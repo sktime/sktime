@@ -313,7 +313,8 @@ class STLForecaster(BaseForecaster):
 
     See Also
     --------
-    STL
+    Deseasonalizer
+    Detrender
 
     References
     ----------
