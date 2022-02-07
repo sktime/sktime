@@ -20,35 +20,27 @@ param_names=None)
 __author__ = ["jasonlines", "TonyBagnall", "chrisholder", "fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
+from math import dist
 import warnings
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 
 from sktime.classification.base import BaseClassifier
-from sktime.distances import (
-    ddtw_distance,
-    dtw_distance,
-    erp_distance,
-    euclidean_distance,
-    lcss_distance,
-    wddtw_distance,
-    wdtw_distance,
-)
-from sktime.distances.mpdist import mpdist
+from sktime.distances import pairwise_distance
 
 # add new distance string codes here
-DISTANCE_DICT = {
-    "euclidean": euclidean_distance,
+DISTANCES_SUPPORTED = [
+    "euclidean",
     # Euclidean will default to the base class distance
-    "dtw": dtw_distance,
-    "ddtw": ddtw_distance,
-    "wdtw": wdtw_distance,
-    "wddtw": wddtw_distance,
-    "lcss": lcss_distance,
-    "erp": erp_distance,
-    "mpdist": mpdist,
-}
+    "dtw",
+    "ddtw",
+    "wdtw",
+    "wddtw",
+    "lcss",
+    "erp",
+    "mpdist",
+]
 
 
 class KNeighborsTimeSeriesClassifier(BaseClassifier):
@@ -71,7 +63,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
-        if str, one of {'euclidean', 'dtw', 'dtwcv', 'ddtw', 'wdtw', 'wddtw', 'lcss',
+        if str, one of {'euclidean', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss',
                 'erp', 'mpdist'}
             this will substitute a hard-coded distance metric from sktime.distances
         When mpdist is used, the subsequence length (parameter m) must be set
@@ -121,34 +113,27 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
 
+        if distance_params is None:
+            _distance_params = {}
+        else:
+            _distance_params = distance_params
+
         self._cv_for_params = False
 
         # translate distance strings into distance callables
-        if distance in DISTANCE_DICT.keys():
-            distance = DISTANCE_DICT[distance]
-        elif distance == "dtwcv":  # special case to force loocv grid search
-            # cv in training
-            if distance_params is not None:
-                warnings.warn(
-                    "Warning: measure parameters have been specified for "
-                    "dtwcv. "
-                    "These will be ignored and parameter values will be "
-                    "found using LOOCV."
-                )
-            distance = dtw_distance
-            self._cv_for_params = True
-            self._param_matrix = {
-                "distance_params": [{"w": x / 100} for x in range(0, 100)]
-            }
+        if distance in DISTANCES_SUPPORTED:
+            self._distance = lambda x, y: pairwise_distance(
+                x, y, metric=distance, **_distance_params
+            )
         elif isinstance(distance, str):
-            allowed_vals = list(DISTANCE_DICT.keys()) + ["dtwcv"]
+            allowed_vals = DISTANCES_SUPPORTED + ["dtwcv"]
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
                 f"Allowed values for string codes are: {allowed_vals}. "
                 "Alternatively, pass a callable distance measure into the constuctor."
             )
-
-        self._distance = distance
+        else:
+            self._distance = distance
 
         self.knn_estimator_ = KNeighborsClassifier(
             n_neighbors=n_neighbors,
