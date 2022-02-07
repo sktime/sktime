@@ -97,6 +97,7 @@ def check_estimator(
         msg = "All tests PASSED!"
 
     if verbose:
-        print(msg)
+        # printing is an intended feature, for console usage and interactive debugging
+        print(msg)  # noqa T001
 
     return results
