@@ -221,7 +221,11 @@ class BaseTransformer(BaseEstimator):
                     "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+                X,
+                to_type="df-list",
+                as_scitype="Panel",
+                store=self._converter_store_X,
+                store_behaviour="reset",
             )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
@@ -658,7 +662,11 @@ class BaseTransformer(BaseEstimator):
                     "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+                X,
+                to_type="df-list",
+                as_scitype="Panel",
+                store=self._converter_store_X,
+                store_behaviour="reset",
             )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
@@ -690,7 +698,11 @@ class BaseTransformer(BaseEstimator):
             )
 
         X = convert_to(
-            X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+            X,
+            to_type="df-list",
+            as_scitype="Panel",
+            store=self._converter_store_X,
+            store_behaviour="reset",
         )
 
         # depending on whether fitting happens, apply fitted or unfitted instances
@@ -728,6 +740,7 @@ class BaseTransformer(BaseEstimator):
                 to_type=X_input_mtype,
                 as_scitype="Panel",
                 store=self._converter_store_X,
+                store_behaviour="freeze",
             )
 
         # if the output is Primitives, we have a list of one-row dataframes
@@ -769,6 +782,7 @@ class BaseTransformer(BaseEstimator):
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
             store=self._converter_store_X,
+            store_behaviour="reset",
         )
 
         if y_inner_mtype != ["None"]:
@@ -824,6 +838,7 @@ class BaseTransformer(BaseEstimator):
                 to_type=X_output_mtype,
                 as_scitype=X_input_scitype,
                 store=self._converter_store_X,
+                store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
