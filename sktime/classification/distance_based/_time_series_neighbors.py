@@ -35,9 +35,9 @@ DISTANCES_SUPPORTED = [
     "wdtw",
     "wddtw",
     "lcss",
+    "edr",
     "erp",
     "msm",
-    "mpdist",
 ]
 
 
@@ -61,9 +61,10 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
-        if str, one of {'euclidean', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss',
-                'erp', 'msm', 'mpdist'}
-            this will substitute a hard-coded distance metric from sktime.distances
+        if str, must be one of the following strings:
+            'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
+            'lcss', 'edr', 'erp', 'msm'
+        this will substitute a hard-coded distance metric from sktime.distances
         When mpdist is used, the subsequence length (parameter m) must be set
             Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
                                 metric='mpdist', metric_params={'m':30})
