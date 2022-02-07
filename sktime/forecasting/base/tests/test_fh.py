@@ -234,7 +234,10 @@ def test_get_duration(n_timepoints, index_type):
     assert duration == n_timepoints - 1
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+FREQUENCY_STRINGS = ["10T", "H", "D", "2D", "W-WED", "W-SUN", "W-SAT", "M"]
+
+
+@pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
@@ -243,7 +246,7 @@ def test_to_absolute_freq(freqstr):
     assert abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+@pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_absolute_to_absolute(freqstr):
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
@@ -256,7 +259,7 @@ def test_absolute_to_absolute(freqstr):
     assert converted_abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["H", "2H", "W-WED", "W-SUN", "W-SAT"])
+@pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_relative_to_relative(freqstr):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
@@ -268,9 +271,7 @@ def test_relative_to_relative(freqstr):
     assert_array_equal(fh, converted_rel_fh)
 
 
-@pytest.mark.parametrize(
-    "freq", ["10Min", "H", "1D", "2D", "W-WED", "W-SUN", "W-SAT", "M"]
-)
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_relative(freq: str):
     """Test conversion to relative.
 
@@ -285,9 +286,7 @@ def test_to_relative(freq: str):
 
 
 @pytest.mark.parametrize("idx", range(5))
-@pytest.mark.parametrize(
-    "freq", ["10Min", "H", "1D", "2D", "W-WED", "W-SUN", "W-SAT", "M"]
-)
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_to_absolute_int(idx: int, freq: str):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
