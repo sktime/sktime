@@ -110,17 +110,10 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
 
-        if distance_params is None:
-            _distance_params = {}
-        else:
-            _distance_params = distance_params
-
-        self._cv_for_params = False
-
         # translate distance strings into distance callables
         if distance in DISTANCES_SUPPORTED:
-            self._distance = lambda x, y: pairwise_distance(
-                x, y, metric=distance, **_distance_params
+            self._distance = self._curry_distance(
+                pairwise_distance, distance, distance_params
             )
         elif isinstance(distance, str):
             raise ValueError(
@@ -148,6 +141,16 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             self.set_tags(X_inner_mtype="numpy3D")
         elif distance_mtype is not None:
             self.set_tags(X_inner_mtype=distance_mtype)
+
+    def _curry_distance(self, numba_dist, metric, distance_params=None):
+        """Curry metric, distance_params from numba_dist."""
+        if distance_params is None:
+            distance_params = {}
+
+        def curried_dist(x, y):
+            return numba_dist(x, y, metric, **distance_params)
+
+        return curried_dist
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
