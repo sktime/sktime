@@ -36,6 +36,7 @@ DISTANCES_SUPPORTED = [
     "wddtw",
     "lcss",
     "erp",
+    "msm",
     "mpdist",
 ]
 
@@ -61,7 +62,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     distance : str or callable, optional. default ='dtw'
         distance measure between time series
         if str, one of {'euclidean', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss',
-                'erp', 'mpdist'}
+                'erp', 'msm', 'mpdist'}
             this will substitute a hard-coded distance metric from sktime.distances
         When mpdist is used, the subsequence length (parameter m) must be set
             Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
