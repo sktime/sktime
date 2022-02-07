@@ -27,7 +27,7 @@ expected_correct = {
 }
 
 
-@pytest.mark.parameterize("distance_key", distance_functions)
+@pytest.mark.parametrize("distance_key", distance_functions)
 def test_knn_on_unit_test(distance_key):
     """Test function for elastic knn, to be reinstated soon."""
     # load arrowhead data for unit tests
@@ -45,7 +45,7 @@ def test_knn_on_unit_test(distance_key):
     assert correct == expected_correct[distance_key]
 
 
-@pytest.mark.parameterize("distance_key", distance_functions)
+@pytest.mark.parametrize("distance_key", distance_functions)
 def test_knn_bounding_matrix(distance_key):
     """Test knn with custom bounding parameters."""
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
