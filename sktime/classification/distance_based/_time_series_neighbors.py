@@ -123,10 +123,9 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
                 x, y, metric=distance, **_distance_params
             )
         elif isinstance(distance, str):
-            allowed_vals = DISTANCES_SUPPORTED + ["dtwcv"]
             raise ValueError(
                 f"Unrecognised distance measure string: {distance}. "
-                f"Allowed values for string codes are: {allowed_vals}. "
+                f"Allowed values for string codes are: {DISTANCES_SUPPORTED}. "
                 "Alternatively, pass a callable distance measure into the constuctor."
             )
         else:
