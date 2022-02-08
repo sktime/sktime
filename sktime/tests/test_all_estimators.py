@@ -865,7 +865,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 results = scenario.run(
                     estimator_fitted,
                     method_sequence=[method],
-                    return_all=True,
                     deepcopy_return=True,
                 )
 
@@ -874,13 +873,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 results_2nd = scenario.run(
                     estimator_fitted,
                     method_sequence=["fit", method],
-                    return_all=True,
                     deepcopy_return=True,
                 )
 
                 _assert_array_almost_equal(
                     results,
-                    results_2nd[1],
+                    results_2nd,
                     # err_msg=f"Idempotency check failed for method {method}",
                 )
 
