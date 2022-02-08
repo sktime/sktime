@@ -33,6 +33,8 @@ MANIFEST
 
 #downloaded datasets
 sktime/datasets/local_data/
+# temporary results
+sktime/contrib/temp/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
