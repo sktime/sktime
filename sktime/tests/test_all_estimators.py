@@ -134,7 +134,7 @@ class BaseFixtureGenerator:
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
-        )
+        )[:5]
 
     def generator_dict(self):
         """Return dict with methods _generate_[variable] collected in a dict.
@@ -243,23 +243,28 @@ class BaseFixtureGenerator:
         # for the caching to work, we need to hash/cache *classes*
         if "estimator_class" in kwargs.keys():
             objs = kwargs["estimator_class"].create_test_instances_and_names()[0]
+            was_class = True
         elif "estimator_instance" in kwargs.keys():
             objs = [kwargs["estimator_instance"]]
+            was_class = False
         else:
             return []
 
         scenario = kwargs["scenario"]
 
         fitted_ests = []
-        fitted_est_names = []
 
         for obj in objs:
-            fitted_ests += self._cached_estimator_fitting(
-                type(obj), scenario, obj._test_param_id
-            )
-            fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
+            fitted_ests += [
+                self._cached_estimator_fitting(type(obj), scenario, obj._test_param_id)
+            ]
+            # fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
 
-        # empty name - there is only one fitted estimator per instance, scenario
+        if was_class and len(fitted_ests) > 1:
+            fitted_est_names = [str(i) for i in range(len(fitted_ests))]
+        else:
+            fitted_est_names = ["" for i in range(len(fitted_ests))]
+
         return fitted_ests, fitted_est_names
 
     @staticmethod
@@ -269,7 +274,7 @@ class BaseFixtureGenerator:
     ):
         """Cache estimator/scenario combination for fast test runs."""
         estimator_instance_params = estimator_class.get_test_params()[test_param_id]
-        estimator_instance = estimator_class(estimator_instance_params)
+        estimator_instance = estimator_class(**estimator_instance_params)
         set_random_state(estimator_instance, random_state=random_state)
         estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
 
