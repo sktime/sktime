@@ -517,7 +517,7 @@ def load_shampoo_sales():
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of shampoo sales"
     return y
@@ -571,7 +571,7 @@ def load_longley(y_name="TOTEMP"):
     data = pd.read_csv(path, index_col=0)
     data = data.set_index("YEAR")
     data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
-    data = data.astype(np.float)
+    data = data.astype(float)
 
     # Get target series
     y = data.pop(y_name)
@@ -618,7 +618,7 @@ def load_lynx():
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
     y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
     y.name = "Number of Lynx trappings"
     return y
@@ -655,7 +655,7 @@ def load_airline():
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
@@ -822,7 +822,7 @@ def load_PBS_dataset():
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
