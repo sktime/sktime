@@ -9,7 +9,7 @@ __author__ = ["fkiraly"]
 __all__ = ["create_conditional_fixtures_and_names"]
 
 from copy import deepcopy
-from itertools import chain, starmap
+from itertools import starmap, tee
 from typing import Callable, Dict, List
 
 import numpy as np
@@ -137,9 +137,12 @@ def create_conditional_fixtures_and_names(
             if isinstance(res, tuple) and len(res) == 2:
                 fixture_prod = res[0]
                 fixture_names = res[1]
-            else:
+            elif isinstance(res, list):
                 fixture_prod = res
                 fixture_names = [str(x) for x in res]
+            else:
+                fixture_prod = starmap(lambda x, y: x, res)
+                fixture_names = starmap(lambda x, y: y, res)
         except Exception:
             error = FixtureGenerationError(fixture_name=fixture_var)
             fixture_prod = [error]
@@ -183,9 +186,11 @@ def create_conditional_fixtures_and_names(
         name = [x for x in fixture_name if x != ""]
         return "-".join(name)
 
-    # apply selection and final modifications to fixturetuples and names
-    fixture_prod = starmap(make_fixture_prod, fixture_prods_and_names)
-    fixture_names = starmap(make_fixture_name, fixture_prods_and_names)
+    fixture_prods_and_names1, fixture_prods_and_names2 = tee(fixture_prods_and_names)
+
+    # apply selection and final modifications to fixture tuples and names
+    fixture_prod = starmap(make_fixture_prod, fixture_prods_and_names1)
+    fixture_names = starmap(make_fixture_name, fixture_prods_and_names2)
 
     # in pytest convention, variable strings are separated by comma
     fixture_param_str = ",".join(fixture_vars)
