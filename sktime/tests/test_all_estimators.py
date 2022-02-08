@@ -982,20 +982,16 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                     method_args_after, method_args_before
                 ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
-    def test_persistence_via_pickle(self, estimator_instance):
+    def test_persistence_via_pickle(
+        self, estimator_instance, scenario, estimator_fitted
+    ):
         """Check that we can pickle all estimators."""
-        estimator = estimator_instance
-        set_random_state(estimator)
-        fit_args = _make_args(estimator, "fit")
-        estimator.fit(*fit_args)
-
+        estimator = estimator_fitted
         # Generate results before pickling
         results = {}
-        args = {}
         for method in NON_STATE_CHANGING_METHODS:
             if _has_capability(estimator, method):
-                args[method] = _make_args(estimator, method)
-                results[method] = getattr(estimator, method)(*args[method])
+                results[method] = scenario.run(estimator, method_sequence=[method])
 
         # Pickle and unpickle
         pickled_estimator = pickle.dumps(estimator)
@@ -1003,7 +999,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Compare against results after pickling
         for method, value in results.items():
-            unpickled_result = getattr(unpickled_estimator, method)(*args[method])
+            unpickled_result = scenario.run(
+                unpickled_estimator, method_sequence=[method]
+            )
             _assert_array_almost_equal(
                 value,
                 unpickled_result,
