@@ -11,6 +11,7 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
+from functools import cache
 from inspect import getfullargspec, isclass, signature
 
 import joblib
@@ -97,7 +98,9 @@ class BaseFixtureGenerator:
     estimator_type_filter = None
 
     # which sequence the conditional fixtures are generated in
-    fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
+    fixture_sequence = [
+        "estimator_class", "estimator_instance", "scenario" "estimator_fitted"
+    ]
 
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
@@ -228,6 +231,30 @@ class BaseFixtureGenerator:
         scenario_names = [type(scen).__name__ for scen in scenarios]
 
         return scenarios, scenario_names
+
+    def _generate_estimator_fitted(self, test_name, **kwargs):
+        """Return fitted estimator instance.
+
+        Fixtures parameterized
+        ----------------------
+        estimator_fitted: fitted estimator instance
+            ranges over all estimator instances, fitted to all applicable scenarios
+        """
+        estimator_instance = kwargs["estimator_instance"]
+        scenario = kwargs["scenario"]
+
+        estimator_fitted = self._cached_estimator_fitting(estimator_instance, scenario)
+
+        # empty name - there is only one fitted estimator per instance, scenario
+        return [estimator_fitted], [""]
+
+    @staticmethod
+    @cache
+    def _cached_estimator_fitting(estimator_instance, scenario):
+        """Cache estimator/scenario combination for fast test runs."""
+        estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
+
+        return estimator_fitted
 
     @staticmethod
     def _excluded_scenario(test_name, scenario):
