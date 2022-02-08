@@ -124,6 +124,7 @@ class BaseFixtureGenerator:
             fixture_vars=fixture_vars,
             generator_dict=self.generator_dict(),
             fixture_sequence=fixture_sequence,
+            raise_exceptions=True,
         )
 
         metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
@@ -273,7 +274,9 @@ class BaseFixtureGenerator:
         estimator_class, scenario, test_param_id, random_state=0
     ):
         """Cache estimator/scenario combination for fast test runs."""
-        estimator_instance_params = estimator_class.get_test_params()[test_param_id]
+        estimator_instance_params = estimator_class.get_test_params()
+        if not isinstance(estimator_instance_params, dict):
+            estimator_instance_params = estimator_instance_params[test_param_id]
         estimator_instance = estimator_class(**estimator_instance_params)
         set_random_state(estimator_instance, random_state=random_state)
         estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
