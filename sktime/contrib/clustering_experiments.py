@@ -71,6 +71,9 @@ if __name__ == "__main__":
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
         tf = str(sys.argv[6]) == "True"
+        train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
+        test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+        clst = TimeSeriesKMeans(n_clusters=len(set(train_Y)))
         load_and_run_clustering_experiment(
             problem_path=data_dir,
             results_path=results_dir,
@@ -91,20 +94,10 @@ if __name__ == "__main__":
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
 
         clst = TimeSeriesKMeans(n_clusters=len(set(train_Y)))
-        load_and_run_clustering_experiment(
-            overwrite=True,
-            problem_path=data_dir,
-            results_path=results_dir,
-            cls_name=clusterer,
-            dataset=dataset,
-            resample_id=resample,
-            train_file=tf,
-            clusterer=clst,
-        )
         run_clustering_experiment(
             train_X,
             clst,
-            results_path=results_dir + "kmeans/",
+            results_path=results_dir + "/kmeans/",
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
