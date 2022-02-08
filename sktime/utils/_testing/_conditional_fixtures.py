@@ -9,6 +9,7 @@ __author__ = ["fkiraly"]
 __all__ = ["create_conditional_fixtures_and_names"]
 
 from copy import deepcopy
+from itertools import chain, starmap
 from typing import Callable, Dict, List
 
 import numpy as np
@@ -146,44 +147,48 @@ def create_conditional_fixtures_and_names(
 
         return fixture_prod, fixture_names
 
-    fixture_prod = [()]
-    fixture_names = [""]
+    def one_fixture_prod(
+        fixture_prod,
+        old_fixture_vars,
+        fixture_var: List[str],
+    ):
 
-    # we loop over fixture_vars, incrementally going through conditionals
-    for i, fixture_var in enumerate(fixture_vars):
-        old_fixture_vars = fixture_vars[0:i]
-
-        # then take successive left products
-        new_fixture_prod = []
-        new_fixture_names = []
-
-        for j, fixture in enumerate(fixture_prod):
-            fixture_name = fixture_names[j]
-            if i == 0:
+        for fixture, fixture_name in fixture_prod:
+            if len(old_fixture_vars) == 0:
                 kwargs = dict()
             else:
                 kwargs = dict(zip(old_fixture_vars, fixture))
 
-            new_fixtures, new_fixture_names_r = deepcopy(
-                get_fixtures(fixture_var, **kwargs)
-            )
-            new_fixture_prod += [
-                deepcopy(fixture) + (new_fixture,) for new_fixture in new_fixtures
-            ]
-            new_fixture_names += [f"{fixture_name}-{x}" for x in new_fixture_names_r]
+            new_fixtures, new_fixture_names = get_fixtures(fixture_var, **kwargs)
+            for new_fixture, new_fixture_name in zip(new_fixtures, new_fixture_names):
+                prod_fixture = deepcopy(fixture) + (deepcopy(new_fixture),)
+                prod_name = fixture_name + [new_fixture_name]
+                yield prod_fixture, prod_name
 
-        fixture_prod = new_fixture_prod
-        fixture_names = new_fixture_names
+    fixture_prods_and_names = [((), [])]
 
-    # due to the concatenation, fixture names all start leading "-" which is removed
-    fixture_names = [x[1:] for x in fixture_names]
+    # we loop over fixture_vars, incrementally going through conditionals
+    for i, fixture_var in enumerate(fixture_vars):
+        old_fixture_vars = fixture_vars[0:i]
+        fixture_prods_and_names = one_fixture_prod(
+            fixture_prods_and_names, old_fixture_vars, fixture_var
+        )
+
+    def make_fixture_prod(fixture_prod, fixture_name):
+        # we need to remove the tuple bracket from singleton
+        #   in pytest convention, only multiple variables (2 or more) are tuples
+        return _remove_single(fixture_prod)
+
+    def make_fixture_name(fixture_prod, fixture_name):
+        name = [x for x in fixture_name if x != ""]
+        return "-".join(name)
+
+    # apply selection and final modifications to fixturetuples and names
+    fixture_prod = starmap(make_fixture_prod, fixture_prods_and_names)
+    fixture_names = starmap(make_fixture_name, fixture_prods_and_names)
 
     # in pytest convention, variable strings are separated by comma
     fixture_param_str = ",".join(fixture_vars)
-
-    # we need to remove the tuple bracket from singleton
-    #   in pytest convention, only multiple variables (2 or more) are tuples
-    fixture_prod = [_remove_single(x) for x in fixture_prod]
 
     return fixture_param_str, fixture_prod, fixture_names
 
