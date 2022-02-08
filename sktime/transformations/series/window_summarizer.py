@@ -21,29 +21,54 @@ class WindowSummarizer(BaseTransformer):
 
     Parameters
     ----------
-    Dictionary with the following arguments:
-    index : str, base string of the derived features
-            final name will also contain
-            window shift and window length.
-    summarizer: either str corresponding to implemented pandas function, currently
-            * "sum",
-            * "mean",
-            * "median",
-            * "std",
-            * "var",
-            * "kurt",
-            * "min",
-            * "max",
-            * "corr",
-            * "cov",
-            * "skew",
-            * "sem"
-            or function definition
-    window: list of integers
-        Contains values for window shift and window length.
-    target_cols: list of str,
-        Specifies which columns in X to target. If set to None will
-        target first column in X.
+    n_jobs : int, optional (default=-1)
+        The number of jobs to run in parallel for applying the window functions.
+        ``-1`` means using all processors.
+    target_cols: list of str, optional (default = None)
+        Specifies which columns in X to target for applying the window functions.
+        ``None`` will target the first column
+    lag_config: Dictionary specifying which as index the `name` of the columns to be
+        generated. The dict also specifies the type of function via the argument
+        `summarize` as well as the length 2 list argument `window`. The internal
+        function _window_feature will be resolved to `window length` - the length of
+        the window across which to apply the function - as well as the argument
+        `starting_at`, which will specify have far back in the past the window will
+        start.
+
+        For example for `window = [4, 3]`, we have a `window_length` of 4 and
+        `starting_at` of 3 to target the four days prior to the last three days.
+        Here is a representation of the selected window::
+
+        |---------------------------------------|
+        | x * * * * * * * x x x z - - - |
+
+        ``-`` = future observations.
+        ``z`` = current observation, to which the window should be relative to.
+        ``x`` = past observations.
+        ``*`` = selected window of past observations.
+
+
+        index : str, base string of the derived features, will be appended by
+                window shift and window length.
+        summarizer: either str corresponding to pandas window function, currently
+                * "sum",
+                * "mean",
+                * "median",
+                * "std",
+                * "var",
+                * "kurt",
+                * "min",
+                * "max",
+                * "corr",
+                * "cov",
+                * "skew",
+                * "sem"
+                or custom function call (to be provided by user).
+                See for the native window functions also:
+                https://pandas.pydata.org/docs/reference/window.html.
+        window: list of integers
+            Contains values for window shift and window length.
+
 
     Examples
     --------
@@ -55,10 +80,17 @@ class WindowSummarizer(BaseTransformer):
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
-    >>> kwargs = WindowSummarizer.get_test_params()[0]
+    >>> kwargs = {
+    ...     "lag_config": {
+    ...         "lag": ["lag", [[1, 0]]],
+    ...         "mean": ["mean", [[3, 0], [12, 0]]],
+    ...         "std": ["std", [[4, 0]]],
+    ...     }
+    ... }
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
-    >>> # Example y univariate
+
+        Example with transforming multiple columns of exogeneous features
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(X_test.index, is_relative=False)
@@ -72,13 +104,15 @@ class WindowSummarizer(BaseTransformer):
     ... )
     >>> pipe_return = pipe.fit(y_train, X_train)
     >>> y_pred1 = pipe_return.predict(fh=fh, X=X_test)
-    >>> # Example transforming X and y ("TOTEMP") - will result in first lag of y
+
+        Example with transforming multiple columns of exogeneous features
+        as well as the y column
     >>> Z_train = pd.concat([X_train, y_train], axis=1)
     >>> Z_test = pd.concat([X_test, y_test], axis=1)
     >>> pipe = ForecastingPipeline(
     ...     steps=[
     ...         ("a", WindowSummarizer(n_jobs=1, target_cols=["POP", "TOTEMP"])),
-    ...         ("b", WindowSummarizer(n_jobs=1, target_cols=["GNP"], **kwargs)),
+    ...         ("b", WindowSummarizer(**kwargs, n_jobs=1, target_cols=["GNP"])),
     ...         ("forecaster", NaiveForecaster(strategy="drift")),
     ...     ]
     ... )
@@ -105,13 +139,13 @@ class WindowSummarizer(BaseTransformer):
 
     def __init__(
         self,
-        summarizer=None,
+        lag_config=None,
         n_jobs=-1,
         target_cols=None,
     ):
 
         # self._converter_store_X = dict()
-        self.summarizer = summarizer
+        self.lag_config = lag_config
         self.n_jobs = n_jobs
         self.target_cols = target_cols
 
@@ -152,17 +186,17 @@ class WindowSummarizer(BaseTransformer):
                     + " specified that do neither exist in X (or y resp.)"
                 )
 
-        if self.summarizer is None:
+        if self.lag_config is None:
             func_dict = pd.DataFrame(
                 {
                     "lag": ["lag", [[1, 0]]],
                 }
             ).T.reset_index()
         else:
-            func_dict = pd.DataFrame(self.summarizer).T.reset_index()
+            func_dict = pd.DataFrame(self.lag_config).T.reset_index()
 
         func_dict.rename(
-            columns={"index": "name", 0: "win_summarizer", 1: "window"},
+            columns={"index": "name", 0: "summarizer", 1: "window"},
             inplace=True,
         )
         func_dict = func_dict.explode("window")
@@ -218,7 +252,7 @@ class WindowSummarizer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {
-            "summarizer": {
+            "lag_config": {
                 "lag": ["lag", [[1, 0]]],
                 "mean": ["mean", [[3, 0], [12, 0]]],
                 "std": ["std", [[4, 0]]],
@@ -226,13 +260,13 @@ class WindowSummarizer(BaseTransformer):
         }
 
         params2 = {
-            "summarizer": {
+            "lag_config": {
                 "lag": ["lag", [[3, 0], [6, 0]]],
             }
         }
 
         params3 = {
-            "summarizer": {
+            "lag_config": {
                 "mean": ["mean", [[7, 0], [7, 7]]],
                 "covar_feature": ["cov", [[28, 0]]],
             }
@@ -275,7 +309,7 @@ def get_name_list(Z):
 def _window_feature(
     Z,
     name=None,
-    win_summarizer=None,
+    summarizer=None,
     window=None,
 ):
     """Compute window features and lag.
@@ -285,11 +319,9 @@ def _window_feature(
 
     y: either pandas.core.groupby.generic.SeriesGroupBy
         Object create by grouping across groupBy columns.
-    name : str, base string of the derived features
-           final name will also contain
-           window shift and window length.
-    win_summarizer: either str corresponding to native
-    implemented pandas function, currently
+    name : str, base string of the derived features, will be appended by
+        window shift and window length.
+    summarizer: either str corresponding to pandas window function, currently
             * "sum",
             * "mean",
             * "median",
@@ -302,27 +334,32 @@ def _window_feature(
             * "cov",
             * "skew",
             * "sem"
-         or function definition. See for the native functions also
+         or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        Contains values for window shift and window length.
+        Contains values for `window_length` and window `starting_at` which defines
+        how many observations back the windows start.
     """
-    win = window[0]
-    shift = window[1] + 1
+    window_length = window[0]
+    starting_at = window[1] + 1
 
-    if win_summarizer in pd_rolling:
+    if summarizer in pd_rolling:
         if isinstance(Z.index, pd.MultiIndex):
-            feat = getattr(Z.shift(shift).rolling(win), win_summarizer)()
+            feat = getattr(Z.shift(starting_at).rolling(window_length), summarizer)()
         else:
             feat = Z.apply(
-                lambda x: getattr(x.shift(shift).rolling(win), win_summarizer)()
+                lambda x: getattr(
+                    x.shift(starting_at).rolling(window_length), summarizer
+                )()
             )
     else:
-        feat = Z.shift(shift)
-        if isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
-            feat = feat.rolling(win).apply(win_summarizer, raw=True)
-        elif not isinstance(Z.index, pd.MultiIndex) and callable(win_summarizer):
-            feat = feat.apply(lambda x: x.rolling(win).apply(win_summarizer, raw=True))
+        feat = Z.shift(starting_at)
+        if isinstance(Z.index, pd.MultiIndex) and callable(summarizer):
+            feat = feat.rolling(window_length).apply(summarizer, raw=True)
+        elif not isinstance(Z.index, pd.MultiIndex) and callable(summarizer):
+            feat = feat.apply(
+                lambda x: x.rolling(window_length).apply(summarizer, raw=True)
+            )
 
     feat.rename(
         columns={

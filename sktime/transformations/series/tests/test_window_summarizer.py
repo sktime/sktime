@@ -58,8 +58,8 @@ def count_gt100(x):
 
 # Cannot be pickled in get_test_params, therefore here explicit
 kwargs_custom = {
-    "summarizer": {
-        "cgt100": [count_gt100, [[3, 0]]],
+    "lag_config": {
+        "cgt100": [count_gt100, [[3, 2]]],
     }
 }
 # Generate named and unnamed y
@@ -91,7 +91,7 @@ Xtmvar_none = ["GNPDEFL_lag_3_0", "GNPDEFL_lag_6_0", "GNP", "UNEMP", "ARMED", "P
         # (None, ["lag_1_0"], y_multi),
         (None, None, y_train, None),
         (None, ["a_lag_1_0"], y_pd, None),
-        (kwargs_custom, ["a_cgt100_3_0"], y_pd, None),
+        (kwargs_custom, ["a_cgt100_3_2"], y_pd, None),
         (kwargs_alternames, ["0_lag_3_0", "0_lag_6_0"], y_train, None),
         (
             kwargs_variant,
