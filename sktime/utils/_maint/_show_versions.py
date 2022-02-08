@@ -1,6 +1,9 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-"""
-Utility methods to print system info for debugging
+# License: BSD 3 clause
+
+"""Utility methods to print system info for debugging.
+
 adapted from :func:`sklearn.show_versions`
 """
 
@@ -13,7 +16,9 @@ import sys
 
 
 def _get_sys_info():
-    """System information.
+    """
+    System information.
+
     Return
     ------
     sys_info : dict
@@ -31,7 +36,9 @@ def _get_sys_info():
 
 
 def _get_deps_info():
-    """Overview of the installed version of main dependency.
+    """
+    Overview of the installed version of main dependencies.
+
     Returns
     -------
     deps_info: dict
@@ -45,14 +52,12 @@ def _get_deps_info():
         "statsmodels",
         "numpy",
         "scipy",
-        "Cython",
         "pandas",
         "matplotlib",
         "joblib",
         "numba",
         "pmdarima",
         "tsfresh",
-        "tslearn",
     ]
 
     def get_version(module):
@@ -76,7 +81,6 @@ def _get_deps_info():
 
 def show_versions():
     """Print useful debugging information."""
-
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
 

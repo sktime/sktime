@@ -24,7 +24,8 @@ Mandatory implements:
 
 Optional implements:
     updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=0.5)
+    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
+    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
@@ -165,6 +166,13 @@ class MyForecaster(BaseForecaster):
 
         private _predict containing the core logic, called from predict
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
@@ -188,6 +196,13 @@ class MyForecaster(BaseForecaster):
         """Update time series to incremental training data.
 
         private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Writes to self:
             Sets fitted model attributes ending in "_", if update_params=True.
@@ -229,17 +244,25 @@ class MyForecaster(BaseForecaster):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _predict_quantiles method
-    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+    # todo: consider implementing one of _predict_quantiles and _predict_interval
+    #   if one is implemented, the other one works automatically
+    #   when interfacing or implementing, consider which of the two is easier
+    #   both can be implemented if desired, but usually that is not necessary
+    #
+    # if implementing _predict_interval, delete _predict_quantiles
+    # if not implementing either, delete both methods
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
-            called from predict_quantiles and predict_interval
+            called from predict_quantiles and possibly predict_interval
 
-        If alpha is iterable, multiple quantiles will be calculated.
+        State required:
+            Requires state to be "fitted".
 
-        Users can also implement _predict_interval if calling it makes this faster.
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
@@ -247,8 +270,8 @@ class MyForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=0.5)
-            A probability or list of, at which quantile forecasts are computed.
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
@@ -260,6 +283,55 @@ class MyForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         # implement here
+        # IMPORTANT: avoid side effects to y, X, fh, alpha
+        #
+        # Note: unlike in predict_quantiles where alpha can be float or list of float
+        #   alpha in _predict_quantiles is guaranteed to be a list of float
+
+    # implement one of _predict_interval or _predict_quantiles (above), or delete both
+    #
+    # if implementing _predict_quantiles, delete _predict_interval
+    # if not implementing either, delete both methods
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        # implement here
+        # IMPORTANT: avoid side effects to y, X, fh, coverage
+        #
+        # Note: unlike in predict_interval where coverage can be float or list of float
+        #   coverage in _predict_interval is guaranteed to be a list of float
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
