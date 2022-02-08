@@ -88,7 +88,7 @@ if __name__ == "__main__":
         results_dir = "./temp"
         dataset = "UnitTest"
         clusterer = "kmeans"
-        resample = 1
+        resample = 0
         tf = True
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")

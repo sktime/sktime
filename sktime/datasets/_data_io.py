@@ -1331,7 +1331,13 @@ def write_results_to_uea_format(
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
     first_line = (
-        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test)
+        str(estimator_name)
+        + ","
+        + str(dataset_name)
+        + ","
+        + str(train_or_test)
+        + ","
+        + str(resample_seed)
     )
     if timing_type is not None:
         first_line += "," + timing_type
