@@ -572,6 +572,10 @@ class DrCIF(BaseClassifier):
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
+        results = np.zeros((self.n_instances_, self.n_classes_))
+        if len(oob) == 0:
+            return [results, oob]
+
         clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data_[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data_[idx][oob])
@@ -583,7 +587,6 @@ class DrCIF(BaseClassifier):
                 new_probas[:, cls_idx] = probas[:, i]
             probas = new_probas
 
-        results = np.zeros((self.n_instances_, self.n_classes_))
         for n, proba in enumerate(probas):
             results[oob[n]] += proba
 
