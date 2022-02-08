@@ -887,9 +887,7 @@ def load_unit_test_tsf():
     contain_equal_length: bool
         Whether the series have equal lengths or not.
     """
-    name = "UnitTest"
-    fname = "UnitTest_Tsf_Loader.tsf"
-    path = os.path.join(MODULE, DIRNAME, name, fname)
+    path = os.path.join(MODULE, DIRNAME, "UnitTest", "UnitTest_Tsf_Loader.tsf")
     (
         loaded_data,
         frequency,
