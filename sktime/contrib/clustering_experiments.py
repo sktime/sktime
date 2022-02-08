@@ -86,7 +86,7 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "../datasets/data/"
         results_dir = "./temp"
-        dataset = "UnitTest"
+        dataset = "GunPoint"
         clusterer = "kmeans"
         resample = 0
         tf = True

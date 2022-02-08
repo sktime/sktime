@@ -75,6 +75,10 @@ def run_clustering_experiment(
 
     """
     # Build the clusterer on train data, recording how long it takes
+    le = preprocessing.LabelEncoder()
+    le.fit(trainY)
+    trainY = le.transform(trainY)
+    testY = le.transform(testY)
 
     start = int(round(time.time() * 1000))
     clusterer.fit(trainX)
@@ -222,10 +226,6 @@ def load_and_run_clustering_experiment(
         trainX, trainY, testX, testY = stratified_resample(
             trainX, trainY, testX, testY, resample_id
         )
-    le = preprocessing.LabelEncoder()
-    le.fit(trainY)
-    trainY = le.transform(trainY)
-    testY = le.transform(testY)
     run_clustering_experiment(
         trainX,
         clusterer,
