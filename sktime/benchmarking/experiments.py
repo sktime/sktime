@@ -92,7 +92,7 @@ def run_clustering_experiment(
     second.replace("\r", " ")
     # TODO: refactor clusterers to return an array
     pr = np.array(preds)
-    third = "," + str(build_time) + "," + str(test_time) + ",-1,-1,"
+    third = "0," + str(build_time) + "," + str(test_time) + ",-1,-1,"
     write_results_to_uea_format(
         second_line=second,
         third_line=third,
