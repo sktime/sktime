@@ -68,7 +68,7 @@ class WindowSummarizer(BaseTransformer):
                 See for the native window functions also:
                 https://pandas.pydata.org/docs/reference/window.html.
         window: list of integers
-            Contains values for window shift and window length.
+            List containg window_length and starting_at parameters, see above.
 
 
     Examples
@@ -170,9 +170,6 @@ class WindowSummarizer(BaseTransformer):
         """
         X_name = get_name_list(X)
 
-        if X_name is None:
-            X_name = ["var_0"]
-
         if self.target_cols is None:
             self._target_cols = [X_name[0]]
         else:
@@ -184,7 +181,7 @@ class WindowSummarizer(BaseTransformer):
                 raise ValueError(
                     "target_cols "
                     + " ".join(missing_cols)
-                    + " specified that do neither exist in X (or y resp.)"
+                    + " specified that do neither exist in X"
                 )
 
         if self.lag_config is None:
@@ -212,7 +209,7 @@ class WindowSummarizer(BaseTransformer):
         Parameters
         ----------
         X : Series or Panel
-        y : Series or Panel
+        y : None
 
         Returns
         -------
@@ -318,10 +315,9 @@ def _window_feature(
     Apply summarizer passed over a certain window
     of past observations, e.g. the mean of a window of length 7 days, lagged by 14 days.
 
-    y: either pandas.core.groupby.generic.SeriesGroupBy
-        Object create by grouping across groupBy columns.
+    Z: pandas Dataframe with a single column.
     name : str, base string of the derived features, will be appended by
-        window shift and window length.
+        window length and starting at parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
             * "sum",
             * "mean",
@@ -338,8 +334,8 @@ def _window_feature(
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        Contains values for `window_length` and window `starting_at` which defines
-        how many observations back the windows start.
+        List containg window_length and starting_at parameters, see WindowSummarizer
+        class description for in-depth explanation.
     """
     window_length = window[0]
     starting_at = window[1] + 1
