@@ -71,6 +71,7 @@ def config_clusterer(clusterer, config, num_clusters):
             cls = TimeSeriesKMedoids(n_clusters=num_clusters, metric=distance)
         else:
             cls = TimeSeriesKMedoids(n_clusters=num_clusters)
+    return cls
 
 
 if __name__ == "__main__":
@@ -85,17 +86,22 @@ if __name__ == "__main__":
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
         tf = str(sys.argv[6]) == "True"
-        config = sys.argv[7]
+        distance = sys.argv[7]
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        clst = TimeSeriesKMeans(n_clusters=len(set(train_Y)))
-        load_and_run_clustering_experiment(
-            problem_path=data_dir,
+        clst = config_clusterer(
+            custerer=clusterer, config=distance, n_clusters=len(set(train_Y))
+        )
+        run_clustering_experiment(
+            train_X,
+            clst,
             results_path=results_dir,
-            cls_name=classifier,
-            dataset=dataset,
+            trainY=train_Y,
+            testX=test_X,
+            testY=test_Y,
+            cls_name=clusterer,
             resample_id=resample,
-            train_file=tf,
+            dataset_name=dataset,
         )
     else:  # Local run
         print(" Local Run")
