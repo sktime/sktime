@@ -27,7 +27,8 @@ class WindowSummarizer(BaseTransformer):
     target_cols: list of str, optional (default = None)
         Specifies which columns in X to target for applying the window functions.
         ``None`` will target the first column
-    lag_config: Dictionary specifying which as index the `name` of the columns to be
+    lag_config: dict of str and list, optional (default = dict containing first lag)
+        Dictionary specifying which as index the `name` of the columns to be
         generated. The dict also specifies the type of function via the argument
         `summarize` as well as the length 2 list argument `window`. The internal
         function _window_feature will be resolved to `window length` - the length of
