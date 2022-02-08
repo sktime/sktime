@@ -88,7 +88,7 @@ if __name__ == "__main__":
         results_dir = "./temp"
         dataset = "UnitTest"
         clusterer = "kmeans"
-        resample = 0
+        resample = 1
         tf = True
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
@@ -97,9 +97,11 @@ if __name__ == "__main__":
         run_clustering_experiment(
             train_X,
             clst,
-            results_path=results_dir + "/kmeans/",
+            results_path=results_dir,
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
             cls_name=clusterer,
+            resample_id=resample,
+            dataset_name=dataset,
         )
