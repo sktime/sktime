@@ -70,6 +70,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "estimator_instance",
         "n_columns",
         "scenario",
+        "estimator_fitted",
         # "fh",
         "fh_int",
         "fh_int_oos",
