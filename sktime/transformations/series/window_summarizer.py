@@ -28,30 +28,32 @@ class WindowSummarizer(BaseTransformer):
         Specifies which columns in X to target for applying the window functions.
         ``None`` will target the first column
     lag_config: dict of str and list, optional (default = dict containing first lag)
-        Dictionary specifying which as index the `name` of the columns to be
-        generated. The dict also specifies the type of function via the argument
-        `summarize` as well as the length 2 list argument `window`. The internal
-        function _window_feature will be resolved to `window length` - the length of
-        the window across which to apply the function - as well as the argument
-        `starting_at`, which will specify have far back in the past the window will
-        start.
+        Dictionary specifying as key the `name` of the columns to be
+        generated. As value the dict specifies the type of function via the argument
+        `summarize` as well as the length 2 list argument `window`. The list `window`
+        will be resolved by the internal function _window_feature to `window length`
+        - the length of the window across which to apply the function - as well as
+        the argument `starting_at`, which will specify how far back in the past
+        the window will start.
 
         For example for `window = [4, 3]`, we have a `window_length` of 4 and
         `starting_at` of 3 to target the four days prior to the last three days.
-        Here is a representation of the selected window::
+        Here is a representation of the selected window:
 
-        |---------------------------------------|
+        |-------------------------------|
         | x * * * * * * * x x x z - - - |
+        |-------------------------------|
 
         ``-`` = future observations.
         ``z`` = current observation, to which the window should be relative to.
         ``x`` = past observations.
-        ``*`` = selected window of past observations.
+        ``*`` = selected window of past observations across which summarizer
+                function will be applied.
 
-
-        index : str, base string of the derived features, will be appended by
+        key (resolved to name) : str, name of the derived features, will be appended by
                 window shift and window length.
-        summarizer: either str corresponding to pandas window function, currently
+        first value (resolved to summarizer): either custom function call (to be
+                provided by user) or str corresponding to native pandas window function:
                 * "sum",
                 * "mean",
                 * "median",
@@ -64,12 +66,29 @@ class WindowSummarizer(BaseTransformer):
                 * "cov",
                 * "skew",
                 * "sem"
-                or custom function call (to be provided by user).
-                See for the native window functions also:
-                https://pandas.pydata.org/docs/reference/window.html.
-        window: list of integers
-            List containg window_length and starting_at parameters, see above.
+                See also: https://pandas.pydata.org/docs/reference/window.html.
+        second value (window): list of integers
+            List containg window_length and starting_at parameters.
+        The function _window_feature will resolve the dictionary to generate the
+        required features.
 
+    Attributes
+    ----------
+    truncate_start : int
+        This attribute will tell the user the maximum period length of NAs that was
+        created as a result of applying the functions in the lag_config dict across
+        the specified windows.
+        For example a lag config of [7, 14] - a window_length of 7 starting at 14
+        observations in the past - will fill the first 21 observations of the targeted
+        column with NAs, so truncate_start will be set to 21.
+        A lag_config of [[7, 14], [0, 28]] will set truncate_start to the maximum of 28.
+
+    Returns
+    -------
+    X: pd.DataFrame
+        Contains all transformed columns as well as non-transformed columns.
+        The raw inputs to transformed columns will be dropped.
+    self: reference to self
 
     Examples
     --------
@@ -160,7 +179,7 @@ class WindowSummarizer(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.Series or pd.DataFrame
+        X : pd.DataFrame
         y : None
 
         Returns
@@ -181,7 +200,7 @@ class WindowSummarizer(BaseTransformer):
                 raise ValueError(
                     "target_cols "
                     + " ".join(missing_cols)
-                    + " specified that do neither exist in X"
+                    + " specified that do not exist in X."
                 )
 
         if self.lag_config is None:
@@ -199,7 +218,7 @@ class WindowSummarizer(BaseTransformer):
         )
         func_dict = func_dict.explode("window")
         self._func_dict = func_dict
-        self._truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
 
         return self
 
@@ -208,7 +227,7 @@ class WindowSummarizer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel
+        X : pd.DataFrame
         y : None
 
         Returns
