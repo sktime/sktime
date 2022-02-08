@@ -283,7 +283,10 @@ class BaseObject(_BaseEstimator):
                 "get_test_params should either return a dict or list of dict."
             )
 
-        return cls(**params)
+        obj = cls(**params)
+        obj._test_id = 1
+
+        return obj
 
     @classmethod
     def create_test_instances_and_names(cls):
@@ -307,13 +310,15 @@ class BaseObject(_BaseEstimator):
             )
         if isinstance(param_list, dict):
             param_list = [param_list]
-        for params in param_list:
+        for i, params in enumerate(param_list):
             if not isinstance(params, dict):
                 raise RuntimeError(
                     f"Error in {cls.__name__}.get_test_params, "
                     "return must be param dict for class, or list thereof"
                 )
-            objs += [cls(**params)]
+            obj = cls(**params)
+            obj._test_param_id = i
+            objs += [obj]
 
         num_instances = len(param_list)
         if num_instances > 1:

@@ -11,7 +11,7 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
-from functools import cache
+from functools import lru_cache
 from inspect import getfullargspec, isclass, signature
 
 import joblib
@@ -99,7 +99,7 @@ class BaseFixtureGenerator:
 
     # which sequence the conditional fixtures are generated in
     fixture_sequence = [
-        "estimator_class", "estimator_instance", "scenario" "estimator_fitted"
+        "estimator_class", "estimator_instance", "scenario", "estimator_fitted",
     ]
 
     def pytest_generate_tests(self, metafunc):
@@ -240,18 +240,37 @@ class BaseFixtureGenerator:
         estimator_fitted: fitted estimator instance
             ranges over all estimator instances, fitted to all applicable scenarios
         """
-        estimator_instance = kwargs["estimator_instance"]
+        # for the caching to work, we need to hash/cache *classes*
+        if "estimator_class" in kwargs.keys():
+            objs = kwargs["estimator_class"].create_test_instances_and_names()[0]
+        elif "estimator_instance" in kwargs.keys():
+            objs = [kwargs["estimator_instance"]]
+        else:
+            return []
+
         scenario = kwargs["scenario"]
 
-        estimator_fitted = self._cached_estimator_fitting(estimator_instance, scenario)
+        fitted_ests = []
+        fitted_est_names = []
+
+        for obj in objs:
+            fitted_ests += self._cached_estimator_fitting(
+                type(obj), scenario, obj._test_param_id
+            )
+            fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
 
         # empty name - there is only one fitted estimator per instance, scenario
-        return [estimator_fitted], [""]
+        return fitted_ests, fitted_est_names
 
     @staticmethod
-    @cache
-    def _cached_estimator_fitting(estimator_instance, scenario):
+    @lru_cache(maxsize=None)
+    def _cached_estimator_fitting(
+        estimator_class, scenario, test_param_id, random_state=0
+    ):
         """Cache estimator/scenario combination for fast test runs."""
+        estimator_instance_params = estimator_class.get_test_params()[test_param_id]
+        estimator_instance = estimator_class(estimator_instance_params)
+        set_random_state(estimator_instance, random_state=random_state)
         estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
 
         return estimator_fitted
@@ -778,7 +797,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 else:
                     assert param_value == param.default, param.name
 
-    def test_fit_updates_state(self, estimator_instance, scenario):
+    def test_fit_updates_state(self, estimator_instance, scenario, estimator_fitted):
         """Check fit/update state change."""
         # Check that fit updates the is-fitted states
         attrs = ["_is_fitted", "is_fitted"]
@@ -795,12 +814,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 estimator, attr
             ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
 
-        fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
-
         # Check 0s_fitted attribute is updated correctly to False after calling fit
         for attr in attrs:
             assert getattr(
-                fitted_estimator, attr
+                estimator_fitted, attr
             ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
     def test_fit_returns_self(self, estimator_instance, scenario):
@@ -825,7 +842,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 with pytest.raises(NotFittedError, match=r"has not been fitted"):
                     scenario.run(estimator_instance, method_sequence=[method])
 
-    def test_fit_idempotent(self, estimator_instance, scenario):
+    def test_fit_idempotent(self, estimator_instance, scenario, estimator_fitted):
         """Check that calling fit twice is equivalent to calling it once."""
         estimator = estimator_instance
 
@@ -834,8 +851,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             if _has_capability(estimator, method):
                 set_random_state(estimator)
                 results = scenario.run(
-                    estimator,
-                    method_sequence=["fit", method],
+                    estimator_fitted,
+                    method_sequence=[method],
                     return_all=True,
                     deepcopy_return=True,
                 )
@@ -856,20 +873,18 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                     # err_msg=f"Idempotency check failed for method {method}",
                 )
 
-    def test_fit_does_not_overwrite_hyper_params(self, estimator_instance, scenario):
+    def test_fit_does_not_overwrite_hyper_params(
+        self, estimator_instance, scenario, estimator_fitted
+    ):
         """Check that we do not overwrite hyper-parameters in fit."""
         estimator = estimator_instance
-        set_random_state(estimator)
 
         # Make a physical copy of the original estimator parameters before fitting.
         params = estimator.get_params()
         original_params = deepcopy(params)
 
-        # Fit the model
-        fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
-
         # Compare the state of the model parameters with the original parameters
-        new_params = fitted_est.get_params()
+        new_params = estimator_fitted.get_params()
         for param_name, original_value in original_params.items():
             new_value = new_params[param_name]
 
@@ -885,21 +900,20 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
 
-    def test_methods_do_not_change_state(self, estimator_instance, scenario):
+    def test_methods_do_not_change_state(
+        self, estimator_instance, scenario, estimator_fitted
+    ):
         """Check that non-state-changing methods do not change state.
 
         Check that methods that are not supposed to change attributes of the
         estimators do not change anything (including hyper-parameters and
         fitted parameters)
         """
-        estimator = estimator_instance
-        set_random_state(estimator)
-
         for method in NON_STATE_CHANGING_METHODS:
-            if _has_capability(estimator, method):
+            if _has_capability(estimator_instance, method):
+                estimator = estimator_fitted
 
                 # dict_before = copy of dictionary of estimator before predict, post fit
-                _ = scenario.run(estimator, method_sequence=["fit"])
                 dict_before = estimator.__dict__.copy()
 
                 # dict_after = dictionary of estimator after predict and fit
