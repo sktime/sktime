@@ -461,10 +461,6 @@ class RotationForest(BaseEstimator):
         subsample = rng.choice(self.n_instances, size=self.n_instances)
         oob = [n for n in indices if n not in subsample]
 
-        results = np.zeros((self.n_instances, self.n_classes))
-        if len(oob) == 0:
-            return [results, oob]
-
         clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data[idx][oob])
@@ -476,6 +472,7 @@ class RotationForest(BaseEstimator):
                 new_probas[:, cls_idx] = probas[:, i]
             probas = new_probas
 
+        results = np.zeros((self.n_instances, self.n_classes))
         for n, proba in enumerate(probas):
             results[oob[n]] += proba
 
