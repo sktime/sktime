@@ -22,7 +22,6 @@ from sktime.forecasting.tests._config import (
     TEST_FHS,
     VALID_INDEX_FH_COMBINATIONS,
 )
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
 from sktime.utils._testing.series import _make_index
 from sktime.utils.datetime import (
@@ -352,28 +351,6 @@ def test_exponential_smoothing():
     y_pred = forecaster.predict()
     pd.testing.assert_index_equal(
         y_pred.index, pd.period_range("2019-01-02 00:00", periods=6, freq=freq)
-    )
-
-
-# TODO: Replace this long running test with fast unit test
-def test_theta_forecaster():
-    """Test example in notebook.
-
-    '1.2.4 prediction intervals' section of examples/01_forecasting.ipynb
-    """
-    # simple workflow
-    y = load_airline()
-    fh = np.arange(1, 13)
-
-    forecaster = ThetaForecaster(sp=12)
-    forecaster.fit(y)
-
-    # setting return_pred_int argument to True; alpha determines percentiles
-    #  intervals are lower = alpha/2-percentile, upper = (1-alpha/2)-percentile
-    alpha = 0.05  # 2.5%/97.5% prediction intervals
-    y_pred, y_pred_ints = forecaster.predict(fh, return_pred_int=True, alpha=alpha)
-    pd.testing.assert_index_equal(
-        y_pred.index, pd.period_range("1961-01", periods=12, freq="M")
     )
 
 
