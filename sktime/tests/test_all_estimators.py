@@ -124,7 +124,6 @@ class BaseFixtureGenerator:
             fixture_vars=fixture_vars,
             generator_dict=self.generator_dict(),
             fixture_sequence=fixture_sequence,
-            raise_exceptions=True,
         )
 
         metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
@@ -135,7 +134,7 @@ class BaseFixtureGenerator:
             estimator_types=getattr(self, "estimator_type_filter", None),
             return_names=False,
             exclude_estimators=EXCLUDE_ESTIMATORS,
-        )[:5]
+        )[:10]
 
     def generator_dict(self):
         """Return dict with methods _generate_[variable] collected in a dict.
