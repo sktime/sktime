@@ -109,7 +109,12 @@ def test_kmeans():
     X_test, y_test = load_basic_motions(split="test")
 
     kmeans = TimeSeriesKMeans(
-        averaging_method="mean", random_state=1, n_init=2, n_clusters=4
+        averaging_method="mean",
+        random_state=1,
+        n_init=2,
+        n_clusters=4,
+        init_algorithm="kmeans++",
+        metric="dtw",
     )
     train_predict = kmeans.fit_predict(X_train)
     train_mean_score = metrics.rand_score(y_train, train_predict)

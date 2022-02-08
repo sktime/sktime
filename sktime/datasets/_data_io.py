@@ -172,7 +172,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
-        y = pd.Series.to_numpy(y, dtype=np.str)
+        y = pd.Series.to_numpy(y, dtype=str)
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -224,7 +224,12 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
 
     else:
         raise ValueError("Invalid `split` value =", split)
-    return X, y
+    # Return appropriately
+    if return_X_y:
+        return X, y
+    else:
+        X["class_val"] = pd.Series(y)
+        return X
 
 
 def _read_header(file, full_file_path_and_name):

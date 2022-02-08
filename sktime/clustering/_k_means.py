@@ -32,7 +32,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     max_iter: int, defaults = 30
         Maximum number of iterations of the k-means algorithm for a single
         run.
-    tol: float, defaults = 1e-4
+    tol: float, defaults = 1e-6
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
@@ -63,11 +63,11 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "kmeans++",
+        init_algorithm: Union[str, Callable] = "random",
         metric: Union[str, Callable] = "dtw",
         n_init: int = 10,
         max_iter: int = 300,
-        tol: float = 1e-4,
+        tol: float = 1e-6,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
         averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "dba",
@@ -108,3 +108,24 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             curr_indexes = np.where(assignment_indexes == i)[0]
             new_centers[i, :] = self._averaging_method(X[curr_indexes])
         return new_centers
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_clusters": 8,
+            "metric": "euclidean",
+            "n_init": 1,
+            "max_iter": 10,
+            "random_state": 0,
+        }
+        return params
