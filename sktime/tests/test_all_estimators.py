@@ -200,16 +200,11 @@ class BaseFixtureGenerator:
             test_name=test_name
         )
 
-        # create instances from the classes
-        estimator_instances_to_test = []
-        estimator_instance_names = []
         # retrieve all estimator parameters if multiple, construct instances
         for est in estimator_classes_to_test:
             all_instances_of_est, instance_names = est.create_test_instances_and_names()
-            estimator_instances_to_test += all_instances_of_est
-            estimator_instance_names += instance_names
-
-        return estimator_instances_to_test, estimator_instance_names
+            for est, name in zip(all_instances_of_est, instance_names):
+                yield est, name
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
