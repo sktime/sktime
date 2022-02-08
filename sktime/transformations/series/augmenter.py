@@ -16,7 +16,7 @@ import pandas as pd
 from scipy.stats import norm
 from sklearn.utils import check_random_state
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.base import BaseTransformer
 
 
 class _AugmenterTags:
@@ -26,6 +26,7 @@ class _AugmenterTags:
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,
         "handles-missing-data": False,
+        "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "X-y-must-have-same-index": False,
         "fit-in-transform": True,
@@ -34,7 +35,7 @@ class _AugmenterTags:
     }
 
 
-class WhiteNoiseAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
+class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     """Augmenter adding Gaussian (i.e . white) noise to the time series.
 
     Parameters
@@ -64,7 +65,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
         return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
 
 
-class ReverseAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
+class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     """Augmenter reversing the time series."""
 
     def __init__(self):
@@ -74,7 +75,7 @@ class ReverseAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
         return X.loc[::-1].reset_index(drop=True, inplace=False)
 
 
-class InvertAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
+class InvertAugmenter(_AugmenterTags, BaseTransformer):
     """Augmenter inverting the time series by multiplying it by -1)."""
 
     def __init__(self):
@@ -84,7 +85,7 @@ class InvertAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
         return X.mul(-1)
 
 
-class RandomSamplesAugmenter(_AugmenterTags, _SeriesToSeriesTransformer):
+class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     """Draw random instances form panel data.
 
     As the implemented augmenters work stochastically, it is best practice to
