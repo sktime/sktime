@@ -51,7 +51,7 @@ class WindowSummarizer(BaseTransformer):
                 function will be applied.
 
         key (resolved to name) : str, name of the derived features, will be appended by
-                window shift and window length.
+                window_length and starting_at parameter.
         first value (resolved to summarizer): either custom function call (to be
                 provided by user) or str corresponding to native pandas window function:
                 * "sum",
