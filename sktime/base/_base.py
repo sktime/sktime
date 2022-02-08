@@ -284,7 +284,7 @@ class BaseObject(_BaseEstimator):
             )
 
         obj = cls(**params)
-        obj._test_id = 1
+        obj._test_param_id = 1
 
         return obj
 
