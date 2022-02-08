@@ -1322,7 +1322,6 @@ def write_results_to_uea_format(
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
     file = open(
         str(output_path)
-        + "/"
         + str(train_or_test)
         + "Resample"
         + str(resample_seed)

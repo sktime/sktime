@@ -82,12 +82,15 @@ if __name__ == "__main__":
     else:  # Local run
         print(" Local Run")
         data_dir = "../datasets/data/"
-        results_dir = "C:/Temp/Clusterers/"
+        results_dir = "./temp"
         dataset = "UnitTest"
         clusterer = "kmeans"
         resample = 0
         tf = True
-        clst = TimeSeriesKMeans(n_clusters=2)
+        train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
+        test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+
+        clst = TimeSeriesKMeans(n_clusters=len(set(train_Y)))
         load_and_run_clustering_experiment(
             overwrite=True,
             problem_path=data_dir,
@@ -98,12 +101,10 @@ if __name__ == "__main__":
             train_file=tf,
             clusterer=clst,
         )
-        train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-        test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         run_clustering_experiment(
             train_X,
             clst,
-            results_path=results_dir + "Temp/",
+            results_path=results_dir + "kmeans/",
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
