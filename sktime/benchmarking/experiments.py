@@ -79,18 +79,18 @@ def run_clustering_experiment(
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-
     start = int(round(time.time() * 1000))
     clusterer.fit(trainX)
     build_time = int(round(time.time() * 1000)) - start
     start = int(round(time.time() * 1000))
     train_preds = clusterer.predict(trainX)
-    # predict_train_time = int(round(time.time() * 1000)) - start
+    build_time = int(round(time.time() * 1000)) - start
+    train_probs = clusterer.predict_proba(trainX)
 
-    # Form predictions on trainY
     start = int(round(time.time() * 1000))
-    preds = clusterer.predict(testX)
+    test_preds = clusterer.predict(testX)
     test_time = int(round(time.time() * 1000)) - start
+    test_probs = clusterer.predict_proba(testX)
     second = str(clusterer.get_params())
     second.replace("\n", " ")
     second.replace("\r", " ")
@@ -105,7 +105,8 @@ def run_clustering_experiment(
         output_path=results_path,
         estimator_name=cls_name,
         resample_seed=resample_id,
-        y_pred=preds,
+        y_pred=test_preds,
+        predicted_probs=test_probs,
         dataset_name=dataset_name,
         y_true=testY,
         split="TEST",
@@ -134,6 +135,7 @@ def run_clustering_experiment(
         estimator_name=cls_name,
         resample_seed=resample_id,
         y_pred=train_preds,
+        predicted_probs=train_probs,
         dataset_name=dataset_name,
         y_true=trainY,
         split="TRAIN",

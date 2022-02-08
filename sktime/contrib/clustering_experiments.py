@@ -59,6 +59,20 @@ def demo_loading():
         print(testY.shape)
 
 
+def config_clusterer(clusterer, config, num_clusters):
+    """Configure the custerer for experiments."""
+    if clusterer == "kmeans":
+        if config != "":
+            cls = TimeSeriesKMeans(n_clusters=num_clusters, metric=distance)
+        else:
+            cls = TimeSeriesKMeans(n_clusters=num_clusters)
+    elif clusterer == "kmedoids":
+        if config != "":
+            cls = TimeSeriesKMedoids(n_clusters=num_clusters, metric=distance)
+        else:
+            cls = TimeSeriesKMedoids(n_clusters=num_clusters)
+
+
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
@@ -67,10 +81,11 @@ if __name__ == "__main__":
         print(sys.argv)
         data_dir = sys.argv[1]
         results_dir = sys.argv[2]
-        classifier = sys.argv[3]
+        clusterer = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
         tf = str(sys.argv[6]) == "True"
+        config = sys.argv[7]
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         clst = TimeSeriesKMeans(n_clusters=len(set(train_Y)))
