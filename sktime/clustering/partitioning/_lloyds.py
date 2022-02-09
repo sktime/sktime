@@ -64,7 +64,9 @@ def _random_center_initializer(
     selected = random_state.choice(n_clusters, X.shape[0], replace=True)
     for i in range(n_clusters):
         curr_indexes = np.where(selected == i)[0]
-        new_centers[i, :] = mean_average(X[curr_indexes])
+        result = mean_average(X[curr_indexes])
+        if result.shape[0] > 0:
+            new_centers[i, :] = result
     return new_centers
 
 

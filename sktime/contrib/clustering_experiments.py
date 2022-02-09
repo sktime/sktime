@@ -1,37 +1,43 @@
 # -*- coding: utf-8 -*-
-"""Cluster Experiments.
+"""Classifier Experiments: code to run experiments as an alternative to orchestration.
 
-code to run experiments for clustering, saving results in a standard format.
-The main method is run_clustering_experiment. However, this file is also configured for
-runs of the main method with command line arguments, or for single debugging runs.
+This file is configured for runs of the main method with command line arguments, or for
+single debugging runs. Results are written in a standard format.
 """
+
 __author__ = ["TonyBagnall"]
+
 import os
 import sys
 
+from sktime.contrib.set_classifier import set_classifier
+
+os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
+
 import sktime.datasets.tsc_dataset_names as dataset_lists
-from sktime.benchmarking.experiments import (
-    load_and_run_clustering_experiment,
-    run_clustering_experiment,
-)
-from sktime.clustering import TimeSeriesKMeans
+from sktime.benchmarking.experiments import load_and_run_classification_experiment
+from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# We sometimes want to force execution in a single thread. sklearn often threads in ways
-# beyond the users control. This forces single thread execution, which is required,
-# for example, when running on an HPC
-# MUST be done before numpy import
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREADS"] = "1"
+"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
+mechanism used in Java,
+https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
+but isfrom sktime.classification.interval_based import (
+    CanonicalIntervalForest,
+ not yet as engineered. However, if you generate results using the method
+recommended here, they can be directly and automatically compared to the results
+generated in java.
+"""
 
 
 def demo_loading():
     """Test function to check dataset loading of univariate and multivaria problems."""
     for i in range(0, len(dataset_lists.univariate)):
-        data_dir = "E:/tsc_ts/"
+        data_dir = "../"
         dataset = dataset_lists.univariate[i]
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
@@ -81,7 +87,7 @@ def config_clusterer(clusterer, config, n_clusters, rand):
 
 if __name__ == "__main__":
     """
-    Example simple usage, with arguments input via script or hard coded for testing
+    Example simple usage, with arguments input via script or hard coded for testing.
     """
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
@@ -106,7 +112,8 @@ if __name__ == "__main__":
             testY=test_Y,
             cls_name=clusterer+"_"+distance,
             resample_id=resample,
-            dataset_name=dataset,
+            build_train=tf,
+            predefined_resample=predefined_resample,
         )
     else:  # Local run
         print(" Local Run")
@@ -126,10 +133,10 @@ if __name__ == "__main__":
             train_X,
             clst,
             results_path=results_dir,
-            trainY=train_Y,
-            testX=test_X,
-            testY=test_Y,
-            cls_name=clusterer,
+            cls_name=cls_name,
+            classifier=classifier,
+            dataset=dataset,
             resample_id=resample,
-            dataset_name=dataset,
+            build_train=tf,
+            predefined_resample=predefined_resample,
         )

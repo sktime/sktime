@@ -19,6 +19,8 @@ def mean_average(X: np.ndarray) -> np.ndarray:
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the mean.
     """
+    if X.shape[0] <= 1:
+        return X
     return X.mean(axis=0)
 
 
