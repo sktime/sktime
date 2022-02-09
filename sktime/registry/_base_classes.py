@@ -95,9 +95,7 @@ BASE_CLASS_REGISTER = [
         "pairwise transformer for panel data, distance or kernel",
     ),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
-    "metric",
-    BaseMetric,
-    "performance metric",
+    ("metric", BaseMetric, "performance metric"),
 ]
 
 BASE_CLASS_SCITYPE_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[0].tolist()
