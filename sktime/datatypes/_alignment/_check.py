@@ -103,6 +103,7 @@ def check_align(align_df, name="align_df", index="iloc"):
 
     return True, ""
 
+
 def check_alignment_alignment(obj, return_metadata=False, var_name="obj"):
     """Check whether object has mtype `alignment` for scitype `Alignment`."""
     valid, msg = check_align(obj, name=var_name, index="iloc")
@@ -115,6 +116,7 @@ def check_alignment_alignment(obj, return_metadata=False, var_name="obj"):
 
 check_dict[("alignment", "Alignment")] = check_alignment_alignment
 
+
 def check_alignment_loc_alignment(obj, return_metadata=False, var_name="obj"):
     """Check whether object has mtype `alignment_loc` for scitype `Alignment`."""
     valid, msg = check_align(obj, name=var_name, index="loc")
@@ -123,5 +125,6 @@ def check_alignment_loc_alignment(obj, return_metadata=False, var_name="obj"):
         return valid, msg, dict()
     else:
         return valid
+
 
 check_dict[("alignment_loc", "Alignment")] = check_alignment_loc_alignment
