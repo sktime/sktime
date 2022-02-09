@@ -8,7 +8,6 @@ Interface module to scipy.spatial's pairwise distance function cdist
 __author__ = ["fkiraly"]
 
 import pandas as pd
-
 from scipy.spatial.distance import cdist
 
 from sktime.dists_kernels._base import BasePairwiseTransformer
@@ -78,6 +77,20 @@ class ScipyDist(BasePairwiseTransformer):
         """
         p = self.p
         metric = self.metric
+        common_columns = X.columns.intersection(X2.columns)
+
+        if self.colalign == "intersect":
+            X = X[common_columns]
+            X2 = X2[common_columns]
+        elif self.colalign == "force-align":
+            if common_columns == X.columns and common_columns == X2.columns:
+                X = X[common_columns]
+                X2 = X2[common_columns]
+            else:
+                raise ValueError(
+                    "The set of columns in X and X2 must be same when using",
+                    "'force-align'",
+                )
 
         if isinstance(X, pd.DataFrame):
             X = X.select_dtypes("number").to_numpy(dtype="float")
