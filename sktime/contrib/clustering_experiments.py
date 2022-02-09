@@ -118,7 +118,7 @@ if __name__ == "__main__":
         results_dir = "./temp"
         dataset = "Beef"
         clusterer = "kmeans"
-        resample = 3
+        resample = 2
         tf = True
         distance = "euclidean"
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
