@@ -121,8 +121,10 @@ class SingleSplit:
 
     def split(self, data, y=None, groups=None):
         """
+        Split the data into training and testing data.
+
         Parameters
-        ---------
+        ----------
         data : pandas dataframe
             data used for cross validation
 
@@ -147,4 +149,5 @@ class SingleSplit:
 
     @staticmethod
     def get_n_splits():
+        """Return 1."""
         return 1
