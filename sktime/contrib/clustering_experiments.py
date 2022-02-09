@@ -59,18 +59,20 @@ def demo_loading():
         print(testY.shape)
 
 
-def config_clusterer(clusterer, config, num_clusters):
+def config_clusterer(clusterer, config, n_clusters, rand):
     """Configure the custerer for experiments."""
     if clusterer == "kmeans":
         if config != "":
-            cls = TimeSeriesKMeans(n_clusters=num_clusters, metric=distance)
+            cls = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance,
+                                   random_state=rand)
         else:
-            cls = TimeSeriesKMeans(n_clusters=num_clusters)
+            cls = TimeSeriesKMeans(n_clusters=n_clusters, random_state=rand)
     elif clusterer == "kmedoids":
         if config != "":
-            cls = TimeSeriesKMedoids(n_clusters=num_clusters, metric=distance)
+            cls = TimeSeriesKMedoids(n_clusters=n_clusters, metric=distance,
+                                     random_state=rand)
         else:
-            cls = TimeSeriesKMedoids(n_clusters=num_clusters)
+            cls = TimeSeriesKMedoids(n_clusters=n_clusters, random_state=rand)
     return cls
 
 
@@ -80,18 +82,18 @@ if __name__ == "__main__":
     """
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
-        data_dir = sys.argv[1]
-        results_dir = sys.argv[2]
-        clusterer = sys.argv[3]
-        dataset = sys.argv[4]
-        resample = int(sys.argv[5]) - 1
-        tf = str(sys.argv[6]) == "True"
-        distance = sys.argv[7]
+        data_dir = "/home/ajb/data/Univariate_ts/"
+        results_dir = "/home/ajb/results/"
+        clusterer = "kmeans"
+        dataset = sys.argv[1]
+        resample = int(sys.argv[2]) - 1
+        tf = True
+        distance = sys.argv[3]
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         clst = config_clusterer(
-            custerer=clusterer, config=distance, n_clusters=len(set(train_Y))
-        )
+            clusterer=clusterer, config=distance, n_clusters=len(set(train_Y)),
+                                                                 rand = resample)
         run_clustering_experiment(
             train_X,
             clst,
@@ -105,16 +107,18 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "../datasets/data/"
+        data_dir = "E:/Data Working Area/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "GunPoint"
+        dataset = "Beef"
         clusterer = "kmeans"
         resample = 0
         tf = True
+        distance = "euclidean"
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-
-        clst = TimeSeriesKMeans(n_clusters=len(set(train_Y)))
+        clst = config_clusterer(
+            clusterer=clusterer, config=distance, n_clusters=len(set(train_Y)),
+                                                                 rand=resample)
         run_clustering_experiment(
             train_X,
             clst,
