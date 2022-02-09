@@ -16,6 +16,8 @@ from sktime.benchmarking.experiments import (
 )
 from sktime.clustering import TimeSeriesKMeans
 from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # We sometimes want to force execution in a single thread. sklearn often threads in ways
 # beyond the users control. This forces single thread execution, which is required,
@@ -64,6 +66,7 @@ def config_clusterer(clusterer, config, n_clusters, rand):
     if clusterer == "kmeans":
         if config != "":
             cls = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance,
+                                   init_algorithm="kmeans++",
                                    random_state=rand)
         else:
             cls = TimeSeriesKMeans(n_clusters=n_clusters, random_state=rand)
@@ -93,7 +96,7 @@ if __name__ == "__main__":
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         clst = config_clusterer(
             clusterer=clusterer, config=distance, n_clusters=len(set(train_Y)),
-                                                                 rand = resample)
+                                                                 rand=resample+1)
         run_clustering_experiment(
             train_X,
             clst,
@@ -101,7 +104,7 @@ if __name__ == "__main__":
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
-            cls_name=clusterer,
+            cls_name=clusterer+"_"+distance,
             resample_id=resample,
             dataset_name=dataset,
         )
@@ -111,7 +114,7 @@ if __name__ == "__main__":
         results_dir = "./temp"
         dataset = "Beef"
         clusterer = "kmeans"
-        resample = 0
+        resample = 1
         tf = True
         distance = "euclidean"
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
