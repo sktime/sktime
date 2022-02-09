@@ -244,10 +244,6 @@ class STLForecaster(BaseForecaster):
         Seasonal period for defaulting forecasters and/or STL.period param,
         by default None. Can only be used if at least on the forecasters
         or the stl is None.
-    period : {int, None}, optional
-        Periodicity of the sequence. If None and endog is a pandas Series or
-        DataFrame, attempts to determine from endog. If endog is a ndarray,
-        period must be provided.
     seasonal : int, optional
         Length of the seasonal smoother. Must be an odd integer, and should
         normally be >= 7 (default).
