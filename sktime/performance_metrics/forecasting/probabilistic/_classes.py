@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 # from imp import get_tag
+
+import numpy as np
+
+# TODO: add formal tests
 import pandas as pd
+from sklearn.metrics._regression import _check_reg_targets
 
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
 
 
 class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
-    """Base class for defining probabilistic forecasting error metrics in sktime.
+    """Base class for probabilistic forecasting error metrics in sktime.
 
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
     metrics measure the error (loss) between forecasts and true values. Lower
@@ -41,7 +46,9 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
 
     def evaluate(self, y_true, y_pred, multioutput, **kwargs):
         """Evaluate the desired metric on given inputs."""
-        # input_check()
+        # Input checks
+        _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+
         return self._evaluate(y_true, y_pred, multioutput, **kwargs)
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
@@ -49,7 +56,8 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
 
     def evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Return the metric evaluated at each time point."""
-        # input_check()
+        _, y_true, y_pred = _check_reg_targets(y_true, y_pred, multioutput)
+
         n = len(y_true)
         out_series = pd.series()
         x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
@@ -63,9 +71,14 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
 class PinballLoss(_BaseProbForecastingErrorMetric):
     """Evaluate the pinball loss at the alpha quantile.
 
-    Describe parameters/output
+    Parameters
+    ----------
+    alpha : The significance level that you want to find pinball loss for
 
-    Give some examples of use
+    multioutput : string "uniform_average" or "raw_values" determines how multioutput
+    results will be treated
+
+
     """
 
     def __init__(self, alpha, multioutput="uniform_average"):
@@ -77,19 +90,21 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
 
     def evaluate(self, y_true, y_pred, multioutput, **kwargs):
         """Evaluate the desired metric on given inputs."""
-        # input_check()
-        n = y_true.shape[1]
-        for _i in range(n):
-            # need to change this
-            return self._evaluate(y_true, y_pred, **kwargs)
+        # Input checks
+        if isinstance(y_pred, pd.DataFrame):
+            if y_pred.columns.get_level_values(0)[0] == "Quantiles":
+                # Need to catch error if
+                y_pred = y_pred.iloc[
+                    :, y_pred.columns.get_level_values(1) == self.alpha
+                ].to_numpy()
 
-    def _evaluate(self, y_true, y_pred, **kwargs):
+        _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+        return self._evaluate(y_true, y_pred, multioutput)
+
+    def _evaluate(self, y_true, y_pred, multioutput):
         # Return pinball loss
         alpha = self.alpha
-        if y_true >= y_pred:
-            return alpha * (y_true - y_pred)
-        else:
-            return (1 - alpha) * (y_true - y_pred)
+        return pinball_loss(y_true, y_pred, alpha, multioutput)
 
     def evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Return the metric evaluated at each time point."""
@@ -104,16 +119,16 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
         return out_series
 
 
-def pinball_loss(y_true, y_pred, alpha):
+def pinball_loss(y_true, y_pred, alpha, multioutput):
     """Evaluate the pinball loss at the alpha quantile.
 
     Parameters
     ----------
-    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+    y_true : np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Ground truth (correct) target values.
 
-    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+    y_pred : np.array of shape (fh,) or (fh, n_outputs) \
              where fh is the forecasting horizon
         Forecasted alpha quantiles
 
@@ -122,8 +137,22 @@ def pinball_loss(y_true, y_pred, alpha):
     # check_alpha(alpha) # checks alpha is scalar between 0 and 1
     # check_quantile(y_pred, alpha) # checks that y_pred is quantile at correct
 
-    # Return pinball loss
-    if y_true >= y_pred:
-        return alpha * (y_true - y_pred)
-    else:
-        return (1 - alpha) * (y_true - y_pred)
+    # Return pinball loss, this was taken from sklearn.mean_pinball_loss()
+    diff = y_true - y_pred
+    sign = (diff >= 0).astype(diff.dtype)
+    loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
+    output_errors = np.average(loss, axis=0)
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        elif multioutput == "uniform_average":
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+        else:
+            raise ValueError(
+                "multioutput is expected to be 'raw_values' "
+                "or 'uniform_average' but we got %r"
+                " instead." % multioutput
+            )
+
+    return np.average(output_errors, weights=multioutput)
