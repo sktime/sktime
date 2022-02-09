@@ -56,14 +56,19 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
 
     def evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Return the metric evaluated at each time point."""
-        _, y_true, y_pred = _check_reg_targets(y_true, y_pred, multioutput)
+        _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
 
-        n = len(y_true)
-        out_series = pd.series()
+        return self._evaluate_by_index(y_true, y_pred, multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        n = y_true.shape[0]
+        out_series = pd.Series(index=pd.RangeIndex(0, n))
         x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
-        for _i in range(n):
-            out_series[_i] = n * x_bar - (n - 1) * self.evaluate(
-                y_true[-_i], y_pred[-_i]
+        for i in range(n):
+            out_series[i] = n * x_bar - (n - 1) * self.evaluate(
+                np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
+                np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                multioutput,
             )
         return out_series
 
@@ -93,7 +98,7 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
         # Input checks
         if isinstance(y_pred, pd.DataFrame):
             if y_pred.columns.get_level_values(0)[0] == "Quantiles":
-                # Need to catch error if
+                # Need to catch error if alpha not in dataframe
                 y_pred = y_pred.iloc[
                     :, y_pred.columns.get_level_values(1) == self.alpha
                 ].to_numpy()
@@ -108,15 +113,15 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
 
     def evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Return the metric evaluated at each time point."""
-        # input_check()
-        n = len(y_true)
-        out_series = pd.series()  #
-        x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
-        for _i in range(n):
-            out_series[_i] = n * x_bar - (n - 1) * self.evaluate(
-                y_true[-_i], y_pred[-_i]
-            )
-        return out_series
+        # Input checks
+        if isinstance(y_pred, pd.DataFrame):
+            if y_pred.columns.get_level_values(0)[0] == "Quantiles":
+                # Need to catch error if alpha not in dataframe
+                y_pred = y_pred.iloc[
+                    :, y_pred.columns.get_level_values(1) == self.alpha
+                ].to_numpy()
+
+        return super().evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
 
 
 def pinball_loss(y_true, y_pred, alpha, multioutput):
