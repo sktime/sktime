@@ -391,10 +391,6 @@ class Arsenal(BaseClassifier):
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
-        results = np.zeros((self.n_instances_, self.n_classes_))
-        if len(oob) == 0:
-            return results, 1, oob
-
         clf = make_pipeline(
             StandardScaler(with_mean=False),
             RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
@@ -404,6 +400,7 @@ class Arsenal(BaseClassifier):
 
         weight = clf.steps[1][1].best_score_
 
+        results = np.zeros((self.n_instances_, self.n_classes_))
         for n, pred in enumerate(preds):
             results[oob[n]][self._class_dictionary[pred]] += weight
 
