@@ -116,13 +116,13 @@ if __name__ == "__main__":
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "../datasets/data/"
+        data_dir = "E:/Data Working Area/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "Beef"
-        clusterer = "kmeans"
-        resample = 2
+        dataset = "ArrowHead"
+        clusterer = "kmedoids"
+        resample = 6
         tf = True
-        distance = "euclidean"
+        distance = "edr"
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         clst = config_clusterer(
