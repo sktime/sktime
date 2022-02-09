@@ -77,9 +77,11 @@ def config_clusterer(clusterer, config, n_clusters, rand):
     elif clusterer == "kmedoids":
         if config != "":
             cls = TimeSeriesKMedoids(n_clusters=n_clusters, metric=distance,
+                                     init_algorithm="kmeans++",
                                      random_state=rand)
         else:
-            cls = TimeSeriesKMedoids(n_clusters=n_clusters, random_state=rand)
+            cls = TimeSeriesKMedoids(n_clusters=n_clusters, random_state=rand,
+                                     init_algorithm="kmeans++")
     return cls
 
 
@@ -91,7 +93,7 @@ if __name__ == "__main__":
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
         results_dir = "/home/ajb/results/"
-        clusterer = "kmeans"
+        clusterer = "kmedoids"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True

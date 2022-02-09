@@ -36,6 +36,7 @@ def run_clustering_experiment(
     cls_name=None,
     dataset_name=None,
     resample_id=0,
+    overwrite=True,
 ):
     """
     Run a clustering experiment and save the results to file.
@@ -74,6 +75,21 @@ def run_clustering_experiment(
         Resample identifier, defaults to 0
 
     """
+    if not overwrite:
+        full_path = (
+            results_path
+            + "/"
+            + cls_name
+            + "/Predictions/"
+            + dataset
+            + "/testResample"
+            + str(resample_id)
+            + ".csv"
+        )
+        if os.path.exists(full_path):
+            return
+
+
     # Build the clusterer on train data, recording how long it takes
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
