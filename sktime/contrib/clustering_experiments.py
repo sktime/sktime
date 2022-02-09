@@ -17,11 +17,9 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 
 import sktime.datasets.tsc_dataset_names as dataset_lists
-from sktime.benchmarking.experiments import load_and_run_classification_experiment
-from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
+from sktime.benchmarking.experiments import run_clustering_experiment
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
@@ -111,32 +109,31 @@ if __name__ == "__main__":
             testX=test_X,
             testY=test_Y,
             cls_name=clusterer+"_"+distance,
+            dataset_name=dataset,
             resample_id=resample,
-            build_train=tf,
-            predefined_resample=predefined_resample,
         )
     else:  # Local run
         print(" Local Run")
-        data_dir = "E:/Data Working Area/Univariate_ts/"
+        data_dir = "../datasets/data/"
         results_dir = "./temp"
-        dataset = "Beef"
+        dataset = "GunPoint"
         clusterer = "kmeans"
-        resample = 1
+        resample = 2
         tf = True
         distance = "euclidean"
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         clst = config_clusterer(
             clusterer=clusterer, config=distance, n_clusters=len(set(train_Y)),
-                                                                 rand=resample)
+                                                                 rand=resample+1)
         run_clustering_experiment(
             train_X,
             clst,
             results_path=results_dir,
-            cls_name=cls_name,
-            classifier=classifier,
-            dataset=dataset,
+            trainY=train_Y,
+            testX=test_X,
+            testY=test_Y,
+            cls_name=clusterer+"_"+distance,
+            dataset_name=dataset,
             resample_id=resample,
-            build_train=tf,
-            predefined_resample=predefined_resample,
         )
