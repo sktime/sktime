@@ -116,9 +116,9 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "../datasets/data/"
         results_dir = "./temp"
-        dataset = "GunPoint"
+        dataset = "Beef"
         clusterer = "kmeans"
-        resample = 2
+        resample = 3
         tf = True
         distance = "euclidean"
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")

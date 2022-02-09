@@ -85,12 +85,13 @@ def run_clustering_experiment(
     start = int(round(time.time() * 1000))
     train_preds = clusterer.predict(trainX)
     build_time = int(round(time.time() * 1000)) - start
-    train_probs = clusterer.predict_proba(trainX)
+    n_clusters = len(np.unique(trainY))
+    train_probs = clusterer.predict_proba(trainX, n_clusters=n_clusters)
 
     start = int(round(time.time() * 1000))
     test_preds = clusterer.predict(testX)
     test_time = int(round(time.time() * 1000)) - start
-    test_probs = clusterer.predict_proba(testX)
+    test_probs = clusterer.predict_proba(testX, n_clusters=n_clusters)
     second = str(clusterer.get_params())
     second.replace("\n", " ")
     second.replace("\r", " ")
