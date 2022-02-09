@@ -479,10 +479,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             indices = range(n_instances)
             for i, clf in enumerate(self.estimators_):
                 oob = [n for n in indices if n not in clf._subsample]
-
-                if len(oob) == 0:
-                    continue
-
                 preds = clf.predict(X[oob])
 
                 for n, pred in enumerate(preds):
@@ -917,8 +913,11 @@ class IndividualTDE(BaseClassifier):
                 fin_transformers.append(transformers[i])
 
         if len(dims) > self.max_dims:
-            rng = check_random_state(self.random_state)
-            idx = rng.choice(len(dims), self.max_dims, replace=False).tolist()
+            idx = self.random_state.choice(
+                len(dims),
+                self.max_dims,
+                replace=False,
+            ).tolist()
             dims = [dims[i] for i in idx]
             fin_transformers = [fin_transformers[i] for i in idx]
 
