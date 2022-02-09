@@ -77,9 +77,8 @@ def convert_Panel_to_Series(obj, store=None):
         obj.index = obj.index.droplevel(level=0)
 
     if isinstance(obj, np.ndarray):
-        shape = obj.shape
-        if not len(shape == 3) or not shape[2] == 1:
-            raise ValueError("if obj is np.ndarray, must be of dim 3, with shape[2]=1")
-        obj = np.reshape(obj, (obj.shape[0], obj.shape[1]))
+        if obj.ndim != 3 or obj.shape[0] != 1:
+            raise ValueError("if obj is np.ndarray, must be of dim 3, with shape[0]=1")
+        obj = np.reshape(obj, (obj.shape[1], obj.shape[2]))
 
     return obj
