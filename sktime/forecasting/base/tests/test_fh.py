@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for ForecastingHorizon object."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "khrapovs"]
 
 import numpy as np
 import pandas as pd
@@ -10,9 +10,12 @@ import pytest
 from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
 
+from sktime.datasets import load_airline
+from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import DELEGATED_METHODS
 from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
@@ -174,10 +177,15 @@ def test_shift(timepoint, by):
         assert timepoint == ret
 
 
-DURATIONS = [
+DURATIONS_ALLOWED = [
     pd.TimedeltaIndex(range(3), unit="D", freq="D"),
     pd.TimedeltaIndex(range(0, 9, 3), unit="D", freq="3D"),
     pd.tseries.offsets.MonthEnd(3),
+    # we also support pd.Timedelta, but it does not have freqstr so we
+    # cannot automatically infer the unit during testing
+    # pd.Timedelta(days=3, freq="D"),
+]
+DURATIONS_NOT_ALLOWED = [
     pd.Index(pd.tseries.offsets.Day(day) for day in range(3)),
     # we also support pd.Timedelta, but it does not have freqstr so we
     # cannot automatically infer the unit during testing
@@ -185,7 +193,7 @@ DURATIONS = [
 ]
 
 
-@pytest.mark.parametrize("duration", DURATIONS)
+@pytest.mark.parametrize("duration", DURATIONS_ALLOWED)
 def test_coerce_duration_to_int(duration):
     """Test coercion of duration to int."""
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
@@ -199,6 +207,13 @@ def test_coerce_duration_to_int(duration):
 
     if isinstance(duration, pd.tseries.offsets.BaseOffset):
         assert ret == 3
+
+
+@pytest.mark.parametrize("duration", DURATIONS_NOT_ALLOWED)
+def test_coerce_duration_to_int_with_non_allowed_durations(duration):
+    """Test coercion of duration to int."""
+    with pytest.raises(ValueError, match="frequency is missing"):
+        _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
 
 @pytest.mark.parametrize("n_timepoints", [3, 5])
@@ -218,7 +233,10 @@ def test_get_duration(n_timepoints, index_type):
     assert duration == n_timepoints - 1
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+FREQUENCY_STRINGS = ["10T", "H", "D", "2D", "W-WED", "W-SUN", "W-SAT", "M"]
+
+
+@pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
@@ -227,7 +245,7 @@ def test_to_absolute_freq(freqstr):
     assert abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+@pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_absolute_to_absolute(freqstr):
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
@@ -240,7 +258,7 @@ def test_absolute_to_absolute(freqstr):
     assert converted_abs_fh._values.freqstr == freqstr
 
 
-@pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
+@pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_relative_to_relative(freqstr):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
@@ -250,6 +268,31 @@ def test_relative_to_relative(freqstr):
 
     converted_rel_fh = abs_fh.to_relative(train.index[-1])
     assert_array_equal(fh, converted_rel_fh)
+
+
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_to_relative(freq: str):
+    """Test conversion to relative.
+
+    Fixes bug in
+    https://github.com/alan-turing-institute/sktime/issues/1935#issue-1114814142
+    """
+    freq = "2H"
+    t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
+    fh_abs = ForecastingHorizon(t, is_relative=False)
+    fh_rel = fh_abs.to_relative(cutoff=t.min())
+    assert_array_equal(fh_rel, np.arange(5))
+
+
+@pytest.mark.parametrize("idx", range(5))
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_to_absolute_int(idx: int, freq: str):
+    """Test converting between relative and absolute."""
+    # Converts from relative to absolute and back to relative
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
+    fh = ForecastingHorizon([1, 2, 3])
+    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[idx])
+    assert_array_equal(fh + idx, absolute_int)
 
 
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
@@ -264,3 +307,91 @@ def test_estimator_fh(freqstr):
     pred = forecaster.predict(np.arange(1, 27))
     expected_fh = ForecastingHorizon(np.arange(1, 27)).to_absolute(train.index[-1])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
+
+
+# TODO: Replace this long running test with fast unit test
+def test_auto_ets():
+    """Fix bug in 1435.
+
+    https://github.com/alan-turing-institute/sktime/issues/1435#issue-1000175469
+    """
+    freq = "30T"
+    _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
+    t = pd.date_range("2021-09-19", periods=50, freq=freq)
+    y = pd.Series(_y, index=t)
+    y.index = y.index.to_period(freq=freq)
+    forecaster = AutoETS(sp=12, auto=True, n_jobs=-1)
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh=[1, 2, 3])
+    pd.testing.assert_index_equal(
+        y_pred.index,
+        pd.date_range("2021-09-19", periods=53, freq=freq)[-3:].to_period(freq=freq),
+    )
+
+
+# TODO: Replace this long running test with fast unit test
+def test_exponential_smoothing():
+    """Test bug in 1876.
+
+    https://github.com/alan-turing-institute/sktime/issues/1876#issue-1103752402.
+    """
+    y = load_airline()
+    # Change index to 10 min interval
+    freq = "10Min"
+    time_range = pd.date_range(
+        pd.to_datetime("2019-01-01 00:00"),
+        pd.to_datetime("2019-01-01 23:55"),
+        freq=freq,
+    )
+    # Period Index does not work
+    y.index = time_range.to_period()
+
+    forecaster = ExponentialSmoothing(trend="add", seasonal="multiplicative", sp=12)
+    forecaster.fit(y, fh=[1, 2, 3, 4, 5, 6])
+    y_pred = forecaster.predict()
+    pd.testing.assert_index_equal(
+        y_pred.index, pd.period_range("2019-01-02 00:00", periods=6, freq=freq)
+    )
+
+
+# TODO: Replace this long running test with fast unit test
+def test_auto_arima():
+    """Test bug in 805.
+
+    https://github.com/alan-turing-institute/sktime/issues/805#issuecomment-891848228.
+    """
+    time_index = pd.date_range("January 1, 2021", periods=8, freq="1D")
+    X = pd.DataFrame(
+        np.random.randint(0, 4, 24).reshape(8, 3),
+        columns=["First", "Second", "Third"],
+        index=time_index,
+    )
+    y = pd.Series([1, 3, 2, 4, 5, 2, 3, 1], index=time_index)
+
+    fh_ = ForecastingHorizon(X.index[5:], is_relative=False)
+
+    a_clf = AutoARIMA(start_p=2, start_q=2, max_p=5, max_q=5)
+    clf = a_clf.fit(X=X[:5], y=y[:5])
+    y_pred_sk = clf.predict(fh=fh_, X=X[5:])
+
+    pd.testing.assert_index_equal(
+        y_pred_sk.index, pd.date_range("January 6, 2021", periods=3, freq="1D")
+    )
+
+    time_index = pd.date_range("January 1, 2021", periods=8, freq="2D")
+    X = pd.DataFrame(
+        np.random.randint(0, 4, 24).reshape(8, 3),
+        columns=["First", "Second", "Third"],
+        index=time_index,
+    )
+    y = pd.Series([1, 3, 2, 4, 5, 2, 3, 1], index=time_index)
+
+    fh = ForecastingHorizon(X.index[5:], is_relative=False)
+
+    a_clf = AutoARIMA(start_p=2, start_q=2, max_p=5, max_q=5)
+    clf = a_clf.fit(X=X[:5], y=y[:5])
+    y_pred_sk = clf.predict(fh=fh, X=X[5:])
+
+    pd.testing.assert_index_equal(
+        y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq="2D")
+    )
