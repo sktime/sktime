@@ -664,6 +664,8 @@ def test_persistence_via_pickle(estimator_instance):
         )
 
 
+# todo: this needs to be diagnosed and fixed - temporary skip
+@pytest.mark.skip(reason="hangs on mac and unix remote tests")
 def test_multiprocessing_idempotent(estimator_class, scenario):
     """Test that single and multi-process run results are identical.
 
