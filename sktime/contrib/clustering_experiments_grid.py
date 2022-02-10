@@ -71,15 +71,9 @@ def demo_loading():
 def config_clusterer(clusterer: str, **kwargs):
     """Configure the custerer for experiments."""
     if clusterer == "kmeans":
-        if kwargs["metric"] != "":
-            cls = TimeSeriesKMeans(**kwargs)
-        else:
-            cls = TimeSeriesKMeans(**kwargs)
+        cls = TimeSeriesKMeans(**kwargs)
     elif clusterer == "kmedoids":
-        if kwargs["metric"] != "":
-            cls = TimeSeriesKMedoids(**kwargs)
-        else:
-            cls = TimeSeriesKMedoids(**kwargs)
+        cls = TimeSeriesKMedoids(**kwargs)
     return cls
 
 
