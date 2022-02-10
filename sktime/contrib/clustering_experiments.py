@@ -67,17 +67,10 @@ def demo_loading():
 
 
 def config_clusterer(clusterer: str, **kwargs):
-    """Configure the custerer for experiments."""
     if clusterer == "kmeans":
-        if kwargs["metric"] != "":
-            cls = TimeSeriesKMeans(**kwargs)
-        else:
-            cls = TimeSeriesKMeans(**kwargs)
+        cls = TimeSeriesKMeans(**kwargs)
     elif clusterer == "kmedoids":
-        if kwargs["metric"] != "":
-            cls = TimeSeriesKMedoids(**kwargs)
-        else:
-            cls = TimeSeriesKMedoids(**kwargs)
+        cls = TimeSeriesKMedoids(**kwargs)
     return cls
 
 
@@ -137,7 +130,7 @@ if __name__ == "__main__":
         dataset = "ChinaTown"
         resample = 22
         tf = True
-        distance = "euclidean"
+        distance = "dtw"
 
     # train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
     # test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
@@ -167,9 +160,12 @@ if __name__ == "__main__":
             i += 1
 
     else:
+
+
         clst = config_clusterer(
             clusterer=clusterer,
             metric=distance,
+            distance_params={"window": 0.2},
             n_clusters=len(set(train_Y)),
             random_state=resample + 1,
         )
@@ -180,7 +176,7 @@ if __name__ == "__main__":
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
-            cls_name=clusterer + "_" + distance,
+            cls_name=clusterer + "-" + distance,
             dataset_name=dataset,
             resample_id=resample,
         )
