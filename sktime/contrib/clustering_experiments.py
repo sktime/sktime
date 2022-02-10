@@ -98,7 +98,7 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = False
+    tune = True
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "ChinaTown"
+        dataset = "ArrowHead"
         resample = 22
         tf = True
         distance = "dtw"
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance+"-tuned"
     else:
-        window = 1.0
+        window = 0.2
         name = clusterer + "-" + distance
     clst = config_clusterer(
         clusterer=clusterer,
