@@ -112,7 +112,7 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     hyperparams = False  # Set to true to enable running hyper params
-    clusterer = "kmeans"
+    clusterer = "kmedoids"
     chris_config = False  # This is so chris doesn't have to change config each time
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
@@ -133,10 +133,10 @@ if __name__ == "__main__":
         distance = "euclidean"
     else:  # Local run
         print(" Local Run")
-        data_dir = "../datasets/data/"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
         dataset = "GunPoint"
-        resample = 6
+        resample = 22
         tf = True
         distance = "euclidean"
 
