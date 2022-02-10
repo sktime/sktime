@@ -98,7 +98,7 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
