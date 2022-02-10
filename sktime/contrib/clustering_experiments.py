@@ -10,6 +10,8 @@ __author__ = ["TonyBagnall"]
 import os
 import sys
 
+import numpy as np
+
 from sktime.contrib.set_classifier import set_classifier
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -80,9 +82,6 @@ def config_clusterer(clusterer: str, **kwargs):
     return cls
 
 
-import numpy as np
-
-
 def _get_bounding_matrix_params():
     range = np.linspace(0, 1, 11)
     distances = ["dtw"]
@@ -136,7 +135,7 @@ if __name__ == "__main__":
         data_dir = "../datasets/data/"
         results_dir = "./temp"
         dataset = "GunPoint"
-        resample = 2
+        resample = 6
         tf = True
         distance = "euclidean"
 
