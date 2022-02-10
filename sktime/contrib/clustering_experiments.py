@@ -102,6 +102,7 @@ def hyper_param_experiment(clusterer: str):
     """Hyper parametrise a clusters."""
     params = _get_bounding_matrix_params()
     params.append({"metric": "euclidean"})
+    test = ""
     for param in params:
         yield config_clusterer(clusterer, **param)
 
@@ -139,12 +140,8 @@ if __name__ == "__main__":
         tf = True
         distance = "euclidean"
 
-    if chris_config is True:
-        train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
-        test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
-    else:
-        train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-        test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+    train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
+    test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
 
     if hyperparams is True:
         hyper_param_clusterers = hyper_param_experiment(clusterer)
@@ -167,9 +164,9 @@ if __name__ == "__main__":
     else:
         clst = config_clusterer(
             clusterer=clusterer,
-            config=distance,
+            metric=distance,
             n_clusters=len(set(train_Y)),
-            rand=resample + 1,
+            random_state=resample + 1,
         )
         run_clustering_experiment(
             train_X,
