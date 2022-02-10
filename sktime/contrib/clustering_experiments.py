@@ -12,16 +12,15 @@ import sys
 
 import numpy as np
 
-from sktime.contrib.set_classifier import set_classifier
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
-
+from sklearn.preprocessing import normalize
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
-from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
+from sktime.datasets import load_from_tsfile as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
@@ -112,7 +111,7 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     hyperparams = False  # Set to true to enable running hyper params
-    clusterer = "kmedoids"
+    clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
@@ -135,20 +134,19 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "GunPoint"
+        dataset = "ChinaTown"
         resample = 22
         tf = True
         distance = "euclidean"
 
     # train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
     # test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
-    train_X, train_Y = load_ts(
-        f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="nump3d"
-    )
-    test_X, test_Y = load_ts(
-        f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy3d"
-    )
-    print(" input type = ", type(test_X))
+    train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts",
+                               return_data_type="numpy2d")
+    test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts",
+                             return_data_type="numpy2d")
+    normalize(train_X, norm="l1", copy=False)
+    normalize(test_X, norm="l1", copy=False)
 
     if hyperparams is True:
         hyper_param_clusterers = hyper_param_experiment(clusterer)
