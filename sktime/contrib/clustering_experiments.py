@@ -17,6 +17,9 @@ os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 from sklearn.preprocessing import normalize
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import davies_bouldin_score
+import sklearn.metrics
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
@@ -74,38 +77,28 @@ def config_clusterer(clusterer: str, **kwargs):
     return cls
 
 
-def _get_bounding_matrix_params():
-    range = np.linspace(0, 1, 11)
-    distances = ["ddtw"]
-    param_names = ["window", "itakura_max_slope"]
-    hyper_params = []
-    for dist in distances:
-        dist_params = []
-        for param in param_names:
-            for val in range:
-                dist_params.append({param: val})
-        for dist_param in dist_params:
-            hyper_params.append({"metric": dist, "distance_params": dist_param})
-
-    return hyper_params
-
-
-def hyper_param_experiment(clusterer: str):
-    """Hyper parametrise a clusters."""
-    params = _get_bounding_matrix_params()
-    params.append({"metric": "euclidean"})
-    test = ""
-    for param in params:
-        yield config_clusterer(clusterer, **param)
-
+def tune_window(metric: str, train_X):
+    best_w=0
+    best_score=0
+    for w in np.arange(0,1,0.1):
+        cls = TimeSeriesKMeans(metric=metric, distance_params={"window":w})
+        cls.fit(train_X)
+        preds = cls.predict(train_X)
+        score = davies_bouldin_score(train_X, preds)
+        print(score)
+        if score>best_score:
+            best_score=score
+            best_w=w
+    print("best window =",best_w, " with score ",best_score)
+    return best_w
 
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    hyperparams = False  # Set to true to enable running hyper params
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
+    tune = True
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
@@ -131,53 +124,34 @@ if __name__ == "__main__":
         resample = 22
         tf = True
         distance = "dtw"
-
-    # train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
-    # test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
     train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts",
                                return_data_type="numpy2d")
     test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts",
                              return_data_type="numpy2d")
     normalize(train_X, norm="l1", copy=False)
     normalize(test_X, norm="l1", copy=False)
-
-    if hyperparams is True:
-        hyper_param_clusterers = hyper_param_experiment(clusterer)
-
-        i = 0
-        for clusterer in hyper_param_clusterers:
-            run_clustering_experiment(
-                train_X,
-                clusterer,
-                results_path=results_dir,
-                trainY=train_Y,
-                testX=test_X,
-                testY=test_Y,
-                cls_name=f"clusterer_{clusterer.metric}-params_id-{i}",
-                dataset_name=dataset,
-                resample_id=resample,
-            )
-            i += 1
-
+    if tune:
+        window = tune_window(distance, train_X)
+        name = clusterer + "-" + distance+"-tuned"
     else:
-
-
-        clst = config_clusterer(
-            clusterer=clusterer,
-            metric=distance,
-            distance_params={"window": 0.2},
-            n_clusters=len(set(train_Y)),
-            random_state=resample + 1,
-        )
-        run_clustering_experiment(
-            train_X,
-            clst,
-            results_path=results_dir,
-            trainY=train_Y,
-            testX=test_X,
-            testY=test_Y,
-            cls_name=clusterer + "-" + distance,
-            dataset_name=dataset,
-            resample_id=resample,
-        )
+        window = 0.2
+        name = clusterer + "-" + distance
+    clst = config_clusterer(
+        clusterer=clusterer,
+        metric=distance,
+        distance_params={"window": window},
+        n_clusters=len(set(train_Y)),
+        random_state=resample + 1,
+    )
+    run_clustering_experiment(
+        train_X,
+        clst,
+        results_path=results_dir,
+        trainY=train_Y,
+        testX=test_X,
+        testY=test_Y,
+        cls_name=name,
+        dataset_name=dataset,
+        resample_id=resample,
+    )
     print("done")

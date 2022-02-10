@@ -24,7 +24,7 @@ from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.datasets import load_from_tsfile as load_ts
 
-"""Prototype mechanism for testing classifiers on the UCR format. This mirrors the
+"""Prototype mechanism for testing clusterers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but isfrom sktime.classification.interval_based import (
