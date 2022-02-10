@@ -22,7 +22,7 @@ os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
-from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
+from sktime.datasets import load_from_tsfile as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
@@ -135,10 +135,10 @@ if __name__ == "__main__":
     # train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
     # test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
     train_X, train_Y = load_ts(
-        f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="nump3d"
+        f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
     test_X, test_Y = load_ts(
-        f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy3d"
+        f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
     print(" input type = ", type(test_X))
 
