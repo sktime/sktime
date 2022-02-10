@@ -17,9 +17,9 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 
 import sktime.datasets.tsc_dataset_names as dataset_lists
-from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
-from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
 from sktime.benchmarking.experiments import run_clustering_experiment
+from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
+from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
@@ -65,67 +65,113 @@ def demo_loading():
         print(testY.shape)
 
 
-def config_clusterer(clusterer, config, n_clusters, rand):
+def config_clusterer(clusterer: str, **kwargs):
     """Configure the custerer for experiments."""
     if clusterer == "kmeans":
-        if config != "":
-            cls = TimeSeriesKMeans(n_clusters=n_clusters, metric=distance,
-                                   init_algorithm="kmeans++",
-                                   random_state=rand)
+        if kwargs["metric"] != "":
+            cls = TimeSeriesKMeans(**kwargs)
         else:
-            cls = TimeSeriesKMeans(n_clusters=n_clusters, random_state=rand)
+            cls = TimeSeriesKMeans(**kwargs)
     elif clusterer == "kmedoids":
-        if config != "":
-            cls = TimeSeriesKMedoids(n_clusters=n_clusters, metric=distance,
-                                     random_state=rand)
+        if kwargs["metric"] != "":
+            cls = TimeSeriesKMedoids(**kwargs)
         else:
-            cls = TimeSeriesKMedoids(n_clusters=n_clusters, random_state=rand)
+            cls = TimeSeriesKMedoids(**kwargs)
     return cls
+
+
+import numpy as np
+
+
+def _get_bounding_matrix_params():
+    range = np.linspace(0, 1, 11)
+    distances = ["dtw"]
+    param_names = ["window", "itakura_max_slope"]
+    hyper_params = []
+    for dist in distances:
+        dist_params = []
+        for param in param_names:
+            for val in range:
+                dist_params.append({param: val})
+        for dist_param in dist_params:
+            hyper_params.append({"metric": dist, "distance_params": dist_param})
+
+    return hyper_params
+
+
+def hyper_param_experiment(clusterer: str):
+    """Hyper parametrise a clusters."""
+    params = _get_bounding_matrix_params()
+    params.append({"metric": "euclidean"})
+    for param in params:
+        yield config_clusterer(clusterer, **param)
 
 
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
+    hyperparams = False  # Set to true to enable running hyper params
+    clusterer = "kmeans"
+    chris_config = False  # This is so chris doesn't have to change config each time
+
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
         results_dir = "/home/ajb/results/"
-        clusterer = "kmeans"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
         distance = sys.argv[3]
-        train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
-        test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        clst = config_clusterer(
-            clusterer=clusterer, config=distance, n_clusters=len(set(train_Y)),
-                                                                 rand=resample+1)
-        run_clustering_experiment(
-            train_X,
-            clst,
-            results_path=results_dir,
-            trainY=train_Y,
-            testX=test_X,
-            testY=test_Y,
-            cls_name=clusterer+"_"+distance,
-            dataset_name=dataset,
-            resample_id=resample,
-        )
+    elif chris_config is True:
+        path = "/home/chris/Documents/masters-results/"
+        data_dir = os.path.abspath(f"{path}/datasets/")
+        results_dir = os.path.abspath(f"{path}/results/")
+        dataset = "GunPoint"
+        resample = 2
+        tf = True
+        distance = "euclidean"
     else:  # Local run
         print(" Local Run")
         data_dir = "../datasets/data/"
         results_dir = "./temp"
         dataset = "GunPoint"
-        clusterer = "kmeans"
         resample = 2
         tf = True
         distance = "euclidean"
+
+    if chris_config is True:
+        train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
+        test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
+    else:
         train_X, train_Y = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         test_X, test_Y = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
+
+    if hyperparams is True:
+        hyper_param_clusterers = hyper_param_experiment(clusterer)
+
+        i = 0
+        for clusterer in hyper_param_clusterers:
+            run_clustering_experiment(
+                train_X,
+                clusterer,
+                results_path=results_dir,
+                trainY=train_Y,
+                testX=test_X,
+                testY=test_Y,
+                cls_name=f"clusterer_{clusterer.metric}-params_id-{i}",
+                dataset_name=dataset,
+                resample_id=resample,
+            )
+            i += 1
+
+    else:
         clst = config_clusterer(
-            clusterer=clusterer, config=distance, n_clusters=len(set(train_Y)),
-                                                                 rand=resample+1)
+            clusterer=clusterer,
+            config=distance,
+            n_clusters=len(set(train_Y)),
+            rand=resample + 1,
+        )
         run_clustering_experiment(
             train_X,
             clst,
@@ -133,7 +179,7 @@ if __name__ == "__main__":
             trainY=train_Y,
             testX=test_X,
             testY=test_Y,
-            cls_name=clusterer+"_"+distance,
+            cls_name=clusterer + "_" + distance,
             dataset_name=dataset,
             resample_id=resample,
         )

@@ -44,6 +44,8 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Averaging method to compute the average of a cluster. Any of the following
         strings are valid: ['mean']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
+    distance_params: dict, defaults = None
+        Dictonary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -71,6 +73,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
         averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "mean",
+        distance_params: dict = None,
     ):
         self.averaging_method = averaging_method
         self._averaging_method = resolve_average_callable(averaging_method)
@@ -84,6 +87,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             tol,
             verbose,
             random_state,
+            distance_params,
         )
 
     def _compute_new_cluster_centers(
