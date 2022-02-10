@@ -154,8 +154,11 @@ if __name__ == "__main__":
         tf = True
         distance = "euclidean"
 
-    train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts")
-    test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts")
+    train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts",
+                               return_data_type="nump3d")
+    test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts",
+                             return_data_type="numpy3d")
+    print(" input type = ", type(test_X))
 
     if hyperparams is True:
         hyper_param_clusterers = hyper_param_experiment(clusterer)
