@@ -11,6 +11,7 @@ import os
 import sys
 
 import numpy as np
+from sklearn.model_selection import GridSearchCV
 
 from sktime.contrib.set_classifier import set_classifier
 
@@ -82,18 +83,31 @@ def config_clusterer(clusterer: str, **kwargs):
     return cls
 
 
+# def _get_bounding_matrix_params():
+#     range = np.linspace(0, 1, 11)
+#     distances = ["dtw"]
+#     param_names = ["window", "itakura_max_slope"]
+#     hyper_params = []
+#     for dist in distances:
+#         dist_params = []
+#         for param in param_names:
+#             for val in range:
+#                 dist_params.append(**{param: val})
+#         for dist_param in dist_params:
+#             hyper_params.append({"metric": [dist], "distance_params": [dist_param]})
+#
+#     return hyper_params
+
+
 def _get_bounding_matrix_params():
     range = np.linspace(0, 1, 11)
-    distances = ["dtw"]
     param_names = ["window", "itakura_max_slope"]
-    hyper_params = []
-    for dist in distances:
-        dist_params = []
-        for param in param_names:
-            for val in range:
-                dist_params.append({param: val})
-        for dist_param in dist_params:
-            hyper_params.append({"metric": dist, "distance_params": dist_param})
+    hyper_params = {}
+    hyper_params["metric"] = ["dtw"]
+    hyper_params["distance_params"] = []
+    for param in param_names:
+        for val in range:
+            hyper_params["distance_params"].append({param: val})
 
     return hyper_params
 
@@ -101,18 +115,18 @@ def _get_bounding_matrix_params():
 def hyper_param_experiment(clusterer: str):
     """Hyper parametrise a clusters."""
     params = _get_bounding_matrix_params()
-    params.append({"metric": "euclidean"})
-    test = ""
-    for param in params:
-        yield config_clusterer(clusterer, **param)
+    # params.append({"metric": ["euclidean"]})
+    return params
+    # for param in params:
+    #     yield config_clusterer(clusterer, **param)
 
 
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    hyperparams = False  # Set to true to enable running hyper params
-    clusterer = "kmedoids"
+    hyperparams = True  # Set to true to enable running hyper params
+    clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
@@ -145,21 +159,27 @@ if __name__ == "__main__":
 
     if hyperparams is True:
         hyper_param_clusterers = hyper_param_experiment(clusterer)
+        # Comment this out onyl meant to be used to run it quickly
+        hyper_param_clusterers = {"metric": ["dtw"]}
+        clus = GridSearchCV(TimeSeriesKMeans(), hyper_param_clusterers, verbose=True)
+        clus.fit(train_X)
+        clus.predict(test_X)
+        stop = ""
 
-        i = 0
-        for clusterer in hyper_param_clusterers:
-            run_clustering_experiment(
-                train_X,
-                clusterer,
-                results_path=results_dir,
-                trainY=train_Y,
-                testX=test_X,
-                testY=test_Y,
-                cls_name=f"clusterer_{clusterer.metric}-params_id-{i}",
-                dataset_name=dataset,
-                resample_id=resample,
-            )
-            i += 1
+        # i = 0
+        # for clusterer in hyper_param_clusterers:
+        #     run_clustering_experiment(
+        #         train_X,
+        #         clusterer,
+        #         results_path=results_dir,
+        #         trainY=train_Y,
+        #         testX=test_X,
+        #         testY=test_Y,
+        #         cls_name=f"clusterer_{clusterer.metric}-params_id-{i}",
+        #         dataset_name=dataset,
+        #         resample_id=resample,
+        #     )
+        #     i += 1
 
     else:
         clst = config_clusterer(
