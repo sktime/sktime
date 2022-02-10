@@ -146,6 +146,32 @@ class BaseClusterer(BaseEstimator, ABC):
         X = self._check_clusterer_input(X)
         return self._predict_proba(X, n_clusters)
 
+    def score(self, X, y=None) -> float:
+        """Score the quality of the clusterer.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series)).
+            Time series instances to train clusterer and then have indexes each belong
+            to return.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        score : float
+            Score of the clusterer.
+        """
+        self.check_is_fitted()
+        X = self._check_clusterer_input(X)
+        return self._score(X, y)
+
+    @abstractmethod
+    def _score(self, X, y=None):
+        ...
+
     def _predict_proba(self, X, n_clusters=None):
         """Predicts labels probabilities for sequences in X.
 

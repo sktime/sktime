@@ -434,6 +434,9 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         )
         return pairwise.argmin(axis=1), pairwise.min(axis=1).sum()
 
+    def _score(self, X, y=None):
+        return -self.inertia_
+
     @abstractmethod
     def _compute_new_cluster_centers(
         self, X: np.ndarray, assignment_indexes: np.ndarray
