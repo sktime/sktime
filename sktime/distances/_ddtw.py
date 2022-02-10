@@ -47,7 +47,8 @@ def _average_of_slope(q: np.ndarray):
 
     """
     # Taken from https://github.com/tslearn-team/tslearn/issues/180
-    return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
+    return np.diff(q.T).T
+    # return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
 
 
 class _DdtwDistance(NumbaDistance):

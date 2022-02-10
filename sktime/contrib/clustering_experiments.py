@@ -83,7 +83,7 @@ def config_clusterer(clusterer: str, **kwargs):
 
 def _get_bounding_matrix_params():
     range = np.linspace(0, 1, 11)
-    distances = ["dtw"]
+    distances = ["ddtw"]
     param_names = ["window", "itakura_max_slope"]
     hyper_params = []
     for dist in distances:
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         dataset = "GunPoint"
         resample = 2
         tf = True
-        distance = "euclidean"
+        distance = "ddtw"
     else:  # Local run
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
@@ -184,3 +184,4 @@ if __name__ == "__main__":
             dataset_name=dataset,
             resample_id=resample,
         )
+    print("done")
