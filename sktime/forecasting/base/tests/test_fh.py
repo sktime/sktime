@@ -198,12 +198,7 @@ DURATIONS_ALLOWED = [
     # cannot automatically infer the unit during testing
     # pd.Timedelta(days=3, freq="D"),
 ]
-DURATIONS_NOT_ALLOWED = [
-    pd.Index(pd.tseries.offsets.Day(day) for day in range(3)),
-    # we also support pd.Timedelta, but it does not have freqstr so we
-    # cannot automatically infer the unit during testing
-    # pd.Timedelta(days=3, freq="D"),
-]
+DURATIONS_NOT_ALLOWED = [pd.Index(pd.tseries.offsets.Day(day) for day in range(3))]
 
 
 @pytest.mark.parametrize("duration", DURATIONS_ALLOWED)
