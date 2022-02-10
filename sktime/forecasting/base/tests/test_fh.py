@@ -154,7 +154,7 @@ def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     assert type(output) in VALID_INDEX_TYPES
 
 
-GOOD_RELATIVE_INPUT_ARGS = [pd.timedelta_range(1, periods=3, freq="D")]
+GOOD_RELATIVE_INPUT_ARGS = [pd.timedelta_range("1 day", periods=3, freq="D")]
 
 
 @pytest.mark.parametrize("arg", GOOD_RELATIVE_INPUT_ARGS)
