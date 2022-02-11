@@ -29,6 +29,8 @@ def medoids(
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the medoids.
     """
+    if X.shape[0] < 1:
+        return X
     if precomputed_pairwise_distance is None:
         precomputed_pairwise_distance = pairwise_distance(X, metric=distance_metric)
 
@@ -37,4 +39,8 @@ def medoids(
     for j in range(x_size):
         for k in range(x_size):
             distance_matrix[j, k] = precomputed_pairwise_distance[j, k]
+    # try:
+    #     joe = X[np.argmin(sum(distance_matrix))]
+    # except:
+    #     joe = ''
     return X[np.argmin(sum(distance_matrix))]

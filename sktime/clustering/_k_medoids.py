@@ -130,7 +130,9 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
             for j in range(len(curr_indexes)):
                 for k in range(len(curr_indexes)):
                     distance_matrix[j, k] = self._precomputed_pairwise[j, k]
-            new_centers[i, :] = medoids(X[curr_indexes], self._precomputed_pairwise)
+            result = medoids(X[curr_indexes], self._precomputed_pairwise)
+            if result.shape[0] > 0:
+                new_centers[i, :] = result
         return new_centers
 
     @classmethod
