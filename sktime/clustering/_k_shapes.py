@@ -4,7 +4,6 @@ from typing import Callable, Union
 import numpy as np
 from numpy.random import RandomState
 from sklearn.utils import check_random_state
-from tslearn.clustering import KShape
 
 from sktime.clustering._base import BaseClusterer, TimeSeriesInstances
 from sktime.clustering.partitioning._lloyds import (
@@ -12,6 +11,9 @@ from sktime.clustering.partitioning._lloyds import (
     _random_center_initializer,
 )
 from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tslearn")
+from tslearn.clustering import KShape  # noqa: E402
 
 
 class KShapes(BaseClusterer):
