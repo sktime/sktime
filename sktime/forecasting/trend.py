@@ -228,22 +228,12 @@ class STLForecaster(BaseForecaster):
 
     Parameters
     ----------
-    forecaster_trend : sktime forecaster, optional
-        Forecaster to be fitted on trend_ component of the
-        STL, by default None. If None, then
-        a NaiveForecaster(strategy="drift") is used.
-    forecaster_seasonal : sktime forecaster, optional
-        Forecaster to be fitted on seasonal_ component of the
-        STL, by default None. If None, then
-        a NaiveForecaster(strategy="last") is used.
-    forecaster_resid : sktime forecaster, optional
-        Forecaster to be fitted on resid_ component of the
-        STL, by default None. If None, then
-        a NaiveForecaster(strategy="mean") is used.
     sp : int, optional
-        Seasonal period for defaulting forecasters and/or STL.period param,
-        by default None. Can only be used if at least on the forecasters
-        or the stl is None.
+        Length of the seasonal period for STL, by default 2.
+        It's also the default sp for the forecasters
+        (forecaster_seasonal, forecaster_resid) that are None. The
+        default forecaster_trend does not get sp as trend is independent
+        to seasonality.
     seasonal : int, optional
         Length of the seasonal smoother. Must be an odd integer, and should
         normally be >= 7 (default).
@@ -279,6 +269,18 @@ class STLForecaster(BaseForecaster):
         than 1, the LOESS is used every low_pass_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
+    forecaster_trend : sktime forecaster, optional
+        Forecaster to be fitted on trend_ component of the
+        STL, by default None. If None, then
+        a NaiveForecaster(strategy="drift") is used.
+    forecaster_seasonal : sktime forecaster, optional
+        Forecaster to be fitted on seasonal_ component of the
+        STL, by default None. If None, then
+        a NaiveForecaster(strategy="last") is used.
+    forecaster_resid : sktime forecaster, optional
+        Forecaster to be fitted on resid_ component of the
+        STL, by default None. If None, then
+        a NaiveForecaster(strategy="mean") is used.
 
     Attributes
     ----------
@@ -332,9 +334,6 @@ class STLForecaster(BaseForecaster):
 
     def __init__(
         self,
-        forecaster_trend=None,
-        forecaster_seasonal=None,
-        forecaster_resid=None,
         sp=2,
         seasonal=7,
         trend=None,
@@ -346,10 +345,10 @@ class STLForecaster(BaseForecaster):
         seasonal_jump=1,
         trend_jump=1,
         low_pass_jump=1,
+        forecaster_trend=None,
+        forecaster_seasonal=None,
+        forecaster_resid=None,
     ):
-        self.forecaster_trend = forecaster_trend
-        self.forecaster_seasonal = forecaster_seasonal
-        self.forecaster_resid = forecaster_resid
         self.sp = sp
         self.seasonal = seasonal
         self.trend = trend
@@ -361,6 +360,9 @@ class STLForecaster(BaseForecaster):
         self.seasonal_jump = seasonal_jump
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
+        self.forecaster_trend = forecaster_trend
+        self.forecaster_seasonal = forecaster_seasonal
+        self.forecaster_resid = forecaster_resid
         super(STLForecaster, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
@@ -397,13 +399,12 @@ class STLForecaster(BaseForecaster):
         self.resid_ = pd.Series(self.stl_.resid, index=y.index)
         self.trend_ = pd.Series(self.stl_.trend, index=y.index)
 
-        # TODO: set sp=self.sp after NaiveForecaster bug fix
-        # setting defualt forecasters if required
         self.forecaster_seasonal_ = (
             NaiveForecaster(sp=self.sp, strategy="last")
             if self.forecaster_seasonal is None
             else clone(self.forecaster_seasonal)
         )
+        # trend forecaster does not need sp
         self.forecaster_trend_ = (
             NaiveForecaster(strategy="drift")
             if self.forecaster_trend is None
