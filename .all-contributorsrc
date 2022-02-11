@@ -1487,7 +1487,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/74055102?v=4",
       "profile": "https://github.com/Saransh-cpp",
       "contributions": [
-        "doc"
+        "doc",
+        "infra"
       ]
     }
   ],
