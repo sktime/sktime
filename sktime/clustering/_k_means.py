@@ -42,7 +42,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Determines random number generation for centroid initialization.
     averaging_method: str or Callable, defaults = 'mean'
         Averaging method to compute the average of a cluster. Any of the following
-        strings are valid: ['mean']. If a Callable is provided must take the form
+        strings are valid: ['mean', 'dba']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
 
     Attributes
@@ -70,7 +70,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         tol: float = 1e-6,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
-        averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "mean",
+        averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "dba",
     ):
         self.averaging_method = averaging_method
         self._averaging_method = resolve_average_callable(averaging_method)
@@ -122,10 +122,14 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "n_clusters": 8,
+            "n_clusters": 2,
+            "init_algorithm": "random",
             "metric": "euclidean",
             "n_init": 1,
-            "max_iter": 10,
-            "random_state": 0,
+            "max_iter": 1,
+            "tol": 1e-4,
+            "verbose": False,
+            "random_state": 1,
+            "averaging_method": "mean",
         }
         return params

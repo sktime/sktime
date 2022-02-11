@@ -242,6 +242,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self.n_iter_ = 0
 
         self._random_state = None
+        self._init_algorithm = None
 
         super(TimeSeriesLloyds, self).__init__()
 
