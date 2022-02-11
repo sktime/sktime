@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for time series k-means."""
+"""Tests for time series k-shapes."""
 # from sklearn import metrics
 
 from sktime.clustering._k_shapes import KShapes
