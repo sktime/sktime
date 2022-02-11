@@ -33,6 +33,8 @@ __all__ = [
     "write_ndarray_to_tsfile",
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
+    "load_tsf_to_dataframe",
+    "load_unit_test_tsf",
 ]
 
 from sktime.datasets._data_io import (
@@ -42,6 +44,7 @@ from sktime.datasets._data_io import (
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_from_ucr_tsv_to_dataframe,
+    load_tsf_to_dataframe,
     make_multi_index_dataframe,
     write_dataframe_to_tsfile,
     write_ndarray_to_tsfile,
@@ -67,5 +70,6 @@ from sktime.datasets._single_problem_loaders import (
     load_shampoo_sales,
     load_UCR_UEA_dataset,
     load_unit_test,
+    load_unit_test_tsf,
     load_uschange,
 )
