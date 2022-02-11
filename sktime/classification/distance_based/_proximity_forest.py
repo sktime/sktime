@@ -968,7 +968,7 @@ class ProximityStump(BaseClassifier):
             predictions.append(prediction)
         #        y = self.label_encoder.inverse_transform(predictions)
 
-        return predictions
+        return np.array(predictions)
 
     def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
@@ -1137,7 +1137,7 @@ class ProximityTree(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
-        # setup label encoding
+        # setup label encoding. Can surely remove this
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
             y = self.label_encoder.fit_transform(y)
@@ -1181,12 +1181,6 @@ class ProximityTree(BaseClassifier):
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
-            If a Pandas data frame is passed (sktime format)
-            If a Pandas data frame is passed, a check is performed that it
-            only has one column.
-            If not, an exception is thrown, since this classifier does not
-            yet have
-            multivariate capability.
 
         Returns
         -------
@@ -1198,9 +1192,8 @@ class ProximityTree(BaseClassifier):
             distribution = distributions[instance_index]
             prediction = np.argmax(distribution)
             predictions.append(prediction)
-        y = self.label_encoder.inverse_transform(predictions)
 
-        return y
+        return np.array(predictions)
 
     def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
@@ -1496,7 +1489,7 @@ class ProximityForest(BaseClassifier):
             prediction = np.argmax(distribution)
             predictions.append(prediction)
 
-        return predictions
+        return np.array(predictions)
 
     def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
