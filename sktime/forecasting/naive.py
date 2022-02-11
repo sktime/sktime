@@ -197,6 +197,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
             pad_width = self.sp_ - remainder
         else:
             pad_width = 0
+        pad_width += self.window_length_ - len(last_window)
         last_window = np.hstack([np.full(pad_width, np.nan), last_window])
 
         # reshape last window, one column per season

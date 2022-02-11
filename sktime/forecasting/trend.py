@@ -400,7 +400,7 @@ class STLForecaster(BaseForecaster):
         # TODO: set sp=self.sp after NaiveForecaster bug fix
         # setting defualt forecasters if required
         self.forecaster_seasonal_ = (
-            NaiveForecaster(sp=1, strategy="last")
+            NaiveForecaster(sp=self.sp, strategy="last")
             if self.forecaster_seasonal is None
             else clone(self.forecaster_seasonal)
         )
@@ -410,7 +410,7 @@ class STLForecaster(BaseForecaster):
             else clone(self.forecaster_trend)
         )
         self.forecaster_resid_ = (
-            NaiveForecaster(sp=1, strategy="mean")
+            NaiveForecaster(sp=self.sp, strategy="mean")
             if self.forecaster_resid is None
             else clone(self.forecaster_resid)
         )
