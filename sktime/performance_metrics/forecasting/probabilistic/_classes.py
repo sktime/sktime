@@ -123,6 +123,10 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
 
         return super().evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
 
+    def create_test_instance(self):
+        """Create test instance of class."""
+        return self.__init__(alpha=0.5)
+
 
 def pinball_loss(y_true, y_pred, alpha, multioutput):
     """Evaluate the pinball loss at the alpha quantile.
