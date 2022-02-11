@@ -4,7 +4,11 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from typing import Callable
 
 import numpy as np
-from tslearn.barycenters import dtw_barycenter_averaging
+
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tslearn")
+from tslearn.barycenters import dtw_barycenter_averaging  # noqa: E402
 
 
 def mean_average(X: np.ndarray) -> np.ndarray:
