@@ -98,12 +98,12 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = False
+    tune = True
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/norm-window/"
+        results_dir = "/home/ajb/results/trained/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance+"-tuned"
     else:
-        window = 0.2
+        window = 1.0
         name = clusterer + "-" + distance
     clst = config_clusterer(
         clusterer=clusterer,
