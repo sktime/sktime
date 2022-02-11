@@ -84,6 +84,7 @@ def tune_window(metric: str, train_X):
         cls = TimeSeriesKMeans(metric=metric, distance_params={"window":w})
         cls.fit(train_X)
         preds = cls.predict(train_X)
+        print(" Preds type = ", type(preds))
         score = davies_bouldin_score(train_X, preds)
         print(score)
         if score>best_score:
@@ -96,14 +97,14 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    clusterer = "kmeans"
+    clusterer = "kmedoids"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/trained/"
+        results_dir = "/home/ajb/results/kmedoids/normed/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
@@ -120,8 +121,8 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "Adiac"
-        resample = 22
+        dataset = "Chinatown"
+        resample = 27
         tf = True
         distance = "dtw"
     train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts",
