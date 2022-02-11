@@ -134,7 +134,7 @@ if __name__ == "__main__":
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance+"-tuned"
     else:
-        window = 1.0
+        window = 0.2
         name = clusterer + "-" + distance
     clst = config_clusterer(
         clusterer=clusterer,
