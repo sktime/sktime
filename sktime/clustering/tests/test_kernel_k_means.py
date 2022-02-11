@@ -104,7 +104,7 @@ def test_kernel_k_means():
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    kernel_kmeans = TimeSeriesKernelKMeans(random_state=1, n_clusters=3, verbose=True)
+    kernel_kmeans = TimeSeriesKernelKMeans(random_state=1, n_clusters=3)
     kernel_kmeans.fit(X_train)
     test_shape_result = kernel_kmeans.predict(X_test)
     score = metrics.rand_score(y_test, test_shape_result)

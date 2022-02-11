@@ -45,10 +45,6 @@ class TimeSeriesKShapes(BaseClusterer):
 
     Attributes
     ----------
-    cluster_centers_: np.ndarray (3d array of shape (n_clusters, n_dimensions,
-        series_length))
-        Time series that represent each of the cluster centers. If the algorithm stops
-        before fully converging these will not be consistent with labels_.
     labels_: np.ndarray (1d array of shape (n_instance,))
         Labels that is the index each time series belongs to.
     inertia_: float
