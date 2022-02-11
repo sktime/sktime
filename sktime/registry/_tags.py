@@ -269,6 +269,24 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
     ),
+    (
+        "requires-y-train",
+        "metric",
+        "bool",
+        "does metric require y-train data to be passed?",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "metric",
+        "bool",
+        "does metric require a predictive benchmark?",
+    ),
+    (
+        "univariate-only",
+        "metric",
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
