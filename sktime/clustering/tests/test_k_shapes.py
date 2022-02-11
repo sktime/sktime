@@ -2,7 +2,7 @@
 """Tests for time series k-shapes."""
 # from sklearn import metrics
 
-from sktime.clustering._k_shapes import KShapes
+from sktime.clustering._k_shapes import TimeSeriesKShapes
 from sktime.datasets import load_basic_motions
 
 expected_results = [
@@ -103,7 +103,7 @@ def test_kshapes():
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    kshapes = KShapes(random_state=1, n_clusters=3, verbose=True)
+    kshapes = TimeSeriesKShapes(random_state=1, n_clusters=3, verbose=True)
     kshapes.fit(X_train)
     # test_shape_result = kshapes.predict(X_test)
     # score = metrics.rand_score(y_test, test_shape_result)

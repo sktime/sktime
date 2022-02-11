@@ -16,7 +16,7 @@ _check_soft_dependencies("tslearn")
 from tslearn.clustering import KShape  # noqa: E402
 
 
-class KShapes(BaseClusterer):
+class TimeSeriesKShapes(BaseClusterer):
     """Kshape algorithm wrapper tslearns implementation.
 
     Parameters
@@ -93,7 +93,7 @@ class KShapes(BaseClusterer):
         self._init_algorithm = None
         self._tslearn_k_shapes = None
 
-        super(KShapes, self).__init__()
+        super(TimeSeriesKShapes, self).__init__()
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
@@ -172,3 +172,26 @@ class KShapes(BaseClusterer):
                 f"invalid. The following are a list of valid init algorithms strings: "
                 f"{list(self._init_algorithms.keys())}"
             )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_clusters": 2,
+            "init_algorithm": "random",
+            "n_init": 1,
+            "max_iter": 1,
+            "tol": 1e-4,
+            "verbose": False,
+            "random_state": 1,
+        }
+        return params

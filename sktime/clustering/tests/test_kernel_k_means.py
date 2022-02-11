@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Tests for time series kernel k-means."""
+"""Tests for time series kernel kmeans."""
 import numpy as np
 from sklearn import metrics
 
-from sktime.clustering._kernel_k_means import KernelKMeans
+from sktime.clustering._kernel_k_means import TimeSeriesKernelKMeans
 from sktime.datasets import load_basic_motions
 
 expected_results = [
@@ -100,11 +100,11 @@ expected_labels = [
 
 
 def test_kernel_k_means():
-    """Test implementation of Kshapes."""
+    """Test implementation of kernel k means."""
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
-    kernel_kmeans = KernelKMeans(random_state=1, n_clusters=3, verbose=True)
+    kernel_kmeans = TimeSeriesKernelKMeans(random_state=1, n_clusters=3, verbose=True)
     kernel_kmeans.fit(X_train)
     test_shape_result = kernel_kmeans.predict(X_test)
     score = metrics.rand_score(y_test, test_shape_result)

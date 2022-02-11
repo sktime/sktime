@@ -11,7 +11,7 @@ _check_soft_dependencies("tslearn")
 from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans  # noqa: E402
 
 
-class KernelKMeans(BaseClusterer):
+class TimeSeriesKernelKMeans(BaseClusterer):
     """Kernel algorithm wrapper tslearns implementation.
 
     Parameters
@@ -100,7 +100,7 @@ class KernelKMeans(BaseClusterer):
 
         self._tslearn_kernel_k_means = None
 
-        super(KernelKMeans, self).__init__()
+        super(TimeSeriesKernelKMeans, self).__init__()
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
@@ -154,3 +154,28 @@ class KernelKMeans(BaseClusterer):
             Index of the cluster each time series in X belongs to.
         """
         return self._tslearn_kernel_k_means.predict(X)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_clusters": 2,
+            "kernel": "gak",
+            "n_init": 1,
+            "max_iter": 1,
+            "tol": 1e-4,
+            "kernel_params": None,
+            "verbose": False,
+            "n_jobs": 1,
+            "random_state": 1,
+        }
+        return params
