@@ -3,7 +3,7 @@
 """Theta forecaster."""
 
 __all__ = ["ThetaForecaster"]
-__author__ = ["big-o", "mloning"]
+__author__ = ["big-o", "mloning", "kejsitake", "fkiraly"]
 
 from warnings import warn
 
@@ -11,11 +11,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformations.series.detrend import Deseasonalizer
 from sktime.utils.slope_and_trend import _fit_trend
-from sktime.utils.validation.forecasting import check_alpha, check_sp
+from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -136,7 +135,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.trend_ = self._compute_trend(y)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Make forecasts.
 
         Parameters
@@ -151,9 +150,7 @@ class ThetaForecaster(ExponentialSmoothing):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        y_pred = super(ThetaForecaster, self)._predict(
-            fh, X, return_pred_int=False, alpha=alpha
-        )
+        y_pred = super(ThetaForecaster, self)._predict(fh, X)
 
         # Add drift.
         drift = self._compute_drift()
@@ -161,10 +158,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
         if self.deseasonalize:
             y_pred = self.deseasonalizer_.inverse_transform(y_pred)
-
-        if return_pred_int:
-            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, pred_int
 
         return y_pred
 
@@ -189,52 +182,34 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        """
-        Compute/return prediction intervals for a forecast.
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
-
-        If alpha is iterable, multiple intervals will be calculated.
-
-        public method including checks & utility
-        dispatches to core logic in _compute_pred_int
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and predict_interval
 
         Parameters
         ----------
-        y_pred : pd.Series
-            Point predictions.
-        alpha : float or list, optional (default=0.95)
-            A significance level or list of significance levels.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
-        intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in
-            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
-            list of such tables.
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
-        self.check_is_fitted()
-        alphas = check_alpha(alpha)
-        errors = self._compute_pred_err(alphas)
+        # prepare return data frame
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
 
-        # compute prediction intervals
-        pred_int = [
-            pd.DataFrame({"lower": y_pred - error, "upper": y_pred + error})
-            for error in errors
-        ]
-
-        # for a single alpha, return single pd.DataFrame
-        if isinstance(alpha, float):
-            return pred_int[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int
-
-    def _compute_pred_err(self, alphas):
-        """Get the prediction errors for the forecast."""
-        self.check_is_fitted()
-
+        # compute historical residual standard error
         n_timepoints = len(self._y)
 
         self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
@@ -242,13 +217,16 @@ class ThetaForecaster(ExponentialSmoothing):
             self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
         )
 
-        errors = []
-        for alpha in alphas:
-            z = _zscore(1 - alpha)
-            error = z * sem
-            errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
+        y_pred = super(ThetaForecaster, self).predict(fh, X)
 
-        return errors
+        # we assume normal additive noise with sem variance
+        for a in alpha:
+            pred_quantiles[("Quantiles", a)] = y_pred + norm.ppf(a) * sem
+        # todo: should this not increase with the horizon?
+        # i.e., sth like norm.ppf(a) * sem * fh.to_absolute(cutoff) ?
+        # I've just refactored this so will leave it for now
+
+        return pred_quantiles
 
     def _update(self, y, X=None, update_params=True):
         super(ThetaForecaster, self)._update(
