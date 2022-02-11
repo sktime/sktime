@@ -197,6 +197,9 @@ class _NaiveForecaster(_BaseWindowForecaster):
             pad_width = self.sp_ - remainder
         else:
             pad_width = 0
+
+        pad_width += self.window_length_ - len(last_window)
+
         last_window = np.hstack([np.full(pad_width, np.nan), last_window])
 
         # reshape last window, one column per season
@@ -381,8 +384,7 @@ class NaiveForecaster(BaseForecaster):
         """
         params_list = [
             {},
-            # todo: this one fails the forecaster tests! fix in other PR
-            # {"sp": 2},
+            {"sp": 2},
             {"strategy": "mean"},
             {"strategy": "drift"},
             {"strategy": "mean", "window_length": 5},
