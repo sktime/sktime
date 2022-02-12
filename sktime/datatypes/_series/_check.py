@@ -40,7 +40,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (pd.Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 # whether the checks insist on freq attribute is set
 FREQ_SET_CHECK = False

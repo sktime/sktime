@@ -1491,6 +1491,16 @@
         "doc",
         "infra"
       ]
+    },
+    {
+      "login":"SadmanSyfe",
+      "name":"Sadman Sudad Syfe",
+      "avatar_url":"https://avatars.githubusercontent.com/u/99546467?v=4",
+      "profile":"https://github.com/SadmanSyfe",
+      "contributions":[
+        "code"
+      ]
+
     }
   ],
   "projectName": "sktime",
