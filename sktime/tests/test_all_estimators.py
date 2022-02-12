@@ -321,7 +321,7 @@ class QuickTester:
         ...     tests_to_run="test_required_params"
         ... )
         {'test_required_params[NaiveForecaster]': 'PASSED'}
-        >>> TestAllEstimators().run_tests(
+        >>> EstimatorsAllTests().run_tests(
         ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
