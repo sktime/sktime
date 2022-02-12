@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v --showlocals --durations=20 --pyargs $(PACKAGE)
+	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v --showlocals --durations=20 -n auto --pyargs $(PACKAGE) | tee pytest_$(date +"%Y-%m-%d_%T").log
 
 tests: test
 
@@ -57,6 +57,12 @@ docs: doc
 
 doc: ## Build documentation with Sphinx
 	$(MAKE) -C $(DOC_DIR) html
+
+docker:
+	DOCKER_BUILDKIT=1 docker build -t sktime -f build_tools/Dockerfile .
+
+dockertest: docker
+	docker run -it --name sktime sktime bash -c "make test"
 
 nb: clean
 	rm -rf .venv || true
