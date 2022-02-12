@@ -1,49 +1,20 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for transformers.
+"""Bootstrapping methods for time series."""
 
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
 
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by testing transformations/tests/test_all_transformers
-        and tests/test_all_estimators
-- once complete: use as a local library, or contribute to sktime via PR
-
-Mandatory implements:
-    fitting         - _fit(self, X, y=None)
-    transformation  - _transform(self, X, y=None)
-
-Optional implements:
-    inverse transformation      - _inverse_transform(self, X, y=None)
-    update                      - _update(self, X, y=None)
-    fitted parameter inspection - get_fitted_params()
-
-Testing - implement if sktime transformer (not needed locally):
-    get default parameters for test instance(s) - get_test_params()
-"""
-
-# todo: uncomment the following line, enter authors' GitHub IDs
-# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+__author__ = ["ltsaprounis"]
 
 # todo: add any necessary sktime external imports here
 
+import numpy as np
+import pandas as pd
+
 from sktime.transformations.base import BaseTransformer
 
-# todo: add any necessary sktime internal imports here
 
-
-class MyTransformer(BaseTransformer):
-    """Custom transformer. todo: write docstring.
+class UnivariateBootsrappingTransformer(BaseTransformer):
+    """Creartes a population of similar time series.
 
     todo: describe your custom transformer here
         fill in sections appropriately
@@ -89,26 +60,22 @@ class MyTransformer(BaseTransformer):
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
         # todo: what scitype is returned: Primitives, Series, Panel
-        "scitype:transform-output": "Series",
+        "scitype:transform-output": "Panel",
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": True,  # does transformer have inverse transform
+        "capability:inverse_transform": False,
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "univariate-only": True,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
-        # does transform return have the same time index as input X
     }
-    # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__
-    #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
@@ -129,7 +96,7 @@ class MyTransformer(BaseTransformer):
         #     self.est2 = MyDefaultEstimator()
 
         # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        super(UnivariateBootsrappingTransformer, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -209,72 +176,9 @@ class MyTransformer(BaseTransformer):
         #  -------
         #  X_transformed : Series of mtype pd.DataFrame
         #       transformed version of X
+        df = pd.DataFrame()
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _inverse_transform method
-    # inverse transform exists only if transform does not change scitype
-    #  i.e., Series transformed to Series
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform, inverse operation to transform.
-
-        private _inverse_transform containing core logic, called from inverse_transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # type conventions are exactly those in _transform, reversed
-        #
-        # for example: if transform-output is "Series":
-        #  return should be of same mtype as input, X_inner_mtype
-        #  if multiple X_inner_mtype are supported, ensure same input/output
-        #
-        # todo: add the return mtype/scitype to the docstring, e.g.,
-        #  Returns
-        #  -------
-        #  X_inv_transformed : Series of mtype pd.DataFrame
-        #       inverse transformed version of X
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
-    # standard behaviour is "no update"
-    # also delete in the case where there is no fitting
-    def _update(self, X, y=None):
-        """Update transformer with X and y.
-
-        private _update containing the core logic, called from update
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _update must support all types in it
-            Data to update transformer with
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
+        return df
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
@@ -321,3 +225,42 @@ class MyTransformer(BaseTransformer):
         #           {"est": value3, "parama": value4}]
         #
         # return params
+
+
+def moving_block_bootstrap(
+    ts: pd.Series, block_length: int, replacement=False
+) -> pd.Series:
+    """Implement the moving block bootstrap method MBB.
+
+    Parameters
+    ----------
+    ts : Union[pd.DataFrame, pd.Series]
+        a stationary time series
+    block_length : int
+        the length of the bootstrapping block
+
+    Returns
+    -------
+    Union[pd.DataFrame, pd.Series]
+        bootstrapped time series
+    """
+    ts_length = len(ts)
+    ts_index = ts.index
+    ts_values = ts.values
+
+    if ts_length <= block_length:
+        raise ValueError("ts length should be greater than block_length")
+    total_num_blocks = int(ts_length / block_length) + 2
+
+    block_origns = np.random.choice(
+        ts_length - block_length + 1, size=total_num_blocks, replace=replacement
+    )
+
+    mbb_values = [val for i in block_origns for val in ts_values[i : i + block_length]]
+    # remove the first few observations and ensure new series has the same length
+    # as the original
+    remove_first = np.random.choice(block_length - 1)
+    mbb_values = mbb_values[remove_first : remove_first + ts_length]
+    mbb_series = pd.Series(data=mbb_values, index=ts_index)
+
+    return mbb_series
