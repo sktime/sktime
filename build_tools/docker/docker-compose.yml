@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  sktime37:
+    build:
+      context: ../../
+      dockerfile: ./build_tools/docker/sktime37.Dockerfile
+    volumes:
+      - ./sktime:/app/sktime:ro
