@@ -73,6 +73,8 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-monitor",
+    "pytest-xdist",
     "wheel",
 ]
 
