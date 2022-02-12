@@ -1161,3 +1161,17 @@ _METRIC_CALLABLES = dict(
     (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
 )
 _METRICS_NAMES = list(_METRICS.keys())
+
+
+ALL_DISTANCES = (
+    ddtw_distance,
+    dtw_distance,
+    edr_distance,
+    erp_distance,
+    euclidean_distance,
+    lcss_distance,
+    msm_distance,
+    squared_distance,
+    wddtw_distance,
+    wdtw_distance,
+)

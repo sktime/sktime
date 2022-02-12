@@ -19,16 +19,18 @@ __all__ = [
 ]
 
 from sktime.distances._distance import (
-    ddtw_distance,
     distance,
     distance_factory,
+    pairwise_distance,
+)
+from sktime.distances._distance_pairwise import (
+    ddtw_distance,
     dtw_distance,
     edr_distance,
     erp_distance,
     euclidean_distance,
     lcss_distance,
     msm_distance,
-    pairwise_distance,
     squared_distance,
     wddtw_distance,
     wdtw_distance,
