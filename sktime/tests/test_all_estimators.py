@@ -197,16 +197,11 @@ class BaseFixtureGenerator:
             test_name=test_name
         )
 
-        # create instances from the classes
-        estimator_instances_to_test = []
-        estimator_instance_names = []
         # retrieve all estimator parameters if multiple, construct instances
         for est in estimator_classes_to_test:
             all_instances_of_est, instance_names = est.create_test_instances_and_names()
-            estimator_instances_to_test += all_instances_of_est
-            estimator_instance_names += instance_names
-
-        return estimator_instances_to_test, estimator_instance_names
+            for est, name in zip(all_instances_of_est, instance_names):
+                yield est, name
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
@@ -963,7 +958,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     # todo: this needs to be diagnosed and fixed - temporary skip
     @pytest.mark.skip(reason="hangs on mac and unix remote tests")
-    def test_multiprocessing_idempotent(self, estimator_class, scenario):
+    def test_multiprocessing_idempotent(self, estimator_instance, scenario):
         """Test that single and multi-process run results are identical.
 
         Check that running an estimator on a single process is no different to running
@@ -971,15 +966,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         of all CPUs. The test is not really necessary though, as we rely on joblib for
         parallelization and can trust that it works as expected.
         """
-        estimator = estimator_class.create_test_instance()
-        params = estimator.get_params()
+        params = estimator_instance.get_params()
 
         if "n_jobs" in params:
             for method in NON_STATE_CHANGING_METHODS:
-                if _has_capability(estimator, method):
+                if _has_capability(estimator_instance, method):
                     # run on a single process
                     # -----------------------
-                    estimator = estimator_class.create_test_instance()
+                    estimator = deepcopy(estimator_instance)
                     estimator.set_params(n_jobs=1)
                     set_random_state(estimator)
                     result_single_process = scenario.run(
@@ -988,7 +982,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
                     # run on multiple processes
                     # -------------------------
-                    estimator = estimator_class.create_test_instance()
+                    estimator = deepcopy(estimator_instance)
                     estimator.set_params(n_jobs=-1)
                     set_random_state(estimator)
                     result_multiple_process = scenario.run(
