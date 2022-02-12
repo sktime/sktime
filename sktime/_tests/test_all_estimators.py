@@ -381,6 +381,10 @@ class QuickTester:
         # loop A: we loop over all the tests
         for test_name in test_names_subset:
 
+            # skip if test is on the exclusion list for estimator_class
+            if self.is_excluded(test_name, estimator_class):
+                continue
+
             test_fun = getattr(self, test_name)
             fixture_sequence = self.fixture_sequence
 
