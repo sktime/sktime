@@ -30,7 +30,7 @@ from sktime.dists_kernels._base import (
 )
 from sktime.exceptions import NotFittedError
 from sktime.registry import all_estimators
-from sktime.tests._config import (
+from sktime._tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
     NON_STATE_CHANGING_METHODS,
@@ -315,7 +315,7 @@ class QuickTester:
         Examples
         --------
         >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> from sktime.tests.test_all_estimators import EstimatorsAllTests
+        >>> from sktime._tests.test_all_estimators import EstimatorsAllTests
         >>> EstimatorsAllTests().run_tests(
         ...     NaiveForecaster,
         ...     tests_to_run="test_required_params"

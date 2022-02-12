@@ -9,7 +9,7 @@ __all__ = [
 import pytest
 
 from sktime.registry import all_estimators
-from sktime.tests._config import EXCLUDE_ESTIMATORS, NON_STATE_CHANGING_METHODS
+from sktime._tests._config import EXCLUDE_ESTIMATORS, NON_STATE_CHANGING_METHODS
 from sktime.transformations.base import (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,

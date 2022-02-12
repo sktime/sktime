@@ -11,7 +11,7 @@ import pytest
 
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.registry import all_estimators
-from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime._tests._config import VALID_TRANSFORMER_TYPES
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
