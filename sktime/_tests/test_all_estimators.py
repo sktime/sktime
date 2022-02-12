@@ -23,13 +23,6 @@ from sklearn.utils.estimator_checks import (
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 
-from sktime.base import BaseEstimator
-from sktime.dists_kernels._base import (
-    BasePairwiseTransformer,
-    BasePairwiseTransformerPanel,
-)
-from sktime.exceptions import NotFittedError
-from sktime.registry import all_estimators
 from sktime._tests._config import (
     EXCLUDE_ESTIMATORS,
     EXCLUDED_TESTS,
@@ -39,6 +32,13 @@ from sktime._tests._config import (
     VALID_ESTIMATOR_TYPES,
     VALID_TRANSFORMER_TYPES,
 )
+from sktime.base import BaseEstimator
+from sktime.dists_kernels._base import (
+    BasePairwiseTransformer,
+    BasePairwiseTransformerPanel,
+)
+from sktime.exceptions import NotFittedError
+from sktime.registry import all_estimators
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )

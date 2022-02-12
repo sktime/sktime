@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.registry import all_estimators
 from sktime._tests._config import EXCLUDE_ESTIMATORS, NON_STATE_CHANGING_METHODS
+from sktime.registry import all_estimators
 from sktime.utils._testing.estimator_checks import _has_capability, _make_args
 
 REGRESSORS = all_estimators(
