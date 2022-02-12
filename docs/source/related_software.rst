@@ -82,6 +82,8 @@ Libraries
      - A Python library for detecting patterns and anomalies in massive datasets using the Matrix Profile
    * - `mcfly <https://mcfly.readthedocs.io/en/latest/>`_
      - Deep learning for time series classification with automated hyperparameter selection
+   * - `salesforce-merlion <https://github.com/salesforce/Merlion/>`_
+     - Library from salesforce for forecasting, anomaly detection, and change point detection
    * - `neuralprophet <https://github.com/ourownstory/neural_prophet>`_
      - A Neural Network based model, inspired by Facebook Prophet and AR-Net, built on PyTorch
    * - `Nitime <https://github.com/nipy/nitime>`_
