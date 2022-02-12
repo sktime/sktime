@@ -62,7 +62,7 @@ def check_estimator(
     """
     from sktime.forecasting.tests.test_all_forecasters import ForecastersAllTests
     from sktime.registry import scitype
-    from sktime.tests.test_all_estimators import EstimatorsAllTests
+    from sktime._tests.test_all_estimators import EstimatorsAllTests
 
     testclass_dict = dict()
     testclass_dict["forecaster"] = ForecastersAllTests
