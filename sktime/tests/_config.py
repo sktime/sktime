@@ -118,6 +118,8 @@ EXCLUDE_ESTIMATORS = [
     "ConditionalDeseasonalizer",
     "STLforecaster",
     "STLTransformer",
+    # MultiRocket seems to cause memory problems and hangs CI/CD
+    "MultiRocket",
 ]
 
 
