@@ -42,7 +42,6 @@ from sktime.tests._config import (
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
-from sktime.utils.estimator_checks import check_estimator
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
@@ -53,7 +52,7 @@ from sktime.utils._testing.estimator_checks import (
     _make_args,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-
+from sktime.utils.estimator_checks import check_estimator
 
 ALL_ESTIMATORS = all_estimators(
     return_names=False,
