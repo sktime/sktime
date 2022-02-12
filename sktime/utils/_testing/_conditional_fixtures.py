@@ -18,10 +18,9 @@ import numpy as np
 class FixtureGenerationError(Exception):
     """Raised when a fixture fails to generate."""
 
-    def __init__(self, fixture_name=""):
+    def __init__(self, fixture_name="", err=None):
         self.fixture_name = fixture_name
-        fixture_name = fixture_name + " "
-        super().__init__(f"fixture {fixture_name}failed to generate")
+        super().__init__(f"fixture {fixture_name} failed to generate. {err}")
 
 
 def create_conditional_fixtures_and_names(
@@ -29,6 +28,7 @@ def create_conditional_fixtures_and_names(
     fixture_vars: List[str],
     generator_dict: Dict[str, Callable],
     fixture_sequence: List[str] = None,
+    raise_exceptions: bool = False,
 ):
     """Create conditional fixtures for pytest_generate_tests.
 
@@ -66,6 +66,9 @@ def create_conditional_fixtures_and_names(
             under the assumption that arguments have given values
     fixture_sequence : list of str, optional, default = None
         used in prioritizing conditional generators, sequentially (see above)
+    raise_exceptions : bool, optional, default = False
+        whether fixture generation errors or other Exceptions are raised
+        if False, exceptions are returned instead of fixtures
 
     Returns
     -------
@@ -143,8 +146,10 @@ def create_conditional_fixtures_and_names(
             else:
                 fixture_prod = starmap(lambda x, y: x, res)
                 fixture_names = starmap(lambda x, y: y, res)
-        except Exception:
-            error = FixtureGenerationError(fixture_name=fixture_var)
+        except Exception as err:
+            error = FixtureGenerationError(fixture_name=fixture_var, err=err)
+            if raise_exceptions:
+                raise error
             fixture_prod = [error]
             fixture_names = [f"Error:{fixture_var}"]
 

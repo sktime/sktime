@@ -70,6 +70,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "estimator_instance",
         "n_columns",
         "scenario",
+        "estimator_fitted",
         # "fh",
         "fh_int",
         "fh_int_oos",
@@ -187,11 +188,10 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
 class ForecastersAllTests(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
-    def test_get_fitted_params(self, estimator_instance, scenario):
+    def test_get_fitted_params(self, estimator_instance, scenario, estimator_fitted):
         """Test get_fitted_params."""
-        scenario.run(estimator_instance, method_sequence=["fit"])
         try:
-            params = estimator_instance.get_fitted_params()
+            params = estimator_fitted.get_fitted_params()
             assert isinstance(params, dict)
 
         except NotImplementedError:
