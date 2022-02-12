@@ -384,8 +384,7 @@ class NaiveForecaster(BaseForecaster):
         """
         params_list = [
             {},
-            # todo: this one fails the forecaster tests! fix in other PR
-            # {"sp": 2},
+            {"sp": 2},
             {"strategy": "mean"},
             {"strategy": "drift"},
             {"strategy": "mean", "window_length": 5},
