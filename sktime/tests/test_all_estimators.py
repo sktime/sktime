@@ -7,6 +7,7 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly"]
 
+import gc
 import numbers
 import pickle
 import types
@@ -124,6 +125,8 @@ class BaseFixtureGenerator:
         )
 
         metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
+
+        gc.collect()
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
@@ -253,6 +256,11 @@ class BaseFixtureGenerator:
             return True
 
         return False
+
+    @pytest.fixture(autouse=True)
+    def ensure_gc(self):
+        """Garbage collection before each test."""
+        gc.collect()
 
 
 class QuickTester:
