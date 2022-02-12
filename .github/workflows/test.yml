@@ -87,7 +87,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml -n 2 --cov=sktime -v --pyargs sktime
+          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime -v --pyargs sktime
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
