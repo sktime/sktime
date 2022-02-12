@@ -898,6 +898,7 @@ class EstimatorsAllTests(BaseFixtureGenerator, QuickTester):
     ):
         """Check that we do not overwrite hyper-parameters in fit."""
         estimator = estimator_instance
+        set_random_state(estimator)
 
         # Make a physical copy of the original estimator parameters before fitting.
         params = estimator.get_params()
