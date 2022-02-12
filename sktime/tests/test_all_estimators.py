@@ -42,6 +42,7 @@ from sktime.tests._config import (
 from sktime.utils._testing._conditional_fixtures import (
     create_conditional_fixtures_and_names,
 )
+from sktime.utils.estimator_checks import check_estimator
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
@@ -52,6 +53,18 @@ from sktime.utils._testing.estimator_checks import (
     _make_args,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+
+
+ALL_ESTIMATORS = all_estimators(
+    return_names=False,
+    exclude_estimators=EXCLUDE_ESTIMATORS,
+)
+
+
+@pytest.mark.parametrize("estimator_class", ALL_ESTIMATORS)
+def test_estimators_all_tests(estimator_class):
+    """Run all estimator tests via check_estimator."""
+    check_estimator(estimator_class, return_exceptions=False)
 
 
 class BaseFixtureGenerator:
@@ -512,7 +525,7 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
 
-class TestAllEstimators(BaseFixtureGenerator, QuickTester):
+class EstimatorsAllTests(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators."""
 
     def test_create_test_instance(self, estimator_class):

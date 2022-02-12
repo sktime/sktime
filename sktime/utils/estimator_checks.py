@@ -60,14 +60,14 @@ def check_estimator(
     All tests PASSED!
     {'test_score[ARIMA--fh=1]': 'PASSED'}
     """
-    from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
+    from sktime.forecasting.tests.test_all_forecasters import ForecastersAllTests
     from sktime.registry import scitype
-    from sktime.tests.test_all_estimators import TestAllEstimators
+    from sktime.tests.test_all_estimators import EstimatorsAllTests
 
     testclass_dict = dict()
-    testclass_dict["forecaster"] = TestAllForecasters
+    testclass_dict["forecaster"] = ForecastersAllTests
 
-    results = TestAllEstimators().run_tests(
+    results = EstimatorsAllTests().run_tests(
         estimator=estimator,
         return_exceptions=return_exceptions,
         tests_to_run=tests_to_run,

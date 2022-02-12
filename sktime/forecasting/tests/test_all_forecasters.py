@@ -184,7 +184,7 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         return VALID_INDEX_FH_COMBINATIONS, names
 
 
-class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
+class ForecastersAllTests(ForecasterFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
     def test_get_fitted_params(self, estimator_instance, scenario):
