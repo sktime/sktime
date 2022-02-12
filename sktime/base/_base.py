@@ -235,7 +235,7 @@ class BaseObject(_BaseEstimator):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # imported inside the function to avoid circular imports
-        from sktime.tests._config import ESTIMATOR_TEST_PARAMS
+        from sktime._tests._config import ESTIMATOR_TEST_PARAMS
 
         # if non-default parameters are required, but none have been found,
         # raise error
