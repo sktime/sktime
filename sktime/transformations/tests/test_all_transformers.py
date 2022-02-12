@@ -9,9 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime._tests._config import VALID_TRANSFORMER_TYPES
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.registry import all_estimators
-from sktime._tests._config import VALID_TRANSFORMER_TYPES
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,

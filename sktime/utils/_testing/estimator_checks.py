@@ -14,6 +14,7 @@ from pandas.testing import assert_frame_equal
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_random_state
 
+from sktime._tests._config import VALID_ESTIMATOR_TYPES
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
@@ -22,7 +23,6 @@ from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
-from sktime._tests._config import VALID_ESTIMATOR_TYPES
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,

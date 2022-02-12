@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime._tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
@@ -24,7 +25,6 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
-from sktime._tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
