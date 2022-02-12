@@ -12,8 +12,10 @@ assign = [(x.__name__, i) for i, x in enumerate(ALL_DISTANCES)]
 
 def _vectorize_distance(distance):
     """Turn 2D distance in one that can handle 1D, 2D and 3D input."""
+
     def _3D_distance(X, X2, **params):
         return pairwise_distance(X, X2, metric=distance, **params)
+
     return _3D_distance
 
 

@@ -18,11 +18,7 @@ __all__ = [
     "LowerBounding",
 ]
 
-from sktime.distances._distance import (
-    distance,
-    distance_factory,
-    pairwise_distance,
-)
+from sktime.distances._distance import distance, distance_factory, pairwise_distance
 from sktime.distances._distance_pairwise import (
     ddtw_distance,
     dtw_distance,
