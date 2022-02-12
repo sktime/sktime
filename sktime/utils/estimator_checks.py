@@ -58,7 +58,7 @@ def check_estimator(
     All tests PASSED!
     >>> check_estimator(ARIMA, fixtures_to_run="test_score[ARIMA--fh=1]")
     All tests PASSED!
-    {'test_score[ARIMA--fh=1]': 'PASSED'}
+    {'test_score[ARIMA-fh=1]': 'PASSED'}
     """
     from sktime.forecasting.tests.test_all_forecasters import ForecastersAllTests
     from sktime.registry import scitype

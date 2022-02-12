@@ -315,8 +315,8 @@ class QuickTester:
         Examples
         --------
         >>> from sktime.forecasting.naive import NaiveForecaster
-        >>> from sktime.tests.test_all_estimators import TestAllEstimators
-        >>> TestAllEstimators().run_tests(
+        >>> from sktime.tests.test_all_estimators import EstimatorsAllTests
+        >>> EstimatorsAllTests().run_tests(
         ...     NaiveForecaster,
         ...     tests_to_run="test_required_params"
         ... )
