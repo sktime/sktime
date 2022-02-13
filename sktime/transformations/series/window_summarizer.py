@@ -89,7 +89,12 @@ class WindowSummarizer(BaseTransformer):
     Attributes
     ----------
     truncate_start : int
-        Will give the maximum of window_length
+        See section Parameters - truncate for a more detailed explanation of truncation
+        as a result of applying windows of certain lengths across past observations.
+        A lag_config of [[7, 14], [0, 28]] cannot be correctly applied for the
+        first 21 resp. 28 observations of  the targeted column. truncate_start will
+        give the maximum og observations that are filled with NAs across all arguments
+        of the lag_config, in this case 28.
 
 
     Returns
