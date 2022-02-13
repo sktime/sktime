@@ -197,7 +197,7 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     }
 
     args = {
-        "fit": {"X": _make_series(n_timepoints=20, random_state=RAND_SEED)},
+        "fit": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
         "transform": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
         # "inverse_transform": {"X": _make_series(n_timepoints=10)},
     }
@@ -211,7 +211,7 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 
     args = {
         "fit": {
-            "X": _make_series(n_columns=2, n_timepoints=20, random_state=RAND_SEED)
+            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
         },
         "transform": {
             "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
@@ -228,7 +228,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
     args = {
         "fit": {
             "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=20, random_state=RAND_SEED
+                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
             )
         },
         "transform": {
