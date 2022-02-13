@@ -17,10 +17,9 @@ import numpy as np
 class FixtureGenerationError(Exception):
     """Raised when a fixture fails to generate."""
 
-    def __init__(self, fixture_name=""):
+    def __init__(self, fixture_name="", err=None):
         self.fixture_name = fixture_name
-        fixture_name = fixture_name + " "
-        super().__init__(f"fixture {fixture_name}failed to generate")
+        super().__init__(f"fixture {fixture_name} failed to generate. {err}")
 
 
 def create_conditional_fixtures_and_names(
