@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
-from sklearn.utils import check_random_state
 
 from sktime.clustering._base import BaseClusterer, TimeSeriesInstances
-from sktime.clustering.partitioning._lloyds import (
-    _forgy_center_initializer,
-    _random_center_initializer,
-)
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tslearn")
@@ -24,9 +19,10 @@ class TimeSeriesKShapes(BaseClusterer):
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
+    init_algorithm: str or np.ndarray, defaults = 'random'
         Method for initializing cluster centers. Any of the following are valid:
-        ['kmeans++', 'random', 'forgy']
+        ['random']. Or a np.ndarray of shape (n_clusters, ts_size, d) and gives the
+        initial centers.
     n_init: int, defaults = 10
         Number of times the k-means algorithm will be run with different
         centroid seeds. The final result will be the best output of n_init
@@ -58,15 +54,10 @@ class TimeSeriesKShapes(BaseClusterer):
         "capability:multivariate": True,
     }
 
-    _init_algorithms = {
-        "forgy": _forgy_center_initializer,
-        "random": _random_center_initializer,
-    }
-
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "forgy",
+        init_algorithm: Union[str, np.ndarray] = "random",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,
@@ -86,7 +77,6 @@ class TimeSeriesKShapes(BaseClusterer):
         self.inertia_ = None
         self.n_iter_ = 0
 
-        self._init_algorithm = None
         self._tslearn_k_shapes = None
 
         super(TimeSeriesKShapes, self).__init__()
@@ -106,8 +96,6 @@ class TimeSeriesKShapes(BaseClusterer):
         self:
             Fitted estimator.
         """
-        self._check_params(X)
-
         if self._tslearn_k_shapes is None:
             self._tslearn_k_shapes = KShape(
                 n_clusters=self.n_clusters,
@@ -116,6 +104,7 @@ class TimeSeriesKShapes(BaseClusterer):
                 random_state=self.random_state,
                 n_init=self.n_init,
                 verbose=self.verbose,
+                init=self.init_algorithm,
             )
 
         self._tslearn_k_shapes.fit(X)
@@ -140,34 +129,6 @@ class TimeSeriesKShapes(BaseClusterer):
             Index of the cluster each time series in X belongs to.
         """
         return self._tslearn_k_shapes.predict(X)
-
-    def _check_params(self, X: np.ndarray) -> None:
-        """Check parameters are valid and initialized.
-
-        Parameters
-        ----------
-        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
-            (n_instances, n_dimensions, series_length))
-            Time series instances to cluster.
-
-        Raises
-        ------
-        ValueError
-            If the init_algorithm value is invalid.
-        """
-        self._random_state = check_random_state(self.random_state)
-
-        if isinstance(self.init_algorithm, str) and self._init_algorithm is None:
-            self._init_algorithm = self._init_algorithms.get(self.init_algorithm)
-        else:
-            self._init_algorithm = self.init_algorithm
-
-        if not isinstance(self._init_algorithm, Callable):
-            raise ValueError(
-                f"The value provided for init_algorim: {self.init_algorithm} is "
-                f"invalid. The following are a list of valid init algorithms strings: "
-                f"{list(self._init_algorithms.keys())}"
-            )
 
     @classmethod
     def get_test_params(cls):
