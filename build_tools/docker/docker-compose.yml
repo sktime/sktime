@@ -6,3 +6,22 @@ services:
       dockerfile: ./build_tools/docker/sktime37.Dockerfile
     volumes:
       - ../../:/sktime
+# Uncomment which version you want.
+#  sktime38:
+#    build:
+#      context: ../../
+#      dockerfile: ./build_tools/docker/sktime38.Dockerfile
+#    volumes:
+#      - ../../:/sktime
+#  sktime39:
+#    build:
+#      context: ../../
+#      dockerfile: ./build_tools/docker/sktime39.Dockerfile
+#    volumes:
+#      - ../../:/sktime
+#  sktime310:
+#    build:
+#      context: ../../
+#      dockerfile: ./build_tools/docker/sktime310.Dockerfile
+#    volumes:
+#      - ../../:/sktime
