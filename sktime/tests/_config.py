@@ -118,6 +118,8 @@ EXCLUDE_ESTIMATORS = [
     "ConditionalDeseasonalizer",
     "STLforecaster",
     "STLTransformer",
+    # SFA is non-compliant with any transformer interfaces
+    "SFA",
 ]
 
 
