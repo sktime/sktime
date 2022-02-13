@@ -43,7 +43,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._series._check import check_pdDataFrame_Series
+from sktime.datatypes._series._check import check_pddataframe_series
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
@@ -69,7 +69,7 @@ def _list_all_equal(obj):
 check_dict = dict()
 
 
-def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
+def check_dflist_panel(obj, return_metadata=False, var_name="obj"):
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata
@@ -88,7 +88,7 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name}[i] must pd.DataFrame, but found other types at i={bad_inds}"
         return ret(False, msg, None, return_metadata)
 
-    check_res = [check_pdDataFrame_Series(s, return_metadata=True) for s in obj]
+    check_res = [check_pddataframe_series(s, return_metadata=True) for s in obj]
     bad_inds = [i for i in range(n) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
@@ -109,10 +109,10 @@ def check_dflist_Panel(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("df-list", "Panel")] = check_dflist_Panel
+check_dict[("df-list", "Panel")] = check_dflist_panel
 
 
-def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
+def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata
@@ -145,10 +145,10 @@ def check_numpy3D_Panel(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy3D", "Panel")] = check_numpy3D_Panel
+check_dict[("numpy3D", "Panel")] = check_numpy3d_panel
 
 
-def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
+def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     def ret(valid, msg, metadata, return_metadata):
         if return_metadata:
             return valid, msg, metadata
@@ -186,7 +186,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
     inst_inds = np.unique(obj.index.get_level_values(0))
 
     check_res = [
-        check_pdDataFrame_Series(obj.loc[i], return_metadata=True) for i in inst_inds
+        check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
     ]
     bad_inds = [i for i in inst_inds if not check_res[i][0]]
 
@@ -211,7 +211,7 @@ def check_pdmultiindex_Panel(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_Panel
+check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_panel
 
 
 def _cell_is_series_or_array(cell):
