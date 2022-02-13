@@ -104,7 +104,7 @@ if __name__ == "__main__":
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/kmedoids/"
+        results_dir = "/home/ajb/results/kmedoids/normed/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
@@ -129,8 +129,8 @@ if __name__ == "__main__":
                                return_data_type="numpy2d")
     test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts",
                              return_data_type="numpy2d")
-    #normalize(train_X, norm="l1", copy=False)
-    #normalize(test_X, norm="l1", copy=False)
+    normalize(train_X, norm="l1", copy=False)
+    normalize(test_X, norm="l1", copy=False)
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance+"-tuned"
