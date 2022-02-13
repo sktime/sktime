@@ -115,7 +115,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self.fit(X)
         return self.predict(X)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, n_clusters=None):
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
@@ -131,6 +131,9 @@ class BaseClusterer(BaseEstimator, ABC):
                 pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        n_clusters: int, defaults = None
+            n_clusters the model uses. This can't always be inferred so for consitency
+            this should be passed. If it isn't past an attempt to infer it is made.
 
         Returns
         -------
@@ -141,7 +144,33 @@ class BaseClusterer(BaseEstimator, ABC):
         """
         self.check_is_fitted()
         X = self._check_clusterer_input(X)
-        return self._predict_proba(X)
+        return self._predict_proba(X, n_clusters)
+
+    def score(self, X, y=None) -> float:
+        """Score the quality of the clusterer.
+
+        Parameters
+        ----------
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length)) or pd.DataFrame (where each
+            column is a dimension, each cell is a pd.Series (any number of dimensions,
+            equal or unequal length series)).
+            Time series instances to train clusterer and then have indexes each belong
+            to return.
+        y: ignored, exists for API consistency reasons.
+
+        Returns
+        -------
+        score : float
+            Score of the clusterer.
+        """
+        self.check_is_fitted()
+        X = self._check_clusterer_input(X)
+        return self._score(X, y)
+
+    @abstractmethod
+    def _score(self, X, y=None):
+        ...
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.

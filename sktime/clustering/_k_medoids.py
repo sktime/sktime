@@ -41,6 +41,8 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         Verbosity mode.
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
+    distance_params: dict, defaults = None
+        Dictonary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -67,6 +69,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         tol: float = 1e-6,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
+        distance_params: dict = None,
     ):
         self._precomputed_pairwise = None
 
@@ -79,6 +82,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
             tol,
             verbose,
             random_state,
+            distance_params,
         )
 
     def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
@@ -126,7 +130,9 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
             for j in range(len(curr_indexes)):
                 for k in range(len(curr_indexes)):
                     distance_matrix[j, k] = self._precomputed_pairwise[j, k]
-            new_centers[i, :] = medoids(X[curr_indexes], self._precomputed_pairwise)
+            result = medoids(X[curr_indexes], self._precomputed_pairwise)
+            if result.shape[0] > 0:
+                new_centers[i, :] = result
         return new_centers
 
     @classmethod
