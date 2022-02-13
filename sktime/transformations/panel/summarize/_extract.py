@@ -137,7 +137,8 @@ def _check_features(features):
 
 
 class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
-    """
+    """Random interval feature extractor transform.
+
     Transformer that segments time-series into random intervals
     and subsequently extracts series-to-primitives features from each interval.
 
