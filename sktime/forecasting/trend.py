@@ -461,8 +461,6 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # TODO: remove _update method after refactor of update methods in base class.
-        # This method is only required to pass tests.
         self.stl_ = _STL(
             y.values,
             period=self.sp,
