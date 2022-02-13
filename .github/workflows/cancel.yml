@@ -1,4 +1,4 @@
-name: Cancel
+name: Cancel Workflows on Push
 on:
   workflow_run:
     workflows: ["test"]
