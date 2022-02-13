@@ -1,5 +1,5 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
@@ -12,7 +12,6 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
 
 _check_soft_dependencies("tsfresh")
 
@@ -23,12 +22,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Series",
+        "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": True,
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
     }
 
     def __init__(
@@ -63,7 +62,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         super(_TSFreshFeatureExtractor, self).__init__()
 
     def _get_extraction_params(self):
-        """Helper function to set default parameters from tsfresh"""
+        """Set default parameters from tsfresh."""
         # make n_jobs compatible with scikit-learn
         self.n_jobs = check_n_jobs(self.n_jobs)
 
@@ -132,6 +131,11 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
+    _tags = {
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+    }
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -190,9 +194,10 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """
 
     _tags = {
-        "requires_y": True,
+        "requires_y": True,  # does y need to be passed in fit and transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
     }
 
     def __init__(
@@ -241,7 +246,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         self.ml_task = ml_task
 
     def _get_selection_params(self):
-        """Helper function to set default values from tsfresh"""
+        """Set default values from tsfresh."""
         # lazy imports to avoid hard dependency
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
@@ -268,7 +273,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         return selection_params
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit.
 
         Parameters
@@ -308,10 +313,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         Xt = self.extractor_.fit_transform(X)
         self.selector_.fit(Xt, y)
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X.
 
         Parameters
@@ -326,8 +330,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
         Xt = self.extractor_.transform(X)
         Xt = self.selector_.transform(Xt)
         return Xt.reindex(X.index)
