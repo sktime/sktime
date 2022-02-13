@@ -1,6 +1,5 @@
 FROM python:3.10
 
-
 ADD ./  ./sktime
 
 WORKDIR ./sktime
