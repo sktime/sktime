@@ -8,8 +8,38 @@ import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.window_summarizer import WindowSummarizer
+
+y = load_airline()
+kwargs = {
+    "lag_config": {
+        "lag": ["lag", [[1, 0]]],
+        "mean": ["mean", [[3, 0], [12, 0]]],
+        "std": ["std", [[4, 0]]],
+    }
+}
+# transformer = WindowSummarizer(**kwargs)
+# y_transformed = transformer.fit_transform(y)
+
+y, X = load_longley()
+y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+fh = ForecastingHorizon(X_test.index, is_relative=False)
+# Example transforming only X
+pipe = ForecastingPipeline(
+    steps=[
+        (
+            "a",
+            WindowSummarizer(n_jobs=1, target_cols=["POP", "GNPDEFL"], truncate="drop"),
+        ),
+        ("forecaster", NaiveForecaster(strategy="drift")),
+    ]
+)
+pipe_return = pipe.fit(y_train, X_train)
+y_pred1 = pipe_return.predict(fh=fh, X=X_test)
 
 
 def check_eval(test_input, expected):
@@ -73,40 +103,45 @@ Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
 Xtmvar_none = ["GNPDEFL_lag_3_0", "GNPDEFL_lag_6_0", "GNP", "UNEMP", "ARMED", "POP"]
 
 # Some tests are commented out until hierarchical PR works
+WindowSummarizer(**kwargs, truncate="bfill").fit_transform(y_train)
 
 
 @pytest.mark.parametrize(
-    "kwargs, column_names, y, target_cols",
+    "kwargs, column_names, y, target_cols, truncate",
     [
         (
             kwargs,
             ["y_lag_1_0", "y_mean_3_0", "y_mean_12_0", "y_std_4_0"],
             y_train_named,
             None,
+            None,
         ),
-        (kwargs_alternames, Xtmvar, X_ll_train, ["POP", "GNP"]),
-        (kwargs_alternames, Xtmvar_none, X_ll_train, None),
+        (kwargs_alternames, Xtmvar, X_ll_train, ["POP", "GNP"], None),
+        (kwargs_alternames, Xtmvar_none, X_ll_train, None, None),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
         # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
         # (None, ["lag_1_0"], y_multi),
-        (None, None, y_train, None),
-        (None, ["a_lag_1_0"], y_pd, None),
-        (kwargs_custom, ["a_cgt100_3_2"], y_pd, None),
-        (kwargs_alternames, ["0_lag_3_0", "0_lag_6_0"], y_train, None),
+        (None, None, y_train, None, None),
+        (None, ["a_lag_1_0"], y_pd, None, None),
+        (kwargs_custom, ["a_cgt100_3_2"], y_pd, None, None),
+        (kwargs_alternames, ["0_lag_3_0", "0_lag_6_0"], y_train, None, "bfill"),
         (
             kwargs_variant,
             ["0_mean_7_0", "0_mean_7_7", "0_covar_feature_28_0"],
             y_train,
             None,
+            None,
         ),
     ],
 )
-def test_windowsummarizer(kwargs, column_names, y, target_cols):
+def test_windowsummarizer(kwargs, column_names, y, target_cols, truncate):
     """Test columns match kwargs arguments."""
     if kwargs is not None:
-        transformer = WindowSummarizer(**kwargs, target_cols=target_cols)
+        transformer = WindowSummarizer(
+            **kwargs, target_cols=target_cols, truncate=truncate
+        )
     else:
-        transformer = WindowSummarizer(target_cols=target_cols)
+        transformer = WindowSummarizer(target_cols=target_cols, truncate=truncate)
     Xt = transformer.fit_transform(y)
     if Xt is not None:
         if isinstance(Xt, pd.DataFrame):

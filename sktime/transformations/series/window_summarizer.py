@@ -69,19 +69,28 @@ class WindowSummarizer(BaseTransformer):
                 See also: https://pandas.pydata.org/docs/reference/window.html.
         second value (window): list of integers
             List containg window_length and starting_at parameters.
-        The function _window_feature will resolve the dictionary to generate the
-        required features.
+        truncate: str, optional (default = None)
+            Defines how to deal with NAs that were created as a result of applying the
+            functions in the lag_config dict across windows that are longer than
+            the remaining history of data.
+            For example a lag config of [7, 14] - a window_length of 7 starting at 14
+            observations in the past - cannot be fully applied for the first 20
+            observations of the targeted column.
+            A lag_config of [[7, 14], [0, 28]] cannot be correctly applied for the
+            first 21 resp. 28 observations of  the targeted column. Possible values
+            to deal with those NAs:
+                * None
+                * "bfill"
+            None will keep the NAs generated, and would leave it for the user to choose
+            an estimator that can correctly deal with observations with missing values,
+            "bfill" will fill the NAs by carrying the first observation backwards.
+
 
     Attributes
     ----------
     truncate_start : int
-        This attribute will tell the user the maximum period length of NAs that was
-        created as a result of applying the functions in the lag_config dict across
-        the specified windows.
-        For example a lag config of [7, 14] - a window_length of 7 starting at 14
-        observations in the past - will fill the first 21 observations of the targeted
-        column with NAs, so truncate_start will be set to 21.
-        A lag_config of [[7, 14], [0, 28]] will set truncate_start to the maximum of 28.
+        Will give the maximum of window_length
+
 
     Returns
     -------
@@ -145,8 +154,9 @@ class WindowSummarizer(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "capability:inverse_transform": False,
-        "scitype:transform-labels": None,
+        "scitype:transform-labels": True,
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
@@ -162,12 +172,14 @@ class WindowSummarizer(BaseTransformer):
         lag_config=None,
         n_jobs=-1,
         target_cols=None,
+        truncate=None,
     ):
 
         # self._converter_store_X = dict()
         self.lag_config = lag_config
         self.n_jobs = n_jobs
         self.target_cols = target_cols
+        self.truncate = truncate
 
         super(WindowSummarizer, self).__init__()
 
@@ -235,18 +247,21 @@ class WindowSummarizer(BaseTransformer):
         transformed version of X
         """
         X.columns = X.columns.map(str)
-
         Xt_out = []
+        if self.truncate == "bfill":
+            bfill = True
+        else:
+            bfill = False
         for cols in self._target_cols:
             if isinstance(X.index, pd.MultiIndex):
                 X_grouped = getattr(X.groupby("instances"), X.loc[:, [cols]])
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X_grouped, **kwargs)
+                    delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in self._func_dict.iterrows()
                 )
             else:
                 df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X.loc[:, [cols]], **kwargs)
+                    delayed(_window_feature)(X.loc[:, [cols]], **kwargs, bfill=bfill)
                     for _index, kwargs in self._func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
@@ -254,6 +269,7 @@ class WindowSummarizer(BaseTransformer):
             Xt_out.append(Xt)
         Xt_out_df = pd.concat(Xt_out, axis=1)
         Xt_return = pd.concat([Xt_out_df, X.drop(self._target_cols, axis=1)], axis=1)
+
         return Xt_return
 
     @classmethod
@@ -323,12 +339,7 @@ def get_name_list(Z):
     return Z_name
 
 
-def _window_feature(
-    Z,
-    name=None,
-    summarizer=None,
-    window=None,
-):
+def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
     """Compute window features and lag.
 
     Apply summarizer passed over a certain window
@@ -361,21 +372,44 @@ def _window_feature(
 
     if summarizer in pd_rolling:
         if isinstance(Z.index, pd.MultiIndex):
-            feat = getattr(Z.shift(starting_at).rolling(window_length), summarizer)()
-        else:
-            feat = Z.apply(
-                lambda x: getattr(
-                    x.shift(starting_at).rolling(window_length), summarizer
+            if bfill is False:
+                feat = getattr(
+                    Z.shift(starting_at).rolling(window_length), summarizer
                 )()
-            )
+            else:
+                feat = getattr(
+                    Z.shift(starting_at).fillna(method="bfill").rolling(window_length),
+                    summarizer,
+                )()
+        else:
+            if bfill is False:
+                feat = Z.apply(
+                    lambda x: getattr(
+                        x.shift(starting_at).rolling(window_length), summarizer
+                    )()
+                )
+            else:
+                feat = Z.apply(
+                    lambda x: getattr(
+                        x.shift(starting_at)
+                        .fillna(method="bfill")
+                        .rolling(window_length),
+                        summarizer,
+                    )()
+                )
     else:
-        feat = Z.shift(starting_at)
+        if bfill is False:
+            feat = Z.shift(starting_at)
+        else:
+            feat = Z.shift(starting_at).fillna(method="bfill")
         if isinstance(Z.index, pd.MultiIndex) and callable(summarizer):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z.index, pd.MultiIndex) and callable(summarizer):
             feat = feat.apply(
                 lambda x: x.rolling(window_length).apply(summarizer, raw=True)
             )
+    if bfill is True:
+        feat = feat.fillna(method="bfill")
 
     feat.rename(
         columns={
