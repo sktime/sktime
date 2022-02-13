@@ -123,6 +123,7 @@ class DerivativeSlopeTransformer(_PanelToPanelTransformer):
     @staticmethod
     def row_wise_get_der(X):
         """Get derivatives."""
+
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
