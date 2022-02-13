@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functionality for specifying forecast horizons in sktime."""
 
-__author__ = ["mloning", "fkiraly", "eenticott-shell"]
+__author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
@@ -273,23 +273,29 @@ class ForecastingHorizon:
             absolute = self.to_pandas()
             _check_cutoff(cutoff, absolute)
 
-            if isinstance(absolute, pd.DatetimeIndex):
-                # We cannot use the freq from the the ForecastingHorizon itself (or its
-                # wrapped pd.DatetimeIndex) because it may be none for non-regular
-                # indices, so instead we use the freq of cutoff.
-                freq = _get_freq(cutoff)
+            # We cannot use the freq from the ForecastingHorizon itself (or its
+            # wrapped pd.DatetimeIndex) because it may be none for non-regular
+            # indices, so instead we use the freq of cutoff.
+            freq = _get_freq(cutoff)
 
+            if isinstance(absolute, pd.DatetimeIndex):
                 # coerce to pd.Period for reliable arithmetics and computations of
                 # time deltas
                 absolute = _coerce_to_period(absolute, freq)
                 cutoff = _coerce_to_period(cutoff, freq)
 
             # Compute relative values
-            relative = absolute - cutoff
+            # The following line circumvents the bug in pandas
+            # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+            # periods - periods[0]
+            # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+            # [v - periods[0] for v in periods]
+            # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
+            relative = pd.Index([date - cutoff for date in absolute])
 
             # Coerce durations (time deltas) into integer values for given frequency
             if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-                relative = _coerce_duration_to_int(relative, freq=_get_freq(cutoff))
+                relative = _coerce_duration_to_int(relative, freq=freq)
 
             return self._new(relative, is_relative=True)
 
@@ -325,8 +331,7 @@ class ForecastingHorizon:
 
             if is_timestamp:
                 # coerce back to DatetimeIndex after operation
-                freq = cutoff.freqstr
-                absolute = absolute.to_timestamp(freq)
+                absolute = absolute.to_timestamp(cutoff.freqstr)
 
             return self._new(absolute, is_relative=False)
 
@@ -347,16 +352,36 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
+        freq = _get_freq(cutoff)
+
+        if isinstance(cutoff, pd.Timestamp):
+            # coerce to pd.Period for reliable arithmetic operations and
+            # computations of time deltas
+            cutoff = _coerce_to_period(cutoff, freq=freq)
+
+        absolute = self.to_absolute(cutoff).to_pandas()
+        if isinstance(absolute, pd.DatetimeIndex):
+            # coerce to pd.Period for reliable arithmetics and computations of
+            # time deltas
+            absolute = _coerce_to_period(absolute, freq=freq)
+
         # We here check the start value, the cutoff value is checked when we use it
         # to convert the horizon to the absolute representation below
-        absolute = self.to_absolute(cutoff).to_pandas()
+        if isinstance(start, pd.Timestamp):
+            start = _coerce_to_period(start, freq=freq)
         _check_start(start, absolute)
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
         # `update_predict` and incomplete time indices where the `freq` information
         # is lost, see comment on issue #534
-        integers = absolute - start
+        # The following line circumvents the bug in pandas
+        # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+        # periods - periods[0]
+        # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+        # [v - periods[0] for v in periods]
+        # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
+        integers = pd.Index([date - start for date in absolute])
 
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
             integers = _coerce_duration_to_int(integers, freq=_get_freq(cutoff))

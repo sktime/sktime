@@ -67,7 +67,7 @@ def _ret(valid, msg, metadata, return_metadata):
 @deprecated(
     version="v0.10.0",
     reason=(
-        "check_is has been deprecated and will be removed in v0.11.0."
+        "check_is is deprecated since v0.10.0 and will be removed in v0.11.0."
         "Please use check_is_mtype instead."
     ),
     category=FutureWarning,
