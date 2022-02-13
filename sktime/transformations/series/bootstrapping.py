@@ -234,15 +234,27 @@ def moving_block_bootstrap(
 
     Parameters
     ----------
-    ts : Union[pd.DataFrame, pd.Series]
+    ts : pd.Series
         a stationary time series
     block_length : int
         the length of the bootstrapping block
 
     Returns
     -------
-    Union[pd.DataFrame, pd.Series]
+    pd.Series
         bootstrapped time series
+
+    References
+    ----------
+    .. [1] Bergmeir, C., Hyndman, R. J., & Benítez, J. M. (2016). Bagging exponential
+        smoothing methods using STL decomposition and Box-Cox transformation.
+        International Journal of Forecasting, 32(2), 303-312
+    .. [2] Kunsch HR (1989) The jackknife and the bootstrap for general stationary
+        observations. Annals of Statistics 17(3), 1217-1241
+    .. [3] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
+        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
+        Accessed on January 24th 2022.
+
     """
     ts_length = len(ts)
     ts_index = ts.index
