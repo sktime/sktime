@@ -89,8 +89,12 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
         # applicable only if number of variables in y complies with scitype:y
         is_univariate = self.get_tag("X_univariate")
-
         if not is_univariate and get_tag(obj, "univariate-only"):
+            return False
+
+        # if transformer requires y, the scenario also must pass y
+        has_y = self.get_tag("has_y")
+        if not has_y and get_tag(obj, "requires_y"):
             return False
 
         # the case that we would need to vectorize with y, skip
@@ -207,7 +211,12 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
 class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Series X."""
 
-    _tags = {"X_scitype": "Series", "X_univariate": False, "has_y": False}
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": False,
+        "has_y": False,
+        "pre-refactor": True,
+    }
 
     args = {
         "fit": {
@@ -223,7 +232,12 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": True, "has_y": False}
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "has_y": False,
+        "pre-refactor": False,
+    }
 
     args = {
         "fit": {
@@ -233,7 +247,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
         },
         "transform": {
             "X": _make_panel_X(
-                n_instances=3, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
             )
         },
     }
@@ -243,11 +257,16 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
 class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": False, "has_y": False}
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": False,
+        "has_y": False,
+        "pre-refactor": False,
+    }
 
     args = {
-        "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
+        "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=10)},
+        "transform": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -265,10 +284,10 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
 
     args = {
         "fit": {
-            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20),
+            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20)},
+        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10)},
     }
     default_method_sequence = ["fit", "transform"]
 
