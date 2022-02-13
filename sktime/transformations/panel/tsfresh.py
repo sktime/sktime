@@ -7,7 +7,7 @@ __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
 
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.utils.validation import check_n_jobs
@@ -17,8 +17,19 @@ from sktime.utils.validation.panel import check_X_y
 _check_soft_dependencies("tsfresh")
 
 
-class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
-    """Base adapter class for tsfresh transformations"""
+class _TSFreshFeatureExtractor(BaseTransformer):
+    """Base adapter class for tsfresh transformations."""
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit-in-transform": True,
+    }
 
     def __init__(
         self,
@@ -47,27 +58,9 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
         self.distributor = distributor
 
         self.default_fc_parameters_ = None
+        self.default_fc_parameters_ = self._get_extraction_params()
 
         super(_TSFreshFeatureExtractor, self).__init__()
-
-    def fit(self, X, y=None):
-        """Fit.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series or np.array
-            Target variable
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        check_X(X, coerce_to_pandas=True)
-        self.default_fc_parameters_ = self._get_extraction_params()
-        self._is_fitted = True
-        return self
 
     def _get_extraction_params(self):
         """Helper function to set default parameters from tsfresh"""
@@ -132,31 +125,31 @@ class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
 
 
 class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
-    """Transformer for extracting time series features
+    """Transformer for extracting time series features.
 
     References
     ----------
     ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
-    def transform(self, X, y=None):
-        """Transform X.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
-        X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
-        y : pd.Series, optional (default=None)
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame
+        Xt : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of Xt contains pandas.Series
+            transformed version of X
         """
-        # input checks
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
-
         # tsfresh requires unique index, returns only values for
         # unique index values
         if X.index.nunique() < X.shape[0]:
@@ -195,6 +188,12 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     ----------
     ..[1]  https://github.com/blue-yonder/tsfresh
     """
+
+    _tags = {
+        "requires_y": True,
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(
         self,
@@ -285,11 +284,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         """
         # lazy imports to avoid hard dependency
         from tsfresh.transformers.feature_selector import FeatureSelector
-
-        # input checks
-        if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-        X, y = check_X_y(X, y, coerce_to_pandas=True)
 
         self.extractor_ = TSFreshFeatureExtractor(
             default_fc_parameters=self.default_fc_parameters,
