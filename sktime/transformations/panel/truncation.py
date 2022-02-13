@@ -84,9 +84,8 @@ class TruncationTransformer(BaseTransformer):
         ----------
         X : nested pandas DataFrame of shape [n_instances, n_features]
             each cell of X must contain pandas.Series
-            Data to fit transform to
+            Data to transform
         y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
 
         Returns
         -------
