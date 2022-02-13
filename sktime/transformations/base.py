@@ -106,6 +106,7 @@ class BaseTransformer(BaseEstimator):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "requires_y": False,  # does y need to be passed in fit and transform?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
