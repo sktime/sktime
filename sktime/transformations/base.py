@@ -173,6 +173,8 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
@@ -306,6 +308,8 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `transform`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
@@ -614,6 +618,8 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
