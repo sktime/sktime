@@ -168,11 +168,7 @@ class BaseClusterer(BaseEstimator, ABC):
         X = self._check_clusterer_input(X)
         return self._score(X, y)
 
-    @abstractmethod
-    def _score(self, X, y=None):
-        ...
-
-    def _predict_proba(self, X):
+    def _predict_proba(self, X, n_clusters=None):
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
@@ -188,6 +184,9 @@ class BaseClusterer(BaseEstimator, ABC):
                 pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        n_clusters: int, defaults = None
+            n_clusters the model uses. This can't always be inferred so for consitency
+            this should be passed. If it isn't past an attempt to infer it is made.
 
         Returns
         -------
@@ -197,11 +196,16 @@ class BaseClusterer(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         preds = self._predict(X)
-        n_clusters = max(preds) + 1  # This isn't always correct but best we can do
+        if n_clusters is None:
+            n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
         for i in range(X.shape[0]):
             dists[i, preds[i]] = 1
         return dists
+
+    @abstractmethod
+    def _score(self, X, y=None):
+        ...
 
     @abstractmethod
     def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
