@@ -296,9 +296,6 @@ class STLForecaster(BaseForecaster):
         Fitted seasonal forecaster.
     forecaster_resid_ : sktime forecaster
         Fitted residual forecaster.
-    stl_ : STL
-        Results object from statsmodels.STL after
-        doing stl_ = STL(...).fit().
 
     Examples
     --------
@@ -380,7 +377,7 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        self.stl_ = _STL(
+        self._stl = _STL(
             y.values,
             period=self.sp,
             seasonal=self.seasonal,
@@ -395,9 +392,9 @@ class STLForecaster(BaseForecaster):
             low_pass_jump=self.low_pass_jump,
         ).fit()
 
-        self.seasonal_ = pd.Series(self.stl_.seasonal, index=y.index)
-        self.resid_ = pd.Series(self.stl_.resid, index=y.index)
-        self.trend_ = pd.Series(self.stl_.trend, index=y.index)
+        self.seasonal_ = pd.Series(self._stl.seasonal, index=y.index)
+        self.resid_ = pd.Series(self._stl.resid, index=y.index)
+        self.trend_ = pd.Series(self._stl.trend, index=y.index)
 
         self.forecaster_seasonal_ = (
             NaiveForecaster(sp=self.sp, strategy="last")
@@ -461,7 +458,7 @@ class STLForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.stl_ = _STL(
+        self._stl = _STL(
             y.values,
             period=self.sp,
             seasonal=self.seasonal,
@@ -476,9 +473,9 @@ class STLForecaster(BaseForecaster):
             low_pass_jump=self.low_pass_jump,
         ).fit()
 
-        self.seasonal_ = pd.Series(self.stl_.seasonal, index=y.index)
-        self.resid_ = pd.Series(self.stl_.resid, index=y.index)
-        self.trend_ = pd.Series(self.stl_.trend, index=y.index)
+        self.seasonal_ = pd.Series(self._stl.seasonal, index=y.index)
+        self.resid_ = pd.Series(self._stl.resid, index=y.index)
+        self.trend_ = pd.Series(self._stl.trend, index=y.index)
 
         self.forecaster_seasonal_.update(
             y=self.seasonal_, X=X, update_params=update_params
