@@ -8,38 +8,8 @@ import pytest
 
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import ForecastingPipeline
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.window_summarizer import WindowSummarizer
-
-y = load_airline()
-kwargs = {
-    "lag_config": {
-        "lag": ["lag", [[1, 0]]],
-        "mean": ["mean", [[3, 0], [12, 0]]],
-        "std": ["std", [[4, 0]]],
-    }
-}
-# transformer = WindowSummarizer(**kwargs)
-# y_transformed = transformer.fit_transform(y)
-
-y, X = load_longley()
-y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-fh = ForecastingHorizon(X_test.index, is_relative=False)
-# Example transforming only X
-pipe = ForecastingPipeline(
-    steps=[
-        (
-            "a",
-            WindowSummarizer(n_jobs=1, target_cols=["POP", "GNPDEFL"], truncate="drop"),
-        ),
-        ("forecaster", NaiveForecaster(strategy="drift")),
-    ]
-)
-pipe_return = pipe.fit(y_train, X_train)
-y_pred1 = pipe_return.predict(fh=fh, X=X_test)
 
 
 def check_eval(test_input, expected):
@@ -103,7 +73,6 @@ Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
 Xtmvar_none = ["GNPDEFL_lag_3_0", "GNPDEFL_lag_6_0", "GNP", "UNEMP", "ARMED", "POP"]
 
 # Some tests are commented out until hierarchical PR works
-WindowSummarizer(**kwargs, truncate="bfill").fit_transform(y_train)
 
 
 @pytest.mark.parametrize(
