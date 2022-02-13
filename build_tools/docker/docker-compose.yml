@@ -5,4 +5,4 @@ services:
       context: ../../
       dockerfile: ./build_tools/docker/sktime37.Dockerfile
     volumes:
-      - ./sktime:/app/sktime:ro
+      - ../../:/sktime
