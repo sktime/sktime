@@ -269,6 +269,12 @@ class STLForecaster(BaseForecaster):
         than 1, the LOESS is used every low_pass_jump points and values between
         the two are linearly interpolated. Higher values reduce estimation
         time.
+    inner_iter: int, optional
+        Number of iterations to perform in the inner loop. If not provided uses 2 if
+        robust is True, or 5 if not. This param goes into STL.fit() from statsmodels.
+    outer_iter: int, optional
+        Number of iterations to perform in the outer loop. If not provided uses 15 if
+        robust is True, or 0 if not. This param goes into STL.fit() from statsmodels.
     forecaster_trend : sktime forecaster, optional
         Forecaster to be fitted on trend_ component of the
         STL, by default None. If None, then
@@ -342,6 +348,8 @@ class STLForecaster(BaseForecaster):
         seasonal_jump=1,
         trend_jump=1,
         low_pass_jump=1,
+        inner_iter=None,
+        outer_iter=None,
         forecaster_trend=None,
         forecaster_seasonal=None,
         forecaster_resid=None,
@@ -357,6 +365,8 @@ class STLForecaster(BaseForecaster):
         self.seasonal_jump = seasonal_jump
         self.trend_jump = trend_jump
         self.low_pass_jump = low_pass_jump
+        self.inner_iter = inner_iter
+        self.outer_iter = outer_iter
         self.forecaster_trend = forecaster_trend
         self.forecaster_seasonal = forecaster_seasonal
         self.forecaster_resid = forecaster_resid
@@ -390,7 +400,7 @@ class STLForecaster(BaseForecaster):
             seasonal_jump=self.seasonal_jump,
             trend_jump=self.trend_jump,
             low_pass_jump=self.low_pass_jump,
-        ).fit()
+        ).fit(inner_iter=self.inner_iter, outer_iter=self.outer_iter)
 
         self.seasonal_ = pd.Series(self._stl.seasonal, index=y.index)
         self.resid_ = pd.Series(self._stl.resid, index=y.index)
@@ -471,7 +481,7 @@ class STLForecaster(BaseForecaster):
             seasonal_jump=self.seasonal_jump,
             trend_jump=self.trend_jump,
             low_pass_jump=self.low_pass_jump,
-        ).fit()
+        ).fit(inner_iter=self.inner_iter, outer_iter=self.outer_iter)
 
         self.seasonal_ = pd.Series(self._stl.seasonal, index=y.index)
         self.resid_ = pd.Series(self._stl.resid, index=y.index)
