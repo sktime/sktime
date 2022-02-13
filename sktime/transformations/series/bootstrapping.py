@@ -7,55 +7,61 @@ __author__ = ["ltsaprounis"]
 
 # todo: add any necessary sktime external imports here
 
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
+from statsmodels.tsa.api import STL as _STL
 
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
 class UnivariateBootsrappingTransformer(BaseTransformer):
-    """Creartes a population of similar time series.
-
-    todo: describe your custom transformer here
-        fill in sections appropriately
-        docstring must be numpydoc compliant
+    """Creates a population of similar time series.
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    number_of_new_series : int, optional
+        [description], by default 10
+    sp : int, optional
+        [description], by default 12
+    block_length : int, optional
+        [description], by default None
+    return_actual : bool, optional
+        [description], by default True
+    series_name : str, optional
+        [description], by default None
+    boxcox_bounds : Tuple, optional
+        [description], by default None
+    boxcox_method : str, optional
+        [description], by default "guerrero"
+    seasonal : int, optional
+        [description], by default 7
+    trend : int, optional
+        [description], by default None
+    low_pass : int, optional
+        [description], by default None
+    seasonal_deg : int, optional
+        [description], by default 1
+    trend_deg : int, optional
+        [description], by default 1
+    low_pass_deg : int, optional
+        [description], by default 1
+    robust : bool, optional
+        [description], by default False
+    seasonal_jump : int, optional
+        [description], by default 1
+    trend_jump : int, optional
+        [description], by default 1
+    low_pass_jump : int, optional
+        [description], by default 1
+    inner_iter : int, optional
+        [description], by default None
+    outer_iter : int, optional
+        [description], by default None
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    #
-    # todo: define the transformer scitype by setting the tags
-    #   scitype:transform-input - the expected input scitype of X
-    #   scitype:transform-output - the output scitype that transform produces
-    #   scitype:transform-labels - whether y is used and if yes which scitype
-    #   scitype:instancewise - whether transform uses all samples or acts by instance
-    #
-    # todo: define internal types for X, y in _fit/_transform by setting the tags
-    #   X_inner_mtype - the internal mtype used for X in _fit and _transform
-    #   y_inner_mtype - if y is used, the internal mtype used for y; usually "None"
-    #   setting this guarantees that X, y passed to _fit, _transform are of above types
-    #   for possible mtypes see datatypes.MTYPE_REGISTER, or the datatypes tutorial
-    #
-    #  when scitype:transform-input is set to Panel:
-    #   X_inner_mtype must be changed to one or a list of sktime Panel mtypes
-    #  when scitype:transform-labels is set to Series or Panel:
-    #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
-    #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
         # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
@@ -64,7 +70,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -77,70 +83,50 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         "transform-returns-same-time-index": False,
     }
 
-    # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+    def __init__(
+        self,
+        number_of_new_series: int = 10,
+        sp: int = 12,
+        block_length: int = None,
+        return_actual: bool = True,
+        series_name: str = None,
+        boxcox_bounds: Tuple = None,
+        boxcox_method: str = "guerrero",
+        seasonal: int = 7,
+        trend: int = None,
+        low_pass: int = None,
+        seasonal_deg: int = 1,
+        trend_deg: int = 1,
+        low_pass_deg: int = 1,
+        robust: bool = False,
+        seasonal_jump: int = 1,
+        trend_jump: int = 1,
+        low_pass_jump: int = 1,
+        inner_iter: int = None,
+        outer_iter: int = None,
+    ):
+        self.number_of_new_series = number_of_new_series
+        self.sp = sp
+        self.block_length = block_length
+        self.return_actual = return_actual
+        self.series_name = series_name
+        self.boxcox_bounds = boxcox_bounds
+        self.boxcox_method = boxcox_method
+        self.seasonal = seasonal
+        self.trend = trend
+        self.low_pass = low_pass
+        self.seasonal_deg = seasonal_deg
+        self.trend_deg = trend_deg
+        self.low_pass_deg = low_pass_deg
+        self.robust = robust
+        self.seasonal_jump = seasonal_jump
+        self.trend_jump = trend_jump
+        self.low_pass_jump = low_pass_jump
+        self.inner_iter = inner_iter
+        self.outer_iter = outer_iter
 
-        # todo: write any hyper-parameters and components to self
-        self.est = est
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
-        # important: no checking or other logic should happen here
-
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.est2 = MyDefaultEstimator()
-
-        # todo: change "MyTransformer" to the name of the class
         super(UnivariateBootsrappingTransformer, self).__init__()
 
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
-
-    # todo: implement this, mandatory (except in special case below)
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: reference to self
-        """
-
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
-        #
-        # special case: if no fitting happens before transformation
-        #  then: delete _fit (don't implement)
-        #   set "fit-in-transform" tag to True
-
-    # todo: implement this, mandatory
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -158,38 +144,65 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # if transform-output is "Primitives":
-        #  return should be pd.DataFrame, with as many rows as instances in input
-        #  if input is a single series, return should be single-row pd.DataFrame
-        # if transform-output is "Series":
-        #  return should be of same mtype as input, X_inner_mtype
-        #  if multiple X_inner_mtype are supported, ensure same input/output
-        # if transform-output is "Panel":
-        #  return a multi-indexed pd.DataFrame of Panel mtype pd_multiindex
-        #
-        # todo: add the return mtype/scitype to the docstring, e.g.,
-        #  Returns
-        #  -------
-        #  X_transformed : Series of mtype pd.DataFrame
-        #       transformed version of X
-        df = pd.DataFrame()
+        ###############################################################
+        #           Should this block be in _fit instead?             #
+        ###############################################################
+        X_index = X.index
+
+        self.block_length_ = (
+            self.block_length
+            if self.block_length is not None
+            else min(self.sp * 2, len(X) - self.sp)
+        )
+
+        # fit boxcox to get lambda and transform X
+        self.BoxCoxTransformer_ = BoxCoxTransformer(
+            sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
+        )
+        self.BoxCoxTransformer_.fit(X)
+        X_transformed = self.BoxCoxTransformer_.transform(X)
+
+        # fit STL on X_transformed series and extract trend, seasonal and residuals
+        self.STL_ = _STL(X_transformed, period=self.sp).fit()
+        self.seasonal_ = pd.Series(self.STL_.seasonal, index=X_index)
+        self.resid_ = pd.Series(self.STL_.resid, index=X_index)
+        self.trend_ = pd.Series(self.STL_.trend, index=X_index)
+        ###############################################################
+        ###############################################################
+        ###############################################################
+
+        # time series id prefix
+        prefix = self.series_name + "_" if self.series_name is not None else ""
+
+        # initialize the dataframe that will store the bootstrapped series
+        if self.return_actual:
+            df = pd.DataFrame(
+                X.values,
+                index=pd.MultiIndex.from_product(
+                    iterables=[[f"{prefix}actual"], X_index],
+                    names=["series_id", "time_index"],
+                ),
+            )
+        else:
+            df = pd.DataFrame()
+
+        # create multiple series
+        for i in range(self.number_of_new_series):
+            new_series = self.BoxCoxTransformer_.inverse_transform(
+                moving_block_bootstrap(ts=self.resid_, block_length=self.block_length_)
+                + self.seasonal_
+                + self.trend_
+            )
+
+            new_series_id = f"{prefix}synthetic_{i}"
+            new_df_index = pd.MultiIndex.from_product(
+                iterables=[[new_series_id], new_series.index],
+                names=["series_id", "time_index"],
+            )
+
+            df = df.append(pd.DataFrame(data=new_series.values, index=new_df_index))
 
         return df
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # implement here
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
@@ -254,7 +267,6 @@ def moving_block_bootstrap(
     .. [3] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
         practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
         Accessed on January 24th 2022.
-
     """
     ts_length = len(ts)
     ts_index = ts.index
