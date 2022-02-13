@@ -20,8 +20,7 @@ from sklearn.feature_selection import f_classif
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 # The binning methods to use: equi-depth, equi-width, information gain or kmeans
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
@@ -29,7 +28,7 @@ binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 # TODO remove imag-part from dc-component component
 
 
-class SFA(_PanelToPanelTransformer):
+class SFA(BaseTransformer):
     """Symbolic Fourier Approximation (SFA) Transformer.
 
     Overview: for each series:
@@ -104,7 +103,17 @@ class SFA(_PanelToPanelTransformer):
     15th international conference on extending database technology. 2012.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+    }
 
     def __init__(
         self,
@@ -178,7 +187,7 @@ class SFA(_PanelToPanelTransformer):
 
         super(SFA, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Calculate word breakpoints using MCB or IGB.
 
         Parameters
@@ -225,7 +234,6 @@ class SFA(_PanelToPanelTransformer):
                 "(this is way to many anyway)."
             )
 
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         if self.levels > 1:
@@ -238,10 +246,9 @@ class SFA(_PanelToPanelTransformer):
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
 
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into SFA words.
 
         Parameters
@@ -253,8 +260,6 @@ class SFA(_PanelToPanelTransformer):
         -------
         List of dictionaries containing SFA words
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         with warnings.catch_warnings():
@@ -1022,3 +1027,19 @@ class SFA(_PanelToPanelTransformer):
             letters = (letters, level)
 
         return letters
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # small window size for testing
+        params = {"window_size": 5}
+        return params
