@@ -71,7 +71,7 @@ class Detrender(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "univariate-only": True,
         "fit-in-transform": False,
         "capability:inverse_transform": True,
         "transform-returns-same-time-index": True,
@@ -81,6 +81,12 @@ class Detrender(BaseTransformer):
         self.forecaster = forecaster
         self.forecaster_ = None
         super(Detrender, self).__init__()
+
+        # whether this transformer is univariate depends on the forecaster
+        #  this transformer is univariate iff the forecaster is univariate
+        if forecaster is not None:
+            fc_univ = forecaster.get_tag("scitype:y", "univariate") == "univariate"
+            self.set_tags(**{"univariate-only": fc_univ})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
