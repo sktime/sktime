@@ -208,6 +208,7 @@ def pytest_generate_tests(metafunc):
         fixture_vars=metafunc.fixturenames,
         generator_dict=generator_dict,
         fixture_sequence=fixture_sequence,
+        raise_exceptions=True,
     )
 
     metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
