@@ -296,7 +296,7 @@ def _conversions_defined(scitype: str):
 
 
 def _check_str_or_list_of_str(obj, obj_name="obj"):
-    """Checks whether obj is str or list of str; coerces to list of str."""
+    """Check whether obj is str or list of str; coerces to list of str."""
     if isinstance(obj, list):
         if not np.all(isinstance(x, str) for x in obj):
             raise TypeError(f"{obj} must be a str or list of str")
