@@ -210,7 +210,7 @@ class BaseTransformer(BaseEstimator):
         if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
             X = convert_Series_to_Panel(X)
         # 3. internal only has Series but X is Panel: loop over instances
-        elif X_input_scitype == "Panel" and "Series" not in X_inner_scitypes:
+        elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
                     f"{type(self).__name__} does not support Panel X if y is not None, "
