@@ -63,6 +63,7 @@ Hybrid
     :template: class.rst
 
     HIVECOTEV1
+    HIVECOTEV2
 
 Interval-based
 --------------
@@ -74,10 +75,11 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForestClassifier
-    RandomIntervalSpectralForest
     SupervisedTimeSeriesForest
     CanonicalIntervalForest
     DrCIF
+    RandomIntervalSpectralEnsemble
+
 
 Shapelet-based
 --------------
@@ -89,7 +91,6 @@ Shapelet-based
     :template: class.rst
 
     ShapeletTransformClassifier
-    MrSEQLClassifier
 
 Kernel-based
 ------------
@@ -116,3 +117,6 @@ Feature-based
     MatrixProfileClassifier
     TSFreshClassifier
     SignatureClassifier
+    FreshPRINCE
+    SummaryClassifier
+    RandomIntervalClassifier

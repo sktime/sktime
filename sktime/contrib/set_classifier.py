@@ -32,7 +32,7 @@ from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
     CanonicalIntervalForest,
     DrCIF,
-    RandomIntervalSpectralForest,
+    RandomIntervalSpectralEnsemble,
     SupervisedTimeSeriesForest,
     TimeSeriesForestClassifier,
 )
@@ -142,7 +142,9 @@ def set_classifier(cls, resample_id=None, train_file=False):
         return HIVECOTEV2(random_state=resample_id)
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
-        return RandomIntervalSpectralForest(random_state=resample_id, n_estimators=500)
+        return RandomIntervalSpectralEnsemble(
+            random_state=resample_id, n_estimators=500
+        )
     elif name == "tsf" or name == "timeseriesforestclassifier":
         return TimeSeriesForestClassifier(random_state=resample_id, n_estimators=500)
     elif name == "cif" or name == "canonicalintervalforest":

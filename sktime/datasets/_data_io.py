@@ -27,6 +27,8 @@ import shutil
 import tempfile
 import textwrap
 import zipfile
+from datetime import datetime
+from distutils.util import strtobool
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -172,7 +174,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
-        y = pd.Series.to_numpy(y, dtype=np.str)
+        y = pd.Series.to_numpy(y, dtype=str)
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -184,37 +186,52 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X
 
 
-def _load_provided_dataset(name, split=None, return_X_y=True):
-    """Load baked in time series classification datasets (helper function)."""
+def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
+    """Load baked in time series classification datasets (helper function).
+
+    Loads data from the provided files from sktime/datasets/data only.
+
+    Parameters
+    ----------
+        name : string, file name
+        split : string, default = None, or one of "TRAIN" or "TEST".
+        return_X_y : default = True, if true, returns X and y separately.
+        return_type : default = None,
+    """
     if isinstance(split, str):
         split = split.upper()
 
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X, y = load_from_tsfile(abspath)
+        X, y = load_from_tsfile(abspath, return_data_type=return_type)
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X_train, y_train = load_from_tsfile(abspath)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
         fname = name + "_TEST.ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
-        X_test, y_test = load_from_tsfile(abspath)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
         if isinstance(X_train, np.ndarray):
-            X = np.concatenate(X_train, X_test)
-            y = np.concatenate(y_train, y_test)
+            X = np.concatenate((X_train, X_test))
         elif isinstance(X_train, pd.DataFrame):
             X = pd.concat([X_train, X_test])
-            y = pd.concat([y_train, y_test])
         else:
             raise IOError(
                 f"Invalid data structure type {type(X_train)} for loading "
                 f"classification problem "
             )
+        y = np.concatenate((y_train, y_test))
+
     else:
         raise ValueError("Invalid `split` value =", split)
-    return X, y
+    # Return appropriately
+    if return_X_y:
+        return X, y
+    else:
+        X["class_val"] = pd.Series(y)
+        return X
 
 
 def _read_header(file, full_file_path_and_name):
@@ -307,9 +324,11 @@ def load_from_tsfile(
     return_y: boolean, default True
        whether to return the y variable, if it is present.
     return_data_type: default, None
-        what data structure to return X in. Valid alternatives to None (default
-        pd.DataFrame are numpy2d/np2d or numpy3d/np3d. These arguments will raise an
-        error if the data cannot be stored in the requested type.
+        what data structure to return X in. Valid alternatives to None (default to
+        pd.DataFrame) are nested_univ (pd.DataFrame) are numpy2d/np2d/numpyflat or
+        numpy3d/np3d.
+        These arguments will raise an error if the data cannot be stored in the
+        requested type.
 
     Returns
     -------
@@ -1659,3 +1678,189 @@ def write_ndarray_to_tsfile(
             file.write(f"{a}{missing_values}")
         file.write("\n")  # open a new line
     file.close()
+
+
+def load_tsf_to_dataframe(
+    full_file_path_and_name,
+    replace_missing_vals_with="NaN",
+    value_column_name="series_value",
+):
+    """
+    Convert the contents in a .tsf file into a dataframe.
+
+    This code was extracted from
+    https://github.com/rakshitha123/TSForecasting/blob
+    /master/utils/data_loader.py.
+
+    Parameters
+    ----------
+    full_file_path_and_name: str
+        The full path to the .tsf file.
+    replace_missing_vals_with: str, default="NAN"
+        A term to indicate the missing values in series in the returning dataframe.
+    value_column_name: str, default="series_value"
+        Any name that is preferred to have as the name of the column containing series
+        values in the returning dataframe.
+
+    Returns
+    -------
+    loaded_data: pd.DataFrame
+        The converted dataframe containing the time series.
+    frequency: str
+        The frequency of the dataset.
+    forecast_horizon: int
+        The expected forecast horizon of the dataset.
+    contain_missing_values: bool
+        Whether the dataset contains missing values or not.
+    contain_equal_length: bool
+        Whether the series have equal lengths or not.
+    """
+    col_names = []
+    col_types = []
+    all_data = {}
+    line_count = 0
+    frequency = None
+    forecast_horizon = None
+    contain_missing_values = None
+    contain_equal_length = None
+    found_data_tag = False
+    found_data_section = False
+    started_reading_data_section = False
+
+    with open(full_file_path_and_name, "r", encoding="cp1252") as file:
+        for line in file:
+            # Strip white space from start/end of line
+            line = line.strip()
+
+            if line:
+                if line.startswith("@"):  # Read meta-data
+                    if not line.startswith("@data"):
+                        line_content = line.split(" ")
+                        if line.startswith("@attribute"):
+                            if (
+                                len(line_content) != 3
+                            ):  # Attributes have both name and type
+                                raise Exception("Invalid meta-data specification.")
+
+                            col_names.append(line_content[1])
+                            col_types.append(line_content[2])
+                        else:
+                            if (
+                                len(line_content) != 2
+                            ):  # Other meta-data have only values
+                                raise Exception("Invalid meta-data specification.")
+
+                            if line.startswith("@frequency"):
+                                frequency = line_content[1]
+                            elif line.startswith("@horizon"):
+                                forecast_horizon = int(line_content[1])
+                            elif line.startswith("@missing"):
+                                contain_missing_values = bool(
+                                    strtobool(line_content[1])
+                                )
+                            elif line.startswith("@equallength"):
+                                contain_equal_length = bool(strtobool(line_content[1]))
+
+                    else:
+                        if len(col_names) == 0:
+                            raise Exception(
+                                "Missing attribute section. "
+                                "Attribute section must come before data."
+                            )
+
+                        found_data_tag = True
+                elif not line.startswith("#"):
+                    if len(col_names) == 0:
+                        raise Exception(
+                            "Missing attribute section. "
+                            "Attribute section must come before data."
+                        )
+                    elif not found_data_tag:
+                        raise Exception("Missing @data tag.")
+                    else:
+                        if not started_reading_data_section:
+                            started_reading_data_section = True
+                            found_data_section = True
+                            all_series = []
+
+                            for col in col_names:
+                                all_data[col] = []
+
+                        full_info = line.split(":")
+
+                        if len(full_info) != (len(col_names) + 1):
+                            raise Exception("Missing attributes/values in series.")
+
+                        series = full_info[len(full_info) - 1]
+                        series = series.split(",")
+
+                        if len(series) == 0:
+                            raise Exception(
+                                "A given series should contains a set "
+                                "of comma separated numeric values."
+                                "At least one numeric value should be there "
+                                "in a series. "
+                                "Missing values should be indicated with ? symbol"
+                            )
+
+                        numeric_series = []
+
+                        for val in series:
+                            if val == "?":
+                                numeric_series.append(replace_missing_vals_with)
+                            else:
+                                numeric_series.append(float(val))
+
+                        if numeric_series.count(replace_missing_vals_with) == len(
+                            numeric_series
+                        ):
+                            raise Exception(
+                                "All series values are missing. "
+                                "A given series should contains a set "
+                                "of comma separated numeric values."
+                                "At least one numeric value should be there "
+                                "in a series."
+                            )
+
+                        all_series.append(pd.Series(numeric_series).array)
+
+                        for i in range(len(col_names)):
+                            att_val = None
+                            if col_types[i] == "numeric":
+                                att_val = int(full_info[i])
+                            elif col_types[i] == "string":
+                                att_val = str(full_info[i])
+                            elif col_types[i] == "date":
+                                att_val = datetime.strptime(
+                                    full_info[i], "%Y-%m-%d %H-%M-%S"
+                                )
+                            else:
+                                # Currently, the code supports only
+                                # numeric, string and date types.
+                                # Extend this as required.
+                                raise Exception("Invalid attribute type.")
+
+                            if att_val is None:
+                                raise Exception("Invalid attribute value.")
+                            else:
+                                all_data[col_names[i]].append(att_val)
+
+                line_count = line_count + 1
+
+        if line_count == 0:
+            raise Exception("Empty file.")
+        if len(col_names) == 0:
+            raise Exception("Missing attribute section.")
+        if not found_data_section:
+            raise Exception("Missing series information under data section.")
+
+        all_data[value_column_name] = all_series
+        loaded_data = pd.DataFrame(all_data)
+
+        return (
+            loaded_data,
+            frequency,
+            forecast_horizon,
+            contain_missing_values,
+            contain_equal_length,
+        )
