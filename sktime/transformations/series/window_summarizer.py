@@ -166,7 +166,7 @@ class WindowSummarizer(BaseTransformer):
         "handles-missing-data": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
     }
@@ -187,17 +187,28 @@ class WindowSummarizer(BaseTransformer):
 
         super(WindowSummarizer, self).__init__()
 
-    def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
 
-        Parameters
+        Private _fit containing the core logic, called from fit
+
+        Attributes
         ----------
-        X : pd.DataFrame
-        y : None
+        truncate_start : int
+            See section Parameters - truncate for a more detailed explanation of
+            truncation as a result of applying windows of certain lengths across past
+            observations.
+            A lag_config of [[7, 14], [0, 28]] cannot be correctly applied for the
+            first 21 resp. 28 observations of  the targeted column. truncate_start will
+            give the maximum og observations that are filled with NAs across all
+            arguments of the lag_config, in this case 28.
 
         Returns
         -------
-        transformed version of X
+        X: pd.DataFrame
+            Contains all transformed columns as well as non-transformed columns.
+            The raw inputs to transformed columns will be dropped.
+        self: reference to self
         """
         X_name = get_name_list(X)
 
@@ -211,9 +222,9 @@ class WindowSummarizer(BaseTransformer):
                 )
 
         if self.target_cols is None:
-            target_cols = [X_name[0]]
+            self._target_cols = [X_name[0]]
         else:
-            target_cols = self.target_cols
+            self._target_cols = self.target_cols
 
         if self.lag_config is None:
             func_dict = pd.DataFrame(
@@ -229,8 +240,24 @@ class WindowSummarizer(BaseTransformer):
             inplace=True,
         )
         func_dict = func_dict.explode("window")
-
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+
+        self._func_dict = func_dict
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+        y : None
+
+        Returns
+        -------
+        transformed version of X
+        """
+        func_dict = self._func_dict
+        target_cols = self._target_cols
 
         X.columns = X.columns.map(str)
         Xt_out = []
