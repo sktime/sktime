@@ -90,9 +90,10 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
         Sorted and validated forecasting horizon values.
     """
     # if values are one of the supported pandas index types, we don't have
-    # to do anything as the forecasting horizon directly wraps the index,
-    # note that isinstance() does not work here,
-    # because index types inherit from each other,
+    # to do
+    # anything as the forecasting horizon directly wraps the index, note that
+    # isinstance() does not work here, because index types inherit from each
+    # other,
     # hence we check for type equality here
     if type(values) in VALID_INDEX_TYPES:
         pass
