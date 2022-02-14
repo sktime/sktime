@@ -161,13 +161,13 @@ class WindowSummarizer(BaseTransformer):
         "capability:inverse_transform": False,
         "scitype:transform-labels": True,
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": None,  # which mtypes do _fit/_predict support for y?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
     }
@@ -188,11 +188,8 @@ class WindowSummarizer(BaseTransformer):
 
         super(WindowSummarizer, self).__init__()
 
-    # Get extraction parameters
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        Private _fit containing the core logic, called from fit
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
 
         Parameters
         ----------
@@ -201,15 +198,9 @@ class WindowSummarizer(BaseTransformer):
 
         Returns
         -------
-        X: pd.DataFrame
-        self: reference to self
+        transformed version of X
         """
         X_name = get_name_list(X)
-
-        if self.target_cols is None:
-            self._target_cols = [X_name[0]]
-        else:
-            self._target_cols = self.target_cols
 
         if self.target_cols is not None:
             if not all(x in X_name for x in self.target_cols):
@@ -219,6 +210,11 @@ class WindowSummarizer(BaseTransformer):
                     + " ".join(missing_cols)
                     + " specified that do not exist in X."
                 )
+
+        if self.target_cols is None:
+            target_cols = [X_name[0]]
+        else:
+            target_cols = self.target_cols
 
         if self.lag_config is None:
             func_dict = pd.DataFrame(
@@ -234,46 +230,32 @@ class WindowSummarizer(BaseTransformer):
             inplace=True,
         )
         func_dict = func_dict.explode("window")
-        self._func_dict = func_dict
+
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
 
-        return self
-
-    def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-        y : None
-
-        Returns
-        -------
-        transformed version of X
-        """
         X.columns = X.columns.map(str)
         Xt_out = []
         if self.truncate == "bfill":
             bfill = True
         else:
             bfill = False
-        for cols in self._target_cols:
+        for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
                 X_grouped = getattr(X.groupby("instances"), X.loc[:, [cols]])
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
-                    for index, kwargs in self._func_dict.iterrows()
+                    for index, kwargs in func_dict.iterrows()
                 )
             else:
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X.loc[:, [cols]], **kwargs, bfill=bfill)
-                    for _index, kwargs in self._func_dict.iterrows()
+                    for _index, kwargs in func_dict.iterrows()
                 )
             Xt = pd.concat(df, axis=1)
             Xt = Xt.add_prefix(str(cols) + "_")
             Xt_out.append(Xt)
         Xt_out_df = pd.concat(Xt_out, axis=1)
-        Xt_return = pd.concat([Xt_out_df, X.drop(self._target_cols, axis=1)], axis=1)
+        Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
 
         return Xt_return
 
