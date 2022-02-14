@@ -75,11 +75,8 @@ X = pd.DataFrame(
 )
 
 # %%
-from sktime.forecasting.model_selection import temporal_train_test_split
-
-
-X_train, X_test, y_train, y_test = temporal_train_test_split(X, y)
-
+tscv = MVTimeSeriesSplit(n_splits=3, test_size=3)
+X_train, X_test, y_train, y_test = mvts_cv(X, y, tscv)
 
 # %%
 # window argument: list of how many features we want

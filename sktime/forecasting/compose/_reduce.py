@@ -97,19 +97,18 @@ def _sliding_window_transform(
 
     if isinstance(y.index, pd.MultiIndex):
         # danbartl: how to implement iteration over all transformers?
-        tf_fit = transformers[0].fit()
+        tf_fit = transformers[0].fit(y)
         X_from_y = tf_fit.transform(y)
 
         X_from_y_cut = X_from_y.groupby(level=0).tail(
-            n_timepoints - tf_fit.truncate_start + 1
+            n_timepoints - tf_fit.truncate_start
         )
-        #    X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
+        # X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
         # fix maxlag to take lag into account
-        X_cut = X.groupby(level=0).tail(n_timepoints - tf_fit.truncate_start + 1)
+        X_cut = X.groupby(level=0).tail(n_timepoints - tf_fit.truncate_start)
 
-        z = pd.concat([X_from_y_cut, X_cut], axis=1)
-        yt = z[["y"]]
-        Xt = z.drop("y", axis=1)
+        yt = y.groupby(level=0).tail(n_timepoints - tf_fit.truncate_start)
+        Xt = pd.concat([X_from_y_cut, X_cut], axis=1)
     else:
         z = _concat_y_X(y, X)
         n_timepoints, n_variables = z.shape
@@ -369,8 +368,8 @@ class _RecursiveReducer(_Reducer):
     strategy = "recursive"
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
-        "X_inner_mtype": ["pd-multiindex", "pd.DataFrame"],
+        "y_inner_mtype": ["pd-multiindex"],
+        "X_inner_mtype": ["pd-multiindex"],
     }
 
     # move to the init class
@@ -392,7 +391,7 @@ class _RecursiveReducer(_Reducer):
         """Select last window."""
         # Get the start and end points of the last window.
         cutoff = self.cutoff
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        start = _shift(cutoff, by=-self.window_length_)
 
         if isinstance(self._y.index, pd.MultiIndex):
 
@@ -406,17 +405,12 @@ class _RecursiveReducer(_Reducer):
                 else None
             )
 
-            X_from_y = self.transformers[0].fit().transform(y)
+            X_from_y = self.transformers[0].fit_transform(y)
 
             X_from_y_cut = X_from_y.groupby(level=0).tail(1)
-            #    X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
-            # fix maxlag to take lag into account
             X_cut = X.groupby(level=0).tail(1)
 
-            z = pd.concat([X_from_y_cut, X_cut], axis=1)
-
-            # X_cut = X.groupby(level=0).tail(n_timepoints-maxlag)
-            X = z.drop("y", axis=1)
+            X = pd.concat([X_from_y_cut, X_cut], axis=1)
             y = y.groupby(level=0).tail(1)
         else:
             # Get the last window of the endogenous variable.
@@ -448,20 +442,20 @@ class _RecursiveReducer(_Reducer):
         )
 
         self.transformers_ = self.transformers
-        # if self.window_length is None:
-        #     if isinstance(self.transformers, list):
-        #         truncate_start = self.transformers[0].fit_transform().truncate_start
-        #         self.window_length_ = truncate_start
-        #         self.window_length = truncate_start
-        #     else:
-        #         truncate_start = self.transformers.fit().truncate_start
-        #         self.window_length_ = truncate_start
-        #         self.window_length = truncate_start
+        if self.window_length is None:
+            if isinstance(self.transformers, list):
+                truncate_start = self.transformers[0].fit(y).truncate_start
+                self.window_length_ = truncate_start
+                self.window_length = truncate_start
+            else:
+                truncate_start = self.transformers.fit(y).truncate_start
+                self.window_length_ = truncate_start
+                self.window_length = truncate_start
 
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        if "pd-multiindex" in self.get_tag("y_inner_mtype"):
+        if isinstance(y.index, pd.MultiIndex):
             yt = yt["y"].ravel()
         else:
             yt = yt.ravel()
@@ -471,10 +465,10 @@ class _RecursiveReducer(_Reducer):
         return self
 
     def _get_shifted_window(self, y_update, X_update, shift):
-        """Select last window."""
+        """Select shifted window."""
         # Get the start and end points of the last window.
         cutoff = _shift(self.cutoff, by=shift)
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        start = _shift(cutoff, by=-self.window_length_)
 
         # danbartl: need to transform
 
@@ -490,32 +484,26 @@ class _RecursiveReducer(_Reducer):
             )
 
             # Create new y with old values and new forecasts
-            y = pd.DataFrame(index=mi, columns=["y"])
+            y = pd.DataFrame(np.zeros((mi.shape[0], 1)), index=mi, columns=["y"])
+            y = y.astype(self._y.dtypes.to_dict())
             y.update(self._y)
             y.update(y_update)
 
             # Create new X with old values and new features derived from forecasts
-            X = pd.DataFrame(index=mi, columns=self._X.columns)
+            X = pd.DataFrame(
+                np.zeros((mi.shape[0], len(self._X.columns))),
+                index=mi,
+                columns=self._X.columns,
+            )
+            X = X.astype(self._X.dtypes.to_dict())
             X.update(self._X)
             X.update(X_update)
 
-            y = y.query("timepoints >= @start & timepoints <= @cutoff")
-            X_cut = X_update.query("timepoints == @cutoff")
-
-            ts_index = _get_time_index(y)
-            n_timepoints = ts_index.shape[0]
-            X_from_y = self.transformers[0].fit().transform(y)
-
-            X_from_y_cut = X_from_y.groupby(level=0).tail(
-                n_timepoints - self.window_length + 1
-            )
-            # X_from_y = LaggedWindowSummarizer(**model_kwargs,X)
-            X_cut = X.groupby(level=0).tail(n_timepoints - self.window_length + 1)
+            X_from_y = self.transformers[0].fit_transform(y)
+            X_from_y_cut = X_from_y.groupby(level=0).tail(1)
+            X_cut = X.groupby(level=0).tail(1)
 
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
-
-            # X_cut = X.groupby(level=0).tail(n_timepoints-maxlag)
-            X = X.drop("y", axis=1)
             y = y.groupby(level=0).tail(1)
         else:
             # Get the last window of the endogenous variable.
@@ -567,6 +555,7 @@ class _RecursiveReducer(_Reducer):
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
                 y_pred_curr = pd.DataFrame(y_pred_vector, index=mi, columns=["y"])
+                y_pred_curr["y"] = pd.to_numeric(y_pred_curr["y"])
                 # fh.to_absolute(self.cutoff).to_pandas()
                 # tsids = y_last.index.get_level_values("instances")
 

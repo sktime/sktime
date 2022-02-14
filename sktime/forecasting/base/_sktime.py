@@ -9,10 +9,8 @@ __all__ = ["_BaseWindowForecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.model_selection import CutoffSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.model_selection import CutoffSplitter, SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_cv
 
@@ -113,7 +111,10 @@ class _BaseWindowForecaster(BaseForecaster):
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
         index = fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+        if isinstance(y_pred, pd.DataFrame):
+            return y_pred
+        else:
+            return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA

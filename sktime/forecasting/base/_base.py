@@ -49,6 +49,7 @@ from sktime.datatypes import (
     convert_to,
     mtype_to_scitype,
 )
+from sktime.datatypes._panel._convert import _get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
@@ -1191,7 +1192,8 @@ class BaseForecaster(BaseEstimator):
                     self._cutoff = y.index[-1]
                 else:
                     # otherwise, we need to look in last level, take the max index
-                    self._cutoff = y.index.get_level_values(-1).max()
+                    # danbartl: else freq is dropped
+                    self._cutoff = _get_time_index(y)[-1]
             elif isinstance(y, "np.ndarray"):
                 # if numpy 3D, time is in axis 2
                 if y.ndim == 3:
