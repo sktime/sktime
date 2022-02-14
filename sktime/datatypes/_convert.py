@@ -217,14 +217,21 @@ def convert_to(
     if obj is None:
         return None
 
-    # input checks on to_type, as_scitype
+    # input checks on to_type, as_scitype; coerce to_type, as_scitype to lists
     to_type = _check_str_or_list_of_str(to_type, obj_name="to_type")
-    if as_scitype is not None:
-        as_scitype = _check_str_or_list_of_str(as_scitype, obj_name="as_scitype")
 
-    potential_scitypes = mtype_to_scitype(to_type)
-    potential_scitypes = list(set(potential_scitypes).intersection(as_scitype))
-    from_type = infer_mtype(obj=obj, as_scitype=potential_scitypes)
+    # sub-set a preliminary set of as_scitype from to_type, as_scitype
+    if as_scitype is not None:
+        # if not None, subset to types compatible between to_type and as_scitype
+        as_scitype = _check_str_or_list_of_str(as_scitype, obj_name="as_scitype")
+        potential_scitypes = mtype_to_scitype(to_type)
+        as_scitype = list(set(potential_scitypes).intersection(as_scitype))
+    else:
+        # if None, infer from to_type
+        as_scitype = mtype_to_scitype(to_type)
+
+    # now further narrow down as_scitype by inference from the obj
+    from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
     as_scitype = mtype_to_scitype(from_type)
 
     # if to_type is a list, we do the following:
