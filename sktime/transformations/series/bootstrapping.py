@@ -74,7 +74,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": True,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
@@ -127,6 +127,66 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
 
         super(UnivariateBootsrappingTransformer, self).__init__()
 
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        # implement here
+        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
+        # IMPORTANT: avoid side effects to X, y
+        #
+        # any model parameters should be written to attributes ending in "_"
+        #  attributes set by the constructor must not be overwritten
+        #  if used, estimators should be cloned to attributes ending in "_"
+        #  the clones, not the originals, should be used or fitted if needed
+        #
+        # special case: if no fitting happens before transformation
+        #  then: delete _fit (don't implement)
+        #   set "fit-in-transform" tag to True
+        X_index = X.index
+
+        if len(X) <= self.sp:
+            raise ValueError(
+                "UnivariateBootstrappingTransformer requires that sp is greater than"
+                "the length of X"
+            )
+        else:
+            self.block_length_ = (
+                self.block_length
+                if self.block_length is not None
+                else min(self.sp * 2, len(X) - self.sp)
+            )
+
+        # fit boxcox to get lambda and transform X
+        self.BoxCoxTransformer_ = BoxCoxTransformer(
+            sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
+        )
+        self.BoxCoxTransformer_.fit(X)
+        X_transformed = self.BoxCoxTransformer_.transform(X)
+
+        # fit STL on X_transformed series and extract trend, seasonal and residuals
+        self.statsmodelsSTL_ = _STL(X_transformed, period=self.sp).fit()
+        self.seasonal_ = pd.Series(self.statsmodelsSTL_.seasonal, index=X_index)
+        self.resid_ = pd.Series(self.statsmodelsSTL_.resid, index=X_index)
+        self.trend_ = pd.Series(self.statsmodelsSTL_.trend, index=X_index)
+
+        self._X = X
+
+        return self
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -147,29 +207,35 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         ###############################################################
         #           Should this block be in _fit instead?             #
         ###############################################################
+        # X_index = X.index
+
+        # self.block_length_ = (
+        #     self.block_length
+        #     if self.block_length is not None
+        #     else min(self.sp * 2, len(X) - self.sp)
+        # )
+
+        # # fit boxcox to get lambda and transform X
+        # self.BoxCoxTransformer_ = BoxCoxTransformer(
+        #     sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
+        # )
+        # self.BoxCoxTransformer_.fit(X)
+        # X_transformed = self.BoxCoxTransformer_.transform(X)
+
+        # # fit STL on X_transformed series and extract trend, seasonal and residuals
+        # self.STL_ = _STL(X_transformed, period=self.sp).fit()
+        # self.seasonal_ = pd.Series(self.STL_.seasonal, index=X_index)
+        # self.resid_ = pd.Series(self.STL_.resid, index=X_index)
+        # self.trend_ = pd.Series(self.STL_.trend, index=X_index)
+        ###############################################################
+        ###############################################################
+        ###############################################################
+        if not X.equals(self._X):
+            raise ValueError(
+                "UnivariateBootstrappingTransformer cannot transform unseen data"
+            )
+
         X_index = X.index
-
-        self.block_length_ = (
-            self.block_length
-            if self.block_length is not None
-            else min(self.sp * 2, len(X) - self.sp)
-        )
-
-        # fit boxcox to get lambda and transform X
-        self.BoxCoxTransformer_ = BoxCoxTransformer(
-            sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
-        )
-        self.BoxCoxTransformer_.fit(X)
-        X_transformed = self.BoxCoxTransformer_.transform(X)
-
-        # fit STL on X_transformed series and extract trend, seasonal and residuals
-        self.STL_ = _STL(X_transformed, period=self.sp).fit()
-        self.seasonal_ = pd.Series(self.STL_.seasonal, index=X_index)
-        self.resid_ = pd.Series(self.STL_.resid, index=X_index)
-        self.trend_ = pd.Series(self.STL_.trend, index=X_index)
-        ###############################################################
-        ###############################################################
-        ###############################################################
 
         # time series id prefix
         prefix = self.series_name + "_" if self.series_name is not None else ""
@@ -218,7 +284,6 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
         #
@@ -237,7 +302,9 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
         #
-        # return params
+        params = [{}]
+
+        return params
 
 
 def moving_block_bootstrap(
