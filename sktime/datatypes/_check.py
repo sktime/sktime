@@ -362,7 +362,7 @@ def mtype(obj, as_scitype: Union[str, List[str]] = None):
             (x[0], x[1]) for x in check_dict.keys() if x[1] in as_scitype
         ]
 
-    #danbartl: manual fix to avoid errors
+    # danbartl: manual fix to avoid errors
     m_plus_scitypes = [i for i in m_plus_scitypes if i[0] != "pd_DataFrame_Table"]
 
     res = [
