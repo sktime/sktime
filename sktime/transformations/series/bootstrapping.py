@@ -156,7 +156,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
         #   set "fit-in-transform" tag to True
-        X_index = X.index
+        # X_index = X.index
+
+        if self.sp <= 2:
+            raise ValueError(
+                "UnivariateBootstrappingTransformer does not support non-seasonal data"
+            )
 
         if len(X) <= self.sp:
             raise ValueError(
@@ -164,6 +169,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
                 "the length of X"
             )
         else:
+            # implement as static method
             self.block_length_ = (
                 self.block_length
                 if self.block_length is not None
@@ -175,15 +181,6 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
             sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
         )
         self.BoxCoxTransformer_.fit(X)
-        X_transformed = self.BoxCoxTransformer_.transform(X)
-
-        # fit STL on X_transformed series and extract trend, seasonal and residuals
-        self.statsmodelsSTL_ = _STL(X_transformed, period=self.sp).fit()
-        self.seasonal_ = pd.Series(self.statsmodelsSTL_.seasonal, index=X_index)
-        self.resid_ = pd.Series(self.statsmodelsSTL_.resid, index=X_index)
-        self.trend_ = pd.Series(self.statsmodelsSTL_.trend, index=X_index)
-
-        self._X = X
 
         return self
 
@@ -204,38 +201,15 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         -------
         transformed version of X
         """
-        ###############################################################
-        #           Should this block be in _fit instead?             #
-        ###############################################################
-        # X_index = X.index
-
-        # self.block_length_ = (
-        #     self.block_length
-        #     if self.block_length is not None
-        #     else min(self.sp * 2, len(X) - self.sp)
-        # )
-
-        # # fit boxcox to get lambda and transform X
-        # self.BoxCoxTransformer_ = BoxCoxTransformer(
-        #     sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
-        # )
-        # self.BoxCoxTransformer_.fit(X)
-        # X_transformed = self.BoxCoxTransformer_.transform(X)
-
-        # # fit STL on X_transformed series and extract trend, seasonal and residuals
-        # self.STL_ = _STL(X_transformed, period=self.sp).fit()
-        # self.seasonal_ = pd.Series(self.STL_.seasonal, index=X_index)
-        # self.resid_ = pd.Series(self.STL_.resid, index=X_index)
-        # self.trend_ = pd.Series(self.STL_.trend, index=X_index)
-        ###############################################################
-        ###############################################################
-        ###############################################################
-        if not X.equals(self._X):
-            raise ValueError(
-                "UnivariateBootstrappingTransformer cannot transform unseen data"
-            )
-
         X_index = X.index
+
+        X_transformed = self.BoxCoxTransformer_.transform(X)
+
+        # fit STL on X_transformed series and extract trend, seasonal and residuals
+        STL_ = _STL(X_transformed, period=self.sp).fit()
+        seasonal = pd.Series(STL_.seasonal, index=X_index)
+        resid = pd.Series(STL_.resid, index=X_index)
+        trend = pd.Series(STL_.trend, index=X_index)
 
         # time series id prefix
         prefix = self.series_name + "_" if self.series_name is not None else ""
@@ -255,9 +229,9 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # create multiple series
         for i in range(self.number_of_new_series):
             new_series = self.BoxCoxTransformer_.inverse_transform(
-                moving_block_bootstrap(ts=self.resid_, block_length=self.block_length_)
-                + self.seasonal_
-                + self.trend_
+                moving_block_bootstrap(ts=resid, block_length=self.block_length_)
+                + seasonal
+                + trend
             )
 
             new_series_id = f"{prefix}synthetic_{i}"
