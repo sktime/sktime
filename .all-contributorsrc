@@ -1491,7 +1491,16 @@
         "doc",
         "infra"
       ]
-    }
+    },
+    {
+      "login": "RishiKumarRay",
+      "name": "Rishi Kumar Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87641376?v=4",
+      "profile": "https://github.com/RishiKumarRay",
+      "contributions": [
+        "infra"
+      ]
+    } 
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
