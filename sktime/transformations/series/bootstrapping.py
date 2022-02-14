@@ -60,6 +60,34 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         [description], by default None
     outer_iter : int, optional
         [description], by default None
+
+    References
+    ----------
+    .. [1] Bergmeir, C., Hyndman, R. J., & Benítez, J. M. (2016). Bagging exponential
+        smoothing methods using STL decomposition and Box-Cox transformation.
+        International Journal of Forecasting, 32(2), 303-312
+    .. [2] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
+        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
+        Accessed on February 13th 2022.
+
+    Examples
+    --------
+    >>> from sktime.transformations.series.bootstrapping import (
+    ...     UnivariateBootsrappingTransformer
+    ... )
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.utils.plotting import plot_series
+    >>> ts = load_airline()
+    >>> ubt = UnivariateBootsrappingTransformer(10)
+    >>> df = ubt.fit_transform(ts)
+    >>> series_list = []
+    >>> names = []
+    >>> for group, series in df.groupby(level=[0], as_index=False):
+    ...     series.index = series.index.droplevel(0)
+    ...     series_list.append(series)
+    ...     names.append(group)
+    >>> plot_series(*series_list, labels=names)
+    (...)
     """
 
     _tags = {
@@ -273,9 +301,6 @@ def moving_block_bootstrap(
         International Journal of Forecasting, 32(2), 303-312
     .. [2] Kunsch HR (1989) The jackknife and the bootstrap for general stationary
         observations. Annals of Statistics 17(3), 1217-1241
-    .. [3] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
-        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
-        Accessed on January 24th 2022.
     """
     ts_length = len(ts)
     ts_index = ts.index
