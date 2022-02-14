@@ -5,7 +5,8 @@
 
 __author__ = ["ltsaprounis"]
 
-# todo: add any necessary sktime external imports here
+# todo: add option to sample with or without replacement
+# todo: raise error or warning if sampling with replacement is not possible
 
 from typing import Tuple
 
@@ -272,7 +273,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [{}]
+        params = [
+            {},
+            # {"block_length": 1}, # this failes due to sampling without replacement!
+            {"series_name": "test"},
+            {"return_actual": False},
+        ]
 
         return params
 
