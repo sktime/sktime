@@ -208,6 +208,7 @@ class BaseTransformer(BaseEstimator):
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
         if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
             X = convert_Series_to_Panel(X)
+
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None and self.get_tag("y_inner_mtype") != "None":
@@ -648,6 +649,7 @@ class BaseTransformer(BaseEstimator):
         # 2. internal only has Panel but X is Series: consider X as one-instance Panel
         if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
             X = convert_Series_to_Panel(X)
+
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
             if y is not None and self.get_tag("y_inner_mtype") != "None":
