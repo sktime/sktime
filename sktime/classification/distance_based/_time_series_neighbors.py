@@ -2,8 +2,8 @@
 """KNN time series classification.
 
  Built on sklearn KNeighborsClassifier, this class supports a range of distance
- measure specifically for time series. These distance functions are defined in cython
- in sktime.distances.elastic_cython. Python versions are in sktime.distances.elastic
+ measure specifically for time series. These distance functions are defined in numba
+ in sktime.distances. Python versions are in sktime.distances.elastic
  but these are orders of magnitude slower.
 
 Please note that many aspects of this class are taken from scikit-learn's

@@ -65,6 +65,8 @@ __all__ = [
     "convert_to",
 ]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 
@@ -83,7 +85,14 @@ convert_dict.update(convert_dict_Hierarchical)
 convert_dict.update(convert_dict_Table)
 
 
-def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=None):
+def convert(
+    obj,
+    from_type: str,
+    to_type: str,
+    as_scitype: str = None,
+    store=None,
+    store_behaviour: str = None,
+):
     """Convert objects between different machine representations, subject to scitype.
 
     Parameters
@@ -93,7 +102,13 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
     to_type : str - the type to convert "obj" to, a valid mtype string
     as_scitype : str, optional - name of scitype the object "obj" is considered as
         default = inferred from from_type
-    store : reference of storage for lossy conversions, default=None (no store)
+    store : optional, reference of storage for lossy conversions, default=None (no ref)
+        is updated by side effect if not None and store_behaviour="reset" or "update"
+    store_behaviour : str, optional, one of None (default), "reset", "freeze", "update"
+        "reset" - store is emptied and then updated from conversion
+        "freeze" - store is read-only, may be read/used by conversion but not changed
+        "update" - store is updated from conversion and retains previous contents
+        None - automatic: "update" if store is empty and not None; "freeze", otherwise
 
     Returns
     -------
@@ -103,10 +118,12 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
     Raises
     ------
     KeyError if conversion is not implemented
+    TypeError or ValueError if inputs do not match specification
     """
     if obj is None:
         return None
 
+    # input type checks
     if not isinstance(to_type, str):
         raise TypeError("to_type must be a str")
     if not isinstance(from_type, str):
@@ -115,6 +132,16 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
         as_scitype = mtype_to_scitype(to_type)
     elif not isinstance(as_scitype, str):
         raise TypeError("as_scitype must be str or None")
+    if store is not None and not isinstance(store, dict):
+        raise TypeError("store must be a dict or None")
+    if store_behaviour not in [None, "reset", "freeze", "update"]:
+        raise ValueError(
+            'store_behaviour must be one of "reset", "freeze", "update", or None'
+        )
+    if store_behaviour is None and store == {}:
+        store_behaviour = "update"
+    if store_behaviour is None and store != {}:
+        store_behaviour = "freeze"
 
     key = (from_type, to_type, as_scitype)
 
@@ -123,13 +150,33 @@ def convert(obj, from_type: str, to_type: str, as_scitype: str = None, store=Non
             "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )
 
+    if store_behaviour == "freeze":
+        store = deepcopy(store)
+    elif store_behaviour == "reset":
+        # note: this is a side effect on store
+        store.clear()
+    elif store_behaviour == "update":
+        # store is passed to convert_obj by reference, unchanged
+        # this "elif" is here for clarity, to cover all three values
+        pass
+    else:
+        raise RuntimeError(
+            "bug: unrechable condition error, store_behaviour has unexpected value"
+        )
+
     converted_obj = convert_dict[key](obj, store=store)
 
     return converted_obj
 
 
 # conversion based on queriable type to specified target
-def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
+def convert_to(
+    obj,
+    to_type: str,
+    as_scitype: str = None,
+    store=None,
+    store_behaviour: str = None,
+):
     """Convert object to a different machine representation, subject to scitype.
 
     Parameters
@@ -141,6 +188,12 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
         pre-specifying the scitype reduces the number of checks done in type inference
         default = inferred from mtype of obj, which is in turn inferred internally
     store : reference of storage for lossy conversions, default=None (no store)
+        is updated by side effect if not None and store_behaviour="reset" or "update"
+    store_behaviour : str, optional, one of None (default), "reset", "freeze", "update"
+        "reset" - store is emptied and then updated from conversion
+        "freeze" - store is read-only, may be read/used by conversion but not changed
+        "update" - store is updated from conversion and retains previous contents
+        None - automatic: "update" if store is empty and not None; "freeze", otherwise
 
     Returns
     -------
@@ -159,16 +212,19 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
     TypeError if machine type of input "obj" is not recognized
     TypeError if to_type contains no mtype compatible with mtype of obj
     KeyError if conversion that would be conducted is not implemented
+    TypeError or ValueError if inputs do not match specification
     """
     if obj is None:
         return None
 
     # input checks on to_type, as_scitype
-    _check_str_or_list_of_str(to_type, obj_name="to_type")
+    to_type = _check_str_or_list_of_str(to_type, obj_name="to_type")
     if as_scitype is not None:
-        _check_str_or_list_of_str(as_scitype, obj_name="as_scitype")
+        as_scitype = _check_str_or_list_of_str(as_scitype, obj_name="as_scitype")
 
-    from_type = infer_mtype(obj=obj, as_scitype=as_scitype)
+    potential_scitypes = mtype_to_scitype(to_type)
+    potential_scitypes = list(set(potential_scitypes).intersection(as_scitype))
+    from_type = infer_mtype(obj=obj, as_scitype=potential_scitypes)
     as_scitype = mtype_to_scitype(from_type)
 
     # if to_type is a list, we do the following:
@@ -196,6 +252,7 @@ def convert_to(obj, to_type: str, as_scitype: str = None, store=None):
         to_type=to_type,
         as_scitype=as_scitype,
         store=store,
+        store_behaviour=store_behaviour,
     )
 
     return converted_obj
@@ -232,8 +289,13 @@ def _conversions_defined(scitype: str):
 
 
 def _check_str_or_list_of_str(obj, obj_name="obj"):
+    """Checks whether obj is str or list of str; coerces to list of str."""
     if isinstance(obj, list):
         if not np.all(isinstance(x, str) for x in obj):
             raise TypeError(f"{obj} must be a str or list of str")
+        else:
+            return obj
     elif not isinstance(obj, str):
         raise TypeError(f"{obj} must be a str or list of str")
+    else:
+        return [obj]

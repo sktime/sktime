@@ -1442,6 +1442,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/7654679?v=4",
       "profile": "https://github.com/rakshitha123",
       "contributions": [
+        "code",
         "doc"
       ]
     },
@@ -1470,6 +1471,25 @@
       "profile": "https://github.com/ishannangia001",
       "contributions": [
         "ideas"
+      ]
+    },
+    {
+      "login": "khrapovs",
+      "name": "Stanislav Khrapov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3774663?v=4",
+      "profile": "https://github.com/khrapovs",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Saransh-cpp",
+      "name": "Saransh Chopra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74055102?v=4",
+      "profile": "https://github.com/Saransh-cpp",
+      "contributions": [
+        "doc",
+        "infra"
       ]
     }
   ],

@@ -215,3 +215,13 @@ Model Evaluation (Backtesting)
     :template: function.rst
 
     evaluate
+
+VAR (Vector Autoregression)
+
+.. currentmodule:: sktime.forecasting.var
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VAR
