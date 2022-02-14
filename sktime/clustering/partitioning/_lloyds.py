@@ -187,7 +187,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
     distance_params: dict, defaults = None
-        Dictonary containing kwargs for the distance metric being used.
+        Dictionary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -280,7 +280,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         else:
             self._distance_params = self.distance_params
 
-    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+    def _fit(self, X: np.ndarray, y=None):
         """Fit time series clusterer to training data.
 
         Parameters
