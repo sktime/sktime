@@ -12,6 +12,7 @@ __all__ = [
 ]
 
 from typing import Union
+from sktime.datatypes._panel._convert import _get_time_index
 
 import numpy as np
 import pandas as pd
@@ -237,6 +238,8 @@ def check_equal_time_index(*ys, mode="equal"):
     # only validate indices if data is passed as pd.Series
     if isinstance(y_not_None[0], np.ndarray):
         first_index = pd.Index(range(len(y_not_None[0])))
+    elif isinstance(y_not_None[0].index, pd.MultiIndex):
+        first_index = _get_time_index(y_not_None[0])
     else:
         first_index = y_not_None[0].index
 
@@ -245,6 +248,8 @@ def check_equal_time_index(*ys, mode="equal"):
     for i, y in enumerate(y_not_None[1:]):
         if isinstance(y, np.ndarray):
             y_index = pd.Index(y)
+        elif isinstance(y.index, pd.MultiIndex):
+            y_index = _get_time_index(y)
         else:
             y_index = y.index
 
