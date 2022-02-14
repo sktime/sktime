@@ -477,25 +477,13 @@ class _RecursiveReducer(_Reducer):
 
             # If X is given, also get the last window of the exogenous variables.
             dateline = pd.date_range(start=start, end=cutoff, freq=start.freq)
-            tsids = X_update.index.get_level_values("instances").unique()
 
-            mi = pd.MultiIndex.from_product(
-                [tsids, dateline], names=["instances", "timepoints"]
-            )
-
-            # Create new y with old values and new forecasts
-            y = pd.DataFrame(np.zeros((mi.shape[0], 1)), index=mi, columns=["y"])
-            y = y.astype(self._y.dtypes.to_dict())
+            y = _create_multiindex(dateline, self._y)
             y.update(self._y)
             y.update(y_update)
 
             # Create new X with old values and new features derived from forecasts
-            X = pd.DataFrame(
-                np.zeros((mi.shape[0], len(self._X.columns))),
-                index=mi,
-                columns=self._X.columns,
-            )
-            X = X.astype(self._X.dtypes.to_dict())
+            X = _create_multiindex(dateline, self._X)
             X.update(self._X)
             X.update(X_update)
 
@@ -525,51 +513,31 @@ class _RecursiveReducer(_Reducer):
         y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
-        # danbartl: remove check
         # if not self._is_predictable(y_last):
         #     return self._predict_nan(fh)
         if isinstance(self._y.index, pd.MultiIndex):
             fh_max = fh.to_relative(self.cutoff)[-1]
-
             dateline = pd.date_range(
                 end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
             )
-            #            fh.to_absolute(self.cutoff).to_pandas()
-            tsids = y_last.index.get_level_values("instances")
 
-            mi = pd.MultiIndex.from_product(
-                [tsids, dateline], names=["instances", "timepoints"]
-            )
-
-            y_pred = pd.DataFrame(index=mi, columns=["y"])
-            y_pred["y"] = pd.to_numeric(y_pred["y"])
+            y_pred = _create_multiindex(dateline, self._y)
 
             for i in range(fh_max):
                 # Slice prediction window.
+                # Collect inputs for predictions
                 date_curr = pd.date_range(end=dateline[i], periods=1)
-
-                mi = pd.MultiIndex.from_product(
-                    [tsids, date_curr], names=["instances", "timepoints"]
-                )
 
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
-                y_pred_curr = pd.DataFrame(y_pred_vector, index=mi, columns=["y"])
-                y_pred_curr["y"] = pd.to_numeric(y_pred_curr["y"])
-                # fh.to_absolute(self.cutoff).to_pandas()
-                # tsids = y_last.index.get_level_values("instances")
-
+                y_pred_curr = _create_multiindex(date_curr, self._y, fill=y_pred_vector)
                 y_pred.update(y_pred_curr)
-                # danbartl: check for horizon larger than one
-                # danbartl should not take y_pred_curr but y_pred as input for fh > 2
 
+                # # Update last window with previous prediction.
                 X_last = self._get_shifted_window(
                     y_update=y_pred, X_update=X, shift=i + 1
                 )
 
-                # y_pred[i] = self.estimator_.predict(X_pred)
-                # # Update last window with previous prediction.
-                # last[:, 0, window_length + i] = y_pred[i]
         else:
             # Pre-allocate arrays.
             if X is None:
@@ -994,3 +962,23 @@ def _get_forecaster(scitype, strategy):
         },
     }
     return registry[scitype][strategy]
+
+
+def _create_multiindex(target_date, origin_df, fill=None):
+    """Create an empty multiindex dataframe from origin dataframe."""
+    # Collect predictions
+    tsids = origin_df.index.get_level_values("instances").unique()
+    mi = pd.MultiIndex.from_product(
+        [tsids, target_date], names=["instances", "timepoints"]
+    )
+    if fill is None:
+        template = pd.DataFrame(
+            np.zeros((len(target_date) * len(tsids), len(origin_df.columns))),
+            index=mi,
+            columns=origin_df.columns.to_list(),
+        )
+    else:
+        template = pd.DataFrame(fill, index=mi, columns=origin_df.columns.to_list())
+
+    template = template.astype(origin_df.dtypes.to_dict())
+    return template
