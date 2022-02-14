@@ -144,20 +144,6 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         -------
         self: reference to self
         """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
-        #
-        # special case: if no fitting happens before transformation
-        #  then: delete _fit (don't implement)
-        #   set "fit-in-transform" tag to True
-        # X_index = X.index
-
         if self.sp <= 2:
             raise ValueError(
                 "UnivariateBootstrappingTransformer does not support non-seasonal data"
@@ -258,24 +244,6 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        #
-        # this can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
         params = [{}]
 
         return params
