@@ -1,7 +1,7 @@
 name: Cancel Workflows on Push
 on:
   workflow_run:
-    workflows: ["test"]
+    workflows: ["Install and test"]
     types:
       - requested
 jobs:
