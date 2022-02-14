@@ -114,6 +114,8 @@ Libraries
      - Contains time series preprocessing, transformation as well as classification techniques
    * - `ruptures <https://github.com/deepcharles/ruptures>`_
      - time series annotation: change point detection, segmentation
+   * - `salesforce-merlion <https://github.com/salesforce/Merlion/>`_
+     - Library from salesforce for forecasting, anomaly detection, and change point detection
    * - `scikit-fda <https://github.com/GAA-UAM/scikit-fda>`_
      - A Python library to perform Functional Data Analysis, compatible with scikit-learn, including representation, preprocessing, exploratory analysis and machine learning methods
    * - `scikit-multiflow <https://scikit-multiflow.github.io>`_
