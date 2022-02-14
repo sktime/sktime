@@ -159,9 +159,8 @@ class WindowSummarizer(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:instancewise": True,
         "capability:inverse_transform": False,
-        "scitype:transform-labels": True,
+        "scitype:transform-labels": False,
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": None,  # which mtypes do _fit/_predict support for y?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
