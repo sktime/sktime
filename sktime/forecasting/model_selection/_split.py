@@ -563,8 +563,10 @@ class CutoffSplitter(BaseSplitter):
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like
+        Cutoff points, positive and integer- or datetime-index like.
+        Type should match the type of `fh` input.
     fh : int, timedelta, list or np.array of ints or timedeltas
+        Type should match the type of `cutoffs` input.
     window_length : int or timedelta or pd.DateOffset
     """
 
