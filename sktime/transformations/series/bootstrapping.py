@@ -7,7 +7,9 @@ __author__ = ["ltsaprounis"]
 
 # todo: add option to sample with or without replacement
 # todo: raise error or warning if sampling with replacement is not possible
+# todo: remove the +1 from the choice in mbb
 
+from copy import copy
 from typing import Tuple
 
 import numpy as np
@@ -275,7 +277,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         """
         params = [
             {},
-            # {"block_length": 1}, # this failes due to sampling without replacement!
+            {"block_length": 1},  # this failes due to sampling without replacement!
             {"series_name": "test"},
             {"return_actual": False},
         ]
@@ -286,7 +288,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
 def moving_block_bootstrap(
     ts: pd.Series, block_length: int, replacement=False
 ) -> pd.Series:
-    """Implement the moving block bootstrap method MBB.
+    """Create a synthetic time series using the moving block bootstrap method MBB.
 
     Parameters
     ----------
@@ -314,17 +316,25 @@ def moving_block_bootstrap(
 
     if ts_length <= block_length:
         raise ValueError("ts length should be greater than block_length")
-    total_num_blocks = int(ts_length / block_length) + 2
 
-    block_origns = np.random.choice(
-        ts_length - block_length + 1, size=total_num_blocks, replace=replacement
-    )
+    if block_length == 1 and not replacement:
+        mbb_values = copy(ts_values)
+        np.random.shuffle(mbb_values)
+    elif block_length == 1:
+        mbb_values = np.random.choice(ts_values, size=ts_length, replace=replacement)
+    else:
+        total_num_blocks = int(ts_length / block_length) + 2
+        block_origns = np.random.choice(
+            ts_length - block_length + 1, size=total_num_blocks, replace=replacement
+        )
+        mbb_values = [
+            val for i in block_origns for val in ts_values[i : i + block_length]
+        ]
+        # remove the first few observations and ensure new series has the same length
+        # as the original
+        remove_first = np.random.choice(block_length - 1)
+        mbb_values = mbb_values[remove_first : remove_first + ts_length]
 
-    mbb_values = [val for i in block_origns for val in ts_values[i : i + block_length]]
-    # remove the first few observations and ensure new series has the same length
-    # as the original
-    remove_first = np.random.choice(block_length - 1)
-    mbb_values = mbb_values[remove_first : remove_first + ts_length]
     mbb_series = pd.Series(data=mbb_values, index=ts_index)
 
     return mbb_series
