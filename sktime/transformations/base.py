@@ -763,9 +763,6 @@ class BaseTransformer(BaseEstimator):
         X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
 
-        y_mtype = mtype(y, as_scitype=["Series", "Panel"])
-        y_scitype = mtype_to_scitype(y_mtype)
-
         # for debugging, exception if the conversion fails (this should never happen)
         if X_scitype not in X_inner_scitypes:
             raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
@@ -788,7 +785,15 @@ class BaseTransformer(BaseEstimator):
             store_behaviour="reset",
         )
 
-        if y_inner_mtype != ["None"]:
+        if y_inner_mtype != ["None"] and y is not None:
+
+            if X_scitype == "Series":
+                y_possible_scitypes = ["Series"]
+            elif X_scitype == "Panel":
+                y_possible_scitypes = ["Panel", "Table"]
+            y_mtype = mtype(y, as_scitype=y_possible_scitypes)
+            y_scitype = mtype_to_scitype(y_mtype)
+
             y_inner_mtype = [
                 mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
             ]
