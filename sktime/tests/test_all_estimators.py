@@ -635,33 +635,36 @@ def test_methods_have_no_side_effects(estimator_instance, scenario):
             ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
 
-def test_persistence_via_pickle(estimator_instance):
+def test_persistence_via_pickle(estimator_instance, scenario):
     """Check that we can pickle all estimators."""
     estimator = estimator_instance
     set_random_state(estimator)
-    fit_args = _make_args(estimator, "fit")
-    estimator.fit(*fit_args)
+    # Fit the model, get args before and after
+    scenario.run(estimator, method_sequence=["fit"], return_args=True)
 
     # Generate results before pickling
     results = {}
-    args = {}
     for method in NON_STATE_CHANGING_METHODS:
         if _has_capability(estimator, method):
-            args[method] = _make_args(estimator, method)
-            results[method] = getattr(estimator, method)(*args[method])
+            results[method] = scenario.run(estimator, method_sequence=[method])
 
     # Pickle and unpickle
     pickled_estimator = pickle.dumps(estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     # Compare against results after pickling
-    for method, value in results.items():
-        unpickled_result = getattr(unpickled_estimator, method)(*args[method])
+    for method, vanilla_result in results.items():
+        unpickled_result = scenario.run(unpickled_estimator, method_sequence=[method])
+        msg = (
+            f"Results of {method} differ between when pickling and not pickling, "
+            f"estimator {estimator_instance.__name__}"
+        )
+
         _assert_array_almost_equal(
-            value,
+            vanilla_result,
             unpickled_result,
             decimal=6,
-            err_msg="Results are not the same after pickling",
+            err_msg=msg,
         )
 
 
