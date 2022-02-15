@@ -109,6 +109,7 @@ from sktime.transformations.series.summarize import SummaryTransformer
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
+    # known issues, see PR 1989 for fix
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
@@ -116,14 +117,18 @@ EXCLUDE_ESTIMATORS = [
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
     "STLTransformer",
-    # SFA is non-compliant with any transformer interfaces
+    # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
 ]
 
 
 EXCLUDED_TESTS = {
+    # known issue caused by inheritane from sklearn feature union, #1662
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
+    # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
+    # known side effects on multivariate arguments, #2072
+    "WindowSummarizer": ["test_methods_have_no_side_effects"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
