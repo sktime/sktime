@@ -1447,7 +1447,14 @@ def geometric_mean_squared_error(
 
 
 # TODO: change default to symmetric=False in v0.12.0
-@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
+@deprecated(
+    version="v0.11.0",
+    reason=(
+        "The default argument symmetric=True is changing to symmetric=False "
+        "in v0.12.0"
+    ),
+    category=FutureWarning,
+)
 def mean_absolute_percentage_error(
     y_true,
     y_pred,
@@ -1559,8 +1566,16 @@ def mean_absolute_percentage_error(
 
     return np.average(output_errors, weights=multioutput)
 
+
 # TODO: change default to symmetric=False in v0.12.0
-@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
+@deprecated(
+    version="v0.11.0",
+    reason=(
+        "The default argument symmetric=True is changing to symmetric=False "
+        "in v0.12.0"
+    ),
+    category=FutureWarning,
+)
 def median_absolute_percentage_error(
     y_true,
     y_pred,
@@ -1678,8 +1693,16 @@ def median_absolute_percentage_error(
 
     return np.average(output_errors, weights=multioutput)
 
+
 # TODO: change default to symmetric=False in v0.12.0
-@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
+@deprecated(
+    version="v0.11.0",
+    reason=(
+        "The default argument symmetric=True is changing to symmetric=False "
+        "in v0.12.0"
+    ),
+    category=FutureWarning,
+)
 def mean_squared_percentage_error(
     y_true,
     y_pred,
@@ -1806,8 +1829,16 @@ def mean_squared_percentage_error(
 
     return np.average(output_errors, weights=multioutput)
 
+
 # TODO: change default to symmetric=False in v0.12.0
-@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
+@deprecated(
+    version="v0.11.0",
+    reason=(
+        "The default argument symmetric=True is changing to symmetric=False "
+        "in v0.12.0"
+    ),
+    category=FutureWarning,
+)
 def median_squared_percentage_error(
     y_true,
     y_pred,
