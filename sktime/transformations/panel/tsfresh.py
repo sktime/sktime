@@ -187,6 +187,20 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # input data
         return Xt.reindex(X.index)
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"disable_progressbar": True, "show_warnings": False}
+
 
 class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting and selecting features.
@@ -338,3 +352,22 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt = self.extractor_.transform(X)
         Xt = self.selector_.transform(Xt)
         return Xt.reindex(X.index)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "disable_progressbar": True,
+            "show_warnings": False,
+            "fdr_level": 0.01,
+        }
+        return params
