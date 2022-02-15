@@ -18,6 +18,18 @@ from sktime.transformations.series.boxcox import BoxCoxTransformer
 class UnivariateBootsrappingTransformer(BaseTransformer):
     """Creates a population of similar time series.
 
+    This method utilises a form of bootstrapping to generate a population of
+    similar time series to the input time series _[1], _[2].
+
+    First the observed time series is transformed using a Box-Cox transformation to
+    stabilise the variance. Then it's decomposed to seasonal, trend and remainder
+    time series, using the STL algorithm from statsmodels _[4]. We then sample blocks
+    from the remainder time series using the Moving Block Bootstrapping method _[3] to
+    create synthetic remainder series that mimic the autocorrelation pattenrs of the
+    observed series. Finally these bootstrapped remainders are added to the season and
+    trend components and we use the inverse Box-Cox transform to return a panel of
+    similar time series.
+
     Parameters
     ----------
     number_of_new_series : int, optional
@@ -100,6 +112,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         Accessed on February 13th 2022.
     .. [3] Kunsch HR (1989) The jackknife and the bootstrap for general stationary
         observations. Annals of Statistics 17(3), 1217-1241
+    .. [4] https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html
 
     Examples
     --------
