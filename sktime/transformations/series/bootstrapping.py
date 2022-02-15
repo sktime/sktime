@@ -19,12 +19,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
     """Creates a population of similar time series.
 
     This method utilises a form of bootstrapping to generate a population of
-    similar time series to the input time series _[1], _[2].
+    similar time series to the input time series [1]_, [2]_.
 
     First the observed time series is transformed using a Box-Cox transformation to
     stabilise the variance. Then it's decomposed to seasonal, trend and remainder
-    time series, using the STL algorithm from statsmodels _[4]. We then sample blocks
-    from the remainder time series using the Moving Block Bootstrapping method _[3] to
+    time series, using the STL algorithm from statsmodels [4]_. We then sample blocks
+    from the remainder time series using the Moving Block Bootstrapping method [3]_ to
     create synthetic remainder series that mimic the autocorrelation pattenrs of the
     observed series. Finally these bootstrapped remainders are added to the season and
     trend components and we use the inverse Box-Cox transform to return a panel of
