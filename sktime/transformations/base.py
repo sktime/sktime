@@ -106,7 +106,7 @@ class BaseTransformer(BaseEstimator):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "requires_y": False,  # does y need to be passed in fit and transform?
+        "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
@@ -308,8 +308,6 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `transform`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
@@ -618,8 +616,6 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
