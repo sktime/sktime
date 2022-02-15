@@ -2,12 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Bootstrapping methods for time series."""
 
-
 __author__ = ["ltsaprounis"]
-
-# todo: add option to sample with or without replacement
-# todo: raise error or warning if sampling with replacement is not possible
-# todo: remove the +1 from the choice in mbb
 
 from copy import copy
 from typing import Tuple
@@ -32,22 +27,24 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         Must be an integer >= 2
     block_length : int, optional
         The length of the block in the MBB method, by default None.
-        If it is None then the following heuristic is used, the block length will the
+        If not provided, the following heuristic is used, the block length will the
         minimum between 2*sp and len(X) - sp.
+    sampling_replacement: bool, optional
+        Whether the MBB sample is with or without replacement, by default False.
     return_actual : bool, optional
         If True the output will contain the actual time series, by default True.
         The actual time series will be labelled as "<series_name>_actual" (or "actual"
         if series name is None).
     series_name : str, optional
         The series name, by default None
-        If speciffied, the synthetic series names will have the series_name as a
-        prefix followed by an undescore e.g. "<series_name>_synthetic_1". If it's None
-        the series names will no prefix will be present e.g. "synthetic_1".
+        If provided, the synthetic series names will have the series_name as a
+        prefix followed by an undescore e.g. "<series_name>_synthetic_1". If not
+        provided the series names will no prefix will be present e.g. "synthetic_1".
     boxcox_bounds : Tuple, optional
         Lower and upper bounds used to restrict the feasible range
         when solving for the value of lambda, by default None.
     boxcox_method : str, optional
-        {"pearsonr", "mle", "all", "guerrero"}, default="guerrero"
+        {"pearsonr", "mle", "all", "guerrero"}, by default "guerrero"
         The optimization approach used to determine the lambda value used
         in the Box-Cox transformation.
     seasonal : int, optional
@@ -150,6 +147,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         number_of_new_series: int = 10,
         sp: int = 12,
         block_length: int = None,
+        sampling_replacement: bool = False,
         return_actual: bool = True,
         series_name: str = None,
         boxcox_bounds: Tuple = None,
@@ -170,6 +168,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         self.number_of_new_series = number_of_new_series
         self.sp = sp
         self.block_length = block_length
+        self.sampling_replacement = sampling_replacement
         self.return_actual = return_actual
         self.series_name = series_name
         self.boxcox_bounds = boxcox_bounds
@@ -290,7 +289,11 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # create multiple series
         for i in range(self.number_of_new_series):
             new_series = self.box_cox_transformer_.inverse_transform(
-                self.moving_block_bootstrap(ts=resid, block_length=self.block_length_)
+                self.moving_block_bootstrap(
+                    ts=resid,
+                    block_length=self.block_length_,
+                    replacement=self.sampling_replacement,
+                )
                 + seasonal
                 + trend
             )
@@ -307,7 +310,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
 
     @staticmethod
     def moving_block_bootstrap(
-        ts: pd.Series, block_length: int, replacement=False
+        ts: pd.Series, block_length: int, replacement: bool = False
     ) -> pd.Series:
         """Create a synthetic time series using the moving block bootstrap method MBB.
 
@@ -316,7 +319,9 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         ts : pd.Series
             a stationary time series
         block_length : int
-            the length of the bootstrapping block
+            The length of the bootstrapping block
+        replacement: bool, optional
+           Whether the sample is with or without replacement, by default True.
 
         Returns
         -------
@@ -371,6 +376,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
             {"block_length": 1},
             {"series_name": "test"},
             {"return_actual": False},
+            {"sampling_replacement": True},
         ]
 
         return params
