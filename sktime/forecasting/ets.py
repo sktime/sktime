@@ -20,6 +20,8 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from sktime.utils.validation.forecasting import check_alpha
 
 
+
+
 class AutoETS(_StatsModelsAdapter):
     """ETS models with both manual and automatic fitting capabilities.
 
