@@ -44,6 +44,7 @@ Trend
 
     TrendForecaster
     PolynomialTrendForecaster
+    STLForecaster
 
 Exponential Smoothing
 ---------------------
