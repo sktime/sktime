@@ -29,7 +29,6 @@ def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
     return _x
 
 
-@njit()
 def _compute_pairwise_distance(
     x: np.ndarray, y: np.ndarray, symmetric: bool, distance_callable: DistanceCallable
 ) -> np.ndarray:
@@ -63,7 +62,6 @@ def _compute_pairwise_distance(
 
     for i in range(x_size):
         curr_x = _x[i]
-
         for j in range(y_size):
             if symmetric and j < i:
                 pairwise_matrix[i, j] = pairwise_matrix[j, i]
@@ -134,7 +132,7 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
             f"distance computation a numpy arrays must be provided."
         )
 
-    _x = np.array(x, copy=True, dtype=np.float)
+    _x = np.array(x, copy=True, dtype=float)
     num_dims = _x.ndim
     if num_dims == 1:
         shape = _x.shape
@@ -175,11 +173,11 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
     """
     if not isinstance(x, np.ndarray):
         raise ValueError(
-            f"The value {x} is an invalid timeseries. To perform a "
-            f"distance computation a numpy arrays must be provided."
+            f"The value {x} is an invalid time series. To perform a"
+            f"distance computation a numpy array must be provided."
         )
 
-    _x = np.array(x, copy=True, dtype=np.float)
+    _x = np.array(x, copy=True, dtype=float)
     num_dims = _x.ndim
     shape = _x.shape
     if num_dims == 1:

@@ -19,6 +19,12 @@ from sktime.classification.base import BaseClassifier
 
 
 class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
+    """Base Class for column ensemble."""
+
+    _tags = {
+        "capability:multivariate": True,
+    }
+
     def __init__(self, estimators, verbose=False):
         self.verbose = verbose
         self.estimators = estimators
@@ -114,7 +120,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
             yield name, estimator, column
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         # the data passed in could be an array of dataframes?
         """Fit all estimators, fit the data.
 
@@ -163,13 +169,13 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             ]
         )
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for X using 'soft' voting."""
         self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def predict(self, X):
+    def _predict(self, X):
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 
@@ -213,6 +219,19 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
+
+    Examples
+    --------
+    >>> from sktime.classification.interval_based import DrCIF
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> clf = DrCIF(n_estimators=10)
+    >>> estimators = [("DrCIF", clf, [0, 1, 2, 3, 4, 5])]
+    >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
+    >>> col_ens.fit(X_train, y_train)
+    ColumnEnsembleClassifier(...)
+    >>> y_pred = col_ens.predict(X_test)
     """
 
     _required_parameters = ["estimators"]

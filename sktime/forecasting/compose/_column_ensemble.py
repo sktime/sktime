@@ -32,9 +32,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
-    >>> _, y = load_longley()
-    >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
+    >>> from sktime.datasets import load_macroeconomic
+    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
     ...     ("ses", ExponentialSmoothing(trend='add'), 1),
@@ -221,3 +220,22 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "One estimator per column required. Found %s" % len(indices)
             )
         return self.forecasters
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        # imports
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": FORECASTER}
+        return params

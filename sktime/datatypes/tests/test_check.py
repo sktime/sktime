@@ -186,9 +186,11 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
         check_result = check_is_mtype(fixture, mtype, scitype, return_metadata=True)
         metadata = check_result[2]
 
-        # remove mtype key if exists, since comparison is on scitype level
+        # remove mtype & scitype key if exists, since comparison is on scitype level
         if "mtype" in metadata:
             del metadata["mtype"]
+        if "scitype" in metadata:
+            del metadata["scitype"]
 
         msg = (
             f"check_is_mtype returns wrong metadata on scitype {scitype}, "

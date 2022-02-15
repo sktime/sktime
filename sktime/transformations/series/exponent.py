@@ -9,11 +9,10 @@ __all__ = ["ExponentTransformer", "SqrtTransformer"]
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
 
-class ExponentTransformer(_SeriesToSeriesTransformer):
+class ExponentTransformer(BaseTransformer):
     """Apply exponent transformation to a timeseries.
 
     Transformation raises input series to the `power` provided. By default,
@@ -69,9 +68,18 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
     """
 
     _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit-in-transform": False,
         "transform-returns-same-time-index": True,
         "univariate-only": False,
+        "capability:inverse_transform": True,
     }
 
     def __init__(self, power=0.5, offset="auto"):
@@ -81,18 +89,24 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
 
         super(ExponentTransformer, self).__init__()
 
-    def _fit(self, Z, X=None):
-        """Logic used by fit method on `Z`.
+    def _fit(self, X, y=None):
+        """
+        Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        self
+        self: a fitted instance of the estimator
         """
+        Z = X
         if not isinstance(self.power, (int, float)):
             raise ValueError(
                 f"Expected `power` to be int or float, but found {type(self.power)}."
@@ -114,99 +128,46 @@ class ExponentTransformer(_SeriesToSeriesTransformer):
 
         return self
 
-    def _transform(self, Z, X=None):
-        """Logic used by `transform` to apply transformation to `Z`.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            The timeseries to be transformed.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed timeseries.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            transformed version of X
         """
-        Zt = Z.copy()
-        Zt = np.power(Zt + self._offset_value, self.power)
+        Zt = X.copy()
+        Xt = np.power(Zt + self._offset_value, self.power)
 
-        return Zt
+        return Xt
 
-    def _inverse_transform(self, Z, X=None):
-        """Logic used by `inverse_transform` to reverse transformation on  `Z`.
+    def _inverse_transform(self, X, y=None):
+        """Logic used by `inverse_transform` to reverse transformation on `X`.
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply reverse the transformation on.
+        X : pd.Series or pd.DataFrame
+            Data to be inverse transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
+        Xt : pd.Series or pd.DataFrame, same type as X
+            inverse transformed version of X
         """
-        Z_inv = Z.copy()
-        Z_inv = np.power(Z_inv, 1.0 / self.power) - self._offset_value
-        return Z_inv
-
-    def fit(self, Z, X=None):
-        """Fit the transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
-
-        Returns
-        -------
-        self
-        """
-        Z = check_series(Z)
-
-        self._fit(Z, X=X)
-
-        self._is_fitted = True
-        return self
-
-    def transform(self, Z, X=None):
-        """Return transformed version of input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to apply the transformation on.
-
-        Returns
-        -------
-        Zt : pd.Series or pd.DataFrame
-            Transformed version of input series `Z`.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        Zt = self._transform(Z, X=X)
-
-        return Zt
-
-    def inverse_transform(self, Z, X=None):
-        """Reverse transformation on input series `Z`.
-
-        Parameters
-        ----------
-        Z : pd.Series or pd.DataFrame
-            A time series to reverse the transformation on.
-
-        Returns
-        -------
-        Z_inv : pd.Series or pd.DataFrame
-            The reconstructed timeseries after the transformation has been reversed.
-        """
-        self.check_is_fitted()
-        Z = check_series(Z)
-
-        Z_inv = self._inverse_transform(Z, X=X)
-
-        return Z_inv
+        Z_inv = X.copy()
+        Xt = np.power(Z_inv, 1.0 / self.power) - self._offset_value
+        return Xt
 
 
 class SqrtTransformer(ExponentTransformer):
@@ -257,12 +218,6 @@ class SqrtTransformer(ExponentTransformer):
     >>> transformer = SqrtTransformer()
     >>> y_transform = transformer.fit_transform(y)
     """
-
-    _tags = {
-        "fit-in-transform": False,
-        "transform-returns-same-time-index": True,
-        "univariate-only": False,
-    }
 
     def __init__(self, offset="auto"):
         super().__init__(power=0.5, offset=offset)

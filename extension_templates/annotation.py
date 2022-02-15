@@ -25,14 +25,8 @@ Mandatory implements:
 Optional implements:
     updating        - _update(self, X, Y=None)
 
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
-
-Testing:
+Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -185,6 +179,7 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
         # IMPORTANT: avoid side effects to X, fh
 
     # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -200,6 +195,12 @@ class MySeriesAnnotator(BaseSeriesAnnotator):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

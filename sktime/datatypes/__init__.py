@@ -22,6 +22,7 @@ from sktime.datatypes._registry import (
     SCITYPE_REGISTER,
     mtype_to_scitype,
 )
+from sktime.datatypes._vectorize import VectorizedDF
 
 __all__ = [
     "check_is",
@@ -40,4 +41,5 @@ __all__ = [
     "scitype",
     "SCITYPE_LIST",
     "SCITYPE_REGISTER",
+    "VectorizedDF",
 ]
