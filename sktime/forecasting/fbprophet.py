@@ -11,7 +11,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("fbprophet")
+_check_soft_dependencies("prophet")
 
 
 class Prophet(_ProphetAdapter):
@@ -167,7 +167,7 @@ class Prophet(_ProphetAdapter):
         self.interval_width = interval_width
 
         # import inside method to avoid hard dependency
-        from fbprophet.forecaster import Prophet as _Prophet
+        from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
 
