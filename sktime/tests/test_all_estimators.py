@@ -654,11 +654,11 @@ def test_persistence_via_pickle(estimator_instance, scenario):
     # Compare against results after pickling
     for method, vanilla_result in results.items():
         unpickled_result = scenario.run(unpickled_estimator, method_sequence=[method])
+
         msg = (
             f"Results of {method} differ between when pickling and not pickling, "
-            f"estimator {estimator_instance.__name__}"
+            f"estimator {type(estimator_instance).__name__}"
         )
-
         _assert_array_almost_equal(
             vanilla_result,
             unpickled_result,
