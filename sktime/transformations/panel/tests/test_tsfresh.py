@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-__author__ = ["Ayushmann Seth", "Markus Löning"]
+__author__ = ["Ayushmann Seth", "mloning"]
 
 import numpy as np
 import pytest
-from sklearn.model_selection import train_test_split
+from sktime.datatypes import convert
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.utils._testing.panel import make_classification_problem
 
 
@@ -19,7 +18,7 @@ def test_tsfresh_extractor(default_fc_parameters):
 
     Xt = transformer.fit_transform(X)
     actual = Xt.filter(like="__mean", axis=1).values.ravel()
-    expected = from_nested_to_2d_array(X).mean(axis=1).values
-
+    converted = convert(X, from_type="nested_univ", to_type="pd-wide")
+    expected = converted.mean(axis=1).values
     assert expected[0] == X.iloc[0, 0].mean()
     np.testing.assert_allclose(actual, expected)
