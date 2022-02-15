@@ -49,7 +49,6 @@ from sktime.utils._testing.estimator_checks import (
     _get_args,
     _has_capability,
     _list_required_methods,
-    _make_args,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
