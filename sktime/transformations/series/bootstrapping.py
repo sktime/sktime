@@ -26,43 +26,72 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
     Parameters
     ----------
     number_of_new_series : int, optional
-        [description], by default 10
+        The number of bootstraped time series that will be generated, by default 10
     sp : int, optional
-        [description], by default 12
+        Seasonal periodicity of the data in integer form, by default 12.
+        Must be an integer >= 2
     block_length : int, optional
-        [description], by default None
+        The length of the block in the MBB method, by default None.
+        If it is None then the following heuristic is used, the block length will the
+        minimum between 2*sp and len(X) - sp.
     return_actual : bool, optional
-        [description], by default True
+        If True the output will contain the actual time series, by default True.
+        The actual time series will be labelled as "<series_name>_actual" (or "actual"
+        if series name is None).
     series_name : str, optional
-        [description], by default None
+        The series name, by default None
+        If speciffied, the synthetic series names will have the series_name as a
+        prefix followed by an undescore e.g. "<series_name>_synthetic_1". If it's None
+        the series names will no prefix will be present e.g. "synthetic_1".
     boxcox_bounds : Tuple, optional
-        [description], by default None
+        Lower and upper bounds used to restrict the feasible range
+        when solving for the value of lambda, by default None.
     boxcox_method : str, optional
-        [description], by default "guerrero"
+        {"pearsonr", "mle", "all", "guerrero"}, default="guerrero"
+        The optimization approach used to determine the lambda value used
+        in the Box-Cox transformation.
     seasonal : int, optional
-        [description], by default 7
+        Length of the seasonal smoother. Must be an odd integer, and should
+        normally be >= 7, by default 7
     trend : int, optional
-        [description], by default None
+        Length of the trend smoother, by default None.
+        Must be an odd integer. If not provided uses the smallest odd integer greater
+        than 1.5 * period / (1 - 1.5 / seasonal), following the suggestion in the
+        original implementation.
     low_pass : int, optional
-        [description], by default None
+        Length of the low-pass filter, by default None.
+        Must be an odd integer >=3. If not provided, uses the smallest odd
+        integer > period
     seasonal_deg : int, optional
-        [description], by default 1
+        Degree of seasonal LOESS. 0 (constant) or 1 (constant and trend), by default 1.
     trend_deg : int, optional
-        [description], by default 1
+        Degree of trend LOESS. 0 (constant) or 1 (constant and trend), by default 1.
     low_pass_deg : int, optional
-        [description], by default 1
+        Degree of low pass LOESS. 0 (constant) or 1 (constant and trend), by default 1
     robust : bool, optional
-        [description], by default False
+        Flag indicating whether to use a weighted version that is robust to
+        some forms of outliers, by default False
     seasonal_jump : int, optional
-        [description], by default 1
+        Positive integer determining the linear interpolation step, by default 1.
+        If larger than 1, the LOESS is used every seasonal_jump points and linear
+        interpolation is between fitted points. Higher values reduce estimation time.
     trend_jump : int, optional
-        [description], by default 1
+        Positive integer determining the linear interpolation step, by default 1.
+        If larger than 1, the LOESS is used every trend_jump points and values between
+        the two are linearly interpolated. Higher values reduce estimation time.
     low_pass_jump : int, optional
-        [description], by default 1
+        Positive integer determining the linear interpolation step, by default 1.
+        If larger than 1, the LOESS is used every low_pass_jump points and values
+        between the two are linearly interpolated. Higher values reduce estimation
+        time.
     inner_iter : int, optional
-        [description], by default None
+        Number of iterations to perform in the inner loop, by default None.
+        If not provided uses 2 if robust is True, or 5 if not. This param goes into
+        STL.fit() from statsmodels.
     outer_iter : int, optional
-        [description], by default None
+        Number of iterations to perform in the outer loop, by default None.
+        If not provided uses 15 if robust is True, or 0 if not.
+        This param goes into STL.fit() from statsmodels.
 
     References
     ----------
@@ -225,10 +254,23 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         X_transformed = self.BoxCoxTransformer_.transform(X)
 
         # fit STL on X_transformed series and extract trend, seasonal and residuals
-        STL_ = _STL(X_transformed, period=self.sp).fit()
-        seasonal = pd.Series(STL_.seasonal, index=X_index)
-        resid = pd.Series(STL_.resid, index=X_index)
-        trend = pd.Series(STL_.trend, index=X_index)
+        stl = _STL(
+            X_transformed,
+            period=self.sp,
+            seasonal=self.seasonal,
+            trend=self.trend,
+            low_pass=self.low_pass,
+            seasonal_deg=self.seasonal_deg,
+            trend_deg=self.trend_deg,
+            low_pass_deg=self.low_pass_deg,
+            robust=self.robust,
+            seasonal_jump=self.seasonal_jump,
+            trend_jump=self.trend_jump,
+            low_pass_jump=self.low_pass_jump,
+        ).fit(inner_iter=self.inner_iter, outer_iter=self.outer_iter)
+        seasonal = pd.Series(stl.seasonal, index=X_index)
+        resid = pd.Series(stl.resid, index=X_index)
+        trend = pd.Series(stl.trend, index=X_index)
 
         # time series id prefix
         prefix = self.series_name + "_" if self.series_name is not None else ""
