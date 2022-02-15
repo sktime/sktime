@@ -1037,7 +1037,7 @@ def from_dflist_to_numpy3D(obj, store=None):
 convert_dict[("df-list", "numpy3D", "Panel")] = from_dflist_to_numpy3D
 
 
-def from_numpy3D_to_dflist(obj, store=None):
+def from_numpy3d_to_dflist(obj, store=None):
 
     if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
         raise TypeError("obj must be a 3D numpy.ndarray")
@@ -1048,7 +1048,7 @@ def from_numpy3D_to_dflist(obj, store=None):
     return Xlist
 
 
-convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3D_to_dflist
+convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3d_to_dflist
 
 
 def from_nested_to_df_list_adp(obj, store=None):
@@ -1071,7 +1071,7 @@ def from_df_list_to_nested_adp(obj, store=None):
 convert_dict[("df-list", "nested_univ", "Panel")] = from_df_list_to_nested_adp
 
 
-def from_numpy3D_to_numpyflat(obj, store=None):
+def from_numpy3d_to_numpyflat(obj, store=None):
 
     if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
         raise TypeError("obj must be a 3D numpy.ndarray")
@@ -1087,10 +1087,10 @@ def from_numpy3D_to_numpyflat(obj, store=None):
     return obj_in_2D
 
 
-convert_dict[("numpy3D", "numpyflat", "Panel")] = from_numpy3D_to_numpyflat
+convert_dict[("numpy3D", "numpyflat", "Panel")] = from_numpy3d_to_numpyflat
 
 
-def from_numpyflat_to_numpy3D(obj, store=None):
+def from_numpyflat_to_numpy3d(obj, store=None):
 
     if not isinstance(obj, np.ndarray) or len(obj.shape) != 2:
         raise TypeError("obj must be a 2D numpy.ndarray")
@@ -1114,7 +1114,7 @@ def from_numpyflat_to_numpy3D(obj, store=None):
     return obj_in_3D
 
 
-convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3D
+convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3d
 
 
 # obtain other conversions from/to numpyflat via concatenation to numpy3D
