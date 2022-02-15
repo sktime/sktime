@@ -10,6 +10,7 @@ the lower the better.
 
 import numpy as np
 from scipy.stats import gmean
+from deprecated.sphinx import deprecated
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
@@ -19,8 +20,6 @@ from sklearn.utils.validation import check_consistent_length
 
 from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
-
-from deprecated.sphinx import deprecated
 
 __author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
 __all__ = [
