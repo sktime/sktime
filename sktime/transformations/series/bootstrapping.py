@@ -225,10 +225,10 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
             )
 
         # fit boxcox to get lambda and transform X
-        self.BoxCoxTransformer_ = BoxCoxTransformer(
+        self.box_cox_transformer_ = BoxCoxTransformer(
             sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
         )
-        self.BoxCoxTransformer_.fit(X)
+        self.box_cox_transformer_.fit(X)
 
         return self
 
@@ -251,7 +251,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         """
         X_index = X.index
 
-        X_transformed = self.BoxCoxTransformer_.transform(X)
+        X_transformed = self.box_cox_transformer_.transform(X)
 
         # fit STL on X_transformed series and extract trend, seasonal and residuals
         stl = _STL(
@@ -289,7 +289,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
 
         # create multiple series
         for i in range(self.number_of_new_series):
-            new_series = self.BoxCoxTransformer_.inverse_transform(
+            new_series = self.box_cox_transformer_.inverse_transform(
                 self.moving_block_bootstrap(ts=resid, block_length=self.block_length_)
                 + seasonal
                 + trend
