@@ -97,12 +97,7 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.panel.tsfresh import (
-    TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor,
-)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.summarize import SummaryTransformer
 
@@ -248,11 +243,6 @@ ESTIMATOR_TEST_PARAMS = {
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    SignatureTransformer: {
-        "augmentation_list": ("basepoint", "addtime"),
-        "depth": 3,
-        "window_name": "global",
-    },
     SignatureClassifier: {
         "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
@@ -321,12 +311,6 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": Catch22Classifier(
             estimator=RandomForestClassifier(n_estimators=2)
         ),
-    },
-    TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
-    TSFreshRelevantFeatureExtractor: {
-        "disable_progressbar": True,
-        "show_warnings": False,
-        "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralEnsemble: {
