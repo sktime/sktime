@@ -1030,7 +1030,7 @@ class _PanelToTabularTransformer(BaseTransformer):
 
     # class is temporary for downwards compatibility
 
-    # default tag values for "Series-to-Series"
+    # default tag values for "Panel-to-Tabular"
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -1047,7 +1047,7 @@ class _PanelToPanelTransformer(BaseTransformer):
 
     # class is temporary for downwards compatibility
 
-    # default tag values for "Series-to-Series"
+    # default tag values for "Panel-to-Panel"
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
