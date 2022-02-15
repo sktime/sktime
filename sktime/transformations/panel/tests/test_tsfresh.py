@@ -3,6 +3,7 @@ __author__ = ["Ayushmann Seth", "mloning"]
 
 import numpy as np
 import pytest
+
 from sktime.datatypes import convert
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils._testing.panel import make_classification_problem
