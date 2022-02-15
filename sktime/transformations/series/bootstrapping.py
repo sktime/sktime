@@ -72,6 +72,8 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
     .. [2] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
         practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
         Accessed on February 13th 2022.
+    .. [3] Kunsch HR (1989) The jackknife and the bootstrap for general stationary
+        observations. Annals of Statistics 17(3), 1217-1241
 
     Examples
     --------
@@ -246,7 +248,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         # create multiple series
         for i in range(self.number_of_new_series):
             new_series = self.BoxCoxTransformer_.inverse_transform(
-                moving_block_bootstrap(ts=resid, block_length=self.block_length_)
+                self.moving_block_bootstrap(ts=resid, block_length=self.block_length_)
                 + seasonal
                 + trend
             )
@@ -261,8 +263,55 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
 
         return df
 
-    # todo: return default parameters, so that a test instance can be created
-    #   required for automated unit and integration testing of estimator
+    @staticmethod
+    def moving_block_bootstrap(
+        ts: pd.Series, block_length: int, replacement=False
+    ) -> pd.Series:
+        """Create a synthetic time series using the moving block bootstrap method MBB.
+
+        Parameters
+        ----------
+        ts : pd.Series
+            a stationary time series
+        block_length : int
+            the length of the bootstrapping block
+
+        Returns
+        -------
+        pd.Series
+            synthetic time series
+        """
+        ts_length = len(ts)
+        ts_index = ts.index
+        ts_values = ts.values
+
+        if ts_length <= block_length:
+            raise ValueError("ts length should be greater than block_length")
+
+        if block_length == 1 and not replacement:
+            mbb_values = copy(ts_values)
+            np.random.shuffle(mbb_values)
+        elif block_length == 1:
+            mbb_values = np.random.choice(
+                ts_values, size=ts_length, replace=replacement
+            )
+        else:
+            total_num_blocks = int(ts_length / block_length) + 2
+            block_origns = np.random.choice(
+                ts_length - block_length + 1, size=total_num_blocks, replace=replacement
+            )
+            mbb_values = [
+                val for i in block_origns for val in ts_values[i : i + block_length]
+            ]
+            # remove the first few observations and ensure new series has the
+            # same length as the original
+            remove_first = np.random.choice(block_length - 1)
+            mbb_values = mbb_values[remove_first : remove_first + ts_length]
+
+        mbb_series = pd.Series(data=mbb_values, index=ts_index)
+
+        return mbb_series
+
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -277,64 +326,9 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         """
         params = [
             {},
-            {"block_length": 1},  # this failes due to sampling without replacement!
+            {"block_length": 1},
             {"series_name": "test"},
             {"return_actual": False},
         ]
 
         return params
-
-
-def moving_block_bootstrap(
-    ts: pd.Series, block_length: int, replacement=False
-) -> pd.Series:
-    """Create a synthetic time series using the moving block bootstrap method MBB.
-
-    Parameters
-    ----------
-    ts : pd.Series
-        a stationary time series
-    block_length : int
-        the length of the bootstrapping block
-
-    Returns
-    -------
-    pd.Series
-        bootstrapped time series
-
-    References
-    ----------
-    .. [1] Bergmeir, C., Hyndman, R. J., & Benítez, J. M. (2016). Bagging exponential
-        smoothing methods using STL decomposition and Box-Cox transformation.
-        International Journal of Forecasting, 32(2), 303-312
-    .. [2] Kunsch HR (1989) The jackknife and the bootstrap for general stationary
-        observations. Annals of Statistics 17(3), 1217-1241
-    """
-    ts_length = len(ts)
-    ts_index = ts.index
-    ts_values = ts.values
-
-    if ts_length <= block_length:
-        raise ValueError("ts length should be greater than block_length")
-
-    if block_length == 1 and not replacement:
-        mbb_values = copy(ts_values)
-        np.random.shuffle(mbb_values)
-    elif block_length == 1:
-        mbb_values = np.random.choice(ts_values, size=ts_length, replace=replacement)
-    else:
-        total_num_blocks = int(ts_length / block_length) + 2
-        block_origns = np.random.choice(
-            ts_length - block_length + 1, size=total_num_blocks, replace=replacement
-        )
-        mbb_values = [
-            val for i in block_origns for val in ts_values[i : i + block_length]
-        ]
-        # remove the first few observations and ensure new series has the same length
-        # as the original
-        remove_first = np.random.choice(block_length - 1)
-        mbb_values = mbb_values[remove_first : remove_first + ts_length]
-
-    mbb_series = pd.Series(data=mbb_values, index=ts_index)
-
-    return mbb_series
