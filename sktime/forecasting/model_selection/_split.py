@@ -359,13 +359,15 @@ def _check_cutoffs_fh_y(
     """Check that combination of inputs is compatible.
 
     Currently, only two cases are allowed:
-    either all inputs are integers, or they are all datetime or timedelta
+    either both `cutoffs` and `fh` are integers, or they are datetime or timedelta.
 
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like
+        Cutoff points, positive and integer- or datetime-index like.
+        Type should match the type of `fh` input.
     fh : int, timedelta, list or np.array of ints or timedeltas
+        Type should match the type of `cutoffs` input.
     y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
         coerced and checked version of input y
 
@@ -378,11 +380,10 @@ def _check_cutoffs_fh_y(
     """
     max_cutoff = np.max(cutoffs)
     max_fh = fh.max()
-    n_timepoints = y.shape[0]
 
     msg = "`fh` is incompatible with given `cutoffs` and `y`."
     if is_int(x=max_cutoff) and is_int(x=max_fh):
-        if max_cutoff + max_fh > n_timepoints:
+        if max_cutoff + max_fh > y.shape[0]:
             raise ValueError(msg)
     elif is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
         if max_cutoff + max_fh > y.max():
