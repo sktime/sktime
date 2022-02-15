@@ -11,7 +11,7 @@ import pytest
 
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.registry import all_estimators
-from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.tests._config import EXCLUDE_ESTIMATORS, VALID_TRANSFORMER_TYPES
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
@@ -25,7 +25,11 @@ from sktime.utils._testing.estimator_checks import (
     _make_args,
 )
 
-ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
+ALL_TRANSFORMERS = all_estimators(
+    estimator_types="transformer",
+    return_names=False,
+    exclude_estimators=EXCLUDE_ESTIMATORS,
+)
 
 
 @pytest.mark.parametrize("Estimator", ALL_TRANSFORMERS)
