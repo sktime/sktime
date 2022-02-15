@@ -327,7 +327,6 @@ ESTIMATOR_TEST_PARAMS = {
         "acf_lag": 10,
         "min_interval": 5,
     },
-    SFA: {"return_pandas_data_series": True},
     BOSSEnsemble: {"max_ensemble_size": 3},
     ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
     WEASEL: {"window_inc": 4},

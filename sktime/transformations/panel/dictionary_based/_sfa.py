@@ -1036,5 +1036,5 @@ class SFA(_PanelToPanelTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # small window size for testing
-        params = {"window_size": 4}
+        params = {"window_size": 4, "return_pandas_data_series": True}
         return params
