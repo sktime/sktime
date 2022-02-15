@@ -93,7 +93,6 @@ from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
