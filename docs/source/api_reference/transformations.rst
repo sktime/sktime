@@ -349,3 +349,14 @@ FeatureSelection
     :template: class.rst
 
     FeatureSelection
+
+UnivariateBootsrappingTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.bootstrapping
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    UnivariateBootsrappingTransformer
