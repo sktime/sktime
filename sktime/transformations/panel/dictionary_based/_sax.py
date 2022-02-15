@@ -19,7 +19,9 @@ __author__ = "Matthew Middlehurst"
 
 
 class SAX(_PanelToPanelTransformer):
-    """SAX (Symbolic Aggregate approXimation) Transformer, as described in
+    """SAX (Symbolic Aggregate approXimation) transformer.
+
+    as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
     Data Mining and Knowledge Discovery, 15(2):107-144
@@ -80,7 +82,7 @@ class SAX(_PanelToPanelTransformer):
         super(SAX, self).__init__()
 
     def transform(self, X, y=None):
-        """
+        """Transform data.
 
         Parameters
         ----------
