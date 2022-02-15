@@ -20,6 +20,8 @@ from sklearn.utils.validation import check_consistent_length
 from sktime.utils.stats import _weighted_geometric_mean
 from sktime.utils.validation.series import check_series
 
+from deprecated.sphinx import deprecated
+
 __author__ = ["mloning", "Tomasz Chodakowski", "RNKuhns"]
 __all__ = [
     "relative_loss",
@@ -1444,6 +1446,8 @@ def geometric_mean_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+# TODO: change default to symmetric=False in v0.12.0
+@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
 def mean_absolute_percentage_error(
     y_true,
     y_pred,
@@ -1555,7 +1559,8 @@ def mean_absolute_percentage_error(
 
     return np.average(output_errors, weights=multioutput)
 
-
+# TODO: change default to symmetric=False in v0.12.0
+@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
 def median_absolute_percentage_error(
     y_true,
     y_pred,
@@ -1673,7 +1678,8 @@ def median_absolute_percentage_error(
 
     return np.average(output_errors, weights=multioutput)
 
-
+# TODO: change default to symmetric=False in v0.12.0
+@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
 def mean_squared_percentage_error(
     y_true,
     y_pred,
@@ -1800,7 +1806,8 @@ def mean_squared_percentage_error(
 
     return np.average(output_errors, weights=multioutput)
 
-
+# TODO: change default to symmetric=False in v0.12.0
+@deprecated(version="0.11.0", reason="The default argument symmetric=True is changing to symmetric=False in v0.12.0 ", category=FutureWarning)
 def median_squared_percentage_error(
     y_true,
     y_pred,
