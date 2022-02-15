@@ -119,6 +119,10 @@ EXCLUDE_ESTIMATORS = [
     "STLTransformer",
     # SFA is non-compliant with any transformer interfaces, #2064
     "SFA",
+    # requires y in fit, this is incompatible with the old testing framework
+    #    unless it inherits from the old mixins, which hard coded the y
+    #    should be removed once test_all_transformers has been refactored to scenarios
+    "TSFreshRelevantFeatureExtractor",
 ]
 
 
