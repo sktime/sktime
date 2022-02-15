@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Tests for TSFreshFeatureExtractor."""
 __author__ = ["Ayushmann Seth", "mloning"]
 
 import numpy as np
@@ -11,6 +12,7 @@ from sktime.utils._testing.panel import make_classification_problem
 
 @pytest.mark.parametrize("default_fc_parameters", ["minimal"])
 def test_tsfresh_extractor(default_fc_parameters):
+    """Test that mean feature of TSFreshFeatureExtract is identical with sample mean."""
     X, _ = make_classification_problem()
 
     transformer = TSFreshFeatureExtractor(
