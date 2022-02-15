@@ -143,7 +143,8 @@ class ExponentTransformer(BaseTransformer):
 
     def _get_offset(self, X):
         if self.offset == "auto":
-            offset = - X.min() * (X.min() < 0)
+            Xmin = X.min()
+            offset = -Xmin * (Xmin < 0)
         else:
             offset = self.offset
 
