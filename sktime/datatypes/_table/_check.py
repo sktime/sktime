@@ -78,6 +78,35 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
 check_dict[("pd_DataFrame_Table", "Table")] = check_pddataframe_table
 
 
+def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
+
+    metadata = dict()
+
+    if not isinstance(obj, pd.Series):
+        msg = f"{var_name} must be a pandas.Series, found {type(obj)}"
+        return _ret(False, msg, None, return_metadata)
+
+    # we now know obj is a pd.Series
+    index = obj.index
+    metadata["is_empty"] = len(index) < 1
+    metadata["is_univariate"] = True
+
+    # check that dtype is not object
+    if "object" == obj.dtypes:
+        msg = f"{var_name} should not be of 'object' dtype"
+        return _ret(False, msg, None, return_metadata)
+
+    # check whether index is equally spaced or if there are any nans
+    #   compute only if needed
+    if return_metadata:
+        metadata["has_nans"] = obj.isna().values.any()
+
+    return _ret(True, None, metadata, return_metadata)
+
+
+check_dict[("pd_Series_Table", "Table")] = check_pdseries_table
+
+
 def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
