@@ -147,6 +147,7 @@ def test_construct_vectorizeddf(scitype, mtype, fixture_index):
     if scitype == "Hierarchical":
         VectorizedDF(X=fixture, iterate_as="Panel", is_scitype=None)
 
+
 def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
     """Test VectorizedDF raises appropriate errors with invalid arguments.
 
