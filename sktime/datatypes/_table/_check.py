@@ -36,7 +36,6 @@ __author__ = ["fkiraly"]
 
 __all__ = ["check_dict"]
 
-from multiprocessing.sharedctypes import Value
 import numpy as np
 import pandas as pd
 
