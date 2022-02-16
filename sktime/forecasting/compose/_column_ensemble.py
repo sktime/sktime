@@ -32,9 +32,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
-    >>> _, y = load_longley()
-    >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
+    >>> from sktime.datasets import load_macroeconomic
+    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
     ...     ("ses", ExponentialSmoothing(trend='add'), 1),
