@@ -4,8 +4,6 @@ __all__ = [
     "BaseClusterer",
     "TimeSeriesKMeans",
     "TimeSeriesKMedoids",
-    "TimeSeriesKShapes",
-    "TimeSeriesKernelKMeans",
 ]
 __author__ = ["chrisholder", "TonyBagnall"]
 
