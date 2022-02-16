@@ -18,4 +18,7 @@ from sktime.performance_metrics.forecasting.probabilistic._classes import (
     _BaseProbForecastingErrorMetric,
 )
 
-__all__ = ["_BaseProbForecastingErrorMetric", "PinballLoss"]
+__all__ = [
+    "_BaseProbForecastingErrorMetric",
+    "PinballLoss"
+]

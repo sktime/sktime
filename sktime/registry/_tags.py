@@ -287,6 +287,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "Does the metric only work on univariate y data?",
     ),
+    (
+        "scitype:y_pred",
+        "estimator",
+        "str",
+        "What is the scitype of y_pred: quantiles, proba, interval?",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)

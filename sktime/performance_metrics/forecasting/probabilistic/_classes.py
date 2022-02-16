@@ -1,13 +1,20 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
-# from imp import get_tag
-
-import numpy as np
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # TODO: add formal tests
 import pandas as pd
+import numpy as np
 from sklearn.metrics._regression import _check_reg_targets
-
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
+
+
+def _check_y_pred_type(metric_object, y_pred):
+    input_type = metric_object.get_tag("scitype:y_pred")
+    if input_type == "quantiles":
+        if isinstance(y_pred, pd.DataFrame):
+            return(y_pred)
+        # if distribution object then get the relevant quantiles and return.
 
 
 class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
@@ -18,7 +25,7 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
     values are better.
     """
 
-    # _tags = {"scitype:y_pred": "quantiles"}
+    _tags = {"scitype:y_pred": "quantiles"}
 
     def __init__(self, func, name=None, multioutput="uniform_average"):
         self.multioutput = multioutput
@@ -48,6 +55,7 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
         """Evaluate the desired metric on given inputs."""
         # Input checks
         _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+        #y_pred = _check_y_pred_type()
 
         return self._evaluate(y_true, y_pred, multioutput, **kwargs)
 
@@ -57,6 +65,7 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
     def evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Return the metric evaluated at each time point."""
         _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+        #y_pred = _check_y_pred_type(self)
 
         return self._evaluate_by_index(y_true, y_pred, multioutput)
 
@@ -66,8 +75,8 @@ class _BaseProbForecastingErrorMetric(_BaseForecastingErrorMetric):
         x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
         for i in range(n):
             out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
-                np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                np.vstack((y_true[:i, :], y_true[i + 1:, :])),
+                np.vstack((y_pred[:i, :], y_pred[i + 1:, :])),
                 multioutput,
             )
         return out_series
@@ -82,8 +91,6 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
 
     multioutput : string "uniform_average" or "raw_values" determines how multioutput
     results will be treated
-
-
     """
 
     def __init__(self, alpha, multioutput="uniform_average"):
@@ -93,7 +100,7 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
         self.alpha = alpha
         super().__init__(func=func, name=name, multioutput=multioutput)
 
-    def evaluate(self, y_true, y_pred, multioutput, **kwargs):
+    def evaluate(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
         """Evaluate the desired metric on given inputs."""
         # Input checks
         if isinstance(y_pred, pd.DataFrame):
@@ -111,7 +118,7 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
         alpha = self.alpha
         return pinball_loss(y_true, y_pred, alpha, multioutput)
 
-    def evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+    def evaluate_by_index(self, y_true, y_pred, multioutput="uniform_average", **kwargs):
         """Return the metric evaluated at each time point."""
         # Input checks
         if isinstance(y_pred, pd.DataFrame):
@@ -123,9 +130,10 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
 
         return super().evaluate_by_index(y_true, y_pred, multioutput, **kwargs)
 
-    def create_test_instance(self):
-        """Create test instance of class."""
-        return self.__init__(alpha=0.5)
+    @classmethod
+    def get_test_params(self):
+        """Retrieve test parameters."""
+        return({"alpha": 0.5})
 
 
 def pinball_loss(y_true, y_pred, alpha, multioutput):
