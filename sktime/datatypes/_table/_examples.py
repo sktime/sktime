@@ -47,6 +47,11 @@ arr = np.array([1, 4, 0.5, -3])
 example_dict[("numpy1D", "Table", 0)] = arr
 example_dict_lossy[("numpy1D", "Table", 0)] = True
 
+series = pd.Series([1, 4, 0.5, -3])
+
+example_dict[("pd_Series_Table", "Table", 0)] = series
+example_dict_lossy[("pd_Series_Table", "Table", 0)] = True
+
 example_dict_metadata[("Table", 0)] = {
     "is_univariate": True,
     "is_empty": False,
@@ -68,6 +73,9 @@ arr = np.array([[1, 3], [4, 7], [0.5, 2], [-3, -3 / 7]])
 
 example_dict[("numpy2D", "Table", 1)] = arr
 example_dict_lossy[("numpy2D", "Table", 1)] = True
+
+example_dict[("pd_Series_Table", "Table", 1)] = None
+example_dict_lossy[("pd_Series_Table", "Table", 1)] = None
 
 example_dict_metadata[("Table", 1)] = {
     "is_univariate": False,
