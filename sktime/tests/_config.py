@@ -113,7 +113,6 @@ EXCLUDE_ESTIMATORS = [
     # ConditionalDeseasonalizer and STLtransformer still need refactoring
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
-    "STLforecaster",
     "STLTransformer",
 ]
 

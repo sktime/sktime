@@ -49,7 +49,7 @@ def _ret(valid, msg, metadata, return_metadata):
         return valid
 
 
-def check_pdDataFrame_Table(obj, return_metadata=False, var_name="obj"):
+def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -75,10 +75,10 @@ def check_pdDataFrame_Table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd_DataFrame_Table", "Table")] = check_pdDataFrame_Table
+check_dict[("pd_DataFrame_Table", "Table")] = check_pddataframe_table
 
 
-def check_numpy1D_Table(obj, return_metadata=False, var_name="obj"):
+def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -101,10 +101,10 @@ def check_numpy1D_Table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy1D", "Table")] = check_numpy1D_Table
+check_dict[("numpy1D", "Table")] = check_numpy1d_table
 
 
-def check_numpy2D_Table(obj, return_metadata=False, var_name="obj"):
+def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -126,4 +126,4 @@ def check_numpy2D_Table(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("numpy2D", "Table")] = check_numpy2D_Table
+check_dict[("numpy2D", "Table")] = check_numpy2d_table
