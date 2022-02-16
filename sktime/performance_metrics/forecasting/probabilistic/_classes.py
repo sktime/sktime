@@ -78,7 +78,7 @@ class PinballLoss(_BaseProbForecastingErrorMetric):
 
     Parameters
     ----------
-    alpha : The significance level that you want to find pinball loss for
+    alpha : The significance level required for the pinball loss
 
     multioutput : string "uniform_average" or "raw_values" determines how multioutput
     results will be treated

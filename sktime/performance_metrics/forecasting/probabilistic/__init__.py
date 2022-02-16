@@ -14,7 +14,8 @@ __author__ = ["euanenticott-shell"]
 __all__ = []
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
+    PinballLoss,
     _BaseProbForecastingErrorMetric,
 )
 
-__all__ = ["_BaseProbForecastingErrorMetric"]
+__all__ = ["_BaseProbForecastingErrorMetric", "PinballLoss"]

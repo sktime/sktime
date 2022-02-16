@@ -271,19 +271,19 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "requires-y-train",
-        "metric",
+        "estimator",
         "bool",
         "does metric require y-train data to be passed?",
     ),
     (
         "requires-y-pred-benchmark",
-        "metric",
+        "estimator",
         "bool",
         "does metric require a predictive benchmark?",
     ),
     (
-        "univariate-only",
-        "metric",
+        "univariate-metric",
+        "estimator",
         "bool",
         "Does the metric only work on univariate y data?",
     ),
