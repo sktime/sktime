@@ -790,8 +790,11 @@ class BaseTransformer(BaseEstimator):
             if X_scitype == "Series":
                 y_possible_scitypes = ["Series"]
             elif X_scitype == "Panel":
-                y_possible_scitypes = ["Panel", "Table"]
+                # todo: change this back to Panel/Table once
+                #   polymorphic convert_to is merged
+                # y_possible_scitypes = ["Panel", "Table"]
                 # y_possible_scitypes = ["Series", "Panel"]
+                y_possible_scitypes = "Table"
             y_mtype = mtype(y, as_scitype=y_possible_scitypes)
             y_scitype = mtype_to_scitype(y_mtype)
 

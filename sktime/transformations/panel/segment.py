@@ -183,7 +183,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
     _tags = {
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "pd_Series_Table",
+        # which mtypes do _fit/_predict support for y?
     }
 
     def __init__(
