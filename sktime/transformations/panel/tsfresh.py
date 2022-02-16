@@ -213,7 +213,8 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     _tags = {
         "requires_y": True,  # does y need to be passed in fit?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",
+        # which mtypes do _fit/_predict support for X?
         "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
     }
 
