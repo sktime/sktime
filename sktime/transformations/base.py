@@ -788,7 +788,8 @@ class BaseTransformer(BaseEstimator):
         if y_inner_mtype != ["None"] and y is not None:
 
             if X_scitype == "Series":
-                y_possible_scitypes = ["Series"]
+                # y_possible_scitypes = ["Series"]
+                y_possible_scitypes = "Series"
             elif X_scitype == "Panel":
                 # todo: change this back to Panel/Table once
                 #   polymorphic convert_to is merged
