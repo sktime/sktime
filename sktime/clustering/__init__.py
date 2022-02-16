@@ -12,5 +12,3 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from sktime.clustering._base import BaseClusterer
 from sktime.clustering._k_means import TimeSeriesKMeans
 from sktime.clustering._k_medoids import TimeSeriesKMedoids
-from sktime.clustering._k_shapes import TimeSeriesKShapes
-from sktime.clustering._kernel_k_means import TimeSeriesKernelKMeans
