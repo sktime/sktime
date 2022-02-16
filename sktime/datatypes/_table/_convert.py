@@ -196,6 +196,49 @@ convert_dict[
 ] = convert_df_to_s_as_table
 
 
+def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
+
+    if not isinstance(obj, list):
+        raise TypeError("input must be a list of dict")
+
+    if not np.all([isinstance(x, dict) for x in obj]):
+        raise TypeError("input must be a list of dict")
+
+    res = pd.DataFrame(obj)
+
+    if (
+        isinstance(store, dict)
+        and "index" in store.keys()
+        and len(store["index"]) == len(res)
+    ):
+        res.index = store["index"]
+
+    return res
+
+
+convert_dict[
+    ("list_of_dict", "pd_DataFrame_Table", "Table")
+] = convert_list_of_dict_to_df_as_table
+
+
+def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
+
+    if not isinstance(obj, pd.DataFrame):
+        raise TypeError("input is not a pd.DataFrame")
+
+    ret_dict = [obj.loc[i].to_dict() for i in obj.index]
+
+    if isinstance(store, dict):
+        store["index"] = obj.index
+
+    return ret_dict
+
+
+convert_dict[
+    ("pd_DataFrame_Table", "list_of_dict", "Table")
+] = convert_df_to_list_of_dict_as_table
+
+
 # obtain other conversions from/to numpyflat via concatenation to DataFrame
 def _concat(fun1, fun2):
     def concat_fun(obj, store=None):
@@ -227,3 +270,4 @@ def _extend_conversions(mtype, anchor_mtype, convert_dict, mtype_list=None):
 
 
 _extend_conversions("pd_Series_Table", "pd_DataFrame_Table", convert_dict)
+_extend_conversions("list_of_dict", "pd_DataFrame_Table", convert_dict)

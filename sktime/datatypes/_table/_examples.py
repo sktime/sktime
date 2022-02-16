@@ -52,6 +52,12 @@ series = pd.Series([1, 4, 0.5, -3])
 example_dict[("pd_Series_Table", "Table", 0)] = series
 example_dict_lossy[("pd_Series_Table", "Table", 0)] = True
 
+list_of_dict = [{"a": 1.}, {"a": 4.}, {"a": 0.5}, {"a": -3.}]
+
+example_dict[("list_of_dict", "Table", 0)] = list_of_dict
+example_dict_lossy[("list_of_dict", "Table", 0)] = False
+
+
 example_dict_metadata[("Table", 0)] = {
     "is_univariate": True,
     "is_empty": False,
@@ -76,6 +82,13 @@ example_dict_lossy[("numpy2D", "Table", 1)] = True
 
 example_dict[("pd_Series_Table", "Table", 1)] = None
 example_dict_lossy[("pd_Series_Table", "Table", 1)] = None
+
+list_of_dict = [
+    {"a": 1., "b": 3.}, {"a": 4., "b": 7.}, {"a": 0.5, "b": 2.}, {"a": -3., "b": -3 / 7}
+]
+
+example_dict[("list_of_dict", "Table", 1)] = list_of_dict
+example_dict_lossy[("list_of_dict", "Table", 1)] = False
 
 example_dict_metadata[("Table", 1)] = {
     "is_univariate": False,
