@@ -247,11 +247,13 @@ class WindowSummarizer(BaseTransformer):
         X : pd.DataFrame
             Transformed version of X
         """
+        X = X.copy()
+        X.columns = X.columns.map(str)
+        Xt_out = []
+
         func_dict = self._func_dict
         target_cols = self._target_cols
 
-        X.columns = X.columns.map(str)
-        Xt_out = []
         if self.truncate == "bfill":
             bfill = True
         else:
