@@ -30,9 +30,12 @@ class BootsrappingTransformer(BaseTransformer):
     to the season and trend components and we use the inverse Box-Cox transform to
     return a panel of similar time series.
 
+    The resulting panel can be used for Bagging forecasts, prediction intervals and
+    data augmentation.
+
     Parameters
     ----------
-    number_of_new_series : int, optional
+    n_series : int, optional
         The number of bootstraped time series that will be generated, by default 10
     sp : int, optional
         Seasonal periodicity of the data in integer form, by default 12.
@@ -52,10 +55,10 @@ class BootsrappingTransformer(BaseTransformer):
         If provided, the synthetic series names will have the series_name as a
         prefix followed by an undescore e.g. "<series_name>_synthetic_1". If not
         provided the series names will no prefix will be present e.g. "synthetic_1".
-    boxcox_bounds : Tuple, optional
+    lambda_bounds : Tuple, optional
         Lower and upper bounds used to restrict the feasible range
         when solving for the value of lambda, by default None.
-    boxcox_method : str, optional
+    lambda_method : str, optional
         {"pearsonr", "mle", "all", "guerrero"}, by default "guerrero"
         The optimization approach used to determine the lambda value used
         in the Box-Cox transformation.
@@ -157,14 +160,14 @@ class BootsrappingTransformer(BaseTransformer):
 
     def __init__(
         self,
-        number_of_new_series: int = 10,
+        n_series: int = 10,
         sp: int = 12,
         block_length: int = None,
         sampling_replacement: bool = False,
         return_actual: bool = True,
         series_name: str = None,
-        boxcox_bounds: Tuple = None,
-        boxcox_method: str = "guerrero",
+        lambda_bounds: Tuple = None,
+        lambda_method: str = "guerrero",
         seasonal: int = 7,
         trend: int = None,
         low_pass: int = None,
@@ -178,14 +181,14 @@ class BootsrappingTransformer(BaseTransformer):
         inner_iter: int = None,
         outer_iter: int = None,
     ):
-        self.number_of_new_series = number_of_new_series
+        self.n_series = n_series
         self.sp = sp
         self.block_length = block_length
         self.sampling_replacement = sampling_replacement
         self.return_actual = return_actual
         self.series_name = series_name
-        self.boxcox_bounds = boxcox_bounds
-        self.boxcox_method = boxcox_method
+        self.lambda_bounds = lambda_bounds
+        self.lambda_method = lambda_method
         self.seasonal = seasonal
         self.trend = trend
         self.low_pass = low_pass
@@ -238,7 +241,7 @@ class BootsrappingTransformer(BaseTransformer):
 
         # fit boxcox to get lambda and transform X
         self.box_cox_transformer_ = BoxCoxTransformer(
-            sp=self.sp, bounds=self.boxcox_bounds, method=self.boxcox_method
+            sp=self.sp, bounds=self.lambda_bounds, method=self.lambda_method
         )
         self.box_cox_transformer_.fit(X)
 
@@ -300,9 +303,9 @@ class BootsrappingTransformer(BaseTransformer):
             df = pd.DataFrame()
 
         # create multiple series
-        for i in range(self.number_of_new_series):
+        for i in range(self.n_series):
             new_series = self.box_cox_transformer_.inverse_transform(
-                self.moving_block_bootstrap(
+                self._moving_block_bootstrap(
                     ts=resid,
                     block_length=self.block_length_,
                     replacement=self.sampling_replacement,
@@ -322,7 +325,7 @@ class BootsrappingTransformer(BaseTransformer):
         return df
 
     @staticmethod
-    def moving_block_bootstrap(
+    def _moving_block_bootstrap(
         ts: pd.Series, block_length: int, replacement: bool = False
     ) -> pd.Series:
         """Create a synthetic time series using the moving block bootstrap method MBB.
@@ -346,7 +349,10 @@ class BootsrappingTransformer(BaseTransformer):
         ts_values = ts.values
 
         if ts_length <= block_length:
-            raise ValueError("ts length should be greater than block_length")
+            raise ValueError(
+                "X length in BootstrappingTransformer should be greater"
+                " than block_length"
+            )
 
         if block_length == 1 and not replacement:
             mbb_values = copy(ts_values)
