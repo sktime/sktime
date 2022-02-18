@@ -37,12 +37,12 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     def __init__(self, transformers):
 
         self.transformers = transformers
-        self.estimators = self._check_estimators(transformers)
+        self.transformers_ = self._check_estimators(transformers)
 
         super(TransformerPipeline, self).__init__()
 
-        first_trafo = self.estimators[0][1]
-        last_trafo = self.estimators[-1][1]
+        first_trafo = self.transformers_[0][1]
+        last_trafo = self.transformers_[-1][1]
 
         self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
         self.clone_tags(last_trafo, "scitype:transform-output")
@@ -58,24 +58,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("capability:inverse_transform", False, True)
         self._anytagis_then_set("handles-missing-data", False, True)
         self._anytagis_then_set("univariate-only", True, False)
-
-    @property
-    def estimators(self):
-        """Get estimators named list."""
-        return self._estimators
-
-    @estimators.setter
-    def estimators(self, value):
-        """Set estimators named list."""
-        estimators = value
-        if isinstance(estimators[0], tuple):
-            est_list = estimators
-        else:
-            names = [type(x).__name__ for x in estimators]
-            unique_names = self._make_strings_unique(names)
-            est_list = [(unique_names[i], t) for i, t in enumerate(estimators)]
-        self._estimators = est_list
-
 
     @staticmethod
     def _make_strings_unique(strlist):
@@ -94,7 +76,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     def _anytagis(self, tag_name, value):
         """Return whether any estimator in list has tag `tag_name` of value `value`."""
-        tagis = [est.get_tag(tag_name, value) for _, est in self._estimators]
+        tagis = [est.get_tag(tag_name, value) == value for _, est in self.transformers_]
         return any(tagis)
 
     def _anytagis_then_set(self, tag_name, value, value_if_not):
@@ -106,7 +88,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     def _anytag_notnone_val(self, tag_name):
         """Return first non-'None' value of tag `tag_name` in estimator list."""
-        for _, est in self._estimators:
+        for _, est in self.transformers_:
             tag_val = est.get_tag(tag_name)
             if tag_val != "None":
                 return tag_val
@@ -114,7 +96,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     def _anytag_notnone_set(self, tag_name):
         """Set self's `tag_name` tag to first non-'None' value in estimator list."""
-        tag_val = self._anytag_notnone_val
+        tag_val = self._anytag_notnone_val(tag_name=tag_name)
         if tag_val != "None":
             self.set_tags(**{tag_name: tag_val})
 
@@ -135,13 +117,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self: reference to self
         """
-        self.transformers_ = []
         Xt = X
-
-        for (name, transformer) in self.estimators:
-            transformer_ = clone(transformer)
-            Xt = transformer_.fit_transform(X=Xt, y=y)
-            self.transformers_.append((name, transformer_))
+        for _, transformer in self.transformers_:
+            Xt = transformer.fit_transform(X=Xt, y=y)
 
         return self
 
@@ -274,7 +252,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             # defined by MetaEstimatorMixin
             self._check_names(names)
 
-        return estimators
+        if isinstance(estimators[0], tuple):
+            est_list = [clone(e) for e in estimators]
+        else:
+            names = [type(x).__name__ for x in estimators]
+            unique_names = self._make_strings_unique(names)
+            est_list = [(unique_names[i], clone(e)) for i, e in enumerate(estimators)]
+
+        return est_list
 
     @classmethod
     def get_test_params(cls):
