@@ -229,7 +229,7 @@ class BootsrappingTransformer(BaseTransformer):
         if len(X) <= self.sp:
             raise ValueError(
                 "BootstrappingTransformer requires that sp is greater than"
-                "the length of X"
+                " the length of X"
             )
         else:
             # implement as static method
