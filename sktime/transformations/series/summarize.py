@@ -95,13 +95,6 @@ class WindowSummarizer(BaseTransformer):
         give the maximum og observations that are filled with NAs across all arguments
         of the lag_config, in this case 28.
 
-    Returns
-    -------
-    X: pd.DataFrame
-        Contains all transformed columns as well as non-transformed columns.
-        The raw inputs to transformed columns will be dropped.
-    self: reference to self
-
     See Also
     --------
     SummaryTransformer
