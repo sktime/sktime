@@ -222,7 +222,7 @@ class BootsrappingTransformer(BaseTransformer):
         self: reference to self
         """
         if self.sp <= 2:
-            raise ValueError(
+            raise NotImplementedError(
                 "BootstrappingTransformer does not support non-seasonal data"
             )
 
