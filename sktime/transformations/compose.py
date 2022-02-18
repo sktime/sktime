@@ -37,13 +37,12 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     def __init__(self, transformers):
 
         self.transformers = transformers
-        self._estimators = self._check_estimators(transformers)
+        self.estimators = self._check_estimators(transformers)
 
         super(TransformerPipeline, self).__init__()
 
-        first_trafo = self._estimators[0][1]
-        num_est = len(self._estimators)
-        last_trafo = self._estimators[num_est][1]
+        first_trafo = self.estimators[0][1]
+        last_trafo = self.estimators[-1][1]
 
         self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
         self.clone_tags(last_trafo, "scitype:transform-output")
@@ -61,15 +60,22 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("univariate-only", True, False)
 
     @property
-    def _estimators(self):
-        """Make internal list of estimators."""
-        estimators = self.estimators
+    def estimators(self):
+        """Get estimators named list."""
+        return self._estimators
+
+    @estimators.setter
+    def estimators(self, value):
+        """Set estimators named list."""
+        estimators = value
         if isinstance(estimators[0], tuple):
-            return estimators
+            est_list = estimators
         else:
             names = [type(x).__name__ for x in estimators]
             unique_names = self._make_strings_unique(names)
-            return [(unique_names[i], t) for i, t in enumerate(estimators)]
+            est_list = [(unique_names[i], t) for i, t in enumerate(estimators)]
+        self._estimators = est_list
+
 
     @staticmethod
     def _make_strings_unique(strlist):
@@ -132,7 +138,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self.transformers_ = []
         Xt = X
 
-        for (name, transformer) in self._estimators:
+        for (name, transformer) in self.estimators:
             transformer_ = clone(transformer)
             Xt = transformer_.fit_transform(X=Xt, y=y)
             self.transformers_.append((name, transformer_))
@@ -223,7 +229,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("_transformers", deep=deep)
+        return self._get_params("transformers_", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of estimator in `_forecasters`.
@@ -234,7 +240,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self : returns an instance of self.
         """
-        self._set_params("_transformers", **kwargs)
+        self._set_params("transformers_", **kwargs)
         return self
 
     def _check_estimators(self, estimators, attr_name="transformers"):
