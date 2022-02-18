@@ -15,7 +15,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
-class UnivariateBootsrappingTransformer(BaseTransformer):
+class BootsrappingTransformer(BaseTransformer):
     """Creates a population of similar time series.
 
     This method utilises a form of bootstrapping to generate a population of
@@ -23,12 +23,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
 
     First the observed time series is transformed using a Box-Cox transformation to
     stabilise the variance. Then it's decomposed to seasonal, trend and residual
-    time series, using the STL implementation from statsmodels [4]_. We then sample blocks
-    from the remainder time series using the Moving Block Bootstrapping (MBB) method
-    [3]_ to create synthetic remainder series that mimic the autocorrelation patterns
-    of the observed series. Finally these bootstrapped remainders are added to the
-    season and trend components and we use the inverse Box-Cox transform to return
-    a panel of similar time series.
+    time series, using the STL implementation from statsmodels [4]_. We then sample
+    blocks from the remainder time series using the Moving Block Bootstrapping (MBB)
+    method [3]_ to create synthetic remainder series that mimic the autocorrelation
+    patterns of the observed series. Finally these bootstrapped remainders are added
+    to the season and trend components and we use the inverse Box-Cox transform to
+    return a panel of similar time series.
 
     Parameters
     ----------
@@ -117,12 +117,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.series.bootstrapping import (
-    ...     UnivariateBootsrappingTransformer
+    ...     BootsrappingTransformer
     ... )
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
-    >>> transformer = UnivariateBootsrappingTransformer(10)
+    >>> transformer = BootsrappingTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
     >>> series_list = []
     >>> names = []
@@ -199,7 +199,7 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         self.inner_iter = inner_iter
         self.outer_iter = outer_iter
 
-        super(UnivariateBootsrappingTransformer, self).__init__()
+        super(BootsrappingTransformer, self).__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -220,12 +220,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
         """
         if self.sp <= 2:
             raise ValueError(
-                "UnivariateBootstrappingTransformer does not support non-seasonal data"
+                "BootstrappingTransformer does not support non-seasonal data"
             )
 
         if len(X) <= self.sp:
             raise ValueError(
-                "UnivariateBootstrappingTransformer requires that sp is greater than"
+                "BootstrappingTransformer requires that sp is greater than"
                 "the length of X"
             )
         else:
