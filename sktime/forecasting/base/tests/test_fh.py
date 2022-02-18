@@ -64,7 +64,6 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # generate fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-
     if fh_type == "int":
         assert isinstance(fh, INDEX_TYPE_LOOKUP.get("int")) and fh.dtype == "int64"
     else:
