@@ -1500,6 +1500,15 @@
       "contributions": [
         "infra"
      ]
+    },
+    {
+      "login": "gchhablani",
+      "name": "Gunjan Chhablani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29076344?v=4",
+      "profile": "https://github.com/gchhablani",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "projectName": "sktime",
