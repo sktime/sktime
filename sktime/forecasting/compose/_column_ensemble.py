@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
@@ -51,6 +51,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "capability:pred_int": True,
     }
 
     def __init__(self, forecasters):
@@ -143,8 +144,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecaster.update(y.iloc[:, index], X, update_params=update_params)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
+    def _predict(self, fh=None, X=None):
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
             y_pred[:, index] = forecaster.predict(fh)
@@ -152,6 +152,70 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred = pd.DataFrame(data=y_pred, columns=self.y_columns)
         y_pred.index = self.fh.to_absolute(self.cutoff)
         return y_pred
+
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        # Find indices of probabilistic forecasters
+        indices_prob_forecasters = [
+            index
+            for (_, forecaster, index) in self.forecasters_
+            if forecaster.get_tag("capability:pred_int")
+        ]
+        var_names = [self.y_columns[i] for i in indices_prob_forecasters]
+        if len(var_names) == 0:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "prediction intervals. It is likely that the univariate composing "
+                "forecasters do not have this capability. If you think this estimator"
+                " should have the capability, please open an issue on sktime."
+            )
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        predict_interval = pd.DataFrame(columns=int_idx)
+        for (_, forecaster, index) in self.forecasters_:
+            if forecaster.get_tag("capability:pred_int"):
+                pred_int = forecaster.predict_interval(coverage=coverage)
+                for cov in coverage:
+                    predict_interval[(self.y_columns[index], cov, "lower")] = pred_int[
+                        ("Coverage", cov, "lower")
+                    ]
+                    predict_interval[(self.y_columns[index], cov, "upper")] = pred_int[
+                        ("Coverage", cov, "upper")
+                    ]
+        predict_interval.index = self.fh.to_absolute(self.cutoff)
+        return predict_interval
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.
