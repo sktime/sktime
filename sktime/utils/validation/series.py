@@ -18,7 +18,7 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -179,10 +179,13 @@ def check_time_index(
 
     # We here check for type equality because isinstance does not
     # work reliably because index types inherit from each other.
-    if not type(index) in VALID_INDEX_TYPES:
+    if not (
+        (type(index) == pd.Index and index.dtype == "int64")
+        or type(index) in VALID_INDEX_TYPES
+    ):
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
-            f"one of {VALID_INDEX_TYPES} instead."
+            f"one of {VALID_INDEX_TYPES} or `pd.Int64Index` types instead."
         )
 
     if enforce_index_type and type(index) is not enforce_index_type:
@@ -271,7 +274,9 @@ def check_equal_time_index(*ys, mode="equal"):
 
 def _is_int_index(index):
     """Check if index type is one of pd.RangeIndex or pd.Int64Index."""
-    return type(index) in (pd.Int64Index, pd.RangeIndex)
+    return type(index) == pd.RangeIndex or (
+        type(index) == pd.Index and index.dtype == "int64"
+    )
 
 
 def check_consistent_index_type(a, b):

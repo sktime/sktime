@@ -15,10 +15,14 @@ import pandas as pd
 from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
-RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
-ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
-assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
-assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
+RELATIVE_TYPES = (pd.RangeIndex,)
+ABSOLUTE_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
+assert set(RELATIVE_TYPES).issubset(
+    VALID_INDEX_TYPES
+)  # TODO: Check if we need to add Int64Index
+assert set(ABSOLUTE_TYPES).issubset(
+    VALID_INDEX_TYPES
+)  # TODO: Check if we need to add Int64Index
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
 DELEGATED_METHODS = (
@@ -88,16 +92,20 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if type(values) in VALID_INDEX_TYPES:
+    if (
+        type(values) in VALID_INDEX_TYPES
+        or type(values) == pd.Index
+        and values.dtype == "int64"
+    ):
         pass
 
     # convert single integer to pandas index, no further checks needed
     elif isinstance(values, (int, np.integer)):
-        return pd.Int64Index([values], dtype=int)
+        return pd.Index([values], dtype="int64")
 
     # convert np.array or list to pandas index
     elif isinstance(values, (list, np.ndarray)):
-        values = pd.Int64Index(values, dtype=int)
+        values = pd.Index(values, dtype="int64")
 
     # otherwise, raise type error
     else:
@@ -109,7 +117,8 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
         )
         raise TypeError(
             f"Invalid `fh`. The type of the passed `fh` values is not supported. "
-            f"Please use one of {valid_types}, but found: {type(values)}"
+            f"Please use one of {valid_types} or pd.Int64Index, "
+            f"but found: {type(values)}"
         )
 
     # check values does not contain duplicates
@@ -170,17 +179,29 @@ class ForecastingHorizon:
             f"`values` type is not compatible with `is_relative=" f"{is_relative}`."
         )
         if is_relative is None:
-            if type(values) in RELATIVE_TYPES:
+            if (
+                type(values) in RELATIVE_TYPES
+                or type(values) == pd.Index
+                and values.dtype == "int64"
+            ):
                 is_relative = True
-            elif type(values) in ABSOLUTE_TYPES:
+            elif (
+                type(values) in ABSOLUTE_TYPES
+                or type(values) == pd.Index
+                and values.dtype == "int64"
+            ):
                 is_relative = False
             else:
                 raise TypeError(type(values) + "is not a supported fh index type")
         if is_relative:
-            if not type(values) in RELATIVE_TYPES:
+            if not type(values) in RELATIVE_TYPES and not (
+                type(values) == pd.Index and values.dtype == "int64"
+            ):
                 raise TypeError(error_msg)
         else:
-            if not type(values) in ABSOLUTE_TYPES:
+            if not type(values) in ABSOLUTE_TYPES and not (
+                type(values) == pd.Index and values.dtype == "int64"
+            ):
                 raise TypeError(error_msg)
 
         self._values = values

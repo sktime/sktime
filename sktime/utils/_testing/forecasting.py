@@ -148,7 +148,12 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
         steps = np.array([steps], dtype=int)
 
     if is_relative:
-        return ForecastingHorizon(fh_class(steps), is_relative=is_relative)
+        if fh_type == "int":
+            return ForecastingHorizon(
+                fh_class(steps, dtype="int64"), is_relative=is_relative
+            )
+        else:
+            return ForecastingHorizon(fh_class(steps), is_relative=is_relative)
 
     else:
         kwargs = {}
@@ -158,6 +163,9 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
 
         if fh_type == "period":
             kwargs = {"freq": cutoff.freq}
+
+        if fh_type == "int":
+            kwargs = {"dtype": "int64"}
 
         values = cutoff + steps
         return ForecastingHorizon(fh_class(values, **kwargs), is_relative)

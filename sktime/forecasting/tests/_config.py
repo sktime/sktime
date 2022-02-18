@@ -82,7 +82,7 @@ VALID_INDEX_FH_COMBINATIONS = [
 ]
 
 INDEX_TYPE_LOOKUP = {
-    "int": pd.Int64Index,
+    "int": pd.Index,
     "range": pd.RangeIndex,
     "datetime": pd.DatetimeIndex,
     "period": pd.PeriodIndex,

@@ -37,7 +37,7 @@ def _coerce_duration_to_int(duration, freq=None):
         duration[0], pd.tseries.offsets.BaseOffset
     ):
         count = _get_intervals_count_and_unit(freq)[0]
-        return pd.Int64Index([d.n / count for d in duration])
+        return pd.Index([d.n / count for d in duration], dtype="int64")
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
         count, unit = _get_intervals_count_and_unit(freq)
         # integer conversion only works reliably with non-ambiguous units (
@@ -100,7 +100,9 @@ def _shift(x, by=1):
         Shifted time point
     """
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
-    assert isinstance(by, (int, np.integer, pd.Int64Index)), type(by)
+    assert isinstance(by, (int, np.integer)) or (
+        isinstance(by, pd.Index) and by.dtype == "int64"
+    ), type(by)
     if isinstance(x, pd.Timestamp):
         if not hasattr(x, "freq") or x.freq is None:
             raise ValueError("No `freq` information available")
