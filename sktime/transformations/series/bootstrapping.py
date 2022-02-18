@@ -22,8 +22,8 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
     similar time series to the input time series [1]_, [2]_.
 
     First the observed time series is transformed using a Box-Cox transformation to
-    stabilise the variance. Then it's decomposed to seasonal, trend and remainder
-    time series, using the STL algorithm from statsmodels [4]_. We then sample blocks
+    stabilise the variance. Then it's decomposed to seasonal, trend and residual
+    time series, using the STL implementation from statsmodels [4]_. We then sample blocks
     from the remainder time series using the Moving Block Bootstrapping (MBB) method
     [3]_ to create synthetic remainder series that mimic the autocorrelation patterns
     of the observed series. Finally these bootstrapped remainders are added to the
@@ -121,12 +121,12 @@ class UnivariateBootsrappingTransformer(BaseTransformer):
     ... )
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series
-    >>> ts = load_airline()
-    >>> ubt = UnivariateBootsrappingTransformer(10)
-    >>> df = ubt.fit_transform(ts)
+    >>> y = load_airline()
+    >>> transformer = UnivariateBootsrappingTransformer(10)
+    >>> y_hat = transformer.fit_transform(y)
     >>> series_list = []
     >>> names = []
-    >>> for group, series in df.groupby(level=[0], as_index=False):
+    >>> for group, series in y_hat.groupby(level=[0], as_index=False):
     ...     series.index = series.index.droplevel(0)
     ...     series_list.append(series)
     ...     names.append(group)
