@@ -102,6 +102,11 @@ class WindowSummarizer(BaseTransformer):
         The raw inputs to transformed columns will be dropped.
     self: reference to self
 
+    See Also
+    --------
+    SummaryTransformer
+        Calculate summary value of a time series.
+
     Examples
     --------
     >>> import pandas as pd
@@ -531,6 +536,8 @@ class SummaryTransformer(BaseTransformer):
     --------
     MeanTransformer :
         Calculate the mean of a timeseries.
+    WindowSummarizer:
+        Extracting features across (shifted) windows from series
 
     Notes
     -----
