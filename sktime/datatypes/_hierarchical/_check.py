@@ -48,7 +48,7 @@ import pandas as pd
 from sktime.datatypes._series._check import check_pddataframe_series
 
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
-VALID_MULTIINDEX_TYPES = (pd.RangeIndex)
+VALID_MULTIINDEX_TYPES = (pd.RangeIndex,)
 
 
 def _list_all_equal(obj):
