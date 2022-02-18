@@ -146,9 +146,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return False
         return True
 
-    @staticmethod
-    def _make_strings_unique(strlist):
+    def _make_strings_unique(self, strlist):
+        """Make a list or tuple of strings unique by appending _int of occurrence."""
+        # if already unique, just return
+        if len(set(strlist)) == len(strlist):
+            return strlist
 
+        # we convert internally to list, but remember whether it was tuple
         if isinstance(strlist, tuple):
             strlist = list(strlist)
             was_tuple = True
@@ -158,6 +162,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         from collections import Counter
         strcount = Counter(strlist)
 
+        # if any duplicates, we append _integer of occurrence to non-uniques
         nowcount = Counter()
         uniquestr = strlist
         for i, x in enumerate(uniquestr):
@@ -168,7 +173,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         if was_tuple:
             uniquestr = tuple(uniquestr)
 
-        return uniquestr
+        # repeat until all are unique
+        #   the algorithm recurses, but will always terminate
+        #   because potential clashes are lexicographically increasing
+        return self._make_strings_unique(uniquestr)
 
     def _anytagis(self, tag_name, value):
         """Return whether any estimator in list has tag `tag_name` of value `value`."""
