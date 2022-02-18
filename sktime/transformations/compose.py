@@ -160,6 +160,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             was_tuple = False
 
         from collections import Counter
+
         strcount = Counter(strlist)
 
         # if any duplicates, we append _integer of occurrence to non-uniques
