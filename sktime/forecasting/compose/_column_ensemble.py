@@ -147,7 +147,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     def _predict(self, fh=None, X=None):
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
-            y_pred[:, index] = forecaster.predict(fh)
+            y_pred[:, index] = forecaster.predict(fh=fh, X=X)
 
         y_pred = pd.DataFrame(data=y_pred, columns=self.y_columns)
         y_pred.index = self.fh.to_absolute(self.cutoff)
