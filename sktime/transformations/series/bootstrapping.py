@@ -24,9 +24,9 @@ class BootsrappingTransformer(BaseTransformer):
     First the observed time series is transformed using a Box-Cox transformation to
     stabilise the variance. Then it's decomposed to seasonal, trend and residual
     time series, using the STL implementation from statsmodels [4]_. We then sample
-    blocks from the remainder time series using the Moving Block Bootstrapping (MBB)
-    method [3]_ to create synthetic remainder series that mimic the autocorrelation
-    patterns of the observed series. Finally these bootstrapped remainders are added
+    blocks from the residuals time series using the Moving Block Bootstrapping (MBB)
+    method [3]_ to create synthetic residuals series that mimic the autocorrelation
+    patterns of the observed series. Finally these bootstrapped residuals are added
     to the season and trend components and we use the inverse Box-Cox transform to
     return a panel of similar time series.
 
