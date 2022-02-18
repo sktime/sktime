@@ -133,6 +133,30 @@ class BaseTransformer(BaseEstimator):
 
         super(BaseTransformer, self).__init__()
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformerPipeline."""
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformerPipeline(transformers=[self])
+            return self_as_pipeline * other
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline."""
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformerPipeline(transformers=[self])
+            return other * self_as_pipeline
+        else:
+            return NotImplemented
+
     def fit(self, X, y=None, Z=None):
         """Fit transformer to X, optionally to y.
 

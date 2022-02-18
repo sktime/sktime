@@ -12,22 +12,47 @@ __all__ = ["TransformerPipeline"]
 
 
 class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
-    """Wrap an existing transformer to tune whether to include it in a pipeline.
+    """Pipeline of transformers compositor.
 
-    Allows tuning the implicit hyperparameter whether or not to use a
-    particular transformer inside a pipeline (e.g. TranformedTargetForecaster)
-    or not. This is achieved by the hyperparameter `passthrough`
-    which can be added to a tuning grid then (see example).
+    The `TransformerPipeline` compositor allows to chain transformers.
+    The pipeline is constructed with a list of sktime transformers,
+        i.e., estimators following the BaseTransformer interface.
+    The list can be unnamed - a simple list of transformers -
+        or string named - a list of pairs of string, estimator.
+
+    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
+        the pipeline behaves as follows:
+    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
+        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
+    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
+        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+        and returning the output of `trafoN.transform`
+    `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
+        with `trafo[i].inverse_transform` input = output `trafo[i-1].inverse_transform`,
+        and returning the output of `trafoN.inverse_transform`
+    `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
+        `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
+        where `trafo[i].update` and `trafo[i].transform` receive as input
+            the output of `trafo[i-1].transform`
+
+    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+        if list is unnamed, names are generated as names of classes
+        if names are non-unique, `f"_{str(i)}"` is appended to each name string
+            where `i` is the total count of occurrence of a non-unique string
+            inside the list of names leading up to it (inclusive)
+
+    `TransformerPipeline` can also be created by using the magic multiplication
+        on any transformer, i.e., any estimator inheriting from `BaseTransformer`
+            for instance, `my_trafo1 * my_trafo2 * my_trafo3`
+            will result in the same object as  obtained from the constructor
+            `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
+        magic multiplication can also be used with (str, transformer) pairs,
+            as long as one element in the chain is a transformer
 
     Parameters
     ----------
-    transformer : Estimator
-        scikit-learn-like or sktime-like transformer to fit and apply to series.
-    passthrough : bool, default=False
-       Whether to apply the given transformer or to just
-        passthrough the data (identity transformation). If, True the transformer
-        is not applied and the OptionalPassthrough uses the identity
-        transformation.
+    transformer : list of sktime transformers, or
+        list of tuples (str, transformer) of sktime transformers
     """
 
     _required_parameters = ["transformers"]
@@ -59,8 +84,76 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("handles-missing-data", False, True)
         self._anytagis_then_set("univariate-only", True, False)
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformerPipeline."""
+        # we don't use names but _get_names to get the *original* names
+        #   to avoid multiple "make unique" calls which may grow strings too much
+        _, trafos = zip(*self.transformers_)
+        names = tuple(self._get_orig_names(self.transformers))
+        if isinstance(other, BaseTransformer):
+            new_names = names + (type(other).__name__,)
+            new_trafos = trafos + (other,)
+        elif isinstance(other, TransformerPipeline):
+            _, trafos_o = zip(*other.transformers_)
+            names_o = other._get_orig_names(self.transformers)
+            new_names = names + names_o
+            new_trafos = trafos + trafos_o
+        elif self._is_name_and_trafo(other):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = names + (other_name,)
+            new_trafos = trafos + (other_trafo,)
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
+            return TransformerPipeline(transformers=list(new_trafos))
+        else:
+            return TransformerPipeline(transformers=list(zip(new_names, new_trafos)))
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline."""
+        _, trafos = zip(*self.transformers_)
+        names = tuple(self._get_orig_names(self.transformers))
+        if isinstance(other, BaseTransformer):
+            new_names = (type(other).__name__,) + names
+            new_trafos = (other,) + trafos
+        elif isinstance(other, TransformerPipeline):
+            _, trafos_o = zip(*other.transformers_)
+            names_o = other._get_orig_names(self.transformers)
+            new_names = names_o + names
+            new_trafos = trafos_o + trafos
+        elif self._is_name_and_trafo(other):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = (other_name,) + names
+            new_trafos = (other_trafo,) + trafos
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
+            return TransformerPipeline(transformers=list(new_trafos))
+        else:
+            return TransformerPipeline(transformers=list(zip(new_names, new_trafos)))
+
+    @staticmethod
+    def _is_name_and_trafo(obj):
+        if not isinstance(obj, tuple) or len(obj) != 2:
+            return False
+        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
+            return False
+        return True
+
     @staticmethod
     def _make_strings_unique(strlist):
+
+        if isinstance(strlist, tuple):
+            strlist = list(strlist)
+            was_tuple = True
+        else:
+            was_tuple = False
 
         from collections import Counter
         strcount = Counter(strlist)
@@ -69,8 +162,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         uniquestr = strlist
         for i, x in enumerate(uniquestr):
             if strcount[x] > 1:
-                nowcount.update(x)
+                nowcount.update([x])
                 uniquestr[i] = x + "_" + str(nowcount[x])
+
+        if was_tuple:
+            uniquestr = tuple(uniquestr)
 
         return uniquestr
 
@@ -249,17 +345,27 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             if not all(isinstance(est[1], BaseTransformer) for est in estimators):
                 raise TypeError(msg)
             names, _ = zip(*estimators)
-            # defined by MetaEstimatorMixin
-            self._check_names(names)
 
         if isinstance(estimators[0], tuple):
-            est_list = [clone(e) for e in estimators]
+            names = [x[0] for x in estimators]
+            est_clones = [clone(x[1]) for x in estimators]
         else:
-            names = [type(x).__name__ for x in estimators]
-            unique_names = self._make_strings_unique(names)
-            est_list = [(unique_names[i], clone(e)) for i, e in enumerate(estimators)]
+            names = [type(e).__name__ for e in estimators]
+            est_clones = [clone(e) for e in estimators]
 
-        return est_list
+        unique_names = self._make_strings_unique(names)
+        est_tuples = [(unique_names[i], e) for i, e in enumerate(est_clones)]
+
+        return est_tuples
+
+    def _get_orig_names(self, estimators):
+        if estimators is None or len(estimators) == 0:
+            names = []
+        if isinstance(estimators[0], BaseTransformer):
+            names = [type(e).__name__ for e in estimators]
+        if isinstance(estimators[0], tuple):
+            names = [e[0] for e in estimators]
+        return tuple(names)
 
     @classmethod
     def get_test_params(cls):
