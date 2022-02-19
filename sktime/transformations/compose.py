@@ -100,7 +100,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         names = tuple(self._get_estimator_names(self.transformers))
         if isinstance(other, TransformerPipeline):
             _, trafos_o = zip(*other.transformers_)
-            names_o = other._get_estimator_names(other.transformers)
+            names_o = tuple(other._get_estimator_names(other.transformers))
             new_names = names + names_o
             new_trafos = trafos + trafos_o
         elif isinstance(other, BaseTransformer):
@@ -126,7 +126,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         names = tuple(self._get_estimator_names(self.transformers))
         if isinstance(other, TransformerPipeline):
             _, trafos_o = zip(*other.transformers_)
-            names_o = other._get_estimator_names(other.transformers)
+            names_o = tuple(other._get_estimator_names(other.transformers))
             new_names = names_o + names
             new_trafos = trafos_o + trafos
         elif isinstance(other, BaseTransformer):
