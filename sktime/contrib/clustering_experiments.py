@@ -81,23 +81,23 @@ def tune_window(metric: str, train_X):
     best_w=0
     best_score=0
     for w in np.arange(0,1,0.1):
-        cls = TimeSeriesKMeans(metric=metric, distance_params={"window":w})
+        cls = TimeSeriesKMeans(metric=metric, distance_params={"window": w})
         cls.fit(train_X)
         preds = cls.predict(train_X)
         print(" Preds type = ", type(preds))
         score = davies_bouldin_score(train_X, preds)
         print(score)
-        if score>best_score:
-            best_score=score
-            best_w=w
-    print("best window =",best_w, " with score ",best_score)
+        if score > best_score:
+            best_score = score
+            best_w = w
+    print("best window =", best_w, " with score ",best_score)
     return best_w
 
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    clusterer = "kmedoids"
+    clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance+"-tuned"
     else:
-        window = 1.0
+        window = 0.2
         name = clusterer + "-" + distance
     clst = config_clusterer(
         clusterer=clusterer,
