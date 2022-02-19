@@ -94,13 +94,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline."""
-        # we don't use names but _get_names to get the *original* names
+        # we don't use names but _get_estimator_names to get the *original* names
         #   to avoid multiple "make unique" calls which may grow strings too much
         _, trafos = zip(*self.transformers_)
-        names = tuple(self._get_orig_names(self.transformers))
+        names = tuple(self._get_estimator_names(self.transformers))
         if isinstance(other, TransformerPipeline):
             _, trafos_o = zip(*other.transformers_)
-            names_o = other._get_orig_names(other.transformers)
+            names_o = other._get_estimator_names(other.transformers)
             new_names = names + names_o
             new_trafos = trafos + trafos_o
         elif isinstance(other, BaseTransformer):
@@ -123,10 +123,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline."""
         _, trafos = zip(*self.transformers_)
-        names = tuple(self._get_orig_names(self.transformers))
+        names = tuple(self._get_estimator_names(self.transformers))
         if isinstance(other, TransformerPipeline):
             _, trafos_o = zip(*other.transformers_)
-            names_o = other._get_orig_names(other.transformers)
+            names_o = other._get_estimator_names(other.transformers)
             new_names = names_o + names
             new_trafos = trafos_o + trafos
         elif isinstance(other, BaseTransformer):
@@ -381,24 +381,36 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         else:
             return estimators
 
-    def _make_names(self, estimators):
-        """Return *unique*-made names for the estimators.
+    def _get_estimator_names(self, estimators, make_unique=False):
+        """Return names for the estimators, optionally made unique.
 
         Arguments
         ---------
         estimators : list of estimators, or list of (str, estimator tuples)
+        make_unique : bool, optional, default=False
+            whether names should be made unique in the return
 
         Returns
         -------
-        unique_names : list of str, unique entries, of equal length as estimators
-            list of unique names for estimators, made unique using _make_strings_unique
+        names : list of str, unique entries, of equal length as estimators
+            names for estimators in estimators
+            if make_unique=True, made unique using _make_strings_unique
         """
-        if isinstance(estimators[0], tuple):
+        if estimators is None or len(estimators) == 0:
+            names = []
+        elif isinstance(estimators[0], tuple):
             names = [x[0] for x in estimators]
-        else:
+        elif isinstance(estimators[0], BaseTransformer):
             names = [type(e).__name__ for e in estimators]
-        unique_names = self._make_strings_unique(names)
-        return unique_names
+        else:
+            raise RuntimeError(
+                "unreachable condition in _get_estimator_names, "
+                " likely input assumptions are violated,"
+                " run _check_estimators before running _get_estimator_names"
+            )
+        if make_unique:
+            names = self._make_strings_unique(names)
+        return names
 
     def _get_estimator_tuples(self, estimators, clone_ests=False):
         """Return list of estimator tuples, from a list or tuple.
@@ -417,28 +429,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         ests = self._get_estimator_list(estimators)
         if clone_ests:
             ests = [clone(e) for e in ests]
-        unique_names = self._make_names(estimators)
+        unique_names = self._get_estimator_names(estimators, make_unique=True)
         est_tuples = list(zip(unique_names, ests))
         return est_tuples
-
-    def _get_orig_names(self, estimators):
-        """Return original, potentially non-unique names for the estimators.
-
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
-
-        Returns
-        -------
-        names : list of str, unique entries, of equal length as estimators
-        """
-        if estimators is None or len(estimators) == 0:
-            names = []
-        if isinstance(estimators[0], BaseTransformer):
-            names = [type(e).__name__ for e in estimators]
-        if isinstance(estimators[0], tuple):
-            names = [e[0] for e in estimators]
-        return tuple(names)
 
     @classmethod
     def get_test_params(cls):
