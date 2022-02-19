@@ -2,7 +2,6 @@
 """Meta-transformers for building composite transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from enum import unique
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -392,7 +391,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         Returns
         -------
         unique_names : list of str, unique entries, of equal length as estimators
-            list of unique names for estimators, made unique using _make_strings_unique 
+            list of unique names for estimators, made unique using _make_strings_unique
         """
         if isinstance(estimators[0], tuple):
             names = [x[0] for x in estimators]
