@@ -2,6 +2,7 @@
 """Meta-transformers for building composite transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+from enum import unique
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -83,6 +84,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("capability:inverse_transform", False, True)
         self._anytagis_then_set("handles-missing-data", False, True)
         self._anytagis_then_set("univariate-only", True, False)
+
+    @property
+    def _transformers(self):
+        return self._get_estimator_tuples(self.transformers, clone_ests=False)
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers = value
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline."""
@@ -312,7 +321,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("transformers", deep=deep)
+        return self._get_params("_transformers", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of estimator in `transformers`.
@@ -323,7 +332,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self : returns an instance of self.
         """
-        self._set_params("transformers", **kwargs)
+        self._set_params("_transformers", **kwargs)
         return self
 
     def _check_estimators(self, estimators, attr_name="transformers"):
@@ -353,21 +362,77 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
                 raise TypeError(msg)
             if not all(isinstance(est[1], BaseTransformer) for est in estimators):
                 raise TypeError(msg)
-            names, _ = zip(*estimators)
 
+        return self._get_estimator_tuples(estimators, clone_ests=True)
+
+    def _get_estimator_list(self, estimators):
+        """Return list of estimators, from a list or tuple.
+
+        Arguments
+        ---------
+        estimators : list of estimators, or list of (str, estimator tuples)
+
+        Returns
+        -------
+        list of estimators - identical with estimators if list of estimators
+            if list of (str, estimator) tuples, the str get removed
+        """
+        if isinstance(estimators[0], tuple):
+            return [x[1] for x in estimators]
+        else:
+            return estimators
+
+    def _make_names(self, estimators):
+        """Return *unique*-made names for the estimators.
+
+        Arguments
+        ---------
+        estimators : list of estimators, or list of (str, estimator tuples)
+
+        Returns
+        -------
+        unique_names : list of str, unique entries, of equal length as estimators
+            list of unique names for estimators, made unique using _make_strings_unique 
+        """
         if isinstance(estimators[0], tuple):
             names = [x[0] for x in estimators]
-            est_clones = [clone(x[1]) for x in estimators]
         else:
             names = [type(e).__name__ for e in estimators]
-            est_clones = [clone(e) for e in estimators]
-
         unique_names = self._make_strings_unique(names)
-        est_tuples = [(unique_names[i], e) for i, e in enumerate(est_clones)]
+        return unique_names
 
+    def _get_estimator_tuples(self, estimators, clone_ests=False):
+        """Return list of estimator tuples, from a list or tuple.
+
+        Arguments
+        ---------
+        estimators : list of estimators, or list of (str, estimator tuples)
+        clone_ests : bool, whether estimators get cloned in the process
+
+        Returns
+        -------
+        est_tuples : list of (str, estimator) tuples
+            if estimators was a list of (str, estimator) tuples, then identical/cloned
+            if was a list of estimators, then str are generated via _name_names
+        """
+        ests = self._get_estimator_list(estimators)
+        if clone_ests:
+            ests = [clone(e) for e in ests]
+        unique_names = self._make_names(estimators)
+        est_tuples = list(zip(unique_names, ests))
         return est_tuples
 
     def _get_orig_names(self, estimators):
+        """Return original, potentially non-unique names for the estimators.
+
+        Arguments
+        ---------
+        estimators : list of estimators, or list of (str, estimator tuples)
+
+        Returns
+        -------
+        names : list of str, unique entries, of equal length as estimators
+        """
         if estimators is None or len(estimators) == 0:
             names = []
         if isinstance(estimators[0], BaseTransformer):
