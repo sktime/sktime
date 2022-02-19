@@ -36,14 +36,24 @@ class _AugmenterTags:
 
 
 class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
-    """Augmenter adding Gaussian (i.e . white) noise to the time series.
+    """Augmenter adding Gaussian (i.e. white) noise to the time series.
 
     Parameters
     ----------
-    param: statistic function or integer or float (default: 1.0)
-        Standard deviation (std) of the gaussian noise. If a statistic function is
-        given, the std of the gaussian noise will be calculated from X.
-    random_state: int
+    scale: float, scale parameter (default=1.0)
+            Specifies the standard deviation.
+    random_state: None or int or ``np.random.RandomState`` instance, optional
+            "If int or RandomState, use it for drawing the random variates.
+            If None, rely on ``self.random_state``.
+            Default is None." [1]
+
+    References and Footnotes
+    ----------
+
+        [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.
+            rv_continuous.random_state.html?highlight=random_state#scipy.stats.
+            rv_continuous.random_state
+
     """
 
     _allowed_statistics = [np.std]
@@ -66,7 +76,19 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
-    """Augmenter reversing the time series."""
+    """Augmenter reversing the time series.
+
+    Example
+    -------
+    >>> X = pd.Series([1,2,3,4,5])
+    >>> augmenter = InvertAugmenter()
+    >>> Xt = augmenter.fit_transform(X)
+    0  5
+    1  4
+    2  3
+    3  2
+    4  1
+    """
 
     def __init__(self):
         super().__init__()
@@ -76,7 +98,19 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class InvertAugmenter(_AugmenterTags, BaseTransformer):
-    """Augmenter inverting the time series by multiplying it by -1)."""
+    """Augmenter inverting the time series by multiplying it by -1).
+
+    Example
+    -------
+    >>> X = pd.Series([1,2,3,4,5])
+    >>> augmenter = InvertAugmenter()
+    >>> Xt = augmenter.fit_transform(X)
+    0  -1
+    1  -2
+    2  -3
+    3  -4
+    4  -5
+    """
 
     def __init__(self):
         super().__init__()
@@ -86,30 +120,32 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
-    """Draw random instances form panel data.
-
-    As the implemented augmenters work stochastically, it is best practice to
-    draw random samples (instances) from the (train) set and try to enlarge
-    the set by randomly executed and parameterized sequential augmentation
-    steps. In contrast to known augmenters in more ANN-focused packages (e.g.
-    `torchvision.transforms`) working batch-wise (augmented instances are
-    recurrently drawn while training), `sklearn` demands to enlarge the
-    dataset before calling a fit() or transform() function.
+    """Draw random samples form time series.
 
     Parameters
     ----------
     n: int or float, optional (default = 1.0)
-        Number of instances to draw. If type of n is float,
-        it is interpreted as the proportion of instances to draw compared
-        to the number of instances in X. By default, the same number of
-        instances as given by X is returned.
+            To specify an exact number of samples to draw, set `n` to an int value.
+            Number of samples to draw. If type of `n` is float,
+            To specify the returned samples as a proportion of the given times series
+            set `n` to an float value.
+            By default, the same number of samples is returned as in the given times
+            series
     without_replacement: bool, optional (default = True)
-        Whether to draw without replacement. If True, between two
-        subsequent draws of the same original instance, every other
-        instance of X appears once or twice.
-    random_state: int, RandomState instance or None, default=None
-        Controls the shuffling applied to the data before applying the split.
-        Pass an int for reproducible output across multiple function calls.
+            Whether to draw without replacement. If True, every samples of given
+            times series `X` appears once in `Xt`.
+    random_state: None or int or ``np.random.RandomState`` instance, optional
+            "If int or RandomState, use it for drawing the random variates.
+            If None, rely on ``self.random_state``.
+            Default is None." [1]
+
+    References and Footnotes
+    ----------
+
+        [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.
+        rv_continuous.random_state.html?highlight=random_state#scipy.
+        stats.rv_continuous.random_state
+
     """
 
     def __init__(
