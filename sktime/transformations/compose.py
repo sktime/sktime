@@ -90,14 +90,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         #   to avoid multiple "make unique" calls which may grow strings too much
         _, trafos = zip(*self.transformers_)
         names = tuple(self._get_orig_names(self.transformers))
-        if isinstance(other, BaseTransformer):
-            new_names = names + (type(other).__name__,)
-            new_trafos = trafos + (other,)
-        elif isinstance(other, TransformerPipeline):
+        if isinstance(other, TransformerPipeline):
             _, trafos_o = zip(*other.transformers_)
-            names_o = other._get_orig_names(self.transformers)
+            names_o = other._get_orig_names(other.transformers)
             new_names = names + names_o
             new_trafos = trafos + trafos_o
+        elif isinstance(other, BaseTransformer):
+            new_names = names + (type(other).__name__,)
+            new_trafos = trafos + (other,)
         elif self._is_name_and_trafo(other):
             other_name = other[0]
             other_trafo = other[1]
@@ -116,14 +116,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         """Magic * method, return (left) concatenated TransformerPipeline."""
         _, trafos = zip(*self.transformers_)
         names = tuple(self._get_orig_names(self.transformers))
-        if isinstance(other, BaseTransformer):
-            new_names = (type(other).__name__,) + names
-            new_trafos = (other,) + trafos
-        elif isinstance(other, TransformerPipeline):
+        if isinstance(other, TransformerPipeline):
             _, trafos_o = zip(*other.transformers_)
-            names_o = other._get_orig_names(self.transformers)
+            names_o = other._get_orig_names(other.transformers)
             new_names = names_o + names
             new_trafos = trafos_o + trafos
+        elif isinstance(other, BaseTransformer):
+            new_names = (type(other).__name__,) + names
+            new_trafos = (other,) + trafos
         elif self._is_name_and_trafo(other):
             other_name = other[0]
             other_trafo = other[1]
