@@ -283,7 +283,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         else:
             self._distance_params = self.distance_params
 
-    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+    def _fit(self, X: np.ndarray, y=None):
         """Fit time series clusterer to training data.
 
         Parameters
@@ -293,10 +293,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Training time series instances to cluster.
         y: ignored, exists for API consistency reasons.
 
-        Returns
-        -------
-        self:
-            Fitted estimator.
         """
         self._check_params(X)
 

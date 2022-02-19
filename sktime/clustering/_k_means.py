@@ -129,7 +129,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "n_clusters": 8,
+            "n_clusters": 2,
             "metric": "euclidean",
             "n_init": 1,
             "max_iter": 10,
