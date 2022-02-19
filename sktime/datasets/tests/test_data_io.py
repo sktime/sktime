@@ -1090,9 +1090,14 @@ def test_load_tsf_to_dataframe():
         "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
     )
 
-    df, frequency, horizon, missing_values, equal_length = load_tsf_to_dataframe(
-        data_path
-    )
+    expected_metadata = {
+        "freequency": "yearly",
+        "horizon": 4,
+        "missing_values": False,
+        "equal_length": False,
+    }
+
+    df, metadata = load_tsf_to_dataframe(data_path)
 
     test_df = pd.DataFrame(
         {
@@ -1119,7 +1124,4 @@ def test_load_tsf_to_dataframe():
     )
 
     assert_frame_equal(df, test_df)
-    assert frequency == "yearly"
-    assert horizon == 4
-    assert missing_values is False
-    assert equal_length is False
+    assert metadata == expected_metadata
