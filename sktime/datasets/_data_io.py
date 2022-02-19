@@ -1706,14 +1706,10 @@ def load_tsf_to_dataframe(
     -------
     loaded_data: pd.DataFrame
         The converted dataframe containing the time series.
-    frequency: str
-        The frequency of the dataset.
-    forecast_horizon: int
-        The expected forecast horizon of the dataset.
-    contain_missing_values: bool
-        Whether the dataset contains missing values or not.
-    contain_equal_length: bool
-        Whether the series have equal lengths or not.
+    metadata: dict
+        The metadata for the forecasting problem. The dictionary keys are:
+        "frequency", "forecast_horizon", "contain_missing_values",
+        "contain_equal_length"
     """
     col_names = []
     col_types = []
@@ -1857,10 +1853,22 @@ def load_tsf_to_dataframe(
         all_data[value_column_name] = all_series
         loaded_data = pd.DataFrame(all_data)
 
-        return (
-            loaded_data,
-            frequency,
-            forecast_horizon,
-            contain_missing_values,
-            contain_equal_length,
+        # metadata dict
+        metadata = dict(
+            zip(
+                (
+                    "frequency",
+                    "forecast_horizon",
+                    "contain_missing_values",
+                    "contain_equal_length",
+                ),
+                (
+                    frequency,
+                    forecast_horizon,
+                    contain_missing_values,
+                    contain_equal_length,
+                ),
+            )
         )
+
+        return loaded_data, metadata
