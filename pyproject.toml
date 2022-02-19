@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.9.0"
+version = "0.10.0"
 description = "A unified framework for machine learning with time series"
 license = "BSD-3-Clause"
 authors = [
@@ -49,6 +49,7 @@ dependencies = [
     "pandas>=1.1.0,<1.5.0",
     "scikit-learn>=0.24.0",
     "statsmodels>=0.12.1",
+    "scipy<1.8.0",
 ]
 
 [project.optional-dependencies]
@@ -72,7 +73,6 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "pytest-xdist",
     "wheel",
 ]
 
@@ -100,5 +100,5 @@ documentation = "https://www.sktime.org"
 download = "https://pypi.org/project/sktime/#files"
 
 [build-system]
-requires = ["setuptools", "wheel", "numpy==1.21.0", "toml", "build"]
+requires = ["setuptools", "wheel", "toml", "build"]
 build-backend = "setuptools.build_meta"

@@ -355,6 +355,23 @@ class AutoARIMA(_PmdArimaAdapter):
             **self.model_kwargs
         )
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "d": 0,
+            "suppress_warnings": True,
+            "max_p": 2,
+            "max_q": 2,
+            "seasonal": False,
+        }
+        return params
+
 
 class ARIMA(_PmdArimaAdapter):
     """An ARIMA estimator.
