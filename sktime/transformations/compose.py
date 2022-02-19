@@ -299,7 +299,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         return self
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `_forecasters`.
+        """Get parameters of estimator in `transformers`.
 
         Parameters
         ----------
@@ -312,10 +312,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("transformers_", deep=deep)
+        return self._get_params("transformers", deep=deep)
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `_forecasters`.
+        """Set the parameters of estimator in `transformers`.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -323,7 +323,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self : returns an instance of self.
         """
-        self._set_params("transformers_", **kwargs)
+        self._set_params("transformers", **kwargs)
         return self
 
     def _check_estimators(self, estimators, attr_name="transformers"):
