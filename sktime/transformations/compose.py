@@ -455,7 +455,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         # imports
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        trafo1 = ExponentTransformer(power=2)
-        trafo2 = ExponentTransformer(power=0.5)
-        params = {"transformers": [trafo1, trafo2]}
-        return params
+        t1 = ExponentTransformer(power=2)
+        t2 = ExponentTransformer(power=0.5)
+        t3 = ExponentTransformer(power=1)
+
+        # construct without names
+        params1 = {"transformers": [t1, t2]}
+
+        # construct with names
+        params2 = {"transformers": [("foo", t1), ("bar", t2), ("foobar", t3)]}
+
+        # construct with names and provoke multiple naming clashes
+        params3 = {"transformers": [("foo", t1), ("foo", t2), ("foo_1", t3)]}
+
+        return [params1, params2, params3]
