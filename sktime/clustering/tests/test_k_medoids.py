@@ -55,7 +55,7 @@ expected_score = {"medoids": 0.3153846153846154}
 
 train_expected_score = {"medoids": 0.4858974358974359}
 
-expected_inertia = {"medoids": 291267.56256896566}
+expected_inertia = {"medoids": 2387.3342740600688}
 
 expected_iters = {"medoids": 5}
 
@@ -111,7 +111,11 @@ def test_kmedoids():
     X_test, y_test = load_basic_motions(split="test")
 
     kmedoids = TimeSeriesKMedoids(
-        random_state=1, n_init=2, max_iter=5, init_algorithm="kmeans++", metric="dtw"
+        random_state=1,
+        n_init=2,
+        max_iter=5,
+        init_algorithm="kmeans++",
+        metric="euclidean",
     )
     train_predict = kmedoids.fit_predict(X_train)
     train_score = metrics.rand_score(y_train, train_predict)
