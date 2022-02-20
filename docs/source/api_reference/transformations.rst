@@ -293,6 +293,17 @@ Datetime feature generation
 
     DateTimeFeatures
 
+Lagged Window Summarizer
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.window_summarizer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowSummarizer
+
 Outlier detection
 ~~~~~~~~~~~~~~~~~
 
