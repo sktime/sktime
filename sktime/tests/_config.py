@@ -305,6 +305,7 @@ VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 # "apply" the fitted estimator to data and useful for checking results.
 NON_STATE_CHANGING_METHODS = (
     "predict",
+    "predict_var",
     "predict_proba",
     "decision_function",
     "transform",
