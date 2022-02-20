@@ -1091,10 +1091,10 @@ def test_load_tsf_to_dataframe():
     )
 
     expected_metadata = {
-        "freequency": "yearly",
-        "horizon": 4,
-        "missing_values": False,
-        "equal_length": False,
+        "frequency": "yearly",
+        "forecast_horizon": 4,
+        "contain_missing_values": False,
+        "contain_equal_length": False,
     }
 
     df, metadata = load_tsf_to_dataframe(data_path)
