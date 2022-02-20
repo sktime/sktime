@@ -20,11 +20,11 @@ For our long-term plan, see our :ref:`roadmap`.
 Highlights
 ~~~~~~~~~~
 
-* this release is mainly a maintenance patch which upper bounds ``scipy<1.8.0`` to prevent bugs due to interface changes in ``scipy``.
-* once ``sktime`` is compatible with ``scipy 1.8.0``, the upper bound will be relaxed
-* new forecaster: ``STLForecaster`` (:pr:`1963`) :user:`aiwalter`
-* new transformer: lagged window summarizer transformation (:pr:`1924`) :user:`danbartl`
-* loaders for ``.tsf``data format (:pr:`1934`) :user:`rakshitha123`
+* This release is mainly a maintenance patch which upper bounds ``scipy<1.8.0`` to prevent bugs due to interface changes in ``scipy``.
+* Once ``sktime`` is compatible with ``scipy 1.8.0``, the upper bound will be relaxed
+* New forecaster: ``STLForecaster`` (:pr:`1963`) :user:`aiwalter`
+* New transformer: lagged window summarizer transformation (:pr:`1924`) :user:`danbartl`
+* Loaders for ``.tsf`` data format (:pr:`1934`) :user:`rakshitha123`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
