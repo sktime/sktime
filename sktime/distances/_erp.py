@@ -17,7 +17,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _ErpDistance(NumbaDistance):
-    """Edit distance with real penalty (erp) between two timeseries."""
+    """Edit distance with real penalty (erp) between two time series."""
 
     def _distance_factory(
         self,
@@ -34,9 +34,9 @@ class _ErpDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.

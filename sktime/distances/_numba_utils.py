@@ -14,12 +14,12 @@ def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     x: np.ndarray
-        A timeseries
+        A time series
 
     Returns
     -------
     np.ndarray
-        Validated and reshaped (where appropriate) timeseries.
+        Validated and reshaped (where appropriate) time series.
     """
     if x.ndim == 2:
         shape = x.shape
@@ -37,9 +37,9 @@ def _compute_pairwise_distance(
     Parameters
     ----------
     x: np.ndarray (2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d or 3d array)
-        Second timeseries.
+        Second time series.
     symmetric: bool
         Boolean that is true when x == y and false when x != y. Used in some instances
         to speed up pairwise computation.
@@ -50,7 +50,7 @@ def _compute_pairwise_distance(
     Returns
     -------
     np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
-        Pairwise distance matrix between the two timeseries.
+        Pairwise distance matrix between the two time series.
     """
     _x = _check_numba_pairwise_series(x)
     _y = _check_numba_pairwise_series(y)
@@ -108,17 +108,17 @@ def is_no_python_compiled_callable(
 
 
 def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
-    """Convert a timeseries to a valid timeseries for numba pairwise use.
+    """Convert a time series to a valid time series for numba pairwise use.
 
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d array)
-        A timeseries.
+        A time series.
 
     Returns
     -------
     np.ndarray (3d array)
-        3d array that is the formatted pairwise timeseries.
+        3d array that is the formatted pairwise time series.
 
     Raises
     ------
@@ -128,7 +128,7 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
     """
     if not isinstance(x, np.ndarray):
         raise ValueError(
-            f"The value {x} is an invalid timeseries. To perform a "
+            f"The value {x} is an invalid time series. To perform a "
             f"distance computation a numpy arrays must be provided."
         )
 
@@ -153,17 +153,17 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
 
 
 def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
-    """Convert a timeseries to a valid timeseries for numba use.
+    """Convert a time series to a valid time series for numba use.
 
     Parameters
     ----------
     x: np.ndarray (1d or 2d)
-        A timeseries.
+        A time series.
 
     Returns
     -------
     np.ndarray (2d array)
-        2d array that is the formatted timeseries.
+        2d array that is the formatted time series.
 
     Raises
     ------

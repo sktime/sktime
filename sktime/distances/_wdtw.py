@@ -17,7 +17,28 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _WdtwDistance(NumbaDistance):
-    """Weighted dynamic time warping (wdtw) distance between two timeseries."""
+    r"""Weighted dynamic time warping (wdtw) distance between two time series.
+
+    Uses  DTW with a weighted pairwise distance matrix rather than a window. When
+    creating the distance matrix $M$, a weight penalty  $w_{|i-j|}$ for a warping
+    distance of $|i-j|$ is applied, so that
+    .. math::
+    M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
+    A logistic weight function is proposed in [1], so that a warping of $a$ places
+    imposes a weighting of
+    .. math::
+    w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
+
+    where $w_{max}$ is an upper bound on the weight (set to 1), $m$ is the series
+    length and $g$ is a parameter that controls the penalty level for larger warpings.
+    The greater $g$ is, the greater the penalty for warping. Once $M$ is found,
+    standard dynamic time warping is applied.
+
+    References
+    ----------
+    ..[1] Jeong, Y., Jeong, M., Omitaomu, O.: Weighted dynamic time warping for time
+    series classification. Pattern Recognition 44, 2231–2240 (2011
+    """
 
     def _distance_factory(
         self,
@@ -65,8 +86,8 @@ class _WdtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If the value of g is not a float
@@ -100,9 +121,9 @@ def _weighted_cost_matrix(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the values in bound are marked by finite values and
         outside bound points are infinite values.

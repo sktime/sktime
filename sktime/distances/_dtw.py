@@ -17,7 +17,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _DtwDistance(NumbaDistance):
-    """Dynamic time warping (dtw) between two timeseries."""
+    """Dynamic time warping (dtw) between two time series."""
 
     def _distance_factory(
         self,
@@ -33,9 +33,9 @@ class _DtwDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: Float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
@@ -59,8 +59,8 @@ class _DtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """

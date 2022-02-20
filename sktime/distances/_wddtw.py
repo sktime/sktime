@@ -19,7 +19,11 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _WddtwDistance(NumbaDistance):
-    """Weighted derivative dynamic time warping (wddtw) distance between two series."""
+    """Weighted derivative dynamic time warping (wddtw) distance between two series.
+
+    Takes the first order difference of each series, then applies weighted dynamic
+    time warping (see _WdtwDistance).
+    """
 
     def _distance_factory(
         self,
@@ -37,9 +41,9 @@ class _WddtwDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: int, defaults = None
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding).

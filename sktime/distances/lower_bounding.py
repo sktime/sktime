@@ -113,9 +113,9 @@ def no_bounding(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
 
     Returns
     -------
@@ -133,9 +133,9 @@ def sakoe_chiba(x: np.ndarray, y: np.ndarray, window: float) -> np.ndarray:
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     window: float
         Float that is the size of the window. Must be between 0 and 1.
 
@@ -185,9 +185,9 @@ def itakura_parallelogram(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     itakura_max_slope: float or int
         Gradient of the slope must be between 0 and 1.
 
@@ -253,9 +253,9 @@ def numba_create_bounding_matrix(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     window: float, defaults = -1.
         Float that is the % radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Must be between 0 and 1.
@@ -359,9 +359,9 @@ class LowerBounding(Enum):
         Parameters
         ----------
         x: np.ndarray (1d, 2d or 3d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (1d, 2d or 3d array)
-            Second timeseries.
+            Second time series.
         sakoe_chiba_window_radius: int, defaults = None
             Integer that is the radius of the sakoe chiba window. Must be between 0
             and 1.
@@ -379,8 +379,8 @@ class LowerBounding(Enum):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
@@ -405,26 +405,27 @@ class LowerBounding(Enum):
 
     @staticmethod
     def _check_input_timeseries(x: np.ndarray) -> np.ndarray:
-        """Check and validate input timeseries.
+        """Check and validate input time series.
 
         Parameters
         ----------
         x: np.ndarray (1d, 2d or 3d array)
-            A timeseries.
+            A time series.
 
         Returns
         -------
         np.ndarray (2d array)
-            A validated timeseries.
+            A validated time series.
 
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
         """
         if not isinstance(x, np.ndarray):
-            raise ValueError("The input timeseries must be a numpy array.")
+            raise ValueError("The input time series must be a numpy array.")
+            raise ValueError("The input time series must be a numpy array.")
         if x.ndim <= 0 or x.ndim >= 4:
             raise ValueError(
                 "The input timeseries must have more than 0 dimensions and"

@@ -13,7 +13,7 @@ from sktime.distances.base import DistanceCallable, NumbaDistance
 
 
 class _EuclideanDistance(NumbaDistance):
-    """Euclidean distance between two timeseries."""
+    """Euclidean distance between two time series."""
 
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: Any
@@ -23,9 +23,9 @@ class _EuclideanDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (1d or 2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (1d or 2d array)
-            Second timeseries.
+            Second time series.
         kwargs: Any
             Extra kwargs. For euclidean there are none however, this is kept for
             consistency.

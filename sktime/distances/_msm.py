@@ -14,7 +14,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _MsmDistance(NumbaDistance):
-    """Move-split-merge (MSM) distance between two timeseries."""
+    """Move-split-merge (MSM) distance between two time series."""
 
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, c: float = 0.0, **kwargs: dict
@@ -24,9 +24,9 @@ class _MsmDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         c: float
             parameter used in MSM (update later!)
 

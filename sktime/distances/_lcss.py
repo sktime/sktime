@@ -17,7 +17,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _LcssDistance(NumbaDistance):
-    """Longest common subsequence (Lcss) between two timeseries."""
+    """Longest common subsequence (Lcss) between two time series."""
 
     def _distance_factory(
         self,
@@ -34,9 +34,9 @@ class _LcssDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.

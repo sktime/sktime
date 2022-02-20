@@ -39,13 +39,11 @@ def _average_of_slope(q: np.ndarray):
      a 2d np.ndarray of shape (m-1)xd containing the first order difference of q.
 
     """
-    print("q = ",q, "\n transform = ",np.diff(q.T).T)
-    print("q' = ",np.diff(q))
     return np.diff(q)
 
 
 class _DdtwDistance(NumbaDistance):
-    """Derivative dynamic time warping (ddtw) between two timeseries."""
+    """Derivative dynamic time warping (ddtw) between two time series."""
 
     def _distance_factory(
         self,
