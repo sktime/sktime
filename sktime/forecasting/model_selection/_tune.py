@@ -458,6 +458,26 @@ class ForecastingGridSearchCV(BaseGridSearch):
         _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return params
+
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
     """Perform randomized-search cross-validation to find optimal model parameters.
@@ -567,3 +587,23 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
                 self.param_distributions, self.n_iter, random_state=self.random_state
             )
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return params
