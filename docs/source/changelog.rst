@@ -28,8 +28,8 @@ Highlights
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
-* introduction of bound ``scipy<1.8.0``, to prevent bugs due to interface changes in ``scipy``
-* once ``sktime`` is compatible with ``scipy 1.8.0``, the upper bound will be relaxed
+* Introduction of bound ``scipy<1.8.0``, to prevent bugs due to interface changes in ``scipy``
+* Once ``sktime`` is compatible with ``scipy 1.8.0``, the upper bound will be relaxed
 
 Added
 ~~~~~
