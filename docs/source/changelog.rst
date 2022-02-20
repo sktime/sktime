@@ -109,17 +109,6 @@ Contributors
 :user:`schettino72`,
 
 
-
-## New Contributors
-* @schettino72 made their first contribution in https://github.com/alan-turing-institute/sktime/pull/1973
-* @Saransh-cpp made their first contribution in https://github.com/alan-turing-institute/sktime/pull/2035
-* @Rubiel1 made their first contribution in https://github.com/alan-turing-institute/sktime/pull/2042
-* @chicken-biryani made their first contribution in https://github.com/alan-turing-institute/sktime/pull/2014
-* @baggiponte made their first contribution in https://github.com/alan-turing-institute/sktime/pull/1834
-* @RishiKumarRay made their first contribution in https://github.com/alan-turing-institute/sktime/pull/2063
-
-
-
 [0.10.0] - 2022-02-02
 ---------------------
 
