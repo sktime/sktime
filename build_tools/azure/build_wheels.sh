@@ -28,7 +28,7 @@ echo "Included Python versions: " "${PYTHON_VERSIONS[@]}"
 cd /io/ # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
-  "${PYTHON}/python" -m pip install ".[all_extras,dev]"
+  "${PYTHON}/python" -m pip install ".[all_extras,dev,dl]"
 done
 
 # Install built wheel and test

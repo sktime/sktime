@@ -93,6 +93,11 @@ docs = [
     "tabulate",
 ]
 
+dl = [
+    "tensorflow",
+    "tensorflow-probability",
+]
+
 [project.urls]
 homepage = "https://www.sktime.org"
 repository = "https://github.com/alan-turing-institute/sktime"
