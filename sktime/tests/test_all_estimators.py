@@ -29,6 +29,7 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
+from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
@@ -506,6 +507,9 @@ def test_fit_idempotent(estimator_instance, scenario):
 
     # todo: may have to rework this, due to "if estimator has param"
     for method in NON_STATE_CHANGING_METHODS:
+        # todo:
+        if isinstance(estimator_instance, BaseForecaster) and method == "predict_proba":
+            continue
         if _has_capability(estimator, method):
             set_random_state(estimator)
             results = scenario.run(
