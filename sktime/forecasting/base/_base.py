@@ -1635,11 +1635,13 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         pred_dist : tfp Distribution object
-            batch shape is 1D and same length as fh
+            batch shape is 2D, of shape [len(fh), 1]
             event shape is 1D, with length equal to number of variables being forecast
             i-th (batch) distribution is forecast for i-th entry of fh
             j-th (event) component is j-th variable, same order as y in `fit`/`update`
         """
+        import tensorflow_probability as tfp
+
         # default behaviour is implemented if one of the following three is implemented
         implements_interval = self._has_implementation_of("_predict_interval")
         implements_quantiles = self._has_implementation_of("_predict_quantiles")
@@ -1654,14 +1656,18 @@ class BaseForecaster(BaseEstimator):
                 "This is likely a bug, please report, and/or set the flag to False."
             )
 
-        # if has one of interval/quantile predictions:
-        #   return normal distributions 
-        if implements_interval or implements_quantiles:
-
-            # compute quantile forecasts corresponding to upper/lower
-            pred_int = self._predict_interval(fh=fh, X=X, coverage=[0.5])
-
-        pred_dist = 42
+        # if any of the above are implemented, predict_var will have a default
+        #   we use predict_var to get scale, and predict to get location
+        pred_var = self._predict_var(fh=fh, X=X)
+        pred_std = np.sqrt(pred_var)
+        pred_mean = self.predict(fh=fh, X=X)
+        # ensure that pred_mean is a pd.DataFrame
+        df_types = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        pred_mean = convert_to(pred_mean, to_type=df_types)
+        # pred_mean and pred_var now have the same format
+    
+        d = tfp.distributions.Normal
+        pred_dist = d(loc=pred_mean, scale=pred_std)
 
         return pred_dist
 
