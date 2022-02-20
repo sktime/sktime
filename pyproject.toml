@@ -40,7 +40,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
 ]
-requires-python = ">=3.7,<3.10"
+requires-python = ">=3.7,<3.11"
 dependencies = [
     "deprecated>=1.2.13",
     "numba>=0.53",
