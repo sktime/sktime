@@ -29,6 +29,7 @@ import textwrap
 import zipfile
 from datetime import datetime
 from distutils.util import strtobool
+from typing import Dict
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -1872,3 +1873,53 @@ def load_tsf_to_dataframe(
         )
 
         return loaded_data, metadata
+
+
+def _convert_tsf_to_multiindex(
+    data: pd.DataFrame, metadata: Dict, freq: str = None
+) -> pd.DataFrame:
+    """Convert the nested arrays format froom the load_tsf_to_dataframe to multiindex.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        nested values dataframe
+    metadata : Dict
+        tsf file metadata
+    freq : str, optional
+        pandas compatible time frequency, by default None
+        if not speciffied it's automatically mapped from the tsf frequency to a pandas
+        frequency
+
+    Returns
+    -------
+    pd.DataFrame
+        sktime multiindex mtype
+    """
+    if freq is None:
+        freq_map = {
+            "daily": "D",
+            "weekly": "W",
+            "monthly": "MS",
+            "yearly": "YS",
+        }
+        freq = freq_map[metadata["frequency"]]
+
+    df_list = []
+    for _, row in data.iterrows():
+        time_index = pd.date_range(
+            start=row["start_timestamp"], periods=len(row["series_value"]), freq=freq
+        )
+        cols = list(row.index)
+        cols.remove("series_value")
+        cols.remove("start_timestamp")
+        index = [tuple(list(row[cols]) + [time]) for time in time_index]
+        df_list.append(
+            pd.DataFrame(
+                data=list(row["series_value"]),
+                index=pd.MultiIndex.from_tuples(index, names=cols + ["timestamp"]),
+                columns=["series_value"],
+            )
+        )
+
+    return pd.concat(df_list)
