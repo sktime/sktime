@@ -47,7 +47,7 @@ Documentation
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Added loaders for ``.tsf``data format (:pr:`1934`) :user:`rakshitha123`
+* [ENH] Added loaders for ``.tsf`` data format (:pr:`1934`) :user:`rakshitha123`
 * [ENH] Added ``.tsf`` dataset for unit testing (:pr:`1996`) :user:`rakshitha123`
 
 Data types, checks, conversions
