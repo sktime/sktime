@@ -1665,7 +1665,7 @@ class BaseForecaster(BaseEstimator):
         df_types = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         pred_mean = convert_to(pred_mean, to_type=df_types)
         # pred_mean and pred_var now have the same format
-    
+
         d = tfp.distributions.Normal
         pred_dist = d(loc=pred_mean, scale=pred_std)
 
