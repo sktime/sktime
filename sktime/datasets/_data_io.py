@@ -1872,6 +1872,11 @@ def load_tsf_to_dataframe(
             )
         )
 
+        # convert to multiinidex mtype
+        loaded_data = _convert_tsf_to_multiindex(
+            loaded_data, metadata, value_column_name=value_column_name
+        )
+
         return loaded_data, metadata
 
 
