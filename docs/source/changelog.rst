@@ -14,6 +14,13 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+[0.10.1] - 2022-02-20
+---------------------
+
+Highlights
+~~~~~~~~~~
+
+
 [0.10.0] - 2022-02-02
 ---------------------
 
