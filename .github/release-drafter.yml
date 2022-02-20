@@ -15,7 +15,7 @@ categories:
       - 'chore'
       - 'maintenance'
       - 'refactor'
-      - 'documentation' 
+      - 'documentation'
 
 template: |
   ## What's New
