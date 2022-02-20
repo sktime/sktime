@@ -21,34 +21,27 @@ DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
 @njit(cache=True, fastmath=True)
 def _average_of_slope(q: np.ndarray):
-    r"""Compute the average of a slope between points.
+    r"""Compute the first order difference for series q.
 
-    Computes the average of the slope of the line through the point in question and
-    its left neighbour, and the slope of the line through the left neighbour and the
-    right neighbour.
-
-    Mathematically this is defined at:
+    q is a series length m (len(q.shape[0]) with dimension d (len(q.shape[1]),
+    and the first order difference is
 
     .. math::
-        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+    q'_{i} = q_{i}-q_{i-1} for 0 < i < m
 
-    Where q is the original timeseries and d_q is the derived timeseries.
-
+    not sure this needs to be in its own method
     Parameters
     ----------
-    q: np.ndarray (2d array)
-        A timeseries.
+    q: a 2d np.ndarray, a time series
 
     Returns
     -------
-    np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
-                len(q.shape[1]))
-        Array containing the derivative of q.
+     a 2d np.ndarray of shape (m-1)xd containing the first order difference of q.
 
     """
-    # Taken from https://github.com/tslearn-team/tslearn/issues/180
-    return np.diff(q.T).T
-    # return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
+    print("q = ",q, "\n transform = ",np.diff(q.T).T)
+    print("q' = ",np.diff(q))
+    return np.diff(q)
 
 
 class _DdtwDistance(NumbaDistance):

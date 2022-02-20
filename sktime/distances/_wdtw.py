@@ -34,14 +34,14 @@ class _WdtwDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: float, defaults = None
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
-            Gradient of the slope for itakura parallelogram (if using Itakura
+            Gradient of the slope for Itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None)
@@ -95,7 +95,7 @@ class _WdtwDistance(NumbaDistance):
 def _weighted_cost_matrix(
     x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, g: float
 ):
-    """Compute the wdtw cost matrix between two timeseries.
+    """Compute the wdtw cost matrix between two time series.
 
     Parameters
     ----------
