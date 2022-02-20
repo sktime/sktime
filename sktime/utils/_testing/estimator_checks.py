@@ -341,7 +341,7 @@ def _has_capability(est, method: str) -> bool:
         "predict_interval",
         "predict_quantiles",
         "predict_var",
-     ]:
+    ]:
         # all classifiers implement predict_proba
         if method == "predict_proba" and isinstance(est, BaseClassifier):
             return True
