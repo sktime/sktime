@@ -118,3 +118,21 @@ class BATS(_TbatsAdapter):
     from tbats import BATS as _BATS
 
     _ModelClass = _BATS
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "use_box_cox": False,
+            "use_trend": False,
+            "use_damped_trend": False,
+            "sp": [],
+            "use_arma_errors": False,
+            "n_jobs": 1,
+        }
+        return params
