@@ -110,11 +110,11 @@ class _BaseWindowForecaster(BaseForecaster):
         y_pred = self._predict_last_window(
             fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
-        if isinstance(y_pred, np.ndarray):
+        if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
+            return y_pred
+        else:
             index = fh.to_absolute(self.cutoff)
             return pd.Series(y_pred, index=index)
-        else:
-            return y_pred
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
