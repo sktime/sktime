@@ -1876,7 +1876,10 @@ def load_tsf_to_dataframe(
 
 
 def _convert_tsf_to_multiindex(
-    data: pd.DataFrame, metadata: Dict, freq: str = None
+    data: pd.DataFrame,
+    metadata: Dict,
+    freq: str = None,
+    value_column_name: str = "series_value",
 ) -> pd.DataFrame:
     """Convert the nested arrays format froom the load_tsf_to_dataframe to multiindex.
 
@@ -1890,6 +1893,8 @@ def _convert_tsf_to_multiindex(
         pandas compatible time frequency, by default None
         if not speciffied it's automatically mapped from the tsf frequency to a pandas
         frequency
+    value_column_name: str, optional
+        The name of the column that contains the values, by default "series_value"
 
     Returns
     -------
@@ -1908,17 +1913,17 @@ def _convert_tsf_to_multiindex(
     df_list = []
     for _, row in data.iterrows():
         time_index = pd.date_range(
-            start=row["start_timestamp"], periods=len(row["series_value"]), freq=freq
+            start=row["start_timestamp"], periods=len(row[value_column_name]), freq=freq
         )
         cols = list(row.index)
-        cols.remove("series_value")
+        cols.remove(value_column_name)
         cols.remove("start_timestamp")
         index = [tuple(list(row[cols]) + [time]) for time in time_index]
         df_list.append(
             pd.DataFrame(
-                data=list(row["series_value"]),
+                data=list(row[value_column_name]),
                 index=pd.MultiIndex.from_tuples(index, names=cols + ["timestamp"]),
-                columns=["series_value"],
+                columns=[value_column_name],
             )
         )
 
