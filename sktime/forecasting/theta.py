@@ -212,8 +212,8 @@ class ThetaForecaster(ExponentialSmoothing):
         # compute historical residual standard error
         n_timepoints = len(self._y)
 
-        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
-        sem = self.sigma_ * np.sqrt(
+        sigma = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
+        sem = sigma * np.sqrt(
             self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
         )
 
