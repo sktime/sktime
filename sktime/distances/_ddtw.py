@@ -29,7 +29,8 @@ def _average_of_slope(q: np.ndarray):
     .. math::
     q'_{i} = q_{i}-q_{i-1} for 0 < i < m
 
-    not sure this needs to be in its own method
+    not sure this needs to be in its own method.
+
     Parameters
     ----------
     q: a 2d np.ndarray, a time series

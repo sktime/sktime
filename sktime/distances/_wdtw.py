@@ -24,7 +24,7 @@ class _WdtwDistance(NumbaDistance):
     distance of $|i-j|$ is applied, so that
     .. math::
     M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
-    A logistic weight function is proposed in [1], so that a warping of $a$ places
+    A logistic weight function, proposed in [1] is used, so that a warping of $a$ places
     imposes a weighting of
     .. math::
     w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},

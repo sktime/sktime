@@ -14,43 +14,59 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _MsmDistance(NumbaDistance):
-    """Move-split-merge (MSM) distance between two time series."""
+    r"""Move-split-merge (MSM) distance between two time series.
 
-    def _distance_factory(
-        self, x: np.ndarray, y: np.ndarray, c: float = 0.0, **kwargs: dict
-    ) -> DistanceCallable:
-        """Create a no_python compiled MSM distance callable.
+    It is based on a cost function
 
-        Parameters
-        ----------
-        x: np.ndarray (2d array)
-            First time series.
-        y: np.ndarray (2d array)
-            Second time series.
-        c: float
-            parameter used in MSM (update later!)
+        .. math::
+    C(a_i,a_{i-1},b_j) = \left\{ \begin{array}{l}
+    \mbox{$c$ \textbf{if} $a_{i-1} \leq a_i \leq b_j $ \textbf{or} $a_{i-1}
+    \geq a_i \geq b_j$}
+    \mbox{$c+min(|a_i-a_{i-1}|,|a_i-b_j|)$ \textbf{otherwise}.}
 
-        Returns
-        -------
-        Callable[[np.ndarray, np.ndarray], float]
-            No_python compiled MSM distance callable.
 
-        Raises
-        ------
-        ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
-        """
+    References
+    ----------
+    ..[1] Stefan, A., Athitsos, V., Das, G.: The move-split-merge metric for time
+    series IEEE Transactions on Knowledge and Data Engineering 25(6), (2012)
+    """
 
-        @njit(cache=True)
-        def numba_msm_distance(
-            _x: np.ndarray,
-            _y: np.ndarray,
-        ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, c)
-            return cost_matrix[-1, -1]
 
-        return numba_msm_distance
+def _distance_factory(
+    self, x: np.ndarray, y: np.ndarray, c: float = 0.0, **kwargs: dict
+) -> DistanceCallable:
+    """Create a no_python compiled MSM distance callable.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array)
+        First time series.
+    y: np.ndarray (2d array)
+        Second time series.
+    c: float
+        parameter used in MSM (update later!)
+
+    Returns
+    -------
+    Callable[[np.ndarray, np.ndarray], float]
+        No_python compiled MSM distance callable.
+
+    Raises
+    ------
+    ValueError
+        If the input timeseries is not a numpy array.
+        If the input timeseries doesn't have exactly 2 dimensions.
+    """
+
+    @njit(cache=True)
+    def numba_msm_distance(
+        _x: np.ndarray,
+        _y: np.ndarray,
+    ) -> float:
+        cost_matrix = _cost_matrix(_x, _y, c)
+        return cost_matrix[-1, -1]
+
+    return numba_msm_distance
 
 
 @njit(cache=True, fastmath=True)
