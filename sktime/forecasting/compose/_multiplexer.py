@@ -197,3 +197,23 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         """
         self.forecaster_.update(y, X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params = {
+            "forecasters": [
+                ("Naive_mean", NaiveForecaster(strategy="mean")),
+                ("Naive_last", NaiveForecaster(strategy="last")),
+                ("Naive_drift", NaiveForecaster(strategy="drift")),
+            ],
+            "selected_forecaster": "Naive_mean",
+        }
+        return params
