@@ -827,20 +827,12 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     instances = []
     for instance_idx in instance_idxs:
         iidx = instance_idx
-        instance = [
-            pd.DataFrame(i[1], columns=[i[0]])
-            for i in X.loc[iidx, :].iteritems()  # noqa
-        ]
-        # instance = [
-        #     _val if isinstance(_val, (pd.Series) else pd.Series(_val, name=_lab)
-        #     for _lab, _val in X.loc[instance_idx, :].iteritems()  # noqa
-        # ]
-        # instance = [
-        #     X.loc[instance_idx, _label]
-        #     if isinstance(X.loc[instance_idx, _label], pd.Series)
-        #     else pd.Series(X.loc[instance_idx, _label], name=_label)
-        #     for _label in X.columns ]
+        series = [i[1] for i in X.loc[iidx, :].iteritems()]
+        colnames = [i[0] for i in X.loc[iidx, :].iteritems()]
+        for x in series:
+            x.name = None
 
+        instance = [pd.DataFrame(s, columns=[c]) for s, c in zip(series, colnames)]
         instance = pd.concat(instance, axis=1)
         # For primitive (non-nested column) assume the same
         # primitive value applies to every timepoint of the instance

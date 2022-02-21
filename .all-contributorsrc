@@ -1442,6 +1442,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/7654679?v=4",
       "profile": "https://github.com/rakshitha123",
       "contributions": [
+        "code",
         "doc"
       ]
     },
@@ -1480,6 +1481,25 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Saransh-cpp",
+      "name": "Saransh Chopra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74055102?v=4",
+      "profile": "https://github.com/Saransh-cpp",
+      "contributions": [
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "RishiKumarRay",
+      "name": "Rishi Kumar Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87641376?v=4",
+      "profile": "https://github.com/RishiKumarRay",
+      "contributions": [
+        "infra"
+     ]
     }
   ],
   "projectName": "sktime",
