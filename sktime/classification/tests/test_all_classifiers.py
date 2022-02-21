@@ -75,7 +75,7 @@ def test_multivariate_input(Estimator):
 def test_classifier_output(Estimator):
     """Test classifier outputs the correct data types and values.
 
-    Test predict produces a np.array or pd.Series with only values seen in the train
+    Test predict produces a np.array with only values seen in the train
     data, and that predict_proba probability estimates add up to one.
     """
     estimator = Estimator.create_test_instance()

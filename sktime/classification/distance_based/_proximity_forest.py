@@ -900,7 +900,6 @@ class ProximityStump(BaseClassifier):
         self : object
         """
         self.X = _positive_dataframe_indices(X)
-        #        if self._random_object is None:
         self._random_object = check_random_state(self.random_state)
         self.y = y
         if self.distance_measure is None:
@@ -1139,8 +1138,7 @@ class ProximityTree(BaseClassifier):
         self : object
         """
         self.X = _positive_dataframe_indices(X)
-        if self._random_object is None:
-            self._random_object = check_random_state(self.random_state)
+        self._random_object = check_random_state(self.random_state)
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         self.y = y
@@ -1235,7 +1233,8 @@ class ProximityTree(BaseClassifier):
                 else:
                     sub_X = X.iloc[indices, :]
                     sub_distribution = sub_tree.predict_proba(sub_X)
-                assert sub_distribution.shape[1] == self.n_classes_
+                if sub_distribution.shape[1] != self.n_classes_:
+                    sub_distribution = np.zeros((1, self.n_classes_))
                 np.add.at(distribution, indices, sub_distribution)
         normalize(distribution, copy=False, norm="l1")
         return distribution
@@ -1416,8 +1415,7 @@ class ProximityForest(BaseClassifier):
         self : object
         """
         self.X = _positive_dataframe_indices(X)
-        if self._random_object is None:
-            self._random_object = check_random_state(self.random_state)
+        self._random_object = check_random_state(self.random_state)
         self.y = y
         if self.distance_measure is None:
             if self.get_distance_measure is None:
