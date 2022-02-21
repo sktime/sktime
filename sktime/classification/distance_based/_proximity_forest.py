@@ -566,6 +566,41 @@ def setup_ddtw_distance_measure_getter(transformer):
     return getter
 
 
+class DistanceMeasureGetter:
+    def __init__(self):
+        transformer = _CachedTransformer(DerivativeSlopeTransformer())
+        self.distance_measure_getters = [
+            euclidean_distance_measure_getter,
+            dtw_distance_measure_getter,
+            setup_ddtw_distance_measure_getter(transformer),
+            wdtw_distance_measure_getter,
+            setup_wddtw_distance_measure_getter(transformer),
+            msm_distance_measure_getter,
+            lcss_distance_measure_getter,
+            erp_distance_measure_getter,
+            #        twe_distance_measure_getter,
+        ]
+
+    def __call__(self, proximity, **kwargs):
+        return self.pick_rand_distance_measure(proximity)
+
+    def pick_rand_distance_measure(self, proximity):
+        """Generate a distance measure from a range of parameters.
+
+        :param proximity: proximity object containing distance measures,
+        ranges and dataset
+        :returns: a distance measure with no parameters
+        """
+        random_state = check_random_state(proximity.random_state + 5)
+        X = proximity.X
+        distance_measure_getter = random_state.choice(self.distance_measure_getters)
+        distance_measure_perm = distance_measure_getter(X)
+        param_perm = pick_rand_param_perm_from_dict(distance_measure_perm, random_state)
+        distance_measure = param_perm["distance_measure"]
+        del param_perm["distance_measure"]
+        return distance_predefined_params(distance_measure, **param_perm)
+
+
 def setup_all_distance_measure_getter(proximity):
     """All distance measure getter functions from a proximity object.
 
@@ -785,7 +820,7 @@ class ProximityStump(BaseClassifier):
         self,
         random_state=0,
         get_exemplars=get_one_exemplar_per_class_proximity,
-        setup_distance_measure=setup_all_distance_measure_getter,
+        setup_distance_measure=DistanceMeasureGetter,
         get_distance_measure=None,
         distance_measure=None,
         get_gain=gini_gain,
@@ -905,10 +940,10 @@ class ProximityStump(BaseClassifier):
         self.y = y
         if self.distance_measure is None:
             if self.get_distance_measure is None:
-                self._get_distance_measure = self.setup_distance_measure(self)
+                self._get_distance_measure = self.setup_distance_measure
             else:
                 self._get_distance_measure = self.get_distance_measure
-            self.distance_measure = self._get_distance_measure(self)
+            self.distance_measure = self._get_distance_measure()
         self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
 
         return self
