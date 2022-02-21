@@ -12,14 +12,14 @@ import sys
 
 import numpy as np
 
-
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
-from sklearn.preprocessing import normalize
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import davies_bouldin_score
 import sklearn.metrics
+from sklearn.metrics import davies_bouldin_score
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import normalize
+
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
@@ -70,6 +70,7 @@ def demo_loading():
 
 
 def config_clusterer(clusterer: str, **kwargs):
+    """Config clusterer."""
     if clusterer == "kmeans":
         cls = TimeSeriesKMeans(**kwargs)
     elif clusterer == "kmedoids":
@@ -78,9 +79,10 @@ def config_clusterer(clusterer: str, **kwargs):
 
 
 def tune_window(metric: str, train_X):
-    best_w=0
-    best_score=0
-    for w in np.arange(0,1,0.1):
+    """Tune window."""
+    best_w = 0
+    best_score = 0
+    for w in np.arange(0, 1, 0.1):
         cls = TimeSeriesKMeans(metric=metric, distance_params={"window": w})
         cls.fit(train_X)
         preds = cls.predict(train_X)
@@ -90,8 +92,9 @@ def tune_window(metric: str, train_X):
         if score > best_score:
             best_score = score
             best_w = w
-    print("best window =", best_w, " with score ",best_score)
+    print("best window =", best_w, " with score ", best_score)
     return best_w
+
 
 if __name__ == "__main__":
     """
@@ -125,15 +128,17 @@ if __name__ == "__main__":
         resample = 27
         tf = True
         distance = "ddtw"
-    train_X, train_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TRAIN.ts",
-                               return_data_type="numpy2d")
-    test_X, test_Y = load_ts(f"{data_dir}/{dataset}/{dataset}_TEST.ts",
-                             return_data_type="numpy2d")
-#    normalize(train_X, norm="l1", copy=False)
-#    normalize(test_X, norm="l1", copy=False)
+    train_X, train_Y = load_ts(
+        f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
+    )
+    test_X, test_Y = load_ts(
+        f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
+    )
+    #    normalize(train_X, norm="l1", copy=False)
+    #    normalize(test_X, norm="l1", copy=False)
     if tune:
         window = tune_window(distance, train_X)
-        name = clusterer + "-" + distance+"-tuned"
+        name = clusterer + "-" + distance + "-tuned"
     else:
         window = 0.2
         name = clusterer + "-" + distance

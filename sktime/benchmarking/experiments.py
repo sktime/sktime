@@ -81,14 +81,13 @@ def run_clustering_experiment(
             + "/"
             + cls_name
             + "/Predictions/"
-            + dataset
+            + dataset_name
             + "/testResample"
             + str(resample_id)
             + ".csv"
         )
         if os.path.exists(full_path):
             return
-
 
     # Build the clusterer on train data, recording how long it takes
     le = preprocessing.LabelEncoder()
