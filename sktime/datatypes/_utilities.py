@@ -18,7 +18,7 @@ def get_time_index(X):
 
     Parameters
     ----------
-    X : pd.DataFrame
+    X : pd.DataFrame / pd.Series / np.ndarray
 
     Returns
     -------
