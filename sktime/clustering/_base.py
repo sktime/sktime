@@ -115,7 +115,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self.fit(X)
         return self.predict(X)
 
-    def predict_proba(self, X, n_clusters=None):
+    def predict_proba(self, X, n_clusters=None) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
