@@ -506,7 +506,9 @@ def test_fit_idempotent(estimator_instance, scenario):
 
     # todo: may have to rework this, due to "if estimator has param"
     for method in NON_STATE_CHANGING_METHODS:
-        # todo:
+        # todo: replace by sth sensible
+        # for now, we have to skip predict_proba, since current output comparison
+        #   does not work for tensorflow Distribution
         if isinstance(estimator_instance, BaseForecaster) and method == "predict_proba":
             continue
         if _has_capability(estimator, method):
@@ -656,6 +658,11 @@ def test_persistence_via_pickle(estimator_instance, scenario):
 
     # Compare against results after pickling
     for method, vanilla_result in results.items():
+        # todo: replace by sth sensible
+        # for now, we have to skip predict_proba, since current output comparison
+        #   does not work for tensorflow Distribution
+        if isinstance(estimator_instance, BaseForecaster) and method == "predict_proba":
+            continue
         unpickled_result = scenario.run(unpickled_estimator, method_sequence=[method])
 
         msg = (
