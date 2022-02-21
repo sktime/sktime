@@ -92,7 +92,7 @@ from sktime.transformations.series.summarize import SummaryTransformer
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     "ProximityForest",
-    "ProximityStump",
+    #    "ProximityStump",
     "ProximityTree",
     # ConditionalDeseasonalizer and STLtransformer still need refactoring
     #  (see PR 1773, blocked through open discussion) escaping until then

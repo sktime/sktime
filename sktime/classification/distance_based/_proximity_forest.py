@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from scipy import stats
-from sklearn.preprocessing import LabelEncoder, normalize
+from sklearn.preprocessing import normalize
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -592,7 +592,7 @@ def setup_all_distance_measure_getter(proximity):
         ranges and dataset
         :returns: a distance measure with no parameters
         """
-        random_state = proximity._random_object
+        random_state = check_random_state(proximity.random_state + 5)
         X = proximity.X
         distance_measure_getter = random_state.choice(distance_measure_getters)
         distance_measure_perm = distance_measure_getter(X)
@@ -826,7 +826,7 @@ class ProximityStump(BaseClassifier):
         self.y = None
         self.entropy = None
         self._random_object = None
-
+        self._get_distance_measure = None
         super(ProximityStump, self).__init__()
 
     @staticmethod
@@ -900,13 +900,15 @@ class ProximityStump(BaseClassifier):
         self : object
         """
         self.X = _positive_dataframe_indices(X)
-        if self._random_object is None:
-            self._random_object = check_random_state(self.random_state)
+        #        if self._random_object is None:
+        self._random_object = check_random_state(self.random_state)
         self.y = y
         if self.distance_measure is None:
             if self.get_distance_measure is None:
-                self.get_distance_measure = self.setup_distance_measure(self)
-            self.distance_measure = self.get_distance_measure(self)
+                self._get_distance_measure = self.setup_distance_measure(self)
+            else:
+                self._get_distance_measure = self.get_distance_measure
+            self.distance_measure = self._get_distance_measure(self)
         self.X_exemplar, self.y_exemplar = self.get_exemplars(self)
 
         return self
@@ -971,9 +973,8 @@ class ProximityStump(BaseClassifier):
             distribution = distributions[instance_index]
             prediction = np.argmax(distribution)
             predictions.append(prediction)
-        y = self.label_encoder.inverse_transform(predictions)
 
-        return y
+        return np.array(predictions)
 
     def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
@@ -1142,12 +1143,7 @@ class ProximityTree(BaseClassifier):
             self._random_object = check_random_state(self.random_state)
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
-        # setup label encoding
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-            y = self.label_encoder.fit_transform(y)
         self.y = y
-        self.classes_ = self.label_encoder.classes_
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -1203,9 +1199,8 @@ class ProximityTree(BaseClassifier):
             distribution = distributions[instance_index]
             prediction = np.argmax(distribution)
             predictions.append(prediction)
-        y = self.label_encoder.inverse_transform(predictions)
 
-        return y
+        return np.array(predictions)
 
     def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
@@ -1227,21 +1222,20 @@ class ProximityTree(BaseClassifier):
         """
         X = _negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
-        n_classes = len(self.label_encoder.classes_)
-        distribution = np.zeros((X.shape[0], n_classes))
+        distribution = np.zeros((X.shape[0], self.n_classes_))
         for index in range(len(self.branches)):
             indices = np.argwhere(closest_exemplar_indices == index)
             if indices.shape[0] > 0:
                 indices = np.ravel(indices)
                 sub_tree = self.branches[index]
                 if sub_tree is None:
-                    sub_distribution = np.zeros((1, n_classes))
+                    sub_distribution = np.zeros((1, self.n_classes_))
                     class_label = self.stump.y_exemplar[index]
-                    sub_distribution[0][class_label] = 1
+                    sub_distribution[0][self._class_dictionary[class_label]] = 1
                 else:
                     sub_X = X.iloc[indices, :]
                     sub_distribution = sub_tree.predict_proba(sub_X)
-                assert sub_distribution.shape[1] == n_classes
+                assert sub_distribution.shape[1] == self.n_classes_
                 np.add.at(distribution, indices, sub_distribution)
         normalize(distribution, copy=False, norm="l1")
         return distribution
@@ -1424,12 +1418,7 @@ class ProximityForest(BaseClassifier):
         self.X = _positive_dataframe_indices(X)
         if self._random_object is None:
             self._random_object = check_random_state(self.random_state)
-        # setup label encoding
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-            y = self.label_encoder.fit_transform(y)
         self.y = y
-        self.classes_ = self.label_encoder.classes_
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)
@@ -1498,9 +1487,8 @@ class ProximityForest(BaseClassifier):
             distribution = distributions[instance_index]
             prediction = np.argmax(distribution)
             predictions.append(prediction)
-        y = self.label_encoder.inverse_transform(predictions)
 
-        return y
+        return np.array(predictions)
 
     def _predict_proba(self, X):
         """Find probability estimates for each class for all cases in X.
@@ -1532,6 +1520,24 @@ class ProximityForest(BaseClassifier):
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
         return distributions
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_estimators": 3,
+            "random_state": 1,
+        }
+        return params
 
 
 # start of util functions
