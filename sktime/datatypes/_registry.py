@@ -72,7 +72,7 @@ SCITYPE_REGISTER = [
 ]
 
 
-def mtype_to_scitype(mtype: str, return_unique=False):
+def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     """Infer scitype belonging to mtype.
 
     Parameters
@@ -88,7 +88,9 @@ def mtype_to_scitype(mtype: str, return_unique=False):
         if nested list/str object, replaces mtype str by scitype str
         if None, returns None
     return_unique : bool, default=False
-        if True, makes
+        if True, makes return unique
+    coerce_to_list : bool, default=Fakse
+        if True, coerces rerturn to list, even if one-element
 
     Raises
     ------
@@ -121,4 +123,7 @@ def mtype_to_scitype(mtype: str, return_unique=False):
     if len(scitype) < 1:
         raise ValueError(f"{mtype} is not a supported mtype")
 
-    return scitype[0]
+    if coerce_to_list:
+        return [scitype[0]]
+    else:
+        return scitype[0]
