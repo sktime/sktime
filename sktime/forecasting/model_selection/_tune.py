@@ -194,7 +194,9 @@ class BaseGridSearch(BaseForecaster):
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
-        parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
+        parallel = Parallel(
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend="threading"
+        )
 
         def _fit_and_score(params):
             # Clone forecaster.
