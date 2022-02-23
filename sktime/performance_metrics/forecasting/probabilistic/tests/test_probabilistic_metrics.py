@@ -21,18 +21,18 @@ f.fit(y_train)
 
 QUANTILE_PRED = f.predict_quantiles(fh=fh, alpha=[0.05, 0.5, 0.95])
 INTERVAL_PRED = f.predict_interval(fh=fh, coverage=0.9)
-y_true = QUANTILE_PRED["Quantiles"][0.5]
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
 def test_output(Metric):
     """Test output is correct class."""
+    y_true = y_test
     Loss = Metric.create_test_instance()
     eval_loss = Loss.evaluate(y_true, y_pred=QUANTILE_PRED)
     index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
 
-    assert isinstance(eval_loss, float)
-    assert isinstance(index_loss, pd.Series)
+    assert isinstance(eval_loss, pd.DataFrame)
+    assert isinstance(index_loss, pd.DataFrame)
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
@@ -50,5 +50,4 @@ def test_evaluate_by_index_to_zero(Metric):
     Loss = Metric.create_test_instance()
     y_true = QUANTILE_PRED["Quantiles"][0.5]
     index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
-
-    assert all([a == 0 for a in index_loss])
+    assert all([np.isclose(0, a) for a in index_loss.values[:, 0]])
