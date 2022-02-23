@@ -6,8 +6,8 @@
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("hcrystalball")
@@ -168,3 +168,16 @@ class HCrystalBallForecaster(BaseForecaster):
 
     def _compute_pred_err(self, alphas):
         raise NotImplementedError()
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from hcrystalball.wrappers import HoltSmoothingWrapper
+
+        params = {"model": HoltSmoothingWrapper()}
+        return params

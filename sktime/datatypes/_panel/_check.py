@@ -188,7 +188,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     check_res = [
         check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
     ]
-    bad_inds = [i for i in inst_inds if not check_res[i][0]]
+    bad_inds = [i for i in range(len(inst_inds)) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
         msg = (
