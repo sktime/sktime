@@ -31,7 +31,7 @@ def get_index_for_series(obj, cutoff=0):
     return pd.RangeIndex(cutoff, cutoff + obj.shape[0])
 
 
-def get_cutoff(obj, cutoff=0):
+def get_cutoff(obj, cutoff=0, return_index=False):
     """Get cutoff = latest time point of time series or time series panel.
 
     Assumptions on obj are not checked, these should be validated separately.
@@ -46,9 +46,15 @@ def get_cutoff(obj, cutoff=0):
             pd_multiindex_hier, of Hierarchical scitype
     cutoff : int, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
+    return_index : bool, optional, default=False
+        whether a pd.Index object should be returned (True)
+            or a pandas compatible index element (False)
+        note: return_index=True may set freq attribute of time types to None
+            return_index=False will typically preserve freq attribute
 
     -------
-    cutoff_index : pd.Index of length 1
+    cutoff_index : pandas compatible index element (if return_index=False)
+        pd.Index of length 1 (if return_index=True)
     """
     if cutoff is None:
         cutoff = 0
@@ -59,20 +65,26 @@ def get_cutoff(obj, cutoff=0):
             cutoff_ind = obj.shape[-1] + cutoff
         if obj.ndim < 3 and obj.ndim > 0:
             cutoff_ind = obj.shape[0] + cutoff
-        return pd.RangeIndex(cutoff_ind - 1, cutoff_ind)
+        if return_index:
+            return pd.RangeIndex(cutoff_ind - 1, cutoff_ind)
+        else:
+            return cutoff_ind
 
     if isinstance(obj, pd.Series):
-        return obj.index[[-1]]
+        return obj.index[[-1]] if return_index else obj.index[-1]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
         objcols = [x for x in obj.columns if obj.dtypes[x] == "object"]
         # pd.DataFrame
         if len(objcols) == 0:
-            return obj.index[[-1]]
+            return obj.index[[-1]] if return_index else obj.index[-1]
         # nested_univ
         else:
-            idxx = [x.index[[-1]] for col in objcols for x in obj[col]]
+            if return_index:
+                idxx = [x.index[[-1]] for col in objcols for x in obj[col]]
+            else:
+                idxx = [x.index[-1] for col in objcols for x in obj[col]]
             return max(idxx)
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
@@ -80,9 +92,12 @@ def get_cutoff(obj, cutoff=0):
         idx = obj.index
         nlevels = idx.nlevels
         idx_t = idx.droplevel(list(range(nlevels - 1)))
-        return idx_t.sort_values()[[-1]]
+        return idx_t.sort_values()[[-1]] if return_index else idx_t.sort_values()[-1]
 
     # df-list (Panel)
     if isinstance(obj, list):
-        idxs = [x.index[[-1]] for x in obj]
+        if return_index:
+            idxs = [x.index[[-1]] for x in obj]
+        else:
+            idxs = [x.index[-1] for x in obj]
         return max(idxs)
