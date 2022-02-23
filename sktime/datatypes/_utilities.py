@@ -39,17 +39,20 @@ def get_cutoff(obj, cutoff=0):
 
     Parameters
     ----------
-    obj : sktime data container
+    obj : sktime compatible time series data container
         must be of one of the following mtypes:
             pd.Series, pd.DataFrame, np.ndarray, of Series scitype
             pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
             pd_multiindex_hier, of Hierarchical scitype
-    cutoff : int, or pd.datetime, optional, default=0
+    cutoff : int, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
 
     -------
     cutoff_index : pd.Index of length 1
     """
+    if cutoff is None:
+        cutoff = 0
+
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
         if obj.ndim == 3:
