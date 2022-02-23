@@ -31,9 +31,14 @@ class PlateauFinder(_PanelToPanelTransformer):
 
     _tags = {"fit-in-transform": True, "univariate-only": True}
 
-    def __init__(self, value=np.nan, min_length=2):
+    def __init__(self, value=np.nan, min_length=2, max_length=None):
         self.value = value
         self.min_length = min_length
+        self.max_length = max_length
+        # param checks
+        if min_length > max_length:
+            raise ValueError(f'Max length {max_length} less than Min length {min_length}')
+
         super(PlateauFinder, self).__init__()
 
     def transform(self, X, y=None):
@@ -81,8 +86,12 @@ class PlateauFinder(_PanelToPanelTransformer):
             lengths = ends - starts
 
             # filter out single points
-            starts = starts[lengths >= self.min_length]
-            lengths = lengths[lengths >= self.min_length]
+            selection = lengths >= self.min_length
+            if self.max_length is not None:
+                selection = selection & lengths <= self.max_length
+
+            starts = starts[selection]
+            lengths = lengths[selection]
 
             self._starts.append(starts)
             self._lengths.append(lengths)
