@@ -59,6 +59,9 @@ def get_cutoff(obj, cutoff=0, return_index=False):
     if cutoff is None:
         cutoff = 0
 
+    if len(obj) == 0:
+        return cutoff
+
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
         if obj.ndim == 3:
