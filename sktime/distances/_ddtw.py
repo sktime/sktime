@@ -56,7 +56,11 @@ def _first_order_difference(q: np.ndarray):
 
 
 class _DdtwDistance(NumbaDistance):
-    """Derivative dynamic time warping (ddtw) between two time series."""
+    """Derivative dynamic time warping (ddtw) between two time series.
+
+    Takes the derivative of the series, then applies DTW (using the _cost_matrix from
+    _DtwDistance)
+    """
 
     def _distance_factory(
         self,
