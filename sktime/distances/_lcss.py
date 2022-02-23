@@ -30,16 +30,7 @@ class _LcssDistance(NumbaDistance):
     of matching pairs. The LCSS distance uses a matrix L that records the sequence of
     matches over valid warpings. L is found by iterating over all valid windows.
 
-    ::math
-    \State Let $L$ be an $(m+1)\times(m+1)$ matrix initialised to zero.
-    \For{$i \leftarrow  m$ to $1$}
-        \For{$j \leftarrow  m$ to $1$}
-            \If |a_i - b_j| < espilon
-                \State $L_{i,j} \leftarrow L_{i-1,j-1}+1$
-            \Else
-                \State $L_{i,j} \leftarrow \max(L_{i,j-1}, L_{i-1,j})$
-
-    The distance is then an inverse function of the final LCSS.
+    The distance is an inverse function of the final LCSS.
     ::math
     d_{LCSS}({\bf a,b}) = 1- \frac{LCSS({\bf a,b})}{m}.\]
 
