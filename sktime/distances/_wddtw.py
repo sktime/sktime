@@ -22,7 +22,7 @@ class _WddtwDistance(NumbaDistance):
     """Weighted derivative dynamic time warping (wddtw) distance between two series.
 
     Takes the first order derivative, then applies _weighted_cost_matrix to find WDTW
-    distance
+    distance.
 
     """
 
