@@ -36,6 +36,7 @@ class BaseGridSearch(BaseForecaster):
         strategy="refit",
         n_jobs=None,
         pre_dispatch=None,
+        backend=None,
         refit=False,
         scoring=None,
         verbose=0,
@@ -47,6 +48,7 @@ class BaseGridSearch(BaseForecaster):
         self.strategy = strategy
         self.n_jobs = n_jobs
         self.pre_dispatch = pre_dispatch
+        self.backend = backend
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
@@ -195,7 +197,7 @@ class BaseGridSearch(BaseForecaster):
         scoring_name = f"test_{scoring.name}"
 
         parallel = Parallel(
-            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend="threading"
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
         )
 
         def _fit_and_score(params):
@@ -299,6 +301,8 @@ class BaseGridSearch(BaseForecaster):
         return self
 
 
+# TODO: change to default parallel backend in v0.12.0 in docstring example
+# threading for now due to deprecated warning in MAPE metric
 class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
@@ -338,6 +342,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
+    backend: str, optional (default=None)
+        Specify the parallelisation backend implementation in joblib, where
+        'loky' is used by default.
 
     Attributes
     ----------
@@ -421,7 +428,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1)
+    ...     n_jobs=-1,
+    ...     # threading backend for now due to deprecated warning in MAPE metric
+    ...     backend="threading")
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])
@@ -441,6 +450,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         verbose=0,
         return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
+        backend=None,
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -452,6 +462,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
+            backend=backend,
         )
         self.param_grid = param_grid
 
@@ -531,6 +542,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     pre_dispatch: str, optional (default='2*n_jobs')
+    backend: str, optional (default=None)
+        Specify the parallelisation backend implementation in joblib, where
+        'loky' is used by default.
 
     Attributes
     ----------
@@ -566,6 +580,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
+        backend=None,
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -577,6 +592,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
+            backend=backend,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
