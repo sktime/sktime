@@ -113,7 +113,6 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             result = self._averaging_method(X[curr_indexes])
             if result.shape[0] > 0:
                 new_centers[i, :] = result
-
         return new_centers
 
     @classmethod

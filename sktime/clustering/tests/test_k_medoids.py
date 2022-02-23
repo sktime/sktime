@@ -130,7 +130,7 @@ def test_kmedoids():
     assert kmedoids.n_iter_ == expected_iters["medoids"]
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])
     assert isinstance(kmedoids.cluster_centers_, np.ndarray)
-    assert proba.shape == (40, 6)
+    assert proba.shape == (40, 8)
 
     for val in proba:
         assert np.count_nonzero(val == 1.0) == 1

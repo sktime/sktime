@@ -76,6 +76,7 @@ def _kmeans_plus_plus(
     random_state: np.random.RandomState,
     distance_metric: str = "euclidean",
     n_local_trials: int = None,
+    distance_params: dict = None,
     **kwargs,
 ):
     """Compute initial centroids using kmeans++ method.
@@ -219,7 +220,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         random_state: Union[int, RandomState] = None,
         distance_params: dict = None,
     ):
-        self.n_clusters = n_clusters
         self.init_algorithm = init_algorithm
         self.metric = metric
         self.n_init = n_init
@@ -241,7 +241,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         if distance_params is None:
             self._distance_params = {}
 
-        super(TimeSeriesLloyds, self).__init__()
+        super(TimeSeriesLloyds, self).__init__(n_clusters=n_clusters)
 
     def _check_params(self, X: np.ndarray) -> None:
         """Check parameters are valid and initialized.
@@ -309,6 +309,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self.inertia_ = best_inertia
         self.cluster_centers_ = best_centers
         self.n_iter_ = best_iters
+        return self
 
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.

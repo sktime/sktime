@@ -31,6 +31,7 @@ def medoids(
     """
     if X.shape[0] < 1:
         return X
+
     if precomputed_pairwise_distance is None:
         precomputed_pairwise_distance = pairwise_distance(X, metric=distance_metric)
 
