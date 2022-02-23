@@ -90,9 +90,9 @@ def _cost_matrix(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the index in bound finite values (0.) and indexes
         outside bound points are infinite values (non finite).
@@ -100,7 +100,7 @@ def _cost_matrix(
     Returns
     -------
     distance: float
-        Dtw distance between the x and y timeseries.
+        Dtw distance between the x and y time series.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]

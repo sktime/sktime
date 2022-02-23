@@ -19,16 +19,17 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 class _WdtwDistance(NumbaDistance):
     r"""Weighted dynamic time warping (wdtw) distance between two time series.
 
-    Uses  DTW with a weighted pairwise distance matrix rather than a window. When
+    Uses DTW with a weighted pairwise distance matrix rather than a window. When
     creating the distance matrix $M$, a weight penalty  $w_{|i-j|}$ for a warping
-    distance of $|i-j|$ is applied, so that
+    distance of $|i-j|$ is applied, so that for series a = <a_1, ..., a_m> and
+    b=<b_1,...,b_m>,
+
     .. math::
     M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
-    A logistic weight function, proposed in [1] is used, so that a warping of $a$ places
+    A logistic weight function, proposed in [1] is used, so that a warping of $x$ places
     imposes a weighting of
     .. math::
     w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
-
     where $w_{max}$ is an upper bound on the weight (set to 1), $m$ is the series
     length and $g$ is a parameter that controls the penalty level for larger warpings.
     The greater $g$ is, the greater the penalty for warping. Once $M$ is found,
@@ -37,7 +38,7 @@ class _WdtwDistance(NumbaDistance):
     References
     ----------
     ..[1] Jeong, Y., Jeong, M., Omitaomu, O.: Weighted dynamic time warping for time
-    series classification. Pattern Recognition 44, 2231–2240 (2011
+    series classification. Pattern Recognition 44, 2231–2240 (2011)
     """
 
     def _distance_factory(

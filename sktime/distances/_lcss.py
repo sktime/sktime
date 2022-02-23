@@ -17,43 +17,67 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _LcssDistance(NumbaDistance):
-    """Longest common subsequence (Lcss) between two time series."""
+    r"""Longest common subsequence (Lcss) between two time series.
+
+    The Longest Common Subsequence (LCSS) distance is based on the solution to the
+    longest common subsequence problem in pattern matching [1]. The typical problem
+    is to
+    find the longest subsequence that is common to two discrete series based on the
+    edit distance. This approach can be extended to consider real-valued time series
+    by using a distance threshold epsilon, which defines the maximum difference
+    between a pair of values that is allowed for them to be considered a match.
+    LCSS finds the optimal alignment between two series by find the greatest number
+    of matching pairs. The LCSS distance uses a matrix L that records the sequence of
+    matches over valid warpings. for two series a = a_1,... a_m and b = b_1,
+    ... b_m, L is found by iterating over all valid windows (i.e.
+    where |i-j|<window*m, where m is series length), then calculating
+
+    ::math
+    if(|a_i - b_j| < espilon) \\
+            &L_{i,j} \leftarrow L_{i-1,j-1}+1 \\
+    else\\
+            &L_{i,j} \leftarrow \max(L_{i,j-1}, L_{i-1,j})\\
+
+    The distance is an inverse function of the final LCSS.
+    ::math
+    d_{LCSS}({\bf a,b}) = 1- \frac{LCSS({\bf a,b})}{m}.\]
+
+    References
+    ----------
+    .. [1] D. Hirschberg, Algorithms for the longest common subsequence problem, Journal
+    of the ACM 24(4), 664--675, 1977
+    """
 
     def _distance_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
-        window: int = None,
+        epsilon: float = 1.0,
+        window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        epsilon: float = 1.0,
         **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled lcss distance callable.
 
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First time series.
-        y: np.ndarray (2d array)
-            Second time series.
-        window: float, defaults = None
-            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-            lower bounding). Must be between 0 and 1.
-        itakura_max_slope: float, defaults = None
-            Gradient of the slope for itakura parallelogram (if using Itakura
-            Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None
-            Custom bounding matrix to use. If defined then other lower_bounding params
-            are ignored. The matrix should be structure so that indexes considered in
-            bound should be the value 0. and indexes outside the bounding matrix should
-            be infinity.
-        epsilon : float, defaults = 1.
+        x: np.ndarray (2d array), First time series.
+        y: np.ndarray (2d array), Second time series.
+        epsilon : float, default = 1.
             Matching threshold to determine if two subsequences are considered close
             enough to be considered 'common'.
-        kwargs: Any
-            Extra kwargs.
+        window: float, default = None, radius of the bounding window (if using
+        Sakoe-Chiba lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None, gradient of the slope for bounding
+        parallelogram (if using Itakura parallelogram lower bounding). Must be
+                between 0 and 1.
+        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(
+        y)), defaults = None, Custom bounding matrix to use. If defined then other
+        lower_bounding params are ignored. The matrix should be structure so that
+        indexes considered in bound should be the value 0. and indexes outside the
+        bounding matrix should be infinity.
+        kwargs: Any Extra kwargs.
 
         Returns
         -------
@@ -63,8 +87,8 @@ class _LcssDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
@@ -100,10 +124,8 @@ def _sequence_cost_matrix(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
-        First timeseries.
-    y: np.ndarray (2d array)
-        Second timeseries.
+    x: np.ndarray (2d array), first time series.
+    y: np.ndarray (2d array), second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the values in bound are marked by finite values and
         outside bound points are infinite values.

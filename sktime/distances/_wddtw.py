@@ -8,7 +8,7 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._ddtw import DerivativeCallable, _average_of_slope
+from sktime.distances._ddtw import DerivativeCallable, _first_order_difference
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances._wdtw import _weighted_cost_matrix
 from sktime.distances.base import DistanceCallable, NumbaDistance
@@ -21,8 +21,9 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 class _WddtwDistance(NumbaDistance):
     """Weighted derivative dynamic time warping (wddtw) distance between two series.
 
-    Takes the first order difference of each series, then applies weighted dynamic
-    time warping (see _WdtwDistance).
+    Takes the first order derivative, then applies _weighted_cost_matrix to find WDTW
+    distance.
+
     """
 
     def _distance_factory(
@@ -32,7 +33,7 @@ class _WddtwDistance(NumbaDistance):
         window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = _average_of_slope,
+        compute_derivative: DerivativeCallable = _first_order_difference,
         g: float = 0.0,
         **kwargs: Any,
     ) -> DistanceCallable:
