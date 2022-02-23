@@ -28,7 +28,15 @@ class _LcssDistance(NumbaDistance):
     between a pair of values that is allowed for them to be considered a match.
     LCSS finds the optimal alignment between two series by find the greatest number
     of matching pairs. The LCSS distance uses a matrix L that records the sequence of
-    matches over valid warpings. L is found by iterating over all valid windows.
+    matches over valid warpings. for two series a = a_1,... a_m and b = b_1,
+    ... b_m, L is found by iterating over all valid windows (i.e.
+    where |i-j|<window*m, where m is series length), then calculating
+
+    ::math
+    if(|a_i - b_j| < espilon) \\
+            &L_{i,j} \leftarrow L_{i-1,j-1}+1 \\
+    else\\
+            &L_{i,j} \leftarrow \max(L_{i,j-1}, L_{i-1,j})\\
 
     The distance is an inverse function of the final LCSS.
     ::math
