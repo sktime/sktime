@@ -19,7 +19,13 @@ TimeSeriesInstances = Union[pd.DataFrame, np.ndarray]
 
 
 class BaseClusterer(BaseEstimator, ABC):
-    """Abstract base class for time series clusterer."""
+    """Abstract base class for time series clusterer.
+
+    Parameters
+    ----------
+    n_clusters: int, defaults = None
+        Number of clusters for model.
+    """
 
     _tags = {
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
@@ -31,10 +37,11 @@ class BaseClusterer(BaseEstimator, ABC):
         "capability:multithreading": False,
     }
 
-    def __init__(self):
+    def __init__(self, n_clusters: int = None):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self.n_clusters = n_clusters
         super(BaseClusterer, self).__init__()
 
     def fit(self, X: TimeSeriesInstances, y=None) -> BaseEstimator:
@@ -115,7 +122,7 @@ class BaseClusterer(BaseEstimator, ABC):
         self.fit(X)
         return self.predict(X)
 
-    def predict_proba(self, X, n_clusters=None):
+    def predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
@@ -131,9 +138,7 @@ class BaseClusterer(BaseEstimator, ABC):
                 pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        n_clusters: int, defaults = None
-            n_clusters the model uses. This can't always be inferred so for consitency
-            this should be passed. If it isn't past an attempt to infer it is made.
+
 
         Returns
         -------
@@ -144,7 +149,7 @@ class BaseClusterer(BaseEstimator, ABC):
         """
         self.check_is_fitted()
         X = self._check_clusterer_input(X)
-        return self._predict_proba(X, n_clusters)
+        return self._predict_proba(X)
 
     def score(self, X, y=None) -> float:
         """Score the quality of the clusterer.
@@ -168,7 +173,7 @@ class BaseClusterer(BaseEstimator, ABC):
         X = self._check_clusterer_input(X)
         return self._score(X, y)
 
-    def _predict_proba(self, X, n_clusters=None):
+    def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
@@ -184,9 +189,6 @@ class BaseClusterer(BaseEstimator, ABC):
                 pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        n_clusters: int, defaults = None
-            n_clusters the model uses. This can't always be inferred so for consitency
-            this should be passed. If it isn't past an attempt to infer it is made.
 
         Returns
         -------
@@ -196,6 +198,7 @@ class BaseClusterer(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         """
         preds = self._predict(X)
+        n_clusters = self.n_clusters
         if n_clusters is None:
             n_clusters = max(preds) + 1
         dists = np.zeros((X.shape[0], n_clusters))
