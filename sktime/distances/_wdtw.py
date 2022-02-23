@@ -17,7 +17,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _WdtwDistance(NumbaDistance):
-    """Weighted dynamic time warping (wdtw) distance between two timeseries."""
+    """Weighted dynamic time warping (wdtw) distance between two time series."""
 
     def _distance_factory(
         self,

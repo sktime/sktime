@@ -5,7 +5,11 @@ from typing import Any, Callable, Union
 
 import numpy as np
 
-from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
+from sktime.distances._ddtw import (
+    DerivativeCallable,
+    _DdtwDistance,
+    _first_order_difference,
+)
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
@@ -305,7 +309,7 @@ def wddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
+    compute_derivative: DerivativeCallable = _first_order_difference,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -507,7 +511,7 @@ def ddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
+    compute_derivative: DerivativeCallable = _first_order_difference,
     **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.

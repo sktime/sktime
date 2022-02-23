@@ -20,33 +20,43 @@ DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
 
 @njit(cache=True, fastmath=True)
-def _average_of_slope(q: np.ndarray):
+def _first_order_difference(q: np.ndarray):
     r"""Compute the average of a slope between points.
 
     Computes the average of the slope of the line through the point in question and
     its left neighbour, and the slope of the line through the left neighbour and the
-    right neighbour This is defined at:
-    .. math::
-        D_(q) = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+    right neighbour.
 
-    Where q is the original timeseries and d_q is the derived time series.
+    .. math::
+     q'_{i} = q_{i}-q_{i-1} for 0 < i < m
+
+    Where q is the original time series and q' is the derived time series.
+
+    Note the alternative, proposed in [1], is the slope.
+    .. math::
+        d'_{i}= \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+    Where q is the original time series and q' is the derived time series.
 
     Parameters
     ----------
-    q: np.ndarray (2d array)
-        A timeseries.
+    q: np.ndarray (2d array) A times series.
 
     Returns
     -------
-    np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
+    np.ndarray (2d array of shape nxm where n is len(q.shape[0]-1) and m is
                 len(q.shape[1]))
         Array containing the derivative of q.
+
+    References
+    ----------
+    .. [1] Keogh E, Pazzani M Derivative dynamic time warping. In: proceedings of 1st
+    SIAM International Conference on Data Mining, 2001
     """
-    return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
+    return np.diff(q)
 
 
 class _DdtwDistance(NumbaDistance):
-    """Derivative dynamic time warping (ddtw) between two timeseries."""
+    """Derivative dynamic time warping (ddtw) between two time series."""
 
     def _distance_factory(
         self,
@@ -55,7 +65,7 @@ class _DdtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = _average_of_slope,
+        compute_derivative: DerivativeCallable = _first_order_difference,
         **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled ddtw distance callable.
@@ -63,9 +73,9 @@ class _DdtwDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
@@ -93,8 +103,8 @@ class _DdtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
