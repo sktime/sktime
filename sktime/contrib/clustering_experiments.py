@@ -127,7 +127,7 @@ if __name__ == "__main__":
         dataset = "Chinatown"
         resample = 27
         tf = True
-        distance = "ddtw"
+        distance = "lcss"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -136,16 +136,19 @@ if __name__ == "__main__":
     )
     #    normalize(train_X, norm="l1", copy=False)
     #    normalize(test_X, norm="l1", copy=False)
+    epsilon = 0.5
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
     else:
         window = 0.2
         name = clusterer + "-" + distance
+    parameters = {"window": window, "epsilon": epsilon}
+
     clst = config_clusterer(
         clusterer=clusterer,
         metric=distance,
-        distance_params={"window": window},
+        distance_params=parameters,
         n_clusters=len(set(train_Y)),
         random_state=resample + 1,
     )
