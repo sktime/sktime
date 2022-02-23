@@ -544,7 +544,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         for i in range(self.n_series):
             new_series = _moving_block_bootstrap(
                 ts=X,
-                block_length=self.block_length_,
+                block_length=self.block_length,
                 replacement=self.sampling_replacement,
             )
 
