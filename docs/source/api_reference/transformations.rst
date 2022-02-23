@@ -364,7 +364,7 @@ FeatureSelection
 BootsrappingTransformer
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.bootstrapping
+.. currentmodule:: sktime.transformations.bootstrap
 
 .. autosummary::
     :toctree: auto_generated/

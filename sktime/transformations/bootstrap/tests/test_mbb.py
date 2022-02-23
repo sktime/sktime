@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.transformations.series.bootstrapping import BootsrappingTransformer
+from sktime.transformations.bootstrap import BootsrappingTransformer
 
 y = load_airline()
 y_index = y.index
