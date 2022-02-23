@@ -1029,7 +1029,7 @@ class BaseForecaster(BaseEstimator):
         Set self._cutoff to last index seen in `y`.
         """
         cutoff_idx = get_cutoff(y, self.cutoff)
-        self.cutoff = cutoff_idx[0]
+        self._cutoff = cutoff_idx[0]
 
     @contextmanager
     def _detached_cutoff(self):
