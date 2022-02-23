@@ -42,7 +42,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import convert_to, mtype
+from sktime.datatypes import convert_to, get_cutoff, mtype
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
@@ -997,7 +997,7 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        cutoff : int
+        cutoff : pandas compatible index element
         """
         return self._cutoff
 
@@ -1019,22 +1019,17 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y: pd.Series, pd.DataFrame, or np.array
-            Time series from which to infer the cutoff.
-
+        y : sktime compatible time series data container
+            must be of one of the following mtypes:
+                pd.Series, pd.DataFrame, np.ndarray, of Series scitype
+                pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
+                pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
         Set self._cutoff to last index seen in `y`.
         """
-        y_mtype = mtype(y, as_scitype="Series")
-
-        if len(y) > 0:
-            if y_mtype in ["pd.Series", "pd.DataFrame"]:
-                self._cutoff = y.index[-1]
-            elif y_mtype == "np.ndarray":
-                self._cutoff = len(y)
-            else:
-                raise TypeError("y does not have a supported type")
+        cutoff_idx = get_cutoff(y, self.cutoff)
+        self.cutoff = cutoff_idx[0]
 
     @contextmanager
     def _detached_cutoff(self):
