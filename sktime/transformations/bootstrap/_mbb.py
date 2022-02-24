@@ -478,7 +478,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
     def __init__(
         self,
         n_series: int = 10,
-        block_length: int = 5,
+        block_length: int = 10,
         sampling_replacement: bool = False,
         return_actual: bool = True,
     ):
@@ -566,10 +566,10 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {},
+            {"block_length": 5},
             {"block_length": 1},
-            {"return_actual": False},
-            {"sampling_replacement": True},
+            {"block_length": 5, "return_actual": False},
+            {"block_length": 5, "sampling_replacement": True},
         ]
 
         return params
