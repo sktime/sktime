@@ -255,13 +255,12 @@ class STLResidualBootsrapTransformer(BaseTransformer):
                 "STLResidualBootsrapTransformer requires that sp is greater than"
                 " the length of X"
             )
-        else:
-            # implement as static method
-            self.block_length_ = (
-                self.block_length
-                if self.block_length is not None
-                else min(self.sp * 2, len(X) - self.sp)
-            )
+
+        self.block_length_ = (
+            self.block_length
+            if self.block_length is not None
+            else min(self.sp * 2, len(X) - self.sp)
+        )
 
         # fit boxcox to get lambda and transform X
         self.box_cox_transformer_ = BoxCoxTransformer(
@@ -288,6 +287,12 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        if len(X) <= self.block_length_:
+            raise ValueError(
+                "STLResidualBootsrapTransformer requires that block_length is "
+                " greater than the length of X"
+            )
+
         X_index = X.index
 
         X_transformed = self.box_cox_transformer_.transform(X)
@@ -473,16 +478,14 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
     def __init__(
         self,
         n_series: int = 10,
-        block_length: int = 10,
+        block_length: int = 5,
         sampling_replacement: bool = False,
         return_actual: bool = True,
-        series_name: str = None,
     ):
         self.n_series = n_series
         self.block_length = block_length
         self.sampling_replacement = sampling_replacement
         self.return_actual = return_actual
-        self.series_name = series_name
 
         super(MovingBlockBootsrapTransformer, self).__init__()
 
@@ -503,6 +506,12 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        if len(X) <= self.block_length:
+            raise ValueError(
+                "MovingBlockBootsrapTransformer requires that block_length is "
+                " greater than the length of X"
+            )
+
         X_index = X.index
 
         # time series name
@@ -591,7 +600,7 @@ def _moving_block_bootstrap(
 
     if ts_length <= block_length:
         raise ValueError(
-            "X length in STLResidualBootsrapTransformer should be greater"
+            "X length in moving block bootstrapping should be greater"
             " than block_length"
         )
 
