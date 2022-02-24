@@ -39,16 +39,16 @@ example_dict_metadata = dict()
 ###
 # example 0: univariate
 
-pred_q = pd.DataFrame({0.2 : [1, 2, 3], 0.6: [2, 3, 4]})
+pred_q = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4]})
 pred_q.columns = pd.MultiIndex.from_product([["Quantiles"], [0.2, 0.6]])
 
 # we need to use this due to numerical inaccuracies from the binary based representation
-pseudo_0_2 = 2 * np.abs(0.6-0.5)
+pseudo_0_2 = 2 * np.abs(0.6 - 0.5)
 
 example_dict[("pred_quantiles", "Proba", 0)] = pred_q
 example_dict_lossy[("pred_quantiles", "Proba", 0)] = False
 
-pred_int = pd.DataFrame({0.2 : [1, 2, 3], 0.6: [2, 3, 4]})
+pred_int = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4]})
 pred_int.columns = pd.MultiIndex.from_tuples(
     [("Coverage", 0.6, "lower"), ("Coverage", pseudo_0_2, "upper")]
 )
@@ -66,16 +66,14 @@ example_dict_metadata[("Proba", 0)] = {
 ###
 # example 1: multi
 
-pred_q = pd.DataFrame(
-    {0.2 : [1, 2, 3], 0.6: [2, 3, 4], 42 : [5, 3, -1], 46 : [5, 3, -1]}
-)
+pred_q = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4], 42: [5, 3, -1], 46: [5, 3, -1]})
 pred_q.columns = pd.MultiIndex.from_product([["foo", "bar"], [0.2, 0.6]])
 
 example_dict[("pred_quantiles", "Proba", 1)] = pred_q
 example_dict_lossy[("pred_quantiles", "Proba", 1)] = False
 
 pred_int = pd.DataFrame(
-    {0.2 : [1, 2, 3], 0.6: [2, 3, 4], 42 : [5, 3, -1], 46 : [5, 3, -1]}
+    {0.2: [1, 2, 3], 0.6: [2, 3, 4], 42: [5, 3, -1], 46: [5, 3, -1]}
 )
 pred_int.columns = pd.MultiIndex.from_tuples(
     [

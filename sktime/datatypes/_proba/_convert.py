@@ -97,8 +97,8 @@ def convert_pred_interval_to_quantiles(y_pred, inplace=False):
     alphas = np.array(coverages.copy())
     lower_upper = idx.get_level_values(2)
 
-    lower_selector = (lower_upper == "lower")
-    upper_selector = (lower_upper == "upper")
+    lower_selector = lower_upper == "lower"
+    upper_selector = lower_upper == "upper"
 
     alphas[lower_selector] = 0.5 - 0.5 * alphas[lower_selector]
     alphas[upper_selector] = 0.5 + 0.5 * alphas[upper_selector]

@@ -38,7 +38,6 @@ __all__ = ["check_dict"]
 
 import numpy as np
 import pandas as pd
-
 from pandas.api.types import is_numeric_dtype
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
