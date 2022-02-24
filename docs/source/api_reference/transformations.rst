@@ -361,8 +361,8 @@ FeatureSelection
 
     FeatureSelection
 
-BootsrappingTransformer
-~~~~~~~~~~~~~~~~~~~~~~~
+STLResidualBootsrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.bootstrap
 
@@ -370,7 +370,7 @@ BootsrappingTransformer
     :toctree: auto_generated/
     :template: class.rst
 
-    BootsrappingTransformer
+    STLResidualBootsrapTransformer
 
 MovingBlockBootsrapTransformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

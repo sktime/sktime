@@ -15,7 +15,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
-class BootsrappingTransformer(BaseTransformer):
+class STLResidualBootsrapTransformer(BaseTransformer):
     """Creates a population of similar time series.
 
     This method utilises a form of bootstrapping to generate a population of
@@ -34,8 +34,9 @@ class BootsrappingTransformer(BaseTransformer):
 
     The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
     series_id and time_index as the index and a single column of the time series value.
-
-    | series_id | time_index | series/column name |
+    The values for series_id are "actual" for the original series and "synthetic_n"
+    (where n is an integer) for the generated series.
+    See the **Examples** section for example output.
 
     Parameters
     ----------
@@ -138,13 +139,11 @@ class BootsrappingTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.series.bootstrapping import (
-    ...     BootsrappingTransformer
-    ... )
+    >>> from sktime.transformations.bootstrap import STLResidualBootsrapTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
-    >>> transformer = BootsrappingTransformer(10)
+    >>> transformer = STLResidualBootsrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
     >>> series_list = []
     >>> names = []
@@ -154,6 +153,14 @@ class BootsrappingTransformer(BaseTransformer):
     ...     names.append(group)
     >>> plot_series(*series_list, labels=names)
     (...)
+    >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
+                          Number of airline passengers
+    series_id time_index
+    actual    1949-01                            112.0
+              1949-02                            118.0
+              1949-03                            132.0
+              1949-04                            129.0
+              1949-05                            121.0
     """
 
     _tags = {
@@ -219,7 +226,7 @@ class BootsrappingTransformer(BaseTransformer):
         self.inner_iter = inner_iter
         self.outer_iter = outer_iter
 
-        super(BootsrappingTransformer, self).__init__()
+        super(STLResidualBootsrapTransformer, self).__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -240,12 +247,12 @@ class BootsrappingTransformer(BaseTransformer):
         """
         if self.sp <= 2:
             raise NotImplementedError(
-                "BootstrappingTransformer does not support non-seasonal data"
+                "STLResidualBootsrapTransformer does not support non-seasonal data"
             )
 
         if len(X) <= self.sp:
             raise ValueError(
-                "BootstrappingTransformer requires that sp is greater than"
+                "STLResidualBootsrapTransformer requires that sp is greater than"
                 " the length of X"
             )
         else:
@@ -380,8 +387,9 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
     The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
     series_id and time_index as the index and a single column of the time series value.
-
-    | series_id | time_index | series/column name |
+    The values for series_id are "actual" for the original series and "synthetic_n"
+    (where n is an integer) for the generated series.
+    See the **Examples** section for example output.
 
     Parameters
     ----------
@@ -399,7 +407,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
     See Also
     --------
-    sktime.transformations.bootstrap.BootsrappingTransformer :
+    sktime.transformations.bootstrap.STLResidualBootsrapTransformer :
         Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
@@ -430,6 +438,14 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
     ...     names.append(group)
     >>> plot_series(*series_list, labels=names)
     (...)
+    >>> print(y_hat.head()) # doctest: +NORMALIZE_WHITESPACE
+                          Number of airline passengers
+    series_id time_index
+    actual    1949-01                            112.0
+              1949-02                            118.0
+              1949-03                            132.0
+              1949-04                            129.0
+              1949-05                            121.0
     """
 
     _tags = {
@@ -572,7 +588,7 @@ def _moving_block_bootstrap(
 
     if ts_length <= block_length:
         raise ValueError(
-            "X length in BootstrappingTransformer should be greater"
+            "X length in STLResidualBootsrapTransformer should be greater"
             " than block_length"
         )
 

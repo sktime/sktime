@@ -10,8 +10,8 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.bootstrap import (
-    BootsrappingTransformer,
     MovingBlockBootsrapTransformer,
+    STLResidualBootsrapTransformer,
 )
 from sktime.transformations.bootstrap._mbb import (
     _get_series_name,
@@ -25,20 +25,24 @@ y_index = y.index
 def test_bootstrapping_transformer_no_seasonal_period():
     """Tests that an exception is raised if sp<2."""
     with pytest.raises(NotImplementedError) as ex:
-        transformer = BootsrappingTransformer(sp=1)
+        transformer = STLResidualBootsrapTransformer(sp=1)
         transformer.fit(y)
 
-        assert "BootstrappingTransformer does not support non-seasonal data" == ex.value
+        assert (
+            "STLResidualBootsrapTransformer does not support non-seasonal data"
+            == ex.value
+        )
 
 
 def test_bootstrapping_transformer_series_shorter_than_sp():
     """Tests that an exception is raised if sp>len(y)."""
     with pytest.raises(ValueError) as ex:
-        transformer = BootsrappingTransformer(sp=12)
+        transformer = STLResidualBootsrapTransformer(sp=12)
         transformer.fit(y.iloc[1:9])
 
         msg = (
-            "BootstrappingTransformer requires that sp is greater than the length of X"
+            "STLResidualBootsrapTransformer requires that sp is greater than"
+            " the length of X"
         )
 
         assert msg == ex.value
@@ -61,7 +65,7 @@ index_return_actual_false = pd.MultiIndex.from_product(
             index_return_actual_true,
         ),
         (
-            BootsrappingTransformer,
+            STLResidualBootsrapTransformer,
             True,
             index_return_actual_true,
         ),
@@ -71,7 +75,7 @@ index_return_actual_false = pd.MultiIndex.from_product(
             index_return_actual_false,
         ),
         (
-            BootsrappingTransformer,
+            STLResidualBootsrapTransformer,
             False,
             index_return_actual_false,
         ),
