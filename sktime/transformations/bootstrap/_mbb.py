@@ -368,7 +368,6 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         params = [
             {},
             {"block_length": 1},
-            {"series_name": "test"},
             {"return_actual": False},
             {"sampling_replacement": True},
         ]
