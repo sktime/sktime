@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Bootstrapping methods for time series augmentation."""
+"""Bootstrapping methods for time series."""
 
 __all__ = ["BootsrappingTransformer", "MovingBlockBootsrapTransformer"]
 
