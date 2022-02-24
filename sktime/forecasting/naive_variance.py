@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 from sklearn.base import clone
-
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -24,9 +23,12 @@ class NaiveVariance(BaseForecaster):
         by averaging the squared residuals that are k steps ahead.
     """
 
+    _required_parameters = ["forecaster"]
     _tags = {
+        "scitype:y": "univariate",
+        "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
         "capability:pred_var": True,
@@ -40,13 +42,14 @@ class NaiveVariance(BaseForecaster):
 
         tags_to_clone = [
             "requires-fh-in-fit",
-            "scitype:y",
+            "ignores-exogeneous-X",
+            "handles-missing-data",
             "y_inner_mtype",
             "X_inner_mtype",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
-        self.clone_tags(forecaster, tags_to_clone)
+        self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
         return self.forecaster.fit(y, X, fh)
@@ -162,3 +165,22 @@ class NaiveVariance(BaseForecaster):
             )
 
         return pred_var
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+
+        from sktime.forecasting.structural import UnobservedComponents
+
+        params_list = {"forecaster": UnobservedComponents()}
+
+        return params_list
