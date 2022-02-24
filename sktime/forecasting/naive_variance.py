@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 from sklearn.base import clone
+
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -174,11 +175,9 @@ class NaiveVariance(BaseForecaster):
         -------
         params : dict or list of dict
         """
-
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-
         params_list = {"forecaster": FORECASTER}
 
         return params_list
