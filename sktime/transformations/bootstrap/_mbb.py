@@ -35,6 +35,8 @@ class BootsrappingTransformer(BaseTransformer):
     The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
     series_id and time_index as the index and a single column of the time series value.
 
+    | series_id | time_index | series/column name |
+
     Parameters
     ----------
     n_series : int, optional
@@ -378,6 +380,8 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
     The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
     series_id and time_index as the index and a single column of the time series value.
+
+    | series_id | time_index | series/column name |
 
     Parameters
     ----------
