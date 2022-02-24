@@ -27,6 +27,15 @@ import pandas as pd
 from sktime.utils._testing.series import _make_series
 
 # We here define the parameter values for unit testing.
+TEST_CUTOFFS_INT = [np.array([21, 22]), np.array([3, 7, 10])]
+# The following timestamps correspond
+# to the above integers for `_make_series(all_positive=True)`
+TEST_CUTOFFS_TIMESTAMP = [
+    pd.to_datetime(["2000-01-22", "2000-01-23"]),
+    pd.to_datetime(["2000-01-04", "2000-01-08", "2000-01-11"]),
+]
+TEST_CUTOFFS = [*TEST_CUTOFFS_INT, *TEST_CUTOFFS_TIMESTAMP]
+
 TEST_WINDOW_LENGTHS_INT = [1, 5]
 TEST_WINDOW_LENGTHS_TIMEDELTA = [pd.Timedelta(1, unit="D"), pd.Timedelta(5, unit="D")]
 TEST_WINDOW_LENGTHS_DATEOFFSET = [pd.offsets.Day(1), pd.offsets.Day(5)]
@@ -61,7 +70,23 @@ TEST_INS_FHS = [
     0,  # last training point
     np.array([-3, 2]),  # mixed in-sample and out-of-sample
 ]
-TEST_FHS = TEST_OOS_FHS + TEST_INS_FHS
+TEST_FHS = [*TEST_OOS_FHS, *TEST_INS_FHS]
+
+TEST_OOS_FHS_TIMEDELTA = [
+    [pd.Timedelta(1, unit="D")],
+    [pd.Timedelta(2, unit="D"), pd.Timedelta(5, unit="D")],
+]  # out-of-sample
+TEST_INS_FHS_TIMEDELTA = [
+    pd.Timedelta(-3, unit="D"),  # single in-sample
+    [pd.Timedelta(-2, unit="D"), pd.Timedelta(-5, unit="D")],  # multiple in-sample
+    pd.Timedelta(0, unit="D"),  # last training point
+    [
+        pd.Timedelta(-3, unit="D"),
+        pd.Timedelta(2, unit="D"),
+    ],  # mixed in-sample and out-of-sample
+]
+TEST_FHS_TIMEDELTA = [*TEST_OOS_FHS_TIMEDELTA, *TEST_INS_FHS_TIMEDELTA]
+
 TEST_SPS = [3, 12]
 TEST_ALPHAS = [0.05, 0.1]
 TEST_YS = [_make_series(all_positive=True)]
