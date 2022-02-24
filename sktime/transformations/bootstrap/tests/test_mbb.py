@@ -9,7 +9,14 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.transformations.bootstrap import BootsrappingTransformer
+from sktime.transformations.bootstrap import (
+    BootsrappingTransformer,
+    MovingBlockBootsrapTransformer,
+)
+from sktime.transformations.bootstrap._mbb import (
+    _get_series_name,
+    _moving_block_bootstrap,
+)
 
 y = load_airline()
 y_index = y.index
@@ -37,54 +44,69 @@ def test_bootstrapping_transformer_series_shorter_than_sp():
         assert msg == ex.value
 
 
+index_return_actual_true = pd.MultiIndex.from_product(
+    [["actual", "synthetic_0", "synthetic_1"], y_index]
+)
+index_return_actual_false = pd.MultiIndex.from_product(
+    [["synthetic_0", "synthetic_1"], y_index]
+)
+
+
 @pytest.mark.parametrize(
-    "series_name, return_actual, expected_index",
+    "transformer_class, return_actual, expected_index",
     [
         (
-            None,
+            MovingBlockBootsrapTransformer,
             True,
-            pd.MultiIndex.from_product(
-                [["actual", "synthetic_0", "synthetic_1"], y_index]
-            ),
+            index_return_actual_true,
         ),
         (
-            None,
+            BootsrappingTransformer,
+            True,
+            index_return_actual_true,
+        ),
+        (
+            MovingBlockBootsrapTransformer,
             False,
-            pd.MultiIndex.from_product([["synthetic_0", "synthetic_1"], y_index]),
+            index_return_actual_false,
         ),
         (
-            "test",
-            True,
-            pd.MultiIndex.from_product(
-                [["test_actual", "test_synthetic_0", "test_synthetic_1"], y_index]
-            ),
+            BootsrappingTransformer,
+            False,
+            index_return_actual_false,
         ),
     ],
 )
-def test_bootstrapping_transformer_panel_format(
-    series_name, return_actual, expected_index
+def test_bootstrap_transformers_panel_format(
+    transformer_class, return_actual, expected_index
 ):
     """Tests that the final panel has the right index."""
-    transformer = BootsrappingTransformer(
-        n_series=2, sp=12, return_actual=return_actual, series_name=series_name
-    )
+    transformer = transformer_class(n_series=2, return_actual=return_actual)
     y_hat = transformer.fit_transform(y)
-    assert expected_index.equals(y_hat.index)
+    assert expected_index.equals(y_hat.index) and (y_hat.columns[0] == y.name)
 
 
-@pytest.mark.parametrize("block_length", [1, 5])
-def test_moving_block_bootstrap(block_length):
-    """Tests for the BootsrappingTransformer._moving_block_bootstrap.
+@pytest.mark.parametrize(
+    "block_length, replacement", [(1, True), (5, True), (1, False), (5, False)]
+)
+def test_moving_block_bootstrap(block_length, replacement):
+    """Tests for the _moving_block_bootstrap.
 
     1. the output series has the same index as the input
     2. basic checks for the distribution of the bootstrapped values
        i.e. actual min/max >= bootstapped min/max
     """
-    y_hat = BootsrappingTransformer._moving_block_bootstrap(
-        y, block_length=block_length
+    y_hat = _moving_block_bootstrap(
+        y, block_length=block_length, replacement=replacement
     )
     assert (
         y_hat.index.equals(y_index)
         & (y_hat.max() <= y.max())
         & (y_hat.min() >= y.min())
     )
+
+
+@pytest.mark.parametrize("ts", [y, y.to_frame()])
+def test_get_series_name(ts):
+    """Test _get_series_name returns the right string."""
+    assert _get_series_name(ts) == "Number of airline passengers"
