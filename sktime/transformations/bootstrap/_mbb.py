@@ -46,7 +46,7 @@ class BootsrappingTransformer(BaseTransformer):
         The length of the block in the MBB method, by default None.
         If not provided, the following heuristic is used, the block length will the
         minimum between 2*sp and len(X) - sp.
-    sampling_replacement: bool, optional
+    sampling_replacement : bool, optional
         Whether the MBB sample is with or without replacement, by default False.
     return_actual : bool, optional
         If True the output will contain the actual time series, by default True.
@@ -128,8 +128,8 @@ class BootsrappingTransformer(BaseTransformer):
         smoothing methods using STL decomposition and Box-Cox transformation.
         International Journal of Forecasting, 32(2), 303-312
     .. [2] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
-        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
-        Accessed on February 13th 2022.
+        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3,
+        Chapter 12.5. Accessed on February 13th 2022.
     .. [3] Kunsch HR (1989) The jackknife and the bootstrap for general stationary
         observations. Annals of Statistics 17(3), 1217-1241
     .. [4] https://www.statsmodels.org/dev/generated/statsmodels.tsa.seasonal.STL.html
@@ -387,7 +387,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         The length of the block in the MBB method, by default None.
         If not provided, the following heuristic is used, the block length will the
         minimum between 2*sp and len(X) - sp.
-    sampling_replacement: bool, optional
+    sampling_replacement : bool, optional
         Whether the MBB sample is with or without replacement, by default False.
     return_actual : bool, optional
         If True the output will contain the actual time series, by default True.
@@ -407,8 +407,8 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         smoothing methods using STL decomposition and Box-Cox transformation.
         International Journal of Forecasting, 32(2), 303-312
     .. [3] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
-        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.
-        Accessed on February 13th 2022.
+        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3,
+        Chapter 12.5. Accessed on February 13th 2022. Accessed on February 13th 2022.
 
     Examples
     --------
