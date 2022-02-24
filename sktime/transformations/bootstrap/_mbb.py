@@ -5,7 +5,7 @@
 __author__ = ["ltsaprounis"]
 
 from copy import copy
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -23,20 +23,22 @@ class BootsrappingTransformer(BaseTransformer):
 
     First the observed time series is transformed using a Box-Cox transformation to
     stabilise the variance. Then it's decomposed to seasonal, trend and residual
-    time series, using the STL implementation from statsmodels [4]_. We then sample
-    blocks from the residuals time series using the Moving Block Bootstrapping (MBB)
-    method [3]_ to create synthetic residuals series that mimic the autocorrelation
-    patterns of the observed series. Finally these bootstrapped residuals are added
-    to the season and trend components and we use the inverse Box-Cox transform to
-    return a panel of similar time series.
+    time series, using the STL implementation from statsmodels
+    (`statsmodels.tsa.api.STL`) [4]_. We then sample blocks from the residuals time
+    series using the Moving Block Bootstrapping (MBB) method [3]_ to create synthetic
+    residuals series that mimic the autocorrelation patterns of the observed series.
+    Finally these bootstrapped residuals are added to the season and trend components
+    and we use the inverse Box-Cox transform to return a panel of similar time series.
+    The output can be used for bagging forecasts, prediction intervals and data
+    augmentation.
 
-    The resulting panel can be used for Bagging forecasts, prediction intervals and
-    data augmentation.
+    The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
+    series_id and time_index as the index and a single column of the time series value.
 
     Parameters
     ----------
     n_series : int, optional
-        The number of bootstraped time series that will be generated, by default 10
+        The number of bootstraped time series that will be generated, by default 10.
     sp : int, optional
         Seasonal periodicity of the data in integer form, by default 12.
         Must be an integer >= 2
@@ -50,31 +52,26 @@ class BootsrappingTransformer(BaseTransformer):
         If True the output will contain the actual time series, by default True.
         The actual time series will be labelled as "<series_name>_actual" (or "actual"
         if series name is None).
-    series_name : str, optional
-        The series name, by default None
-        If provided, the synthetic series names will have the series_name as a
-        prefix followed by an undescore e.g. "<series_name>_synthetic_1". If not
-        provided the series names will no prefix will be present e.g. "synthetic_1".
     lambda_bounds : Tuple, optional
         BoxCox parameter:
         Lower and upper bounds used to restrict the feasible range
         when solving for the value of lambda, by default None.
     lambda_method : str, optional
         BoxCox parameter:
-        {"pearsonr", "mle", "all", "guerrero"}, by default "guerrero"
+        {"pearsonr", "mle", "all", "guerrero"}, by default "guerrero".
         The optimization approach used to determine the lambda value used
         in the Box-Cox transformation.
     seasonal : int, optional
         STL parameter:
         Length of the seasonal smoother. Must be an odd integer, and should
-        normally be >= 7, by default 7
+        normally be >= 7, by default 7.
     trend : int, optional
         STL parameter:
         Length of the trend smoother, by default None.
         Must be an odd integer. If not provided uses the smallest odd integer greater
         than 1.5 * period / (1 - 1.5 / seasonal), following the suggestion in the
         original implementation.
-    low_pass : int, optional\
+    low_pass : int, optional
         STL parameter:
         Length of the low-pass filter, by default None.
         Must be an odd integer >=3. If not provided, uses the smallest odd
@@ -87,11 +84,11 @@ class BootsrappingTransformer(BaseTransformer):
         Degree of trend LOESS. 0 (constant) or 1 (constant and trend), by default 1.
     low_pass_deg : int, optional
         STL parameter:
-        Degree of low pass LOESS. 0 (constant) or 1 (constant and trend), by default 1
+        Degree of low pass LOESS. 0 (constant) or 1 (constant and trend), by default 1.
     robust : bool, optional
         STL parameter:
         Flag indicating whether to use a weighted version that is robust to
-        some forms of outliers, by default False
+        some forms of outliers, by default False.
     seasonal_jump : int, optional
         STL parameter:
         Positive integer determining the linear interpolation step, by default 1.
@@ -118,6 +115,12 @@ class BootsrappingTransformer(BaseTransformer):
         Number of iterations to perform in the outer loop, by default None.
         If not provided uses 15 if robust is True, or 0 if not.
         This param goes into STL.fit() from statsmodels.
+
+    See Also
+    --------
+    sktime.transformations.bootstrap.MovingBlockBootsrapTransformer :
+        Transofrmer that applies the Moving Block Bootstrapping method to create
+        a panel of synthetic time series.
 
     References
     ----------
@@ -179,7 +182,6 @@ class BootsrappingTransformer(BaseTransformer):
         block_length: int = None,
         sampling_replacement: bool = False,
         return_actual: bool = True,
-        series_name: str = None,
         lambda_bounds: Tuple = None,
         lambda_method: str = "guerrero",
         seasonal: int = 7,
@@ -200,7 +202,6 @@ class BootsrappingTransformer(BaseTransformer):
         self.block_length = block_length
         self.sampling_replacement = sampling_replacement
         self.return_actual = return_actual
-        self.series_name = series_name
         self.lambda_bounds = lambda_bounds
         self.lambda_method = lambda_method
         self.seasonal = seasonal
@@ -302,16 +303,17 @@ class BootsrappingTransformer(BaseTransformer):
         trend = pd.Series(stl.trend, index=X_index)
 
         # time series id prefix
-        prefix = self.series_name + "_" if self.series_name is not None else ""
+        col_name = _get_series_name(X)
 
         # initialize the dataframe that will store the bootstrapped series
         if self.return_actual:
             df = pd.DataFrame(
                 X.values,
                 index=pd.MultiIndex.from_product(
-                    iterables=[[f"{prefix}actual"], X_index],
+                    iterables=[["actual"], X_index],
                     names=["series_id", "time_index"],
                 ),
+                columns=[col_name],
             )
         else:
             df = pd.DataFrame()
@@ -328,13 +330,17 @@ class BootsrappingTransformer(BaseTransformer):
                 + trend
             )
 
-            new_series_id = f"{prefix}synthetic_{i}"
+            new_series_id = f"synthetic_{i}"
             new_df_index = pd.MultiIndex.from_product(
                 iterables=[[new_series_id], new_series.index],
                 names=["series_id", "time_index"],
             )
 
-            df = df.append(pd.DataFrame(data=new_series.values, index=new_df_index))
+            df = df.append(
+                pd.DataFrame(
+                    data=new_series.values, index=new_df_index, columns=[col_name]
+                )
+            )
 
         return df
 
@@ -368,7 +374,10 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
     create synthetic time series that mimic the autocorelation patterns of an observed
     stationary series. This method is frequently combined with other transformations
     e.g. BoxCox and STL to produce synthetic time series similar to the observed time
-    series [2]_, [3]_
+    series [2]_, [3]_.
+
+    The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
+    series_id and time_index as the index and a single column of the time series value.
 
     Parameters
     ----------
@@ -382,13 +391,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         Whether the MBB sample is with or without replacement, by default False.
     return_actual : bool, optional
         If True the output will contain the actual time series, by default True.
-        The actual time series will be labelled as "<series_name>_actual" (or "actual"
-        if series name is None).
-    series_name : str, optional
-        The series name, by default None
-        If provided, the synthetic series names will have the series_name as a
-        prefix followed by an undescore e.g. "<series_name>_synthetic_1". If not
-        provided the series names will no prefix will be present e.g. "synthetic_1".
+        The actual time series will be labelled as "actual"
 
     See Also
     --------
@@ -481,17 +484,18 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         """
         X_index = X.index
 
-        # time series id prefix
-        prefix = self.series_name + "_" if self.series_name is not None else ""
+        # time series name
+        col_name = _get_series_name(X)
 
         # initialize the dataframe that will store the bootstrapped series
         if self.return_actual:
             df = pd.DataFrame(
                 X.values,
                 index=pd.MultiIndex.from_product(
-                    iterables=[[f"{prefix}actual"], X_index],
+                    iterables=[["actual"], X_index],
                     names=["series_id", "time_index"],
                 ),
+                columns=[col_name],
             )
         else:
             df = pd.DataFrame()
@@ -504,12 +508,16 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
                 replacement=self.sampling_replacement,
             )
 
-            new_series_id = f"{prefix}synthetic_{i}"
+            new_series_id = f"synthetic_{i}"
             new_df_index = pd.MultiIndex.from_product(
                 iterables=[[new_series_id], new_series.index],
                 names=["series_id", "time_index"],
             )
-            df = df.append(pd.DataFrame(data=new_series.values, index=new_df_index))
+            df = df.append(
+                pd.DataFrame(
+                    data=new_series.values, index=new_df_index, columns=[col_name]
+                )
+            )
 
         return df
 
@@ -528,7 +536,6 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         params = [
             {},
             {"block_length": 1},
-            {"series_name": "test"},
             {"return_actual": False},
             {"sampling_replacement": True},
         ]
@@ -586,3 +593,22 @@ def _moving_block_bootstrap(
     mbb_series = pd.Series(data=mbb_values, index=ts_index)
 
     return mbb_series
+
+
+def _get_series_name(ts: Union[pd.Series, pd.DataFrame]) -> str:
+    """Get series name from Series or column name from DataFrame.
+
+    Parameters
+    ----------
+    ts : Union[pd.Series, pd.DataFrame]
+        input series / dataframe
+
+    Returns
+    -------
+    str
+        series name or column name
+    """
+    if isinstance(ts, pd.Series):
+        return ts.name
+    elif isinstance(ts, pd.DataFrame):
+        return ts.columns.values[0]

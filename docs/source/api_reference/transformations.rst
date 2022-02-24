@@ -371,3 +371,14 @@ BootsrappingTransformer
     :template: class.rst
 
     BootsrappingTransformer
+
+MovingBlockBootsrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingBlockBootsrapTransformer
