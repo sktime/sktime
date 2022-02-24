@@ -37,7 +37,7 @@ class NaiveVariance(BaseForecaster):
 
     def __init__(self, forecaster):
 
-        self.forecaster = clone(forecaster)
+        self.forecaster = forecaster
         super(NaiveVariance, self).__init__()
 
         tags_to_clone = [
@@ -172,15 +172,13 @@ class NaiveVariance(BaseForecaster):
 
         Returns
         -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+        params : dict or list of dict
         """
 
-        from sktime.forecasting.structural import UnobservedComponents
+        from sktime.forecasting.naive import NaiveForecaster
 
-        params_list = {"forecaster": UnobservedComponents()}
+        FORECASTER = NaiveForecaster()
+
+        params_list = {"forecaster": FORECASTER}
 
         return params_list
