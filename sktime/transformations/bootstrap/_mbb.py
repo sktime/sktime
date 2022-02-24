@@ -316,16 +316,18 @@ class STLResidualBootsrapTransformer(BaseTransformer):
 
         # initialize the dataframe that will store the bootstrapped series
         if self.return_actual:
-            df = pd.DataFrame(
-                X.values,
-                index=pd.MultiIndex.from_product(
-                    iterables=[["actual"], X_index],
-                    names=["series_id", "time_index"],
-                ),
-                columns=[col_name],
-            )
+            df_list = [
+                pd.DataFrame(
+                    X.values,
+                    index=pd.MultiIndex.from_product(
+                        iterables=[["actual"], X_index],
+                        names=["series_id", "time_index"],
+                    ),
+                    columns=[col_name],
+                )
+            ]
         else:
-            df = pd.DataFrame()
+            df_list = []
 
         # create multiple series
         for i in range(self.n_series):
@@ -345,13 +347,13 @@ class STLResidualBootsrapTransformer(BaseTransformer):
                 names=["series_id", "time_index"],
             )
 
-            df = df.append(
+            df_list.append(
                 pd.DataFrame(
                     data=new_series.values, index=new_df_index, columns=[col_name]
                 )
             )
 
-        return df
+        return pd.concat(df_list)
 
     @classmethod
     def get_test_params(cls):
@@ -508,16 +510,18 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
         # initialize the dataframe that will store the bootstrapped series
         if self.return_actual:
-            df = pd.DataFrame(
-                X.values,
-                index=pd.MultiIndex.from_product(
-                    iterables=[["actual"], X_index],
-                    names=["series_id", "time_index"],
-                ),
-                columns=[col_name],
-            )
+            df_list = [
+                pd.DataFrame(
+                    X.values,
+                    index=pd.MultiIndex.from_product(
+                        iterables=[["actual"], X_index],
+                        names=["series_id", "time_index"],
+                    ),
+                    columns=[col_name],
+                )
+            ]
         else:
-            df = pd.DataFrame()
+            df_list = []
 
         # create multiple series
         for i in range(self.n_series):
@@ -532,13 +536,13 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
                 iterables=[[new_series_id], new_series.index],
                 names=["series_id", "time_index"],
             )
-            df = df.append(
+            df_list.append(
                 pd.DataFrame(
                     data=new_series.values, index=new_df_index, columns=[col_name]
                 )
             )
 
-        return df
+        return pd.concat(df_list)
 
     @classmethod
     def get_test_params(cls):
