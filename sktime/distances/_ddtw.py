@@ -25,14 +25,11 @@ def _average_of_slope(q: np.ndarray):
 
     Computes the average of the slope of the line through the point in question and
     its left neighbour, and the slope of the line through the left neighbour and the
-    right neighbour.
-
-    Mathematically this is defined at:
-
+    right neighbour This is defined at:
     .. math::
-        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+        D_(q) = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
 
-    Where q is the original timeseries and d_q is the derived timeseries.
+    Where q is the original timeseries and d_q is the derived time series.
 
     Parameters
     ----------
@@ -44,9 +41,7 @@ def _average_of_slope(q: np.ndarray):
     np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
                 len(q.shape[1]))
         Array containing the derivative of q.
-
     """
-    # Taken from https://github.com/tslearn-team/tslearn/issues/180
     return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
 
 

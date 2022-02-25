@@ -76,11 +76,13 @@ class ElasticEnsemble(BaseClassifier):
     --------
     >>> from sktime.classification.distance_based import ElasticEnsemble
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = ElasticEnsemble(
     ...     proportion_of_param_options=0.1,
     ...     proportion_train_for_test=0.1,
+    ...     distance_measures = ["dtw","ddtw"],
+    ...     majority_vote=True,
     ... )
     >>> clf.fit(X_train, y_train)
     ElasticEnsemble(...)
