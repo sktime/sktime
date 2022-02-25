@@ -9,6 +9,7 @@ from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_random_state
 from statsmodels.tsa.api import STL as _STL
 
 from sktime.transformations.base import BaseTransformer
@@ -118,6 +119,8 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         Number of iterations to perform in the outer loop, by default None.
         If not provided uses 15 if robust is True, or 0 if not.
         This param goes into STL.fit() from statsmodels.
+    random_state : int, np.random.RandomState or None, by default None
+        Controls the randomness of the estimator
 
     See Also
     --------
@@ -205,6 +208,7 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         low_pass_jump: int = 1,
         inner_iter: int = None,
         outer_iter: int = None,
+        random_state: Union[int, np.random.RandomState] = None,
     ):
         self.n_series = n_series
         self.sp = sp
@@ -225,6 +229,7 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         self.low_pass_jump = low_pass_jump
         self.inner_iter = inner_iter
         self.outer_iter = outer_iter
+        self.random_state = random_state
 
         super(STLResidualBootsrapTransformer, self).__init__()
 
@@ -410,6 +415,8 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
     return_actual : bool, optional
         If True the output will contain the actual time series, by default True.
         The actual time series will be labelled as "actual"
+    random_state : int, np.random.RandomState or None, by default None
+        Controls the randomness of the estimator
 
     See Also
     --------
@@ -481,11 +488,13 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         block_length: int = 10,
         sampling_replacement: bool = False,
         return_actual: bool = True,
+        random_state: Union[int, np.random.RandomState] = None,
     ):
         self.n_series = n_series
         self.block_length = block_length
         self.sampling_replacement = sampling_replacement
         self.return_actual = return_actual
+        self.random_state = random_state
 
         super(MovingBlockBootsrapTransformer, self).__init__()
 
@@ -576,7 +585,10 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
 
 def _moving_block_bootstrap(
-    ts: pd.Series, block_length: int, replacement: bool = False
+    ts: pd.Series,
+    block_length: int,
+    replacement: bool = False,
+    random_state: Union[int, np.random.RandomState] = None,
 ) -> pd.Series:
     """Create a synthetic time series using the moving block bootstrap method MBB.
 
@@ -588,6 +600,8 @@ def _moving_block_bootstrap(
         The length of the bootstrapping block
     replacement: bool, optional
         Whether the sample is with or without replacement, by default True.
+    random_state : int, np.random.RandomState or None, by default None
+        Controls the randomness of the estimator
 
     Returns
     -------
@@ -597,6 +611,7 @@ def _moving_block_bootstrap(
     ts_length = len(ts)
     ts_index = ts.index
     ts_values = ts.values
+    rng = check_random_state(random_state)
 
     if ts_length <= block_length:
         raise ValueError(
@@ -606,12 +621,12 @@ def _moving_block_bootstrap(
 
     if block_length == 1 and not replacement:
         mbb_values = copy(ts_values)
-        np.random.shuffle(mbb_values)
+        rng.random.shuffle(mbb_values)
     elif block_length == 1:
-        mbb_values = np.random.choice(ts_values, size=ts_length, replace=replacement)
+        mbb_values = rng.random.choice(ts_values, size=ts_length, replace=replacement)
     else:
         total_num_blocks = int(ts_length / block_length) + 2
-        block_origns = np.random.choice(
+        block_origns = rng.random.choice(
             ts_length - block_length + 1, size=total_num_blocks, replace=replacement
         )
         mbb_values = [
@@ -619,7 +634,7 @@ def _moving_block_bootstrap(
         ]
         # remove the first few observations and ensure new series has the
         # same length as the original
-        remove_first = np.random.choice(block_length - 1)
+        remove_first = rng.random.choice(block_length - 1)
         mbb_values = mbb_values[remove_first : remove_first + ts_length]
 
     mbb_series = pd.Series(data=mbb_values, index=ts_index)
