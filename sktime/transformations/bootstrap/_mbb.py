@@ -25,7 +25,7 @@ class STLBootsrapTransformer(BaseTransformer):
     First the observed time series is transformed using a Box-Cox transformation to
     stabilise the variance. Then it's decomposed to seasonal, trend and residual
     time series, using the STL implementation from statsmodels
-    (`statsmodels.tsa.api.STL`) [4]_. We then sample blocks from the residuals time
+    (``statsmodels.tsa.api.STL``) [4]_. We then sample blocks from the residuals time
     series using the Moving Block Bootstrapping (MBB) method [3]_ to create synthetic
     residuals series that mimic the autocorrelation patterns of the observed series.
     Finally these bootstrapped residuals are added to the season and trend components
@@ -33,7 +33,7 @@ class STLBootsrapTransformer(BaseTransformer):
     The output can be used for bagging forecasts, prediction intervals and data
     augmentation.
 
-    The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
+    The returned panel will be a multiindex dataframe (``pd.DataFrame``) with the
     series_id and time_index as the index and a single column of the time series value.
     The values for series_id are "actual" for the original series and "synthetic_n"
     (where n is an integer) for the generated series.
@@ -398,7 +398,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
     e.g. BoxCox and STL to produce synthetic time series similar to the observed time
     series [2]_, [3]_.
 
-    The returned panel will be a multiindex dataframe (`pd.DataFrame`) with the
+    The returned panel will be a multiindex dataframe (``pd.DataFrame``) with the
     series_id and time_index as the index and a single column of the time series value.
     The values for series_id are "actual" for the original series and "synthetic_n"
     (where n is an integer) for the generated series.
