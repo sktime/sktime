@@ -370,7 +370,7 @@ STLResidualBootsrapTransformer
     :toctree: auto_generated/
     :template: class.rst
 
-    STLResidualBootsrapTransformer
+    STLBootsrapTransformer
 
 MovingBlockBootsrapTransformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

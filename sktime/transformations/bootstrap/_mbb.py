@@ -16,7 +16,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
-class STLResidualBootsrapTransformer(BaseTransformer):
+class STLBootsrapTransformer(BaseTransformer):
     """Creates a population of similar time series.
 
     This method utilises a form of bootstrapping to generate a population of
@@ -142,11 +142,11 @@ class STLResidualBootsrapTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.bootstrap import STLResidualBootsrapTransformer
+    >>> from sktime.transformations.bootstrap import STLBootsrapTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
-    >>> transformer = STLResidualBootsrapTransformer(10)
+    >>> transformer = STLBootsrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
     >>> series_list = []
     >>> names = []
@@ -231,7 +231,7 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
 
-        super(STLResidualBootsrapTransformer, self).__init__()
+        super(STLBootsrapTransformer, self).__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -252,12 +252,12 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         """
         if self.sp <= 2:
             raise NotImplementedError(
-                "STLResidualBootsrapTransformer does not support non-seasonal data"
+                "STLBootsrapTransformer does not support non-seasonal data"
             )
 
         if len(X) <= self.sp:
             raise ValueError(
-                "STLResidualBootsrapTransformer requires that sp is greater than"
+                "STLBootsrapTransformer requires that sp is greater than"
                 " the length of X"
             )
 
@@ -294,7 +294,7 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         """
         if len(X) <= self.block_length_:
             raise ValueError(
-                "STLResidualBootsrapTransformer requires that block_length is "
+                "STLBootsrapTransformer requires that block_length is "
                 " greater than the length of X"
             )
 
@@ -422,7 +422,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
     See Also
     --------
-    sktime.transformations.bootstrap.STLResidualBootsrapTransformer :
+    sktime.transformations.bootstrap.STLBootsrapTransformer :
         Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
