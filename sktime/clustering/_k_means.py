@@ -44,6 +44,8 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         Averaging method to compute the average of a cluster. Any of the following
         strings are valid: ['mean']. If a Callable is provided must take the form
         Callable[[np.ndarray], np.ndarray].
+    distance_params: dict, defaults = None
+        Dictonary containing kwargs for the distance metric being used.
 
     Attributes
     ----------
@@ -71,6 +73,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
         averaging_method: Union[str, Callable[[np.ndarray], np.ndarray]] = "mean",
+        distance_params: dict = None,
     ):
         self.averaging_method = averaging_method
         self._averaging_method = resolve_average_callable(averaging_method)
@@ -84,6 +87,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             tol,
             verbose,
             random_state,
+            distance_params,
         )
 
     def _compute_new_cluster_centers(
@@ -106,7 +110,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
             curr_indexes = np.where(assignment_indexes == i)[0]
-            new_centers[i, :] = self._averaging_method(X[curr_indexes])
+            result = self._averaging_method(X[curr_indexes])
+            if result.shape[0] > 0:
+                new_centers[i, :] = result
         return new_centers
 
     @classmethod
@@ -122,7 +128,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "n_clusters": 8,
+            "n_clusters": 2,
             "metric": "euclidean",
             "n_init": 1,
             "max_iter": 10,
