@@ -7,15 +7,22 @@ __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 
 from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
+from sktime.utils.validation import (
+    array_is_int,
+    array_is_timedelta_or_date_offset,
+    is_array,
+    is_int,
+    is_timedelta_or_date_offset,
+)
 from sktime.utils.validation.series import VALID_INDEX_TYPES
 
-RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
+RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
@@ -92,12 +99,18 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
         pass
 
     # convert single integer to pandas index, no further checks needed
-    elif isinstance(values, (int, np.integer)):
+    elif is_int(values):
         return pd.Int64Index([values], dtype=int)
 
+    elif is_timedelta_or_date_offset(values):
+        return pd.Index([values])
+
     # convert np.array or list to pandas index
-    elif isinstance(values, (list, np.ndarray)):
+    elif is_array(values) and array_is_int(values):
         values = pd.Int64Index(values, dtype=int)
+
+    elif is_array(values) and array_is_timedelta_or_date_offset(values):
+        values = pd.Index(values)
 
     # otherwise, raise type error
     else:
@@ -158,7 +171,7 @@ class ForecastingHorizon:
     def __init__(
         self,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
-        is_relative: bool = True,
+        is_relative: Optional[bool] = True,
     ):
         if is_relative is not None and not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean or None")
@@ -166,16 +179,14 @@ class ForecastingHorizon:
 
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
-        error_msg = (
-            f"`values` type is not compatible with `is_relative=" f"{is_relative}`."
-        )
+        error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
             if type(values) in RELATIVE_TYPES:
                 is_relative = True
             elif type(values) in ABSOLUTE_TYPES:
                 is_relative = False
             else:
-                raise TypeError(type(values) + "is not a supported fh index type")
+                raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
             if not type(values) in RELATIVE_TYPES:
                 raise TypeError(error_msg)
@@ -284,6 +295,8 @@ class ForecastingHorizon:
                 absolute = _coerce_to_period(absolute, freq)
                 cutoff = _coerce_to_period(cutoff, freq)
 
+            # TODO: Replace the following line if the bug in pandas is fixed
+            #  and its version is restricted in sktime dependencies
             # Compute relative values
             # The following line circumvents the bug in pandas
             # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
@@ -291,6 +304,13 @@ class ForecastingHorizon:
             # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
             # [v - periods[0] for v in periods]
             # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
+            # TODO: v0.12.0: Check if this comment below can be removed,
+            # so check if pandas has released the fix to PyPI:
+            # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
+            # and fixed: https://github.com/pandas-dev/pandas/pull/46006
+            # Most likely it will be released with pandas 1.5
+            # Once the bug is fixed the line should simply be:
+            # relative = absolute - cutoff
             relative = pd.Index([date - cutoff for date in absolute])
 
             # Coerce durations (time deltas) into integer values for given frequency
