@@ -228,7 +228,7 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "summary_functions": ("mean", "min", "max"),
     },
-    RocketClassifier: {"num_kernels": 100},
+    
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
