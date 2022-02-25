@@ -15,7 +15,7 @@ from sktime.distances import distance_factory, pairwise_distance
 
 
 def _forgy_center_initializer(
-    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState
+    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState, **kwargs
 ) -> np.ndarray:
     """Compute the initial centers using forgy method.
 
@@ -38,7 +38,7 @@ def _forgy_center_initializer(
 
 
 def _random_center_initializer(
-    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState
+    X: np.ndarray, n_clusters: int, random_state: np.random.RandomState, **kwargs
 ) -> np.ndarray:
     """Compute initial centroids using random method.
 
@@ -64,7 +64,9 @@ def _random_center_initializer(
     selected = random_state.choice(n_clusters, X.shape[0], replace=True)
     for i in range(n_clusters):
         curr_indexes = np.where(selected == i)[0]
-        new_centers[i, :] = mean_average(X[curr_indexes])
+        result = mean_average(X[curr_indexes])
+        if result.shape[0] > 0:
+            new_centers[i, :] = result
     return new_centers
 
 
@@ -75,6 +77,7 @@ def _kmeans_plus_plus(
     distance_metric: str = "euclidean",
     n_local_trials: int = None,
     distance_params: dict = None,
+    **kwargs,
 ):
     """Compute initial centroids using kmeans++ method.
 
@@ -124,10 +127,7 @@ def _kmeans_plus_plus(
     center_id = random_state.randint(n_samples)
     centers[0] = X[center_id]
     closest_dist_sq = (
-        pairwise_distance(
-            centers[0, np.newaxis], X, metric=distance_metric, **distance_params
-        )
-        ** 2
+        pairwise_distance(centers[0, np.newaxis], X, metric=distance_metric) ** 2
     )
     current_pot = closest_dist_sq.sum()
 
@@ -137,10 +137,7 @@ def _kmeans_plus_plus(
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
 
         distance_to_candidates = (
-            pairwise_distance(
-                X[candidate_ids], X, metric=distance_metric, **distance_params
-            )
-            ** 2
+            pairwise_distance(X[candidate_ids], X, metric=distance_metric) ** 2
         )
 
         np.minimum(closest_dist_sq, distance_to_candidates, out=distance_to_candidates)
@@ -226,7 +223,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         random_state: Union[int, RandomState] = None,
         distance_params: dict = None,
     ):
-        self.n_clusters = n_clusters
         self.init_algorithm = init_algorithm
         self.metric = metric
         self.n_init = n_init
@@ -244,7 +240,11 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self._random_state = None
         self._init_algorithm = None
 
-        super(TimeSeriesLloyds, self).__init__()
+        self._distance_params = distance_params
+        if distance_params is None:
+            self._distance_params = {}
+
+        super(TimeSeriesLloyds, self).__init__(n_clusters=n_clusters)
 
     def _check_params(self, X: np.ndarray) -> None:
         """Check parameters are valid and initialized.
@@ -262,7 +262,9 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         """
         self._random_state = check_random_state(self.random_state)
 
-        self._distance_metric = distance_factory(X[0], X[1], metric=self.metric)
+        self._distance_metric = distance_factory(
+            X[0], X[1], metric=self.metric, **self._distance_params
+        )
 
         if isinstance(self.init_algorithm, str):
             self._init_algorithm = self._init_algorithms.get(self.init_algorithm)
@@ -281,7 +283,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         else:
             self._distance_params = self.distance_params
 
-    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+    def _fit(self, X: np.ndarray, y=None):
         """Fit time series clusterer to training data.
 
         Parameters
@@ -314,6 +316,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         self.inertia_ = best_inertia
         self.cluster_centers_ = best_centers
         self.n_iter_ = best_iters
+        return self
 
     def _predict(self, X: np.ndarray, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
@@ -358,7 +361,12 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Sum of squared distances of samples to their closest cluster center,
             weighted by the sample weights if provided.
         """
-        cluster_centers = self._init_algorithm(X, self.n_clusters, self._random_state)
+        cluster_centers = self._init_algorithm(
+            X,
+            self.n_clusters,
+            self._random_state,
+            distance_metric=self._distance_metric,
+        )
 
         old_inertia = np.inf
         old_labels = None
@@ -381,7 +389,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             elif old_labels is not None:
                 # No strict convergence, check for tol based convergence.
                 center_shift = pairwise_distance(
-                    labels, old_labels, metric=self.metric, **self._distance_params
+                    labels, old_labels, metric=self._distance_metric
                 ).sum()
                 if center_shift <= self.tol:
                     if self.verbose:
@@ -431,6 +439,9 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             X, cluster_centers, metric=self.metric, **self._distance_params
         )
         return pairwise.argmin(axis=1), pairwise.min(axis=1).sum()
+
+    def _score(self, X, y=None):
+        return -self.inertia_
 
     @abstractmethod
     def _compute_new_cluster_centers(
