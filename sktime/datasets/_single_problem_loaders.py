@@ -120,7 +120,7 @@ def load_plaid(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_gunpoint(split=None, return_X_y=True):
+def load_gunpoint(split=None, return_X_y=True, return_type=None):
     """
     Load the GunPoint time series classification problem and returns X and y.
 
@@ -169,7 +169,7 @@ def load_gunpoint(split=None, return_X_y=True):
     ?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=None)
 
 
 def load_osuleaf(split=None, return_X_y=True):
@@ -212,10 +212,10 @@ def load_osuleaf(split=None, return_X_y=True):
     ?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=None)
 
 
-def load_italy_power_demand(split=None, return_X_y=True):
+def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     """
     Load ItalyPowerDemand time series classification problem.
 
@@ -252,7 +252,7 @@ def load_italy_power_demand(split=None, return_X_y=True):
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, return_type=None)
 
 
 def load_unit_test(split=None, return_X_y=True, return_type=None):
