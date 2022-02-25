@@ -174,7 +174,7 @@ def create_conditional_fixtures_and_names(
             ]
             # new fixture name is concatenation of name so far and "dash-new name"
             #   if the new name is empty string, don't add a dash
-            if len(new_fixture_names_r) > 1 and new_fixture_names_r[0] != "":
+            if len(new_fixture_names_r) > 0 and new_fixture_names_r[0] != "":
                 new_fixture_names_r = [f"-{x}" for x in new_fixture_names_r]
             new_fixture_names += [f"{fixture_name}{x}" for x in new_fixture_names_r]
 
