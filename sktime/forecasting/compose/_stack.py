@@ -163,3 +163,17 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         # index = y_preds.index
         index = self.fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        return params
