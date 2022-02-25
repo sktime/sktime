@@ -294,7 +294,7 @@ class STLBootsrapTransformer(BaseTransformer):
         """
         if len(X) <= self.block_length_:
             raise ValueError(
-                "STLBootsrapTransformer requires that block_length is "
+                "STLBootsrapTransformer requires that block_length is"
                 " greater than the length of X"
             )
 
@@ -519,7 +519,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         """
         if len(X) <= self.block_length:
             raise ValueError(
-                "MovingBlockBootsrapTransformer requires that block_length is "
+                "MovingBlockBootsrapTransformer requires that block_length is"
                 " greater than the length of X"
             )
 

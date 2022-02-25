@@ -42,6 +42,22 @@ def test_bootstrapping_transformer_series_shorter_than_sp():
         assert msg == ex.value
 
 
+@pytest.mark.parametrize(
+    "transformer_class", [STLBootsrapTransformer, MovingBlockBootsrapTransformer]
+)
+def test_block_length_exception(transformer_class):
+    """Tests that a Value error is raised when block_length is smaller than len(X)."""
+    msg = (
+        f"{transformer_class.__name__} requires that block_length"
+        " is greater than the length of X"
+    )
+    with pytest.raises(ValueError) as ex:
+        transformer = transformer_class(block_length=12)
+        transformer.fit_transform(y.iloc[1:9])
+
+        assert msg == ex.value
+
+
 index_return_actual_true = pd.MultiIndex.from_product(
     [["actual", "synthetic_0", "synthetic_1"], y_index]
 )
