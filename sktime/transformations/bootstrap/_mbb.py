@@ -299,7 +299,6 @@ class STLResidualBootsrapTransformer(BaseTransformer):
             )
 
         X_index = X.index
-
         X_transformed = self.box_cox_transformer_.transform(X)
 
         # fit STL on X_transformed series and extract trend, seasonal and residuals
@@ -339,6 +338,8 @@ class STLResidualBootsrapTransformer(BaseTransformer):
         else:
             df_list = []
 
+        # set the random state
+        rng = check_random_state(self.random_state)
         # create multiple series
         for i in range(self.n_series):
             new_series = self.box_cox_transformer_.inverse_transform(
@@ -346,6 +347,7 @@ class STLResidualBootsrapTransformer(BaseTransformer):
                     ts=resid,
                     block_length=self.block_length_,
                     replacement=self.sampling_replacement,
+                    random_state=rng,
                 )
                 + seasonal
                 + trend
@@ -541,12 +543,15 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         else:
             df_list = []
 
+        # set the random state
+        rng = check_random_state(self.random_state)
         # create multiple series
         for i in range(self.n_series):
             new_series = _moving_block_bootstrap(
                 ts=X,
                 block_length=self.block_length,
                 replacement=self.sampling_replacement,
+                random_state=rng,
             )
 
             new_series_id = f"synthetic_{i}"
@@ -621,12 +626,12 @@ def _moving_block_bootstrap(
 
     if block_length == 1 and not replacement:
         mbb_values = copy(ts_values)
-        rng.random.shuffle(mbb_values)
+        rng.shuffle(mbb_values)
     elif block_length == 1:
-        mbb_values = rng.random.choice(ts_values, size=ts_length, replace=replacement)
+        mbb_values = rng.choice(ts_values, size=ts_length, replace=replacement)
     else:
         total_num_blocks = int(ts_length / block_length) + 2
-        block_origns = rng.random.choice(
+        block_origns = rng.choice(
             ts_length - block_length + 1, size=total_num_blocks, replace=replacement
         )
         mbb_values = [
@@ -634,7 +639,7 @@ def _moving_block_bootstrap(
         ]
         # remove the first few observations and ensure new series has the
         # same length as the original
-        remove_first = rng.random.choice(block_length - 1)
+        remove_first = rng.choice(block_length - 1)
         mbb_values = mbb_values[remove_first : remove_first + ts_length]
 
     mbb_series = pd.Series(data=mbb_values, index=ts_index)
