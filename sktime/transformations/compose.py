@@ -51,8 +51,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Parameters
     ----------
-    transformer : list of sktime transformers, or
+    transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
+        these are "blueprint" transformers, states do not change when `fit` is called
+
+    Attributes
+    ----------
+    transformers_ : list of tuples (str, transformer) of sktime transformers
+        clones of transformers in `transformers` which are fitted in the pipeline
+        is always in (str, transformer) format, even if transformers is just a list
+        strings not passed in transformers are unique generated strings
+        i-th transformer in `transformers_` is clone of i-th in `transformers`
     """
 
     _required_parameters = ["transformers"]
