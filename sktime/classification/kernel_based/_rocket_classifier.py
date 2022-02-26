@@ -226,6 +226,6 @@ class RocketClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         
-        params = {RocketClassifier:{"num_kernels": 100}}
+        params = {"num_kernels": 100}
 
         return params
