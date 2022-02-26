@@ -44,6 +44,9 @@ INVALID_y_INPUT_TYPES = [list(), tuple()]
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
+# names for index/fh combinations to display in tests
+index_fh_comb_names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
+
 
 class ForecasterFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for forecasting tests.
@@ -71,13 +74,8 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         "n_columns",
         "scenario",
         # "fh",
-        "fh_int",
-        "fh_int_oos",
-        "alpha",
         "update_params",
         "step_length",
-        "window_length",
-        "index_fh_comb",
     ]
 
     def _generate_n_columns(self, test_name, **kwargs):
@@ -104,39 +102,6 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
 
         return n_columns_list, n_columns_names
 
-    def _generate_fh_int(self, test_name, **kwargs):
-        """Return test integer forecasting horizon input.
-
-        Fixtures parameterized
-        ----------------------
-        fh_int: array of int
-            TEST_FHS from sktime.forecasting.tests._config
-            integer arrays that define forecasting horizons
-        """
-        return TEST_FHS, [f"fh={fh}" for fh in TEST_FHS]
-
-    def _generate_fh_int_oos(self, test_name, **kwargs):
-        """Return test integer forecasting horizon input (out of sample only).
-
-        Fixtures parameterized
-        ----------------------
-        fh_int_oos: array of int
-            TEST_OOS_FHS from sktime.forecasting.tests._config
-            integer arrays that define out-of-sample forecasting horizons
-        """
-        return TEST_OOS_FHS, [f"fh={fh}" for fh in TEST_OOS_FHS]
-
-    def _generate_alpha(self, test_name, **kwargs):
-        """Return test alphas for predict_interval and predict_coverage.
-
-        Fixtures parameterized
-        ----------------------
-        alpha: float
-            TEST_ALPHA from sktime.forecasting.tests._config
-            alpha values between 0 and 1 (exclusive) for coverage or quantiles
-        """
-        return TEST_ALPHAS, [f"alpha={a}" for a in TEST_ALPHAS]
-
     def _generate_update_params(self, test_name, **kwargs):
         """Return update_params for update calls.
 
@@ -144,7 +109,6 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
         ----------------------
         update_params: bool
             whether to update parameters in update; ranges over True, False
-            alpha values between 0 and 1 (exclusive) for coverage or quantiles
         """
         return [True, False], ["update_params=True", "update_params=False"]
 
@@ -161,27 +125,6 @@ class ForecasterFixtureGenerator(BaseFixtureGenerator):
             return [1], [""]
         else:
             return TEST_STEP_LENGTHS_INT, [f"step={a}" for a in TEST_STEP_LENGTHS_INT]
-
-    def _generate_window_length(self, test_name, **kwargs):
-        """Return window length for window.
-
-        Fixtures parameterized
-        ----------------------
-        window_length: int
-            TEST_WINDOW_LENGTHS from sktime.forecasting.tests._config
-        """
-        return TEST_WINDOW_LENGTHS, [f"window={a}" for a in TEST_WINDOW_LENGTHS]
-
-    def _generate_index_fh_comb(self, test_name, **kwargs):
-        """Return valid index/fh combinations.
-
-        Fixtures parameterized
-        ----------------------
-        index_fh_comb: tuple of index_type: type, fh_type: type, is_relative: bool
-            VALID_INDEX_FH_COMBINATION from sktime.forecasting.tests._config
-        """
-        names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
-        return VALID_INDEX_FH_COMBINATIONS, names
 
 
 class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
@@ -249,6 +192,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             assert "exogenous" in msg
 
     # todo: refactor with scenarios. Need to override fh and scenario args for this.
+    @pytest.mark.parametrize(
+        "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
+    )
+    @pytest.mark.parametrize("fh_int", TEST_FHS, ids=[f"fh={fh}" for fh in TEST_FHS])
     def test_predict_time_index(
         self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
@@ -267,6 +214,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    @pytest.mark.parametrize(
+        "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
+    )
+    @pytest.mark.parametrize("fh_int", TEST_FHS, ids=[f"fh={fh}" for fh in TEST_FHS])
     def test_predict_residuals(
         self, estimator_instance, n_columns, index_fh_comb, fh_int
     ):
@@ -291,6 +242,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    @pytest.mark.parametrize(
+        "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
+    )
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
     def test_predict_time_index_with_X(
         self,
         estimator_instance,
@@ -318,6 +275,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+    @pytest.mark.parametrize(
+        "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
+    )
     def test_predict_time_index_in_sample_full(
         self, estimator_instance, n_columns, index_fh_comb
     ):
@@ -358,6 +318,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
             # )
 
+    @pytest.mark.parametrize(
+        "alpha", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
+    )
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
     def test_predict_interval(self, estimator_instance, n_columns, fh_int_oos, alpha):
         """Check prediction intervals returned by predict.
 
@@ -423,6 +389,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 for index in range(len(pred_quantiles.index)):
                     assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
+    @pytest.mark.parametrize(
+        "alpha", TEST_ALPHAS, ids=[f"alpha={a}" for a in TEST_ALPHAS]
+    )
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
     def test_predict_quantiles(self, estimator_instance, n_columns, fh_int_oos, alpha):
         """Check prediction quantiles returned by predict.
 
@@ -482,6 +454,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 'The flag "capability:pred_int" should instead be set to True.'
             )
 
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
     def test_score(self, estimator_instance, n_columns, fh_int_oos):
         """Check score method."""
         y = _make_series(n_columns=n_columns)
@@ -499,6 +474,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         assert actual == expected
 
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
     def test_update_predict_single(
         self, estimator_instance, n_columns, fh_int_oos, update_params
     ):
@@ -511,6 +489,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh_int_oos)
 
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
+    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
     def test_update_predict_predicted_index(
         self,
         estimator_instance,
