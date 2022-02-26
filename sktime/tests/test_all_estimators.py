@@ -452,7 +452,6 @@ class QuickTester:
     # todo: surely there is a pytest method that can be called instead of this?
     #   find and replace if it exists
     @staticmethod
-    @staticmethod
     def _get_pytest_mark_args(fun):
         """Get args from pytest mark annotation of function.
 
