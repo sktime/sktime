@@ -93,7 +93,20 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self.transformers = value
 
     def __mul__(self, other):
-        """Magic * method, return (right) concatenated TransformerPipeline."""
+        """Magic * method, return (right) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
         # we don't use names but _get_estimator_names to get the *original* names
         #   to avoid multiple "make unique" calls which may grow strings too much
         _, trafos = zip(*self.transformers_)
@@ -121,7 +134,20 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return TransformerPipeline(transformers=list(zip(new_names, new_trafos)))
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated TransformerPipeline."""
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
         _, trafos = zip(*self.transformers_)
         names = tuple(self._get_estimator_names(self.transformers))
         if isinstance(other, TransformerPipeline):

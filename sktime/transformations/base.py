@@ -134,7 +134,20 @@ class BaseTransformer(BaseEstimator):
         super(BaseTransformer, self).__init__()
 
     def __mul__(self, other):
-        """Magic * method, return (right) concatenated TransformerPipeline."""
+        """Magic * method, return (right) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
         from sktime.transformations.compose import TransformerPipeline
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -146,7 +159,20 @@ class BaseTransformer(BaseEstimator):
             return NotImplemented
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated TransformerPipeline."""
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
         from sktime.transformations.compose import TransformerPipeline
 
         # we wrap self in a pipeline, and concatenate with the other
