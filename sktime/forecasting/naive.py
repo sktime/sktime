@@ -197,6 +197,9 @@ class _NaiveForecaster(_BaseWindowForecaster):
             pad_width = self.sp_ - remainder
         else:
             pad_width = 0
+
+        pad_width += self.window_length_ - len(last_window)
+
         last_window = np.hstack([np.full(pad_width, np.nan), last_window])
 
         # reshape last window, one column per season
@@ -366,3 +369,25 @@ class NaiveForecaster(BaseForecaster):
         self : reference to self
         """
         return self._forecaster.update(y=y, X=X, update_params=update_params)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params_list = [
+            {},
+            {"sp": 2},
+            {"strategy": "mean"},
+            {"strategy": "drift"},
+            {"strategy": "mean", "window_length": 5},
+        ]
+
+        return params_list

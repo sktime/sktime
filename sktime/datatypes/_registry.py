@@ -36,6 +36,10 @@ from sktime.datatypes._alignment._registry import (
     MTYPE_LIST_ALIGNMENT,
     MTYPE_REGISTER_ALIGNMENT,
 )
+from sktime.datatypes._hierarchical._registry import (
+    MTYPE_LIST_HIERARCHICAL,
+    MTYPE_REGISTER_HIERARCHICAL,
+)
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
 from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
@@ -43,12 +47,14 @@ from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_T
 MTYPE_REGISTER = []
 MTYPE_REGISTER += MTYPE_REGISTER_SERIES
 MTYPE_REGISTER += MTYPE_REGISTER_PANEL
+MTYPE_REGISTER += MTYPE_REGISTER_HIERARCHICAL
 MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
 MTYPE_REGISTER += MTYPE_REGISTER_TABLE
 
 
 __all__ = [
     "MTYPE_REGISTER",
+    "MTYPE_LIST_HIERARCHICAL",
     "MTYPE_LIST_PANEL",
     "MTYPE_LIST_SERIES",
     "MTYPE_LIST_ALIGNMENT",
@@ -60,31 +66,54 @@ __all__ = [
 SCITYPE_REGISTER = [
     ("Series", "uni- or multivariate time series"),
     ("Panel", "panel of uni- or multivariate time series"),
+    ("Hierarchical", "hierarchical panel of time series with 3 or more levels"),
     ("Alignment", "series or sequence alignment"),
     ("Table", "data table with primitive column types"),
 ]
 
 
-def mtype_to_scitype(mtype: str):
+def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     """Infer scitype belonging to mtype.
 
     Parameters
     ----------
-    mtype: str, mtype to find scitype of; or, None
+    mtype : str, or list of str, or nested list/str object, or None
+        mtype(s) to find scitype of
 
     Returns
     -------
-    scitype: str, unique scitype belonging to mtype
-            or, None if mtype is None
+    scitype : str, or list of str, or nested list/str object, or None
+        if str, returns scitype belonging to mtype, if mtype is str
+        if list, returns this function element-wise applied
+        if nested list/str object, replaces mtype str by scitype str
+        if None, returns None
+    return_unique : bool, default=False
+        if True, makes return unique
+    coerce_to_list : bool, default=Fakse
+        if True, coerces rerturn to list, even if one-element
 
     Raises
     ------
-    ValueError, if there are two scitypes with that mtype
-        (this should not happen in general)
-    ValueError, if there is no scitype with that mtype
+    TypeError, if input is not of the type specified
+    ValueError, if there are two scitypes for the/some mtype string
+        (this should not happen in general, it means there is a bug)
+    ValueError, if there is no scitype for the/some mtype string
     """
+    # handle the "None" case first
     if mtype is None or mtype == "None":
         return None
+    # recurse if mtype is a list
+    if isinstance(mtype, list):
+        scitype_list = [mtype_to_scitype(x) for x in mtype]
+        if return_unique:
+            scitype_list = list(set(scitype_list))
+        return scitype_list
+
+    # checking for type. Checking str is enough, recursion above will do the rest.
+    if not isinstance(mtype, str):
+        raise TypeError(
+            "mtype must be str, or list of str, nested list/str object, or None"
+        )
 
     scitype = [k[1] for k in MTYPE_REGISTER if k[0] == mtype]
 
@@ -94,4 +123,7 @@ def mtype_to_scitype(mtype: str):
     if len(scitype) < 1:
         raise ValueError(f"{mtype} is not a supported mtype")
 
-    return scitype[0]
+    if coerce_to_list:
+        return [scitype[0]]
+    else:
+        return scitype[0]
