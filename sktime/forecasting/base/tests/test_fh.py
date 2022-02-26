@@ -28,6 +28,7 @@ from sktime.utils.datetime import (
     _coerce_duration_to_int,
     _get_duration,
     _get_freq,
+    _get_intervals_count_and_unit,
     _shift,
 )
 from sktime.utils.validation.series import VALID_INDEX_TYPES
@@ -137,7 +138,7 @@ def test_check_fh_values_duplicate_input_values(arg):
         ForecastingHorizon(arg)
 
 
-GOOD_INPUT_ARGS = (
+GOOD_ABSOLUTE_INPUT_ARGS = (
     pd.Int64Index([1, 2, 3]),
     pd.period_range("2000-01-01", periods=3, freq="D"),
     pd.date_range("2000-01-01", periods=3, freq="M"),
@@ -147,10 +148,22 @@ GOOD_INPUT_ARGS = (
 )
 
 
-@pytest.mark.parametrize("arg", GOOD_INPUT_ARGS)
-def test_check_fh_values_input_conversion_to_pandas_index(arg):
-    """Test conversion to pandas index."""
+@pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
+def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
+    """Test conversion of absolute horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
+    assert type(output) in VALID_INDEX_TYPES
+
+
+GOOD_RELATIVE_INPUT_ARGS = [
+    pd.timedelta_range(pd.to_timedelta(1, unit="D"), periods=3, freq="D")
+]
+
+
+@pytest.mark.parametrize("arg", GOOD_RELATIVE_INPUT_ARGS)
+def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
+    """Test conversion of relative horizons to pandas index."""
+    output = ForecastingHorizon(arg, is_relative=True).to_pandas()
     assert type(output) in VALID_INDEX_TYPES
 
 
@@ -233,7 +246,9 @@ def test_get_duration(n_timepoints, index_type):
     assert duration == n_timepoints - 1
 
 
-FREQUENCY_STRINGS = ["10T", "H", "D", "2D", "W-WED", "W-SUN", "W-SAT", "M"]
+FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]
+NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
+FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
@@ -246,8 +261,8 @@ def test_to_absolute_freq(freqstr):
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_absolute_to_absolute(freqstr):
-    """Test converting between absolute and relative."""
+def test_absolute_to_absolute_with_integer_horizon(freqstr):
+    """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
@@ -258,9 +273,25 @@ def test_absolute_to_absolute(freqstr):
     assert converted_abs_fh._values.freqstr == freqstr
 
 
+@pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
+def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
+    """Test converting between absolute and relative."""
+    # Converts from absolute to relative and back to absolute
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    count, unit = _get_intervals_count_and_unit(freq=freqstr)
+    fh = ForecastingHorizon(
+        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
+    )
+    abs_fh = fh.to_absolute(train.index[-1])
+
+    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    assert_array_equal(abs_fh, converted_abs_fh)
+    assert converted_abs_fh._values.freqstr == freqstr
+
+
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_relative_to_relative(freqstr):
-    """Test converting between relative and absolute."""
+def test_relative_to_relative_with_integer_horizon(freqstr):
+    """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
@@ -268,6 +299,21 @@ def test_relative_to_relative(freqstr):
 
     converted_rel_fh = abs_fh.to_relative(train.index[-1])
     assert_array_equal(fh, converted_rel_fh)
+
+
+@pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
+def test_relative_to_relative_with_timedelta_horizon(freqstr):
+    """Test converting between relative and absolute with timedelta horizons."""
+    # Converts from relative to absolute and back to relative
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    count, unit = _get_intervals_count_and_unit(freq=freqstr)
+    fh = ForecastingHorizon(
+        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
+    )
+    abs_fh = fh.to_absolute(train.index[-1])
+
+    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    assert_array_equal(converted_rel_fh, np.arange(1, 4))
 
 
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
