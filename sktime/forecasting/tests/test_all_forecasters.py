@@ -489,6 +489,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh_int_oos)
 
+    @pytest.mark.parametrize(
+        "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
+    )
     @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
     def test_update_predict_predicted_index(
         self,
