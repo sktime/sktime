@@ -158,19 +158,25 @@ def create_conditional_fixtures_and_names(
         new_fixture_names = []
 
         for j, fixture in enumerate(fixture_prod):
+            # retrieve kwargs corresponding to old fixture values
             fixture_name = fixture_names[j]
             if i == 0:
                 kwargs = dict()
             else:
                 kwargs = dict(zip(old_fixture_vars, fixture))
-
+            # retrieve conditional fixtures, conditional on fixture values in kwargs
             new_fixtures, new_fixture_names_r = deepcopy(
                 get_fixtures(fixture_var, **kwargs)
             )
+            # new fixture values are concatenation/product of old values plus new
             new_fixture_prod += [
                 deepcopy(fixture) + (new_fixture,) for new_fixture in new_fixtures
             ]
-            new_fixture_names += [f"{fixture_name}-{x}" for x in new_fixture_names_r]
+            # new fixture name is concatenation of name so far and "dash-new name"
+            #   if the new name is empty string, don't add a dash
+            if len(new_fixture_names_r) > 0 and new_fixture_names_r[0] != "":
+                new_fixture_names_r = [f"-{x}" for x in new_fixture_names_r]
+            new_fixture_names += [f"{fixture_name}{x}" for x in new_fixture_names_r]
 
         fixture_prod = new_fixture_prod
         fixture_names = new_fixture_names
