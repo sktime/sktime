@@ -45,9 +45,7 @@ y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 # names for index/fh combinations to display in tests
-index_fh_comb_names = [
-    f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS
-]
+index_fh_comb_names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
 
 
 class ForecasterFixtureGenerator(BaseFixtureGenerator):
