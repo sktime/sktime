@@ -477,10 +477,16 @@ class QuickTester:
         def to_str(obj):
             return [str(x) for x in obj]
 
+        def get_id(mark):
+            if "ids" in mark.kwargs.keys():
+                return mark.kwargs["ids"]
+            else:
+                return to_str(range(len(mark.args[1])))
+
         pytest_fixture_vars = [x.args[0] for x in marks]
         pytest_fixt_raw = [x.args[1] for x in marks]
         pytest_fixt_list = product(*pytest_fixt_raw)
-        pytest_fixt_names_raw = [to_str(range(len(x.args[1]))) for x in marks]
+        pytest_fixt_names_raw = [get_id(x) for x in marks]
         pytest_fixt_names = product(*pytest_fixt_names_raw)
         pytest_fixt_names = ["-".join(x) for x in pytest_fixt_names]
 
@@ -512,7 +518,7 @@ class QuickTester:
 
         # product of fixture names = Cartesian product plus concat
         fixture_names_return = product(fixture_names, pytest_fixture_names)
-        fixture_names_return = [".".join(x) for x in fixture_names_return]
+        fixture_names_return = ["-".join(x) for x in fixture_names_return]
 
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
