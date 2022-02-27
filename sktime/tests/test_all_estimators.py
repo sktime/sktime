@@ -49,7 +49,6 @@ from sktime.utils._testing.estimator_checks import (
     _get_args,
     _has_capability,
     _list_required_methods,
-    _make_args,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
@@ -477,10 +476,16 @@ class QuickTester:
         def to_str(obj):
             return [str(x) for x in obj]
 
+        def get_id(mark):
+            if "ids" in mark.kwargs.keys():
+                return mark.kwargs["ids"]
+            else:
+                return to_str(range(len(mark.args[1])))
+
         pytest_fixture_vars = [x.args[0] for x in marks]
         pytest_fixt_raw = [x.args[1] for x in marks]
         pytest_fixt_list = product(*pytest_fixt_raw)
-        pytest_fixt_names_raw = [to_str(range(len(x.args[1]))) for x in marks]
+        pytest_fixt_names_raw = [get_id(x) for x in marks]
         pytest_fixt_names = product(*pytest_fixt_names_raw)
         pytest_fixt_names = ["-".join(x) for x in pytest_fixt_names]
 
@@ -512,7 +517,7 @@ class QuickTester:
 
         # product of fixture names = Cartesian product plus concat
         fixture_names_return = product(fixture_names, pytest_fixture_names)
-        fixture_names_return = [".".join(x) for x in fixture_names_return]
+        fixture_names_return = ["-".join(x) for x in fixture_names_return]
 
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
@@ -932,33 +937,38 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                     method_args_after, method_args_before
                 ), f"Estimator: {estimator} has side effects on arguments of {method}"
 
-    def test_persistence_via_pickle(self, estimator_instance):
+    def test_persistence_via_pickle(self, estimator_instance, scenario):
         """Check that we can pickle all estimators."""
         estimator = estimator_instance
         set_random_state(estimator)
-        fit_args = _make_args(estimator, "fit")
-        estimator.fit(*fit_args)
+        # Fit the model, get args before and after
+        scenario.run(estimator, method_sequence=["fit"], return_args=True)
 
         # Generate results before pickling
         results = {}
-        args = {}
         for method in NON_STATE_CHANGING_METHODS:
             if _has_capability(estimator, method):
-                args[method] = _make_args(estimator, method)
-                results[method] = getattr(estimator, method)(*args[method])
+                results[method] = scenario.run(estimator, method_sequence=[method])
 
         # Pickle and unpickle
         pickled_estimator = pickle.dumps(estimator)
         unpickled_estimator = pickle.loads(pickled_estimator)
 
         # Compare against results after pickling
-        for method, value in results.items():
-            unpickled_result = getattr(unpickled_estimator, method)(*args[method])
+        for method, vanilla_result in results.items():
+            unpickled_result = scenario.run(
+                unpickled_estimator, method_sequence=[method]
+            )
+
+            msg = (
+                f"Results of {method} differ between when pickling and not pickling, "
+                f"estimator {type(estimator_instance).__name__}"
+            )
             _assert_array_almost_equal(
-                value,
+                vanilla_result,
                 unpickled_result,
                 decimal=6,
-                err_msg="Results are not the same after pickling",
+                err_msg=msg,
             )
 
     # todo: this needs to be diagnosed and fixed - temporary skip
