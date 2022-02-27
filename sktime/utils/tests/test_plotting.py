@@ -132,7 +132,7 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
 
 
 # todo: remove xfail when issue #2066 has been fixed
-@pytest.mark.xfail("sporadic failure on win CI/CD, see #2066")
+@pytest.mark.xfail(reason="sporadic failure on win CI/CD, see issue 2066")
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
     """Tests whether plot_series returns plt.fig and plt.ax."""
