@@ -197,6 +197,8 @@ def test_univariate_plots_run_without_error(series_to_plot, plot_func):
     plt.close()
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.xfail(reason="sporadic failure on win CI/CD, see issue 2066")
 # Generically test whether plots only accepting univariate input
 # raise an error when invalid input type is found
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
@@ -218,6 +220,8 @@ def test_univariate_plots_invalid_input_type_raises_error(
             plot_func(series_to_plot)
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.xfail(reason="sporadic failure on win CI/CD, see issue 2066")
 # Generically test output of plots only accepting univariate input
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
