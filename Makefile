@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v -n 2 --showlocals --durations=20 --pyargs $(PACKAGE)
+	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v --showlocals --durations=20 --pyargs $(PACKAGE)
 
 tests: test
 
