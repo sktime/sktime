@@ -81,14 +81,15 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     Example
     -------
     >>> X = pd.Series([1,2,3,4,5])
-    >>> augmenter = InvertAugmenter()
+    >>> augmenter = ReverseAugmenter()
     >>> Xt = augmenter.fit_transform(X)
     >>> Xt
-    0  5
-    1  4
-    2  3
-    3  2
-    4  1
+    0    5
+    1    4
+    2    3
+    3    2
+    4    1
+    dtype: int64
     """
 
     def __init__(self):
@@ -107,11 +108,12 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
     >>> augmenter = InvertAugmenter()
     >>> Xt = augmenter.fit_transform(X)
     >>> Xt
-    0  -1
-    1  -2
-    2  -3
-    3  -4
-    4  -5
+    0   -1
+    1   -2
+    2   -3
+    3   -4
+    4   -5
+    dtype: int64
     """
 
     def __init__(self):
