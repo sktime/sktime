@@ -182,6 +182,8 @@ def test_plot_series_uniform_treatment_of_int64_range_index_types():
     plt.close()
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.xfail(reason="sporadic failure on win CI/CD, see issue 2066")
 # Generically test whether plots only accepting univariate input run
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
