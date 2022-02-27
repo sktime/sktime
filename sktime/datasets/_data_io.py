@@ -121,8 +121,12 @@ def _list_available_datasets(extract_path):
     return datasets
 
 
-def _load_dataset(name, split, return_X_y, extract_path=None):
-    """Load time series classification datasets (helper function)."""
+def _load_dataset(name, split, return_X_y, extract_path=None, return_type=None):
+    """
+    Load time series classification datasets.
+
+    If necessary, it loads from the timeseriesclassification.com.
+    """
     # Allow user to have non standard extract path
     if extract_path is not None:
         local_module = os.path.dirname(extract_path)
@@ -163,18 +167,25 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
         abspath = os.path.join(local_module, local_dirname, name, fname)
-        X, y = load_from_tsfile_to_dataframe(abspath)
+        X, y = load_from_tsfile(abspath, return_data_type=return_type)
     # if split is None, load both train and test set
     elif split is None:
-        X = pd.DataFrame(dtype="object")
-        y = pd.Series(dtype="object")
-        for split in ("TRAIN", "TEST"):
-            fname = name + "_" + split + ".ts"
-            abspath = os.path.join(local_module, local_dirname, name, fname)
-            result = load_from_tsfile_to_dataframe(abspath)
-            X = pd.concat([X, pd.DataFrame(result[0])])
-            y = pd.concat([y, pd.Series(result[1])])
-        y = pd.Series.to_numpy(y, dtype=str)
+        fname = name + "_TRAIN.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        fname = name + "_TEST.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
+        if isinstance(X_train, np.ndarray):
+            X = np.concatenate((X_train, X_test))
+        elif isinstance(X_train, pd.DataFrame):
+            X = pd.concat([X_train, X_test])
+        else:
+            raise IOError(
+                f"Invalid data structure type {type(X_train)} for loading "
+                f"classification problem "
+            )
+        y = np.concatenate((y_train, y_test))
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -182,7 +193,16 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     if return_X_y:
         return X, y
     else:
-        X["class_val"] = pd.Series(y)
+        if isinstance(X, pd.DataFrame):
+            X["class_val"] = pd.Series(y)
+        elif isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                np.concatenate((X, y), axis=1)
+            else:
+                raise ValueError(
+                    f"Unable to return multivariate X and y in {X.ndim} "
+                    f"a numpy array"
+                )
         return X
 
 
@@ -230,7 +250,16 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
     if return_X_y:
         return X, y
     else:
-        X["class_val"] = pd.Series(y)
+        if isinstance(X, pd.DataFrame):
+            X["class_val"] = pd.Series(y)
+        elif isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                np.concatenate((X, y), axis=1)
+            else:
+                raise ValueError(
+                    f"Unable to return multivariate X and y in {X.ndim} "
+                    f"a numpy array"
+                )
         return X
 
 
