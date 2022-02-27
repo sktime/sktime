@@ -255,6 +255,8 @@ def test_plot_lags_arguments(series_to_plot, lags, suptitle):
     plt.close()
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.xfail(reason="sporadic failure on win CI/CD, see issue 2066")
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("lags", [6, 12, 24, 36])
 @pytest.mark.parametrize("suptitle", ["Correlation Plot", None])
