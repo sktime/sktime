@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.utils.plotting import plot_series, plot_correlations, plot_lags
+from sktime.utils.plotting import plot_correlations, plot_lags, plot_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import VALID_DATA_TYPES
 
