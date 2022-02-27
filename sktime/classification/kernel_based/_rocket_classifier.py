@@ -213,7 +213,6 @@ class RocketClassifier(BaseClassifier):
 
         return dists
 
-
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -225,7 +224,5 @@ class RocketClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        
         params = {"num_kernels": 100}
-
         return params
