@@ -181,4 +181,4 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         return params
 
     def _score(self, X, y=None):
-        return self.inertia_
+        return np.abs(self.inertia_)
