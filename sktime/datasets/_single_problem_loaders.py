@@ -96,7 +96,7 @@ def load_UCR_UEA_dataset(
     ------
     ValueError if an incompatible return_type type is passed: unequal length series
     must be stored in a DataFrame ("nested_univ") and multivariate series calnnot be
-    lowaded into 2d numpy ("numpy2d"/"numpyflat").
+    loaded into 2d numpy ("numpy2d"/"numpyflat").
     """
     return _load_dataset(name, split, return_X_y, extract_path, return_type)
 
@@ -547,6 +547,12 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
     =BasicMotions
     """
     name = "BasicMotions"
+    if return_type == "numpy2d" or return_type == "numpyflat":
+        raise ValueError(
+            f"{name} loader: Error, attempting to load into a numpy2d "
+            f"array, but cannot because it is a multivariate problem. Use "
+            f"numpy3d instead"
+        )
     return _load_provided_dataset(
         name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )

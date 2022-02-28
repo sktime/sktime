@@ -2,6 +2,7 @@
 """Test single problem loaders with varying return types."""
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datasets import (  # Univariate; Unequal length; Multivariate
     load_acsf1,
@@ -68,3 +69,7 @@ def test_load_numpy2d():
         assert isinstance(y, np.ndarray)
         assert X.ndim == 2
         assert y.ndim == 1
+
+    for loader in MULTIVARIATE_PROBLEMS:
+        with pytest.raises(ValueError, match="attempting to load into a numpy2d"):
+            X, y = loader(return_type="numpy2d")

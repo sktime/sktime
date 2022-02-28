@@ -96,7 +96,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_available_datasets(extract_path):
+def _list_available_datasets(extract_path=None):
     """Return a list of all the currently downloaded datasets.
 
     Modified version of
@@ -125,56 +125,52 @@ def _load_dataset(name, split, return_X_y, extract_path=None, return_type=None):
     """
     Load time series classification datasets.
 
-    If necessary, it loads from the timeseriesclassification.com.
+    Loads from the default path (datasets/data) or from a bespoke path. If
+    the data is not at the given location it attempts to load from the repository
+    timeseriesclassification.com.
     """
     # Allow user to have non standard extract path
     if extract_path is not None:
-        local_module = os.path.dirname(extract_path)
-        local_dirname = extract_path
+        path = os.path.join(extract_path)
     else:
-        local_module = MODULE
-        local_dirname = "data"
-
-    if not os.path.exists(os.path.join(local_module, local_dirname)):
-        os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_available_datasets(extract_path):
-        local_dirname = "local_data"
-        if not os.path.exists(os.path.join(local_module, local_dirname)):
-            os.makedirs(os.path.join(local_module, local_dirname))
-        if name not in _list_available_datasets(
-            os.path.join(local_module, local_dirname)
-        ):
-            # Dataset is not baked in the datasets directory, look in local_data,
-            # if it is not there, download and install it.
-            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-            # This also tests the validitiy of the URL, can't rely on the html
-            # status code as it always returns 200
-            try:
-                _download_and_extract(
-                    url,
-                    extract_path=extract_path,
-                )
-            except zipfile.BadZipFile as e:
-                raise ValueError(
-                    "Invalid dataset name. ",
-                    extract_path,
-                    "Please make sure the dataset "
-                    + "is available on http://timeseriesclassification.com/.",
-                ) from e
+        if name in _list_available_datasets():
+            path = os.path.join(MODULE + "/data")
+        else:
+            path = os.path.join(MODULE + "/local_data")
+    if not os.path.exists(path):
+        os.makedirs(path)
+    if name not in _list_available_datasets(path):
+        # Dataset is not baked in the datasets directory, look in local_data,
+        # if it is not there, download and install it.
+        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+        # This also tests the validitiy of the URL, can't rely on the html
+        # status code as it always returns 200
+        try:
+            _download_and_extract(
+                url,
+                extract_path=path,
+            )
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                "Invalid dataset name. ",
+                extract_path,
+                "Please make sure the dataset "
+                + "is available on http://timeseriesclassification.com/.",
+            ) from e
     if isinstance(split, str):
         split = split.upper()
 
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
-        abspath = os.path.join(local_module, local_dirname, name, fname)
+        abspath = os.path.join(path, name, fname)
         X, y = load_from_tsfile(abspath, return_data_type=return_type)
     # if split is None, load both train and test set
     elif split is None:
         fname = name + "_TRAIN.ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        abspath = os.path.join(path, name, fname)
         X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
         fname = name + "_TEST.ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        abspath = os.path.join(path, name, fname)
         X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
         if isinstance(X_train, np.ndarray):
             X = np.concatenate((X_train, X_test))
