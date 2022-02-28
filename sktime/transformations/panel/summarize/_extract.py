@@ -36,8 +36,10 @@ class PlateauFinder(_PanelToPanelTransformer):
         self.min_length = min_length
         self.max_length = max_length
         # param checks
-        if min_length > max_length:
-            raise ValueError(f'Max length {max_length} less than Min length {min_length}')
+        if max_length is not None and min_length > max_length:
+            raise ValueError(
+                f'Max length {max_length} less than Min length {min_length}'
+            )
 
         super(PlateauFinder, self).__init__()
 
