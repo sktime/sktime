@@ -15,7 +15,7 @@ def test_pf_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train PF
-    pf = ProximityForest(n_estimators=5, random_state=0)
+    pf = ProximityForest(n_estimators=2, n_stump_evaluations=1, random_state=0)
     pf.fit(X_train, y_train)
 
     # assert probabilities are the same

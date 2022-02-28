@@ -532,3 +532,15 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
                 expanded_class_weight = compute_sample_weight(class_weight, y_original)
 
         return y, expanded_class_weight
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+        """
+        params = {"n_estimators": 3}
+        return params

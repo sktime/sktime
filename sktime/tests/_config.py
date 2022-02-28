@@ -13,10 +13,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.classification.compose import (
-    ColumnEnsembleClassifier,
-    ComposableTimeSeriesForestClassifier,
-)
 from sktime.classification.dictionary_based import (
     MUSE,
     WEASEL,
@@ -133,11 +129,6 @@ TRANSFORMERS = [
 ]
 REGRESSOR = LinearRegression()
 ANOMALY_DETECTOR = KNN()
-TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
-TIME_SERIES_CLASSIFIERS = [
-    ("tsf1", TIME_SERIES_CLASSIFIER),
-    ("tsf2", TIME_SERIES_CLASSIFIER),
-]
 FORECASTER = NaiveForecaster()
 FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
 STEPS = [
@@ -161,11 +152,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    ColumnEnsembleClassifier: {
-        "estimators": [
-            (name, estimator, 0) for (name, estimator) in TIME_SERIES_CLASSIFIERS
-        ]
     },
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
@@ -278,7 +264,6 @@ ESTIMATOR_TEST_PARAMS = {
         "randomly_selected_params": 5,
     },
     TSFC: {"n_estimators": 3},
-    ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
     CanonicalIntervalForest: {"n_estimators": 3},

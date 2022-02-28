@@ -268,6 +268,33 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         self._set_params("_estimators", **kwargs)
         return self
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+        """
+        from classification.interval_based import DrCIF
+
+        params = {
+            "estimators": [
+                (
+                    "DrCIF",
+                    DrCIF(
+                        n_estimators=2,
+                        n_intervals=2,
+                        att_subsample_size=2,
+                        random_state=0,
+                    ),
+                    0,
+                )
+            ]
+        }
+        return params
+
 
 def _get_column(X, key):
     """
