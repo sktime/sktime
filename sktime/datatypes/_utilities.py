@@ -93,9 +93,12 @@ def get_cutoff(obj, cutoff=0, return_index=False):
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         idx = obj.index
-        nlevels = idx.nlevels
-        idx_t = idx.droplevel(list(range(nlevels - 1)))
-        return idx_t.sort_values()[[-1]] if return_index else idx_t.sort_values()[-1]
+        series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
+        if return_index:
+            cutoffs = [x[[-1]] for x in series_idx]
+        else:
+            cutoffs = [x[-1] for x in series_idx]
+        return max(cutoffs)
 
     # df-list (Panel)
     if isinstance(obj, list):
