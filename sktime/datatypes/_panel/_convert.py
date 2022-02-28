@@ -830,7 +830,8 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         series = [i[1] for i in X.loc[iidx, :].iteritems()]
         colnames = [i[0] for i in X.loc[iidx, :].iteritems()]
         for x in series:
-            x.name = None
+            if hasattr(x, "name"):
+                x.name = None
 
         instance = [pd.DataFrame(s, columns=[c]) for s, c in zip(series, colnames)]
         instance = pd.concat(instance, axis=1)
