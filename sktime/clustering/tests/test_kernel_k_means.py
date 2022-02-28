@@ -108,7 +108,7 @@ def test_kernel_k_means():
     proba = kernel_kmeans.predict_proba(X_test)
 
     assert np.array_equal(test_shape_result, expected_results)
-    assert score == expected_score
+    np.testing.assert_almost_equal(score, expected_score)
     assert kernel_kmeans.n_iter_ == expected_iters
     assert np.array_equal(kernel_kmeans.labels_, expected_labels)
     assert proba.shape == (40, 3)
