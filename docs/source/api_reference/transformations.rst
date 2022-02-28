@@ -361,7 +361,7 @@ FeatureSelection
 
     FeatureSelection
 
-STLResidualBootsrapTransformer
+STLBootsrapTransformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.bootstrap
