@@ -58,7 +58,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "fit-in-transform",
-        "transformer",
+        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "does fit contain no logic and can be skipped? yes/no",
     ),
@@ -135,7 +135,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer"],
+        ["forecaster", "transformer", "transformer-pairwise-panel"],
         (
             "list",
             [
@@ -175,6 +175,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_y",
+        "transformer",
+        "bool",
+        "does this transformer require y to be passed in fit and transform?",
+    ),
+    (
         "capability:inverse_transform",
         "transformer",
         "bool",
@@ -184,7 +190,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:pred_int",
         "forecaster",
         "bool",
-        "is the forecaster capable of returning prediction intervals in predict?",
+        "does the forecaster implement predict_interval or predict_quantiles?",
     ),
     (
         "capability:multivariate",

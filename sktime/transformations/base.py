@@ -106,6 +106,7 @@ class BaseTransformer(BaseEstimator):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
@@ -155,7 +156,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -172,6 +173,8 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
@@ -211,13 +214,21 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+                X,
+                to_type="df-list",
+                as_scitype="Panel",
+                store=self._converter_store_X,
+                store_behaviour="reset",
             )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
@@ -258,7 +269,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -400,7 +411,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -462,7 +473,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -584,7 +595,7 @@ class BaseTransformer(BaseEstimator):
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
         Z : possible alias for X; should not be passed when X is passed
-            alias Z will be deprecated in version 0.10.0
+            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
         update_params : bool, default=True
             whether the model is updated. Yes if true, if false, simply skips call.
             argument exists for compatibility with forecasting module.
@@ -644,13 +655,21 @@ class BaseTransformer(BaseEstimator):
 
         # 3. internal only has Series but X is Panel: loop over instances
         elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None:
+            if y is not None and self.get_tag("y_inner_mtype") != "None":
                 raise ValueError(
-                    "no default behaviour if _fit does not support Panel, "
-                    " but X is Panel and y is not None"
+                    f"{type(self).__name__} does not support Panel X if y is not None, "
+                    f"since {type(self).__name__} supports only Series. "
+                    "Auto-vectorization to extend Series X to Panel X can only be "
+                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                    "Consider extending _fit and _transform to handle the following "
+                    "input types natively: Panel X and non-None y."
                 )
             X = convert_to(
-                X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+                X,
+                to_type="df-list",
+                as_scitype="Panel",
+                store=self._converter_store_X,
+                store_behaviour="reset",
             )
             # this fits one transformer per instance
             self.transformers_ = [clone(self).fit(Xi) for Xi in X]
@@ -671,23 +690,33 @@ class BaseTransformer(BaseEstimator):
         """Vectorized application of transform or inverse, and convert back."""
         if X_input_mtype is None:
             X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        if y is not None:
-            ValueError(
-                "no default behaviour if _fit does not support Panel, "
-                " but X is Panel and y is not None"
+        if y is not None and self.get_tag("y_inner_mtype") != "None":
+            raise ValueError(
+                f"{type(self).__name__} does not support Panel X if y is not None, "
+                f"since {type(self).__name__} supports only Series. "
+                "Auto-vectorization to extend Series X to Panel X can only be "
+                'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                "Consider extending _fit and _transform to handle the following "
+                "input types natively: Panel X and non-None y."
             )
 
         X = convert_to(
-            X, to_type="df-list", as_scitype="Panel", store=self._converter_store_X
+            X,
+            to_type="df-list",
+            as_scitype="Panel",
+            store=self._converter_store_X,
+            store_behaviour="reset",
         )
 
         # depending on whether fitting happens, apply fitted or unfitted instances
         if not self.get_tag("fit-in-transform"):
-            # these are the transformers-per-instanced, fitted in fit
+            # these are the transformers-per-instance, fitted in fit
             transformers = self.transformers_
             if len(transformers) != len(X):
                 raise RuntimeError(
-                    "found different number of instances in transform than in fit"
+                    "found different number of instances in transform than in fit. "
+                    f"number of instances seen in fit: {len(transformers)}; "
+                    f"number of instances seen in transform: {len(X)}"
                 )
             if inverse:
                 Xt = [transformers[i].inverse_transform(X[i]) for i in range(len(X))]
@@ -714,6 +743,7 @@ class BaseTransformer(BaseEstimator):
                 to_type=X_input_mtype,
                 as_scitype="Panel",
                 store=self._converter_store_X,
+                store_behaviour="freeze",
             )
 
         # if the output is Primitives, we have a list of one-row dataframes
@@ -732,9 +762,6 @@ class BaseTransformer(BaseEstimator):
 
         X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
-
-        y_mtype = mtype(y, as_scitype=["Series", "Panel"])
-        y_scitype = mtype_to_scitype(y_mtype)
 
         # for debugging, exception if the conversion fails (this should never happen)
         if X_scitype not in X_inner_scitypes:
@@ -755,9 +782,23 @@ class BaseTransformer(BaseEstimator):
             to_type=X_inner_mtype,
             as_scitype=X_scitype,
             store=self._converter_store_X,
+            store_behaviour="reset",
         )
 
-        if y_inner_mtype != ["None"]:
+        if y_inner_mtype != ["None"] and y is not None:
+
+            if X_scitype == "Series":
+                # y_possible_scitypes = ["Series"]
+                y_possible_scitypes = "Series"
+            elif X_scitype == "Panel":
+                # todo: change this back to Panel/Table once
+                #   polymorphic convert_to is merged
+                # y_possible_scitypes = ["Panel", "Table"]
+                # y_possible_scitypes = ["Series", "Panel"]
+                y_possible_scitypes = "Table"
+            y_mtype = mtype(y, as_scitype=y_possible_scitypes)
+            y_scitype = mtype_to_scitype(y_mtype)
+
             y_inner_mtype = [
                 mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
             ]
@@ -784,23 +825,33 @@ class BaseTransformer(BaseEstimator):
 
         # if we converted Series to "one-instance-Panel", revert that
         if X_was_Series and output_scitype == "Series":
+            Xt = convert_to(
+                Xt, to_type=["pd-multiindex", "numpy3D", "df-list"], as_scitype="Panel"
+            )
             Xt = convert_Panel_to_Series(Xt)
 
         if output_scitype == "Series":
-            # if the transformer outputs multivariate series,
+            # output mtype is input mtype
+            X_output_mtype = X_input_mtype
+
+            # exception to this: if the transformer outputs multivariate series,
             #   we cannot convert back to pd.Series, do pd.DataFrame instead then
-            _, _, metadata = check_is_mtype(
-                Xt, ["pd.DataFrame", "pd.Series", "np.ndarray"], return_metadata=True
-            )
-            if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
-                X_output_mtype = "pd.DataFrame"
-            else:
-                X_output_mtype = X_input_mtype
+            #   this happens only for Series, not Panel
+            if X_input_scitype == "Series":
+                _, _, metadata = check_is_mtype(
+                    Xt,
+                    ["pd.DataFrame", "pd.Series", "np.ndarray"],
+                    return_metadata=True,
+                )
+                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                    X_output_mtype = "pd.DataFrame"
+
             Xt = convert_to(
                 Xt,
                 to_type=X_output_mtype,
                 as_scitype=X_input_scitype,
                 store=self._converter_store_X,
+                store_behaviour="freeze",
             )
         elif output_scitype == "Primitives":
             # we "abuse" the Series converter to ensure df output
@@ -935,10 +986,11 @@ def _handle_alias(X, Z):
     if Z is None:
         return X
     elif X is None:
-        warnings.warn(
-            "argument Z will be deprecated in transformers, sktime version 0.10.0",
-            category=DeprecationWarning,
+        msg = (
+            "argument Z will in transformers is deprecated since version 0.10.0 "
+            "and will be removed in version 0.11.0"
         )
+        warnings.warn(msg, category=DeprecationWarning)
         return Z
     else:
         raise ValueError("X and Z are aliases, at most one of them should be passed")
@@ -983,7 +1035,7 @@ class _PanelToTabularTransformer(BaseTransformer):
 
     # class is temporary for downwards compatibility
 
-    # default tag values for "Series-to-Series"
+    # default tag values for "Panel-to-Tabular"
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -1000,7 +1052,7 @@ class _PanelToPanelTransformer(BaseTransformer):
 
     # class is temporary for downwards compatibility
 
-    # default tag values for "Series-to-Series"
+    # default tag values for "Panel-to-Panel"
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

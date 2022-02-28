@@ -203,6 +203,6 @@ class FunctionTransformer(BaseTransformer):
         params1 = {}
 
         # log-transformer, with exp inverse
-        params2 = {"func": np.log1p, "inverse_func": np.expm1}
+        params2 = {"func": np.expm1, "inverse_func": np.log1p}
 
         return [params1, params2]

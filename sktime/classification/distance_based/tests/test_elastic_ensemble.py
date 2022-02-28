@@ -19,25 +19,27 @@ def test_ee_on_unit_test_data():
         proportion_of_param_options=0.1,
         proportion_train_for_test=0.1,
         random_state=0,
+        majority_vote=True,
+        distance_measures=["dtw", "ddtw"],
     )
     ee.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = ee.predict_proba(X_test.iloc[indices])
-    testing.assert_array_almost_equal(probas, ee_unit_test_probas, decimal=2)
+    testing.assert_array_almost_equal(probas, ee_unit_test_probas, decimal=4)
 
 
 ee_unit_test_probas = np.array(
     [
-        [0.0, 1.0],
-        [1.0, 0.0],
-        [0.1512605, 0.8487395],
-        [0.8487395, 0.1512605],
-        [0.55462185, 0.44537815],
-        [0.8487395, 0.1512605],
-        [0.70588235, 0.29411765],
-        [0.1512605, 0.8487395],
-        [0.8487395, 0.1512605],
-        [1.0, 0.0],
+        [0.00000, 1.00000],
+        [1.00000, 0.00000],
+        [0.00000, 1.00000],
+        [1.00000, 0.00000],
+        [0.50000, 0.50000],
+        [1.00000, 0.00000],
+        [0.50000, 0.50000],
+        [0.00000, 1.00000],
+        [1.00000, 0.00000],
+        [1.00000, 0.00000],
     ]
 )

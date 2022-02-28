@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.utils.plotting import plot_series, plot_correlations, plot_lags
+from sktime.utils.plotting import plot_correlations, plot_lags, plot_series
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.series import VALID_DATA_TYPES
 
@@ -131,6 +131,8 @@ def test_plot_series_invalid_label_kwarg_len_raises_error(series_to_plot):
         _plot_series(series_to_plot, labels=labels)
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.skip(reason="sporadic failure on win CI/CD, see issue 2066")
 @pytest.mark.parametrize("series_to_plot", series_to_test)
 def test_plot_series_output_type(series_to_plot):
     """Tests whether plot_series returns plt.fig and plt.ax."""
@@ -180,6 +182,8 @@ def test_plot_series_uniform_treatment_of_int64_range_index_types():
     plt.close()
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.skip(reason="sporadic failure on win CI/CD, see issue 2066")
 # Generically test whether plots only accepting univariate input run
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
@@ -193,6 +197,8 @@ def test_univariate_plots_run_without_error(series_to_plot, plot_func):
     plt.close()
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.skip(reason="sporadic failure on win CI/CD, see issue 2066")
 # Generically test whether plots only accepting univariate input
 # raise an error when invalid input type is found
 @pytest.mark.parametrize("series_to_plot", invalid_input_types)
@@ -214,6 +220,8 @@ def test_univariate_plots_invalid_input_type_raises_error(
             plot_func(series_to_plot)
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.skip(reason="sporadic failure on win CI/CD, see issue 2066")
 # Generically test output of plots only accepting univariate input
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("plot_func", univariate_plots)
@@ -251,6 +259,8 @@ def test_plot_lags_arguments(series_to_plot, lags, suptitle):
     plt.close()
 
 
+# todo: remove xfail when issue #2066 has been fixed
+@pytest.mark.skip(reason="sporadic failure on win CI/CD, see issue 2066")
 @pytest.mark.parametrize("series_to_plot", [y_airline])
 @pytest.mark.parametrize("lags", [6, 12, 24, 36])
 @pytest.mark.parametrize("suptitle", ["Correlation Plot", None])
