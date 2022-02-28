@@ -78,7 +78,7 @@ def _ret(valid, msg, metadata, return_metadata):
         return valid
 
 
-def check_pdmultiindex_Hierarchical(obj, return_metadata=False, var_name="obj"):
+def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
 
     if not isinstance(obj, pd.DataFrame):
         msg = f"{var_name} must be a pd.DataFrame, found {type(obj)}"
@@ -124,4 +124,4 @@ def check_pdmultiindex_Hierarchical(obj, return_metadata=False, var_name="obj"):
     return _ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd_multiindex_hier", "Hierarchical")] = check_pdmultiindex_Hierarchical
+check_dict[("pd_multiindex_hier", "Hierarchical")] = check_pdmultiindex_hierarchical
