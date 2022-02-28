@@ -75,8 +75,11 @@ def load_UCR_UEA_dataset(
         the extract_path.
     split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By default it
-        loads both. into a single data structure, otherwise it looks only for files
+        loads both into a single data structure, otherwise it looks only for files
         of the format <name>_TRAIN.ts or <name>_TEST.ts.
+    extract_path: None or str, optional (default=None).
+        Location where to look for and/or extract data. If None, it looks in
+        datasets/data
     return_X_y: bool, optional (default=True)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for features and the target.
@@ -85,12 +88,13 @@ def load_UCR_UEA_dataset(
 
     Returns
     -------
-    X:  The time series data for the problem. If return_type is either
-    "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
-    returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns a
-    nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of length m.
+    X:  The time series data for the problem.
+        If return_type is either "numpy2d"/"numpyflat", it returns 2D numpy array of
+        shape (n,m), if "numpy3d" it returns 3D numpy array of shape (n,1,m) and if
+        "nested_univ" or None it returns a nested pandas DataFrame of shape (n,1),
+        where each cell is a pd.Series of length m.
     y: (optional) numpy array shape (n,1). The class labels for each case in X.
-    If return_X_y is False, y is appended to X.
+        If return_X_y is False, y is appended to X.
 
     Raises
     ------

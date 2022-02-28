@@ -103,10 +103,14 @@ def _list_available_datasets(extract_path=None):
     https://github.com/tslearn-team/tslearn/blob
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
 
+    Parameters
+    ----------
+    extract_path: (optional) None or string, location to look for data sest
+
     Returns
     -------
     datasets : List
-        List of the names of datasets downloaded
+        List of the names of datasets in the extract_path
 
     """
     if extract_path is None:
@@ -122,13 +126,7 @@ def _list_available_datasets(extract_path=None):
 
 
 def _load_dataset(name, split, return_X_y, extract_path=None, return_type=None):
-    """
-    Load time series classification datasets.
-
-    Loads from the default path (datasets/data) or from a bespoke path. If
-    the data is not at the given location it attempts to load from the repository
-    timeseriesclassification.com.
-    """
+    """Load time series classification datasets."""
     # Allow user to have non standard extract path
     if extract_path is not None:
         path = os.path.join(extract_path)
@@ -203,17 +201,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None, return_type=None):
 
 
 def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
-    """Load baked in time series classification datasets (helper function).
-
-    Loads data from the provided files from sktime/datasets/data only.
-
-    Parameters
-    ----------
-        name : string, file name
-        split : string, default = None, or one of "TRAIN" or "TEST".
-        return_X_y : default = True, if true, returns X and y separately.
-        return_type : default = None,
-    """
+    """Load baked in time series classification datasets (helper function)."""
     if isinstance(split, str):
         split = split.upper()
 
