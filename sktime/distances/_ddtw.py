@@ -76,10 +76,10 @@ class _DdtwDistance(NumbaDistance):
         y: np.ndarray (2d array)
             Second time series.
         window: float, defaults = None
-            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            Float that is the radius of the Sakoe-Chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
-            Gradient of the slope for itakura parallelogram (if using Itakura
+            Gradient of the slope for Itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None
