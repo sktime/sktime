@@ -10,8 +10,8 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.transformations.bootstrap import (
-    MovingBlockBootsrapTransformer,
-    STLBootsrapTransformer,
+    MovingBlockBootstrapTransformer,
+    STLBootstrapTransformer,
 )
 from sktime.transformations.bootstrap._mbb import (
     _get_series_name,
@@ -25,25 +25,25 @@ y_index = y.index
 def test_bootstrapping_transformer_no_seasonal_period():
     """Tests that an exception is raised if sp<2."""
     with pytest.raises(NotImplementedError) as ex:
-        transformer = STLBootsrapTransformer(sp=1)
+        transformer = STLBootstrapTransformer(sp=1)
         transformer.fit(y)
 
-        assert "STLBootsrapTransformer does not support non-seasonal data" == ex.value
+        assert "STLBootstrapTransformer does not support non-seasonal data" == ex.value
 
 
 def test_bootstrapping_transformer_series_shorter_than_sp():
     """Tests that an exception is raised if sp>len(y)."""
     with pytest.raises(ValueError) as ex:
-        transformer = STLBootsrapTransformer(sp=12)
+        transformer = STLBootstrapTransformer(sp=12)
         transformer.fit(y.iloc[1:9])
 
-        msg = "STLBootsrapTransformer requires that sp is greater than the length of X"
+        msg = "STLBootstrapTransformer requires that sp is greater than the length of X"
 
         assert msg == ex.value
 
 
 @pytest.mark.parametrize(
-    "transformer_class", [STLBootsrapTransformer, MovingBlockBootsrapTransformer]
+    "transformer_class", [STLBootstrapTransformer, MovingBlockBootstrapTransformer]
 )
 def test_block_length_exception(transformer_class):
     """Tests that a Value error is raised when block_length is smaller than len(X)."""
@@ -70,22 +70,22 @@ index_return_actual_false = pd.MultiIndex.from_product(
     "transformer_class, return_actual, expected_index",
     [
         (
-            MovingBlockBootsrapTransformer,
+            MovingBlockBootstrapTransformer,
             True,
             index_return_actual_true,
         ),
         (
-            STLBootsrapTransformer,
+            STLBootstrapTransformer,
             True,
             index_return_actual_true,
         ),
         (
-            MovingBlockBootsrapTransformer,
+            MovingBlockBootstrapTransformer,
             False,
             index_return_actual_false,
         ),
         (
-            STLBootsrapTransformer,
+            STLBootstrapTransformer,
             False,
             index_return_actual_false,
         ),

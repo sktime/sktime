@@ -16,7 +16,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 
 
-class STLBootsrapTransformer(BaseTransformer):
+class STLBootstrapTransformer(BaseTransformer):
     """Creates a population of similar time series.
 
     This method utilises a form of bootstrapping to generate a population of
@@ -124,7 +124,7 @@ class STLBootsrapTransformer(BaseTransformer):
 
     See Also
     --------
-    sktime.transformations.bootstrap.MovingBlockBootsrapTransformer :
+    sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
         Transofrmer that applies the Moving Block Bootstrapping method to create
         a panel of synthetic time series.
 
@@ -142,11 +142,11 @@ class STLBootsrapTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.bootstrap import STLBootsrapTransformer
+    >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
-    >>> transformer = STLBootsrapTransformer(10)
+    >>> transformer = STLBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
     >>> series_list = []
     >>> names = []
@@ -231,7 +231,7 @@ class STLBootsrapTransformer(BaseTransformer):
         self.outer_iter = outer_iter
         self.random_state = random_state
 
-        super(STLBootsrapTransformer, self).__init__()
+        super(STLBootstrapTransformer, self).__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -252,12 +252,12 @@ class STLBootsrapTransformer(BaseTransformer):
         """
         if self.sp <= 2:
             raise NotImplementedError(
-                "STLBootsrapTransformer does not support non-seasonal data"
+                "STLBootstrapTransformer does not support non-seasonal data"
             )
 
         if len(X) <= self.sp:
             raise ValueError(
-                "STLBootsrapTransformer requires that sp is greater than"
+                "STLBootstrapTransformer requires that sp is greater than"
                 " the length of X"
             )
 
@@ -294,7 +294,7 @@ class STLBootsrapTransformer(BaseTransformer):
         """
         if len(X) <= self.block_length_:
             raise ValueError(
-                "STLBootsrapTransformer requires that block_length is"
+                "STLBootstrapTransformer requires that block_length is"
                 " greater than the length of X"
             )
 
@@ -380,16 +380,16 @@ class STLBootsrapTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {},
-            {"block_length": 1},
-            {"return_actual": False},
-            {"sampling_replacement": True},
+            {"sp": 3},
+            {"block_length": 1, "sp": 3},
+            {"return_actual": False, "sp": 3},
+            {"sampling_replacement": True, "sp": 3},
         ]
 
         return params
 
 
-class MovingBlockBootsrapTransformer(BaseTransformer):
+class MovingBlockBootstrapTransformer(BaseTransformer):
     """Moving Block Bootstrapping method for synthetic time series generation.
 
     The Moving Block Bootstrapping (MBB) method introduced in [1]_ is  can be used to
@@ -422,7 +422,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
     See Also
     --------
-    sktime.transformations.bootstrap.STLBootsrapTransformer :
+    sktime.transformations.bootstrap.STLBootstrapTransformer :
         Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
@@ -439,11 +439,11 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.bootstrap import MovingBlockBootsrapTransformer
+    >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
     >>> from sktime.datasets import load_airline
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
-    >>> transformer = MovingBlockBootsrapTransformer(10)
+    >>> transformer = MovingBlockBootstrapTransformer(10)
     >>> y_hat = transformer.fit_transform(y)
     >>> series_list = []
     >>> names = []
@@ -498,7 +498,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         self.return_actual = return_actual
         self.random_state = random_state
 
-        super(MovingBlockBootsrapTransformer, self).__init__()
+        super(MovingBlockBootstrapTransformer, self).__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -519,7 +519,7 @@ class MovingBlockBootsrapTransformer(BaseTransformer):
         """
         if len(X) <= self.block_length:
             raise ValueError(
-                "MovingBlockBootsrapTransformer requires that block_length is"
+                "MovingBlockBootstrapTransformer requires that block_length is"
                 " greater than the length of X"
             )
 
