@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Time series kshapes."""
 from typing import Union
 
 import numpy as np
@@ -8,36 +9,26 @@ from sktime.clustering._base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tslearn")
-from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans  # noqa: E402
+from tslearn.clustering import KShape  # noqa: E402
 
 
-class TimeSeriesKernelKMeans(BaseClusterer):
-    """Kernel algorithm wrapper tslearns implementation.
+class TimeSeriesKShapes(BaseClusterer):
+    """Kshape algorithm wrapper tslearns implementation.
 
     Parameters
     ----------
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    kernel : string, or callable (default: "gak")
-        The kernel should either be "gak", in which case the Global Alignment
-        Kernel from [2]_ is used or a value that is accepted as a metric
-        by `scikit-learn's pairwise_kernels
-        <https://scikit-learn.org/stable/modules/generated/\
-        sklearn.metrics.pairwise.pairwise_kernels.html>`_
+    init_algorithm: str or np.ndarray, defaults = 'random'
+        Method for initializing cluster centers. Any of the following are valid:
+        ['random']. Or a np.ndarray of shape (n_clusters, ts_size, d) and gives the
+        initial centers.
     n_init: int, defaults = 10
         Number of times the k-means algorithm will be run with different
         centroid seeds. The final result will be the best output of n_init
         consecutive runs in terms of inertia.
-    kernel_params : dict or None (default: None)
-        Kernel parameters to be passed to the kernel function.
-        None means no kernel parameter is set.
-        For Global Alignment Kernel, the only parameter of interest is `sigma`.
-        If set to 'auto', it is computed based on a sampling of the training
-        set
-        (cf :ref:`tslearn.metrics.sigma_gak <fun-tslearn.metrics.sigma_gak>`).
-        If no specific value is set for `sigma`, its defaults to 1.
-    max_iter: int, defaults = 300
+    max_iter: int, defaults = 30
         Maximum number of iterations of the k-means algorithm for a single
         run.
     tol: float, defaults = 1e-4
@@ -46,13 +37,6 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         convergence.
     verbose: bool, defaults = False
         Verbosity mode.
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for GAK cross-similarity matrix
-        computations.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See scikit-learns'
-        `Glossary <https://scikit-learn.org/stable/glossary.html#term-n-jobs>`_
-        for more details.
     random_state: int or np.random.RandomState instance or None, defaults = None
         Determines random number generation for centroid initialization.
 
@@ -74,22 +58,18 @@ class TimeSeriesKernelKMeans(BaseClusterer):
     def __init__(
         self,
         n_clusters: int = 8,
-        kernel: str = "gak",
+        init_algorithm: Union[str, np.ndarray] = "random",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,
-        kernel_params: Union[dict, None] = None,
         verbose: bool = False,
-        n_jobs: Union[int, None] = None,
         random_state: Union[int, RandomState] = None,
     ):
-        self.kernel = kernel
+        self.init_algorithm = init_algorithm
         self.n_init = n_init
         self.max_iter = max_iter
         self.tol = tol
-        self.kernel_params = kernel_params
         self.verbose = verbose
-        self.n_jobs = n_jobs
         self.random_state = random_state
 
         self.cluster_centers_ = None
@@ -97,9 +77,9 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         self.inertia_ = None
         self.n_iter_ = 0
 
-        self._tslearn_kernel_k_means = None
+        self._tslearn_k_shapes = None
 
-        super(TimeSeriesKernelKMeans, self).__init__(n_clusters=n_clusters)
+        super(TimeSeriesKShapes, self).__init__(n_clusters=n_clusters)
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
@@ -116,26 +96,23 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         self:
             Fitted estimator.
         """
-        verbose = 0
-        if self.verbose is True:
-            verbose = 1
-
-        if self._tslearn_kernel_k_means is None:
-            self._tslearn_kernel_k_means = TsLearnKernelKMeans(
-                n_clusters=self.n_clusters,
-                kernel=self.kernel,
+        if self._tslearn_k_shapes is None:
+            self._tslearn_k_shapes = KShape(
+                # n_clusters=self.n_clusters,
+                n_clusters=3,
                 max_iter=self.max_iter,
                 tol=self.tol,
-                n_init=self.n_init,
-                kernel_params=self.kernel_params,
-                n_jobs=self.n_jobs,
-                verbose=verbose,
                 random_state=self.random_state,
+                n_init=self.n_init,
+                verbose=self.verbose,
+                init=self.init_algorithm,
             )
-        self._tslearn_kernel_k_means.fit(X)
-        self.labels_ = self._tslearn_kernel_k_means.labels_
-        self.inertia_ = self._tslearn_kernel_k_means.inertia_
-        self.n_iter_ = self._tslearn_kernel_k_means.n_iter_
+
+        self._tslearn_k_shapes.fit(X)
+        self._cluster_centers = self._tslearn_k_shapes.cluster_centers_
+        self.labels_ = self._tslearn_k_shapes.labels_
+        self.inertia_ = self._tslearn_k_shapes.inertia_
+        self.n_iter_ = self._tslearn_k_shapes.n_iter_
 
     def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Predict the closest cluster each sample in X belongs to.
@@ -152,7 +129,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-        return self._tslearn_kernel_k_means.predict(X)
+        return self._tslearn_k_shapes.predict(X)
 
     @classmethod
     def get_test_params(cls):
@@ -168,13 +145,11 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         """
         params = {
             "n_clusters": 2,
-            "kernel": "gak",
+            "init_algorithm": "random",
             "n_init": 1,
             "max_iter": 1,
             "tol": 1e-4,
-            "kernel_params": None,
             "verbose": False,
-            "n_jobs": 1,
             "random_state": 1,
         }
         return params

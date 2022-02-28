@@ -2,7 +2,7 @@
 """Tests for time series kernel kmeans."""
 import numpy as np
 
-from sktime.clustering._kernel_k_means import TimeSeriesKernelKMeans
+from sktime.clustering.kernel_k_means import TimeSeriesKernelKMeans
 from sktime.datasets import load_basic_motions
 
 expected_results = [

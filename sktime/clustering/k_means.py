@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Time series kmeans."""
 __author__ = ["chrisholder", "TonyBagnall"]
 
 from typing import Callable, Union

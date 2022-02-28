@@ -2,7 +2,7 @@
 """Tests for time series k-shapes."""
 import numpy as np
 
-from sktime.clustering._k_shapes import TimeSeriesKShapes
+from sktime.clustering.k_shapes import TimeSeriesKShapes
 from sktime.datasets import load_basic_motions
 
 expected_results = [
