@@ -5,4 +5,4 @@ __all__ = [
 ]
 __author__ = ["chrisholder", "TonyBagnall"]
 
-from sktime.clustering._base import BaseClusterer
+from sktime.clustering.base import BaseClusterer

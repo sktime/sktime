@@ -5,7 +5,7 @@ from typing import Union
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering._base import BaseClusterer, TimeSeriesInstances
+from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tslearn")
