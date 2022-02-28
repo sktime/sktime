@@ -20,7 +20,6 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
-from sktime.classification.distance_based import ElasticEnsemble
 from sktime.classification.early_classification import (
     ProbabilityThresholdEarlyClassifier,
 )
@@ -183,12 +182,6 @@ ESTIMATOR_TEST_PARAMS = {
         "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
         "window_name": "global",
-    },
-    ElasticEnsemble: {
-        "proportion_of_param_options": 0.01,
-        "proportion_train_for_test": 0.1,
-        "majority_vote": True,
-        "distance_measures": ["dtw"],
     },
     Catch22Classifier: {
         "estimator": RandomForestClassifier(n_estimators=3),
