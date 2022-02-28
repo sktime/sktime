@@ -19,8 +19,8 @@ def test_ee_on_unit_test_data():
         proportion_of_param_options=0.1,
         proportion_train_for_test=0.1,
         random_state=0,
-        #        majority_vote=True,
-        #        distance_measures=["dtw"],
+        majority_vote=True,
+        distance_measures=["dtw", "ddtw"],
     )
     ee.fit(X_train, y_train)
 
@@ -31,14 +31,14 @@ def test_ee_on_unit_test_data():
 
 ee_unit_test_probas = np.array(
     [
-        [0.08130, 0.91870],
+        [0.00000, 1.00000],
         [1.00000, 0.00000],
-        [0.08130, 0.91870],
+        [0.00000, 1.00000],
         [1.00000, 0.00000],
-        [0.55285, 0.44715],
+        [0.50000, 0.50000],
         [1.00000, 0.00000],
-        [0.86179, 0.13821],
-        [0.08130, 0.91870],
+        [0.50000, 0.50000],
+        [0.00000, 1.00000],
         [1.00000, 0.00000],
         [1.00000, 0.00000],
     ]

@@ -29,10 +29,17 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
+    array_is_datetime64,
+    array_is_int,
+    array_is_timedelta_or_date_offset,
     check_window_length,
+    is_datetime,
+    is_int,
+    is_timedelta,
     is_timedelta_or_date_offset,
 )
 from sktime.utils.validation.forecasting import (
+    VALID_CUTOFF_TYPES,
     check_cutoffs,
     check_fh,
     check_step_length,
@@ -157,7 +164,19 @@ def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
 
 
 def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
-    """Compute the end of the last training window for a forecasting horizon."""
+    """Compute the end of the last training window for a forecasting horizon.
+
+    Parameters
+    ----------
+    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+        coerced and checked version of input y
+    fh : int, timedelta, list or np.array of ints or timedeltas
+
+    Returns
+    -------
+    end : int
+        end of the training window
+    """
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
     n_timepoints = y.shape[0]
@@ -181,6 +200,25 @@ def _check_window_lengths(
     window_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
     initial_window: NON_FLOAT_WINDOW_LENGTH_TYPES,
 ) -> None:
+    """Check that combination of inputs is compatible.
+
+    Parameters
+    ----------
+    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+        coerced and checked version of input y
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    window_length : int or timedelta or pd.DateOffset
+    initial_window : int or timedelta or pd.DateOffset
+        Window length of first window
+
+    Raises
+    ------
+    ValueError
+        if window length plus max horizon is above the last observation in `y`,
+        or if initial window plus max horizon is above the last observation in `y`
+    TypeError
+        if type of the input is not supported
+    """
     n_timepoints = y.shape[0]
     fh_max = fh[-1]
 
@@ -214,12 +252,144 @@ def _check_window_lengths(
             if y.get_loc(min(y[-1], y[0] + initial_window)) + fh_max > n_timepoints:
                 raise ValueError(error_msg_for_incompatible_initial_window)
             if not is_timedelta_or_date_offset(x=window_length):
-                raise ValueError(error_msg_for_incompatible_types)
+                raise TypeError(error_msg_for_incompatible_types)
         else:
             if initial_window + fh_max > n_timepoints:
                 raise ValueError(error_msg_for_incompatible_initial_window)
             if is_timedelta_or_date_offset(x=window_length):
-                raise ValueError(error_msg_for_incompatible_types)
+                raise TypeError(error_msg_for_incompatible_types)
+
+
+def _cutoffs_fh_window_length_types_are_supported(
+    cutoffs: VALID_CUTOFF_TYPES,
+    fh: FORECASTING_HORIZON_TYPES,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+) -> bool:
+    """Check that combination of inputs is supported.
+
+    Currently, only two cases are allowed:
+    either all inputs are integers, or they are all datetime or timedelta
+
+    Parameters
+    ----------
+    cutoffs : np.array or pd.Index
+        cutoff points, positive and integer- or datetime-index like
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    window_length : int or timedelta or pd.DateOffset
+
+    Returns
+    -------
+    True if all inputs are compatible, False otherwise
+    """
+    all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
+    all_dates = (
+        array_is_datetime64(cutoffs)
+        and array_is_timedelta_or_date_offset(fh)
+        and is_timedelta_or_date_offset(window_length)
+    )
+    if all_int or all_dates:
+        return True
+    else:
+        return False
+
+
+def _check_cutoffs_fh_window_length(
+    cutoffs: VALID_CUTOFF_TYPES,
+    fh: FORECASTING_HORIZON_TYPES,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
+) -> None:
+    """Check that combination of inputs is supported.
+
+    Currently, only two cases are allowed:
+    either all inputs are integers, or they are all datetime or timedelta
+
+    Parameters
+    ----------
+    cutoffs : np.array or pd.Index
+        cutoff points, positive and integer- or datetime-index like
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    window_length : int or timedelta or pd.DateOffset
+
+    Raises
+    ------
+    TypeError
+        if combination of inputs is not supported
+    """
+    if not _cutoffs_fh_window_length_types_are_supported(
+        cutoffs=cutoffs, fh=fh, window_length=window_length
+    ):
+        raise TypeError("Unsupported combination of types")
+
+
+def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> None:
+    """Check that combination of inputs is compatible.
+
+    Parameters
+    ----------
+    cutoffs : np.array or pd.Index
+        cutoff points, positive and integer- or datetime-index like
+    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+        coerced and checked version of input y
+
+    Raises
+    ------
+    ValueError
+        if max cutoff is above the last observation in `y`
+    TypeError
+        if `cutoffs` type is not supported
+    """
+    max_cutoff = np.max(cutoffs)
+    msg = (
+        "`cutoffs` are incompatible with given `y`. "
+        "Maximum cutoff is not smaller than the "
+    )
+    if array_is_int(cutoffs):
+        if max_cutoff >= y.shape[0]:
+            raise ValueError(msg + "number of observations.")
+    elif array_is_datetime64(cutoffs):
+        if max_cutoff >= np.max(y):
+            raise ValueError(msg + "maximum index value of `y`.")
+    else:
+        raise TypeError("Unsupported type of `cutoffs`")
+
+
+def _check_cutoffs_fh_y(
+    cutoffs: VALID_CUTOFF_TYPES, fh: FORECASTING_HORIZON_TYPES, y: ACCEPTED_Y_TYPES
+) -> None:
+    """Check that combination of inputs is compatible.
+
+    Currently, only two cases are allowed:
+    either both `cutoffs` and `fh` are integers, or they are datetime or timedelta.
+
+    Parameters
+    ----------
+    cutoffs : np.array or pd.Index
+        Cutoff points, positive and integer- or datetime-index like.
+        Type should match the type of `fh` input.
+    fh : int, timedelta, list or np.array of ints or timedeltas
+        Type should match the type of `cutoffs` input.
+    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
+        coerced and checked version of input y
+
+    Raises
+    ------
+    ValueError
+        if max cutoff plus max `fh` is above the last observation in `y`
+    TypeError
+        if `cutoffs` and `fh` type combination is not supported
+    """
+    max_cutoff = np.max(cutoffs)
+    max_fh = fh.max()
+
+    msg = "`fh` is incompatible with given `cutoffs` and `y`."
+    if is_int(x=max_cutoff) and is_int(x=max_fh):
+        if max_cutoff + max_fh > y.shape[0]:
+            raise ValueError(msg)
+    elif is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
+        if max_cutoff + max_fh > y.max():
+            raise ValueError(msg)
+    else:
+        raise TypeError("Unsupported type of `cutoffs` and `fh`")
 
 
 class BaseSplitter:
@@ -379,24 +549,30 @@ class CutoffSplitter(BaseSplitter):
 
     Here the user is expected to provide a set of cutoffs (train set endpoints),
     which using the notation provided in :class:`BaseSplitter`,
-    can be written as :math:`\{t(k_1),\ldots,t(k_n)\}`.
+    can be written as :math:`\{k_1,\ldots,k_n\}` for integer based indexing,
+    or :math:`\{t(k_1),\ldots,t(k_n)\}` for datetime based indexing.
+    Training window's last point is equal to the cutoff,
+    while test window starts from the next observation in `y`.
+
     The number of splits returned by `.get_n_splits`
     is then trivially equal to :math:`n`.
+
     The sorted array of cutoffs returned by `.get_cutoffs` is then equal to
     :math:`\{t(k_1),\ldots,t(k_n)\}` with :math:`k_i<k_{i+1}`.
 
     Parameters
     ----------
     cutoffs : np.array or pd.Index
-        cutoff points, positive and integer-index like, usable with pandas
-        .iloc[] indexing
-    fh : int, list or np.array
+        Cutoff points, positive and integer- or datetime-index like.
+        Type should match the type of `fh` input.
+    fh : int, timedelta, list or np.array of ints or timedeltas
+        Type should match the type of `cutoffs` input.
     window_length : int or timedelta or pd.DateOffset
     """
 
     def __init__(
         self,
-        cutoffs: Union[np.ndarray, pd.Index],
+        cutoffs: VALID_CUTOFF_TYPES,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
@@ -404,23 +580,43 @@ class CutoffSplitter(BaseSplitter):
         super(CutoffSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        cutoffs = check_cutoffs(self.cutoffs)
-        if np.max(cutoffs) >= y.shape[0]:
-            raise ValueError("`cutoffs` are incompatible with given `y`.")
-
-        fh = _check_fh(self.fh)
         n_timepoints = y.shape[0]
+        cutoffs = check_cutoffs(cutoffs=self.cutoffs)
+        fh = _check_fh(fh=self.fh)
+        window_length = check_window_length(
+            window_length=self.window_length, n_timepoints=n_timepoints
+        )
+        _check_cutoffs_fh_window_length(
+            cutoffs=cutoffs, fh=fh, window_length=window_length
+        )
+        _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
+        _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
+        max_fh = fh.max()
+        max_cutoff = np.max(cutoffs)
 
-        if np.max(cutoffs) + np.max(fh) > y.shape[0]:
-            raise ValueError("`fh` is incompatible with given `cutoffs` and `y`.")
-        window_length = check_window_length(self.window_length, n_timepoints)
         for cutoff in cutoffs:
-            if is_timedelta_or_date_offset(x=window_length):
-                train_start = y.get_loc(max(y[0], y[cutoff] - window_length))
-            else:
+            if is_int(x=window_length) and is_int(x=cutoff):
                 train_start = cutoff - window_length
-            training_window = np.arange(train_start, cutoff) + 1
-            test_window = cutoff + fh
+            elif is_timedelta_or_date_offset(x=window_length) and is_datetime(x=cutoff):
+                train_start = y.get_loc(max(y[0], cutoff - window_length))
+            else:
+                raise TypeError(
+                    f"Unsupported combination of types: "
+                    f"`window_length`: {type(window_length)}, "
+                    f"`cutoff`: {type(cutoff)}"
+                )
+
+            if is_int(x=cutoff):
+                training_window = np.arange(train_start, cutoff) + 1
+            else:
+                training_window = np.arange(train_start, y.get_loc(cutoff)) + 1
+
+            test_window = cutoff + fh.to_numpy()
+            if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
+                test_window = test_window[test_window >= y.min()]
+                test_window = np.array(
+                    [y.get_loc(timestamp) for timestamp in test_window]
+                )
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
