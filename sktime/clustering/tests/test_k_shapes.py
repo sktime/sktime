@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for time series k-shapes."""
 import numpy as np
-from sklearn import metrics
 
 from sktime.clustering._k_shapes import TimeSeriesKShapes
 from sktime.datasets import load_basic_motions
@@ -51,8 +50,6 @@ expected_results = [
 
 inertia = 0.550860917533926
 
-expected_score = 0.6012820512820513
-
 expected_iters = 4
 
 expected_labels = [
@@ -98,6 +95,8 @@ expected_labels = [
     2,
 ]
 
+expected_score = 0.550860917533926
+
 
 def test_kshapes():
     """Test implementation of Kshapes."""
@@ -107,7 +106,7 @@ def test_kshapes():
     kshapes = TimeSeriesKShapes(random_state=1, n_clusters=3)
     kshapes.fit(X_train)
     test_shape_result = kshapes.predict(X_test)
-    score = metrics.rand_score(y_test, test_shape_result)
+    score = kshapes.score(X_test)
     proba = kshapes.predict_proba(X_test)
 
     assert np.array_equal(test_shape_result, expected_results)

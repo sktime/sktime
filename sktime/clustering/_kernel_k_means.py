@@ -83,7 +83,6 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         n_jobs: Union[int, None] = None,
         random_state: Union[int, RandomState] = None,
     ):
-        self.n_clusters = n_clusters
         self.kernel = kernel
         self.n_init = n_init
         self.max_iter = max_iter
@@ -100,7 +99,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
 
         self._tslearn_kernel_k_means = None
 
-        super(TimeSeriesKernelKMeans, self).__init__()
+        super(TimeSeriesKernelKMeans, self).__init__(n_clusters=n_clusters)
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
@@ -179,3 +178,6 @@ class TimeSeriesKernelKMeans(BaseClusterer):
             "random_state": 1,
         }
         return params
+
+    def _score(self, X, y=None):
+        return self.inertia_

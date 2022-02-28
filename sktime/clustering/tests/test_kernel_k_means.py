@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for time series kernel kmeans."""
 import numpy as np
-from sklearn import metrics
 
 from sktime.clustering._kernel_k_means import TimeSeriesKernelKMeans
 from sktime.datasets import load_basic_motions
@@ -49,9 +48,7 @@ expected_results = [
     0,
 ]
 
-inertia = 73.99999999999983
-
-expected_score = 0.28717948717948716
+expected_score = 73.99999999999983
 
 expected_iters = 2
 
@@ -107,14 +104,14 @@ def test_kernel_k_means():
     kernel_kmeans = TimeSeriesKernelKMeans(random_state=1, n_clusters=3)
     kernel_kmeans.fit(X_train)
     test_shape_result = kernel_kmeans.predict(X_test)
-    score = metrics.rand_score(y_test, test_shape_result)
+    score = kernel_kmeans.score(X_test)
     proba = kernel_kmeans.predict_proba(X_test)
 
     assert np.array_equal(test_shape_result, expected_results)
     assert score == expected_score
     assert kernel_kmeans.n_iter_ == expected_iters
     assert np.array_equal(kernel_kmeans.labels_, expected_labels)
-    assert proba.shape == (40, 2)
+    assert proba.shape == (40, 3)
 
     for val in proba:
         assert np.count_nonzero(val == 1.0) == 1

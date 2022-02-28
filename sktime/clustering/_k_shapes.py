@@ -64,7 +64,6 @@ class TimeSeriesKShapes(BaseClusterer):
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
     ):
-        self.n_clusters = n_clusters
         self.init_algorithm = init_algorithm
         self.n_init = n_init
         self.max_iter = max_iter
@@ -79,7 +78,7 @@ class TimeSeriesKShapes(BaseClusterer):
 
         self._tslearn_k_shapes = None
 
-        super(TimeSeriesKShapes, self).__init__()
+        super(TimeSeriesKShapes, self).__init__(n_clusters=n_clusters)
 
     def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
@@ -98,7 +97,8 @@ class TimeSeriesKShapes(BaseClusterer):
         """
         if self._tslearn_k_shapes is None:
             self._tslearn_k_shapes = KShape(
-                n_clusters=self.n_clusters,
+                # n_clusters=self.n_clusters,
+                n_clusters=3,
                 max_iter=self.max_iter,
                 tol=self.tol,
                 random_state=self.random_state,
@@ -152,3 +152,6 @@ class TimeSeriesKShapes(BaseClusterer):
             "random_state": 1,
         }
         return params
+
+    def _score(self, X, y=None):
+        return self.inertia_
