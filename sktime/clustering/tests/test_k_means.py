@@ -114,7 +114,7 @@ def test_kmeans():
         n_init=2,
         n_clusters=4,
         init_algorithm="kmeans++",
-        metric="ddtw",
+        metric="euclidean",
     )
     train_predict = kmeans.fit_predict(X_train)
     train_mean_score = metrics.rand_score(y_train, train_predict)
