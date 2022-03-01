@@ -102,12 +102,12 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/post_1_3_22/tuned/kmeans/"
+        results_dir = "/home/ajb/results/post_1_3_22/normed/kmeans/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
@@ -125,9 +125,9 @@ if __name__ == "__main__":
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
         dataset = "Chinatown"
-        resample = 27
+        resample = 0
         tf = True
-        distance = "lcss"
+        distance = "dtw"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
