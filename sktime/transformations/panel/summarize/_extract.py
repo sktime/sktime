@@ -90,7 +90,7 @@ class PlateauFinder(_PanelToPanelTransformer):
             # filter out single points
             selection = lengths >= self.min_length
             if self.max_length is not None:
-                selection = selection & lengths <= self.max_length
+                selection = selection & (lengths <= self.max_length)
 
             starts = starts[selection]
             lengths = lengths[selection]
