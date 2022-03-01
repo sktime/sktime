@@ -21,6 +21,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+ACCEPTED_DATETIME_TYPES = np.datetime64, pd.Timestamp
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
 ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
 ACCEPTED_WINDOW_LENGTH_TYPES = Union[
@@ -29,6 +30,11 @@ ACCEPTED_WINDOW_LENGTH_TYPES = Union[
 NON_FLOAT_WINDOW_LENGTH_TYPES = Union[
     int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
 ]
+
+
+def is_array(x) -> bool:
+    """Check if x is either a list or np.ndarray."""
+    return isinstance(x, (list, np.ndarray))
 
 
 def is_int(x) -> bool:
@@ -47,6 +53,11 @@ def is_timedelta(x) -> bool:
     return isinstance(x, ACCEPTED_TIMEDELTA_TYPES)
 
 
+def is_datetime(x) -> bool:
+    """Check if x is of datetime type."""
+    return isinstance(x, ACCEPTED_DATETIME_TYPES)
+
+
 def is_date_offset(x) -> bool:
     """Check if x is of pd.DateOffset type."""
     return isinstance(x, ACCEPTED_DATEOFFSET_TYPES)
@@ -55,6 +66,21 @@ def is_date_offset(x) -> bool:
 def is_timedelta_or_date_offset(x) -> bool:
     """Check if x is of timedelta or pd.DateOffset type."""
     return is_timedelta(x=x) or is_date_offset(x=x)
+
+
+def array_is_int(x) -> bool:
+    """Check if array is of integer type."""
+    return all([is_int(value) for value in x])
+
+
+def array_is_datetime64(x) -> bool:
+    """Check if array is of np.datetime64 type."""
+    return all([is_datetime(value) for value in x])
+
+
+def array_is_timedelta_or_date_offset(x) -> bool:
+    """Check if array is timedelta or pd.DateOffset type."""
+    return all([is_timedelta_or_date_offset(value) for value in x])
 
 
 def check_n_jobs(n_jobs: int) -> int:

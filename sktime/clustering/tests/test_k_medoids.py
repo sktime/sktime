@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn import metrics
 
-from sktime.clustering._k_medoids import TimeSeriesKMedoids
+from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_basic_motions
 
 expected_results = {

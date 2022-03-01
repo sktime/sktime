@@ -14,7 +14,7 @@ from sktime.benchmarking.experiments import (
     load_and_run_clustering_experiment,
     run_clustering_experiment,
 )
-from sktime.clustering import TimeSeriesKMeans
+from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_from_tsfile_to_dataframe as load_ts
 
 # We sometimes want to force execution in a single thread. sklearn often threads in ways
