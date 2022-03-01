@@ -107,7 +107,7 @@ if __name__ == "__main__":
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/post_1_3_22/kmeans/"
+        results_dir = "/home/ajb/results/post_1_3_22/not_normed/kmeans/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
