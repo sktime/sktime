@@ -1140,7 +1140,7 @@ def test_load_tsf_to_dataframe():
         columns=["series_value"],
     )
 
-    assert_frame_equal(df, test_df)
+    assert_frame_equal(df, test_df, check_dtype=False)
     assert metadata == expected_metadata
 
 
@@ -1219,5 +1219,7 @@ def test_convert_tsf_to_multiindex(freq):
     }
 
     assert_frame_equal(
-        output_df, _convert_tsf_to_multiindex(input_df, metadata, freq=freq)
+        output_df,
+        _convert_tsf_to_multiindex(input_df, metadata, freq=freq),
+        check_dtype=False,
     )

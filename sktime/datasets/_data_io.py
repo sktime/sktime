@@ -1906,6 +1906,8 @@ def _convert_tsf_to_multiindex(
     pd.DataFrame
         sktime multiindex mtype
     """
+    df = data.copy()
+
     if freq is None:
         freq_map = {
             "daily": "D",
@@ -1915,21 +1917,21 @@ def _convert_tsf_to_multiindex(
         }
         freq = freq_map[metadata["frequency"]]
 
-    df_list = []
-    for _, row in data.iterrows():
-        time_index = pd.date_range(
-            start=row["start_timestamp"], periods=len(row[value_column_name]), freq=freq
-        )
-        cols = list(row.index)
-        cols.remove(value_column_name)
-        cols.remove("start_timestamp")
-        index = [tuple(list(row[cols]) + [time]) for time in time_index]
-        df_list.append(
-            pd.DataFrame(
-                data=list(row[value_column_name]),
-                index=pd.MultiIndex.from_tuples(index, names=cols + ["timestamp"]),
-                columns=[value_column_name],
-            )
-        )
+    # create the time index
+    df["timestamp"] = df.apply(
+        lambda x: pd.date_range(
+            start=x["start_timestamp"], periods=len(x[value_column_name]), freq=freq
+        ),
+        axis=1,
+    )
 
-    return pd.concat(df_list)
+    # pandas implementation of multiple column explode
+    columns = [value_column_name, "timestamp"]
+    result = pd.DataFrame({c: df[c].explode() for c in columns})
+    df = (
+        df.drop(columns=columns + ["start_timestamp"])
+        .join(result)
+        .set_index(["series_name", "timestamp"])
+    )
+
+    return df
