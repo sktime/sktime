@@ -107,11 +107,12 @@ if __name__ == "__main__":
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/kmeans/non-normed/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
         distance = sys.argv[3]
+        results_dir = sys.argv[4]
+        clusterer = sys.argv[5]
     elif chris_config is True:
         path = "/home/chris/Documents/masters-results/"
         data_dir = os.path.abspath(f"{path}/datasets/")
