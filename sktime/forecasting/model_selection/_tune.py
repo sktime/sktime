@@ -301,8 +301,6 @@ class BaseGridSearch(BaseForecaster):
         return self
 
 
-# TODO: change to default parallel backend in v0.12.0 in docstring example
-# threading for now due to deprecated warning in MAPE metric
 class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
@@ -428,9 +426,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     },
     ...     ],
     ...     cv=cv,
-    ...     n_jobs=-1,
-    ...     # threading backend for now due to deprecated warning in MAPE metric
-    ...     backend="threading")
+    ...     n_jobs=-1)
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh=[1,2,3])
