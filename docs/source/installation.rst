@@ -217,7 +217,7 @@ In the ``anaconda prompt`` terminal:
    2. :code:`conda install -c conda-forge prophet`
    3. :code:`conda install -c conda-forge scipy`
 
-   If you fail to satisfy all the requirements see the troubleshooting section.
+   If you fail to satisfy all the requirements see the `troubleshooting section <https://www.sktime.org/en/stable/installation.html#release-versions-troubleshooting>`_.
 
 5. Build an editable version of sktime :code:`pip install -e .[all_extras,dev,dl]`
 6. If everything has worked you should see message "successfully installed sktime"

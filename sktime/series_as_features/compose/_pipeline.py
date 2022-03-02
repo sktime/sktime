@@ -62,7 +62,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """Transform X separately by each transformer, concatenate results."""
         self.check_is_fitted()
         return super().transform(X)
