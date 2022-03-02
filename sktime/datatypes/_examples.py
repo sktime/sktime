@@ -32,6 +32,11 @@ from sktime.datatypes._panel import (
     example_dict_metadata_Panel,
     example_dict_Panel,
 )
+from sktime.datatypes._proba import (
+    example_dict_lossy_Proba,
+    example_dict_metadata_Proba,
+    example_dict_Proba,
+)
 from sktime.datatypes._series import (
     example_dict_lossy_Series,
     example_dict_metadata_Series,
@@ -50,18 +55,21 @@ example_dict.update(example_dict_Series)
 example_dict.update(example_dict_Panel)
 example_dict.update(example_dict_Hierarchical)
 example_dict.update(example_dict_Table)
+example_dict.update(example_dict_Proba)
 
 example_dict_lossy = dict()
 example_dict_lossy.update(example_dict_lossy_Series)
 example_dict_lossy.update(example_dict_lossy_Panel)
 example_dict_lossy.update(example_dict_lossy_Hierarchical)
 example_dict_lossy.update(example_dict_lossy_Table)
+example_dict_lossy.update(example_dict_lossy_Proba)
 
 example_dict_metadata = dict()
 example_dict_metadata.update(example_dict_metadata_Series)
 example_dict_metadata.update(example_dict_metadata_Panel)
 example_dict_metadata.update(example_dict_metadata_Hierarchical)
 example_dict_metadata.update(example_dict_metadata_Table)
+example_dict_metadata.update(example_dict_metadata_Proba)
 
 
 def get_examples(
