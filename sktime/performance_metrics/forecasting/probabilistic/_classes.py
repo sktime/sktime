@@ -62,8 +62,6 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     def evaluate(self, y_true, y_pred, multioutput=None, **kwargs):
         """Evaluate the desired metric on given inputs."""
         # Input checks and conversions
-        if multioutput is None:
-            multioutput = self.multioutput
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
         )
@@ -78,8 +76,6 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point."""
         # Input checks and conversions
-        if multioutput is None:
-            multioutput = self.multioutput
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
         )
@@ -115,6 +111,8 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         raise TypeError("Alpha should be a float or numpy array")
 
     def _check_ys(self, y_true, y_pred, multioutput):
+        if multioutput is None:
+            multioutput = self.multioutput
         _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
         valid, msg, metadata = check_is_scitype(
             y_pred, scitype="Proba", return_metadata=True, var_name="y_pred"
