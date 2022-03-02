@@ -1304,7 +1304,7 @@ class ProximityForest(BaseClassifier):
 
     def __init__(
         self,
-        random_state=0,
+        random_state=None,
         n_estimators=100,
         distance_measure=None,
         get_distance_measure=None,
