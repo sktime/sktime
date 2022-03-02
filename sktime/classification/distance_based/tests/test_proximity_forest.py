@@ -35,7 +35,7 @@ def test_prox_tree_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train PF
-    pt = ProximityTree(random_state=0)
+    pt = ProximityTree(random_state=0, n_stump_evaluations=1)
     pt.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -51,7 +51,7 @@ def test_pf_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train PF
-    pf = ProximityForest(n_estimators=5, random_state=0)
+    pf = ProximityForest(n_estimators=2, random_state=0, n_stump_evaluations=1)
     pf.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -61,43 +61,46 @@ def test_pf_on_unit_test_data():
 
 ps_unit_test_probas = np.array(
     [
-        [0.61043, 0.38957],
-        [0.75875, 0.24125],
-        [0.40459, 0.59541],
-        [0.37091, 0.62909],
-        [0.50074, 0.49926],
-        [0.35964, 0.64036],
-        [0.41061, 0.58939],
-        [0.49457, 0.50543],
-        [0.69884, 0.30116],
-        [0.41854, 0.58146],
+        [0.57352, 0.42648],
+        [0.56580, 0.43420],
+        [0.50489, 0.49511],
+        [0.63456, 0.36544],
+        [0.39541, 0.60459],
+        [0.58939, 0.41061],
+        [0.56392, 0.43608],
+        [0.52174, 0.47826],
+        [0.57691, 0.42309],
+        [0.69668, 0.30332],
     ]
 )
+
+
 pt_unit_test_probas = np.array(
     [
-        [0.00000, 1.00000],
+        [1.00000, 0.00000],
+        [1.00000, 0.00000],
+        [1.00000, 0.00000],
+        [1.00000, 0.00000],
+        [1.00000, 0.00000],
         [1.00000, 0.00000],
         [0.00000, 1.00000],
         [1.00000, 0.00000],
         [1.00000, 0.00000],
-        [0.00000, 1.00000],
-        [1.00000, 0.00000],
-        [0.00000, 1.00000],
-        [0.00000, 1.00000],
         [1.00000, 0.00000],
     ]
 )
+
 pf_unit_test_probas = np.array(
     [
-        [0.00000, 1.00000],
+        [0.50000, 0.50000],
         [1.00000, 0.00000],
-        [0.00000, 1.00000],
+        [0.50000, 0.50000],
         [1.00000, 0.00000],
         [1.00000, 0.00000],
-        [0.80000, 0.20000],
         [1.00000, 0.00000],
-        [0.00000, 1.00000],
-        [0.80000, 0.20000],
+        [0.50000, 0.50000],
+        [0.50000, 0.50000],
+        [1.00000, 0.00000],
         [1.00000, 0.00000],
     ]
 )
