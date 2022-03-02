@@ -29,7 +29,6 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
