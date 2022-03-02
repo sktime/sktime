@@ -88,8 +88,8 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
-                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                    np.vstack((y_true[:i, :], y_true[i + 1:, :])),
+                    np.vstack((y_pred[:i, :], y_pred[i + 1:, :])),
                     multioutput,
                 )
             return out_series
@@ -99,7 +99,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     def _check_consistent_input(self, y_true, y_pred, multioutput):
         check_consistent_length(y_true, y_pred)
 
-        check_array(y_true, ensure_2d=False)
+        y_true = check_array(y_true, ensure_2d=False)
 
         if not isinstance(y_pred, pd.DataFrame):
             ValueError("y_pred should be a dataframe.")
@@ -139,6 +139,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         valid, msg, metadata = check_is_scitype(
             y_pred, scitype="Proba", return_metadata=True, var_name="y_pred"
         )
+        print(metadata)
         if not valid:
             raise TypeError(msg)
 
@@ -156,6 +157,11 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         )
 
         return y_true, y_pred_inner, multioutput
+
+    def get_alpha_from(y_pred):
+        """Fetch the alphas present in y_pred."""
+        return np.unique(list(y_pred.columns.get_level_values(1)))
+
 
 
 class PinballLoss(_BaseProbaForecastingErrorMetric):
@@ -176,12 +182,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     def __init__(self, multioutput="uniform_average"):
         name = "PinballLoss"
-        # func = pinball_loss
         super().__init__(name=name, multioutput=multioutput)
-
-    def get_alpha_from(y_pred):
-        """Fetch the alphas present in y_pred."""
-        return
 
     def _evaluate(self, y_true, y_pred, multioutput):
         # implement this function, or write af ew lines
