@@ -31,7 +31,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     """
 
     _tags = {
-        "scitype:y_pred": "quantiles",
+        "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
     }
 
@@ -142,7 +142,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     """
 
     _tags = {
-        "scitype:y_pred": "quantiles",
+        "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
     }
 
