@@ -147,6 +147,7 @@ if __name__ == "__main__":
     parameters = {"window": window, "epsilon": epsilon}
 
     clst = config_clusterer(
+        averaging_method="mean",
         clusterer=clusterer,
         metric=distance,
         distance_params=parameters,
