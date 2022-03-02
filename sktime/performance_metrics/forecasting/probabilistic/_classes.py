@@ -71,6 +71,8 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         return self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
+        # todo: should have a default implementation, which is just the mean over
+        #       _evaluate_by_index
         raise NotImplementedError
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
