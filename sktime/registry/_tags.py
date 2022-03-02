@@ -277,27 +277,33 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "requires-y-train",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "does metric require y-train data to be passed?",
     ),
     (
         "requires-y-pred-benchmark",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "does metric require a predictive benchmark?",
     ),
     (
         "univariate-metric",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "Does the metric only work on univariate y data?",
     ),
     (
         "scitype:y_pred",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "str",
         "What is the scitype of y_pred: quantiles, proba, interval?",
+    ),
+    (
+        "lower_is_better",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
 ]
 
