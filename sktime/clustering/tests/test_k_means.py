@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn import metrics
 
-from sktime.clustering._k_means import TimeSeriesKMeans
+from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_basic_motions
 
 expected_results = {
@@ -114,7 +114,7 @@ def test_kmeans():
         n_init=2,
         n_clusters=4,
         init_algorithm="kmeans++",
-        metric="dtw",
+        metric="euclidean",
     )
     train_predict = kmeans.fit_predict(X_train)
     train_mean_score = metrics.rand_score(y_train, train_predict)

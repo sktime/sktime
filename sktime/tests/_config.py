@@ -74,17 +74,11 @@ from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.panel.tsfresh import (
-    TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor,
-)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.summarize import SummaryTransformer
 
@@ -95,6 +89,12 @@ EXCLUDE_ESTIMATORS = [
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
     "STLTransformer",
+    # SFA is non-compliant with any transformer interfaces, #2064
+    "SFA",
+    # requires y in fit, this is incompatible with the old testing framework
+    #    unless it inherits from the old mixins, which hard coded the y
+    #    should be removed once test_all_transformers has been refactored to scenarios
+    "TSFreshRelevantFeatureExtractor",
 ]
 
 
@@ -111,8 +111,12 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
     ],
+    # known issue caused by inheritane from sklearn feature union, #1662
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
+    # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
+    # known side effects on multivariate arguments, #2072
+    "WindowSummarizer": ["test_methods_have_no_side_effects"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -197,11 +201,6 @@ ESTIMATOR_TEST_PARAMS = {
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    SignatureTransformer: {
-        "augmentation_list": ("basepoint", "addtime"),
-        "depth": 3,
-        "window_name": "global",
-    },
     SignatureClassifier: {
         "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
@@ -271,19 +270,12 @@ ESTIMATOR_TEST_PARAMS = {
             estimator=RandomForestClassifier(n_estimators=2)
         ),
     },
-    TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
-    TSFreshRelevantFeatureExtractor: {
-        "disable_progressbar": True,
-        "show_warnings": False,
-        "fdr_level": 0.01,
-    },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralEnsemble: {
         "n_estimators": 3,
         "acf_lag": 10,
         "min_interval": 5,
     },
-    SFA: {"return_pandas_data_series": True},
     BOSSEnsemble: {"max_ensemble_size": 3},
     ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
     WEASEL: {"window_inc": 4},
