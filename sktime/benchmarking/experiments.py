@@ -95,7 +95,6 @@ def run_clustering_experiment(
     trainY = le.transform(trainY)
     testY = le.transform(testY)
     start = int(round(time.time() * 1000))
-    n_clusters = len(np.unique(trainY))
     clusterer.fit(trainX)
     build_time = int(round(time.time() * 1000)) - start
     start = int(round(time.time() * 1000))
