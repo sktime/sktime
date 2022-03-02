@@ -36,7 +36,7 @@ class BaseGridSearch(BaseForecaster):
         strategy="refit",
         n_jobs=None,
         pre_dispatch=None,
-        backend=None,
+        backend="loky",
         refit=False,
         scoring=None,
         verbose=0,
@@ -342,9 +342,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
-    backend: str, optional (default=None)
+    backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
-        'loky' is used by default.
+        "loky" is used by default.
 
     Attributes
     ----------
@@ -450,7 +450,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         verbose=0,
         return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
-        backend=None,
+        backend="loky",
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -542,9 +542,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     pre_dispatch: str, optional (default='2*n_jobs')
-    backend: str, optional (default=None)
+    backend: str, optional (default="loky")
         Specify the parallelisation backend implementation in joblib, where
-        'loky' is used by default.
+        "loky" is used by default.
 
     Attributes
     ----------
@@ -580,7 +580,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
-        backend=None,
+        backend="loky",
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
