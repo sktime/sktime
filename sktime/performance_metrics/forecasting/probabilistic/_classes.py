@@ -7,6 +7,7 @@ import numpy as np
 # TODO: add formal tests
 import pandas as pd
 from sklearn.metrics._regression import _check_reg_targets
+from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
@@ -76,15 +77,19 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         return self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
-        # docstring/comments should explain that default is jackknife pseudosamples
+        """Logic for finding the metric evaluated at each index.
+
+        By default this uses _evaluate to find jackknifed pseudosamples. This
+        estimates the error at each of the time points.
+        """
         n = y_true.shape[0]
         out_series = pd.Series(index=y_pred.index)
         try:
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
-                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                    np.vstack((y_true[:i, :], y_true[i + 1:, :])),
+                    np.vstack((y_pred[:i, :], y_pred[i + 1:, :])),
                     multioutput,
                 )
             return out_series
@@ -106,15 +111,52 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             return [alpha]
         raise TypeError("Alpha should be a float or numpy array")
 
+    def _check_consistent_input(self, y_true, y_pred, multioutput):
+        check_consistent_length(y_true, y_pred)
+
+        check_array(y_true, ensure_2d=False)
+
+        if not isinstance(y_pred, pd.DataFrame):
+            ValueError("y_pred should be a dataframe.")
+
+        if not all(y_pred.dtypes == float):
+            ValueError("Data should be numeric.")
+
+        if y_true.ndim == 1:
+            y_true = y_true.reshape((-1, 1))
+
+        n_outputs = y_true.shape[1]
+
+        allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
+        if isinstance(multioutput, str):
+            if multioutput not in allowed_multioutput_str:
+                raise ValueError(
+                    "Allowed 'multioutput' string values are {}. "
+                    "You provided multioutput={!r}".format(
+                        allowed_multioutput_str, multioutput
+                    )
+                )
+        elif multioutput is not None:
+            multioutput = check_array(multioutput, ensure_2d=False)
+            if n_outputs == 1:
+                raise ValueError("Custom weights are useful only in multi-output case.")
+            elif n_outputs != len(multioutput):
+                raise ValueError(
+                    "There must be equally many custom weights (%d) as outputs (%d)."
+                    % (len(multioutput), n_outputs)
+                )
+
+        return y_true, y_pred, multioutput
+
     def _check_ys(self, y_true, y_pred, multioutput):
         if multioutput is None:
             multioutput = self.multioutput
-        _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
         valid, msg, metadata = check_is_scitype(
             y_pred, scitype="Proba", return_metadata=True, var_name="y_pred"
         )
         if not valid:
             raise TypeError(msg)
+
         y_pred_mtype = metadata["mtype"]
         inner_y_pred_mtype = self.get_tag("scitype:y_pred")
         y_pred_inner = convert(
@@ -123,6 +165,12 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             to_type=inner_y_pred_mtype,
             as_scitype="Proba",
         )
+
+        y_true, y_pred, multioutput = self._check_consistent_input(
+            y_true,
+            y_pred,
+            multioutput)
+
         return y_true, y_pred_inner, multioutput
 
 
@@ -148,6 +196,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         super().__init__(name=name, multioutput=multioutput)
 
     def get_alpha_from(y_pred):
+        """Fetch the alphas present in y_pred."""
         return
 
     def _evaluate(self, y_true, y_pred, multioutput):
