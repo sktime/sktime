@@ -15,8 +15,8 @@ from sktime.transformations.base import BaseTransformer
 class WindowSummarizer(BaseTransformer):
     """Transformer for extracting time series features.
 
-    The WindowSummarizer transforms input series to features
-    based on a provided dictionary of window summarizer, window shifts
+    The WindowSummarizer transforms input series to features based
+    on a provided dictionary of window summarizer, window shifts
     and window lengths.
 
     Parameters
@@ -160,7 +160,10 @@ class WindowSummarizer(BaseTransformer):
         "scitype:instancewise": True,
         "capability:inverse_transform": False,
         "scitype:transform-labels": False,
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": [
+            "pd-multiindex",
+            "pd.DataFrame",
+        ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": True,  # can estimator handle missing data?
@@ -267,7 +270,7 @@ class WindowSummarizer(BaseTransformer):
             bfill = False
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = getattr(X.groupby("instances"), X.loc[:, [cols]])
+                X_grouped = X.groupby("instances")[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
@@ -384,7 +387,7 @@ def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
     starting_at = window[1] + 1
 
     if summarizer in pd_rolling:
-        if isinstance(Z.index, pd.MultiIndex):
+        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
                 feat = getattr(
                     Z.shift(starting_at).rolling(window_length), summarizer
@@ -394,6 +397,7 @@ def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
                     Z.shift(starting_at).fillna(method="bfill").rolling(window_length),
                     summarizer,
                 )()
+            feat = pd.DataFrame(feat)
         else:
             if bfill is False:
                 feat = Z.apply(
@@ -415,12 +419,17 @@ def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
             feat = Z.shift(starting_at)
         else:
             feat = Z.shift(starting_at).fillna(method="bfill")
-        if isinstance(Z.index, pd.MultiIndex) and callable(summarizer):
+        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
+            summarizer
+        ):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
-        elif not isinstance(Z.index, pd.MultiIndex) and callable(summarizer):
+        elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
+            summarizer
+        ):
             feat = feat.apply(
                 lambda x: x.rolling(window_length).apply(summarizer, raw=True)
             )
+        feat = pd.DataFrame(feat)
     if bfill is True:
         feat = feat.fillna(method="bfill")
 
