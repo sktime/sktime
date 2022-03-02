@@ -6,7 +6,7 @@ from sktime.benchmarking.experiments import (
     run_clustering_experiment,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier
-from sktime.clustering import TimeSeriesKMeans
+from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_unit_test
 
 

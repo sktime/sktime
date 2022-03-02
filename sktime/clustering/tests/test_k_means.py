@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn import metrics
 
-from sktime.clustering._k_means import TimeSeriesKMeans
+from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_basic_motions
 
 expected_results = {
