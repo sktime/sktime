@@ -592,7 +592,7 @@ def setup_all_distance_measure_getter(proximity):
         ranges and dataset
         :returns: a distance measure with no parameters
         """
-        random_state = check_random_state(proximity.random_state + 5)
+        random_state = check_random_state(proximity.random_state)
         X = proximity.X
         distance_measure_getter = random_state.choice(distance_measure_getters)
         distance_measure_perm = distance_measure_getter(X)
@@ -1291,7 +1291,7 @@ class ProximityForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityForest(n_estimators=5)
+    >>> clf = ProximityForest(n_estimators=2)
     >>> clf.fit(X_train, y_train)
     ProximityForest(...)
     >>> y_pred = clf.predict(X_test)
