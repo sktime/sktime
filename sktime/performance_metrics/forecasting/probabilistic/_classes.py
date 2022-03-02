@@ -88,28 +88,13 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1:, :])),
-                    np.vstack((y_pred[:i, :], y_pred[i + 1:, :])),
+                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
+                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
                     multioutput,
                 )
             return out_series
         except RecursionError:
             print("Must implement one of _evaluate or _evaluate_by_index")
-
-    def _check_alpha(self, alpha):
-        if isinstance(alpha, list):
-            alpha = np.array(alpha)
-        if isinstance(alpha, np.ndarray):
-            self.multiple_alphas = True
-            if not all(((alpha > 0) & (alpha < 1))):
-                raise ValueError("Alpha must be between 0 and 1.")
-            return alpha
-        if isinstance(alpha, float):
-            self.multiple_alphas = False
-            if not ((alpha > 0) & (alpha < 1)):
-                raise ValueError("Alpha must be between 0 and 1.")
-            return [alpha]
-        raise TypeError("Alpha should be a float or numpy array")
 
     def _check_consistent_input(self, y_true, y_pred, multioutput):
         check_consistent_length(y_true, y_pred)
@@ -167,9 +152,8 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         )
 
         y_true, y_pred, multioutput = self._check_consistent_input(
-            y_true,
-            y_pred,
-            multioutput)
+            y_true, y_pred, multioutput
+        )
 
         return y_true, y_pred_inner, multioutput
 
