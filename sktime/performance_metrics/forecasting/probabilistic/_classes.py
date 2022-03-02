@@ -12,16 +12,6 @@ from sktime.datatypes import check_is_scitype, convert
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
 
 
-def _check_y_pred_type(metric_object, y_pred):
-    # Checks y_pred is of correct type to work with metric.
-    # If it isn't it will convert it if possible
-    input_type = metric_object.get_tag("scitype:y_pred")
-    if input_type == "quantiles":
-        if isinstance(y_pred, pd.DataFrame):
-            return y_pred
-        # if distribution object then get the relevant quantiles and return.
-
-
 class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     """Base class for probabilistic forecasting error metrics in sktime.
 
@@ -35,7 +25,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(self, func, name=None, multioutput="uniform_average"):
+    def __init__(self, func=None, name=None, multioutput="uniform_average"):
         self.multioutput = multioutput
         super().__init__(func, name=name)
 
@@ -69,9 +59,12 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         return self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
-        # todo: should have a default implementation, which is just the mean over
-        #       _evaluate_by_index
-        raise NotImplementedError
+        # Default implementation relies on implementation of evaluate_by_index
+        try:
+            index_df = self._evaluate_by_index(y_true, y_pred, multioutput)
+            return index_df.mean(axis=0)
+        except RecursionError:
+            print("Must implement one of _evaluate or _evaluate_by_index")
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point."""
@@ -86,14 +79,17 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         # docstring/comments should explain that default is jackknife pseudosamples
         n = y_true.shape[0]
         out_series = pd.Series(index=y_pred.index)
-        x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
-        for i in range(n):
-            out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
-                np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
-                multioutput,
-            )
-        return out_series
+        try:
+            x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
+            for i in range(n):
+                out_series[i] = n * x_bar - (n - 1) * self.evaluate(
+                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
+                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                    multioutput,
+                )
+            return out_series
+        except RecursionError:
+            print("Must implement one of _evaluate or _evaluate_by_index")
 
     def _check_alpha(self, alpha):
         if isinstance(alpha, list):
@@ -125,7 +121,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             y_pred,
             from_type=y_pred_mtype,
             to_type=inner_y_pred_mtype,
-            as_scitype="Proba"
+            as_scitype="Proba",
         )
         return y_true, y_pred_inner, multioutput
 
@@ -146,15 +142,17 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(self, alphas, multioutput="uniform_average"):
+    def __init__(self, multioutput="uniform_average"):
         name = "PinballLoss"
-        # _tags = {"scitype:pred": "quantile"}
-        func = pinball_loss
-        super().__init__(func=func, name=name, multioutput=multioutput)
+        # func = pinball_loss
+        super().__init__(name=name, multioutput=multioutput)
+
+    def get_alpha_from(y_pred):
+        return
 
     def _evaluate(self, y_true, y_pred, multioutput):
         # implement this function, or write af ew lines
-        alpha = get_alpha_from(y_pred)
+        alpha = self.get_alpha_from(y_pred)
         # from old evaluate
         out = [None] * len(self.alphas)
         for i, alpha in enumerate(self.alphas):
@@ -171,7 +169,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
 
-        alpha = get_alpha_from(y_pred)
+        alpha = self.get_alpha_from(y_pred)
 
         n = len(y_true)
         out = np.full([n, len(self.alphas)], None)
@@ -192,7 +190,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     @classmethod
     def get_test_params(self):
         """Retrieve test parameters."""
-        return {"alphas": 0.5}
+        return {}
 
 
 def pinball_loss(y_true, y_pred, alpha, multioutput, av=True):
