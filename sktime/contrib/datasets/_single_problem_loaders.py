@@ -15,7 +15,7 @@ __author__ = [
 ]
 
 __all__ = [
-    "load_airline",
+    "load_UCR_UEA_dataset",
     "load_plaid",
     "load_arrow_head",
     "load_gunpoint",
@@ -23,13 +23,13 @@ __all__ = [
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
+    "load_acsf1",
+    "load_unit_test",
+    "load_airline",
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
-    "load_acsf1",
-    "load_unit_test",
     "load_uschange",
-    "load_UCR_UEA_dataset",
     "load_PBS_dataset",
     "load_gun_point_segmentation",
     "load_electric_devices_segmentation",
@@ -43,7 +43,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from sktime.datasets._data_io import (
+from sktime.contrib.datasets._data_io import (
     _load_dataset,
     _load_provided_dataset,
     load_tsf_to_dataframe,
@@ -53,7 +53,9 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
+def load_UCR_UEA_dataset(
+    name, split=None, return_X_y=True, extract_path=None, return_type=None
+):
     """Load dataset from UCR UEA time series archive.
 
     Downloads and extracts dataset if not already downloaded. Data is assumed to be
@@ -61,7 +63,8 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     Each dimension is separated by a colon, each value in a series is comma
     separated. For examples see sktime.datasets.data.tsc. ArrowHead is an example of
     a univariate equal length problem, BasicMotions an equal length multivariate
-    problem.
+    problem. We assume the problem has m rows, d dimensions of series length m (where m
+    can vary between series if not an equal length problem)
 
     Parameters
     ----------
@@ -70,35 +73,45 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
         this function will look in the extract_path first, and if it is not present,
         attempt to download the data from www.timeseriesclassification.com, saving it to
         the extract_path.
-    split : None or str{"train", "test"}, optional (default=None)
+    split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By default it
-        loads both into a single dataset, otherwise it looks only for files of the
-        format <name>_TRAIN.ts or <name>_TEST.ts.
-    return_X_y : bool, optional (default=False)
-        it returns two objects, if False, it appends the class labels to the dataframe.
-    extract_path : str, optional (default=None)
-        the path to look for the data. If no path is provided, the function
-        looks in `sktime/datasets/data/`.
+        loads both into a single data structure, otherwise it looks only for files
+        of the format <name>_TRAIN.ts or <name>_TEST.ts.
+    extract_path: None or str, optional (default=None).
+        Location where to look for and/or extract data. If None, it looks in
+        datasets/data
+    return_X_y: bool, optional (default=True)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for features and the target.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame
-        The time series data for the problem with n_cases rows and either
-        n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
-        series associated with each case. If return_X_y is False, column
-        n_dimensions+1 contains the class labels/target variable.
-    y: numpy array, optional
-        The class labels for each case in X, returned separately if return_X_y is
-        True, or appended to X if False
+    X:  The time series data for the problem.
+        If return_type is either "numpy2d"/"numpyflat", it returns 2D numpy array of
+        shape (n,m), if "numpy3d" it returns 3D numpy array of shape (n,1,m) and if
+        "nested_univ" or None it returns a nested pandas DataFrame of shape (n,1),
+        where each cell is a pd.Series of length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
+
+    Raises
+    ------
+    ValueError if an incompatible return_type type is passed: unequal length series
+    must be stored in a DataFrame ("nested_univ") and multivariate series calnnot be
+    loaded into 2d numpy ("numpy2d"/"numpyflat").
     """
-    return _load_dataset(name, split, return_X_y, extract_path)
+    return _load_dataset(name, split, return_X_y, extract_path, return_type)
 
 
 def load_plaid(split=None, return_X_y=True):
     """
-    Load the PLAID time series classification problem and returns X and y.
+    PLAID stands for the Plug Load Appliance Identification Dataset.
 
-    Example of a univariate problem with unequal length series.
+    Example of a univariate problem with unequal length series. It loads an 11 class
+    classification problem with number of cases, n either 1074/537/537 (for split =
+    None/Train/Test) of series variable length m.
 
     Parameters
     ----------
@@ -111,18 +124,31 @@ def load_plaid(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array The class labels for each case in X
+    X: pandas DataFrame with m rows and 1 column for the time series, where each cell
+    is a pd.Series containing the time series.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
+
+    Notes
+    -----
+    Dimensionality:     univariate
+    Series length:      Variable
+    Train cases:        537
+    Test cases:         537
+    Number of classes:  11
 
     """
     name = "PLAID"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y)
 
 
-def load_gunpoint(split=None, return_X_y=True):
+def load_gunpoint(split=None, return_X_y=True, return_type=None):
     """
-    Load the GunPoint time series classification problem and returns X and y.
+    Load data of two actors making a motion with their hand.
+
+    This is an equal length univariate time series classification problem. It loads
+    a two class classification problem with number of cases, n either 200/50/150 (for
+    split =None/Train/Test) of series length m=150.
 
     Parameters
     ----------
@@ -130,15 +156,20 @@ def load_gunpoint(split=None, return_X_y=True):
         Whether to load the train or test partition of the problem. By default it
         loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for features and the target.
+        If True, returns (features, target) separately instead of a concatenated data
+        structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Notes
     -----
@@ -148,33 +179,30 @@ def load_gunpoint(split=None, return_X_y=True):
     Test cases:         150
     Number of classes:  2
 
-    This dataset involves one female actor and one male actor making a
-    motion with their
-    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors
-    have their
-    hands by their sides. They draw a replicate gun from a hip-mounted
-    holster, point it
-    at a target for approximately one second, then return the gun to the
-    holster, and
-    their hands to their sides. For Point the actors have their gun by their
-    sides.
-    They point with their index fingers to a target for approximately one
-    second, and
-    then return their hands to their sides. For both classes, we tracked the
-    centroid
+    This dataset involves one female actor and one male actor making a motion with their
+    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors have their
+    hands by their sides. They draw a replicate gun from a hip-mounted holster, point it
+    at a target for approximately one second, then return the gun to the holster, and
+    their hands to their sides. For Point the actors have their gun by their sides.
+    They point with their index fingers to a target for approximately one second, and
+    then return their hands to their sides. For both classes, they tracked the centroid
     of the actor's right hands in both X- and Y-axes, which appear to be highly
     correlated. The data in the archive is just the X-axis.
 
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=GunPoint
+    Dataset details:
+    http://timeseriesclassification.com/description.php?Dataset=GunPoint
     """
     name = "GunPoint"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
-def load_osuleaf(split=None, return_X_y=True):
+def load_osuleaf(split=None, return_X_y=True, return_type=None):
     """
-    Load the OSULeaf time series classification problem and returns X and y.
+    Load OSULeaf data set, which consists of one dimensional outlines of leaves.
+
+    This is an equal length univariate time series classification problem. It loads
+    a six class classification problem with number of cases, n either 442/200/242 (for
+    split =None/Train/Test) of series length m=427.
 
     Parameters
     ----------
@@ -182,16 +210,20 @@ def load_osuleaf(split=None, return_X_y=True):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (features, target) separately instead of a concatenated data
+        structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Notes
     -----
@@ -201,23 +233,27 @@ def load_osuleaf(split=None, return_X_y=True):
     Test cases:         242
     Number of classes:  6
 
-    The OSULeaf data set consist of one dimensional outlines of leaves.
-    The series were obtained by color image segmentation and boundary
-    extraction (in the anti-clockwise direction) from digitized leaf images
-    of six classes: Acer Circinatum, Acer Glabrum, Acer Macrophyllum,
-    Acer Negundo, Quercus Garryanaand Quercus Kelloggii for the MSc thesis
-    "Content-Based Image Retrieval: Plant Species Identification" by A Grandhi.
+    The OSULeaf data set consist of one dimensional outlines of leaves. The series
+    were obtained by color image segmentation and boundary extraction (in the
+    anti-clockwise direction) from digitized leaf images of six classes: Acer
+    Circinatum, Acer Glabrum, Acer Macrophyllum, Acer Negundo, Quercus Garryanaand
+    Quercus Kelloggii for the MSc thesis "Content-Based Image Retrieval: Plant
+    Species Identification" by A Grandhi.
 
-    Dataset details: http://www.timeseriesclassification.com/description.php
-    ?Dataset=OSULeaf
+    Dataset details:
+    http://www.timeseriesclassification.com/description.php?Dataset=OSULeaf
     """
     name = "OSULeaf"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
-def load_italy_power_demand(split=None, return_X_y=True):
+def load_italy_power_demand(split=None, return_X_y=True, return_type=None):
     """
-    Load ItalyPowerDemand time series classification problem.
+    Load 12 monthly electrical power demand time series from Italy.
+
+    This is an equal length univariate time series classification problem. It loads
+    a two class classification problem with number of cases, n either 1096/67/1029 (for
+    split =None/Train/Test) of series length m=24.
 
     Parameters
     ----------
@@ -225,80 +261,95 @@ def load_italy_power_demand(split=None, return_X_y=True):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (features, target) separately instead of a concatenated data
+        structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Notes
     -----
-    Dimensionality:     univariate
-    Series length:      24
-    Train cases:        67
-    Test cases:         1029
-    Number of classes:  2
+     Dimensionality:     univariate
+     Series length (m):      24
+     Train cases:        67
+     Test cases:         1029
+     Number of classes:  2
 
-    The data was derived from twelve monthly electrical power demand time series from
-    Italy and first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
-    Mining and Visualization into GUI Operating Systems". The classification task is to
-    distinguish days from Oct to March (inclusive) from April to September.
+    The data was first used in the paper "Intelligent Icons: Integrating Lite-Weight
+    Data Mining and Visualization into GUI Operating Systems". The classification
+    task is to distinguish days from Oct to March (inclusive) from April to September.
     Dataset details:
     http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
     """
     name = "ItalyPowerDemand"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
-def load_unit_test(split=None, return_X_y=True):
+def load_unit_test(split=None, return_X_y=True, return_type=None):
     """
-    Load UnitTest time series classification problem.
+    Load UnitTest data.
 
-    This problem is a stripped down version of the ChinaTown problem that is used in
-    correctness tests for classification.
+    This is an equal length univariate time series classification problem. It is a
+    stripped down version of the ChinaTown problem that is used in correctness tests
+    for classification. It loads a two class classification problem with number of
+    cases, n, where n = 42 (if split is None) or 20/22 (if split is "train"/"test")
+    of series length m = 24
 
     Parameters
     ----------
     split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+        Whether to load the train or test partition of the problem. By default it
+        loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (features, target) separately instead of a concatenated data
+        structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Details
     -------
-    This is the Chinatown problem with a smaller test set, useful for rapid tests. See
-    http://timeseriesclassification.com/description.php?Dataset=Chinatown
-    for the full dataset
+    This is the Chinatown problem with a smaller test set, useful for rapid tests.
     Dimensionality:     univariate
     Series length:      24
     Train cases:        20
     Test cases:         22 (full dataset has 345)
     Number of classes:  2
+
+     See
+    http://timeseriesclassification.com/description.php?Dataset=Chinatown
+    for the full dataset
     """
     name = "UnitTest"
-    return _load_provided_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
     """
-    Load the JapaneseVowels time series classification problem.
+    Load the japanese vowels audio problem.
 
-    Example of a multivariate problem with unequal length series.
+    This is a multivariate, unequal length time series classification problem. It
+    loads a nine class classification problem with number of cases, n, where n = 640
+    (if split is None) or 270/370 (if split is "train"/"test") of series variable
+    length m.
 
     Parameters
     ----------
@@ -311,10 +362,10 @@ def load_japanese_vowels(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pandas DataFrame with n rows and c columns
         The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Notes
     -----
@@ -324,31 +375,30 @@ def load_japanese_vowels(split=None, return_X_y=True):
     Test cases:         370
     Number of classes:  9
 
-    A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
-    the vowels 'a' and 'e'. A '12-degree
-    linear prediction analysis' is applied to the raw recordings to
-    obtain time-series with 12 dimensions and series lengths between 7 and 29.
-    The classification task is to predict the speaker. Therefore,
-    each instance is a transformed utterance,
-    12*29 values with a single class label attached, [1...9]. The given
-    training set is comprised of 30
-    utterances for each speaker, however the test set has a varied
-    distribution based on external factors of
+    A UCI Archive dataset. 9 Japanese-male speakers were recorded saying the vowels
+    'a' and 'e'. A '12-degree linear prediction analysis' is applied to the raw
+    recordings to obtain time-series with 12 dimensions and series lengths between 7 and
+    29. The classification task is to predict the speaker. Therefore, each instance
+    is a transformed utterance, 12*29 values with a single class label attached,
+    [1...9]. The given training set is comprised of 30 utterances for each speaker,
+    however the test set has a varied distribution based on external factors of
     timing and experimental availability, between 24 and 88 instances per
-    speaker. Reference: M. Kudo, J. Toyama
-    and M. Shimbo. (1999). "Multidimensional Curve Classification Using
-    Passing-Through Regions". Pattern
-    Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=JapaneseVowels
+    speaker. Reference: M. Kudo, J. Toyama and M. Shimbo. (1999). "Multidimensional
+    Curve Classification Using Passing-Through Regions". Pattern Recognition Letters,
+    Vol. 20, No. 11--13, pages 1103--1111. Dataset details:
+    http://timeseriesclassification.com/description.php?Dataset=JapaneseVowels
     """
     name = "JapaneseVowels"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
+def load_arrow_head(split=None, return_X_y=True, return_type=None):
     """
-    Load the ArrowHead time series classification problem and returns X and y.
+    Load dataset of arrow head shape outlines.
+
+    This is an equal length univariate time series classification problem. It loads a
+    three class classification problem with number of cases, n, where n = 211 (if
+    split is None) or 36/175 (if split is "train"/"test") of series length m = 251
 
     Parameters
     ----------
@@ -356,16 +406,20 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (time series, target) separately as X and y instead of a single
+        data structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Notes
     -----
@@ -376,19 +430,15 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
     Number of classes:  3
 
     The arrowhead data consists of outlines of the images of arrowheads. The
-    shapes of the
-    projectile points are converted into a time series using the angle-based
-    method. The
-    classification of projectile points is an important topic in
-    anthropology. The classes
-    are based on shape distinctions such as the presence and location of a
-    notch in the
-    arrow. The problem in the repository is a length normalised version of
-    that used in
-    Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
+    shapes of the projectile points are converted into a time series using the angle
+    based method. The classification of projectile points is an important topic in
+    anthropology. The classes are based on shape distinctions such as the presence and
+    location of a notch in the arrow. The problem in the repository is a length
+    normalised version of that used in [1]. The three classes are called "Avonlea",
+    "Clovis" and "Mix".
 
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=ArrowHead
+    Dataset:
+    http://timeseriesclassification.com/description.php?Dataset=ArrowHead
     """
     name = "ArrowHead"
     return _load_provided_dataset(
@@ -396,9 +446,12 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
     )
 
 
-def load_acsf1(split=None, return_X_y=True):
-    """
-    Load dataset on power consumption of typical appliances.
+def load_acsf1(split=None, return_X_y=True, return_type=None):
+    """Load dataset on power consumption of typical appliances.
+
+    This is an equal length univariate time series classification problem. It loads a
+    10 class classification problem with number of cases, n, where n = 200 (if
+    split is None) or 100 (if split is "train"/"test") of series length m = 1460
 
     Parameters
     ----------
@@ -406,16 +459,20 @@ def load_acsf1(split=None, return_X_y=True):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (time series, target) separately as X and y instead of a single
+        data structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Notes
     -----
@@ -434,16 +491,22 @@ def load_acsf1(split=None, return_X_y=True):
     lamp (CFL), laptops (via chargers), microwave ovens, printers, and
     televisions (LCD or LED)."
 
-    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
-    =ACSF1
+    Dataset details:
+    http://www.timeseriesclassification.com/description.php?Dataset=ACSF1
     """
     name = "ACSF1"
-    return _load_dataset(name, split, return_X_y)
+    return _load_provided_dataset(
+        name=name, split=split, return_X_y=return_X_y, return_type=return_type
+    )
 
 
-def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
+def load_basic_motions(split=None, return_X_y=True, return_type=None):
     """
-    Load the  BasicMotions time series classification problem and returns X and y.
+    Load the BasicMotions time series classification problem and returns X and y.
+
+    This is an equal length multivariate time series classification problem. It loads a
+    4 class classification problem with number of cases, n, where n = 80 (if
+    split is None) or 40 (if split is "train"/"test") of series length m = 100.
 
     Parameters
     ----------
@@ -451,17 +514,24 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (time series, target) separately as X and y instead of a single
+        data structure.
+    return_type: None or str{"numpy3d", "nested_univ"},
+    optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
+    Raises
+    ------
+    ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -481,6 +551,12 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
     =BasicMotions
     """
     name = "BasicMotions"
+    if return_type == "numpy2d" or return_type == "numpyflat":
+        raise ValueError(
+            f"{name} loader: Error, attempting to load into a numpy2d "
+            f"array, but cannot because it is a multivariate problem. Use "
+            f"numpy3d instead"
+        )
     return _load_provided_dataset(
         name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )

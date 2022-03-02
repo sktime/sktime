@@ -34,6 +34,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
+from sktime.datasets._data_io import MODULE
 from sktime.datatypes._panel._convert import (
     _make_column_names,
     from_long_to_nested,
@@ -44,7 +45,6 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
 
 DIRNAME = "data"
-MODULE = os.path.dirname(__file__)
 
 
 # time series classification data sets
@@ -96,17 +96,21 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_available_datasets(extract_path):
+def _list_available_datasets(extract_path=None):
     """Return a list of all the currently downloaded datasets.
 
     Modified version of
     https://github.com/tslearn-team/tslearn/blob
     /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
 
+    Parameters
+    ----------
+    extract_path: (optional) None or string, location to look for data sest
+
     Returns
     -------
     datasets : List
-        List of the names of datasets downloaded
+        List of the names of datasets in the extract_path
 
     """
     if extract_path is None:
@@ -121,60 +125,61 @@ def _list_available_datasets(extract_path):
     return datasets
 
 
-def _load_dataset(name, split, return_X_y, extract_path=None):
-    """Load time series classification datasets (helper function)."""
+def _load_dataset(name, split, return_X_y, extract_path=None, return_type=None):
+    """Load time series classification datasets."""
     # Allow user to have non standard extract path
     if extract_path is not None:
-        local_module = os.path.dirname(extract_path)
-        local_dirname = extract_path
+        path = os.path.join(extract_path)
     else:
-        local_module = MODULE
-        local_dirname = "data"
-
-    if not os.path.exists(os.path.join(local_module, local_dirname)):
-        os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_available_datasets(extract_path):
-        local_dirname = "local_data"
-        if not os.path.exists(os.path.join(local_module, local_dirname)):
-            os.makedirs(os.path.join(local_module, local_dirname))
-        if name not in _list_available_datasets(
-            os.path.join(local_module, local_dirname)
-        ):
-            # Dataset is not baked in the datasets directory, look in local_data,
-            # if it is not there, download and install it.
-            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-            # This also tests the validitiy of the URL, can't rely on the html
-            # status code as it always returns 200
-            try:
-                _download_and_extract(
-                    url,
-                    extract_path=extract_path,
-                )
-            except zipfile.BadZipFile as e:
-                raise ValueError(
-                    "Invalid dataset name. ",
-                    extract_path,
-                    "Please make sure the dataset "
-                    + "is available on http://timeseriesclassification.com/.",
-                ) from e
+        if name in _list_available_datasets():
+            path = os.path.join(MODULE + "/data")
+        else:
+            path = os.path.join(MODULE + "/local_data")
+    if not os.path.exists(path):
+        os.makedirs(path)
+    if name not in _list_available_datasets(path):
+        # Dataset is not baked in the datasets directory, look in local_data,
+        # if it is not there, download and install it.
+        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+        # This also tests the validitiy of the URL, can't rely on the html
+        # status code as it always returns 200
+        try:
+            _download_and_extract(
+                url,
+                extract_path=path,
+            )
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                "Invalid dataset name. ",
+                extract_path,
+                "Please make sure the dataset "
+                + "is available on http://timeseriesclassification.com/.",
+            ) from e
     if isinstance(split, str):
         split = split.upper()
 
     if split in ("TRAIN", "TEST"):
         fname = name + "_" + split + ".ts"
-        abspath = os.path.join(local_module, local_dirname, name, fname)
-        X, y = load_from_tsfile_to_dataframe(abspath)
+        abspath = os.path.join(path, name, fname)
+        X, y = load_from_tsfile(abspath, return_data_type=return_type)
     # if split is None, load both train and test set
     elif split is None:
-        X = pd.DataFrame(dtype="object")
-        y = pd.Series(dtype="object")
-        for split in ("TRAIN", "TEST"):
-            fname = name + "_" + split + ".ts"
-            abspath = os.path.join(local_module, local_dirname, name, fname)
-            result = load_from_tsfile_to_dataframe(abspath)
-            X = pd.concat([X, pd.DataFrame(result[0])])
-            y = pd.concat([y, pd.Series(result[1])])
-        y = pd.Series.to_numpy(y, dtype=str)
+        fname = name + "_TRAIN.ts"
+        abspath = os.path.join(path, name, fname)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        fname = name + "_TEST.ts"
+        abspath = os.path.join(path, name, fname)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
+        if isinstance(X_train, np.ndarray):
+            X = np.concatenate((X_train, X_test))
+        elif isinstance(X_train, pd.DataFrame):
+            X = pd.concat([X_train, X_test])
+        else:
+            raise IOError(
+                f"Invalid data structure type {type(X_train)} for loading "
+                f"classification problem "
+            )
+        y = np.concatenate((y_train, y_test))
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -182,22 +187,21 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     if return_X_y:
         return X, y
     else:
-        X["class_val"] = pd.Series(y)
+        if isinstance(X, pd.DataFrame):
+            X["class_val"] = pd.Series(y)
+        elif isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                np.concatenate((X, y), axis=1)
+            else:
+                raise ValueError(
+                    f"Unable to return multivariate X and y in {X.ndim} "
+                    f"a numpy array"
+                )
         return X
 
 
 def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
-    """Load baked in time series classification datasets (helper function).
-
-    Loads data from the provided files from sktime/datasets/data only.
-
-    Parameters
-    ----------
-        name : string, file name
-        split : string, default = None, or one of "TRAIN" or "TEST".
-        return_X_y : default = True, if true, returns X and y separately.
-        return_type : default = None,
-    """
+    """Load baked in time series classification datasets (helper function)."""
     if isinstance(split, str):
         split = split.upper()
 
@@ -230,7 +234,16 @@ def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
     if return_X_y:
         return X, y
     else:
-        X["class_val"] = pd.Series(y)
+        if isinstance(X, pd.DataFrame):
+            X["class_val"] = pd.Series(y)
+        elif isinstance(X, np.ndarray):
+            if X.ndim == 2:
+                np.concatenate((X, y), axis=1)
+            else:
+                raise ValueError(
+                    f"Unable to return multivariate X and y in {X.ndim} "
+                    f"a numpy array"
+                )
         return X
 
 
