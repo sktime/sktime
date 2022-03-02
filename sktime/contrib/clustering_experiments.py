@@ -22,7 +22,8 @@ from sklearn.preprocessing import normalize
 
 import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
-from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
+from sktime.clustering.k_means import TimeSeriesKMeans
+from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_from_tsfile as load_ts
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
