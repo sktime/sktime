@@ -206,5 +206,5 @@ def unflat_len(obj):
 
 
 def is_flat(obj):
-    """Checks whether list or tuple is flat, returns true if yes, false if nested."""
+    """Check whether list or tuple is flat, returns true if yes, false if nested."""
     return not any(isinstance(x, (list, tuple)) for x in obj)
