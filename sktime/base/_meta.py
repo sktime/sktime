@@ -82,18 +82,45 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
     def _make_strings_unique(self, strlist):
         """Make a list or tuple of strings unique by appending _int of occurrence.
 
+        Parameters
+        ----------
+        strlist : nested list/tuple structure with string elements
+
+        Returns
+        -------
+        uniquestr : nested list/tuple structure with string elements
+            has same bracketing as `strlist`
+            string elements, if not unique, are replaced by unique strings
+                if any duplicates, _integer of occurrence is appended to non-uniques
+                e.g., "abc", "abc", "bcd" becomes "abc_1", "abc_2", "bcd"
+                in case of clashes, process is repeated until it terminates
+                e.g., "abc", "abc", "abc_1" becomes "abc_0", "abc_1_0", "abc_1_1"
         """
+        # recursions to guarantee that strlist is flat list of strings
+        ##############################################################
+
+        # if strlist is not flat, flatten and apply, then unflatten
+        if not is_flat(strlist):
+            flat_strlist = flatten(strlist)
+            unique_flat_strlist = self._make_strings_unique(flat_strlist)
+            uniquestr = unflatten(unique_flat_strlist, strlist)
+            return uniquestr
+
+        # now we can assume that strlist is flat
+
+        # if strlist is a tuple, convert to list, apply this function, then convert back
+        if isinstance(strlist, tuple):
+            uniquestr = self._make_strings_unique(list(strlist))
+            uniquestr = tuple(strlist)
+            return uniquestr
+
+        # end of recursions
+        ###################
+        # now we can assume that strlist is a flat list
 
         # if already unique, just return
         if len(set(strlist)) == len(strlist):
             return strlist
-
-        # we convert internally to list, but remember whether it was tuple
-        if isinstance(strlist, tuple):
-            strlist = list(strlist)
-            was_tuple = True
-        else:
-            was_tuple = False
 
         from collections import Counter
 
@@ -106,9 +133,6 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
             if strcount[x] > 1:
                 nowcount.update([x])
                 uniquestr[i] = x + "_" + str(nowcount[x])
-
-        if was_tuple:
-            uniquestr = tuple(uniquestr)
 
         # repeat until all are unique
         #   the algorithm recurses, but will always terminate
@@ -179,3 +203,8 @@ def unflat_len(obj):
         return 1
     else:
         return sum([unflat_len(x) for x in obj])
+
+
+def is_flat(obj):
+    """Checks whether list or tuple is flat, returns true if yes, false if nested."""
+    return not any(isinstance(x, (list, tuple)) for x in obj)
