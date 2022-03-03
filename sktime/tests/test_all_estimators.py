@@ -812,9 +812,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         for method in NON_STATE_CHANGING_METHODS:
             # for now, we have to skip predict_proba, since current output comparison
             #   does not work for tensorflow Distribution
-            if isinstance(
-                estimator_instance, BaseForecaster
-            ) and method == "predict_proba":
+            if (
+                isinstance(estimator_instance, BaseForecaster)
+                and method == "predict_proba"
+            ):
                 continue
             if _has_capability(estimator, method):
                 set_random_state(estimator)
@@ -964,9 +965,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Compare against results after pickling
         for method, vanilla_result in results.items():
             # escape predict_proba for forecasters, tfp distributions cannot be pickled
-            if isinstance(
-                estimator_instance, BaseForecaster
-            ) and method == "predict_proba":
+            if (
+                isinstance(estimator_instance, BaseForecaster)
+                and method == "predict_proba"
+            ):
                 continue
             unpickled_result = scenario.run(
                 unpickled_estimator, method_sequence=[method]
