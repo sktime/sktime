@@ -31,6 +31,10 @@ Optional implements:
 Testing - implement if sktime transformer (not needed locally):
     get default parameters for test instance(s) - get_test_params()
 """
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]

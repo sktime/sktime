@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Extension template for forecasters.
 
@@ -30,9 +31,11 @@ Optional implements:
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
@@ -48,8 +51,8 @@ class MyForecaster(BaseForecaster):
 
     todo: describe your custom forecaster here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -57,9 +60,6 @@ class MyForecaster(BaseForecaster):
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
     and so on
-
-    Components
-    ----------
     est : sktime.estimator, BaseEstimator descendant
         descriptive explanation of est
     est2: another estimator
