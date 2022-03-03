@@ -16,7 +16,6 @@ the representation is considered "lossy" if the representation is incomplete
 
 from sktime.datatypes._registry import mtype_to_scitype
 
-
 __author__ = ["fkiraly"]
 
 __all__ = [
