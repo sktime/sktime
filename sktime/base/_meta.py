@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements meta estimator for estimators composed of other estimators."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning, fkiraly"]
 __all__ = ["_HeterogenousMetaEstimator"]
 
 from abc import ABCMeta
@@ -12,9 +12,9 @@ from sktime.base import BaseEstimator
 
 
 class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for estimtators composed of named estimators.
+    """Handles parameter management for estimators composed of named estimators.
 
-    From sklearn utils.metaestimator.py.
+    Partly adapted from sklearn utils.metaestimator.py.
     """
 
     def get_params(self, deep=True):
@@ -78,3 +78,104 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
                 "Estimator names must not contain __: got "
                 "{0!r}".format(invalid_names)
             )
+
+    def _make_strings_unique(self, strlist):
+        """Make a list or tuple of strings unique by appending _int of occurrence.
+
+        """
+
+        # if already unique, just return
+        if len(set(strlist)) == len(strlist):
+            return strlist
+
+        # we convert internally to list, but remember whether it was tuple
+        if isinstance(strlist, tuple):
+            strlist = list(strlist)
+            was_tuple = True
+        else:
+            was_tuple = False
+
+        from collections import Counter
+
+        strcount = Counter(strlist)
+
+        # if any duplicates, we append _integer of occurrence to non-uniques
+        nowcount = Counter()
+        uniquestr = strlist
+        for i, x in enumerate(uniquestr):
+            if strcount[x] > 1:
+                nowcount.update([x])
+                uniquestr[i] = x + "_" + str(nowcount[x])
+
+        if was_tuple:
+            uniquestr = tuple(uniquestr)
+
+        # repeat until all are unique
+        #   the algorithm recurses, but will always terminate
+        #   because potential clashes are lexicographically increasing
+        return self._make_strings_unique(uniquestr)
+
+
+def flatten(obj):
+    """Flatten nested list/tuple structure.
+
+    Parameters
+    ----------
+    obj: nested list/tuple structure
+
+    Returns
+    -------
+    list or tuple, tuple if obj was tuple, list otherwise
+        flat iterable, containing non-list/tuple elements in obj in same order as in obj
+
+    Example
+    -------
+    >>> flatten([1, 2, [3, (4, 5)], 6])
+    >>> [1, 2, 3, 4, 5, 6]
+    """
+    if not isinstance(obj, (list, tuple)):
+        return [obj]
+    else:
+        return type(obj)([y for x in obj for y in flatten(x)])
+
+
+def unflatten(obj, template):
+    """Invert flattening, given template for nested list/tuple structure.
+
+    Parameters
+    ----------
+    obj : list or tuple of elements
+    template : nested list/tuple structure
+        number of non-list/tuple elements of obj and template must be equal
+
+    Returns
+    -------
+    rest : list or tuple of elements
+        has element bracketing exactly as `template`
+            and elements in sequence exactly as `obj`
+
+    Example
+    -------
+    >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
+    >>> [1, 2, [3, (4, 5)], 6]
+    """
+    if not isinstance(template, (list, tuple)):
+        return obj[0]
+
+    list_or_tuple = type(template)
+    ls = [unflat_len(x) for x in template]
+    for i in range(1, len(ls)):
+        ls[i] += ls[i - 1]
+    ls = [0] + ls
+
+    res = [unflatten(obj[ls[i]:ls[i+1]], template[i]) for i in range(len(ls) - 1)]
+
+    return list_or_tuple(res)
+
+
+def unflat_len(obj):
+    """Return number of non-list/tuple elements in obj."""
+    if not isinstance(obj, (list, tuple)):
+        return 1
+    else:
+        return sum([unflat_len(x) for x in obj])
