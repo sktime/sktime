@@ -963,6 +963,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Compare against results after pickling
         for method, vanilla_result in results.items():
+            # escape predict_proba for forecasters, tfp distributions cannot be pickled
+            if isinstance(
+                estimator_instance, BaseForecaster
+            ) and method == "predict_proba":
+                continue
             unpickled_result = scenario.run(
                 unpickled_estimator, method_sequence=[method]
             )
