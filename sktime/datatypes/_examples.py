@@ -14,6 +14,8 @@ the representation is considered "lossy" if the representation is incomplete
     e.g., metadata such as column names are missing
 """
 
+from sktime.datatypes._registry import mtype_to_scitype
+
 
 __author__ = ["fkiraly"]
 
@@ -66,7 +68,7 @@ example_dict_metadata.update(example_dict_metadata_Table)
 
 def get_examples(
     mtype: str,
-    as_scitype: str,
+    as_scitype: str = None,
     return_lossy: bool = False,
     return_metadata: bool = False,
 ):
@@ -74,8 +76,11 @@ def get_examples(
 
     Parameters
     ----------
-    mtype: str - name of the mtype for the example
-    as_scitype: str - name of scitype for the example
+    mtype: str - name of the mtype for the example, a valid mtype string
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
+    as_scitype : str, optional - name of scitype of the example, a valid scitype string
+        valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
+        default = inferred from mtype of obj
     return_lossy: bool, optional, default=False
         whether to return second argument
     return_metadata: bool, optional, default=False
@@ -90,6 +95,10 @@ def get_examples(
         if return_metadata=True, elements are triples with fixture, lossy, and
             metadata: dict - metadata dict that would be returned by check_is_mtype
     """
+    # if as_scitype is None, infer from mtype
+    if as_scitype is None:
+        as_scitype = mtype_to_scitype(mtype)
+
     # retrieve all keys that match the query
     exkeys = example_dict.keys()
     keys = [k for k in exkeys if k[0] == mtype and k[1] == as_scitype]

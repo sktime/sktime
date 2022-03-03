@@ -78,7 +78,8 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     Parameters
     ----------
     mtype : str, or list of str, or nested list/str object, or None
-        mtype(s) to find scitype of
+        mtype(s) to find scitype of, a valid mtype string
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------
