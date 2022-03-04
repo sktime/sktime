@@ -1,0 +1,286 @@
+# -*- coding: utf-8 -*-
+"""Pipeline with a classifier."""
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+from sklearn.base import clone
+
+from sktime.base import _HeterogenousMetaEstimator
+# from sktime.classification.base import BaseClassifier
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations.compose import TransformerPipeline
+
+__author__ = ["fkiraly"]
+__all__ = ["ClassifierPipeline"]
+
+
+class ClassifierPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+    """Pipeline of transformers compositor.
+
+    The `TransformerPipeline` compositor allows to chain transformers.
+    The pipeline is constructed with a list of sktime transformers,
+        i.e., estimators following the BaseTransformer interface.
+    The list can be unnamed - a simple list of transformers -
+        or string named - a list of pairs of string, estimator.
+
+    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
+        the pipeline behaves as follows:
+    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
+        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
+    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
+        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+        and returning the output of `trafoN.transform`
+    `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
+        with `trafo[i].inverse_transform` input = output `trafo[i-1].inverse_transform`,
+        and returning the output of `trafoN.inverse_transform`
+    `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
+        `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
+        where `trafo[i].update` and `trafo[i].transform` receive as input
+            the output of `trafo[i-1].transform`
+
+    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+        if list is unnamed, names are generated as names of classes
+        if names are non-unique, `f"_{str(i)}"` is appended to each name string
+            where `i` is the total count of occurrence of a non-unique string
+            inside the list of names leading up to it (inclusive)
+
+    `TransformerPipeline` can also be created by using the magic multiplication
+        on any transformer, i.e., any estimator inheriting from `BaseTransformer`
+            for instance, `my_trafo1 * my_trafo2 * my_trafo3`
+            will result in the same object as  obtained from the constructor
+            `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
+        magic multiplication can also be used with (str, transformer) pairs,
+            as long as one element in the chain is a transformer
+
+    Parameters
+    ----------
+    transformers : list of sktime transformers, or
+        list of tuples (str, transformer) of sktime transformers
+        these are "blueprint" transformers, states do not change when `fit` is called
+
+    Attributes
+    ----------
+    transformers_ : list of tuples (str, transformer) of sktime transformers
+        clones of transformers in `transformers` which are fitted in the pipeline
+        is always in (str, transformer) format, even if transformers is just a list
+        strings not passed in transformers are unique generated strings
+        i-th transformer in `transformers_` is clone of i-th in `transformers`
+    """
+
+    _tags = {
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:train_estimate": False,
+        "capability:contractable": False,
+        "capability:multithreading": False,
+    }
+
+    _required_parameters = ["classifier"]
+
+    # no default tag values - these are set dynamically below
+
+    def __init__(self, classifier, transformers):
+
+        self.classifier = classifier
+        self.classifier_ = clone(classifier)
+        self.transformers = transformers
+        self.transformers_ = TransformerPipeline(transformers)
+
+        super(ClassifierPipeline, self).__init__()
+
+        # classifier_tags_to_clone = []
+        # self.clone_tags(classifier, "scitype:transform-output")
+
+    @property
+    def _transformers(self):
+        return self.transformers_._transformers
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_.transformers = value
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        if isinstance(other, BaseTransformer):
+            new_pipeline = ClassifierPipeline(
+                classifier=self.classifier,
+                transformers=other * self.transformers,
+            )
+            return new_pipeline
+        else:
+            return NotImplemented
+
+    @staticmethod
+    def _is_name_and_trafo(obj):
+        if not isinstance(obj, tuple) or len(obj) != 2:
+            return False
+        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
+            return False
+        return True
+
+    def _anytagis(self, tag_name, value):
+        """Return whether any estimator in list has tag `tag_name` of value `value`."""
+        tagis = [est.get_tag(tag_name, value) == value for _, est in self.transformers_]
+        return any(tagis)
+
+    def _anytagis_then_set(self, tag_name, value, value_if_not):
+        """Set self's `tag_name` tag to `value` if any estimator on the list has it."""
+        if self._anytagis(tag_name=tag_name, value=value):
+            self.set_tags(**{tag_name: value})
+        else:
+            self.set_tags(**{tag_name: value_if_not})
+
+    def _anytag_notnone_val(self, tag_name):
+        """Return first non-'None' value of tag `tag_name` in estimator list."""
+        for _, est in self.transformers_:
+            tag_val = est.get_tag(tag_name)
+            if tag_val != "None":
+                return tag_val
+        return tag_val
+
+    def _anytag_notnone_set(self, tag_name):
+        """Set self's `tag_name` tag to first non-'None' value in estimator list."""
+        tag_val = self._anytag_notnone_val(tag_name=tag_name)
+        if tag_val != "None":
+            self.set_tags(**{tag_name: tag_val})
+
+    def _fit(self, X, y):
+        """Fit time series classifier to training data.
+
+        core logic
+
+        Parameters
+        ----------
+        X : Training data of type self.get_tag("X_inner_mtype")
+        y : array-like, shape = [n_instances] - the class labels
+
+        Returns
+        -------
+        self : reference to self.
+
+        State change
+        ------------
+        creates fitted model (attributes ending in "_")
+        """
+        Xt = self.transformers_.fit_transform(X)
+        self.classifier_.fit(Xt, y)
+
+        return self
+
+    def _predict(self, X):
+        """Predict labels for sequences in X.
+
+        core logic
+
+        Parameters
+        ----------
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
+
+        Returns
+        -------
+        y : predictions of labels for X, np.ndarray
+        """
+        Xt = self.transformers_.transform(X)
+        self.classifier_.predict(Xt)
+
+        return self
+
+    def _predict_proba(self, X):
+        """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
+
+        Parameters
+        ----------
+        X : data to predict y with, of type self.get_tag("X_inner_mtype")
+
+        Returns
+        -------
+        y : predictions of probabilities for class values of X, np.ndarray
+        """
+        Xt = self.transformers_.transform(X)
+        self.classifier_.predict_proba(Xt)
+
+        return self
+
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `transformers`.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict()
+        trafo_params = self._get_params("_transformers", deep=deep)
+        classif_params = self.classifier.get_params(deep=deep)
+        params.update(trafo_params)
+        params.update(classif_params)
+
+        return params
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `transformers`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        trafo_keys = self._get_params("_transformers", deep=True).keys()
+        classif_keys = self.classifier.get_params(deep=True)
+        trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
+        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
+        self._set_params("_transformers", **trafo_args)
+        self.classifier.set_params(**classif_args)
+        return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        # imports
+        from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        t1 = ExponentTransformer(power=2)
+        t2 = ExponentTransformer(power=0.5)
+        c = KNeighborsTimeSeriesClassifier()
+
+        # construct without names
+        params = {"transformers": [t1, t2], "classifier": c}
+
+        return params
