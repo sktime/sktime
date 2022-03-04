@@ -175,6 +175,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_y",
+        "transformer",
+        "bool",
+        "does this transformer require y to be passed in fit and transform?",
+    ),
+    (
         "capability:inverse_transform",
         "transformer",
         "bool",
@@ -184,7 +190,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:pred_int",
         "forecaster",
         "bool",
-        "is the forecaster capable of returning prediction intervals in predict?",
+        "does the forecaster implement predict_interval or predict_quantiles?",
     ),
     (
         "capability:multivariate",
@@ -268,6 +274,30 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "requires-y-train",
+        "estimator",
+        "bool",
+        "does metric require y-train data to be passed?",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "estimator",
+        "bool",
+        "does metric require a predictive benchmark?",
+    ),
+    (
+        "univariate-metric",
+        "estimator",
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
+    (
+        "scitype:y_pred",
+        "estimator",
+        "str",
+        "What is the scitype of y_pred: quantiles, proba, interval?",
     ),
 ]
 

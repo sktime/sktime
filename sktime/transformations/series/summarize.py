@@ -4,10 +4,9 @@
 """Implement transformers for summarizing a time series."""
 
 __author__ = ["mloning", "RNKuhns"]
-__all__ = ["SummaryTransformer", "MeanTransformer"]
+__all__ = ["SummaryTransformer"]
 
 import pandas as pd
-from deprecated.sphinx import deprecated
 
 from sktime.transformations.base import BaseTransformer
 
@@ -188,33 +187,3 @@ class SummaryTransformer(BaseTransformer):
             summary_value = pd.DataFrame(summary_value)
 
         return summary_value.T
-
-
-class MeanTransformer(SummaryTransformer):
-    """Calculate mean value of a time series.
-
-    See Also
-    --------
-    SummaryTransformer :
-        Calculate summary values of a time series.
-
-    Examples
-    --------
-    >>> from sktime.transformations.series.summarize import MeanTransformer
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> transformer = MeanTransformer()
-    >>> y_mean = transformer.fit_transform(y)
-    """
-
-    @deprecated(
-        version="0.9.0",
-        reason=(
-            "MeanTransformer will be removed in release v0.10.0. Please use "
-            "`SummaryTransformer` from `sktime.transformation.series.summarize` "
-            "instead."
-        ),
-        category=FutureWarning,
-    )
-    def __init__(self):
-        super().__init__(summary_function="mean", quantiles=None)

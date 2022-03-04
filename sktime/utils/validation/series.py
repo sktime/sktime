@@ -10,12 +10,21 @@ __all__ = [
     "check_equal_time_index",
     "check_consistent_index_type",
 ]
+
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (
+    pd.Int64Index,
+    pd.RangeIndex,
+    pd.PeriodIndex,
+    pd.DatetimeIndex,
+    pd.TimedeltaIndex,
+)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -149,8 +158,11 @@ def check_series(
 
 
 def check_time_index(
-    index, allow_empty=False, enforce_index_type=None, var_name="input"
-):
+    index: Union[pd.Index, np.array],
+    allow_empty: bool = False,
+    enforce_index_type: bool = None,
+    var_name: str = "input",
+) -> pd.Index:
     """Check time index.
 
     Parameters
