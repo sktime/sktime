@@ -255,8 +255,11 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         -------
         self : returns an instance of self.
         """
+        if "classifier" in kwargs.keys():
+            if not isinstance(kwargs["classifier"], BaseClassifier):
+                raise TypeError('"classifier" arg must be an sktime classifier')
         trafo_keys = self._get_params("_transformers", deep=True).keys()
-        classif_keys = self.classifier.get_params(deep=True)
+        classif_keys = self.classifier.get_params(deep=True).keys()
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
         classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
         if len(classif_args) > 0:
