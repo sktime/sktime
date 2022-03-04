@@ -83,6 +83,7 @@ class RocketClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "kernel",
     }
 
     def __init__(

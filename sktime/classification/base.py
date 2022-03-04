@@ -57,7 +57,7 @@ class BaseClassifier(BaseEstimator, ABC):
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        "capability:missing_values": False,
+        "handles-missing-data": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:early_prediction": False,
@@ -338,7 +338,7 @@ class BaseClassifier(BaseEstimator, ABC):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         allow_multivariate = self.get_tag("capability:multivariate")
-        allow_missing = self.get_tag("capability:missing_values")
+        allow_missing = self.get_tag("handles-missing-data")
         allow_unequal = self.get_tag("capability:unequal_length")
         if missing and not allow_missing:
             raise ValueError(

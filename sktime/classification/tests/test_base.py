@@ -36,7 +36,7 @@ class _DummyHandlesAllInput(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:unequal_length": True,
-        "capability:missing_values": True,
+        "handles-missing-data": True,
     }
 
     def _fit(self, X, y):
