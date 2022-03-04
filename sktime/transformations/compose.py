@@ -290,7 +290,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         """
         Xt = X
         for _, transformer in self.transformers_:
-            Xt = transformer.transform(X=Xt, y=y)
+            if not self.get_tag("fit-in-transform", False):
+                Xt = transformer.transform(X=Xt, y=y)
+            else:
+                Xt = transformer.fit_transform(X=Xt, y=y)
 
         return Xt
 
