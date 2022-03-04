@@ -13,13 +13,13 @@ import copy
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import GridSearchCV, cross_val_predict
 from sklearn.svm import OneClassSVM
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.classification.dictionary_based import WEASEL
+from sktime.classification.dictionary_based import MUSE, WEASEL
 from sktime.classification.feature_based import Catch22Classifier
 from sktime.utils.validation.panel import check_X
 
@@ -47,7 +47,7 @@ class TEASER(BaseClassifier):
         An sktime estimator to be built using the transformed data. Defaults to a
         WEASEL classifier.
     classification_points : List or None, default=None
-        List of integer time series thresholds to build classifiers and allow
+        List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
         full series length will be appeneded if not present.
@@ -106,6 +106,8 @@ class TEASER(BaseClassifier):
         self._consecutive_predictions = 0
 
         self._svm_gammas = [100, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1.5, 1]
+        self._svm_nu = 0.05
+        self._svm_tol = 1e-4
 
         super(TEASER, self).__init__()
 
@@ -120,12 +122,12 @@ class TEASER(BaseClassifier):
         # remove duplicates
         self._classification_points = list(set(self._classification_points))
         self._classification_points.sort()
-        # remove classification points that are less than 3
+        # remove classification points that are less than 3 time stamps
         self._classification_points = [i for i in self._classification_points if i >= 3]
         # make sure the full series length is included
         if self._classification_points[-1] != series_length:
             self._classification_points.append(series_length)
-        # create dictionary of classification point indicies
+        # create dictionary of classification point indices
         self._classification_point_dictionary = {}
         for index, classification_point in enumerate(self._classification_points):
             self._classification_point_dictionary[classification_point] = index
@@ -147,7 +149,12 @@ class TEASER(BaseClassifier):
         # tune consecutive predictions required to best harmonic mean
         best_hm = -1
         for g in range(2, min(6, len(self._classification_points))):
+            # A List containing the state info for case, edited at each time stamp.
+            # contains 1. the index of the time stamp, 2. the number of consecutive
+            # positive decisions made, and 3. the prediction made
             state_info = [(0, 0, 0) for _ in range(n_instances)]
+            # Stores whether we have made a final decision on a prediction, if true
+            # state info wont be edited in later time stamps
             finished = [False for _ in range(n_instances)]
 
             for i in range(len(self._classification_points)):
@@ -161,16 +168,20 @@ class TEASER(BaseClassifier):
                 # record consecutive class decisions
                 state_info = [
                     (
+                        # the classification point index
                         i,
+                        # consecutive predictions, add one if positive decision and same
+                        # class
                         state_info[n][1] + 1
                         if decisions[n] and train_preds[i][n] == state_info[i][2]
-                        else 1
-                        if decisions[n]
-                        else 0,
+                        # set to 0 if the decision is negative, 1 if its positive but
+                        # different class
+                        else 1 if decisions[n] else 0,
+                        # predicted class index
                         train_preds[i][n],
                     )
-                    if not finished[n]
-                    else state_info[n]
+                    # if we have finished with this case do not edit the state info
+                    if not finished[n] else state_info[n]
                     for n in range(n_instances)
                 ]
 
@@ -179,6 +190,7 @@ class TEASER(BaseClassifier):
                     True if state_info[n][1] >= g else False for n in range(n_instances)
                 ]
 
+            # calculate harmonic mean from finished state info
             accuracy = (
                 np.sum(
                     [
@@ -228,11 +240,11 @@ class TEASER(BaseClassifier):
         if callable(m):
             return self._estimators[idx].predict_proba(X)
         else:
-            dists = np.zeros((X.shape[0], self.n_classes_))
+            probas = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimators[idx].predict(X)
             for i in range(0, X.shape[0]):
-                dists[i, self._class_dictionary[preds[i]]] = 1
-            return dists
+                probas[i, self._class_dictionary[preds[i]]] = 1
+            return probas
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
         """Decide on the safety of an early classification.
@@ -320,7 +332,8 @@ class TEASER(BaseClassifier):
                 idx + 1,
                 # consecutive predictions, add one if positive decision and same class
                 state_info[i][1] + 1 if decisions[i] and preds[i] == state_info[i][2]
-                # 0 if the decision is negative, 1 if its positive but different class
+                # set to 0 if the decision is negative, 1 if its positive but different
+                # class
                 else 1 if decisions[i] else 0,
                 # predicted class index
                 preds[i],
@@ -339,8 +352,9 @@ class TEASER(BaseClassifier):
         rs = None if self.random_state is None else rs * 37 * (i + 1)
         rng = check_random_state(rs)
 
+        default = MUSE() if X.shape[1] > 1 else WEASEL()
         estimator = _clone_estimator(
-            WEASEL() if self.estimator is None else self.estimator,
+            default if self.estimator is None else self.estimator,
             rng,
         )
 
@@ -385,25 +399,17 @@ class TEASER(BaseClassifier):
             if train_preds[i] == self._class_dictionary[y[i]]:
                 X_svm.append(train_probs[i])
 
-        # tune the one class svm gamma
-        best_svm = None
-        best_acc = -1
-        if len(X_svm) > 1:
-            cv_size = min(len(X_svm), 10)
+        cv_size = min(len(X_svm), 10)
+        gs = GridSearchCV(
+            OneClassSVM(tol=self._svm_tol, nu=self._svm_nu),
+            {"gamma": self._svm_gammas},
+            scoring="accuracy",
+            cv=cv_size,
+        )
+        gs.fit(X_svm, np.ones(len(X_svm)))
+        svm = gs.best_estimator_
 
-            for gamma in self._svm_gammas:
-                svm = OneClassSVM(gamma=gamma)
-                threads = 1 if m is None else self._threads_to_use
-                svm_preds = cross_val_predict(svm, X_svm, cv=cv_size, n_jobs=threads)
-
-                acc = np.sum(svm_preds > 0)
-                if acc > best_acc:
-                    best_svm = svm
-                    best_acc = acc
-
-            best_svm.fit(X_svm)
-
-        return estimator, best_svm, train_probs, train_preds
+        return estimator, svm, train_probs, train_preds
 
     @classmethod
     def get_test_params(cls):

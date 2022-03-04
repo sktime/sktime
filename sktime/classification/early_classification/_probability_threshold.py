@@ -45,7 +45,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         An sktime estimator to be built using the transformed data. Defaults to a
         CanonicalIntervalForest.
     classification_points : List or None, default=None
-        List of integer time series thresholds to build classifiers and allow
+        List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
         full series length will be appeneded if not present.
@@ -120,12 +120,12 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         # remove duplicates
         self._classification_points = list(set(self._classification_points))
         self._classification_points.sort()
-        # remove classification points that are less than 3
+        # remove classification points that are less than 3 time stamps
         self._classification_points = [i for i in self._classification_points if i >= 3]
         # make sure the full series length is included
         if self._classification_points[-1] != series_length:
             self._classification_points.append(series_length)
-        # create dictionary of classification point indicies
+        # create dictionary of classification point indices
         self._classification_point_dictionary = {}
         for index, classification_point in enumerate(self._classification_points):
             self._classification_point_dictionary[classification_point] = index
@@ -166,11 +166,11 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         if callable(m):
             return self._estimators[idx].predict_proba(X)
         else:
-            dists = np.zeros((X.shape[0], self.n_classes_))
+            probas = np.zeros((X.shape[0], self.n_classes_))
             preds = self._estimators[idx].predict(X)
             for i in range(0, X.shape[0]):
-                dists[i, self._class_dictionary[preds[i]]] = 1
-            return dists
+                probas[i, self._class_dictionary[preds[i]]] = 1
+            return probas
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
         """Decide on the safety of an early classification.
@@ -248,7 +248,8 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 idx + 1,
                 # consecutive predictions, add one if positive decision and same class
                 state_info[i][1] + 1 if decisions[i] and preds[i] == state_info[i][2]
-                # 0 if the decision is negative, 1 if its positive but different class
+                # set to 0 if the decision is negative, 1 if its positive but different
+                # class
                 else 1 if decisions[i] else 0,
                 # predicted class index
                 preds[i],
