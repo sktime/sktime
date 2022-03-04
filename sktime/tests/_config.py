@@ -25,9 +25,6 @@ from sktime.classification.dictionary_based import (
     TemporalDictionaryEnsemble,
 )
 from sktime.classification.distance_based import ElasticEnsemble
-from sktime.classification.early_classification import (
-    ProbabilityThresholdEarlyClassifier,
-)
 from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,
@@ -255,12 +252,6 @@ ESTIMATOR_TEST_PARAMS = {
             "max_ensemble_size": 2,
             "randomly_selected_params": 2,
         },
-    },
-    ProbabilityThresholdEarlyClassifier: {
-        "classification_points": [3],
-        "estimator": Catch22Classifier(
-            estimator=RandomForestClassifier(n_estimators=2)
-        ),
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralEnsemble: {

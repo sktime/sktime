@@ -1,49 +1,51 @@
 # -*- coding: utf-8 -*-
-"""Probability Threshold Early Classifier.
+"""TEASER early classifier.
 
-An early classifier using a prediction probability threshold with a time series
-classifier.
+An early classifier using a one class SVM's to determine decision safety with a
+time series classifier.
 """
 
 __author__ = ["MatthewMiddlehurst"]
-__all__ = ["ProbabilityThresholdEarlyClassifier"]
+__all__ = ["TEASER"]
 
 import copy
 
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_predict
+from sklearn.svm import OneClassSVM
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.dictionary_based import WEASEL
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
 
-class ProbabilityThresholdEarlyClassifier(BaseClassifier):
-    """Probability Threshold Early Classifier.
+class TEASER(BaseClassifier):
+    """Two-tier Early and Accurate Series Classifier (TEASER).
 
-    An early classifier which uses a threshold of prediction probability to determine
-    whether an early prediction is safe or not.
+    An early classifier which uses one class SVM's trained on prediction probabilities
+    to determine whether an early prediction is safe or not.
 
     Overview:
         Build n classifiers, where n is the number of classification_points.
+        For each classifier, train a one class svm used to determine prediction safety
+        at that series length.
+        Tune the number of consecutive safe svm predictions required to consider the
+        prediction safe.
+
         While a prediction is still deemed unsafe:
             Make a prediction using the series length at classification point i.
             Decide whether the predcition is safe or not using decide_prediction_safety.
 
     Parameters
     ----------
-    probability_threshold : float, default=0.85
-        The class prediction probability required to deem a prediction as safe.
-    consecutive_predictions : int, default=1
-        The number of consecutive predictions for a class above the threshold required
-        to deem a prediction as safe.
     estimator: sktime classifier, default=None
         An sktime estimator to be built using the transformed data. Defaults to a
-        CanonicalIntervalForest.
+        WEASEL classifier.
     classification_points : List or None, default=None
         List of integer time series thresholds to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
@@ -65,19 +67,17 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.early_classification import (
-    ...     ProbabilityThresholdEarlyClassifier
-    ... )
+    >>> from sktime.classification.early_classification import TEASER
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProbabilityThresholdEarlyClassifier(
+    >>> clf = TEASER(
     ...     classification_points=[6, 16, 24],
     ...     estimator=TimeSeriesForestClassifier(n_estimators=10)
     ... )
     >>> clf.fit(X_train, y_train)
-    ProbabilityThresholdEarlyClassifier(...)
+    TEASER(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -89,15 +89,11 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
     def __init__(
         self,
-        probability_threshold=0.85,
-        consecutive_predictions=1,
         estimator=None,
         classification_points=None,
         n_jobs=1,
         random_state=None,
     ):
-        self.probability_threshold = probability_threshold
-        self.consecutive_predictions = consecutive_predictions
         self.estimator = estimator
         self.classification_points = classification_points
 
@@ -106,11 +102,15 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         self._estimators = []
         self._classification_points = []
+        self._svms = []
+        self._consecutive_predictions = 0
 
-        super(ProbabilityThresholdEarlyClassifier, self).__init__()
+        self._svm_gammas = [100, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1.5, 1]
+
+        super(TEASER, self).__init__()
 
     def _fit(self, X, y):
-        _, _, series_length = X.shape
+        n_instances, _, series_length = X.shape
 
         self._classification_points = (
             copy.deepcopy(self.classification_points)
@@ -133,7 +133,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         m = getattr(self.estimator, "n_jobs", None)
         threads = self._threads_to_use if m is None else 1
 
-        self._estimators = Parallel(n_jobs=threads)(
+        fit = Parallel(n_jobs=threads)(
             delayed(self._fit_estimator)(
                 X,
                 y,
@@ -141,6 +141,68 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             )
             for i in range(len(self._classification_points))
         )
+
+        self._estimators, self._svms, X_svm, train_preds = zip(*fit)
+
+        # tune consecutive predictions required to best harmonic mean
+        best_hm = -1
+        for g in range(2, min(6, len(self._classification_points))):
+            state_info = [(0, 0, 0) for _ in range(n_instances)]
+            finished = [False for _ in range(n_instances)]
+
+            for i in range(len(self._classification_points)):
+                if i == len(self._classification_points) - 1:
+                    decisions = [True for _ in range(n_instances)]
+                elif self._svms[i] is not None:
+                    decisions = self._svms[i].predict(X_svm[i]) == 1
+                else:
+                    decisions = [False for _ in range(n_instances)]
+
+                # record consecutive class decisions
+                state_info = [
+                    (
+                        i,
+                        state_info[n][1] + 1
+                        if decisions[n] and train_preds[i][n] == state_info[i][2]
+                        else 1
+                        if decisions[n]
+                        else 0,
+                        train_preds[i][n],
+                    )
+                    if not finished[n]
+                    else state_info[n]
+                    for n in range(n_instances)
+                ]
+
+                # safety decisions
+                finished = [
+                    True if state_info[n][1] >= g else False for n in range(n_instances)
+                ]
+
+            accuracy = (
+                np.sum(
+                    [
+                        1 if state_info[i][2] == self._class_dictionary[y[i]] else 0
+                        for i in range(n_instances)
+                    ]
+                )
+                / n_instances
+            )
+            earliness = (
+                1
+                - np.sum(
+                    [
+                        self.classification_points[state_info[i][0]] / series_length
+                        for i in range(n_instances)
+                    ]
+                )
+                / n_instances
+            )
+            hm = (2 * accuracy * earliness) / (accuracy + earliness)
+
+            if hm > best_hm:
+                best_hm = hm
+                self._consecutive_predictions = g
 
         return self
 
@@ -236,12 +298,22 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             for prob in X_probabilities
         ]
 
-        # make a decision based on probability threshold, record consecutive class
-        # decisions
-        decisions = [
-            X_probabilities[i][preds[i]] >= self.probability_threshold
-            for i in range(n_instances)
-        ]
+        # make a decision based on the one class svm prediction
+        if self._svms[idx] is not None:
+            X_svm = np.hstack((X_probabilities, np.ones((len(X), 1))))
+
+            for i in range(len(X)):
+                for n in range(self.n_classes_):
+                    if n != preds[i]:
+                        X_svm[i][self.n_classes_] = min(
+                            X_svm[i][self.n_classes_], X_svm[i][preds[i]] - X_svm[i][n]
+                        )
+
+            decisions = self._svms[idx].predict(X_svm) == 1
+        else:
+            decisions = [False for _ in range(n_instances)]
+
+        # record consecutive class decisions
         new_state_info = [
             (
                 # next classification point index
@@ -257,13 +329,10 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         ]
 
         # return the safety decisions and new state information for the instances
-        if self.consecutive_predictions < 2:
-            return decisions, new_state_info
-        else:
-            return [
-                True if new_state_info[i][1] >= self.consecutive_predictions else False
-                for i in range(n_instances)
-            ], new_state_info
+        return [
+            True if new_state_info[i][1] >= self._consecutive_predictions else False
+            for i in range(n_instances)
+        ], new_state_info
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
@@ -271,17 +340,70 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         rng = check_random_state(rs)
 
         estimator = _clone_estimator(
-            CanonicalIntervalForest() if self.estimator is None else self.estimator,
+            WEASEL() if self.estimator is None else self.estimator,
             rng,
         )
+
+        # fit estimator for this threshold
+        estimator.fit(X[:, :, : self._classification_points[i]], y)
 
         m = getattr(estimator, "n_jobs", None)
         if m is not None:
             estimator.n_jobs = self._threads_to_use
 
-        estimator.fit(X[:, :, : self._classification_points[i]], y)
+        # get train set probability estimates for this estimator
+        if callable(getattr(estimator, "_get_train_probs", None)):
+            train_probs = estimator._get_train_probs(X, y)
+        else:
+            cv_size = 5
+            _, counts = np.unique(y, return_counts=True)
+            min_class = np.min(counts)
+            if min_class < cv_size:
+                cv_size = min_class
 
-        return estimator
+            train_probs = cross_val_predict(
+                estimator, X, y=y, cv=cv_size, method="predict_proba"
+            )
+
+        rng = check_random_state(self.random_state)
+        train_preds = [
+            int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in train_probs
+        ]
+        train_probs = np.hstack((train_probs, np.ones((len(X), 1))))
+
+        # create train set for svm using train probs with the minimum difference to the
+        # predicted probability
+        X_svm = []
+        for i in range(len(X)):
+            for n in range(self.n_classes_):
+                if n != train_preds[i]:
+                    train_probs[i][self.n_classes_] = min(
+                        train_probs[i][self.n_classes_],
+                        train_probs[i][train_preds[i]] - train_probs[i][n],
+                    )
+
+            if train_preds[i] == self._class_dictionary[y[i]]:
+                X_svm.append(train_probs[i])
+
+        # tune the one class svm gamma
+        best_svm = None
+        best_acc = -1
+        if len(X_svm) > 1:
+            cv_size = min(len(X_svm), 10)
+
+            for gamma in self._svm_gammas:
+                svm = OneClassSVM(gamma=gamma)
+                threads = 1 if m is None else self._threads_to_use
+                svm_preds = cross_val_predict(svm, X_svm, cv=cv_size, n_jobs=threads)
+
+                acc = np.sum(svm_preds > 0)
+                if acc > best_acc:
+                    best_svm = svm
+                    best_acc = acc
+
+            best_svm.fit(X_svm)
+
+        return estimator, best_svm, train_probs, train_preds
 
     @classmethod
     def get_test_params(cls):
