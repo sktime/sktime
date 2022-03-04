@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn import metrics
 
-from sktime.clustering._k_medoids import TimeSeriesKMedoids
+from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_basic_motions
 
 expected_results = {
@@ -55,7 +55,7 @@ expected_score = {"medoids": 0.3153846153846154}
 
 train_expected_score = {"medoids": 0.4858974358974359}
 
-expected_inertia = {"medoids": 291267.56256896566}
+expected_inertia = {"medoids": 2387.3342740600688}
 
 expected_iters = {"medoids": 5}
 
@@ -111,7 +111,11 @@ def test_kmedoids():
     X_test, y_test = load_basic_motions(split="test")
 
     kmedoids = TimeSeriesKMedoids(
-        random_state=1, n_init=2, max_iter=5, init_algorithm="kmeans++", metric="dtw"
+        random_state=1,
+        n_init=2,
+        max_iter=5,
+        init_algorithm="kmeans++",
+        metric="euclidean",
     )
     train_predict = kmedoids.fit_predict(X_train)
     train_score = metrics.rand_score(y_train, train_predict)
@@ -126,7 +130,7 @@ def test_kmedoids():
     assert kmedoids.n_iter_ == expected_iters["medoids"]
     assert np.array_equal(kmedoids.labels_, expected_labels["medoids"])
     assert isinstance(kmedoids.cluster_centers_, np.ndarray)
-    assert proba.shape == (40, 6)
+    assert proba.shape == (40, 8)
 
     for val in proba:
         assert np.count_nonzero(val == 1.0) == 1

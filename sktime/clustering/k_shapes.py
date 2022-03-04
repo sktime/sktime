@@ -1,31 +1,29 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder", "TonyBagnall"]
-
-from typing import Callable, Union
+"""Time series kshapes."""
+from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering.metrics.medoids import medoids
-from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
-from sktime.distances import pairwise_distance
+from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tslearn")
+from tslearn.clustering import KShape  # noqa: E402
 
 
-class TimeSeriesKMedoids(TimeSeriesLloyds):
-    """Time series K-medoids implementation.
+class TimeSeriesKShapes(BaseClusterer):
+    """Kshape algorithm wrapper tslearns implementation.
 
     Parameters
     ----------
     n_clusters: int, defaults = 8
         The number of clusters to form as well as the number of
         centroids to generate.
-    init_algorithm: str, defaults = 'forgy'
+    init_algorithm: str or np.ndarray, defaults = 'random'
         Method for initializing cluster centers. Any of the following are valid:
-        ['kmeans++', 'random', 'forgy']
-    metric: str or Callable, defaults = 'dtw'
-        Distance metric to compute similarity between time series. Any of the following
-        are valid: ['dtw', 'euclidean', 'erp', 'edr', 'lcss', 'squared', 'ddtw', 'wdtw',
-        'wddtw']
+        ['random']. Or a np.ndarray of shape (n_clusters, ts_size, d) and gives the
+        initial centers.
     n_init: int, defaults = 10
         Number of times the k-means algorithm will be run with different
         centroid seeds. The final result will be the best output of n_init
@@ -33,7 +31,7 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
     max_iter: int, defaults = 30
         Maximum number of iterations of the k-means algorithm for a single
         run.
-    tol: float, defaults = 1e-6
+    tol: float, defaults = 1e-4
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
@@ -44,10 +42,6 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
 
     Attributes
     ----------
-    cluster_centers_: np.ndarray (3d array of shape (n_clusters, n_dimensions,
-        series_length))
-        Time series that represent each of the cluster centers. If the algorithm stops
-        before fully converging these will not be consistent with labels_.
     labels_: np.ndarray (1d array of shape (n_instance,))
         Labels that is the index each time series belongs to.
     inertia_: float
@@ -57,31 +51,37 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         Number of iterations run.
     """
 
+    _tags = {
+        "capability:multivariate": True,
+    }
+
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "dtw",
+        init_algorithm: Union[str, np.ndarray] = "random",
         n_init: int = 10,
         max_iter: int = 300,
-        tol: float = 1e-6,
+        tol: float = 1e-4,
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
     ):
-        self._precomputed_pairwise = None
+        self.init_algorithm = init_algorithm
+        self.n_init = n_init
+        self.max_iter = max_iter
+        self.tol = tol
+        self.verbose = verbose
+        self.random_state = random_state
 
-        super(TimeSeriesKMedoids, self).__init__(
-            n_clusters,
-            init_algorithm,
-            metric,
-            n_init,
-            max_iter,
-            tol,
-            verbose,
-            random_state,
-        )
+        self.cluster_centers_ = None
+        self.labels_ = None
+        self.inertia_ = None
+        self.n_iter_ = 0
 
-    def _fit(self, X: np.ndarray, y=None) -> np.ndarray:
+        self._tslearn_k_shapes = None
+
+        super(TimeSeriesKShapes, self).__init__(n_clusters=n_clusters)
+
+    def _fit(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
         """Fit time series clusterer to training data.
 
         Parameters
@@ -96,38 +96,40 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         self:
             Fitted estimator.
         """
-        self._check_params(X)
-        self._precomputed_pairwise = pairwise_distance(
-            X, metric=self.metric, **self._distance_params
-        )
-        return super()._fit(X, y)
+        if self._tslearn_k_shapes is None:
+            self._tslearn_k_shapes = KShape(
+                # n_clusters=self.n_clusters,
+                n_clusters=3,
+                max_iter=self.max_iter,
+                tol=self.tol,
+                random_state=self.random_state,
+                n_init=self.n_init,
+                verbose=self.verbose,
+                init=self.init_algorithm,
+            )
 
-    def _compute_new_cluster_centers(
-        self, X: np.ndarray, assignment_indexes: np.ndarray
-    ) -> np.ndarray:
-        """Compute new centers.
+        self._tslearn_k_shapes.fit(X)
+        self._cluster_centers = self._tslearn_k_shapes.cluster_centers_
+        self.labels_ = self._tslearn_k_shapes.labels_
+        self.inertia_ = self._tslearn_k_shapes.inertia_
+        self.n_iter_ = self._tslearn_k_shapes.n_iter_
+
+    def _predict(self, X: TimeSeriesInstances, y=None) -> np.ndarray:
+        """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
-        X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
+        X : np.ndarray (2d or 3d array of shape (n_instances, series_length) or shape
+            (n_instances, n_dimensions, series_length))
             Time series instances to predict their cluster indexes.
-        assignment_indexes: np.ndarray
-            Indexes that each time series in X belongs to.
+        y: ignored, exists for API consistency reasons.
 
         Returns
         -------
-        np.ndarray (3d of shape (n_clusters, n_dimensions, series_length)
-            New cluster center values.
+        np.ndarray (1d array of shape (n_instances,))
+            Index of the cluster each time series in X belongs to.
         """
-        new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
-        for i in range(self.n_clusters):
-            curr_indexes = np.where(assignment_indexes == i)[0]
-            distance_matrix = np.zeros((len(curr_indexes), len(curr_indexes)))
-            for j in range(len(curr_indexes)):
-                for k in range(len(curr_indexes)):
-                    distance_matrix[j, k] = self._precomputed_pairwise[j, k]
-            new_centers[i, :] = medoids(X[curr_indexes], self._precomputed_pairwise)
-        return new_centers
+        return self._tslearn_k_shapes.predict(X)
 
     @classmethod
     def get_test_params(cls):
@@ -142,10 +144,15 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "n_clusters": 8,
-            "metric": "euclidean",
+            "n_clusters": 2,
+            "init_algorithm": "random",
             "n_init": 1,
-            "max_iter": 10,
-            "random_state": 0,
+            "max_iter": 1,
+            "tol": 1e-4,
+            "verbose": False,
+            "random_state": 1,
         }
         return params
+
+    def _score(self, X, y=None):
+        return np.abs(self.inertia_)
