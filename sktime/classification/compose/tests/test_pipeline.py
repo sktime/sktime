@@ -5,8 +5,8 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.compose import ClassifierPipeline
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X

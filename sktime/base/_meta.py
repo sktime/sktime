@@ -268,7 +268,7 @@ def unflatten(obj, template):
         ls[i] += ls[i - 1]
     ls = [0] + ls
 
-    res = [unflatten(obj[ls[i]:ls[i+1]], template[i]) for i in range(len(ls) - 1)]
+    res = [unflatten(obj[ls[i] : ls[i + 1]], template[i]) for i in range(len(ls) - 1)]
 
     return list_or_tuple(res)
 

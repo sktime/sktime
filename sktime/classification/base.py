@@ -25,7 +25,6 @@ __all__ = [
 ]
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
-from msilib.schema import Class
 import time
 from abc import ABC, abstractmethod
 
