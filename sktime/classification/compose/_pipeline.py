@@ -259,8 +259,10 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         classif_keys = self.classifier.get_params(deep=True)
         trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
         classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
-        self._set_params("_transformers", **trafo_args)
-        self.classifier.set_params(**classif_args)
+        if len(classif_args) > 0:
+            self.classifier.set_params(**classif_args)
+        if len(trafo_args) > 0:
+            self._set_params("_transformers", **trafo_args)
         return self
 
     @classmethod
