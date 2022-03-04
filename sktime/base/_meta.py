@@ -231,7 +231,7 @@ def flatten(obj):
     Example
     -------
     >>> flatten([1, 2, [3, (4, 5)], 6])
-    >>> [1, 2, 3, 4, 5, 6]
+    [1, 2, 3, 4, 5, 6]
     """
     if not isinstance(obj, (list, tuple)):
         return [obj]
@@ -257,7 +257,7 @@ def unflatten(obj, template):
     Example
     -------
     >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
-    >>> [1, 2, [3, (4, 5)], 6]
+    [1, 2, [3, (4, 5)], 6]
     """
     if not isinstance(template, (list, tuple)):
         return obj[0]
