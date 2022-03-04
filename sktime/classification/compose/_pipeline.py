@@ -14,28 +14,29 @@ __all__ = ["ClassifierPipeline"]
 
 
 class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
-    """Pipeline of transformers compositor.
+    """Pipeline of transformers and a classifier.
 
-    The `TransformerPipeline` compositor allows to chain transformers.
-    The pipeline is constructed with a list of sktime transformers,
-        i.e., estimators following the BaseTransformer interface.
-    The list can be unnamed - a simple list of transformers -
+    The `ClassifierPipeline` compositor chains transformers and a single classifier.
+    The pipeline is constructed with a list of sktime transformers, plus a classifier,
+        i.e., estimators following the BaseTransformer resp BaseClassifier interface.
+    The transformer list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
-    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
+    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN` and a classifier `clf`,
         the pipeline behaves as follows:
-    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
-        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
-    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
+    `fit(X, y)` - changes styte by running `trafo1.fit_transform` on `X`,
+        them `trafo2.fit_transform` on the output of `trafo1.fit_transform`, etc
+        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`,
+        and then running `clf.fit` with `X` being the output of `trafo[N]`,
+        and `y` identical with the input to `self.fit`
+    `predict(X)` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
         with `trafo[i].transform` input = output of `trafo[i-1].transform`,
-        and returning the output of `trafoN.transform`
-    `inverse_transform` - result is of executing `trafo[i].inverse_transform`,
-        with `trafo[i].inverse_transform` input = output `trafo[i-1].inverse_transform`,
-        and returning the output of `trafoN.inverse_transform`
-    `update` - changes state by chaining `trafo1.update`, `trafo1.transform`,
-        `trafo2.update`, `trafo2.transform`, ..., `trafoN.update`,
-        where `trafo[i].update` and `trafo[i].transform` receive as input
-            the output of `trafo[i-1].transform`
+        then running `clf.predict` on the output of `trafoN.transform`,
+        and returning the output of `clf.predict`
+    `predict_proba(X)` - result is of executing `trafo1.transform`, `trafo2.transform`,
+        etc, with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+        then running `clf.predict_proba` on the output of `trafoN.transform`,
+        and returning the output of `clf.predict_proba`
 
     `get_params`, `set_params` uses `sklearn` compatible nesting interface
         if list is unnamed, names are generated as names of classes
@@ -43,22 +44,27 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
             where `i` is the total count of occurrence of a non-unique string
             inside the list of names leading up to it (inclusive)
 
-    `TransformerPipeline` can also be created by using the magic multiplication
-        on any transformer, i.e., any estimator inheriting from `BaseTransformer`
-            for instance, `my_trafo1 * my_trafo2 * my_trafo3`
+    `ClassifierPipeline` can also be created by using the magic multiplication
+        on any classifier, i.e., if `my_clf` inherits from `BaseClassifier`,
+            and `my_trafo1`, `my_trafo2` inherit from `BaseTransformer`, then,
+            for instance, `my_trafo1 * my_trafo2 * my_clf`
             will result in the same object as  obtained from the constructor
-            `TransformerPipeline([my_trafo1, my_trafo2, my_trafo3])`
+            `ClassifierPipeline(classifier=my_clf, transformers=[my_trafo1, my_trafo2])`
         magic multiplication can also be used with (str, transformer) pairs,
             as long as one element in the chain is a transformer
 
     Parameters
     ----------
+    classifier : sktime classifier, i.e., estimator inheriting from BaseClassifier
+        this is a "blueprint" classifier, state does not change when `fit` is called
     transformers : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
 
     Attributes
     ----------
+    classifier_ : sktime classifier, clone of classifier in `classifier`
+        this clone is fitted in the pipeline when `fit` is called
     transformers_ : list of tuples (str, transformer) of sktime transformers
         clones of transformers in `transformers` which are fitted in the pipeline
         is always in (str, transformer) format, even if transformers is just a list
@@ -67,9 +73,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     """
 
     _tags = {
-        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
-        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
-        # types are allowable, see datatypes/panel/_registry.py for options.
+        "X_inner_mtype": "pd-multiindex",  # which type do _fit/_predict accept
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -91,7 +95,10 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
         super(ClassifierPipeline, self).__init__()
 
-        # classifier_tags_to_clone = []
+        # tag cloning is disabled since classifier/transformer tags are not harmonized
+        # todo: clean this up and assign the "right" tags
+        #   for now, tags are set "conservatively"
+        # classifier_tags_to_clone = ["X_inner_mtype"]
         # self.clone_tags(classifier, "scitype:transform-output")
 
     @property
@@ -103,7 +110,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         self.transformers_._transformers = value
 
     def __rmul__(self, other):
-        """Magic * method, return (left) concatenated TransformerPipeline.
+        """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
         Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
 
@@ -114,13 +121,15 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
         Returns
         -------
-        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
         """
         if isinstance(other, BaseTransformer):
+            # use the transformers dunder to get a TransformerPipeline
+            trafo_pipeline = other * self.transformers_
+            # then stick the expanded pipeline in a ClassifierPipeline
             new_pipeline = ClassifierPipeline(
                 classifier=self.classifier,
-                transformers=other * self.transformers,
+                transformers=trafo_pipeline.transformers,
             )
             return new_pipeline
         else:
@@ -233,9 +242,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         """
         params = dict()
         trafo_params = self._get_params("_transformers", deep=deep)
-        classif_params = self.classifier.get_params(deep=deep)
         params.update(trafo_params)
-        params.update(classif_params)
 
         return params
 
