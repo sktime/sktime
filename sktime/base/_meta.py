@@ -81,6 +81,11 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
                 "{0!r}".format(invalid_names)
             )
 
+    def _subset_dict_keys(self, dict_to_subset, keys):
+        """Subset dictionary d to keys in keys."""
+        dict((k, dict_to_subset[k]) for k in keys)
+        return self
+
     def _get_estimator_list(self, estimators):
         """Return list of estimators, from a list or tuple.
 
