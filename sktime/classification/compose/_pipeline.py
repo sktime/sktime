@@ -5,7 +5,7 @@
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-# from sktime.classification.base import BaseClassifier
+from sktime.classification.base import BaseClassifier
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
 
@@ -13,7 +13,7 @@ __author__ = ["fkiraly"]
 __all__ = ["ClassifierPipeline"]
 
 
-class ClassifierPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     """Pipeline of transformers compositor.
 
     The `TransformerPipeline` compositor allows to chain transformers.
@@ -100,7 +100,7 @@ class ClassifierPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers_.transformers = value
+        self.transformers_._transformers = value
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline.
