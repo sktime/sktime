@@ -197,9 +197,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         y : predictions of labels for X, np.ndarray
         """
         Xt = self.transformers_.transform(X)
-        self.classifier_.predict(Xt)
-
-        return self
+        return self.classifier_.predict(Xt)
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
@@ -217,9 +215,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         y : predictions of probabilities for class values of X, np.ndarray
         """
         Xt = self.transformers_.transform(X)
-        self.classifier_.predict_proba(Xt)
-
-        return self
+        return self.classifier_.predict_proba(Xt)
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `transformers`.
