@@ -19,7 +19,8 @@ class Prophet(_ProphetAdapter):
 
     Parameters
     ----------
-    freq: String of DatetimeIndex frequency. Refer [2]_ for possible values:
+    freq: str, default=None
+        A DatetimeIndex frequency. Refer to reference [2] for possible values
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
