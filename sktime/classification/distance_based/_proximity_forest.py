@@ -1220,7 +1220,7 @@ class ProximityTree(BaseClassifier):
         """
         X = _negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
-        distribution = np.full((X.shape[0], self.n_classes_), np.finfo(float).eps)
+        distribution = np.full((X.shape[0], self.n_classes_), 0.0001)
         for index in range(len(self.branches)):
             indices = np.argwhere(closest_exemplar_indices == index)
             if indices.shape[0] > 0:
