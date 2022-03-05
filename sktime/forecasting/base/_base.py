@@ -479,6 +479,8 @@ class BaseForecaster(BaseEstimator):
             Column names are exactly those of `y` passed in `fit`/`update`.
                 For nameless formats, column index will be a RangeIndex.
             Row index is fh. Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
