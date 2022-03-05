@@ -51,7 +51,7 @@ jobs:
         run: echo "WHEELNAME=$(ls ./wheelhouse/sktime-*none-any.whl)" >> $GITHUB_ENV
 
       - name: Install wheel and extras
-        run: python -m pip install "${{ env.WHEELNAME }}[all_extras,dev,dl]"
+        run: python -m pip install "${{ env.WHEELNAME }}[all_extras,dev]"
 
       - name: Run tests
         run: make test
