@@ -5,6 +5,8 @@ from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
 
 from sktime.datasets import load_gunpoint
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sktime.transformations.panel.rocket import MultiRocket
 
 
@@ -25,7 +27,7 @@ def test_multirocket_on_gunpoint():
     np.testing.assert_equal(X_training_transform.shape, (len(X_training), 49_728))
 
     # fit classifier
-    classifier = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+    classifier = make_pipeline(StandardScaler(with_mean=False), RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)))
     classifier.fit(X_training_transform, Y_training)
 
     # load test data
