@@ -269,7 +269,7 @@ class BaseClusterer(BaseEstimator, ABC):
             if the capabilities in self._tags do not handle the data.
         """
         allow_multivariate = self.get_tag("capability:multivariate")
-        allow_missing = self.get_tag("handles-missing-data")
+        allow_missing = self.get_tag("capability:missing_values")
         allow_unequal = self.get_tag("capability:unequal_length")
         if missing and not allow_missing:
             raise ValueError(
