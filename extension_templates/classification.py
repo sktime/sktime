@@ -70,7 +70,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        "capability:missing_values": False,
+        "handles-missing-data": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,

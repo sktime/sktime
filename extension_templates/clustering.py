@@ -68,7 +68,7 @@ class MyClusterer(BaseClusterer):
         # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        "capability:missing_values": False,
+        "handles-missing-data": False,
         "capability:multithreading": False,
     }
 
