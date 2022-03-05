@@ -1241,6 +1241,23 @@ class ProximityTree(BaseClassifier):
         normalize(distribution, copy=False, norm="l1")
         return distribution
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "random_state": 0,
+        }
+        return params
+
 
 class ProximityForest(BaseClassifier):
     """Proximity Forest class.
