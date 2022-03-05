@@ -33,7 +33,7 @@ class BaseClusterer(BaseEstimator, ABC):
         # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:multithreading": False,
     }
 

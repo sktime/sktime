@@ -57,7 +57,7 @@ class BaseClassifier(BaseEstimator, ABC):
         #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:early_prediction": False,
