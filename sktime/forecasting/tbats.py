@@ -122,7 +122,6 @@ class TBATS(_TbatsAdapter):
         from tbats import TBATS as _TBATS
 
         self._ModelClass = _TBATS
-        super(TBATS, self).__init__()
 
     @classmethod
     def get_test_params(cls):

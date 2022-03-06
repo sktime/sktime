@@ -120,7 +120,6 @@ class BATS(_TbatsAdapter):
         from tbats import BATS as _BATS
 
         self._ModelClass = _BATS
-        super(BATS, self).__init__()
 
     @classmethod
     def get_test_params(cls):
