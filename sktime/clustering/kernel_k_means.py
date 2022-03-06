@@ -9,7 +9,6 @@ from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tslearn", severity="warning")
-from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans  # noqa: E402
 
 
 class TimeSeriesKernelKMeans(BaseClusterer):
@@ -119,6 +118,8 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         self:
             Fitted estimator.
         """
+        from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans
+
         verbose = 0
         if self.verbose is True:
             verbose = 1

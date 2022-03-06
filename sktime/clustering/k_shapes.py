@@ -9,7 +9,6 @@ from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tslearn", severity="warning")
-from tslearn.clustering import KShape  # noqa: E402
 
 
 class TimeSeriesKShapes(BaseClusterer):
@@ -98,6 +97,8 @@ class TimeSeriesKShapes(BaseClusterer):
         self:
             Fitted estimator.
         """
+        from tslearn.clustering import KShape
+
         if self._tslearn_k_shapes is None:
             self._tslearn_k_shapes = KShape(
                 # n_clusters=self.n_clusters,
