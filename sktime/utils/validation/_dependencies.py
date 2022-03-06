@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from importlib import import_module
+"""Utility to check soft dependency imports, and raise warnings or errors."""
 import warnings
+from importlib import import_module
 
 
 def _check_soft_dependencies(*packages, severity="error"):
