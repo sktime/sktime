@@ -3,10 +3,10 @@
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
-
-from sktime.datasets import load_gunpoint
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+
+from sktime.datasets import load_gunpoint
 from sktime.transformations.panel.rocket import MiniRocket
 
 
@@ -27,7 +27,10 @@ def test_minirocket_on_gunpoint():
     np.testing.assert_equal(X_training_transform.shape, (len(X_training), 9_996))
 
     # fit classifier
-    classifier = make_pipeline(StandardScaler(with_mean=False), RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)))
+    classifier = make_pipeline(
+        StandardScaler(with_mean=False),
+        RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
+    )
     classifier.fit(X_training_transform, Y_training)
 
     # load test data
