@@ -58,6 +58,14 @@ class _TbatsAdapter(BaseForecaster):
 
         super(_TbatsAdapter, self).__init__()
 
+    def _create_model_class(self):
+        """Instantiate (T)BATS model.
+
+        This method should write a (T)BATS model to self._ModelClass,
+            and should be overridden by concrete classes.
+        """
+        raise NotImplementedError
+
     def _instantiate_model(self):
         n_jobs = check_n_jobs(self.n_jobs)
         sp = check_sp(self.sp, enforce_list=True)
@@ -91,6 +99,7 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._create_model_class()
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
         self._yname = y.name

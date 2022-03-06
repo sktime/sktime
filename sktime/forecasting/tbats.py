@@ -115,11 +115,14 @@ class TBATS(_TbatsAdapter):
 
     _fitted_param_names = "aic"
 
-    # both bats and tbats inherit the same interface from the base class and only
-    # instantiate a different model class internally
-    from tbats import TBATS as _TBATS
+    def _create_model_class(self):
+        """Create model class."""
+        # both bats and tbats inherit the same interface from the base class and only
+        # instantiate a different model class internally
+        from tbats import TBATS as _TBATS
 
-    _ModelClass = _TBATS
+        self._ModelClass = _TBATS
+        super(TBATS, self).__init__()
 
     @classmethod
     def get_test_params(cls):
