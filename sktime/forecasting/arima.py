@@ -574,6 +574,9 @@ class ARIMA(_PmdArimaAdapter):
         with_intercept=True,
         **sarimax_kwargs
     ):
+
+        _check_soft_dependencies("pmdarima", severity="error")
+
         self.order = order
         self.seasonal_order = seasonal_order
         self.start_params = start_params
