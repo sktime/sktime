@@ -10,7 +10,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("hcrystalball")
+_check_soft_dependencies("hcrystalball", severity="warning")
 
 
 def _check_fh(fh, cutoff):
@@ -113,6 +113,7 @@ class HCrystalBallForecaster(BaseForecaster):
     }
 
     def __init__(self, model):
+        _check_soft_dependencies("hcrystalball", severity="error")
         self.model = model
         super(HCrystalBallForecaster, self).__init__()
 

@@ -8,7 +8,7 @@ from numpy.random import RandomState
 from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tslearn")
+_check_soft_dependencies("tslearn", severity="warning")
 from tslearn.clustering import KShape  # noqa: E402
 
 
@@ -65,6 +65,8 @@ class TimeSeriesKShapes(BaseClusterer):
         verbose: bool = False,
         random_state: Union[int, RandomState] = None,
     ):
+        _check_soft_dependencies("tslearn", severity="error")
+
         self.init_algorithm = init_algorithm
         self.n_init = n_init
         self.max_iter = max_iter

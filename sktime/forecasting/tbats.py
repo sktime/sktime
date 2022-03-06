@@ -15,7 +15,7 @@ __all__ = ["TBATS"]
 from sktime.forecasting.base.adapters import _TbatsAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tbats")
+_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):

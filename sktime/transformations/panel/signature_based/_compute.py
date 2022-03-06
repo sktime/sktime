@@ -10,7 +10,7 @@ from sktime.transformations.panel.signature_based._rescaling import (
 from sktime.transformations.panel.signature_based._window import _window_getter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("esig")
+_check_soft_dependencies("esig", severity="warning")
 import esig  # noqa: E402
 
 
@@ -37,6 +37,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         sig_depth=None,
         rescaling=None,
     ):
+        _check_soft_dependencies("esig", severity="error")
         super().__init__()
         self.window_name = window_name
         self.window_depth = window_depth

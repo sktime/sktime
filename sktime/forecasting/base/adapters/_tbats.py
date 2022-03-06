@@ -12,6 +12,7 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -39,6 +40,7 @@ class _TbatsAdapter(BaseForecaster):
         multiprocessing_start_method="spawn",
         context=None,
     ):
+        _check_soft_dependencies("tbats", severity="error")
 
         self.use_box_cox = use_box_cox
         self.box_cox_bounds = box_cox_bounds

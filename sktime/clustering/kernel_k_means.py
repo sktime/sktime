@@ -8,7 +8,7 @@ from numpy.random import RandomState
 from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tslearn")
+_check_soft_dependencies("tslearn", severity="warning")
 from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans  # noqa: E402
 
 
@@ -84,6 +84,8 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         n_jobs: Union[int, None] = None,
         random_state: Union[int, RandomState] = None,
     ):
+        _check_soft_dependencies("tslearn", severity="error")
+
         self.kernel = kernel
         self.n_init = n_init
         self.max_iter = max_iter
