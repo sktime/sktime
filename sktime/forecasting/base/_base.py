@@ -40,15 +40,30 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from sklearn import clone
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import convert_to, get_cutoff, mtype
+from sktime.datatypes import (
+    VectorizedDF,
+    check_is_scitype,
+    convert_to,
+    get_cutoff,
+    mtype_to_scitype,
+)
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
-from sktime.utils.validation.series import check_equal_time_index, check_series
+from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_ALPHA = 0.05
+
+
+def _coerce_to_list(obj):
+    """Return [obj] if obj is not a list, otherwise obj."""
+    if not isinstance(obj, list):
+        return [obj]
+    else:
+        return obj
 
 
 class BaseForecaster(BaseEstimator):
@@ -121,6 +136,9 @@ class BaseForecaster(BaseEstimator):
         -------
         self : Reference to self.
         """
+        # check y is not None
+        assert y is not None, "y cannot be None, but found None"
+
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -135,8 +153,14 @@ class BaseForecaster(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-
-        self._fit(y=y_inner, X=X_inner, fh=fh)
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not vectorization_needed:
+            self._fit(y=y_inner, X=X_inner, fh=fh)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         # this should happen last
         self._is_fitted = True
@@ -202,13 +226,17 @@ class BaseForecaster(BaseEstimator):
 
         # this is how it is supposed to be after the refactor is complete and effective
         if not return_pred_int:
-            y_pred = self._predict(fh=fh, X=X_inner)
+            # we call the ordinary _predict if no looping/vectorization needed
+            if not self._is_vectorized:
+                y_pred = self._predict(fh=fh, X=X_inner)
+            else:
+                # otherwise we call the vectorized version of predict
+                self._vectorize("predict", X=X_inner, fh=fh)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
                 y_pred,
                 self._y_mtype_last_seen,
-                as_scitype="Series",
                 store=self._converter_store_y,
                 store_behaviour="freeze",
             )
@@ -259,7 +287,6 @@ class BaseForecaster(BaseEstimator):
             y_out = convert_to(
                 y_pred,
                 self._y_mtype_last_seen,
-                as_scitype="Series",
                 store=self._converter_store_y,
                 store_behaviour="freeze",
             )
@@ -322,7 +349,15 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
-        self._fit(y=y_inner, X=X_inner, fh=fh)
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not vectorization_needed:
+            self._fit(y=y_inner, X=X_inner, fh=fh)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+
         self._is_fitted = True
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
@@ -828,12 +863,21 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        y_inner : Series compatible with self.get_tag("y_inner_mtype") format
-            converted/coerced version of y, mtype determined by "y_inner_mtype" tag
-            None if y was None
-        X_inner : Series compatible with self.get_tag("X_inner_mtype") format
-            converted/coerced version of y, mtype determined by "X_inner_mtype" tag
-            None if X was None
+        y_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("y_inner_mtype") format
+            Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
+                converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            Case 2: self.get_tag("y_inner_mtype") does not support scitype of y, then
+                VectorizedDF of y, iterated as the most complex supported scitype
+                    (complexity order: Hierarchical > Panel > Series)
+            Case 3: None if y was None
+        X_inner :  Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("X_inner_mtype") format
+            Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
+                converted/coerced version of X, mtype determined by "X_inner_mtype" tag
+            Case 2: self.get_tag("X_inner_mtype") does not support scitype of X, then
+                VectorizedDF of X, iterated as the most complex supported scitype
+            Case 3: None if X was None
 
         Raises
         ------
@@ -850,58 +894,139 @@ class BaseForecaster(BaseEstimator):
         _y_mtype_last_seen : str, mtype of y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
-        # input checks and minor coercions on X, y
-        ###########################################
+        if X is None and y is None:
+            return None, None
 
-        enforce_univariate = self.get_tag("scitype:y") == "univariate"
-        enforce_multivariate = self.get_tag("scitype:y") == "multivariate"
-        enforce_index_type = self.get_tag("enforce_index_type")
+        def _most_complex_scitype(scitypes):
+            """Return most complex scitype in a list of str."""
+            if "Hierarchical" in scitypes:
+                return "Hierarchical"
+            elif "Panel" in scitypes:
+                return "Panel"
+            elif "Series" in scitypes:
+                return "Series"
+            else:
+                raise ValueError("no series scitypes supported, bug in estimator")
+
+        # retrieve supported mtypes
+        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
+        y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
+        X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
+
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
         # checking y
         if y is not None:
-            check_y_args = {
-                "enforce_univariate": enforce_univariate,
-                "enforce_multivariate": enforce_multivariate,
-                "enforce_index_type": enforce_index_type,
-                "allow_None": False,
-                "allow_empty": True,
-            }
+            y_valid, _, y_metadata = check_is_scitype(
+                y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+            )
+            msg = (
+                "y must be in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not y_valid:
+                raise TypeError(msg)
 
-            y = check_series(y, **check_y_args, var_name="y")
+            y_scitype = y_metadata["scitype"]
+            self._y_mtype_last_seen = y_metadata["mtype"]
 
-            self._y_mtype_last_seen = mtype(y, as_scitype="Series")
+            requires_vectorization = y_scitype not in y_inner_scitype
+
+            if (
+                self.get_tag("scitype:y") == "univariate"
+                and not y_metadata["is_univariate"]
+            ):
+                raise ValueError(
+                    "y must be univariate, but found more than one variable"
+                )
+            if (
+                self.get_tag("scitype:y") == "multivariate"
+                and y_metadata["is_univariate"]
+            ):
+                raise ValueError(
+                    "y must have two or more variables, but found only one"
+                )
+        else:
+            # y_scitype is used below - set to None if y is None
+            y_scitype = None
         # end checking y
 
         # checking X
         if X is not None:
-            X = check_series(X, enforce_index_type=enforce_index_type, var_name="X")
+            X_valid, _, X_metadata = check_is_scitype(
+                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+            )
+
+            msg = (
+                "X must be either None, or in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not X_valid:
+                raise TypeError(msg)
+
+            X_scitype = X_metadata["scitype"]
+            requires_vectorization = X_scitype not in X_inner_scitype
+        else:
+            # X_scitype is used below - set to None if X is None
+            X_scitype = None
+        # end checking X
+
+        # compatibility checks between X and y
+        if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
                 check_equal_time_index(X, y, mode="contains")
-        # end checking X
+
+            if y_scitype != X_scitype:
+                raise TypeError("X and y must have the same scitype")
+        # end compatibility checking X and y
+
+        # todo: add tests that :
+        #   y_inner_scitype are same as X_inner_scitype
+        #   y_inner_scitype always includes "less index" scitypes
 
         # convert X & y to supported inner type, if necessary
         #####################################################
 
-        # retrieve supported mtypes
-
         # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
-        y_inner_mtype = self.get_tag("y_inner_mtype")
-        y_inner = convert_to(
-            y,
-            to_type=y_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-            store=self._converter_store_y,
-            store_behaviour="reset",
-        )
+        #  if vectorization is required, we wrap in Vect
 
-        X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype="Series",  # we are dealing with series
-        )
+        if not requires_vectorization:
+            # converts y, skips conversion if already of right type
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype=y_scitype,  # we are dealing with series
+                store=self._converter_store_y,
+                store_behaviour="reset",
+            )
+
+            # converts X, converts None to None if X is None
+            X_inner = convert_to(
+                X,
+                to_type=X_inner_mtype,
+                as_scitype=X_scitype,  # we are dealing with series
+            )
+        else:
+            iterate_as = _most_complex_scitype(y_inner_scitype)
+            if y is not None:
+                y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+            else:
+                y_inner = None
+            if X is not None:
+                X_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
+            else:
+                X_inner = None
 
         return X_inner, y_inner
 
@@ -940,13 +1065,31 @@ class BaseForecaster(BaseEstimator):
         """
         # we only need to modify _y if y is not None
         if y is not None:
+            # we want to ensure that y is either numpy (1D, 2D, 3D)
+            # or in one of the long pandas formats
+            y = convert_to(
+                y,
+                to_type=[
+                    "np.ndarray",
+                    "numpy3D",
+                    "pd.Series",
+                    "pd.DataFrame",
+                    "pd-multiindex",
+                    "pd_multiindex_hier",
+                ],
+            )
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
             # otherwise, update _y with the new rows in y
             #  if y is np.ndarray, we assume all rows are new
             elif isinstance(y, np.ndarray):
-                self._y = np.concatenate(self._y, y)
+                # if 1D or 2D, axis 0 is "time"
+                if y.ndim in [1, 2]:
+                    self._y = np.concatenate(self._y, y, axis=0)
+                # if 3D, axis 2 is "time"
+                elif y.ndim == 3:
+                    self._y = np.concatenate(self._y, y, axis=2)
             #  if y is pandas, we use combine_first to update
             elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
                 self._y = y.combine_first(self._y)
@@ -956,15 +1099,32 @@ class BaseForecaster(BaseEstimator):
 
         # we only need to modify _X if X is not None
         if X is not None:
+            # we want to ensure that X is either numpy (1D, 2D, 3D)
+            # or in one of the long pandas formats
+            X = convert_to(
+                X,
+                to_type=[
+                    "np.ndarray",
+                    "numpy3D",
+                    "pd.DataFrame",
+                    "pd-multiindex",
+                    "pd_multiindex_hier",
+                ],
+            )
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
             # otherwise, update _X with the new rows in X
             #  if X is np.ndarray, we assume all rows are new
             elif isinstance(X, np.ndarray):
-                self._X = np.concatenate(self._X, X)
+                # if 1D or 2D, axis 0 is "time"
+                if X.ndim in [1, 2]:
+                    self._X = np.concatenate(self._X, X, axis=0)
+                # if 3D, axis 2 is "time"
+                elif X.ndim == 3:
+                    self._X = np.concatenate(self._X, X, axis=2)
             #  if X is pandas, we use combine_first to update
-            elif isinstance(X, (pd.Series, pd.DataFrame)) and len(X) > 0:
+            elif isinstance(X, pd.DataFrame) and len(X) > 0:
                 self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
@@ -1026,7 +1186,7 @@ class BaseForecaster(BaseEstimator):
                 pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
-        Set self._cutoff to last index seen in `y`.
+        Set self._cutoff to latest index seen in `y`.
         """
         cutoff_idx = get_cutoff(y, self.cutoff)
         self._cutoff = cutoff_idx
@@ -1154,6 +1314,45 @@ class BaseForecaster(BaseEstimator):
             # if existing one and new match, ignore new one
 
         return self._fh
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseForecaster.
+
+        Uses forecasters_ attribute to store one forecaster per loop index.
+        """
+        PREDICT_METHODS = ["predict", "predict_quantiles"]
+
+        if methodname == "fit":
+            # create container for clones
+            y = kwargs.pop("y")
+            X = kwargs.pop("X", None)
+
+            idx = y.get_iter_indices()
+            ys = y.as_list()
+            if X is None:
+                Xs = [None] * len(ys)
+            else:
+                Xs = X.as_list()
+
+            self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
+            for i in range(len(idx)):
+                self.forecasters_.iloc[i, 0] = clone(self)
+                self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
+
+            return self
+        elif methodname in PREDICT_METHODS:
+            n = len(self.forecasters_.index)
+            X = kwargs.pop("X", None)
+            if X is None:
+                Xs = [None] * n
+            else:
+                Xs = X.as_list()
+            y_preds = []
+            for i in range(n):
+                method = getattr(self.forecasters_.iloc[i, 0], methodname)
+                y_preds += [method(X=Xs[i], **kwargs)]
+            y_pred = self._ys.reconstruct(y_preds, overwrite_index=False)
+            return y_pred
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
