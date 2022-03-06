@@ -40,7 +40,7 @@ class _TbatsAdapter(BaseForecaster):
         multiprocessing_start_method="spawn",
         context=None,
     ):
-        _check_soft_dependencies("tbats", severity="error")
+        _check_soft_dependencies("tbats", severity="error", object=self)
 
         self.use_box_cox = use_box_cox
         self.box_cox_bounds = box_cox_bounds

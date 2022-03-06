@@ -37,7 +37,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         sig_depth=None,
         rescaling=None,
     ):
-        _check_soft_dependencies("esig", severity="error")
+        _check_soft_dependencies("esig", severity="error", object=self)
         super().__init__()
         self.window_name = window_name
         self.window_depth = window_depth

@@ -56,7 +56,7 @@ class MatrixProfileTransformer(BaseTransformer):
     }
 
     def __init__(self, window_length=3):
-        _check_soft_dependencies("stumpy", severity="error")
+        _check_soft_dependencies("stumpy", severity="error", object=self)
         self.window_length = window_length
         super(MatrixProfileTransformer, self).__init__()
 

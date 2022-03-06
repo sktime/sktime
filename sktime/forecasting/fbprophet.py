@@ -143,7 +143,7 @@ class Prophet(_ProphetAdapter):
         verbose=0,
         interval_width=0,
     ):
-        _check_soft_dependencies("prophet", severity="error")
+        _check_soft_dependencies("prophet", severity="error", object=self)
 
         self.freq = freq
         self.add_seasonality = add_seasonality

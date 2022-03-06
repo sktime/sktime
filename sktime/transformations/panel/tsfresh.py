@@ -43,7 +43,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         profiling_sorting=None,
         distributor=None,
     ):
-        _check_soft_dependencies("tsfresh", severity="error")
+        _check_soft_dependencies("tsfresh", severity="error", object=self)
 
         self.default_fc_parameters = default_fc_parameters
         self.kind_to_fc_parameters = kind_to_fc_parameters

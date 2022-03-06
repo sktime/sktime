@@ -66,7 +66,7 @@ class AlignerDTW(BaseAligner):
         variable_to_align=None,
     ):
         """Construct instance."""
-        _check_soft_dependencies("dtw", severity="error")
+        _check_soft_dependencies("dtw", severity="error", object=self)
 
         super(AlignerDTW, self).__init__()
 

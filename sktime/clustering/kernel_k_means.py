@@ -84,7 +84,7 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         n_jobs: Union[int, None] = None,
         random_state: Union[int, RandomState] = None,
     ):
-        _check_soft_dependencies("tslearn", severity="error")
+        _check_soft_dependencies("tslearn", severity="error", object=self)
 
         self.kernel = kernel
         self.n_init = n_init

@@ -267,7 +267,7 @@ class AutoARIMA(_PmdArimaAdapter):
         **kwargs
     ):
 
-        _check_soft_dependencies("pmdarima", severity="error")
+        _check_soft_dependencies("pmdarima", severity="error", object=self)
 
         self.start_p = start_p
         self.d = d
@@ -575,7 +575,7 @@ class ARIMA(_PmdArimaAdapter):
         **sarimax_kwargs
     ):
 
-        _check_soft_dependencies("pmdarima", severity="error")
+        _check_soft_dependencies("pmdarima", severity="error", object=self)
 
         self.order = order
         self.seasonal_order = seasonal_order

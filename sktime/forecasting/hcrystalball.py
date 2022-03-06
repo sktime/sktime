@@ -113,7 +113,7 @@ class HCrystalBallForecaster(BaseForecaster):
     }
 
     def __init__(self, model):
-        _check_soft_dependencies("hcrystalball", severity="error")
+        _check_soft_dependencies("hcrystalball", severity="error", object=self)
         self.model = model
         super(HCrystalBallForecaster, self).__init__()
 
