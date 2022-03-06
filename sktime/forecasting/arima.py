@@ -9,8 +9,6 @@ __all__ = ["AutoARIMA", "ARIMA"]
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("pmdarima")
-
 
 class AutoARIMA(_PmdArimaAdapter):
     """Automatically discover the optimal order for an ARIMA model.
@@ -266,6 +264,8 @@ class AutoARIMA(_PmdArimaAdapter):
         with_intercept=True,
         **kwargs
     ):
+
+        _check_soft_dependencies("pmdarima")
 
         self.start_p = start_p
         self.d = d
