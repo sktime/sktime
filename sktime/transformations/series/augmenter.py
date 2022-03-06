@@ -36,7 +36,12 @@ class _AugmenterTags:
 
 
 class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
-    """Augmenter adding Gaussian (i.e. white) noise to the time series.
+    r"""Augmenter adding Gaussian (i.e. white) noise to the time series.
+
+    If given time series $X={x_1, x_2, ... , x_n}$, then
+    $X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}$ where $e$ is a value randomly drawn from
+    $\frac{1}{\sigma\sqrt{2 \pi}}e^{-\frac{1}{2}(\frac{x}{\sigma})}$,
+    with $\sigma$ as the ``scale`` Factor.
 
     Parameters
     ----------
@@ -76,7 +81,10 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
-    """Augmenter reversing the time series.
+    r"""Augmenter reversing the time series.
+
+    If given time series $X={x_1, x_2, ... , x_n}$, then
+    $X_t={x_n, x_{n-1}, ..., x_2, x_1}.
 
     Example
     -------
@@ -100,7 +108,10 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class InvertAugmenter(_AugmenterTags, BaseTransformer):
-    """Augmenter inverting the time series by multiplying it by -1).
+    r"""Augmenter inverting the time series by multiplying it by -1.
+
+    If given time series $X={x_1, x_2, ... , x_n}$, then
+    $X_t={-x_1, -x_2, ... , -x_n}.
 
     Example
     -------
@@ -124,7 +135,10 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
-    """Draw random samples form time series.
+    r"""Draw random samples form time series.
+
+    If given time series $X \in \mathbb{R}^n$ then $X_t \subseteq X$
+    randomly drawn from $X$ (with or without replacement).
 
     Parameters
     ----------
