@@ -33,11 +33,11 @@ def test_dunder_mul():
     assert isinstance(t1234, TransformerPipeline)
     assert isinstance(t1234_2, TransformerPipeline)
 
-    assert [x.power for x in t12.transformers] == [2, 5]
-    assert [x.power for x in t123.transformers] == [2, 5, 0.1]
-    assert [x.power for x in t312.transformers] == [0.1, 2, 5]
-    assert [x.power for x in t1234.transformers] == [2, 5, 0.1, 1]
-    assert [x.power for x in t1234_2.transformers] == [2, 5, 0.1, 1]
+    assert [x.power for x in t12.steps] == [2, 5]
+    assert [x.power for x in t123.steps] == [2, 5, 0.1]
+    assert [x.power for x in t312.steps] == [0.1, 2, 5]
+    assert [x.power for x in t1234.steps] == [2, 5, 0.1, 1]
+    assert [x.power for x in t1234_2.steps] == [2, 5, 0.1, 1]
 
     _assert_array_almost_equal(X, t123.fit_transform(X))
     _assert_array_almost_equal(X, t312.fit_transform(X))
