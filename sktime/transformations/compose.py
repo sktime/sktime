@@ -51,32 +51,32 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Parameters
     ----------
-    transformers : list of sktime transformers, or
+    steps : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
 
     Attributes
     ----------
-    transformers_ : list of tuples (str, transformer) of sktime transformers
-        clones of transformers in `transformers` which are fitted in the pipeline
-        is always in (str, transformer) format, even if transformers is just a list
-        strings not passed in transformers are unique generated strings
-        i-th transformer in `transformers_` is clone of i-th in `transformers`
+    steps_ : list of tuples (str, transformer) of sktime transformers
+        clones of transformers in `steps` which are fitted in the pipeline
+        is always in (str, transformer) format, even if `steps` is just a list
+        strings not passed in `steps` are replaced by unique generated strings
+        i-th transformer in `steps_` is clone of i-th in `steps`
     """
 
-    _required_parameters = ["transformers"]
+    _required_parameters = ["steps"]
 
     # no default tag values - these are set dynamically below
 
-    def __init__(self, transformers):
+    def __init__(self, steps):
 
-        self.transformers = transformers
-        self.transformers_ = self._check_estimators(transformers)
+        self.steps = steps
+        self.steps_ = self._check_estimators(steps)
 
         super(TransformerPipeline, self).__init__()
 
-        first_trafo = self.transformers_[0][1]
-        last_trafo = self.transformers_[-1][1]
+        first_trafo = self.steps_[0][1]
+        last_trafo = self.steps_[-1][1]
 
         self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
         self.clone_tags(last_trafo, "scitype:transform-output")
@@ -94,12 +94,12 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("univariate-only", True, False)
 
     @property
-    def _transformers(self):
-        return self._get_estimator_tuples(self.transformers, clone_ests=False)
+    def _steps(self):
+        return self._get_estimator_tuples(self.steps, clone_ests=False)
 
-    @_transformers.setter
-    def _transformers(self, value):
-        self.transformers = value
+    @_steps.setter
+    def _steps(self, value):
+        self.steps = value
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformerPipeline.
@@ -118,11 +118,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         """
         # we don't use names but _get_estimator_names to get the *original* names
         #   to avoid multiple "make unique" calls which may grow strings too much
-        _, trafos = zip(*self.transformers_)
-        names = tuple(self._get_estimator_names(self.transformers))
+        _, trafos = zip(*self.steps_)
+        names = tuple(self._get_estimator_names(self.steps))
         if isinstance(other, TransformerPipeline):
-            _, trafos_o = zip(*other.transformers_)
-            names_o = tuple(other._get_estimator_names(other.transformers))
+            _, trafos_o = zip(*other.steps_)
+            names_o = tuple(other._get_estimator_names(other.steps))
             new_names = names + names_o
             new_trafos = trafos + trafos_o
         elif isinstance(other, BaseTransformer):
@@ -138,9 +138,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         # if all the names are equal to class names, we eat them away
         if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return TransformerPipeline(transformers=list(new_trafos))
+            return TransformerPipeline(steps=list(new_trafos))
         else:
-            return TransformerPipeline(transformers=list(zip(new_names, new_trafos)))
+            return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline.
@@ -155,13 +155,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         Returns
         -------
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+            not nested, contains only non-TransformerPipeline `sktime` steps
         """
-        _, trafos = zip(*self.transformers_)
-        names = tuple(self._get_estimator_names(self.transformers))
+        _, trafos = zip(*self.steps_)
+        names = tuple(self._get_estimator_names(self.steps))
         if isinstance(other, TransformerPipeline):
-            _, trafos_o = zip(*other.transformers_)
-            names_o = tuple(other._get_estimator_names(other.transformers))
+            _, trafos_o = zip(*other.steps_)
+            names_o = tuple(other._get_estimator_names(other.steps))
             new_names = names_o + names
             new_trafos = trafos_o + trafos
         elif isinstance(other, BaseTransformer):
@@ -177,9 +177,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         # if all the names are equal to class names, we eat them away
         if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return TransformerPipeline(transformers=list(new_trafos))
+            return TransformerPipeline(steps=list(new_trafos))
         else:
-            return TransformerPipeline(transformers=list(zip(new_names, new_trafos)))
+            return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
 
     @staticmethod
     def _is_name_and_trafo(obj):
@@ -224,7 +224,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     def _anytagis(self, tag_name, value):
         """Return whether any estimator in list has tag `tag_name` of value `value`."""
-        tagis = [est.get_tag(tag_name, value) == value for _, est in self.transformers_]
+        tagis = [est.get_tag(tag_name, value) == value for _, est in self.steps_]
         return any(tagis)
 
     def _anytagis_then_set(self, tag_name, value, value_if_not):
@@ -236,7 +236,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     def _anytag_notnone_val(self, tag_name):
         """Return first non-'None' value of tag `tag_name` in estimator list."""
-        for _, est in self.transformers_:
+        for _, est in self.steps_:
             tag_val = est.get_tag(tag_name)
             if tag_val != "None":
                 return tag_val
@@ -266,7 +266,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self: reference to self
         """
         Xt = X
-        for _, transformer in self.transformers_:
+        for _, transformer in self.steps_:
             Xt = transformer.fit_transform(X=Xt, y=y)
 
         return self
@@ -289,7 +289,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         transformed version of X
         """
         Xt = X
-        for _, transformer in self.transformers_:
+        for _, transformer in self.steps_:
             if not self.get_tag("fit-in-transform", False):
                 Xt = transformer.transform(X=Xt, y=y)
             else:
@@ -315,7 +315,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         inverse transformed version of X
         """
         Xt = X
-        for _, transformer in self.transformers_:
+        for _, transformer in self.steps_:
             Xt = transformer.inverse_transform(X=Xt, y=y)
 
         return Xt
@@ -338,14 +338,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self: reference to self
         """
         Xt = X
-        for _, transformer in self.transformers_:
+        for _, transformer in self.steps_:
             transformer.update(X=Xt, y=y)
             Xt = transformer.transform(X=Xt, y=y)
 
         return self
 
     def get_params(self, deep=True):
-        """Get parameters of estimator in `transformers`.
+        """Get parameters of estimator in `steps`.
 
         Parameters
         ----------
@@ -358,10 +358,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("_transformers", deep=deep)
+        return self._get_params("_steps", deep=deep)
 
     def set_params(self, **kwargs):
-        """Set the parameters of estimator in `transformers`.
+        """Set the parameters of estimator in `steps`.
 
         Valid parameter keys can be listed with ``get_params()``.
 
@@ -369,10 +369,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self : returns an instance of self.
         """
-        self._set_params("_transformers", **kwargs)
+        self._set_params("_steps", **kwargs)
         return self
 
-    def _check_estimators(self, estimators, attr_name="transformers"):
+    def _check_estimators(self, estimators, attr_name="steps"):
 
         msg = (
             f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
@@ -491,12 +491,12 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         t3 = ExponentTransformer(power=1)
 
         # construct without names
-        params1 = {"transformers": [t1, t2]}
+        params1 = {"steps": [t1, t2]}
 
         # construct with names
-        params2 = {"transformers": [("foo", t1), ("bar", t2), ("foobar", t3)]}
+        params2 = {"steps": [("foo", t1), ("bar", t2), ("foobar", t3)]}
 
         # construct with names and provoke multiple naming clashes
-        params3 = {"transformers": [("foo", t1), ("foo", t2), ("foo_1", t3)]}
+        params3 = {"steps": [("foo", t1), ("foo", t2), ("foo_1", t3)]}
 
         return [params1, params2, params3]
