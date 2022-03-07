@@ -107,7 +107,7 @@ class WindowSummarizer(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.series.window_summarizer import WindowSummarizer
+    >>> from sktime.transformations.series.summarize import WindowSummarizer
     >>> from sktime.datasets import load_airline, load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
