@@ -72,11 +72,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     >>> t2 = ExponentTransformer(power=0.5)
 
     >>> # Example 1: construct without strings
-    >>> tp = TransformerPipeline(steps = [t1, t2])
+    >>> pipe = TransformerPipeline(steps = [t1, t2])
     >>> # unique names are generated for the two components t1 and t2
 
     >>> # Example 2: construct with strings to give custom names to steps
-    >>> tp = TransformerPipeline(
+    >>> pipe = TransformerPipeline(
     ...         steps = [
     ...             ("trafo1", t1),
     ...             ("trafo2", t2),
@@ -84,7 +84,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     ...     )
 
     >>> # Example 3: for quick construction, the * dunder method can be used
-    >>> tp = t1 * t2
+    >>> pipe = t1 * t2
     """
 
     _required_parameters = ["steps"]
