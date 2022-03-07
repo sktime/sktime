@@ -24,11 +24,8 @@ install: ## Install for the current user using the default python command
 	python3 setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
-	-rm -rf ${TEST_DIR}
-	mkdir -p ${TEST_DIR}
-	cp .coveragerc ${TEST_DIR}
-	cp setup.cfg ${TEST_DIR}
-	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v -n 2 --showlocals --durations=20 --pyargs $(PACKAGE)
+	python -m pytest --tmnet -n 2 -v --showlocals --durations=20 sktime
+	ls -al .testmondata
 
 tests: test
 
