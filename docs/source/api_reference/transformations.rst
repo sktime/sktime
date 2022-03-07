@@ -296,7 +296,7 @@ Datetime feature generation
 Lagged Window Summarizer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.window_summarizer
+.. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
     :toctree: auto_generated/
