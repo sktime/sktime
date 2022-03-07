@@ -74,14 +74,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     >>> # Example 1: construct without strings
     >>> tp = TransformerPipeline(steps = [t1, t2])
     >>> # unique names are generated for the two components t1 and t2
-    >>> tp.get_params()
-    {'steps': [ExponentTransformer(power=2), ExponentTransformer()],
-    'ExponentTransformer_1': ExponentTransformer(power=2),
-    'ExponentTransformer_2': ExponentTransformer(),
-    'ExponentTransformer_1__offset': 'auto',
-    'ExponentTransformer_1__power': 2,
-    'ExponentTransformer_2__offset': 'auto',
-    'ExponentTransformer_2__power': 0.5}
 
     >>> # Example 2: construct with strings to give custom names to steps
     >>> tp = TransformerPipeline(
@@ -90,26 +82,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     ...             ("trafo2", t2),
     ...         ]
     ...     )
-    >>> tp.get_params()
-    {'steps': [('trafo1', ExponentTransformer(power=2)),
-    ('trafo2', ExponentTransformer())],
-    'trafo1': ExponentTransformer(power=2),
-    'trafo2': ExponentTransformer(),
-    'trafo1__offset': 'auto',
-    'trafo1__power': 2,
-    'trafo2__offset': 'auto',
-    'trafo2__power': 0.5}
 
     >>> # Example 3: for quick construction, the * dunder method can be used
     >>> tp = t1 * t2
-    >>> tp.get_params()
-    {'steps': [ExponentTransformer(power=2), ExponentTransformer()],
-    'ExponentTransformer_1': ExponentTransformer(power=2),
-    'ExponentTransformer_2': ExponentTransformer(),
-    'ExponentTransformer_1__offset': 'auto',
-    'ExponentTransformer_1__power': 2,
-    'ExponentTransformer_2__offset': 'auto',
-    'ExponentTransformer_2__power': 0.5}
     """
 
     _required_parameters = ["steps"]
