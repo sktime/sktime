@@ -36,7 +36,7 @@ from sklearn.model_selection import (
 from sklearn.pipeline import Pipeline
 
 from sktime.classification.interval_based import CanonicalIntervalForest
-from sktime.transformations.series.difference import Differencer
+from sktime.transformations.panel.pca import PCATransformer
 from sktime.utils._testing.estimator_checks import _make_args
 
 DATA_ARGS = [
@@ -66,7 +66,7 @@ PARAMETER_TUNING_METHODS = [
 COMPOSITE_ESTIMATORS = [
     Pipeline(
         [
-            ("transform", Differencer()),
+            ("transform", PCATransformer()),
             ("clf", CanonicalIntervalForest.create_test_instance()),
         ]
     ),
