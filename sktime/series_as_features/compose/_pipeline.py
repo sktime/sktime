@@ -85,7 +85,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X separately by each transformer, concatenate results."""
         # retrieve fitted transformers, apply to the new data individually
         transformer_list_ = self.transformer_list_
