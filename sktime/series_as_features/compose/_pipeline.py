@@ -50,7 +50,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "scitype:instancewise": False,  # depends on components
         "univariate-only": False,  # depends on components
         "handles-missing-data": False,  # depends on components
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,
         "enforce_index_type": None,
@@ -98,7 +98,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join(x) for x in Xt.columns)
+            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
             Xt.columns = flat_index
 
         return Xt
