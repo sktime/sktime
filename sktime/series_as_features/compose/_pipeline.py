@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+"""Feature union pipeline element."""
+
+from warnings import warn
 
 import pandas as pd
 from sklearn import clone
-from warnings import warn
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
