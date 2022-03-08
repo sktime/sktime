@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Unit tests for classifier compatability with sklearn model selection."""
+"""Unit tests for sktime classifier compatability with sklearn interfaces."""
 
 __author__ = ["MatthewMiddlehurst"]
+__all__ = [
+    "test_sklearn_cross_validation",
+    "test_sklearn_cross_validation_iterators",
+    "test_sklearn_parameter_tuning",
+    "test_sklearn_composite_classifiers",
+]
 
 import numpy as np
 import pytest
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import VotingClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import (
     GridSearchCV,
@@ -25,8 +33,10 @@ from sklearn.model_selection import (
     TimeSeriesSplit,
     cross_val_score,
 )
+from sklearn.pipeline import Pipeline
 
 from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.estimator_checks import _make_args
 
 DATA_ARGS = [
@@ -53,12 +63,31 @@ PARAMETER_TUNING_METHODS = [
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
 ]
+COMPOSITE_ESTIMATORS = [
+    Pipeline(
+        [
+            ("transform", Differencer()),
+            ("clf", CanonicalIntervalForest.create_test_instance()),
+        ]
+    ),
+    VotingClassifier(
+        estimators=[
+            ("clf1", CanonicalIntervalForest.create_test_instance()),
+            ("clf2", CanonicalIntervalForest.create_test_instance()),
+            ("clf3", CanonicalIntervalForest.create_test_instance()),
+        ]
+    ),
+    CalibratedClassifierCV(
+        base_estimator=CanonicalIntervalForest.create_test_instance(),
+        cv=3,
+    ),
+]
 
 
 @pytest.mark.parametrize("data_args", DATA_ARGS)
 def test_sklearn_cross_validation(data_args):
     """Test sklearn cross-validation works with sktime panel data and classifiers."""
-    clf = CanonicalIntervalForest(n_estimators=3, n_intervals=2, att_subsample_size=2)
+    clf = CanonicalIntervalForest.create_test_instance()
     fit_args = _make_args(clf, "fit", **data_args)
 
     scores = cross_val_score(clf, *fit_args, cv=KFold(n_splits=3))
@@ -69,7 +98,7 @@ def test_sklearn_cross_validation(data_args):
 @pytest.mark.parametrize("cross_validation_method", CROSS_VALIDATION_METHODS)
 def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
     """Test if sklearn cross-validation iterators can handle sktime panel data."""
-    clf = CanonicalIntervalForest(n_estimators=3, n_intervals=2, att_subsample_size=2)
+    clf = CanonicalIntervalForest.create_test_instance()
     fit_args = _make_args(clf, "fit", **data_args)
     groups = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10]
 
@@ -81,7 +110,7 @@ def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
 @pytest.mark.parametrize("parameter_tuning_method", PARAMETER_TUNING_METHODS)
 def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
     """Test if sklearn parameter tuners can handle sktime panel data and classifiers."""
-    clf = CanonicalIntervalForest(n_estimators=3)
+    clf = CanonicalIntervalForest.create_test_instance()
     param_grid = {"n_intervals": [2, 3], "att_subsample_size": [2, 3]}
     fit_args = _make_args(clf, "fit", **data_args)
 
@@ -90,3 +119,16 @@ def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
     )
     parameter_tuning_method.fit(*fit_args)
     assert isinstance(parameter_tuning_method.best_estimator_, CanonicalIntervalForest)
+
+
+@pytest.mark.parametrize("data_args", DATA_ARGS)
+@pytest.mark.parametrize("composite_classifier", COMPOSITE_ESTIMATORS)
+def test_sklearn_composite_classifiers(data_args, composite_classifier):
+    """Test if sklearn composite classifiers can handle sktime data and classifiers."""
+    base_clf = CanonicalIntervalForest()
+    fit_args = _make_args(base_clf, "fit", **data_args)
+    composite_classifier.fit(*fit_args)
+
+    predict_args = _make_args(base_clf, "predict", **data_args)
+    preds = composite_classifier.predict(*predict_args)
+    assert isinstance(preds, np.ndarray)
