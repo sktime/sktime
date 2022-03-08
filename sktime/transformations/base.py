@@ -154,7 +154,7 @@ class BaseTransformer(BaseEstimator):
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if isinstance(other, BaseTransformer):
-            self_as_pipeline = TransformerPipeline(transformers=[self])
+            self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
         else:
             return NotImplemented
@@ -179,7 +179,7 @@ class BaseTransformer(BaseEstimator):
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if isinstance(other, BaseTransformer):
-            self_as_pipeline = TransformerPipeline(transformers=[self])
+            self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
         else:
             return NotImplemented
