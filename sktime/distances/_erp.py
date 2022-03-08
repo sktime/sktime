@@ -23,7 +23,7 @@ class _ErpDistance(NumbaDistance):
         self,
         x: np.ndarray,
         y: np.ndarray,
-        window: int = None,
+        window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         g: float = 0.0,
@@ -37,12 +37,12 @@ class _ErpDistance(NumbaDistance):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        window: int, defaults = None
-            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-            lower bounding).
+        window: float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
-            Parallelogram lower bounding).
+            Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params

@@ -30,6 +30,7 @@ import numpy as np
 from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
+from sktime.datatypes._hierarchical import check_dict_Hierarchical
 from sktime.datatypes._panel import check_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import check_dict_Series
@@ -39,6 +40,7 @@ from sktime.datatypes._table import check_dict_Table
 check_dict = dict()
 check_dict.update(check_dict_Series)
 check_dict.update(check_dict_Panel)
+check_dict.update(check_dict_Hierarchical)
 check_dict.update(check_dict_Alignment)
 check_dict.update(check_dict_Table)
 
@@ -65,7 +67,7 @@ def _ret(valid, msg, metadata, return_metadata):
 @deprecated(
     version="v0.10.0",
     reason=(
-        "check_is has been deprecated and will be removed in v0.11.0."
+        "check_is is deprecated since v0.10.0 and will be removed in v0.11.0."
         "Please use check_is_mtype instead."
     ),
     category=FutureWarning,
@@ -457,7 +459,7 @@ def check_is_scitype(
 
         if check_passed:
             final_result = res
-            found_mtype.append([0])
+            found_mtype.append(key[0])
             found_scitype.append(key[1])
         elif return_metadata:
             msg.append(res[1])

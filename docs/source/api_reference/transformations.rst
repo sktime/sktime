@@ -141,18 +141,6 @@ Segment
     IntervalSegmenter
     RandomIntervalSegmenter
 
-Shapelet
-~~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.shapelets
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ShapeletTransform
-    ContractedShapeletTransform
-
 Signature
 ~~~~~~~~~
 
@@ -203,6 +191,17 @@ Box-Cox
 
     BoxCoxTransformer
     LogTransformer
+
+Scaled Logit
+~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.scaledlogit
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ScaledLogitTransformer
 
 ClaSP
 ~~~~~
@@ -294,6 +293,17 @@ Datetime feature generation
 
     DateTimeFeatures
 
+Lagged Window Summarizer
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.window_summarizer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowSummarizer
+
 Outlier detection
 ~~~~~~~~~~~~~~~~~
 
@@ -350,3 +360,25 @@ FeatureSelection
     :template: class.rst
 
     FeatureSelection
+
+STLBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STLBootstrapTransformer
+
+MovingBlockBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingBlockBootstrapTransformer

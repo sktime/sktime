@@ -4,7 +4,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.9.0 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
+:rocket: **Version 0.10.1 out now!** [Check out the release notes here](https://www.sktime.org/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes time series classification, regression, clustering, annotation and forecasting. It comes with [time series algorithms](https://www.sktime.org/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune and validate time series models.
 
@@ -12,10 +12,10 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 | Overview | |
 |---|---|
-| **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github)](https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test) [![!appveyor](https://img.shields.io/appveyor/ci/mloning/sktime/main?logo=appveyor)](https://ci.appveyor.com/project/mloning/sktime) [![!azure-devops](https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/main?logo=azure-pipelines)](https://dev.azure.com/mloning/sktime/_build) [![!codecov](https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/alan-turing-institute/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) |
+| **CI/CD** | [![github-actions](https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github)](https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test) [![!codecov](https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov)](https://codecov.io/gh/alan-turing-institute/sktime) [![readthedocs](https://img.shields.io/readthedocs/sktime?logo=readthedocs)](https://www.sktime.org/en/latest/?badge=latest) |
 | **Code** |  [![!pypi](https://img.shields.io/pypi/v/sktime?color=orange)](https://pypi.org/project/sktime/) [![!conda](https://img.shields.io/conda/vn/conda-forge/sktime)](https://anaconda.org/conda-forge/sktime) [![!python-versions](https://img.shields.io/pypi/pyversions/sktime)](https://www.python.org/) [![!black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/alan-turing-institute/sktime/main?filepath=examples) |
 | **Downloads**| [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=week&units=international_system&left_color=grey&right_color=blue&left_text=weekly%20(pypi))](https://pepy.tech/project/sktime) [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=month&units=international_system&left_color=grey&right_color=blue&left_text=monthly%20(pypi))](https://pepy.tech/project/sktime) [![Downloads](https://static.pepy.tech/personalized-badge/sktime?period=total&units=international_system&left_color=grey&right_color=blue&left_text=cumulative%20(pypi))](https://pepy.tech/project/sktime) |
-| **Community** | [![!slack](https://img.shields.io/static/v1?logo=slack&label=slack&message=chat&color=lightgreen)](https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!gitter](https://img.shields.io/static/v1?logo=gitter&label=gitter&message=chat&color=lightgreen)](https://gitter.im/sktime/community) [![!twitter](https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social)](https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s) |
+| **Community** | [![!slack](https://img.shields.io/static/v1?logo=slack&label=slack&message=chat&color=lightgreen)](https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/gqSab2K) [![!twitter](https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social)](https://twitter.com/sktime_toolbox) [![!youtube](https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social)](https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s) |
 | **Citation** | [![!zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg)](https://doi.org/10.5281/zenodo.3749000) |
 
 ## :books: Documentation
@@ -50,13 +50,15 @@ Questions and feedback are extremely welcome! Please understand that we won't be
 | :bug: **Bug Reports**              | [GitHub Issue Tracker]                  |
 | :sparkles: **Feature Requests & Ideas** | [GitHub Issue Tracker]                       |
 | :woman_technologist: **Usage Questions**          | [GitHub Discussions] · [Stack Overflow] |
-| :speech_balloon: **General Discussion**        | [GitHub Discussions] · [Gitter] · [Discord]          |
+| :speech_balloon: **General Discussion**        | [GitHub Discussions] |
+| :factory: **Contribution & Development** | [Slack], contributors channel · [Discord] |
+| :globe_with_meridians: **Community collaboration session** | [Discord] - Fridays 1pm UTC, dev/meet-ups channel |
 
 [github issue tracker]: https://github.com/alan-turing-institute/sktime/issues
 [github discussions]: https://github.com/alan-turing-institute/sktime/discussions
 [stack overflow]: https://stackoverflow.com/questions/tagged/sktime
-[gitter]: https://gitter.im/sktime/community
 [discord]: https://discord.com/invite/gqSab2K
+[slack]: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
 
 ## :dizzy: Features
 Our aim is to make the time series analysis ecosystem more interoperable and usable as a whole. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.org/en/stable/estimator_overview.html) and __tools for composite model building__ including pipelining, ensembling, tuning and reduction that enables users to apply an algorithm for one task to another.
@@ -68,12 +70,12 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 [statsmodels]: https://www.statsmodels.org/stable/index.html
 [tsfresh]: https://tsfresh.readthedocs.io/en/latest/
 [pyod]: https://pyod.readthedocs.io/en/latest/
-[fbprophet]: https://facebook.github.io/prophet/
+[prophet]: https://facebook.github.io/prophet/
 
 | Module | Status | Links |
 |---|---|---|
 | **[Forecasting]** | stable | [Tutorial](https://www.sktime.org/en/latest/examples/01_forecasting.html) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-forecasting-time-series-forecasting) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/forecasting.py)  |
-| **[Time Series Classification]** | stable | [Tutorial](https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification_univariate.ipynb) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-classification) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/classification.py) |
+| **[Time Series Classification]** | stable | [Tutorial](https://github.com/alan-turing-institute/sktime/blob/main/examples/02_classification.ipynb) · [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-classification) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/classification.py) |
 | **[Time Series Regression]** | stable | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-classification-time-series-regression) |
 | **[Transformations]** | maturing | [API Reference](https://www.sktime.org/en/latest/api_reference.html#sktime-transformations-time-series-transformers) · [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/transformer.py)  |
 | **[Time Series Clustering]** | experimental | [Extension Template](https://github.com/alan-turing-institute/sktime/blob/main/extension_templates/clustering.py) |
@@ -93,7 +95,7 @@ For **deep learning**, see our companion package: [sktime-dl](https://github.com
 For trouble shooting and detailed installation instructions, see the [documentation](https://www.sktime.org/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
-- **Python version**: Python 3.6, 3.7 and 3.8 (only 64 bit)
+- **Python version**: Python 3.7, 3.8 and 3.9 (only 64 bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
 [pip]: https://pip.pypa.io/en/stable/
@@ -154,7 +156,7 @@ from sktime.datasets import load_arrow_head
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-X, y = load_arrow_head(return_X_y=True)
+X, y = load_arrow_head()
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 classifier = TimeSeriesForestClassifier()
 classifier.fit(X_train, y_train)

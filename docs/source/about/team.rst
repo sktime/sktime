@@ -52,26 +52,28 @@ Core Developers
      - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
    * - George Oastler
      - :user:`goastler`
-   * - Markus Löning
-     - :user:`mloning`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - James Large
      - :user:`james-large`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Martin Walter
-     - :user:`aiwalter`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
+   * - Markus Löning
+     - :user:`mloning`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
+   * - Martin Walter
+     - :user:`aiwalter`
+   * - Patrick Schäfer
+     - :user:`patrickzib`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 
@@ -93,5 +95,7 @@ Former Core Developers (inactive)
      - :user:`matteogales`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * -
      - :user:`big-o`

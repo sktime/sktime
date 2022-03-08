@@ -10,12 +10,21 @@ __all__ = [
     "check_equal_time_index",
     "check_consistent_index_type",
 ]
+
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (
+    pd.Int64Index,
+    pd.RangeIndex,
+    pd.PeriodIndex,
+    pd.DatetimeIndex,
+    pd.TimedeltaIndex,
+)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -149,8 +158,11 @@ def check_series(
 
 
 def check_time_index(
-    index, allow_empty=False, enforce_index_type=None, var_name="input"
-):
+    index: Union[pd.Index, np.array],
+    allow_empty: bool = False,
+    enforce_index_type: bool = None,
+    var_name: str = "input",
+) -> pd.Index:
     """Check time index.
 
     Parameters
@@ -201,20 +213,28 @@ def check_time_index(
     return index
 
 
-def check_equal_time_index(*ys):
+def check_equal_time_index(*ys, mode="equal"):
     """Check that time series have the same (time) indices.
 
     Parameters
     ----------
-    *ys : tuple of pd.Series, pd.DataFrame or np.ndarray, or None
-        One or more time series
+    *ys : tuple of sktime compatible time series data containers
+        must be pd.Series, pd.DataFrame or 1/2D np.ndarray, or None
+        can be Series, Panel, Hierarchical, but mist be pandas or numpy
+        note: this assumption is not checked by the function itself
+            if check is needed, use check_is_scitype or check_is_mtype before call
+    mode : str, "equal" or "contained", optional, default = "equal"
+        if "equal" will check for all indices being exactly equal
+        if "contained", will check whether all indices are subset of ys[0].index
 
     Raises
     ------
     ValueError
-        If there are at least two no=-None entries of ys
+        if mode = "equal", raised if there are at least two non-None entries of ys
             of which pandas indices are not the same
-            np.ndarray are considered having integer range index on axis 0
+        if mode = "contained, raised if there is at least one non-None ys[i]
+            such that ys[i].index is not contained in ys[o].index
+        np.ndarray are considered having (pandas) integer range index on axis 0
     """
     # None entries are ignored
     y_not_None = [y for y in ys if y is not None]
@@ -229,18 +249,29 @@ def check_equal_time_index(*ys):
     else:
         first_index = y_not_None[0].index
 
-    check_time_index(first_index)
-
-    for y in y_not_None[1:]:
+    for i, y in enumerate(y_not_None[1:]):
         if isinstance(y, np.ndarray):
             y_index = pd.Index(y)
         else:
             y_index = y.index
 
-        check_time_index(y_index)
+        if mode == "equal":
+            failure_cond = not first_index.equals(y_index)
+            msg = (
+                f"(time) indices are not the same, series 0 and {i} "
+                f"differ in the following: {first_index.symmetric_difference(y_index)}."
+            )
+        elif mode == "contains":
+            failure_cond = not y_index.isin(first_index).all()
+            msg = (
+                f"(time) indices of series {i} are not contained in index of series 0,"
+                f" extra indices are: {y_index.difference(first_index)}"
+            )
+        else:
+            raise ValueError('mode must be "equal" or "contains"')
 
-        if not first_index.equals(y_index):
-            raise ValueError("Some (time) indices are not the same.")
+        if failure_cond:
+            raise ValueError(msg)
 
 
 def _is_int_index(index):

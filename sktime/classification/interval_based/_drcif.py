@@ -245,8 +245,8 @@ class DrCIF(BaseClassifier):
             if n <= 0:
                 self._n_intervals[i] = 1
 
-        if self.att_subsample_size > 25:
-            self._att_subsample_size = 25
+        if self.att_subsample_size > 29:
+            self._att_subsample_size = 29
 
         if isinstance(self.min_interval, int):
             self._min_interval = [
@@ -267,9 +267,9 @@ class DrCIF(BaseClassifier):
 
         if self.max_interval is None:
             self._max_interval = [
-                self.series_length_ / 2,
-                X_p.shape[2] / 2,
-                X_d.shape[2] / 2,
+                int(self.series_length_ / 2),
+                int(X_p.shape[2] / 2),
+                int(X_d.shape[2] / 2),
             ]
         elif isinstance(self.max_interval, int):
             self._max_interval = [
@@ -572,6 +572,10 @@ class DrCIF(BaseClassifier):
         subsample = rng.choice(self.n_instances_, size=self.n_instances_)
         oob = [n for n in indices if n not in subsample]
 
+        results = np.zeros((self.n_instances_, self.n_classes_))
+        if len(oob) == 0:
+            return [results, oob]
+
         clf = _clone_estimator(self._base_estimator, rs)
         clf.fit(self.transformed_data_[idx][subsample], y[subsample])
         probas = clf.predict_proba(self.transformed_data_[idx][oob])
@@ -583,7 +587,6 @@ class DrCIF(BaseClassifier):
                 new_probas[:, cls_idx] = probas[:, i]
             probas = new_probas
 
-        results = np.zeros((self.n_instances_, self.n_classes_))
         for n, proba in enumerate(probas):
             results[oob[n]] += proba
 

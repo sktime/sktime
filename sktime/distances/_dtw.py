@@ -17,13 +17,13 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _DtwDistance(NumbaDistance):
-    """Dynamic time warping (dtw) between two timeseries."""
+    """Dynamic time warping (dtw) between two time series."""
 
     def _distance_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
-        window: int = None,
+        window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         **kwargs: Any
@@ -36,12 +36,12 @@ class _DtwDistance(NumbaDistance):
             First timeseries.
         y: np.ndarray (2d array)
             Second timeseries.
-        window: int, defaults = None
-            Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-            lower bounding).
+        window: Float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
-            Parallelogram lower bounding).
+            Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
@@ -59,8 +59,8 @@ class _DtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
@@ -90,9 +90,9 @@ def _cost_matrix(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the index in bound finite values (0.) and indexes
         outside bound points are infinite values (non finite).
@@ -100,7 +100,7 @@ def _cost_matrix(
     Returns
     -------
     distance: float
-        Dtw distance between the x and y timeseries.
+        Dtw distance between the x and y time series.
     """
     x_size = x.shape[0]
     y_size = y.shape[0]

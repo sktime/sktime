@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
-from sktime.clustering.base.base import BaseClusterer
+from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
@@ -49,12 +49,6 @@ def _get_err_msg(estimator):
         f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
         f"{VALID_ESTIMATOR_TYPES}"
     )
-
-
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    # return the instance of the class with default parameters
-    return Estimator.create_test_instance()
 
 
 def _list_required_methods(estimator):
@@ -225,6 +219,9 @@ def _make_inverse_transform_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, _PanelToPanelTransformer):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))

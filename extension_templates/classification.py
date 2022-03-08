@@ -63,8 +63,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
     """
 
     # optional todo: override base class estimator default tags here if necessary
+    # these are the default values, only add if different to these.
     _tags = {
-        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -112,10 +115,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+        X : Training data of type self.get_tag("X_inner_mtype")
         y : array-like, shape = [n_instances] - the class labels
 
         Returns
@@ -131,21 +131,18 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # IMPORTANT: avoid side effects to X, y
 
     # todo: implement this, mandatory
-    def _predict(self, X) -> np.array:
+    def _predict(self, X) -> np.ndarray:
         """Predict labels for sequences in X.
 
         core logic
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
-        y : array-like, shape =  [n_instances] - predicted class labels
+        y : predictions of labels for X, np.ndarray
         """
 
         # implement here
@@ -163,15 +160,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : data to predict y with, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
-        of class membership.
+        y : predictions of probabilities for class values of X, np.ndarray
         """
 
         # implement here
@@ -189,6 +182,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # implement here
 
     # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -204,6 +198,12 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
         #
         # example 1: specify params as dictionary
         # any number of params can be specified

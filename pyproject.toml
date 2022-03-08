@@ -1,0 +1,106 @@
+[project]
+name = "sktime"
+version = "0.10.1"
+description = "A unified framework for machine learning with time series"
+license = "BSD-3-Clause"
+authors = [
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
+    {name = "Markus Löning"},
+    {name = "Martin Walter"},
+]
+maintainers = [
+    {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
+    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
+    {name = "Martin Walter"},
+]
+readme = "README.md"
+keywords = [
+    "data-science",
+    "machine-learning",
+    "data-mining",
+    "time-series",
+    "scikit-learn",
+    "forecasting",
+    "time-series-analysis",
+    "time-series-classification",
+    "time-series-regression",
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+requires-python = ">=3.7,<3.10"
+dependencies = [
+    "deprecated>=1.2.13",
+    "numba>=0.53",
+    "numpy>=1.21.0,<1.22",
+    "pandas>=1.1.0,<1.5.0",
+    "scikit-learn>=0.24.0",
+    "statsmodels>=0.12.1",
+    "scipy<1.8.0",
+]
+
+[project.optional-dependencies]
+all_extras = [
+    "dtw-python",
+    "esig==0.9.7",
+    "prophet>=1.0",
+    "hcrystalball>=0.1.9",
+    "matplotlib>=3.3.2",
+    "pmdarima>=1.8.0,!=1.8.1",
+    "pyod>=0.8.0",
+    "pystan==2.19.1.1",
+    "scikit_posthocs>=0.6.5",
+    "seaborn>=0.11.0",
+    "stumpy>=1.5.1",
+    "tbats>=1.1.0",
+    "tsfresh>=0.17.0",
+    "tslearn>=0.5.2"
+]
+
+dev = [
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "wheel",
+]
+
+binder = [
+    "jupyter",
+]
+
+docs = [
+    "jupyter",
+    "myst-parser",
+    "nbsphinx>=0.8.6",
+    "numpydoc",
+    "pydata-sphinx-theme",
+    "sphinx_issues==1.2.0",
+    "sphinx-gallery==0.6.0",
+    "sphinx-panels==0.6.0",
+    "sphinx==4.1.1",
+    "tabulate",
+]
+
+[project.urls]
+homepage = "https://www.sktime.org"
+repository = "https://github.com/alan-turing-institute/sktime"
+documentation = "https://www.sktime.org"
+download = "https://pypi.org/project/sktime/#files"
+
+[build-system]
+requires = ["setuptools", "wheel", "toml", "build"]
+build-backend = "setuptools.build_meta"

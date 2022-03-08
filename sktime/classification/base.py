@@ -26,6 +26,7 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -35,13 +36,12 @@ from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseClassifier(BaseEstimator):
+class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
     classifiers have to implement. Attributes with a underscore suffix are set in the
     method fit.
-    #TODO: Make _fit and _predict abstract
 
     Parameters
     ----------
@@ -54,11 +54,13 @@ class BaseClassifier(BaseEstimator):
 
     _tags = {
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict, support for X?
+        #    it should be either "numpy3D" or "nested_univ" (nested pd.DataFrame)
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
+        "capability:early_prediction": False,
         "capability:multithreading": False,
     }
 
@@ -100,10 +102,10 @@ class BaseClassifier(BaseEstimator):
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
         X, y = _internal_convert(X, y)
-        self.metadata_ = _check_classifier_input(X, y)
-        missing = self.metadata_["has_nans"]
-        multivariate = not self.metadata_["is_univariate"]
-        unequal = not self.metadata_["is_equal_length"]
+        X_metadata = _check_classifier_input(X, y)
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
@@ -119,8 +121,9 @@ class BaseClassifier(BaseEstimator):
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.shape[0]
-        for index, classVal in enumerate(self.classes_):
-            self._class_dictionary[classVal] = index
+        self._class_dictionary = {}
+        for index, class_val in enumerate(self.classes_):
+            self._class_dictionary[class_val] = index
         self._fit(X, y)
         self.fit_time_ = int(round(time.time() * 1000)) - start
         # this should happen last
@@ -180,7 +183,6 @@ class BaseClassifier(BaseEstimator):
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
-
         return self._predict_proba(X)
 
     def score(self, X, y) -> float:
@@ -208,9 +210,6 @@ class BaseClassifier(BaseEstimator):
 
         self.check_is_fitted()
 
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
         return accuracy_score(y, self.predict(X), normalize=True)
 
     def _check_convert_X_for_predict(self, X):
@@ -231,10 +230,10 @@ class BaseClassifier(BaseEstimator):
         ValueError if the capabilities in self._tags do not handle the data.
         """
         X = _internal_convert(X)
-        self.metadata_ = _check_classifier_input(X)
-        missing = self.metadata_["has_nans"]
-        multivariate = not self.metadata_["is_univariate"]
-        unequal = not self.metadata_["is_equal_length"]
+        X_metadata = _check_classifier_input(X)
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
         # Check this classifier can handle characteristics
         self._check_capabilities(missing, multivariate, unequal)
         # Convert data as dictated by the classifier tags
@@ -242,6 +241,7 @@ class BaseClassifier(BaseEstimator):
 
         return X
 
+    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -268,10 +268,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError(
-            "_fit is a protected abstract method, it must be implemented."
-        )
+        ...
 
+    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -292,9 +291,7 @@ class BaseClassifier(BaseEstimator):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
-        raise NotImplementedError(
-            "_predict is a protected abstract method, it must be implemented."
-        )
+        ...
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
