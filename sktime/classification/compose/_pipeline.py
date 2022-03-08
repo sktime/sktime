@@ -103,11 +103,11 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
     @property
     def _transformers(self):
-        return self.transformers_._transformers
+        return self.transformers_._steps
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformers_._transformers = value
+        self.transformers_._steps = value
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
@@ -129,7 +129,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
             # then stick the expanded pipeline in a ClassifierPipeline
             new_pipeline = ClassifierPipeline(
                 classifier=self.classifier,
-                transformers=trafo_pipeline.transformers,
+                transformers=trafo_pipeline.steps,
             )
             return new_pipeline
         else:
