@@ -134,25 +134,11 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     @classmethod
     def get_test_params(cls):
         """Test parameters for FeatureUnion."""
-        from sklearn.preprocessing import StandardScaler
-
-        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
-
-        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+        from sktime.transformations.series.exponent import ExponentTransformer
 
         TRANSFORMERS = [
-            (
-                "transformer1",
-                SeriesToSeriesRowTransformer(
-                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-                ),
-            ),
-            (
-                "transformer2",
-                SeriesToSeriesRowTransformer(
-                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-                ),
-            ),
+            ("transformer1", ExponentTransformer(power=4)),
+            ("transformer2", ExponentTransformer(power=0.25)),
         ]
 
         return {"transformer_list": TRANSFORMERS}
