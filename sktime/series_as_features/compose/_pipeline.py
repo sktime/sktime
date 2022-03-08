@@ -2,6 +2,7 @@
 
 import pandas as pd
 from sklearn import clone
+from warnings import warn
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -70,6 +71,15 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.preserve_dataframe = preserve_dataframe
+        if not preserve_dataframe:
+            warn(
+                "the preserve_dataframe arg has been deprecated in 0.11.0, "
+                "and will be removed in 0.12.0. It has no effect on the output format, "
+                "but can still be set to avoid compatibility issues in the deprecation "
+                "period. FeatureUnion now follows the "
+                "output format specification for sktime transformers. "
+                "To convert the output to another format, use datatypes.convert_to"
+            )
         self.transformer_list = transformer_list
         self.flatten_transform_index = flatten_transform_index
 
