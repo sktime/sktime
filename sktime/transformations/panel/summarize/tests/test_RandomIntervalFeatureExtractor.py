@@ -101,6 +101,7 @@ def test_different_implementations():
 
 
 # Compare with transformer pipeline using TSFeatureUnion.
+@pytest.mark.xfail(reason="SeriesToPrimitivesTransformer will be deprecated, see 2179")
 def test_different_pipelines():
     random_state = 1233
     X_train, y_train = make_classification_problem()
