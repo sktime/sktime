@@ -20,7 +20,8 @@ class Prophet(_ProphetAdapter):
     Parameters
     ----------
     freq: str, default=None
-        A DatetimeIndex frequency. Refer to reference [2] for possible values
+        A DatetimeIndex frequency. For possible values see
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
@@ -100,7 +101,6 @@ class Prophet(_ProphetAdapter):
     References
     ----------
     .. [1] https://facebook.github.io/prophet
-    .. [2] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
     Examples
     --------
