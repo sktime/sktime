@@ -79,7 +79,8 @@ class TEASER(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TEASER(
     ...     classification_points=[6, 16, 24],
-    ...     estimator=TimeSeriesForestClassifier(n_estimators=10)
+    ...     estimator=TimeSeriesForestClassifier(n_estimators=10),
+    ...     return_safety_decisions=False,
     ... )
     >>> clf.fit(X_train, y_train)
     TEASER(...)
@@ -326,7 +327,9 @@ class TEASER(BaseClassifier):
                 preds, X_oc, self._consecutive_predictions, idx + 1
             )
 
-            probas = np.array([probas[new_state_info[i][0]][i] for i in n_instances])
+            probas = np.array(
+                [probas[new_state_info[i][0]][i] for i in range(n_instances)]
+            )
         else:
             # if this is the smallest dataset, there should be no state_info, else we
             # should have state info for each, and they should all be the same length
