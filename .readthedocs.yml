@@ -8,7 +8,7 @@ python:
     - method: pip
       path: .
       extra_requirements:
-        - docs, all_extras
+        - docs
 build:
   os: ubuntu-20.04
   tools:
