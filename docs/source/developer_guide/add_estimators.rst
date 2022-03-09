@@ -53,11 +53,13 @@ They fit into ``sktime``'s unified interface as follows:
     The public interface follows the "strategy" object orientation pattern.
 *   for each scitype, there is a private extender interface, defined by the extension contract in the extension template.
     For instance, the ``forecaster.py`` extension template for forecasters explains what to fill in for a concrete forecaster
-    inheriting for ``BaseForecaster``. In most extension templates, users should implement private methods ("inner" methods),
+    inheriting from ``BaseForecaster``. In most extension templates, users should implement private methods ("inner" methods),
     e.g., ``_fit`` and ``_predict`` for forecasters. Boilerplate code rests within the public part of the interface, in ``fit`` and ``predict``.
     The extender interface follows the "template" object orientation pattern.
 
-Extenders familiar with ``scikit-learn`` extension should note the difference: the public interface, e.g., ``fit`` and ``predict``, is never overridden.
+Extenders familiar with ``scikit-learn`` extension should note the following difference to ``scikit-learn``:
+
+the public interface, e.g., ``fit`` and ``predict``, is never overridden in ``sktime`` (concrete) estimators.
 Implementation happens in the private, extender sided interface, e.g., ``_fit`` and ``_predict``.
 
 This allows to avoid boilerplate replication, such as ``check_X`` etc in ``scikit-learn``.
