@@ -131,4 +131,20 @@ and extended in two ways:
 Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
 
-When adding an ``sktime`` compatible estimator to ``sktime`` itself, 
+When adding an ``sktime`` compatible estimator to ``sktime`` itself, a number of
+additional things need to be done:
+
+*   ensure that code also meets ``sktime's`` :ref:`documentation <developer_guide_documentation>` standards.
+*   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the 
+    correct ``rst`` file inside ``docs/source/api_reference``.
+*   authors of the estimator should add themselves to ``CODEOWNERS``, as owners of the contributed estimator.
+*   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the "dependencies"
+    developer guide (:ref:`here <coding_standards>`) should be followed
+*   ensure that the estimator passes the entire local test suite of ``sktime``, with the estimator in its target location.
+    To run tests only for the estimator, the command ``pytest -k "EstimatorName"`` can be used (or vs code GUI filter functionality)
+*   ensure that test parameters in ``get_test_params`` are chosen such that runtime of estimator specific tests remains in the seconds order
+    on ``sktime`` remote CI/CD
+
+Don't panic - when contributing to ``sktime``, core developers will give helpful pointers on the above in their PR reviews.
+
+It is recommended to open a draft PR to get feedback early.
