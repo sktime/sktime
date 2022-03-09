@@ -38,13 +38,12 @@ from sktime.classification.feature_based import (
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
-    CanonicalIntervalForest,
     DrCIF,
     RandomIntervalSpectralEnsemble,
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal, RocketClassifier
+from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.forecasting.compose import (
@@ -228,7 +227,6 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "summary_functions": ("mean", "min", "max"),
     },
-    RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
@@ -281,7 +279,6 @@ ESTIMATOR_TEST_PARAMS = {
     ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
-    CanonicalIntervalForest: {"n_estimators": 3},
     DrCIF: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
