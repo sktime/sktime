@@ -20,6 +20,10 @@ def get_time_index(X):
     Parameters
     ----------
     X : pd.DataFrame / pd.Series / np.ndarray
+    in one of the following sktime mtype specifications for Series, Panel, Hierarchical:
+    pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, nested_univ, pd_multiindex_hier
+    assumes all time series have equal length and equal index set
+    will *not* work for numpy3D, list-of-df, pd-wide, pd-long
 
     Returns
     -------
