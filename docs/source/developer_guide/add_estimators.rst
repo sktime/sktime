@@ -13,7 +13,7 @@ Implementing an ``sktime`` compatible estimator
 
 The high-level steps to implement ``sktime`` compatible estimators are as follows:
 
-1.  identify the scitype of the estimator: forecaster, classifier, exceptions
+1.  identify the scitype of the estimator: forecaster, classifier, etc
 2.  copy the extension template for that kind of estimator to its intended location
 3.  complete the extension template
 4.  run the ``sktime`` test suite on the implemented estimator
