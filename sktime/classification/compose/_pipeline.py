@@ -95,11 +95,27 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
         super(ClassifierPipeline, self).__init__()
 
-        # tag cloning is disabled since classifier/transformer tags are not harmonized
-        # todo: clean this up and assign the "right" tags
-        #   for now, tags are set "conservatively"
-        # classifier_tags_to_clone = ["X_inner_mtype"]
-        # self.clone_tags(classifier, "scitype:transform-output")
+        # can handle multivariate of both classifier and all transformers can
+        multivariate = classifier.get_tag("capability:multivariate", False)
+        multivariate = multivariate and not self.transformers_.get_tag(
+            "univariate-only", True
+        )
+        # can handle missing values if both classifier and all transformers can
+        missing = classifier.get_tag("capability:missing_values", False)
+        missing = missing and self.transformer_.get_tag("handles-missing-data", False)
+        # can handle unequal length if classifier can
+        #   transformers should always be able to, due to vectorization
+        unequal = classifier.get_tag("capability:unequal_length")
+        # last three tags are always False, since not supported by transformers
+        tags_to_set = {
+            "capability:multivariate": multivariate,
+            "capability:missing_values": missing,
+            "capability:unequal": unequal,
+            "capability:contractable": False,
+            "capability:train_estimate": False,
+            "capability:multithreading": False,
+        }
+        self.set_tags(**tags_to_set)
 
     @property
     def _transformers(self):
