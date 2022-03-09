@@ -32,11 +32,10 @@ and people who are looking to learn and develop their skills.
    Research <https://the-turing-way.netlify.app/reproducible-research/reproducible-research.html>`_ to get started and learn more about open-source collaboration.
 
 .. _discord: https://discord.com/invite/gqSab2K
-.. _gitter: https://gitter.im/sktime/community
 
 .. note::
 
-   If you get stuck, chat with us on `Gitter`_ or `Discord`_.
+   If you get stuck, chat with us on `Discord`_.
 
 .. panels::
     :card: + intro-card text-center
@@ -127,4 +126,4 @@ All contributions are recorded in
 
 .. note::
 
-   If we have missed anything, please `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`_ or chat with us on `Gitter`_ or `Discord`_.
+   If we have missed anything, please `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`_ or chat with us on `Discord`_.

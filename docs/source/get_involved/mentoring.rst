@@ -43,4 +43,4 @@ How to apply
 
 We accept applications on a rolling basis and we will be in touch with you shortly!
 
-If you have any questions or get stuck, please don't hesitate to `chat with us <https://gitter.im/sktime/community>`_ or email us at info@sktime.org.
+If you have any questions or get stuck, please don't hesitate to `chat with us <https://discord.com/invite/gqSab2K>`_ or email us at info@sktime.org.

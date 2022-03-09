@@ -96,6 +96,6 @@ GitHub, clone, and develop on a new branch.
 .. note::
 
    If any of the above seems like magic to you, look up the `Git documentation <https://git scm.com/documentation>`_.
-   If you get stuck, chat with us on `Gitter`_ or `Discord`_.
+   If you get stuck, chat with us on `Discord`_.
 
 .. _ci::
