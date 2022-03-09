@@ -106,6 +106,7 @@ class BaseTransformer(BaseEstimator):
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
@@ -132,6 +133,56 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseTransformer, self).__init__()
+
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformerPipeline(steps=[self])
+            return self_as_pipeline * other
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformerPipeline(steps=[self])
+            return other * self_as_pipeline
+        else:
+            return NotImplemented
 
     def fit(self, X, y=None, Z=None):
         """Fit transformer to X, optionally to y.
@@ -172,6 +223,8 @@ class BaseTransformer(BaseEstimator):
 
         # input checks and minor coercions on X, y
         ###########################################
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         valid, msg, X_metadata = check_is_mtype(
             X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
@@ -760,9 +813,6 @@ class BaseTransformer(BaseEstimator):
         X_mtype = mtype(X, as_scitype=["Series", "Panel"])
         X_scitype = mtype_to_scitype(X_mtype)
 
-        y_mtype = mtype(y, as_scitype=["Series", "Panel"])
-        y_scitype = mtype_to_scitype(y_mtype)
-
         # for debugging, exception if the conversion fails (this should never happen)
         if X_scitype not in X_inner_scitypes:
             raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
@@ -785,7 +835,20 @@ class BaseTransformer(BaseEstimator):
             store_behaviour="reset",
         )
 
-        if y_inner_mtype != ["None"]:
+        if y_inner_mtype != ["None"] and y is not None:
+
+            if X_scitype == "Series":
+                # y_possible_scitypes = ["Series"]
+                y_possible_scitypes = "Series"
+            elif X_scitype == "Panel":
+                # todo: change this back to Panel/Table once
+                #   polymorphic convert_to is merged
+                # y_possible_scitypes = ["Panel", "Table"]
+                # y_possible_scitypes = ["Series", "Panel"]
+                y_possible_scitypes = "Table"
+            y_mtype = mtype(y, as_scitype=y_possible_scitypes)
+            y_scitype = mtype_to_scitype(y_mtype)
+
             y_inner_mtype = [
                 mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
             ]
@@ -1022,7 +1085,7 @@ class _PanelToTabularTransformer(BaseTransformer):
 
     # class is temporary for downwards compatibility
 
-    # default tag values for "Series-to-Series"
+    # default tag values for "Panel-to-Tabular"
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
@@ -1039,7 +1102,7 @@ class _PanelToPanelTransformer(BaseTransformer):
 
     # class is temporary for downwards compatibility
 
-    # default tag values for "Series-to-Series"
+    # default tag values for "Panel-to-Panel"
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel

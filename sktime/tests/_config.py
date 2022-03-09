@@ -44,7 +44,7 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.kernel_based import Arsenal, RocketClassifier
+from sktime.classification.kernel_based import Arsenal
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.forecasting.compose import (
@@ -74,23 +74,18 @@ from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.dictionary_based import SFA
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.signature_based import SignatureTransformer
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.panel.tsfresh import (
-    TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor,
-)
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
+    # known issues, see PR 1989 for fix
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
@@ -98,12 +93,22 @@ EXCLUDE_ESTIMATORS = [
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
     "STLTransformer",
+    # SFA is non-compliant with any transformer interfaces, #2064
+    "SFA",
+    # requires y in fit, this is incompatible with the old testing framework
+    #    unless it inherits from the old mixins, which hard coded the y
+    #    should be removed once test_all_transformers has been refactored to scenarios
+    "TSFreshRelevantFeatureExtractor",
 ]
 
 
 EXCLUDED_TESTS = {
+    # known issue caused by inheritane from sklearn feature union, #1662
     "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
+    # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
+    # known side effects on multivariate arguments, #2072
+    "WindowSummarizer": ["test_methods_have_no_side_effects"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -188,11 +193,6 @@ ESTIMATOR_TEST_PARAMS = {
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    SignatureTransformer: {
-        "augmentation_list": ("basepoint", "addtime"),
-        "depth": 3,
-        "window_name": "global",
-    },
     SignatureClassifier: {
         "augmentation_list": ("basepoint", "addtime"),
         "depth": 3,
@@ -228,7 +228,6 @@ ESTIMATOR_TEST_PARAMS = {
         "estimator": RandomForestClassifier(n_estimators=3),
         "summary_functions": ("mean", "min", "max"),
     },
-    RocketClassifier: {"num_kernels": 100},
     Arsenal: {"num_kernels": 50, "n_estimators": 3},
     HIVECOTEV1: {
         "stc_params": {
@@ -262,19 +261,12 @@ ESTIMATOR_TEST_PARAMS = {
             estimator=RandomForestClassifier(n_estimators=2)
         ),
     },
-    TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
-    TSFreshRelevantFeatureExtractor: {
-        "disable_progressbar": True,
-        "show_warnings": False,
-        "fdr_level": 0.01,
-    },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralEnsemble: {
         "n_estimators": 3,
         "acf_lag": 10,
         "min_interval": 5,
     },
-    SFA: {"return_pandas_data_series": True},
     BOSSEnsemble: {"max_ensemble_size": 3},
     ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
     WEASEL: {"window_inc": 4},
