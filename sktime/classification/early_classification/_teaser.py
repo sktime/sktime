@@ -46,6 +46,9 @@ class TEASER(BaseClassifier):
     estimator: sktime classifier, default=None
         An sktime estimator to be built using the transformed data. Defaults to a
         WEASEL classifier.
+    one_class_classifier: one-class sklearn classifier, default=None
+        An sklearn one-class classifier used to determine whether an early decision is
+        safe. Defaults to a tuned one-class SVM classifier.
     classification_points : List or None, default=None
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
@@ -90,19 +93,21 @@ class TEASER(BaseClassifier):
     def __init__(
         self,
         estimator=None,
+        one_class_classifier=None,
         classification_points=None,
         n_jobs=1,
         random_state=None,
     ):
         self.estimator = estimator
+        self.one_class_classifier = one_class_classifier
         self.classification_points = classification_points
 
         self.n_jobs = n_jobs
         self.random_state = random_state
 
         self._estimators = []
+        self._one_class_classifiers = []
         self._classification_points = []
-        self._svms = []
         self._consecutive_predictions = 0
 
         self._svm_gammas = [100, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1.5, 1]
@@ -144,7 +149,7 @@ class TEASER(BaseClassifier):
             for i in range(len(self._classification_points))
         )
 
-        self._estimators, self._svms, X_svm, train_preds = zip(*fit)
+        self._estimators, self._one_class_classifiers, X_oc, train_preds = zip(*fit)
 
         # tune consecutive predictions required to best harmonic mean
         best_hm = -1
@@ -160,26 +165,14 @@ class TEASER(BaseClassifier):
             for i in range(len(self._classification_points)):
                 if i == len(self._classification_points) - 1:
                     decisions = [True for _ in range(n_instances)]
-                elif self._svms[i] is not None:
-                    decisions = self._svms[i].predict(X_svm[i]) == 1
+                elif self._one_class_classifiers[i] is not None:
+                    decisions = self._one_class_classifiers[i].predict(X_oc[i]) == 1
                 else:
                     decisions = [False for _ in range(n_instances)]
 
                 # record consecutive class decisions
                 state_info = [
-                    (
-                        # the classification point index
-                        i,
-                        # consecutive predictions, add one if positive decision and same
-                        # class
-                        state_info[n][1] + 1
-                        if decisions[n] and train_preds[i][n] == state_info[i][2]
-                        # set to 0 if the decision is negative, 1 if its positive but
-                        # different class
-                        else 1 if decisions[n] else 0,
-                        # predicted class index
-                        train_preds[i][n],
-                    )
+                    self._fit_state_info(decisions, train_preds, state_info, n, i)
                     # if we have finished with this case do not edit the state info
                     if not finished[n] else state_info[n]
                     for n in range(n_instances)
@@ -310,18 +303,18 @@ class TEASER(BaseClassifier):
             for prob in X_probabilities
         ]
 
-        # make a decision based on the one class svm prediction
-        if self._svms[idx] is not None:
-            X_svm = np.hstack((X_probabilities, np.ones((len(X), 1))))
+        # make a decision based on the one class classifier prediction
+        if self._one_class_classifiers[idx] is not None:
+            X_oc = np.hstack((X_probabilities, np.ones((len(X), 1))))
 
             for i in range(len(X)):
                 for n in range(self.n_classes_):
                     if n != preds[i]:
-                        X_svm[i][self.n_classes_] = min(
-                            X_svm[i][self.n_classes_], X_svm[i][preds[i]] - X_svm[i][n]
+                        X_oc[i][self.n_classes_] = min(
+                            X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
                         )
 
-            decisions = self._svms[idx].predict(X_svm) == 1
+            decisions = self._one_class_classifiers[idx].predict(X_oc) == 1
         else:
             decisions = [False for _ in range(n_instances)]
 
@@ -385,9 +378,9 @@ class TEASER(BaseClassifier):
         ]
         train_probs = np.hstack((train_probs, np.ones((len(X), 1))))
 
-        # create train set for svm using train probs with the minimum difference to the
-        # predicted probability
-        X_svm = []
+        # create train set for the one class classifier using train probs with the
+        # minimum difference to the predicted probability
+        X_oc = []
         for i in range(len(X)):
             for n in range(self.n_classes_):
                 if n != train_preds[i]:
@@ -397,19 +390,34 @@ class TEASER(BaseClassifier):
                     )
 
             if train_preds[i] == self._class_dictionary[y[i]]:
-                X_svm.append(train_probs[i])
+                X_oc.append(train_probs[i])
 
-        cv_size = min(len(X_svm), 10)
-        gs = GridSearchCV(
-            OneClassSVM(tol=self._svm_tol, nu=self._svm_nu),
-            {"gamma": self._svm_gammas},
-            scoring="accuracy",
-            cv=cv_size,
-        )
-        gs.fit(X_svm, np.ones(len(X_svm)))
-        svm = gs.best_estimator_
+        if self.one_class_classifier is None:
+            cv_size = min(len(X_oc), 10)
+            gs = GridSearchCV(
+                OneClassSVM(tol=self._svm_tol, nu=self._svm_nu),
+                {"gamma": self._svm_gammas},
+                scoring="accuracy",
+                cv=cv_size,
+            )
+            gs.fit(X_oc, np.ones(len(X_oc)))
+            one_class_classifier = gs.best_estimator_
+        else:
+            one_class_classifier = _clone_estimator(
+                self.one_class_classifier, random_state=rs
+            )
+            one_class_classifier.fit(X_oc, np.ones(len(X_oc)))
 
-        return estimator, svm, train_probs, train_preds
+        return estimator, one_class_classifier, train_probs, train_preds
+
+    @staticmethod
+    def _fit_state_info(decisions, train_preds, state_info, n, i):
+        # consecutive predictions, add one if positive decision and same class
+        if decisions[n] and train_preds[i][n] == state_info[i][2]:
+            return (i, state_info[n][1] + 1, train_preds[i][n])
+        # set to 0 if the decision is negative, 1 if its positive but different class
+        else:
+            return (i, 1 if decisions[n] else 0, train_preds[i][n])
 
     @classmethod
     def get_test_params(cls):
