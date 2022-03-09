@@ -360,3 +360,25 @@ FeatureSelection
     :template: class.rst
 
     FeatureSelection
+
+STLBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STLBootstrapTransformer
+
+MovingBlockBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingBlockBootstrapTransformer
