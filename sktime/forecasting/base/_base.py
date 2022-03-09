@@ -149,11 +149,11 @@ class BaseForecaster(BaseEstimator):
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y, X)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -231,7 +231,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred = self._predict(fh=fh, X=X_inner)
             else:
                 # otherwise we call the vectorized version of predict
-                self._vectorize("predict", X=X_inner, fh=fh)
+                y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -346,10 +346,10 @@ class BaseForecaster(BaseEstimator):
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y, X)
 
         # apply fit and then predict
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -532,7 +532,7 @@ class BaseForecaster(BaseEstimator):
 
         # update internal X/y with the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y, X)
 
         # checks and conversions complete, pass to inner fit
         self._update(y=y_inner, X=X_inner, update_params=update_params)
@@ -720,7 +720,7 @@ class BaseForecaster(BaseEstimator):
 
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y, X)
 
         return self._update_predict_single(
             y=y_inner,
@@ -1327,8 +1327,11 @@ class BaseForecaster(BaseEstimator):
             y = kwargs.pop("y")
             X = kwargs.pop("X", None)
 
+            self._yvec = y
+
             idx = y.get_iter_indices()
             ys = y.as_list()
+
             if X is None:
                 Xs = [None] * len(ys)
             else:
@@ -1351,7 +1354,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._ys.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
