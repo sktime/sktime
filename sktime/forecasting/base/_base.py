@@ -1071,6 +1071,7 @@ class BaseForecaster(BaseEstimator):
                 y,
                 to_type=[
                     "pd.DataFrame",
+                    "pd.Series",
                     "np.ndarray",
                     "pd-multiindex",
                     "numpy3D",
