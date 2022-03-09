@@ -54,29 +54,29 @@ other packages as soft dependencies when feasible.
 Soft dependencies in sktime should usually be restricted to estimators.
 To add an estimator with a soft dependency, ensure the following:
 
-* imports of the soft dependency only happen inside the estimator, e.g., in ``_fit``
-or ``__init__`` methods of the estimator.
-* Errors and warnings, with informative instructions on how to install the soft dependency,
-are raised through ``_check_soft_dependencies``
-`here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
-In the python module containing the estimator, the function should be called twice:
-at the top of the module, with ``severity="warning"``. This will warn the user whenever
-they import the file and the soft dependency is not installed; and, at the beginning
-of ``__init__``, with ``severity="error"``. This will raise an exception whenever
-the user attempts to instantiate the estimator, and the soft dependency is not installed.
-* ensure the module containing the estimator is registered
-`here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__.
-This allows continuous integration tests to check if all soft dependencies are properly isolated to specific modules.
+*   imports of the soft dependency only happen inside the estimator,
+    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
+*   Errors and warnings, with informative instructions on how to install the soft dependency,
+    are raised through ``_check_soft_dependencies``
+    `here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
+    In the python module containing the estimator, the function should be called twice:
+    at the top of the module, with ``severity="warning"``. This will warn the user whenever
+    they import the file and the soft dependency is not installed; and, at the beginning
+    of ``__init__``, with ``severity="error"``. This will raise an exception whenever
+    the user attempts to instantiate the estimator, and the soft dependency is not installed.
+*   ensure the module containing the estimator is registered
+    `here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__.
+    This allows continuous integration tests to check if all soft dependencies are properly isolated to specific modules.
 
 In addition, if the soft dependency introduced is new to ``sktime``,
 or whenever changing the version of an existing one, you need to update the following files:
 
-* `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__,
-following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention all dependencies
-including build time dependencies and optional dependencies are specified in this file.
-* Ensure new soft dependencies are added
-`here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__
-together with the module that depends on it.
+*   `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__,
+    following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention all dependencies
+    including build time dependencies and optional dependencies are specified in this file.
+*   Ensure new soft dependencies are added
+    `here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__
+    together with the module that depends on it.
 
 API design
 ----------
@@ -87,78 +87,4 @@ Patterns” <https://arxiv.org/abs/2101.04938>`__.
 
 .. note::
 
-   This is a first draft of the paper.
    Feedback and improvement suggestions are very welcome!
-
-
-Deprecation
------------
-
-.. note::
-
-    For planned changes and upcoming releases, see our :ref:`roadmap`.
-
-Description
-~~~~~~~~~~~
-
-Before removing or changing sktime's public API, we need to deprecate it.
-This gives users and developers time to transition to the new functionality.
-
-Once functionality is deprecated, it will be removed in the next minor release.
-We follow `semantic versioning <https://semver.org>`_, where the version number denotes <major>.<minor>.<patch>.
-For example, if we add the deprecation warning in release v0.9.0, we remove
-the functionality in release v0.10.0.
-
-Our current deprecation process is as follows:
-
-* We raise a `FutureWarning <https://docs.python.org/3/library/exceptions.html#FutureWarning>`_. The warning message should the give the version number when the functionality will be removed and describe the new usage.
-
-* We add a to-do comments to the lines of code that can be removed, with the version number when the code can be removed. For example, :code:`TODO: remove in v0.10.0`.
-
-* We remove all deprecated functionality as part of the release process, searching for the to-do comments.
-
-We use the `deprecated <https://deprecated.readthedocs.io/en/latest/index.html>`_ package for deprecation helper functions.
-
-To deprecate functionality, we use the :code:`deprecated` decorator.
-When importing it from :code:`deprecated.sphinx`, it automatically adds a deprecation message to the docstring.
-You can deprecate functions, methods or classes.
-
-Examples
-~~~~~~~~
-
-In the examples below, the :code:`deprecated` decorator will raise a FutureWarning saying that the functionality has been deprecated since version 0.8.0 and will be remove in version 0.10.0.
-
-Functions
-~~~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    @deprecated(version="0.8.0", reason="my_old_function will be removed in v0.10.0", category=FutureWarning)
-    def my_old_function(x, y):
-        return x + y
-
-Methods
-~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    class MyClass:
-
-        @deprecated(version="0.8.0", reason="my_old_method will be removed in v0.10.0", category=FutureWarning)
-        def my_old_method(self, x, y):
-            return x + y
-
-Classes
-~~~~~~~
-
-.. code-block::
-
-    from deprecated.sphinx import deprecated
-
-    @deprecated(version="0.8.0", reason="MyOldClass will be removed in v0.10.0", category=FutureWarning)
-    class MyOldClass:
-        pass
