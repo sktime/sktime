@@ -31,8 +31,7 @@ def test_teaser_on_unit_test_data():
     states = None
     for i in teaser.classification_points:
         X = X_test[indices, :, :i]
-        probas = teaser.predict_proba(X)
-        decisions, states = teaser.decide_prediction_safety(X, probas, states)
+        probas, decisions, states = teaser.predict_proba(X, state_info=states)
 
         for n in range(10):
             if decisions[n] and final_decisions[n] == 0:
@@ -73,8 +72,8 @@ teaser_unit_test_probas = np.array(
             0.0,
         ],
         [
-            0.1,
-            0.9,
+            0.2,
+            0.8,
         ],
         [
             0.9,

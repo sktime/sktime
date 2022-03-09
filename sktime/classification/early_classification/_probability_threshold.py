@@ -110,6 +110,10 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         super(ProbabilityThresholdEarlyClassifier, self).__init__()
 
     def _fit(self, X, y):
+        m = getattr(self.estimator, "predict_proba", None)
+        if not callable(m):
+            raise ValueError("Base estimator must have a predict_proba method.")
+
         _, _, series_length = X.shape
 
         self._classification_points = (
@@ -162,15 +166,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 f" in fit. Current classification points: {self._classification_points}"
             )
 
-        m = getattr(self._estimators[idx], "predict_proba", None)
-        if callable(m):
-            return self._estimators[idx].predict_proba(X)
-        else:
-            probas = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimators[idx].predict(X)
-            for i in range(0, X.shape[0]):
-                probas[i, self._class_dictionary[preds[i]]] = 1
-            return probas
+        return self._estimators[idx].predict_proba(X)
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
         """Decide on the safety of an early classification.

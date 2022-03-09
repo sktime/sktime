@@ -79,8 +79,7 @@ def _reproduce_early_classification_unit_test(estimator):
     states = None
     for i in estimator.classification_points:
         X = X_test[indices, :, :i]
-        probas = estimator.predict_proba(X)
-        decisions, states = estimator.decide_prediction_safety(X, probas, states)
+        probas, decisions, states = estimator.predict_proba(X, state_info=states)
 
         for n in range(10):
             if decisions[n] and final_decisions[n] == 0:
