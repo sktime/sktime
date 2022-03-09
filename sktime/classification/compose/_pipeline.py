@@ -110,7 +110,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         tags_to_set = {
             "capability:multivariate": multivariate,
             "capability:missing_values": missing,
-            "capability:unequal": unequal,
+            "capability:unequal_length": unequal,
             "capability:contractable": False,
             "capability:train_estimate": False,
             "capability:multithreading": False,
