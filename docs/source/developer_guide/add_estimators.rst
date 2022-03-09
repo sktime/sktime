@@ -70,7 +70,7 @@ How to use ``sktime`` extension templates
 -----------------------------------------
 
 To use the ``sktime`` extension templates, copy them to the intended location of the estimator.
-Inside the extension templates, necessary actions are marked with ``todo``s.
+Inside the extension templates, necessary actions are marked with ``todo``.
 The typical workflow goes through the extension template by searching for ``todo``, and carrying out
 the action described next to the ``todo``.
 
