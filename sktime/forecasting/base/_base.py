@@ -1455,10 +1455,14 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called."
             )
+            # we need to overwrite the mtype last seen, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
             self.fit(self._y, self._X, self.fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
 
         return self
 
