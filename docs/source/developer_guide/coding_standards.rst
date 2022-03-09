@@ -46,5 +46,4 @@ Patterns” <https://arxiv.org/abs/2101.04938>`__.
 
 .. note::
 
-   This is a first draft of the paper.
    Feedback and improvement suggestions are very welcome!
