@@ -7,9 +7,9 @@ import warnings
 
 from sktime.transformations.series.summarize import WindowSummarizer
 
+__all__ = ["WindowSummarizer"]
+
 warnings.warn(
     "WindowSummarizer will be moved to summarize. In future, use"
     + "sktime.transformations.series.summarize import WindowSummarizer"
 )
-
-WindowSummarizer()
