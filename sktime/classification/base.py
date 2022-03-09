@@ -100,7 +100,7 @@ class BaseClassifier(BaseEstimator, ABC):
             # if other is a TransformerPipeline but self is not, first unwrap it
             elif isinstance(other, TransformerPipeline):
                 return ClassifierPipeline(
-                    classifier=self, transformers=other.transformers
+                    classifier=self, transformers=other.steps
                 )
             # if neither self nor other are a pipeline, construct a ClassifierPipeline
             else:
