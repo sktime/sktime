@@ -11,7 +11,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("prophet")
+_check_soft_dependencies("prophet", severity="warning")
 
 
 class Prophet(_ProphetAdapter):
@@ -144,6 +144,8 @@ class Prophet(_ProphetAdapter):
         verbose=0,
         interval_width=0,
     ):
+        _check_soft_dependencies("prophet", severity="error", object=self)
+
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays
