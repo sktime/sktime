@@ -10,6 +10,8 @@ from sktime.transformations.series.summarize import WindowSummarizer
 __all__ = ["WindowSummarizer"]
 
 warnings.warn(
-    "WindowSummarizer will be moved to summarize. In future, use"
-    + "sktime.transformations.series.summarize import WindowSummarizer"
+    "WindowSummarizer has been moved to transformations.series.summarize,"
+    + " the old location in series.windows_summarize is deprecated since 0.11.0,"
+    + " and will be removed in 0.12.0. Please use the import from "
+    + "transformations.series.summarize import WindowSummarizer."
 )
