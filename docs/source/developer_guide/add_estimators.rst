@@ -31,12 +31,12 @@ This is also, often, explicitly signposted in publications related to the estima
 For instance, most textbooks mention ARIMA in the context of forecasting, so in that hypothetical situation
 it makeas sense to consider the "forecaster" template.
 Then, inspect the template and check whether the methods of the class map clearly onto routines of the estimator.
-If not, another template might be 
+If not, another template might be more appropriate.
 
 The most common point of confusion here is between transformers and other estimator types,
 since transformers are often used as parts of algorithms of other type.
 
-If unsure, feel free to post your question on one of ``sktime``'s social channels. 
+If unsure, feel free to post your question on one of ``sktime``'s social channels.
 Don't panic - it is not uncommon that academic publications are not clear about the type of an estimator,
 and correct categorization may be difficult even to experts.
 
@@ -87,7 +87,7 @@ Extension templates typically have the following ``todo``s:
 *   Filling in the "inner" methods, e.g., ``_fit`` and ``_predict``. The docstrings and comments in the extension template should be followed here.
     The docstrings also describe the guaranteese on the inputs to the "inner" methods, which are typically stronger than the guarantees on
     inputs to the public methods, and determined by values of tags that have been set.
-    For instance, setting the tag ``y_inner_mtype`` to ``pd.DataFrame`` for a forecaster guarantees that the ``y`` seen by ``_fit`` will be 
+    For instance, setting the tag ``y_inner_mtype`` to ``pd.DataFrame`` for a forecaster guarantees that the ``y`` seen by ``_fit`` will be
     a ``pandas.DataFrame``, complying with additional data container specifications in ``sktime`` (e.g., index types).
 *   filling in testing parameters in ``get_test_params``. The selection of parameters should cover major estimator internal case distinctions
     to achieve good coverage.
@@ -137,7 +137,7 @@ When adding an ``sktime`` compatible estimator to ``sktime`` itself, a number of
 additional things need to be done:
 
 *   ensure that code also meets ``sktime's`` :ref:`documentation <developer_guide_documentation>` standards.
-*   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the 
+*   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the
     correct ``rst`` file inside ``docs/source/api_reference``.
 *   authors of the estimator should add themselves to ``CODEOWNERS``, as owners of the contributed estimator.
 *   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the "dependencies"
