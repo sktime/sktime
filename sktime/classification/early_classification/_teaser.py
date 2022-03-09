@@ -318,7 +318,7 @@ class TEASER(BaseClassifier):
                     X,
                     i,
                 )
-                for i in range(idx)
+                for i in range(idx + 1)
             )
 
             X_oc, probas, preds = zip(*out)
