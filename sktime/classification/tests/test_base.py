@@ -25,7 +25,7 @@ class _DummyClassifier(BaseClassifier):
         """Predict dummy."""
         return self
 
-    def _predict_proba(self):
+    def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
 
@@ -47,7 +47,7 @@ class _DummyHandlesAllInput(BaseClassifier):
         """Predict dummy."""
         return self
 
-    def _predict_proba(self):
+    def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
 
@@ -67,7 +67,7 @@ class _DummyConvertPandas(BaseClassifier):
         """Predict dummy."""
         return self
 
-    def _predict_proba(self):
+    def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
 
@@ -193,17 +193,6 @@ def test_convert_input():
     assert tempX.ndim == 3
 
 
-def _create_example_dataframe(cases=5, dimensions=1, length=10):
-    """Create a simple data frame set of time series (X) for testing."""
-    test_X = pd.DataFrame(dtype=np.float32)
-    for i in range(0, dimensions):
-        instance_list = []
-        for _ in range(0, cases):
-            instance_list.append(pd.Series(np.random.randn(length)))
-        test_X["dimension_" + str(i)] = instance_list
-    return test_X
-
-
 def test__check_classifier_input():
     """Test for valid estimator format.
 
@@ -242,6 +231,17 @@ def test__check_classifier_input():
     # 5. Test incorrect: too few cases or too short a series
     with pytest.raises(ValueError, match=r".*Minimum number of cases required*."):
         _check_classifier_input(test_X2, test_y1, enforce_min_instances=6)
+
+
+def _create_example_dataframe(cases=5, dimensions=1, length=10):
+    """Create a simple data frame set of time series (X) for testing."""
+    test_X = pd.DataFrame(dtype=np.float32)
+    for i in range(0, dimensions):
+        instance_list = []
+        for _ in range(0, cases):
+            instance_list.append(pd.Series(np.random.randn(length)))
+        test_X["dimension_" + str(i)] = instance_list
+    return test_X
 
 
 def _create_nested_dataframe(cases=5, dimensions=1, length=10):
