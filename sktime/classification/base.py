@@ -70,6 +70,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._estimator_type = "classifier"
         super(BaseClassifier, self).__init__()
 
     def fit(self, X, y):

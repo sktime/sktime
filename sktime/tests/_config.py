@@ -35,7 +35,6 @@ from sktime.classification.feature_based import (
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
-    CanonicalIntervalForest,
     DrCIF,
     RandomIntervalSpectralEnsemble,
     SupervisedTimeSeriesForest,
@@ -271,7 +270,6 @@ ESTIMATOR_TEST_PARAMS = {
     ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
-    CanonicalIntervalForest: {"n_estimators": 3},
     DrCIF: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
