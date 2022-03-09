@@ -1070,11 +1070,10 @@ class BaseForecaster(BaseEstimator):
             y = convert_to(
                 y,
                 to_type=[
-                    "np.ndarray",
-                    "numpy3D",
-                    "pd.Series",
                     "pd.DataFrame",
+                    "np.ndarray",
                     "pd-multiindex",
+                    "numpy3D",
                     "pd_multiindex_hier",
                 ],
             )
@@ -1104,10 +1103,10 @@ class BaseForecaster(BaseEstimator):
             X = convert_to(
                 X,
                 to_type=[
-                    "np.ndarray",
-                    "numpy3D",
                     "pd.DataFrame",
+                    "np.ndarray",
                     "pd-multiindex",
+                    "numpy3D",
                     "pd_multiindex_hier",
                 ],
             )
