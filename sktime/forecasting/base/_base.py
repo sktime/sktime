@@ -149,7 +149,7 @@ class BaseForecaster(BaseEstimator):
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -346,7 +346,7 @@ class BaseForecaster(BaseEstimator):
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
         vectorization_needed = isinstance(y_inner, VectorizedDF)
@@ -532,7 +532,7 @@ class BaseForecaster(BaseEstimator):
 
         # update internal X/y with the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
         self._update(y=y_inner, X=X_inner, update_params=update_params)
@@ -720,7 +720,7 @@ class BaseForecaster(BaseEstimator):
 
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y, X)
+        self._update_y_X(y_inner, X_inner)
 
         return self._update_predict_single(
             y=y_inner,
@@ -1065,6 +1065,9 @@ class BaseForecaster(BaseEstimator):
         """
         # we only need to modify _y if y is not None
         if y is not None:
+            # if y is vectorized, unwrap it first
+            if isinstance(y, VectorizedDF):
+                y = y.X
             # we want to ensure that y is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             y = convert_to(
@@ -1099,6 +1102,9 @@ class BaseForecaster(BaseEstimator):
 
         # we only need to modify _X if X is not None
         if X is not None:
+            # if X is vectorized, unwrap it first
+            if isinstance(X, VectorizedDF):
+                X = X.X
             # we want to ensure that X is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             X = convert_to(
