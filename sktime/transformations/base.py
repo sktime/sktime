@@ -57,7 +57,14 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.base import BaseEstimator
-from sktime.datatypes import check_is_mtype, convert_to, mtype, mtype_to_scitype
+from sktime.datatypes import (
+    VectorizedDF,
+    check_is_mtype,
+    check_is_scitype,
+    convert_to,
+    mtype,
+    mtype_to_scitype,
+)
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
@@ -214,12 +221,32 @@ class BaseTransformer(BaseEstimator):
         """
         X = _handle_alias(X, Z)
 
+        # if fit is called, fitted state is re-set
         self._is_fitted = False
 
         # skip everything if fit-in-transform is True
         if self.get_tag("fit-in-transform"):
             self._is_fitted = True
             return self
+
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        # checks and conversions complete, pass to inner fit
+        #####################################################
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        self._is_vectorized = vectorization_needed
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not vectorization_needed:
+            self._fit(X=X_inner, y=y_inner)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("fit", X=X_inner, y=y_inner)
+
+        # this should happen last: fitted state is set to True
+        self._is_fitted = True
+
+        return self
 
         # input checks and minor coercions on X, y
         ###########################################
@@ -355,6 +382,26 @@ class BaseTransformer(BaseEstimator):
 
         # check whether is fitted
         self.check_is_fitted()
+
+        # input check and conversion for X/y
+        X_inner, y_inner, X_mtype = self._check_X_y(X=X, y=y, return_mtype=True)
+
+        if not self._is_vectorized:
+            Xt = self._transform(X=X_inner, y=y_inner)
+        else:
+            # otherwise we call the vectorized version of predict
+            self._vectorize("transform", X=X_inner, y=y_inner)
+
+        # convert to output mtype, identical with last y mtype seen
+        y_out = convert_to(
+            Xt,
+            X_mtype,
+            store=self._converter_store_X,
+            store_behaviour="freeze",
+        )
+
+        return X_out
+
 
         # input checks and minor coercions on X, y
         ###########################################
