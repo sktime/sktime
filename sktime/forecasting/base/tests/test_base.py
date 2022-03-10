@@ -4,15 +4,15 @@
 
 __author__ = ["fkiraly"]
 
-import pytest
-
 from functools import reduce
 from operator import mul
 
+import pytest
+
 from sktime.datatypes import check_is_mtype, convert
 from sktime.forecasting.arima import ARIMA
-from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.hierarchical import _make_hierachical
+from sktime.utils._testing.panel import _make_panel_X
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
