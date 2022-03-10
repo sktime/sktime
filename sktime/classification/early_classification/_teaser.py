@@ -43,11 +43,11 @@ class TEASER(BaseClassifier):
     Parameters
     ----------
     estimator: sktime classifier, default=None
-        An sktime estimator to be built using the transformed data. Defaults to a
-        WEASEL classifier.
+        An sktime estimator (aka slave) to be built using the transformed data.
+        Defaults to a WEASEL classifier.
     one_class_classifier: one-class sklearn classifier, default=None
-        An sklearn one-class classifier used to determine whether an early decision is
-        safe. Defaults to a tuned one-class SVM classifier.
+        An sklearn one-class classifier (aka master) used to determine whether an early
+        decision is safe. Defaults to a tuned one-class SVM classifier.
     one_class_param_grid: the hyper-parameters for grid-search, default=None
         The hyper-parameters for the one-class classifier to learn using grid-search.
     classification_points : List or None, default=None
