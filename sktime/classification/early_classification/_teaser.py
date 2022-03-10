@@ -494,32 +494,32 @@ class TEASER(BaseClassifier):
         # a List containing the state info for case, edited at each time stamp.
         # contains 1. the index of the time stamp, 2. the number of consecutive
         # positive decisions made, and 3. the prediction made
-        state_info = [(0, 0, 0) for _ in range(n_instances)]
+        state_info = np.zeros((n_instances, 3), dtype=int)
+
         # stores whether we have made a final decision on a prediction, if true
-        # state info wont be edited in later time stamps
-        finished = [False for _ in range(n_instances)]
+        # state info won't be edited in later time stamps
+        finished = np.zeros(n_instances, dtype=bool)
 
         for i in range(n_timestamps):
             if i == len(self._classification_points) - 1:
-                decisions = [True for _ in range(n_instances)]
+                decisions = np.ones(n_instances, dtype=bool)
             elif self._one_class_classifiers[i] is not None:
                 decisions = self._one_class_classifiers[i].predict(X_oc[i]) == 1
             else:
-                decisions = [False for _ in range(n_instances)]
+                decisions = np.zeros(n_instances, dtype=bool)
 
             # record consecutive class decisions
-            state_info = [
-                self._update_state_info(decisions, preds[i], state_info, n, i)
-                # if we have finished with this case do not edit the state info
-                if not finished[n] else state_info[n]
-                for n in range(n_instances)
-            ]
+            state_info = np.array(
+                [
+                    self._update_state_info(decisions, preds[i], state_info, n, i)
+                    # once we have finished with this case do not update the state info
+                    if not finished[n] else state_info[n]
+                    for n in range(n_instances)
+                ]
+            )
 
-            # safety decisions
-            finished = [
-                True if state_info[n][1] >= consecutive_predictions else False
-                for n in range(n_instances)
-            ]
+            # safety of decisions
+            finished = state_info[:, 1] >= consecutive_predictions
 
         return state_info, finished
 
