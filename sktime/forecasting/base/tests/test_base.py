@@ -27,7 +27,7 @@ def test_vectorization_series_to_panel(mtype):
     """
     n_instances = 10
 
-    y = _make_panel_X(n_instances=n_instances)
+    y = _make_panel_X(n_instances=n_instances, random_state=42)
     y = convert(y, from_type="nested_univ", to_type=mtype)
 
     y_pred = ARIMA().fit(y).predict([1, 2, 3])
@@ -66,7 +66,7 @@ def test_vectorization_series_to_hier(mtype):
     hierarchy_levels = (2, 4)
     n_instances = reduce(mul, hierarchy_levels)
 
-    y = _make_hierachical()
+    y = _make_hierachical(hierarchy_levels= hierarchy_levels, random_state=42)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     y_pred = ARIMA().fit(y).predict([1, 2, 3])
