@@ -66,8 +66,6 @@ def average_of_slope(q: np.ndarray):
     .. [1] Keogh E, Pazzani M Derivative dynamic time warping. In: proceedings of 1st
     SIAM International Conference on Data Mining, 2001
     """
-    #    q2 = 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
-    #    print("shapes ",q.shape,", ",q2.shape)
     return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
 
 
