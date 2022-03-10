@@ -504,7 +504,12 @@ class TEASER(BaseClassifier):
             if i == len(self._classification_points) - 1:
                 decisions = np.ones(n_instances, dtype=bool)
             elif self._one_class_classifiers[i] is not None:
-                decisions = self._one_class_classifiers[i].predict(X_oc[i]) == 1
+                offsets = np.argwhere(not finished).flatten()
+                decisions_subset = (
+                    self._one_class_classifiers[i].predict(X_oc[i][offsets]) == 1
+                )
+                decisions = np.ones(n_instances, dtype=bool)
+                decisions[offsets] = decisions_subset
             else:
                 decisions = np.zeros(n_instances, dtype=bool)
 
@@ -517,7 +522,6 @@ class TEASER(BaseClassifier):
                     for n in range(n_instances)
                 ]
             )
-
             # safety of decisions
             finished = state_info[:, 1] >= consecutive_predictions
 
