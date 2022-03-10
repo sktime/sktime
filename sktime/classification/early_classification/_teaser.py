@@ -180,27 +180,28 @@ class TEASER(BaseClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            accuracy = np.average(
-                [
-                    state_info[i, 2] == self._class_dictionary[y[i]]
-                    for i in range(n_instances)
-                ]
-            )
-
-            earliness = 1 - np.average(
-                [
-                    self.classification_points[state_info[i][0]] / series_length
-                    for i in range(n_instances)
-                ]
-            )
-
-            hm = (2 * accuracy * earliness) / (accuracy + earliness)
-
+            hm = self._compute_harmonic_mean(n_instances, series_length, state_info, y)
             if hm > best_hm:
                 best_hm = hm
                 self._consecutive_predictions = g
 
         return self
+
+    def _compute_harmonic_mean(self, n_instances, series_length, state_info, y):
+        # calculate harmonic mean from finished state info
+        accuracy = np.average(
+            [
+                state_info[i, 2] == self._class_dictionary[y[i]]
+                for i in range(n_instances)
+            ]
+        )
+        earliness = 1 - np.average(
+            [
+                self.classification_points[state_info[i][0]] / series_length
+                for i in range(n_instances)
+            ]
+        )
+        return (2 * accuracy * earliness) / (accuracy + earliness)
 
     def predict(self, X, state_info=None):
         """Predicts labels for sequences in X.
@@ -420,19 +421,13 @@ class TEASER(BaseClassifier):
         train_preds = [
             int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in train_probas
         ]
-        train_probas = np.hstack((train_probas, np.ones((len(X), 1))))
 
+        # train_probas = np.hstack((train_probas, np.ones((len(X), 1))))
         # create train set for the one class classifier using train probas with the
         # minimum difference to the predicted probability
+        train_probas = self._generate_one_class_features(X, train_preds, train_probas)
         X_oc = []
         for i in range(len(X)):
-            for n in range(self.n_classes_):
-                if n != train_preds[i]:
-                    train_probas[i][self.n_classes_] = min(
-                        train_probas[i][self.n_classes_],
-                        train_probas[i][train_preds[i]] - train_probas[i][n],
-                    )
-
             if train_preds[i] == self._class_dictionary[y[i]]:
                 X_oc.append(train_probas[i])
 
