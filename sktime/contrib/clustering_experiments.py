@@ -128,7 +128,7 @@ if __name__ == "__main__":
         dataset = "Chinatown"
         resample = 0
         tf = True
-        distance = "dtw"
+        distance = "ddtw"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )

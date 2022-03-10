@@ -302,7 +302,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Fitted estimator.
         """
         self._check_params(X)
-
+        X = X.transpose((0, 2, 1))
         if self.metric == "ddtw" or self.metric == "wddtw":
             X = average_of_slope_transform(X)
             if self.metric == "ddtw":
@@ -351,6 +351,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
+        X = X.transpose((0, 2, 1))
         if self.metric == "ddtw" or self.metric == "wddtw":
             X = average_of_slope_transform(X)
         return self._assign_clusters(X, self.cluster_centers_)[0]
