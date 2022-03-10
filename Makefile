@@ -24,7 +24,7 @@ install: ## Install for the current user using the default python command
 	python3 setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
-	python -m pytest --tmnet -n 2 -v --showlocals --durations=20 sktime
+	sudo /home/runner/.virtualenvs/.venv/bin/py-spy record -o profile.svg -- /home/runner/.virtualenvs/.venv/bin/python -m pytest --tmnet -n 2 -v --showlocals --durations=20 sktime
 	ls -al .testmondata
 
 tests: test
