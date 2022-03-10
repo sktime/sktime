@@ -189,6 +189,9 @@ class TEASER(BaseClassifier):
                 )
                 / n_instances
             )
+
+            # accuracy2 = np.sum(state_info[:,2] == self._class_dictionary[y]
+
             earliness = (
                 1
                 - np.sum(
@@ -504,7 +507,7 @@ class TEASER(BaseClassifier):
             if i == len(self._classification_points) - 1:
                 decisions = np.ones(n_instances, dtype=bool)
             elif self._one_class_classifiers[i] is not None:
-                offsets = np.argwhere(not finished).flatten()
+                offsets = np.argwhere(finished == 0).flatten()
                 decisions_subset = (
                     self._one_class_classifiers[i].predict(X_oc[i][offsets]) == 1
                 )
