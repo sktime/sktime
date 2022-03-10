@@ -135,9 +135,8 @@ class TEASER(BaseClassifier):
                 raise ValueError("Base estimator must have a predict_proba method.")
 
         if self.one_class_classifier is None:
-            self.one_class_classifier=OneClassSVM(tol=self._svm_tol, nu=self._svm_nu)
+            self.one_class_classifier = OneClassSVM(tol=self._svm_tol, nu=self._svm_nu)
             self.one_class_param_grid = {"gamma": self._svm_gammas}
-
 
         n_instances, _, series_length = X.shape
 
@@ -360,7 +359,6 @@ class TEASER(BaseClassifier):
                     "and a list of state_info outputs from the previous decision "
                     "making for later inputs."
                 )
-
             probas = self._estimators[idx].predict_proba(X)
 
             # find predicted class for each instance
@@ -486,8 +484,7 @@ class TEASER(BaseClassifier):
             for n in range(self.n_classes_):
                 if n != preds[i]:
                     X_oc[i][self.n_classes_] = min(
-                        X_oc[i][self.n_classes_],
-                        X_oc[i][preds[i]] - X_oc[i][n]
+                        X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
                     )
         return X_oc
 

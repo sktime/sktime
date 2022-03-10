@@ -2,12 +2,13 @@
 """TEASER test code."""
 import numpy as np
 from numpy import testing
+from sklearn.ensemble import IsolationForest
 
 from sktime.classification.early_classification._teaser import TEASER
 from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sklearn.ensemble import IsolationForest
+
 
 def test_teaser_on_unit_test_data():
     """Test of TEASER on unit test data."""
@@ -117,6 +118,4 @@ def test_teaser_with_different_master_classifier():
             if decisions[n] and final_decisions[n] == 0:
                 final_probas[n] = probas[n]
                 final_decisions[n] = i
-
     testing.assert_array_equal(final_probas, teaser_unit_test_probas)
-
