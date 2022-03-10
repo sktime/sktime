@@ -180,28 +180,20 @@ class TEASER(BaseClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            accuracy = (
-                np.sum(
-                    [
-                        1 if state_info[i][2] == self._class_dictionary[y[i]] else 0
-                        for i in range(n_instances)
-                    ]
-                )
-                / n_instances
+            accuracy = np.average(
+                [
+                    state_info[i, 2] == self._class_dictionary[y[i]]
+                    for i in range(n_instances)
+                ]
             )
 
-            # accuracy2 = np.sum(state_info[:,2] == self._class_dictionary[y]
-
-            earliness = (
-                1
-                - np.sum(
-                    [
-                        self.classification_points[state_info[i][0]] / series_length
-                        for i in range(n_instances)
-                    ]
-                )
-                / n_instances
+            earliness = 1 - np.average(
+                [
+                    self.classification_points[state_info[i][0]] / series_length
+                    for i in range(n_instances)
+                ]
             )
+
             hm = (2 * accuracy * earliness) / (accuracy + earliness)
 
             if hm > best_hm:
