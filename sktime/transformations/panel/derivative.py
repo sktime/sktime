@@ -2,7 +2,7 @@
 """Derivative transformer."""
 import numpy as np
 
-from sktime.distances._ddtw import _average_of_slope
+from sktime.distances._ddtw import average_of_slope
 from sktime.transformations.base import BaseTransformer
 
 
@@ -19,5 +19,5 @@ class DerivativeTransformer(BaseTransformer):
     def _transform(self, X: np.ndarray, y=None):
         derivative_X = []
         for val in X:
-            derivative_X.append(_average_of_slope(val))
+            derivative_X.append(average_of_slope(val))
         return np.array(derivative_X)
