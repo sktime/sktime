@@ -126,32 +126,11 @@ kwargs = {
 # plot_series(y_train, y_test, y_pred, labels=["y_train", "y_test", "y_pred"])
 # mean_absolute_percentage_error(y_pred, y_test)
 
-# from sktime.forecasting.base import ForecastingHorizon
-
 # %%
 
-# kwargs = {
-#     "lag_config": {
-#         "lag": ["lag", [[1, 0], [2, 0], [3, 0]]],
-#     }
-# }
+# from sktime.forecasting.base import ForecastingHorizon
 
-# regressor = make_pipeline(
-#     RandomForestRegressor(),
-# )
-
-# forecaster = make_reduction(
-#     regressor,
-#     scitype="tabular-regressor",
-#     transformers=[WindowSummarizer(**kwargs)],
-#     window_length=None,
-# )
-
-# forecaster.fit(X=X_train, y=y_train, fh=2)
-
-# y_pred = forecaster.predict(X=X_test, fh=2)
-# print(y_pred)
-
+# Example 1
 
 kwargs = {
     "lag_config": {
@@ -170,10 +149,71 @@ forecaster = make_reduction(
     window_length=None,
 )
 
-# fh = ForecastingHorizon(X_test.index, is_relative=False)
+forecaster.fit(X=X_train, y=y_train, fh=2)
+
+y_pred = forecaster.predict(X=X_test, fh=2)
+# print(y_pred)
+
+
+# Example 3 - None for transformers does not work yet, but easy to adjust
+#  - no window needed since number of lag of y in this example
+
+regressor = make_pipeline(
+    RandomForestRegressor(),
+)
+
+forecaster = make_reduction(
+    regressor,
+    scitype="tabular-regressor",
+    transformers=None,
+    window_length=None,
+)
+
 pipe = ForecastingPipeline(
     steps=[
-        ("a", WindowSummarizer(n_jobs=1, target_cols=["event_type_1", "snap"])),
+        (
+            "a",
+            WindowSummarizer(n_jobs=1, target_cols=["event_type_1", "snap"], **kwargs),
+        ),
+        ("forecaster", forecaster),
+    ]
+)
+
+
+# Example 4 - I also included lags of y to make example more interesting
+
+kwargs_y = {
+    "lag_config": {
+        "lag": ["lag", [[1, 0], [2, 0], [3, 0]]],
+    }
+}
+
+kwargs_x = {
+    "lag_config": {
+        "mean": ["mean", [[12, 12], [24, 12]]],
+    }
+}
+
+
+regressor = make_pipeline(
+    RandomForestRegressor(),
+)
+
+forecaster = make_reduction(
+    regressor,
+    scitype="tabular-regressor",
+    transformers=[WindowSummarizer(**kwargs_y)],
+    window_length=None,
+)
+
+pipe = ForecastingPipeline(
+    steps=[
+        (
+            "a",
+            WindowSummarizer(
+                n_jobs=1, target_cols=["event_type_1", "snap"], **kwargs_x
+            ),
+        ),
         ("forecaster", forecaster),
     ]
 )

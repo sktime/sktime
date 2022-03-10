@@ -210,9 +210,16 @@ def _dict_equals(x, y, return_msg=False):
     ykeys = set(y.keys())
 
     if xkeys != ykeys:
-        return ret(False, f".keys, x.keys = {xkeys} != y.keys = {ykeys}")
+        xmy = xkeys.difference(ykeys)
+        ymx = ykeys.difference(xkeys)
+        diffmsg = ".keys,"
+        if len(xmy) > 0:
+            diffmsg += f" x.keys-y.keys = {xmy}."
+        if len(ymx) > 0:
+            diffmsg += f" y.keys-x.keys = {ymx}."
+        return ret(False, diffmsg)
 
-    # we now know all keys are the same
+    # we now know that xkeys == ykeys
     for key in xkeys:
         xi = x[key]
         yi = y[key]

@@ -296,7 +296,7 @@ Datetime feature generation
 Lagged Window Summarizer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.window_summarizer
+.. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
     :toctree: auto_generated/
@@ -360,3 +360,25 @@ FeatureSelection
     :template: class.rst
 
     FeatureSelection
+
+STLBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STLBootstrapTransformer
+
+MovingBlockBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingBlockBootstrapTransformer
