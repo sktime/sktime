@@ -71,7 +71,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self._class_dictionary = {}
         self._threads_to_use = 1
 
-        # required for compatability with soem sklearn interfaces
+        # required for compatability with some sklearn interfaces
         # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
 
