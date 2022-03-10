@@ -103,7 +103,7 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "Chinatown"
+        dataset = "GunPoint"
         resample = 0
         tf = True
         distance = "ddtw"
@@ -135,8 +135,8 @@ if __name__ == "__main__":
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    normalize(train_X, norm="l1", copy=False)
-    normalize(test_X, norm="l1", copy=False)
+#    normalize(train_X, norm="l1", copy=False)
+#    normalize(test_X, norm="l1", copy=False)
     epsilon = 0.5
     if tune:
         window = tune_window(distance, train_X)
