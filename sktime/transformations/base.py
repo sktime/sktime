@@ -965,6 +965,56 @@ class BaseTransformer(BaseEstimator):
 
         return Xt
 
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorized/iterated loop over method of BaseTransformer.
+
+        Uses forecasters_ attribute to store one forecaster per loop index.
+        """
+        FIT_METHODS = ["fit", "update"]
+        TRAFO_METHODS = ["transform", "inverse_transform"]
+
+        if methodname in FIT_METHODS:
+            # create container for clones
+            X = kwargs.pop("X")
+            y = kwargs.pop("y", None)
+
+            self._Xvec = y
+
+            idx = X.get_iter_indices()
+            Xs = X.as_list()
+
+            if y is None:
+                ys = [None] * len(Xs)
+            else:
+                ys = y.as_list()
+
+            self.transformers_ = pd.DataFrame(index=idx, columns=["transformers"])
+            for i in range(len(idx)):
+                self.transformers_.iloc[i, 0] = clone(self)
+                method = getattr(self.transformers_.iloc[i, 0], methodname)
+                method(X=Xs[i], y=ys[i], **kwargs)
+
+            return self
+
+        elif methodname in TRAFO_METHODS:
+            n = len(self.transformers_.index)
+            X = kwargs.pop("X")
+            y = kwargs.pop("y", None)
+
+            Xs = X.as_list()
+            if y is None:
+                ys = [None] * len(Xs)
+            else:
+                ys = y.as_list()
+
+            Xts = []
+            for i in range(n):
+                method = getattr(self.transformers_.iloc[i, 0], methodname)
+                Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
+            Xt = self._Xvec.reconstruct(Xts, overwrite_index=False)
+
+            return Xt
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
