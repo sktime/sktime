@@ -48,6 +48,8 @@ class TEASER(BaseClassifier):
     one_class_classifier: one-class sklearn classifier, default=None
         An sklearn one-class classifier used to determine whether an early decision is
         safe. Defaults to a tuned one-class SVM classifier.
+    one_class_param_grid: the hyper-parameters for grid-search, default=None
+        The hyper-parameters for the one-class classifier to learn using grid-search.
     classification_points : List or None, default=None
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
@@ -97,6 +99,7 @@ class TEASER(BaseClassifier):
         self,
         estimator=None,
         one_class_classifier=None,
+        one_class_param_grid=None,
         classification_points=None,
         n_jobs=1,
         random_state=None,
@@ -119,12 +122,22 @@ class TEASER(BaseClassifier):
         self._svm_nu = 0.05
         self._svm_tol = 1e-4
 
+        self.one_class_param_grid = one_class_param_grid
+
         super(TEASER, self).__init__()
 
     def _fit(self, X, y):
-        m = getattr(self.estimator, "predict_proba", None)
-        if not callable(m):
-            raise ValueError("Base estimator must have a predict_proba method.")
+        if self.estimator is None:
+            self.setimator = MUSE() if X.shape[1] > 1 else WEASEL()
+        else:
+            m = getattr(self.estimator, "predict_proba", None)
+            if not callable(m):
+                raise ValueError("Base estimator must have a predict_proba method.")
+
+        if self.one_class_classifier is None:
+            self.one_class_classifier=OneClassSVM(tol=self._svm_tol, nu=self._svm_nu)
+            self.one_class_param_grid = {"gamma": self._svm_gammas}
+
 
         n_instances, _, series_length = X.shape
 
@@ -239,7 +252,7 @@ class TEASER(BaseClassifier):
         return self._predict(X, state_info=state_info)
 
     def _predict(self, X, state_info=None):
-        out = self._predict_proba(X)
+        out = self._predict_proba(X, state_info=state_info)
         probas = out[0] if self.return_safety_decisions else out
 
         rng = check_random_state(self.random_state)
@@ -358,15 +371,7 @@ class TEASER(BaseClassifier):
 
             # make a decision based on the one class classifier prediction
             if self._one_class_classifiers[idx] is not None:
-                X_oc = np.hstack((probas, np.ones((len(X), 1))))
-
-                for i in range(len(X)):
-                    for n in range(self.n_classes_):
-                        if n != preds[i]:
-                            X_oc[i][self.n_classes_] = min(
-                                X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
-                            )
-
+                X_oc = self._generate_one_class_features(X, preds, probas)
                 decisions = self._one_class_classifiers[idx].predict(X_oc) == 1
             else:
                 decisions = [False for _ in range(n_instances)]
@@ -397,13 +402,8 @@ class TEASER(BaseClassifier):
         rs = None if self.random_state is None else rs * 37 * (i + 1)
         rng = check_random_state(rs)
 
-        default = MUSE() if X.shape[1] > 1 else WEASEL()
-        estimator = _clone_estimator(
-            default if self.estimator is None else self.estimator,
-            rng,
-        )
-
         # fit estimator for this threshold
+        estimator = _clone_estimator(self.estimator, rng)
         estimator.fit(X[:, :, : self._classification_points[i]], y)
 
         m = getattr(estimator, "n_jobs", None)
@@ -445,21 +445,18 @@ class TEASER(BaseClassifier):
 
         one_class_classifier = None
         if len(X_oc) > 1:
-            if self.one_class_classifier is None:
-                cv_size = min(len(X_oc), 10)
-                gs = GridSearchCV(
-                    OneClassSVM(tol=self._svm_tol, nu=self._svm_nu),
-                    {"gamma": self._svm_gammas},
-                    scoring="accuracy",
-                    cv=cv_size,
-                )
-                gs.fit(X_oc, np.ones(len(X_oc)))
-                one_class_classifier = gs.best_estimator_
-            else:
-                one_class_classifier = _clone_estimator(
-                    self.one_class_classifier, random_state=rs
-                )
-                one_class_classifier.fit(X_oc, np.ones(len(X_oc)))
+            cv_size = min(len(X_oc), 10)
+            one_class_classifier = _clone_estimator(
+                self.one_class_classifier, random_state=rs
+            )
+            gs = GridSearchCV(
+                estimator=one_class_classifier,
+                param_grid=self.one_class_param_grid,
+                scoring="accuracy",
+                cv=cv_size,
+            )
+            gs.fit(X_oc, np.ones(len(X_oc)))
+            one_class_classifier = gs.best_estimator_
 
         return estimator, one_class_classifier, train_probas, train_preds
 
@@ -477,16 +474,22 @@ class TEASER(BaseClassifier):
         # minimum difference to the predicted probability
         X_oc = []
         if self._one_class_classifiers[i] is not None:
-            X_oc = np.hstack((probas, np.ones((len(X), 1))))
-
-            for i in range(len(X)):
-                for n in range(self.n_classes_):
-                    if n != preds[i]:
-                        X_oc[i][self.n_classes_] = min(
-                            X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
-                        )
+            X_oc = self._generate_one_class_features(X, preds, probas)
 
         return X_oc, probas, preds
+
+    def _generate_one_class_features(self, X, preds, probas):
+        # create data set for the one class classifier using predicted probas with the
+        # minimum difference to the predicted probability
+        X_oc = np.hstack((probas, np.ones((len(X), 1))))
+        for i in range(len(X)):
+            for n in range(self.n_classes_):
+                if n != preds[i]:
+                    X_oc[i][self.n_classes_] = min(
+                        X_oc[i][self.n_classes_],
+                        X_oc[i][preds[i]] - X_oc[i][n]
+                    )
+        return X_oc
 
     def _predict_n_timestamps(self, preds, X_oc, consecutive_predictions, n_timestamps):
         n_instances = len(preds[0])
