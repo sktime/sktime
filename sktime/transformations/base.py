@@ -390,7 +390,7 @@ class BaseTransformer(BaseEstimator):
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
-            self._vectorize("transform", X=X_inner, y=y_inner)
+            Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
