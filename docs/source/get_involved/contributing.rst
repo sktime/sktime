@@ -126,4 +126,4 @@ All contributions are recorded in
 
 .. note::
 
-   If we have missed anything, please `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`_ or chat with us on `Discord`_.
+   If we have missed anything, please `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`_ or chat with us on Slack`_.
