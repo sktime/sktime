@@ -26,6 +26,7 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
+from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -35,13 +36,12 @@ from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseClassifier(BaseEstimator):
+class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
     classifiers have to implement. Attributes with a underscore suffix are set in the
     method fit.
-    #TODO: Make _fit and _predict abstract
 
     Parameters
     ----------
@@ -70,7 +70,46 @@ class BaseClassifier(BaseEstimator):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+
+        # required for compatability with some sklearn interfaces
+        # i.e. CalibratedClassifierCV
+        self._estimator_type = "classifier"
+
         super(BaseClassifier, self).__init__()
+
+    def __rmul__(self, other):
+        """Magic * method, return concatenated ClassifierPipeline, transformers on left.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        """
+        from sktime.classification.compose import ClassifierPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # ClassifierPipeline already has the dunder method defined
+            if isinstance(self, ClassifierPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return ClassifierPipeline(classifier=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a ClassifierPipeline
+            else:
+                return ClassifierPipeline(classifier=self, transformers=[other])
+        else:
+            return NotImplemented
 
     def fit(self, X, y):
         """Fit time series classifier to training data.
@@ -241,6 +280,7 @@ class BaseClassifier(BaseEstimator):
 
         return X
 
+    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -267,10 +307,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError(
-            "_fit is a protected abstract method, it must be implemented."
-        )
+        ...
 
+    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -291,9 +330,7 @@ class BaseClassifier(BaseEstimator):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
-        raise NotImplementedError(
-            "_predict is a protected abstract method, it must be implemented."
-        )
+        ...
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.

@@ -4,18 +4,21 @@
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel
-from joblib import delayed
+from joblib import Parallel, delayed
 from sklearn.base import clone
 
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import (
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+)
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils.validation.panel import check_X
 
 
 class PlateauFinder(_PanelToPanelTransformer):
-    """Transformer that finds segments of the same given value, plateau in
+    """Plateau finder transformer.
+
+    Transformer that finds segments of the same given value, plateau in
     the time series, and
     returns the starting indices and lengths.
 
@@ -38,16 +41,17 @@ class PlateauFinder(_PanelToPanelTransformer):
 
     def transform(self, X, y=None):
         """Transform X.
+
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_samples, n_columns]
             Nested dataframe with time-series in cells.
+
         Returns
         -------
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-
         # input checks
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
@@ -99,8 +103,11 @@ class PlateauFinder(_PanelToPanelTransformer):
 
 
 class DerivativeSlopeTransformer(_PanelToPanelTransformer):
+    """Derivative slope transformer."""
+
     # TODO add docstrings
     def transform(self, X, y=None):
+        """Transform X."""
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
 
@@ -115,6 +122,8 @@ class DerivativeSlopeTransformer(_PanelToPanelTransformer):
 
     @staticmethod
     def row_wise_get_der(X):
+        """Get derivatives."""
+
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
@@ -137,7 +146,8 @@ def _check_features(features):
 
 
 class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
-    """
+    """Random interval feature extractor transform.
+
     Transformer that segments time-series into random intervals
     and subsequently extracts series-to-primitives features from each interval.
 
@@ -215,7 +225,8 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         return self
 
     def transform(self, X, y=None):
-        """
+        """Transform X.
+
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
         during `fit` and extracts features from each interval.
@@ -291,7 +302,8 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
 
 
 class FittedParamExtractor(_PanelToTabularTransformer):
-    """
+    """Fitted parameter extractor.
+
     Extract parameters of a fitted forecaster as features for a subsequent
     tabular learning task.
     This class first fits a forecaster to the given time series and then
@@ -321,7 +333,7 @@ class FittedParamExtractor(_PanelToTabularTransformer):
         super(FittedParamExtractor, self).__init__()
 
     def transform(self, X, y=None):
-        """
+        """Transform X.
 
         Parameters
         ----------

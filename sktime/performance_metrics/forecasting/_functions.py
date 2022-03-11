@@ -8,6 +8,8 @@ Function named as ``*_error`` or ``*_loss`` return a value to minimize:
 the lower the better.
 """
 
+from warnings import warn
+
 import numpy as np
 from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
@@ -1444,6 +1446,8 @@ def geometric_mean_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+# TODO: change default to symmetric=False in v0.12.0, edit doc string,
+# and remove warning
 def mean_absolute_percentage_error(
     y_true,
     y_pred,
@@ -1536,6 +1540,11 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.5668686868686869
     """
+    warn(
+        "In the percentage error metric functions the default argument "
+        "symmetric=True is changing to symmetric=False in v0.12.0.",
+        FutureWarning,
+    )
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
@@ -1556,6 +1565,8 @@ def mean_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
+# TODO: change default to symmetric=False in v0.12.0, edit doc string,
+# and remove warning
 def median_absolute_percentage_error(
     y_true,
     y_pred,
@@ -1652,6 +1663,11 @@ def median_absolute_percentage_error(
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.5066666666666666
     """
+    warn(
+        "In the percentage error metric functions the default argument "
+        "symmetric=True is changing to symmetric=False in v0.12.0.",
+        FutureWarning,
+    )
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is None:
         output_errors = np.median(
@@ -1674,6 +1690,8 @@ def median_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
+# TODO: change default to symmetric=False in v0.12.0, edit doc string,
+# and remove warning
 def mean_squared_percentage_error(
     y_true,
     y_pred,
@@ -1725,7 +1743,7 @@ def mean_squared_percentage_error(
         If True, returns root mean squared error (RMSPE)
         If False, returns mean squared error (MSPE)
 
-    symmetric : bool, default=False
+    symmetric : bool, default=True
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1778,6 +1796,11 @@ def mean_squared_percentage_error(
     square_root=True, symmetric=False)
     0.7504665536595034
     """
+    warn(
+        "In the percentage error metric functions the default argument "
+        "symmetric=True is changing to symmetric=False in v0.12.0.",
+        FutureWarning,
+    )
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
         check_consistent_length(y_true, horizon_weight)
@@ -1801,6 +1824,8 @@ def mean_squared_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
+# TODO: change default to symmetric=False in v0.12.0, edit doc string,
+# and remove warning
 def median_squared_percentage_error(
     y_true,
     y_pred,
@@ -1856,7 +1881,7 @@ def median_squared_percentage_error(
         If True, returns root mean squared error (RMSPE)
         If False, returns mean squared error (MSPE)
 
-    symmetric : bool, default=False
+    symmetric : bool, default=True
         Calculates symmetric version of metric if True.
 
     Returns
@@ -1910,6 +1935,11 @@ def median_squared_percentage_error(
     square_root=True, symmetric=False)
     0.7428571428571428
     """
+    warn(
+        "In the percentage error metric functions the default argument "
+        "symmetric=True is changing to symmetric=False in v0.12.0.",
+        FutureWarning,
+    )
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     perc_err = _percentage_error(y_true, y_pred, symmetric=symmetric)
     if horizon_weight is None:

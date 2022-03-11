@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
-from sktime.clustering._base import BaseClusterer
+from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
@@ -165,14 +165,11 @@ def _make_predict_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         fh = 1
         return (fh,)
-    elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+    elif isinstance(estimator, (BaseClassifier, BaseRegressor, BaseClusterer)):
         X = _make_panel_X(**kwargs)
         return (X,)
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(n_timepoints=10, **kwargs)
-        return (X,)
-    elif isinstance(estimator, BaseClusterer):
-        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))

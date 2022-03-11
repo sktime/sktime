@@ -293,6 +293,17 @@ Datetime feature generation
 
     DateTimeFeatures
 
+Lagged Window Summarizer
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.window_summarizer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowSummarizer
+
 Outlier detection
 ~~~~~~~~~~~~~~~~~
 
@@ -349,3 +360,25 @@ FeatureSelection
     :template: class.rst
 
     FeatureSelection
+
+STLBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STLBootstrapTransformer
+
+MovingBlockBootstrapTransformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.bootstrap
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MovingBlockBootstrapTransformer

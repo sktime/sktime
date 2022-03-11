@@ -17,7 +17,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _EdrDistance(NumbaDistance):
-    """Edit distance for real sequences (edr) between two timeseries."""
+    """Edit distance for real sequences (edr) between two time series."""
 
     def _distance_factory(
         self,

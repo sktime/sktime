@@ -175,6 +175,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_y",
+        "transformer",
+        "bool",
+        "does this transformer require y to be passed in fit and transform?",
+    ),
+    (
         "capability:inverse_transform",
         "transformer",
         "bool",
@@ -239,24 +245,24 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),
-    # (
-    #     "handles-panel",
-    #     "annotator",
-    #     "bool",
-    #     "can handle panel annotations, i.e., list X/y?",
-    # ),
-    # (
-    #     "annotation-type",
-    #     "annotator",
-    #     "str",
-    #     "which annotation type? can be 'point', 'segment' or 'both'",
-    # ),
-    # (
-    #     "annotation-kind",
-    #     "annotator",
-    #     "str",
-    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
-    # ),
+    (
+        "classifier_type",
+        "classifier",
+        (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "which type the classifier falls under in the taxonomy of time series "
+        "classification algorithms.",
+    ),
     (
         "capability:multiple-alignment",
         "aligner",
@@ -274,6 +280,30 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "requires-y-train",
+        "estimator",
+        "bool",
+        "does metric require y-train data to be passed?",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "estimator",
+        "bool",
+        "does metric require a predictive benchmark?",
+    ),
+    (
+        "univariate-metric",
+        "estimator",
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
+    (
+        "scitype:y_pred",
+        "estimator",
+        "str",
+        "What is the scitype of y_pred: quantiles, proba, interval?",
     ),
 ]
 
