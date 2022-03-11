@@ -98,4 +98,5 @@ GitHub, clone, and develop on a new branch.
    If any of the above seems like magic to you, look up the `Git documentation <https://git scm.com/documentation>`_.
    If you get stuck, chat with us on `Slack`_, or join one of the community sessions on `Discord`_.
 
-.. _ci::
+.. _Discord: https://discord.com/invite/gqSab2K
+.. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
