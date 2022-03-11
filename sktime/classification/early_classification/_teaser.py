@@ -209,11 +209,11 @@ class TEASER(BaseClassifier):
         -------
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
-        decisions : List
-            A List of booleans, containing the decision of whether a prediction is safe
-            to use or not. Returned if return_safety_decisions is True.
-        new_state_info : List
-            A List containing the state info for each decision in X, contains
+        decisions : 1D bool array
+            An array of booleans, containing the decision of whether a prediction is
+            safe to use or not. Returned if return_safety_decisions is True.
+        new_state_info : 2D int array
+            An array containing the state info for each decision in X, contains
             information for future decisions on the data. Returned if
             return_safety_decisions is True.
         """
@@ -268,11 +268,11 @@ class TEASER(BaseClassifier):
             1st dimension indices correspond to instance indices in X
             2nd dimension indices correspond to possible labels (integers)
             (i, j)-th entry is predictive probability that i-th instance is of class j
-        decisions : List
-            A List of booleans, containing the decision of whether a prediction is safe
-            to use or not. Returned if return_safety_decisions is True.
-        new_state_info : List
-            A List containing the state info for each decision in X, contains
+        decisions : 1D bool array
+            An array of booleans, containing the decision of whether a prediction is
+            safe to use or not. Returned if return_safety_decisions is True.
+        new_state_info : 2D int array
+            An array containing the state info for each decision in X, contains
             information for future decisions on the data. Returned if
             return_safety_decisions is True.
         """
@@ -320,8 +320,8 @@ class TEASER(BaseClassifier):
             # if this is the smallest dataset, there should be no state_info, else we
             # should have state info for each, and they should all be the same length
             if idx == 0 and (state_info is None or state_info == []):
-                state_info = [(0, 0, 0) for _ in range(n_instances)]
-            elif isinstance(state_info, list) and idx > 0:
+                state_info = np.zeros((n_instances, 3), dtype=int)
+            elif isinstance(state_info, np.ndarray) and idx > 0:
                 if not all(si[0] == idx - 1 for si in state_info):
                     raise ValueError(
                         "All state_info input instances must be from the "
@@ -345,24 +345,33 @@ class TEASER(BaseClassifier):
             # make a decision based on the one class classifier prediction
             if self._one_class_classifiers[idx] is not None:
                 X_oc = self._generate_one_class_features(X, preds, probas)
-                decisions = self._one_class_classifiers[idx].predict(X_oc) == 1
+                decisions = np.array(
+                    self._one_class_classifiers[idx].predict(X_oc) == 1, dtype=bool
+                )
             else:
-                decisions = [False for _ in range(n_instances)]
+                decisions = np.zeros(n_instances, dtype=bool)
 
             # record consecutive class decisions
-            new_state_info = [
-                self._update_state_info(decisions, preds, state_info, i, idx)
-                for i in range(n_instances)
-            ]
+            new_state_info = np.array(
+                [
+                    self._update_state_info(decisions, preds, state_info, i, idx)
+                    for i in range(n_instances)
+                ]
+            )
 
             # if we have the full series, always decide True
             if idx == len(self._classification_points) - 1:
-                decisions = [True for _ in range(n_instances)]
+                decisions = np.ones(n_instances, dtype=bool)
             else:
-                decisions = [
-                    True if state_info[i][1] >= self._consecutive_predictions else False
-                    for i in range(n_instances)
-                ]
+                decisions = np.array(
+                    [
+                        True
+                        if state_info[i][1] >= self._consecutive_predictions
+                        else False
+                        for i in range(n_instances)
+                    ],
+                    dtype=bool,
+                )
 
         return (
             (probas, decisions, new_state_info)
@@ -448,7 +457,9 @@ class TEASER(BaseClassifier):
         probas = self._estimators[i].predict_proba(
             X[:, :, : self._classification_points[i]]
         )
-        preds = [int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in probas]
+        preds = np.array(
+            [int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in probas]
+        )
 
         # create data set for the one class classifier using predicted probas with the
         # minimum difference to the predicted probability
