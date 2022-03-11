@@ -11,6 +11,7 @@ import pytest
 
 from sktime.datatypes import check_is_mtype, convert, get_examples
 from sktime.forecasting.arima import ARIMA
+
 # from sktime.utils._testing.hierarchical import _make_hierachical
 from sktime.utils._testing.panel import _make_panel_X
 
