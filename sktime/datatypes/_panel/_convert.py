@@ -726,7 +726,7 @@ def from_multi_index_to_nested(
         The nested version of the DataFrame
     """
     if instance_index is None:
-        raise ValueError("Supply a value for the instance_index parameter.")
+        instance_index = 0
 
     # get number of distinct cases (note: a case may have 1 or many dimensions)
     instance_idxs = multi_ind_dataframe.index.get_level_values(instance_index).unique()
