@@ -32,6 +32,7 @@ and people who are looking to learn and develop their skills.
    Research <https://the-turing-way.netlify.app/reproducible-research/reproducible-research.html>`_ to get started and learn more about open-source collaboration.
 
 .. _discord: https://discord.com/invite/gqSab2K
+.. _slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
 
 .. note::
 
