@@ -35,7 +35,7 @@ and people who are looking to learn and develop their skills.
 
 .. note::
 
-   If you get stuck, chat with us on `Discord`_.
+   If you get stuck, chat with us on `Slack`_, or join one of the community sessions on `Discord`_.
 
 .. panels::
     :card: + intro-card text-center
