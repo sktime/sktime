@@ -43,11 +43,15 @@ class TEASER(BaseClassifier):
     Parameters
     ----------
     estimator: sktime classifier, default=None
-        An sktime estimator to be built using the transformed data. Defaults to a
-        WEASEL classifier.
+        An sktime estimator to be built at each of the classification_points time
+        stamps. Defaults to a WEASEL classifier.
     one_class_classifier: one-class sklearn classifier, default=None
         An sklearn one-class classifier used to determine whether an early decision is
         safe. Defaults to a tuned one-class SVM classifier.
+    one_class_param_grid: dict or list of dict, default=None
+        The hyper-parameters for the one-class classifier to learn using grid-search.
+        Dictionary with parameters names (`str`) as keys and lists of parameter settings
+        to try as values, or a list of such dictionaries.
     classification_points : List or None, default=None
         List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
@@ -97,6 +101,7 @@ class TEASER(BaseClassifier):
         self,
         estimator=None,
         one_class_classifier=None,
+        one_class_param_grid=None,
         classification_points=None,
         n_jobs=1,
         random_state=None,
@@ -104,6 +109,7 @@ class TEASER(BaseClassifier):
     ):
         self.estimator = estimator
         self.one_class_classifier = one_class_classifier
+        self.one_class_param_grid = one_class_param_grid
         self.classification_points = classification_points
 
         self.n_jobs = n_jobs
@@ -168,27 +174,7 @@ class TEASER(BaseClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            accuracy = (
-                np.sum(
-                    [
-                        1 if state_info[i][2] == self._class_dictionary[y[i]] else 0
-                        for i in range(n_instances)
-                    ]
-                )
-                / n_instances
-            )
-            earliness = (
-                1
-                - np.sum(
-                    [
-                        self.classification_points[state_info[i][0]] / series_length
-                        for i in range(n_instances)
-                    ]
-                )
-                / n_instances
-            )
-            hm = (2 * accuracy * earliness) / (accuracy + earliness)
-
+            hm = self._compute_harmonic_mean(n_instances, series_length, state_info, y)
             if hm > best_hm:
                 best_hm = hm
                 self._consecutive_predictions = g
@@ -239,7 +225,7 @@ class TEASER(BaseClassifier):
         return self._predict(X, state_info=state_info)
 
     def _predict(self, X, state_info=None):
-        out = self._predict_proba(X)
+        out = self._predict_proba(X, state_info=state_info)
         probas = out[0] if self.return_safety_decisions else out
 
         rng = check_random_state(self.random_state)
@@ -358,15 +344,7 @@ class TEASER(BaseClassifier):
 
             # make a decision based on the one class classifier prediction
             if self._one_class_classifiers[idx] is not None:
-                X_oc = np.hstack((probas, np.ones((len(X), 1))))
-
-                for i in range(len(X)):
-                    for n in range(self.n_classes_):
-                        if n != preds[i]:
-                            X_oc[i][self.n_classes_] = min(
-                                X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
-                            )
-
+                X_oc = self._generate_one_class_features(X, preds, probas)
                 decisions = self._one_class_classifiers[idx].predict(X_oc) == 1
             else:
                 decisions = [False for _ in range(n_instances)]
@@ -427,39 +405,38 @@ class TEASER(BaseClassifier):
         train_preds = [
             int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in train_probas
         ]
-        train_probas = np.hstack((train_probas, np.ones((len(X), 1))))
 
         # create train set for the one class classifier using train probas with the
         # minimum difference to the predicted probability
+        train_probas = self._generate_one_class_features(X, train_preds, train_probas)
         X_oc = []
         for i in range(len(X)):
-            for n in range(self.n_classes_):
-                if n != train_preds[i]:
-                    train_probas[i][self.n_classes_] = min(
-                        train_probas[i][self.n_classes_],
-                        train_probas[i][train_preds[i]] - train_probas[i][n],
-                    )
-
             if train_preds[i] == self._class_dictionary[y[i]]:
                 X_oc.append(train_probas[i])
 
         one_class_classifier = None
         if len(X_oc) > 1:
-            if self.one_class_classifier is None:
-                cv_size = min(len(X_oc), 10)
-                gs = GridSearchCV(
-                    OneClassSVM(tol=self._svm_tol, nu=self._svm_nu),
-                    {"gamma": self._svm_gammas},
-                    scoring="accuracy",
-                    cv=cv_size,
-                )
-                gs.fit(X_oc, np.ones(len(X_oc)))
-                one_class_classifier = gs.best_estimator_
-            else:
-                one_class_classifier = _clone_estimator(
-                    self.one_class_classifier, random_state=rs
-                )
-                one_class_classifier.fit(X_oc, np.ones(len(X_oc)))
+            one_class_classifier = (
+                OneClassSVM(tol=self._svm_tol, nu=self._svm_nu)
+                if self.one_class_classifier is None
+                else _clone_estimator(self.one_class_classifier, random_state=rs)
+            )
+            param_grid = (
+                {"gamma": self._svm_gammas}
+                if self.one_class_classifier is None
+                and self.one_class_param_grid is None
+                else self.one_class_param_grid
+            )
+
+            cv_size = min(len(X_oc), 10)
+            gs = GridSearchCV(
+                estimator=one_class_classifier,
+                param_grid=param_grid,
+                scoring="accuracy",
+                cv=cv_size,
+            )
+            gs.fit(X_oc, np.ones(len(X_oc)))
+            one_class_classifier = gs.best_estimator_
 
         return estimator, one_class_classifier, train_probas, train_preds
 
@@ -477,16 +454,21 @@ class TEASER(BaseClassifier):
         # minimum difference to the predicted probability
         X_oc = []
         if self._one_class_classifiers[i] is not None:
-            X_oc = np.hstack((probas, np.ones((len(X), 1))))
-
-            for i in range(len(X)):
-                for n in range(self.n_classes_):
-                    if n != preds[i]:
-                        X_oc[i][self.n_classes_] = min(
-                            X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
-                        )
+            X_oc = self._generate_one_class_features(X, preds, probas)
 
         return X_oc, probas, preds
+
+    def _generate_one_class_features(self, X, preds, probas):
+        # create data set for the one class classifier using predicted probas with the
+        # minimum difference to the predicted probability
+        X_oc = np.hstack((probas, np.ones((len(X), 1))))
+        for i in range(len(X)):
+            for n in range(self.n_classes_):
+                if n != preds[i]:
+                    X_oc[i][self.n_classes_] = min(
+                        X_oc[i][self.n_classes_], X_oc[i][preds[i]] - X_oc[i][n]
+                    )
+        return X_oc
 
     def _predict_n_timestamps(self, preds, X_oc, consecutive_predictions, n_timestamps):
         n_instances = len(preds[0])
@@ -494,34 +476,54 @@ class TEASER(BaseClassifier):
         # a List containing the state info for case, edited at each time stamp.
         # contains 1. the index of the time stamp, 2. the number of consecutive
         # positive decisions made, and 3. the prediction made
-        state_info = [(0, 0, 0) for _ in range(n_instances)]
+        state_info = np.zeros((n_instances, 3), dtype=int)
+
         # stores whether we have made a final decision on a prediction, if true
-        # state info wont be edited in later time stamps
-        finished = [False for _ in range(n_instances)]
+        # state info won't be edited in later time stamps
+        finished = np.zeros(n_instances, dtype=bool)
 
         for i in range(n_timestamps):
             if i == len(self._classification_points) - 1:
-                decisions = [True for _ in range(n_instances)]
+                decisions = np.ones(n_instances, dtype=bool)
             elif self._one_class_classifiers[i] is not None:
-                decisions = self._one_class_classifiers[i].predict(X_oc[i]) == 1
+                offsets = np.argwhere(finished == 0).flatten()
+                decisions_subset = (
+                    self._one_class_classifiers[i].predict(X_oc[i][offsets]) == 1
+                )
+                decisions = np.ones(n_instances, dtype=bool)
+                decisions[offsets] = decisions_subset
             else:
-                decisions = [False for _ in range(n_instances)]
+                decisions = np.zeros(n_instances, dtype=bool)
 
             # record consecutive class decisions
-            state_info = [
-                self._update_state_info(decisions, preds[i], state_info, n, i)
-                # if we have finished with this case do not edit the state info
-                if not finished[n] else state_info[n]
-                for n in range(n_instances)
-            ]
-
-            # safety decisions
-            finished = [
-                True if state_info[n][1] >= consecutive_predictions else False
-                for n in range(n_instances)
-            ]
+            state_info = np.array(
+                [
+                    self._update_state_info(decisions, preds[i], state_info, n, i)
+                    # once we have finished with this case do not update the state info
+                    if not finished[n] else state_info[n]
+                    for n in range(n_instances)
+                ]
+            )
+            # safety of decisions
+            finished = state_info[:, 1] >= consecutive_predictions
 
         return state_info, finished
+
+    def _compute_harmonic_mean(self, n_instances, series_length, state_info, y):
+        # calculate harmonic mean from finished state info
+        accuracy = np.average(
+            [
+                state_info[i][2] == self._class_dictionary[y[i]]
+                for i in range(n_instances)
+            ]
+        )
+        earliness = 1 - np.average(
+            [
+                self.classification_points[state_info[i][0]] / series_length
+                for i in range(n_instances)
+            ]
+        )
+        return (2 * accuracy * earliness) / (accuracy + earliness)
 
     @staticmethod
     def _update_state_info(decisions, preds, state_info, idx, time_stamp):

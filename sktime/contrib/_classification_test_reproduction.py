@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
 from sktime.classification.dictionary_based import (
     MUSE,
@@ -467,6 +467,18 @@ if __name__ == "__main__":
                 random_state=0,
                 classification_points=[6, 10, 16, 24],
                 estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+            )
+        ),
+    )
+    _print_array(
+        "TEASER-IF - UnitTest",
+        _reproduce_early_classification_unit_test(
+            TEASER(
+                random_state=0,
+                classification_points=[6, 10, 16, 24],
+                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+                one_class_classifier=IsolationForest(n_estimators=5),
+                one_class_param_grid={"bootstrap": [True, False]},
             )
         ),
     )
