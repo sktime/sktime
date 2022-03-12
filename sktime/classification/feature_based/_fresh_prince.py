@@ -78,6 +78,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:train_estimate": True,
+        "classifier_type": "feature",
     }
 
     def __init__(

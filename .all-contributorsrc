@@ -1501,6 +1501,15 @@
       "contributions": [
         "infra"
      ]
+    },
+    {
+      "login": "cdahlin",
+      "name": "Christopher Dahlin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1567780?v=4",
+      "profile": "https://github.com/cdahlin",
+      "contributions": [
+        "code"
+     ]
     }
     {
       "login": "iljamaurer",
