@@ -65,6 +65,6 @@ def sklearn_scitype(obj, var_name="obj"):
     if issubclass(obj, sklearn_mixins):
         for mx in sklearn_mixins:
             if issubclass(obj, mx):
-                return mixin_to_scitype(mx)
+                return mixin_to_scitype[mx]
     else:
         return "estimator"
