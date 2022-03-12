@@ -18,6 +18,46 @@ class TabularToSeriesAdaptor(BaseTransformer):
     to :term:`series <Time series>`, but only works with transformations that
     do not require multiple :term:`instances <instance>` for fitting.
 
+    The adaptor behaves as follows.
+    If fit_in_transform = False and X is a series (pd.DataFrame, pd.Series, np.ndarray):
+        ``fit(X)`` fits a clone of ``transformer`` to X (considered as a table)
+        ``transform(X)`` applies transformer.transform to X and returns the result
+        ``inverse_transform(X)`` applies tansformer.inverse_transform to X
+    If fit_in_transform = Truee and X is a series (pd.DataFrame, pd.Series, np.ndarray):
+        ``fit`` is empty
+        ``transform(X)`` applies transformer.fit(X).transform.(X) to X,
+            considered as a table, and returns the result
+        ``inverse_transform(X)`` applies tansformer(X).inverse_transform(X) to X
+
+    If fit_in_transform = False, and X is of a panel/hierarchical type:
+        ``fit(X)`` fits a clone of ``transformer`` for each individual series x in X
+        ``transform(X)`` applies transform(x) of the clone belonging to x,
+                (where the index of x in transform equals the index of x in fit)
+            for each individual series x in X, and returns the result
+        ``inverse_transform(X)`` applies transform(x) of the clone belonging to x,
+                (where the index of x in transform equals the index of x in fit)
+            for each individual series x in X, and returns the result
+        Note: instances indices in transform/inverse_transform
+            must be equal to those seen in fit
+    If fit_in_transform = True, and X is of a panel/hierarchical type:
+        ``fit`` is empty
+        ``transform(X)`` applies transformer.fit(x).transform(x)
+            to all individual series x in X and returns the result
+        ``inverse_transform(X)`` applies transformer.fit(x).inverse_transform(x)
+            to all individual series x in X and returns the result
+
+    WARNING: if fit_in_transform is set to False,
+        when applied to Panel or Hierarchical data,
+        the resulting transformer will identify individual series in test set
+        with series indices in training set, on which instances were fit
+        in particular, transform will not work if number of instances
+            and indices of instances in transform are different from those in fit
+    WARNING: f fit_in_transform is set to True,
+        then each series in the test set will be transformed as batch by fit-predict,
+        this may cause information leakage in a forecasting setting
+            (but not in a time series classification/regression/clustering setting,
+            because in these settings the independent samples are the individual series)
+
     Parameters
     ----------
     transformer : Estimator
@@ -30,15 +70,6 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Transformer that is fitted to data, clone of transformer.
     fit_in_transform: bool, optional, default=False
         whether transformer_ should be fitted in transform (True), or in fit (False)
-        WARNING: if this is set to False, when applied to Panel or Hierarchical data,
-            the resulting transformer will identify individual series in test set
-            with series indices in training set, on which instances were fit
-            in particular, transform will not work if number of instances
-                and indices of instances in transform are different from those in fit
-        WARNING: if this is set to True,
-            then series in the test set will be transformed as batch by fit-predict
-            this may cause information leakage in a forecasting setting
-                (but not in a time series classification/regression/clustering setting)
 
     Examples
     --------
