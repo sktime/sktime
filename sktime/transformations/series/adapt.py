@@ -157,7 +157,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         """
         from sklearn.preprocessing import StandardScaler
 
-        params1 = {"transformer": StandardScaler()}
+        params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {"transformer": StandardScaler(), "fit_in_transform": True}
 
         return [params1, params2]
