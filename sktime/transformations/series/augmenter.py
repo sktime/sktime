@@ -38,10 +38,10 @@ class _AugmenterTags:
 class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter adding Gaussian (i.e. white) noise to the time series.
 
-    If `transform` is given time series $X={x_1, x_2, ... , x_n}$, then
-    returns $X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}$ where $e_i$ are i.i.d. random draws from
-    the normal distribution with mean 0 and standard deviation ``scale``.
-    with $\sigma$ as the ``scale`` Factor.
+    If `transform` is given time series :math:`X={x_1, x_2, ... , x_n}`, then
+    returns :math:`X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}` where :math:`e_i` are i.i.d. random
+    draws from the normal distribution with mean 0 and standard deviation ``scale``.
+    with :math:`\sigma` as the ``scale`` Factor.
 
     Parameters
     ----------
@@ -55,9 +55,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.
-            rv_continuous.random_state.html?highlight=random_state#scipy.stats.
-            rv_continuous.random_state
+        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
 
@@ -83,11 +81,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter reversing the time series.
 
-    If `transform` is given a time series $X={x_1, x_2, ... , x_n}$, then
-    returns $X_t={x_n, x_{n-1}, ..., x_2, x_1}.
+    If `transform` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
+    returns :math:`X_t={x_n, x_{n-1}, ..., x_2, x_1}`.
 
-    Example
-    -------
+    Examples
+    --------
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = ReverseAugmenter()
     >>> Xt = augmenter.fit_transform(X)
@@ -110,11 +108,11 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 class InvertAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter inverting the time series by multiplying it by -1.
 
-    If given time series $X={x_1, x_2, ... , x_n}$, then
-    $X_t={-x_1, -x_2, ... , -x_n}.
+    If `transform` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
+    returns :math:`X_t={-x_1, -x_2, ... , -x_n}`.
 
-    Example
-    -------
+    Examples
+    --------
     >>> X = pd.Series([1,2,3,4,5])
     >>> augmenter = InvertAugmenter()
     >>> Xt = augmenter.fit_transform(X)
@@ -137,8 +135,9 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     r"""Draw random samples form time series.
 
-    If given time series $X \in \mathbb{R}^n$ then $X_t \subseteq X$
-    randomly drawn from $X$ (with or without replacement).
+    If `transform` is given a time series :math:`X={x_1, x_2, ... , x_m}` then returns
+    :math:`X_t={x_i, x_{i+1}, ... , x_n}`, where :math:`{x_i, x_{i+1}, ... , x_n}` are
+    :math:`n`=``n`` random samples drawn from :math:`X` (with or `without_replacement`).
 
     Parameters
     ----------
@@ -160,9 +159,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1] https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.
-        rv_continuous.random_state.html?highlight=random_state#scipy.
-        stats.rv_continuous.random_state
+        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
 
