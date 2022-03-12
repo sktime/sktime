@@ -1509,6 +1509,15 @@
       "contributions": [
         "code"
      ]
+    },
+    {
+      "login": "varuniyer",
+      "name": "Varun Iyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7947595?v=4",
+      "profile": "https://github.com/varuniyer",
+      "contributions": [
+        "docs"
+     ]
     }
   ],
   "projectName": "sktime",
