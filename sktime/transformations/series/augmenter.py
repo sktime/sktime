@@ -40,7 +40,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 
     If `transform` is given time series $X={x_1, x_2, ... , x_n}$, then
     returns $X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}$ where $e_i$ are i.i.d. random draws from
-    $\frac{1}{\sigma\sqrt{2 \pi}}e^{-\frac{1}{2}(\frac{x}{\sigma})}$,
+    the normal distribution with mean 0 and standard deviation ``scale``.
     with $\sigma$ as the ``scale`` Factor.
 
     Parameters
