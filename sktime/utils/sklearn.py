@@ -68,3 +68,59 @@ def sklearn_scitype(obj, var_name="obj"):
                 return mixin_to_scitype[mx]
     else:
         return "estimator"
+
+
+def is_sklearn_transformer(obj):
+    """Check whether obj is an sklearn transformer.
+
+    Parameters
+    ----------
+    obj : any object
+
+    Returns
+    -------
+    bool, whether obj is an sklearn transformer
+    """
+    return is_sklearn_estimator(obj) and sklearn_scitype(obj) == "transformer"
+
+
+def is_sklearn_classifier(obj):
+    """Check whether obj is an sklearn classifier.
+
+    Parameters
+    ----------
+    obj : any object
+
+    Returns
+    -------
+    bool, whether obj is an sklearn classifier
+    """
+    return is_sklearn_estimator(obj) and sklearn_scitype(obj) == "classifier"
+
+
+def is_sklearn_regressor(obj):
+    """Check whether obj is an sklearn regressor.
+
+    Parameters
+    ----------
+    obj : any object
+
+    Returns
+    -------
+    bool, whether obj is an sklearn regressor
+    """
+    return is_sklearn_estimator(obj) and sklearn_scitype(obj) == "regressor"
+
+
+def is_sklearn_clusterer(obj):
+    """Check whether obj is an sklearn clusterer.
+
+    Parameters
+    ----------
+    obj : any object
+
+    Returns
+    -------
+    bool, whether obj is an sklearn clusterer
+    """
+    return is_sklearn_estimator(obj) and sklearn_scitype(obj) == "clusterer"
