@@ -21,8 +21,8 @@ def is_sklearn_estimator(obj):
     -------
     is_sklearn_est : bool, whether obj is an sklearn estimator
     """
-    is_in_sklearn = isinstance(obj, SklearnBaseEstimator)
-    is_in_sktime = not isinstance(obj, BaseObject)
+    is_in_sklearn = issubclass(obj, SklearnBaseEstimator)
+    is_in_sktime = not issubclass(obj, BaseObject)
 
     is_sklearn_est = is_in_sklearn and not is_in_sktime
     return is_sklearn_est
@@ -62,9 +62,9 @@ def sklearn_scitype(obj, var_name="obj"):
 
     sklearn_mixins = tuple(mixin_to_scitype.keys())
 
-    if isinstance(obj, sklearn_mixins):
+    if issubclass(obj, sklearn_mixins):
         for mx in sklearn_mixins:
-            if isinstance(obj, mx):
+            if issubclass(obj, mx):
                 return mixin_to_scitype(mx)
     else:
         return "estimator"
