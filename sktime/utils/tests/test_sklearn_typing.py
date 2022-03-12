@@ -41,7 +41,7 @@ def test_is_sklearn_estimator_negative(estimator):
         f"is_sklearn_estimator incorrectly considers {estimator.__name__} "
         f"as an sklearn estimator (output True), but output should be False"
     )
-    assert is_sklearn_estimator(estimator), msg
+    assert not is_sklearn_estimator(estimator), msg
 
 
 @pytest.mark.parametrize("estimator", sklearn_estimators)
