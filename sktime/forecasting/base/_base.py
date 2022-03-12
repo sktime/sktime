@@ -871,7 +871,7 @@ class BaseForecaster(BaseEstimator):
                 VectorizedDF of y, iterated as the most complex supported scitype
                     (complexity order: Hierarchical > Panel > Series)
             Case 3: None if y was None
-        X_inner :  Series, Panel, or Hierarchical object, or VectorizedDF
+        X_inner : Series, Panel, or Hierarchical object, or VectorizedDF
                 compatible with self.get_tag("X_inner_mtype") format
             Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
                 converted/coerced version of X, mtype determined by "X_inner_mtype" tag
