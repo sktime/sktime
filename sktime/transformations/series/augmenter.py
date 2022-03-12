@@ -84,7 +84,7 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter reversing the time series.
 
     If given time series $X={x_1, x_2, ... , x_n}$, then
-    $X_t={x_n, x_{n-1}, ..., x_2, x_1}.
+    returns $X_t={x_n, x_{n-1}, ..., x_2, x_1}.
 
     Example
     -------
