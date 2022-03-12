@@ -18,7 +18,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
-@njit(cache=True, fastmath=True)
+
 def average_of_slope_transform(X: np.ndarray):
     """Compute the average of a slope between points for multiple series.
 
