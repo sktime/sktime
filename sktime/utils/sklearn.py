@@ -22,7 +22,7 @@ def is_sklearn_estimator(obj):
     is_sklearn_est : bool, whether obj is an sklearn estimator
     """
     is_in_sklearn = issubclass(obj, SklearnBaseEstimator)
-    is_in_sktime = not issubclass(obj, BaseObject)
+    is_in_sktime = issubclass(obj, BaseObject)
 
     is_sklearn_est = is_in_sklearn and not is_in_sktime
     return is_sklearn_est
