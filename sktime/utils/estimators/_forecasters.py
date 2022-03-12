@@ -10,7 +10,25 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class MockUnivariateForecaster(BaseForecaster):
-    """Custom forecaster. todo: write docstring."""
+    """Mock univariate forecaster that logs the methods called and their parameters.
+
+    Parameters
+    ----------
+    prediction_constant : float, optional
+        The forecasted value for all steps in the horizon, by default 10
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.utils.estimators import MockUnivariateForecaster
+    >>> y = load_airline()
+    >>> forecaster = MockUnivariateForecaster()
+    >>> forecaster.fit(y)
+    MockUnivariateForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> print(forecaster.log)
+    [('_fit', ...), ('_predict', ...)]
+    """
 
     # todo: fill out estimator tags here
     #  tags are inherited from parent class if they are not set
