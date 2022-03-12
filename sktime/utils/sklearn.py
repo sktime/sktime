@@ -4,8 +4,8 @@
 
 from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
-from sktime.base import BaseObject
 
+from sktime.base import BaseObject
 
 __author__ = ["fkiraly"]
 

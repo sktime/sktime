@@ -5,7 +5,6 @@ __author__ = ["fkiraly"]
 
 
 import pytest
-
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
