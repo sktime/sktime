@@ -1300,6 +1300,7 @@ class ProximityForest(BaseClassifier):
     _tags = {
         "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
         "capability:multithreading": True,
+        "classifier_type": "distance",
     }
 
     def __init__(

@@ -107,6 +107,7 @@ class MUSE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "X_inner_mtype": "nested_univ",  # MUSE requires nested datafrane
+        "classifier_type": "dictionary",
     }
 
     def __init__(
