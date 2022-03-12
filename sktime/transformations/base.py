@@ -62,6 +62,7 @@ from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
 )
+from sktime.utils.sklearn import is_sklearn_transformer
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -150,12 +151,15 @@ class BaseTransformer(BaseEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if isinstance(other, BaseTransformer):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
+        elif is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
         else:
             return NotImplemented
 
@@ -175,12 +179,15 @@ class BaseTransformer(BaseEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if isinstance(other, BaseTransformer):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
 
