@@ -22,11 +22,23 @@ class TabularToSeriesAdaptor(BaseTransformer):
     ----------
     transformer : Estimator
         scikit-learn-like transformer to fit and apply to series.
+        This is used as a "blueprint" and not fitted or otherwise mutated.
 
     Attributes
     ----------
     transformer_ : Estimator
-        Transformer fitted to data.
+        Transformer that is fitted to data, clone of transformer.
+    fit_in_transform: bool, optional, default=False
+        whether transformer_ should be fitted in transform (True), or in fit (False)
+        WARNING: if this is set to False, when applied to Panel or Hierarchical data,
+            the resulting transformer will identify individual series in test set
+            with series indices in training set, on which instances were fit
+            in particular, transform will not work if number of instances
+                and indices of instances in transform are different from those in fit
+        WARNING: if this is set to True,
+            then series in the test set will be transformed as batch by fit-predict
+            this may cause information leakage in a forecasting setting
+                (but not in a time series classification/regression/clustering setting)
 
     Examples
     --------
@@ -53,14 +65,18 @@ class TabularToSeriesAdaptor(BaseTransformer):
         "fit-in-transform": False,
     }
 
-    def __init__(self, transformer):
+    def __init__(self, transformer, fit_in_transform=False):
         self.transformer = transformer
-        self.transformer_ = None
+        self.transformer_ = clone(self.transformer)
+        self.fit_in_transform = fit_in_transform
 
         super(TabularToSeriesAdaptor, self).__init__()
 
         if hasattr(transformer, "inverse_transform"):
             self.set_tags(**{"capability:inverse_transform": True})
+
+        if fit_in_transform:
+            self.set_tags(**{"fit-in-transform": True})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -78,8 +94,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self.transformer_ = clone(self.transformer)
-        self.transformer_.fit(X)
+        if not self.fit_in_transform:
+            self.transformer_.fit(X)
         return self
 
     def _transform(self, X, y=None):
@@ -99,7 +115,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Xt : 2D np.ndarray
         transformed version of X
         """
-        Xt = self.transformer_.transform(X)
+        if self.fit_in_transform:
+            Xt = self.transformer_.fit(X).transform(X)
+        else:
+            Xt = self.transformer_.transform(X)
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -118,7 +137,10 @@ class TabularToSeriesAdaptor(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        Xt = self.transformer_.inverse_transform(X)
+        if self.fit_in_transform:
+            Xt = self.transformer_.fit(X).inverse_transform(X)
+        else:
+            Xt = self.transformer_.inverse_transform(X)
         return Xt
 
     @classmethod
@@ -135,4 +157,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         """
         from sklearn.preprocessing import StandardScaler
 
-        return {"transformer": StandardScaler()}
+        params1 = {"transformer": StandardScaler()}
+        params2 = {"transformer": StandardScaler(), "fit_in_transform": True}
+
+        return [params1, params2]
