@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from inspect import isclass
+
 from sklearn.base import BaseEstimator as SklearnBaseEstimator
 from sklearn.base import ClassifierMixin, ClusterMixin, RegressorMixin, TransformerMixin
 
