@@ -48,7 +48,7 @@ class _WdtwDistance(NumbaDistance):
         window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        g: float = 0.0,
+        g: float = 0.05,
         **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled wdtw distance callable.
