@@ -69,6 +69,7 @@ from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
 )
+from sktime.utils.validation.series import check_equal_time_index
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -238,7 +239,9 @@ class BaseTransformer(BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(X=X_inner, y=y_inner)
+            # todo 0.11.0: add kwargs call
+            # self._fit(X=X_inner, y=y_inner)
+            self._fit(X_inner, y_inner)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", X=X_inner, y=y_inner)
@@ -246,82 +249,6 @@ class BaseTransformer(BaseEstimator):
         # this should happen last: fitted state is set to True
         self._is_fitted = True
 
-        return self
-
-        # input checks and minor coercions on X, y
-        ###########################################
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-
-        valid, msg, X_metadata = check_is_mtype(
-            X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
-        )
-        if not valid:
-            raise ValueError(msg)
-
-        # checking X
-        enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not X_metadata["is_univariate"]:
-            raise ValueError("X must be univariate but is not")
-
-        # retrieve mtypes/scitypes of all objects
-        #########################################
-
-        X_input_scitype = X_metadata["scitype"]
-
-        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
-
-        # treating Series vs Panel conversion for X
-        ###########################################
-
-        # there are three cases to treat:
-        # 1. if the internal _fit supports X's scitype, move on to mtype conversion
-        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        # 3. internal only has Series but X is Panel: auto-vectorization over instances
-        #     currently, this is enabled by conversion to df-list mtype
-        #     auto-vectorization is not supported if y is passed
-        #       individual estimators that vectorize over y must implement individually
-
-        # 1. nothing to do - simply don't enter any of the ifs below
-
-        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
-            X = convert_Series_to_Panel(X)
-
-        # 3. internal only has Series but X is Panel: loop over instances
-        elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None and self.get_tag("y_inner_mtype") != "None":
-                raise ValueError(
-                    f"{type(self).__name__} does not support Panel X if y is not None, "
-                    f"since {type(self).__name__} supports only Series. "
-                    "Auto-vectorization to extend Series X to Panel X can only be "
-                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
-                    "Consider extending _fit and _transform to handle the following "
-                    "input types natively: Panel X and non-None y."
-                )
-            X = convert_to(
-                X,
-                to_type="df-list",
-                as_scitype="Panel",
-                store=self._converter_store_X,
-                store_behaviour="reset",
-            )
-            # this fits one transformer per instance
-            self.transformers_ = [clone(self).fit(Xi) for Xi in X]
-            # recurse and leave function - recursion does input checks/conversion
-            # also set is_fitted flag to True since we leave function here
-            self._is_fitted = True
-            return self
-
-        X_inner, y_inner = self._convert_X_y(X, y)
-
-        # todo: uncomment this once Z is completely gone
-        # self._fit(X=X_inner, y=y_inner)
-        # less robust workaround until then
-        self._fit(X_inner, y_inner)
-
-        self._is_fitted = True
         return self
 
     def transform(self, X, y=None, Z=None):
@@ -850,65 +777,6 @@ class BaseTransformer(BaseEstimator):
             Xt = Xt.reset_index(drop=True)
         return Xt
 
-    def _convert_X_y(self, X, y):
-        """Convert X, y to inner type."""
-        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
-
-        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
-
-        X_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        X_scitype = mtype_to_scitype(X_mtype)
-
-        # for debugging, exception if the conversion fails (this should never happen)
-        if X_scitype not in X_inner_scitypes:
-            raise RuntimeError("conversion of X to X_inner unsuccessful, unexpected")
-
-        # convert X/y to supported inner type, if necessary
-        ###################################################
-
-        # subset to the mtypes that are of the same scitype as X/y
-        X_inner_mtype = [
-            mt for mt in X_inner_mtype if mtype_to_scitype(mt) == X_scitype
-        ]
-
-        # convert X and y to a supported internal type
-        #  if X/y type is already supported, no conversion takes place
-        X_inner = convert_to(
-            X,
-            to_type=X_inner_mtype,
-            as_scitype=X_scitype,
-            store=self._converter_store_X,
-            store_behaviour="reset",
-        )
-
-        if y_inner_mtype != ["None"] and y is not None:
-
-            if X_scitype == "Series":
-                # y_possible_scitypes = ["Series"]
-                y_possible_scitypes = "Series"
-            elif X_scitype == "Panel":
-                # todo: change this back to Panel/Table once
-                #   polymorphic convert_to is merged
-                # y_possible_scitypes = ["Panel", "Table"]
-                # y_possible_scitypes = ["Series", "Panel"]
-                y_possible_scitypes = "Table"
-            y_mtype = mtype(y, as_scitype=y_possible_scitypes)
-            y_scitype = mtype_to_scitype(y_mtype)
-
-            y_inner_mtype = [
-                mt for mt in y_inner_mtype if mtype_to_scitype(mt) == y_scitype
-            ]
-            y_inner = convert_to(
-                y,
-                to_type=y_inner_mtype,
-                as_scitype=y_scitype,
-            )
-        else:
-            y_inner = None
-
-        return X_inner, y_inner
-
     def _convert_output(self, X, X_input_mtype=None, X_was_Series=False, inverse=False):
         """Convert transform output to expected format."""
         Xt = X
@@ -965,10 +833,227 @@ class BaseTransformer(BaseEstimator):
 
         return Xt
 
+    def _check_X_y(self, X=None, y=None):
+        """Check and coerce X/y for fit/transform functions.
+
+        Parameters
+        ----------
+        X : object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+        y : None (default), or object of sktime compatible time series type
+            can be Series, Panel, Hierarchical
+
+        Returns
+        -------
+        X_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("X_inner_mtype") format
+            Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
+                converted/coerced version of X, mtype determined by "X_inner_mtype" tag
+            Case 2: self.get_tag("X_inner_mtype") supports *higher* scitype than X
+                then X converted to "one-Series" or "one-Panel" sub-case of that scitype
+                always pd-multiindex (Panel) or pd_multiindex_hier (Hierarchical)
+            Case 3: self.get_tag("X_inner_mtype") supports only *simpler* scitype than X
+                then VectorizedDF of X, iterated as the most complex supported scitype
+        y_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("y_inner_mtype") format
+            Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
+                converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            Case 2: self.get_tag("y_inner_mtype") supports *higher* scitype than y
+                then X converted to "one-Series" or "one-Panel" sub-case of that scitype
+                always pd-multiindex (Panel) or pd_multiindex_hier (Hierarchical)
+            Case 3: self.get_tag("y_inner_mtype") supports only *simpler* scitype than y
+                then VectorizedDF of X, iterated as the most complex supported scitype
+            Case 4: None if y was None, or self.get_tag("y_inner_mtype") is "None"
+
+            Complexity order above: Hierarchical > Panel > Series
+
+        Raises
+        ------
+        TypeError if X is None
+        TypeError if X or y is not one of the permissible Series mtypes
+        TypeError if X is not compatible with self.get_tag("univariate_only")
+            if tag value is "True", X must be univariate
+        ValueError if self.get_tag("requires_y")=True but y is None
+
+        Writes to self
+        --------------
+        _converter_store_X : dict, metadata from conversion for back-conversion
+        """
+        if X is None:
+            raise TypeError("X cannot be None, but found None")
+
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
+
+        def _most_complex_scitype(scitypes):
+            """Return most complex scitype in a list of str."""
+            if "Hierarchical" in scitypes:
+                return "Hierarchical"
+            elif "Panel" in scitypes:
+                return "Panel"
+            elif "Series" in scitypes:
+                return "Series"
+            else:
+                raise ValueError("no series scitypes supported, bug in estimator")
+
+        def _least_complex_scitype(scitypes):
+            """Return least complex scitype in a list of str."""
+            if "Series" in scitypes:
+                return "Series"
+            elif "Panel" in scitypes:
+                return "Panel"
+            elif "Hierarchical" in scitypes:
+                return "Hierarchical"
+            else:
+                raise ValueError("no series scitypes supported, bug in estimator")
+
+        def _scitype_A_higher_B(scitypeA, scitypeB):
+            """Compare two scitypes regarding complexity."""
+            if scitypeA == "Series":
+                return False
+            if scitypeA == "Panel" and scitypeB == "Series":
+                return True
+            if scitypeA == "Hierarchical" and scitypeB != "Hierarchical":
+                return True
+            return False
+
+        # retrieve supported mtypes
+        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
+        y_inner_mtype = _coerce_to_list(self.get_tag("y_inner_mtype"))
+        X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
+        y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
+
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+        ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
+
+        # checking X
+        if X is not None:
+            X_valid, _, X_metadata = check_is_scitype(
+                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+            )
+
+            msg = (
+                f"X must be in an sktime compatible format, "
+                f"of scitype Series, Panel or Hierarchical, "
+                f"for instance a pandas.DataFrame with sktime compatible time indices, "
+                f"or with MultiIndex and lowest level a sktime compatible time index. "
+                f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+                # f"See the transformers tutorial examples/05_transformers.ipynb, or"
+                f" the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not X_valid:
+                raise TypeError(msg)
+
+            X_scitype = X_metadata["scitype"]
+            X_mtype = X_metadata["mtype"]
+
+            if X_mtype not in ALLOWED_MTYPES:
+                raise TypeError(msg)
+
+            if X_scitype in X_inner_scitype:
+                case = "case 1: scitype supported"
+            elif any(_scitype_A_higher_B(x, X_scitype) for x in X_inner_scitype):
+                case = "case 2: higher scitype supported"
+            else:
+                case = "case 3: requires vectorization"
+
+            # checking X
+            enforce_univariate = self.get_tag("univariate-only")
+            if enforce_univariate and not X_metadata["is_univariate"]:
+                raise ValueError("X must be univariate but is not")
+
+        else:
+            # X_scitype is used below - set to None if X is None
+            X_scitype = None
+        # end checking X
+
+        if y_inner_mtype != ["None"] and y is not None:
+
+            if X_scitype == "Series":
+                y_possible_scitypes = "Series"
+            elif X_scitype == "Panel":
+                y_possible_scitypes = ["Table", "Panel"]
+            elif X_scitype == "Hierarchical":
+                y_possible_scitypes = ["Table", "Panel", "Hierarchical"]             
+
+            y_valid, _, y_metadata = check_is_scitype(
+                y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
+            )
+            msg = (
+                "y must be in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                # "See the transformers tutorial examples/05_transformers.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            if not y_valid:
+                raise TypeError(msg)
+
+            y_scitype = y_metadata["scitype"]
+
+        else:
+            # y_scitype is used below - set to None if y is None
+            y_scitype = None
+        # end checking y
+
+        # no compabitility checks between X and y
+        # end compatibility checking X and y
+
+        # convert X & y to supported inner type, if necessary
+        #####################################################
+
+        # convert X and y to a supported internal mtype
+        #  it X/y mtype is already supported, no conversion takes place
+        #  if X/y is None, then no conversion takes place (returns None)
+        #  if vectorization is required, we wrap in Vect
+
+        if case == "case 1: scitype supported":
+            # converts X
+            X_inner = convert_to(
+                X,
+                to_type=X_inner_mtype,
+                as_scitype=X_scitype,
+                store=self._converter_store_X,
+                store_behaviour="reset",
+            )
+
+            # converts y, returns None if y is None
+            y_inner = convert_to(
+                y,
+                to_type=y_inner_mtype,
+                as_scitype=y_scitype,
+            )
+
+        # case 2. internal only has Panel but X is Series:
+        #   consider X as one-instance Panel or Hirarchical
+        elif case == "case 2: higher scitype supported":
+            # todo: extend this to Hierarchical
+            X_inner = convert_Series_to_Panel(X)
+
+        elif case == "case 3: requires vectorization":
+            if X is not None:
+                iterate_X = _most_complex_scitype(X_inner_scitype)
+                X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
+            else:
+                X_inner = None
+            # we also assume that y must be vectorized in this case
+            if y_inner_mtype != ["None"] and y is not None:
+                iterate_y = _most_complex_scitype(y_inner_scitype)
+                y_inner = VectorizedDF(X=X, iterate_as=iterate_y, is_scitype=X_scitype)
+            else:
+                y_inner = None
+
+        return X_inner, y_inner
+
+    def _check_X(self, X=None):
+        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
+        return self._check_X_y(X=X)[0]
+
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseTransformer.
 
-        Uses forecasters_ attribute to store one forecaster per loop index.
+        Uses transformers_ attribute to store one forecaster per loop index.
         """
         FIT_METHODS = ["fit", "update"]
         TRAFO_METHODS = ["transform", "inverse_transform"]
