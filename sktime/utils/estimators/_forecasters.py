@@ -1,0 +1,214 @@
+# -*- coding: utf-8 -*-
+
+__author__ = ["ltsaprounis"]
+
+from copy import deepcopy
+
+import pandas as pd
+
+from sktime.forecasting.base import BaseForecaster
+
+
+class MockUnivariateForecaster(BaseForecaster):
+    """Custom forecaster. todo: write docstring."""
+
+    # todo: fill out estimator tags here
+    #  tags are inherited from parent class if they are not set
+    # todo: define the forecaster scitype by setting the tags
+    #  the "forecaster scitype" is determined by the tags
+    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
+    #  when changing scitype:y to multivariate or both:
+    #   y_inner_mtype should be changed to pd.DataFrame
+    # other tags are "safe defaults" which can usually be left as-is
+    _tags = {
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
+        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+    }
+
+    def __init__(self, prediction_constant: float = 10):
+        self.prediction_constant = prediction_constant
+        self._log = []
+        super(MockUnivariateForecaster, self).__init__()
+
+    @property
+    def log(self):
+        """Log of the methods called and the parameters passed in each method."""
+        return self._log
+
+    def _update_log(self, method_name, method_kargs):
+        self._log.append((method_name, deepcopy(method_kargs)))
+
+    # todo: implement this, mandatory
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._update_log(method_name="_fit", method_kargs={"y": y, "X": X, "fh": fh})
+        return self
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        self._update_log(method_name="_predict", method_kargs={"X": X, "fh": fh})
+        index = fh.to_absolute(self.cutoff)
+        return pd.Series(self.prediction_constant, index=index)
+
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._update_log(
+            method_name="_update",
+            method_kargs={"y": y, "X": X, "update_params": update_params},
+        )
+        return self
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
+        """
+        self._update_log(
+            method_name="_predict_quantiles",
+            method_kargs={"fh": fh, "X": X, "alpha": alpha},
+        )
+
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
+
+        fh_index = fh.to_absolute(self.cutoff)
+        pd.Series(self.prediction_constant, index=index)
+
+        for a in alpha:
+            pred_quantiles[("Quantiles", a)] = pd.Series(
+                self.prediction_constant * 2 * a, index=fh_index
+            )
+
+        return pred_quantiles
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = [{}]
+
+        return params
