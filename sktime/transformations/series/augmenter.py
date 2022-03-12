@@ -38,7 +38,7 @@ class _AugmenterTags:
 class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter adding Gaussian (i.e. white) noise to the time series.
 
-    If given time series $X={x_1, x_2, ... , x_n}$, then
+    If `transform` is given time series $X={x_1, x_2, ... , x_n}$, then
     returns $X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}$ where $e_i$ are i.i.d. random draws from
     $\frac{1}{\sigma\sqrt{2 \pi}}e^{-\frac{1}{2}(\frac{x}{\sigma})}$,
     with $\sigma$ as the ``scale`` Factor.
