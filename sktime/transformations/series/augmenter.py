@@ -83,7 +83,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter reversing the time series.
 
-    If given time series $X={x_1, x_2, ... , x_n}$, then
+    If `transform` is given a time series $X={x_1, x_2, ... , x_n}$, then
     returns $X_t={x_n, x_{n-1}, ..., x_2, x_1}.
 
     Example
