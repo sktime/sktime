@@ -131,6 +131,7 @@ X = LONG_X.iloc[0:NUM_T]
 X_test = LONG_X.iloc[NUM_T : (NUM_T + 3)]
 X_test_short = LONG_X.iloc[NUM_T : (NUM_T + 1)]
 
+
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X."""
 
