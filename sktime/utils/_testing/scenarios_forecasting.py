@@ -197,7 +197,7 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 
 y_nan = _make_series(n_timepoints=NUM_T, n_columns=1, random_state=RAND_SEED)
 y_nan.iloc[0] = None
-y_nan.iloc[NUM_T - 1, 0] = None
+y_nan.iloc[NUM_T - 1] = None
 X_nan = X.copy()
 X_nan.iloc[0, 0] = None
 X_nan.iloc[NUM_T - 1, 0] = None
