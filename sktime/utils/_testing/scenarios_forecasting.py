@@ -128,9 +128,8 @@ class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
 
 LONG_X = _make_series(n_columns=2, n_timepoints=2 * NUM_T, random_state=RAND_SEED)
 X = LONG_X.iloc[0:NUM_T]
-X_test = LONG_X.iloc[NUM_T:(NUM_T + 3)]
-X_test_short = LONG_X.iloc[NUM_T:(NUM_T + 1)]
-
+X_test = LONG_X.iloc[NUM_T : (NUM_T + 3)]
+X_test_short = LONG_X.iloc[NUM_T : (NUM_T + 1)]
 
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X."""
@@ -210,7 +209,7 @@ class ForecasterFitPredictWithNan(ForecasterTestScenario):
         "univariate_y": True,
         "has_nans": True,
         "fh_passed_in_fit": True,
-        "pre-refactor": True
+        "pre-refactor": True,
     }
 
     args = {
