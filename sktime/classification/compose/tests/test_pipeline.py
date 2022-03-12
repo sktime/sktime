@@ -36,3 +36,4 @@ def test_dunder_mul():
     _assert_array_almost_equal(y_pred, t12c_1.fit(X, y).predict(X_test))
     _assert_array_almost_equal(y_pred, t12c_2.fit(X, y).predict(X_test))
     _assert_array_almost_equal(y_pred, t12c_3.fit(X, y).predict(X_test))
+
