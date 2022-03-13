@@ -475,6 +475,9 @@ class BaseTransformer(BaseEstimator):
         """
         X = _handle_alias(X, Z)
 
+        # check whether is fitted
+        self.check_is_fitted()
+
         # skip everything if update_params is False
         if not update_params:
             return self
@@ -483,76 +486,21 @@ class BaseTransformer(BaseEstimator):
         if self.get_tag("fit-in-transform"):
             return self
 
-        # input checks and minor coercions on X, y
-        ###########################################
+        # check and convert X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        valid, msg, X_metadata = check_is_mtype(
-            X, mtype=self.ALLOWED_INPUT_MTYPES, return_metadata=True, var_name="X"
-        )
-        if not valid:
-            raise ValueError(msg)
+        # checks and conversions complete, pass to inner fit
+        #####################################################
+        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        # we call the ordinary _fit if no looping/vectorization needed
+        if not vectorization_needed:
+            # todo 0.11.0: add kwargs call
+            # self._fit(X=X_inner, y=y_inner)
+            self._update(X_inner, y_inner)
+        else:
+            # otherwise we call the vectorized version of fit
+            self._vectorize("update", X=X_inner, y=y_inner)
 
-        # checking X
-        enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not X_metadata["is_univariate"]:
-            raise ValueError("X must be univariate but is not")
-
-        # retrieve mtypes/scitypes of all objects
-        #########################################
-
-        X_input_scitype = X_metadata["scitype"]
-
-        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
-        X_inner_scitypes = mtype_to_scitype(X_inner_mtype, return_unique=True)
-
-        # treating Series vs Panel conversion for X
-        ###########################################
-
-        # there are three cases to treat:
-        # 1. if the internal _fit supports X's scitype, move on to mtype conversion
-        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        # 3. internal only has Series but X is Panel: auto-vectorization over instances
-        #     currently, this is enabled by conversion to df-list mtype
-        #     auto-vectorization is not supported if y is passed
-        #       individual estimators that vectorize over y must implement individually
-
-        # 1. nothing to do - simply don't enter any of the ifs below
-
-        # 2. internal only has Panel but X is Series: consider X as one-instance Panel
-        if X_input_scitype == "Series" and "Series" not in X_inner_scitypes:
-            X = convert_Series_to_Panel(X)
-
-        # 3. internal only has Series but X is Panel: loop over instances
-        elif X_input_scitype == "Panel" and "Panel" not in X_inner_scitypes:
-            if y is not None and self.get_tag("y_inner_mtype") != "None":
-                raise ValueError(
-                    f"{type(self).__name__} does not support Panel X if y is not None, "
-                    f"since {type(self).__name__} supports only Series. "
-                    "Auto-vectorization to extend Series X to Panel X can only be "
-                    'carried out if y is None, or "y_inner_mtype" tag is "None". '
-                    "Consider extending _fit and _transform to handle the following "
-                    "input types natively: Panel X and non-None y."
-                )
-            X = convert_to(
-                X,
-                to_type="df-list",
-                as_scitype="Panel",
-                store=self._converter_store_X,
-                store_behaviour="reset",
-            )
-            # this fits one transformer per instance
-            self.transformers_ = [clone(self).fit(Xi) for Xi in X]
-            # recurse and leave function - recursion does input checks/conversion
-            # also set is_fitted flag to True since we leave function here
-            self._is_fitted = True
-            return self
-
-        X_inner, y_inner = self._convert_X_y(X, y)
-
-        # todo: uncomment this once Z is completely gone
-        # self._update(X=X_inner, y=y_inner)
-        # less robust workaround until then
-        self._update(X_inner, y_inner)
         return self
 
     def _check_X_y(self, X=None, y=None, return_metadata=False):
