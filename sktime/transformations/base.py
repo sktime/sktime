@@ -902,7 +902,6 @@ class BaseTransformer(BaseEstimator):
             X_inner = convert_to(
                 X,
                 to_type=X_inner_mtype,
-                as_scitype=X_scitype,
                 store=self._converter_store_X,
                 store_behaviour="reset",
             )
