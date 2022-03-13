@@ -177,7 +177,7 @@ def test_panel_in_panel_out_not_supported_but_series():
     X ouput from fit/transform should be Panel
     """
     # one example for a transformer which supports Panel internally
-    cls = ExponentTransformer
+    cls = BoxCoxTransformer
     est = cls.create_test_instance()
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
