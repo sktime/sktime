@@ -234,7 +234,6 @@ class BaseTransformer(BaseEstimator):
         # checks and conversions complete, pass to inner fit
         #####################################################
         vectorization_needed = isinstance(X_inner, VectorizedDF)
-        self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
             # todo 0.11.0: add kwargs call
@@ -309,9 +308,9 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y, return_mtype=True)
-
-        if not self._is_vectorized:
+        X_inner, y_inner = self._check_X_y(X=X, y=y)  #, return_mtype=True)
+  
+        if not isinstance(X_inner, VectorizedDF):
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -500,6 +499,25 @@ class BaseTransformer(BaseEstimator):
             raise NotImplementedError(
                 f"{type(self)} does not implement inverse_transform"
             )
+
+        X = _handle_alias(X, Z)
+
+        # check whether is fitted
+        self.check_is_fitted()
+
+        # input check and conversion for X/y
+        X_inner, y_inner = self._check_X_y(X=X, y=y)  #, return_mtype=True)
+
+        if not isinstance(X_inner, VectorizedDF):
+            Xt = self._inverse_transform(X=X_inner, y=y_inner)
+        else:
+            # otherwise we call the vectorized version of predict
+            Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
+
+        # convert to output mtype
+        X_out = self._convert_output(Xt, inverse=True)  # , X_input_mtype, X_was_Series)
+
+        return X_out
 
         X = _handle_alias(X, Z)
 
