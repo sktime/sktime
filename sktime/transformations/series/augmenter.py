@@ -39,9 +39,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     r"""Augmenter adding Gaussian (i.e. white) noise to the time series.
 
     If `transform` is given time series :math:`X={x_1, x_2, ... , x_n}`, then
-    returns :math:`X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}` where :math:`e_i` are i.i.d. random
-    draws from a normal distribution with mean :math:`\mu` = 0 and standard deviation :math:`\sigma` = ``scale``.
-    Time series augmentation by adding Gaussian Noise has been discussed among others in [1] and [2].
+    returns :math:`X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}` where :math:`e_i` are
+    i.i.d. random draws from a normal distribution with mean :math:`\mu` = 0
+    and standard deviation :math:`\sigma` = ``scale``.
+    Time series augmentation by adding Gaussian Noise has been discussed among
+    others in [1] and [2].
 
     Parameters
     ----------
@@ -55,10 +57,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1]: WEN, Qingsong, et al. Time series data augmentation for deep learning: A survey.
-        arXiv preprint arXiv:2002.12478, 2020.
-        [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series
-        classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
+        [1]: WEN, Qingsong, et al. Time series data augmentation for deep
+        learning: A survey. arXiv preprint arXiv:2002.12478, 2020.
+        [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
+        augmentation for time series classification with neural networks. Plos
+        one, 2021, 16. Jg., Nr. 7, S. e0254841.
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
@@ -105,8 +108,9 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series
-        classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
+        [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data
+        augmentation for time series classification with neural networks. Plos
+        one, 2021, 16. Jg., Nr. 7, S. e0254841.
 
     """
 
