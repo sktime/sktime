@@ -320,10 +320,9 @@ class BaseTransformer(BaseEstimator):
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
         # convert to output mtype
-        X_out = self._convert_output(Xt)  #, X_input_mtype, X_was_Series)
+        X_out = self._convert_output(Xt)  # , X_input_mtype, X_was_Series)
 
         return X_out
-
 
         # input checks and minor coercions on X, y
         ###########################################
@@ -705,129 +704,6 @@ class BaseTransformer(BaseEstimator):
         self._update(X_inner, y_inner)
         return self
 
-    def _vectorized_transform(self, X, X_input_mtype=None, y=None, inverse=False):
-        """Vectorized application of transform or inverse, and convert back."""
-        if X_input_mtype is None:
-            X_input_mtype = mtype(X, as_scitype=["Series", "Panel"])
-        if y is not None and self.get_tag("y_inner_mtype") != "None":
-            raise ValueError(
-                f"{type(self).__name__} does not support Panel X if y is not None, "
-                f"since {type(self).__name__} supports only Series. "
-                "Auto-vectorization to extend Series X to Panel X can only be "
-                'carried out if y is None, or "y_inner_mtype" tag is "None". '
-                "Consider extending _fit and _transform to handle the following "
-                "input types natively: Panel X and non-None y."
-            )
-
-        X = convert_to(
-            X,
-            to_type="df-list",
-            as_scitype="Panel",
-            store=self._converter_store_X,
-            store_behaviour="reset",
-        )
-
-        # depending on whether fitting happens, apply fitted or unfitted instances
-        if not self.get_tag("fit-in-transform"):
-            # these are the transformers-per-instance, fitted in fit
-            transformers = self.transformers_
-            if len(transformers) != len(X):
-                raise RuntimeError(
-                    "found different number of instances in transform than in fit. "
-                    f"number of instances seen in fit: {len(transformers)}; "
-                    f"number of instances seen in transform: {len(X)}"
-                )
-            if inverse:
-                Xt = [transformers[i].inverse_transform(X[i]) for i in range(len(X))]
-            else:
-                Xt = [transformers[i].transform(X[i]) for i in range(len(X))]
-            # now we have a list of transformed instances
-        else:
-            # if no fitting happens, just apply transform multiple times
-            if inverse:
-                Xt = [self.inverse_transform(X[i]) for i in range(len(X))]
-            else:
-                Xt = [self.transform(X[i]) for i in range(len(X))]
-
-        # convert to expected output format
-        ###################################
-        if inverse:
-            output_scitype = self.get_tag("scitype:transform-input")
-        else:
-            output_scitype = self.get_tag("scitype:transform-output")
-        # if the output is Series, Xt is a Panel and we convert back
-        if output_scitype == "Series":
-            Xt = convert_to(
-                Xt,
-                to_type=X_input_mtype,
-                as_scitype="Panel",
-                store=self._converter_store_X,
-                store_behaviour="freeze",
-            )
-
-        # if the output is Primitives, we have a list of one-row dataframes
-        # we concatenate those and overwrite the index with that of X
-        elif output_scitype == "Primitives":
-            Xt = pd.concat(Xt)
-            Xt = Xt.reset_index(drop=True)
-        return Xt
-
-    def _convert_output(self, X, X_input_mtype=None, X_was_Series=False, inverse=False):
-        """Convert transform output to expected format."""
-        Xt = X
-        X_input_scitype = mtype_to_scitype(X_input_mtype)
-
-        if inverse:
-            # the output of inverse transform is equal to input of transform
-            output_scitype = self.get_tag("scitype:transform-input")
-        else:
-            output_scitype = self.get_tag("scitype:transform-output")
-
-        # if we converted Series to "one-instance-Panel", revert that
-        if X_was_Series and output_scitype == "Series":
-            Xt = convert_to(
-                Xt, to_type=["pd-multiindex", "numpy3D", "df-list"], as_scitype="Panel"
-            )
-            Xt = convert_Panel_to_Series(Xt)
-
-        if output_scitype == "Series":
-            # output mtype is input mtype
-            X_output_mtype = X_input_mtype
-
-            # exception to this: if the transformer outputs multivariate series,
-            #   we cannot convert back to pd.Series, do pd.DataFrame instead then
-            #   this happens only for Series, not Panel
-            if X_input_scitype == "Series":
-                _, _, metadata = check_is_mtype(
-                    Xt,
-                    ["pd.DataFrame", "pd.Series", "np.ndarray"],
-                    return_metadata=True,
-                )
-                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
-                    X_output_mtype = "pd.DataFrame"
-
-            Xt = convert_to(
-                Xt,
-                to_type=X_output_mtype,
-                as_scitype=X_input_scitype,
-                store=self._converter_store_X,
-                store_behaviour="freeze",
-            )
-        elif output_scitype == "Primitives":
-            # we "abuse" the Series converter to ensure df output
-            # & reset index to have integers for instances
-            if isinstance(Xt, (pd.DataFrame, pd.Series)):
-                Xt = Xt.reset_index(drop=True)
-            Xt = convert_to(
-                Xt,
-                to_type="pd.DataFrame",
-                as_scitype="Series",
-                # no converter store since this is not a "1:1 back-conversion"
-            )
-        # else output_scitype is "Panel" and no need for conversion
-
-        return Xt
-
     def _check_X_y(self, X=None, y=None):
         """Check and coerce X/y for fit/transform functions.
 
@@ -875,6 +751,10 @@ class BaseTransformer(BaseEstimator):
         _converter_store_X : dict, metadata from conversion for back-conversion
         _X_mtype_last_seen : str, mtype of X seen last
         _X_input_scitype : str, scitype of X seen last
+        _convert_case : str, coversion case (see above), one of
+            "case 1: scitype supported"
+            "case 2: higher scitype supported"
+            "case 3: requires vectorization"
         """
         if X is None:
             raise TypeError("X cannot be None, but found None")
@@ -924,47 +804,43 @@ class BaseTransformer(BaseEstimator):
         ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
 
         # checking X
-        if X is not None:
-            X_valid, _, X_metadata = check_is_scitype(
-                X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
-            )
+        X_valid, _, X_metadata = check_is_scitype(
+            X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
+        )
 
-            msg = (
-                f"X must be in an sktime compatible format, "
-                f"of scitype Series, Panel or Hierarchical, "
-                f"for instance a pandas.DataFrame with sktime compatible time indices, "
-                f"or with MultiIndex and lowest level a sktime compatible time index. "
-                f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
-                # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-                f" the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
-            )
-            if not X_valid:
-                raise TypeError(msg)
+        msg = (
+            f"X must be in an sktime compatible format, "
+            f"of scitype Series, Panel or Hierarchical, "
+            f"for instance a pandas.DataFrame with sktime compatible time indices, "
+            f"or with MultiIndex and lowest level a sktime compatible time index. "
+            f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+            # f"See the transformers tutorial examples/05_transformers.ipynb, or"
+            f" the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+        )
+        if not X_valid:
+            raise TypeError(msg)
 
-            X_scitype = X_metadata["scitype"]
-            X_mtype = X_metadata["mtype"]
-            # remember these for potential back-conversion (in transform etc)
-            self._X_mtype_last_seen = X_mtype
-            self._X_input_scitype = X_scitype
+        X_scitype = X_metadata["scitype"]
+        X_mtype = X_metadata["mtype"]
+        # remember these for potential back-conversion (in transform etc)
+        self._X_mtype_last_seen = X_mtype
+        self._X_input_scitype = X_scitype
 
-            if X_mtype not in ALLOWED_MTYPES:
-                raise TypeError(msg)
+        if X_mtype not in ALLOWED_MTYPES:
+            raise TypeError(msg)
 
-            if X_scitype in X_inner_scitype:
-                case = "case 1: scitype supported"
-            elif any(_scitype_A_higher_B(x, X_scitype) for x in X_inner_scitype):
-                case = "case 2: higher scitype supported"
-            else:
-                case = "case 3: requires vectorization"
-
-            # checking X
-            enforce_univariate = self.get_tag("univariate-only")
-            if enforce_univariate and not X_metadata["is_univariate"]:
-                raise ValueError("X must be univariate but is not")
-
+        if X_scitype in X_inner_scitype:
+            case = "case 1: scitype supported"
+        elif any(_scitype_A_higher_B(x, X_scitype) for x in X_inner_scitype):
+            case = "case 2: higher scitype supported"
         else:
-            # X_scitype is used below - set to None if X is None
-            X_scitype = None
+            case = "case 3: requires vectorization"
+        self._convert_case = case
+
+        # checking X vs tags
+        enforce_univariate = self.get_tag("univariate-only")
+        if enforce_univariate and not X_metadata["is_univariate"]:
+            raise ValueError("X must be univariate but is not")
         # end checking X
 
         if y_inner_mtype != ["None"] and y is not None:
@@ -974,7 +850,7 @@ class BaseTransformer(BaseEstimator):
             elif X_scitype == "Panel":
                 y_possible_scitypes = ["Table", "Panel"]
             elif X_scitype == "Hierarchical":
-                y_possible_scitypes = ["Table", "Panel", "Hierarchical"]             
+                y_possible_scitypes = ["Table", "Panel", "Hierarchical"]
 
             y_valid, _, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
@@ -1050,6 +926,76 @@ class BaseTransformer(BaseEstimator):
         """Shorthand for _check_X_y with one argument X, see _check_X_y."""
         return self._check_X_y(X=X)[0]
 
+    def _convert_output(self, X, X_input_mtype=None, X_was_Series=False, inverse=False):
+        """Convert transform output to expected format."""
+        Xt = X
+        X_input_mtype = self._X_mtype_last_seen
+        X_input_scitype = self._X_input_scitype
+        case = self._convert_case
+
+        if inverse:
+            # the output of inverse transform is equal to input of transform
+            output_scitype = self.get_tag("scitype:transform-input")
+        else:
+            output_scitype = self.get_tag("scitype:transform-output")
+
+        # if we converted Series to "one-instance-Panel/Hierarchical",
+        #   or Panel to "one-istance-Hierarchical", then revert that
+        # remainder is as in case 1
+        if case == "case 2: higher scitype supported":
+            Xt = convert_to(
+                Xt, to_type=[
+                    "pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"
+                ]
+            )
+            Xt = convert_Panel_to_Series(Xt)
+
+        # now, in all cases, Xt is in the right scitype,
+        #   but not necessarily in the right mtype.
+        # additionally, Primitives may have an extra column
+
+        #   "case 1: scitype supported"
+        #   "case 2: higher scitype supported"
+        #   "case 3: requires vectorization"
+
+        if output_scitype == "Series":
+            # output mtype is input mtype
+            X_output_mtype = X_input_mtype
+
+            # exception to this: if the transformer outputs multivariate series,
+            #   we cannot convert back to pd.Series, do pd.DataFrame instead then
+            #   this happens only for Series, not Panel
+            if X_input_scitype == "Series":
+                _, _, metadata = check_is_mtype(
+                    Xt,
+                    ["pd.DataFrame", "pd.Series", "np.ndarray"],
+                    return_metadata=True,
+                )
+                if not metadata["is_univariate"] and X_input_mtype == "pd.Series":
+                    X_output_mtype = "pd.DataFrame"
+
+            Xt = convert_to(
+                Xt,
+                to_type=X_output_mtype,
+                as_scitype=X_input_scitype,
+                store=self._converter_store_X,
+                store_behaviour="freeze",
+            )
+        elif output_scitype == "Primitives":
+            # we "abuse" the Series converter to ensure df output
+            # & reset index to have integers for instances
+            if isinstance(Xt, (pd.DataFrame, pd.Series)):
+                Xt = Xt.reset_index(drop=True)
+            Xt = convert_to(
+                Xt,
+                to_type="pd.DataFrame",
+                as_scitype="Series",
+                # no converter store since this is not a "1:1 back-conversion"
+            )
+        # else output_scitype is "Panel" and no need for conversion
+
+        return Xt
+
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over method of BaseTransformer.
 
@@ -1090,7 +1036,7 @@ class BaseTransformer(BaseEstimator):
 
             return self
 
-        elif methodname in TRAFO_METHODS:
+        if methodname in TRAFO_METHODS:
             # loop through fitted transformers one-by-one, and transform series/panels
             if not self.get_tag("fit-in-transform"):
                 X, _, Xs, ys, n, _ = unwrap(kwargs)
@@ -1123,31 +1069,17 @@ class BaseTransformer(BaseEstimator):
                     Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
+            # # one more thing before returning:
+            # #   
+            # if methodname == "inverse_transform":
+            #         output_scitype = self.get_tag("scitype:transform-input")
+            #     else:
+            #         output_scitype = self.get_tag("scitype:transform-output")
+            # if output_scitype == "Primitives" and :
+            #         Xt = pd.concat(Xt)
+            #         Xt = Xt.reset_index(drop=True)
+
             return Xt
-
-    # todo: do sth with this
-    #     # convert to expected output format
-    #     ###################################
-    #     if inverse:
-    #         output_scitype = self.get_tag("scitype:transform-input")
-    #     else:
-    #         output_scitype = self.get_tag("scitype:transform-output")
-    #     # if the output is Series, Xt is a Panel and we convert back
-    #     if output_scitype == "Series":
-    #         Xt = convert_to(
-    #             Xt,
-    #             to_type=X_input_mtype,
-    #             as_scitype="Panel",
-    #             store=self._converter_store_X,
-    #             store_behaviour="freeze",
-    #         )
-
-    #     # if the output is Primitives, we have a list of one-row dataframes
-    #     # we concatenate those and overwrite the index with that of X
-    #     elif output_scitype == "Primitives":
-    #         Xt = pd.concat(Xt)
-    #         Xt = Xt.reset_index(drop=True)
-    #     return Xt
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
