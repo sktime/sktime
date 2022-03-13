@@ -40,8 +40,8 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
 
     If `transform` is given time series :math:`X={x_1, x_2, ... , x_n}`, then
     returns :math:`X_t={x_1+e_1, x_2+e_2, ..., x_n+e_n}` where :math:`e_i` are i.i.d. random
-    draws from the normal distribution with mean 0 and standard deviation ``scale``.
-    with :math:`\sigma` as the ``scale`` Factor.
+    draws from a normal distribution with mean :math:`\mu` = 0 and standard deviation :math:`\sigma` = ``scale``.
+    Time series augmentation by adding Gaussian Noise has been discussed among others in [1] and [2].
 
     Parameters
     ----------
@@ -50,12 +50,14 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     random_state: None or int or ``np.random.RandomState`` instance, optional
             "If int or RandomState, use it for drawing the random variates.
             If None, rely on ``self.random_state``.
-            Default is None." [1]
+            Default is None." [3]
 
     References and Footnotes
     ----------
 
-        [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
+        [1]: WEN, Qingsong, et al. Time series data augmentation for deep learning: A survey. arXiv preprint arXiv:2002.12478, 2020.
+        [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
+        [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
 
@@ -73,7 +75,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
             scale = self.scale
         else:
             raise TypeError(
-                "Type of parameter 'scale' must be a float value or a distribution."
+                "Type of parameter 'scale' must be a non-negative float value."
             )
         return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
 
@@ -83,6 +85,7 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
 
     If `transform` is given a time series :math:`X={x_1, x_2, ... , x_n}`, then
     returns :math:`X_t={x_n, x_{n-1}, ..., x_2, x_1}`.
+    Time series augmentation by reversing has been discussed e.g. in [1].
 
     Examples
     --------
@@ -96,6 +99,12 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     3    2
     4    1
     dtype: int64
+    
+    References and Footnotes
+    ----------
+
+        [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
+
     """
 
     def __init__(self):
@@ -133,24 +142,25 @@ class InvertAugmenter(_AugmenterTags, BaseTransformer):
 
 
 class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
-    r"""Draw random samples form time series.
+    r"""Draw random samples from time series.
 
-    If `transform` is given a time series :math:`X={x_1, x_2, ... , x_m}` then returns
-    :math:`X_t={x_i, x_{i+1}, ... , x_n}`, where :math:`{x_i, x_{i+1}, ... , x_n}` are
-    :math:`n`=``n`` random samples drawn from :math:`X` (with or `without_replacement`).
+    `transform` takes a time series :math:`X={x_1, x_2, ... , x_m}` with :math:`m`
+    elements and returns :math:`X_t={x_i, x_{i+1}, ... , x_n}`, where
+    :math:`{x_i, x_{i+1}, ... , x_n}` are :math:`n`=``n`` random samples drawn
+    from :math:`X` (with or `without_replacement`).
 
     Parameters
     ----------
     n: int or float, optional (default = 1.0)
             To specify an exact number of samples to draw, set `n` to an int value.
-            Number of samples to draw. If type of `n` is float,
+            Number of samples to draw.
             To specify the returned samples as a proportion of the given times series
-            set `n` to an float value.
-            By default, the same number of samples is returned as in the given times
-            series
+            set `n` to a float value :math:`n \in [0, 1]`.
+            By default, the same number of samples is returned as given by the input
+            time series.
     without_replacement: bool, optional (default = True)
-            Whether to draw without replacement. If True, every samples of given
-            times series `X` appears once in `Xt`.
+            Whether to draw without replacement. If True, every sample of the input
+            times series `X` will appear at most once in `Xt`.
     random_state: None or int or ``np.random.RandomState`` instance, optional
             "If int or RandomState, use it for drawing the random variates.
             If None, rely on ``self.random_state``.
