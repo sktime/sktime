@@ -1008,6 +1008,7 @@ class BaseTransformer(BaseEstimator):
 
         Uses transformers_ attribute to store one forecaster per loop index.
         """
+
         def unwrap(kwargs):
             """Unwrap kwargs to X, y, and reusable results of some method calls."""
             X = kwargs.pop("X")
