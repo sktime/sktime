@@ -140,7 +140,7 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 
     # check whether there any nans; only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return ret(True, None, metadata, return_metadata)
 
