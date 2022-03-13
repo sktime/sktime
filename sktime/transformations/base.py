@@ -703,6 +703,14 @@ class BaseTransformer(BaseEstimator):
             X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
+                # raise ValueError(
+                #     f"{type(self).__name__} does not support Panel X if y is not "
+                #     f"None, since {type(self).__name__} supports only Series. "
+                #     "Auto-vectorization to extend Series X to Panel X can only be "
+                #     'carried out if y is None, or "y_inner_mtype" tag is "None". '
+                #     "Consider extending _fit and _transform to handle the following "
+                #     "input types natively: Panel X and non-None y."
+                # )
                 iterate_y = _most_complex_scitype(y_inner_scitype)
                 y_inner = VectorizedDF(X=X, iterate_as=iterate_y, is_scitype=X_scitype)
             else:
