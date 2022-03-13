@@ -272,7 +272,7 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
 
 
 class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
-    """Fit/transform, multivariate Panel X."""
+    """Fit/transform, multivariate Panel X, with y in fit and transform."""
 
     _tags = {
         "X_scitype": "Panel",
@@ -295,6 +295,27 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
     default_method_sequence = ["fit", "transform"]
 
 
+class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestScenario):
+    """Fit/transform, multivariate Panel X, with y in fit but not in transform."""
+
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "pre-refactor": False,
+        "has_y": True,
+        "y_scitype": "classes",
+    }
+
+    args = {
+        "fit": {
+            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10),
+            "y": _make_classification_y(n_instances=7, n_classes=2),
+        },
+        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
 # todo: scenario for Panel X
 #   where test and training set has different n_instances or n_timepoints
 #   may need a tag that tells us whethe transformer can cope with this
@@ -306,4 +327,5 @@ scenarios_transformers = [
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
+    TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
 ]
