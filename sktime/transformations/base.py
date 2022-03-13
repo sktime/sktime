@@ -1056,6 +1056,7 @@ class BaseTransformer(BaseEstimator):
         Uses transformers_ attribute to store one forecaster per loop index.
         """
         def unwrap(kwargs):
+            """Unwrap kwargs to X, y, and reusable results of some method calls."""
             X = kwargs.pop("X")
             y = kwargs.pop("y", None)
 
@@ -1076,12 +1077,13 @@ class BaseTransformer(BaseEstimator):
         if methodname in FIT_METHODS:
             X, _, Xs, ys, n, idx = unwrap(kwargs)
 
-            # if fit is called, create container of transformers
+            # if fit is called, create container of transformers, but not in update
             if methodname == "fit":
                 self.transformers_ = pd.DataFrame(index=idx, columns=["transformers"])
                 for i in range(n):
                     self.transformers_.iloc[i, 0] = clone(self)
 
+            # fit/update the i-th transformer with the i-th series/panel
             for i in range(n):
                 method = getattr(self.transformers_.iloc[i, 0], methodname)
                 method(X=Xs[i], y=ys[i], **kwargs)
@@ -1102,6 +1104,7 @@ class BaseTransformer(BaseEstimator):
                         f"number of instances seen in transform: {n}"
                     )
 
+                # transform the i-th series/panel with the i-th stored transformer
                 Xts = []
                 for i in range(n):
                     method = getattr(self.transformers_.iloc[i, 0], methodname)
@@ -1112,6 +1115,7 @@ class BaseTransformer(BaseEstimator):
             else:
                 _, _, Xs, ys, n, _ = unwrap(kwargs)
 
+                # fit/transform the i-th series/panel with a new clone of self
                 Xts = []
                 for i in range(n):
                     transformer = clone(self).fit(X=Xs[i], y=ys[i], **kwargs)
