@@ -70,8 +70,8 @@ class TabularToSeriesAdaptor(BaseTransformer):
         Transformer that is fitted to data, clone of transformer.
     fit_in_transform: bool, optional, default=False
         whether transformer_ should be fitted in transform (True), or in fit (False)
-            recommended setting for forecasting (single series or hierarchical): False
-            recommended setting for ts classification, regression, clustering: True
+            recommended setting in forecasting (single series or hierarchical): False
+            recommended setting in ts classification, regression, clustering: True
 
     Examples
     --------
