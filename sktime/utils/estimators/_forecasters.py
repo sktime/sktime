@@ -5,7 +5,7 @@ __author__ = ["ltsaprounis"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.estimators._base import MockEstimatorMixin
+from sktime.utils.estimators._base import MockEstimatorMixin, method_logger
 
 
 class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
@@ -44,9 +44,9 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
 
     def __init__(self, prediction_constant: float = 10):
         self.prediction_constant = prediction_constant
-        self._log = []
         super(MockUnivariateForecaster, self).__init__()
 
+    @method_logger
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -76,9 +76,9 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         -------
         self : reference to self
         """
-        self._update_log(method_name="_fit", method_kargs={"y": y, "X": X, "fh": fh})
         return self
 
+    @method_logger
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
@@ -104,10 +104,10 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         y_pred : pd.Series
             Point predictions
         """
-        self._update_log(method_name="_predict", method_kargs={"X": X, "fh": fh})
         index = fh.to_absolute(self.cutoff)
         return pd.Series(self.prediction_constant, index=index)
 
+    @method_logger
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
@@ -142,12 +142,9 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         -------
         self : reference to self
         """
-        self._update_log(
-            method_name="_update",
-            method_kargs={"y": y, "X": X, "update_params": update_params},
-        )
         return self
 
+    @method_logger
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
@@ -179,11 +176,6 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        self._update_log(
-            method_name="_predict_quantiles",
-            method_kargs={"fh": fh, "X": X, "alpha": alpha},
-        )
-
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
 
