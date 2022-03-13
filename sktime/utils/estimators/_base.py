@@ -21,6 +21,8 @@ def _method_logger(method):
     """Log the method and it's arguments."""
 
     def wrapper(self, *args, **kwargs):
+        if not isinstance(self, _MockEstimatorMixin):
+            raise TypeError("Estimator is not a Mock Estimator")
         arg_spec = getfullargspec(method)
         inputs_dict = dict(zip(arg_spec.args, deepcopy(args)))
         inputs_dict.update(deepcopy(kwargs))
