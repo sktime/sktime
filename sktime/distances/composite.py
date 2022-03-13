@@ -23,14 +23,17 @@ class CompositeDistance:
                 NumbaDistance,
             ]
         ],
-        weights: List[List],
         variables: List[str],
+        weights: List[List] = None,
     ):
         self.metrics = metrics
-        self.weights = weights
         self.variables = variables
+        self.weights = weights
 
     def __call__(self, x: Dict[str, np.ndarray], y: Dict[str, np.ndarray]) -> float:
+        if self.weights is None:
+            self.weights = [1] * len(self.metrics)
+
         composite_distance_val = 0
         for metric, weight, variable in zip(self.metrics, self.weights, self.variables):
             for var in variable:
