@@ -62,14 +62,12 @@ from sktime.datatypes import (
     check_is_mtype,
     check_is_scitype,
     convert_to,
-    mtype,
     mtype_to_scitype,
 )
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
 )
-from sktime.utils.validation.series import check_equal_time_index
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -773,17 +771,6 @@ class BaseTransformer(BaseEstimator):
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
-        def _least_complex_scitype(scitypes):
-            """Return least complex scitype in a list of str."""
-            if "Series" in scitypes:
-                return "Series"
-            elif "Panel" in scitypes:
-                return "Panel"
-            elif "Hierarchical" in scitypes:
-                return "Hierarchical"
-            else:
-                raise ValueError("no series scitypes supported, bug in estimator")
-
         def _scitype_A_higher_B(scitypeA, scitypeB):
             """Compare two scitypes regarding complexity."""
             if scitypeA == "Series":
@@ -884,7 +871,15 @@ class BaseTransformer(BaseEstimator):
         #  if X/y is None, then no conversion takes place (returns None)
         #  if vectorization is required, we wrap in Vect
 
-        if case == "case 1: scitype supported":
+        # case 2. internal only has Panel but X is Series:
+        #   consider X as one-instance Panel or Hirarchical
+        if case == "case 2: higher scitype supported":
+            # todo: extend this to Hierarchical
+            X = convert_Series_to_Panel(X)
+            # then pass to case 1, which we've reduced to
+
+        # case 1. scitype of X is supported internally
+        if case in ["case 1: scitype supported", "case 2: higher scitype supported"]:
             # converts X
             X_inner = convert_to(
                 X,
@@ -901,18 +896,11 @@ class BaseTransformer(BaseEstimator):
                 as_scitype=y_scitype,
             )
 
-        # case 2. internal only has Panel but X is Series:
-        #   consider X as one-instance Panel or Hirarchical
-        elif case == "case 2: higher scitype supported":
-            # todo: extend this to Hierarchical
-            X_inner = convert_Series_to_Panel(X)
-
+        # case 3. scitype of X is not supported, only lower complexity one is
+        #   then apply vectorization, loop method execution over series/panels
         elif case == "case 3: requires vectorization":
-            if X is not None:
-                iterate_X = _most_complex_scitype(X_inner_scitype)
-                X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
-            else:
-                X_inner = None
+            iterate_X = _most_complex_scitype(X_inner_scitype)
+            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
                 iterate_y = _most_complex_scitype(y_inner_scitype)
@@ -1070,7 +1058,7 @@ class BaseTransformer(BaseEstimator):
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
             # # one more thing before returning:
-            # #   
+            #
             # if methodname == "inverse_transform":
             #         output_scitype = self.get_tag("scitype:transform-input")
             #     else:
