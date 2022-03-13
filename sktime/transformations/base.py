@@ -948,9 +948,11 @@ class BaseTransformer(BaseEstimator):
             output_scitype = self.get_tag("scitype:transform-output")
 
         # if we converted Series to "one-instance-Panel/Hierarchical",
-        #   or Panel to "one-istance-Hierarchical", then revert that
+        #   or Panel to "one-instance-Hierarchical", then revert that
         # remainder is as in case 1
-        if case == "case 2: higher scitype supported":
+        #   skipped for output_scitype = "Primitives"
+        #       since then the output always is a pd.DataFrame
+        if case == "case 2: higher scitype supported" and output_scitype == "Series":
             Xt = convert_to(
                 Xt,
                 to_type=["pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"],
