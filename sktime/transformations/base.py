@@ -1067,7 +1067,7 @@ class BaseTransformer(BaseEstimator):
 
             # if fit-in-transform: don't store transformers, run fit/transform in one
             else:
-                _, _, Xs, ys, n, _ = unwrap(kwargs)
+                X, _, Xs, ys, n, _ = unwrap(kwargs)
 
                 # fit/transform the i-th series/panel with a new clone of self
                 Xts = []
