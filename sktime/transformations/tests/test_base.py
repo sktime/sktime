@@ -16,6 +16,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformSeriesUnivariate,
 )
+
 # other scenarios that might be needed later in development:
 # TransformerFitTransformSeriesMultivariate,
 # TransformerFitTransformPanelUnivariateWithClassY,
