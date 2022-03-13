@@ -908,11 +908,14 @@ class BaseTransformer(BaseEstimator):
             )
 
             # converts y, returns None if y is None
-            y_inner = convert_to(
-                y,
-                to_type=y_inner_mtype,
-                as_scitype=y_scitype,
-            )
+            if y_inner_mtype != ["None"] and y is not None:
+                y_inner = convert_to(
+                    y,
+                    to_type=y_inner_mtype,
+                    as_scitype=y_scitype,
+                )
+            else:
+                y_inner = None
 
         # case 3. scitype of X is not supported, only lower complexity one is
         #   then apply vectorization, loop method execution over series/panels
