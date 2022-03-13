@@ -55,8 +55,10 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1]: WEN, Qingsong, et al. Time series data augmentation for deep learning: A survey. arXiv preprint arXiv:2002.12478, 2020.
-        [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
+        [1]: WEN, Qingsong, et al. Time series data augmentation for deep learning: A survey.
+        arXiv preprint arXiv:2002.12478, 2020.
+        [2]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series
+        classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
         [3]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html # noqa
 
     """
@@ -103,7 +105,8 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     References and Footnotes
     ----------
 
-        [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
+        [1]: IWANA, Brian Kenji; UCHIDA, Seiichi. An empirical survey of data augmentation for time series
+        classification with neural networks. Plos one, 2021, 16. Jg., Nr. 7, S. e0254841.
 
     """
 
