@@ -228,6 +228,10 @@ class BaseTransformer(BaseEstimator):
             self._is_fitted = True
             return self
 
+        # if requires_y is set, y is required in fit and update
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
+
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
@@ -486,6 +490,10 @@ class BaseTransformer(BaseEstimator):
         if self.get_tag("fit-in-transform"):
             return self
 
+        # if requires_y is set, y is required in fit and update
+        if self.get_tag("requires_y") and y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
+
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
@@ -559,9 +567,6 @@ class BaseTransformer(BaseEstimator):
         """
         if X is None:
             raise TypeError("X cannot be None, but found None")
-
-        if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         metadata = dict()
         metadata["_converter_store_X"] = dict()
