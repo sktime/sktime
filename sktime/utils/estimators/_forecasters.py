@@ -2,14 +2,13 @@
 
 __author__ = ["ltsaprounis"]
 
-from copy import deepcopy
-
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.estimators._base import MockEstimatorMixin
 
 
-class MockUnivariateForecaster(BaseForecaster):
+class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
     """Mock univariate forecaster that logs the methods called and their parameters.
 
     Parameters
@@ -48,15 +47,6 @@ class MockUnivariateForecaster(BaseForecaster):
         self._log = []
         super(MockUnivariateForecaster, self).__init__()
 
-    @property
-    def log(self):
-        """Log of the methods called and the parameters passed in each method."""
-        return self._log
-
-    def _update_log(self, method_name, method_kargs):
-        self._log.append((method_name, deepcopy(method_kargs)))
-
-    # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
