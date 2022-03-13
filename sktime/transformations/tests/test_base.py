@@ -139,18 +139,52 @@ def test_panel_in_panel_out_supported():
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
         "fit-in-transform" = False
-        "X_inner_mtype" supports "Series
+        "X_inner_mtype" supports "Panel"
 
     X input to fit/transform has Panel scitype
     X ouput from fit/transform should be Panel
     """
     # one example for a transformer which supports Panel internally
-    cls = BoxCoxTransformer
+    cls = PaddingTransformer
+    est = cls.create_test_instance()
+    # ensure cls is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of cls, but we need to choose another example)
+    assert "Panel" in inner_X_scitypes(est)
+    assert not est.get_tag("fit-in-transform")
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Series"
+
+    # scenario in which series are passed to fit/transform
+    scenario = TransformerFitTransformPanelUnivariate()
+    Xt = scenario.run(est, method_sequence=["fit", "transform"])
+
+    valid, _, _ = check_is_scitype(Xt, scitype="Panel", return_metadata=True)
+    assert valid, "fit.transform does not return a Panel when given a Panel"
+    # todo: possibly, add mtype check, use metadata return
+
+
+def test_panel_in_panel_out_not_supported_but_series():
+    """Test that fit/transform runs and returns the correct output type.
+
+    Setting: transformer has tags
+        "scitype:transform-input" = "Series"
+        "scitype:transform-output" = "Series"
+        "fit-in-transform" = False
+        "X_inner_mtype" supports "Series" but not "Panel" and not "Hierarchical"
+
+    X input to fit/transform has Panel scitype
+    X ouput from fit/transform should be Panel
+    """
+    # one example for a transformer which supports Panel internally
+    cls = ExponentTransformer
     est = cls.create_test_instance()
     # ensure cls is a good example, if this fails, choose another example
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Series" in inner_X_scitypes(est)
+    assert "Panel" not in inner_X_scitypes(est)
+    assert "Hierarchical" not in inner_X_scitypes(est)
     assert not est.get_tag("fit-in-transform")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
