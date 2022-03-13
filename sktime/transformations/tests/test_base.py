@@ -13,12 +13,13 @@ from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.utils._testing.scenarios_transformers import (
-    # TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformPanelUnivariate,
-    # TransformerFitTransformPanelUnivariateWithClassY,
-    # TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformSeriesUnivariate,
- )
+)
+# other scenarios that might be needed later in development:
+# TransformerFitTransformSeriesMultivariate,
+# TransformerFitTransformPanelUnivariateWithClassY,
+# TransformerFitTransformSeriesMultivariate,
 
 
 def inner_X_scitypes(est):
