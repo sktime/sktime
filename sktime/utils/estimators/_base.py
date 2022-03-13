@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Base utils and classes for Mock Estimators."""
 
+from copy import deepcopy
 from inspect import getfullargspec
 
 
@@ -21,8 +22,8 @@ def method_logger(method):
 
     def wrapper(self, *args, **kwargs):
         arg_spec = getfullargspec(method)
-        inputs_dict = dict(zip(arg_spec.args, args))
-        inputs_dict.update(kwargs)
+        inputs_dict = dict(zip(arg_spec.args, deepcopy(args)))
+        inputs_dict.update(deepcopy(kwargs))
         self._log.append((method.__name__, inputs_dict))
         return method(self, *args, **kwargs)
 
