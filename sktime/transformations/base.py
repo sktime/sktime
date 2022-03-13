@@ -601,8 +601,8 @@ class BaseTransformer(BaseEstimator):
             X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
         )
 
-        msg = (
-            f"X must be in an sktime compatible format, "
+        msg_invalid_input = (
+            f"must be in an sktime compatible format, "
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
             f"or with MultiIndex and lowest level a sktime compatible time index. "
@@ -611,7 +611,7 @@ class BaseTransformer(BaseEstimator):
             f" the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
         )
         if not X_valid:
-            raise TypeError(msg)
+            raise TypeError("X" + msg_invalid_input)
 
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
@@ -620,7 +620,7 @@ class BaseTransformer(BaseEstimator):
         metadata["_X_input_scitype"] = X_scitype
 
         if X_mtype not in ALLOWED_MTYPES:
-            raise TypeError(msg)
+            raise TypeError("X" + msg_invalid_input)
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
@@ -648,16 +648,8 @@ class BaseTransformer(BaseEstimator):
             y_valid, _, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
             )
-            msg = (
-                "y must be in an sktime compatible format, "
-                "of scitype Series, Panel or Hierarchical, "
-                "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                # "See the transformers tutorial examples/05_transformers.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
-            )
             if not y_valid:
-                raise TypeError(msg)
+                raise TypeError("y" + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]
 
