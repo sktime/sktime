@@ -6,21 +6,19 @@ __author__ = ["fkiraly"]
 __all__ = []
 
 from inspect import isclass
-import pandas as pd
 
 from sktime.datatypes import check_is_scitype, mtype_to_scitype
+from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
-from sktime.transformations.panel.padder import PaddingTransformer
-from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.scenarios_transformers import (
-    TransformerFitTransformSeriesUnivariate,
-    TransformerFitTransformSeriesMultivariate,
+    # TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformPanelUnivariate,
-    TransformerFitTransformPanelMultivariate,
-    TransformerFitTransformPanelUnivariateWithClassY
-)
+    # TransformerFitTransformPanelUnivariateWithClassY,
+    # TransformerFitTransformSeriesMultivariate,
+    TransformerFitTransformSeriesUnivariate,
+ )
 
 
 def inner_X_scitypes(est):

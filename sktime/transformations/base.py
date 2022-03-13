@@ -308,8 +308,8 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)  #, return_mtype=True)
-  
+        X_inner, y_inner = self._check_X_y(X=X, y=y)
+
         if not isinstance(X_inner, VectorizedDF):
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
@@ -506,7 +506,7 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)  #, return_mtype=True)
+        X_inner, y_inner = self._check_X_y(X=X, y=y)  # , return_mtype=True)
 
         if not isinstance(X_inner, VectorizedDF):
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
@@ -952,9 +952,8 @@ class BaseTransformer(BaseEstimator):
         # remainder is as in case 1
         if case == "case 2: higher scitype supported":
             Xt = convert_to(
-                Xt, to_type=[
-                    "pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"
-                ]
+                Xt,
+                to_type=["pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"],
             )
             Xt = convert_Panel_to_Series(Xt)
 
