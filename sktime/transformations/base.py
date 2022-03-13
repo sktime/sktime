@@ -311,7 +311,7 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner, X_mtype = self._check_X_y(X=X, y=y, return_mtype=True)
+        X_inner, y_inner = self._check_X_y(X=X, y=y, return_mtype=True)
 
         if not self._is_vectorized:
             Xt = self._transform(X=X_inner, y=y_inner)
@@ -319,13 +319,8 @@ class BaseTransformer(BaseEstimator):
             # otherwise we call the vectorized version of predict
             Xt = self._vectorize("transform", X=X_inner, y=y_inner)
 
-        # convert to output mtype, identical with last y mtype seen
-        X_out = convert_to(
-            Xt,
-            X_mtype,
-            store=self._converter_store_X,
-            store_behaviour="freeze",
-        )
+        # convert to output mtype
+        X_out = self._convert_output(Xt)  #, X_input_mtype, X_was_Series)
 
         return X_out
 
@@ -878,6 +873,8 @@ class BaseTransformer(BaseEstimator):
         Writes to self
         --------------
         _converter_store_X : dict, metadata from conversion for back-conversion
+        _X_mtype_last_seen : str, mtype of X seen last
+        _X_input_scitype : str, scitype of X seen last
         """
         if X is None:
             raise TypeError("X cannot be None, but found None")
@@ -946,6 +943,9 @@ class BaseTransformer(BaseEstimator):
 
             X_scitype = X_metadata["scitype"]
             X_mtype = X_metadata["mtype"]
+            # remember these for potential back-conversion (in transform etc)
+            self._X_mtype_last_seen = X_mtype
+            self._X_input_scitype = X_scitype
 
             if X_mtype not in ALLOWED_MTYPES:
                 raise TypeError(msg)
@@ -1055,17 +1055,12 @@ class BaseTransformer(BaseEstimator):
 
         Uses transformers_ attribute to store one forecaster per loop index.
         """
-        FIT_METHODS = ["fit", "update"]
-        TRAFO_METHODS = ["transform", "inverse_transform"]
-
-        if methodname in FIT_METHODS:
-            # create container for clones
+        def unwrap(kwargs):
             X = kwargs.pop("X")
             y = kwargs.pop("y", None)
 
-            self._Xvec = y
-
             idx = X.get_iter_indices()
+            n = len(idx)
             Xs = X.as_list()
 
             if y is None:
@@ -1073,32 +1068,82 @@ class BaseTransformer(BaseEstimator):
             else:
                 ys = y.as_list()
 
-            self.transformers_ = pd.DataFrame(index=idx, columns=["transformers"])
-            for i in range(len(idx)):
-                self.transformers_.iloc[i, 0] = clone(self)
+            return X, y, Xs, ys, n, idx
+
+        FIT_METHODS = ["fit", "update"]
+        TRAFO_METHODS = ["transform", "inverse_transform"]
+
+        if methodname in FIT_METHODS:
+            X, _, Xs, ys, n, idx = unwrap(kwargs)
+
+            # if fit is called, create container of transformers
+            if methodname == "fit":
+                self.transformers_ = pd.DataFrame(index=idx, columns=["transformers"])
+                for i in range(n):
+                    self.transformers_.iloc[i, 0] = clone(self)
+
+            for i in range(n):
                 method = getattr(self.transformers_.iloc[i, 0], methodname)
                 method(X=Xs[i], y=ys[i], **kwargs)
 
             return self
 
         elif methodname in TRAFO_METHODS:
-            n = len(self.transformers_.index)
-            X = kwargs.pop("X")
-            y = kwargs.pop("y", None)
+            # loop through fitted transformers one-by-one, and transform series/panels
+            if not self.get_tag("fit-in-transform"):
+                X, _, Xs, ys, n, _ = unwrap(kwargs)
 
-            Xs = X.as_list()
-            if y is None:
-                ys = [None] * len(Xs)
+                n_fit = len(self.transformers_.index)
+
+                if n != n_fit:
+                    raise RuntimeError(
+                        "found different number of instances in transform than in fit. "
+                        f"number of instances seen in fit: {n_fit}; "
+                        f"number of instances seen in transform: {n}"
+                    )
+
+                Xts = []
+                for i in range(n):
+                    method = getattr(self.transformers_.iloc[i, 0], methodname)
+                    Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
+                Xt = X.reconstruct(Xts, overwrite_index=False)
+
+            # if fit-in-transform: don't store transformers, run fit/transform in one
             else:
-                ys = y.as_list()
+                _, _, Xs, ys, n, _ = unwrap(kwargs)
 
-            Xts = []
-            for i in range(n):
-                method = getattr(self.transformers_.iloc[i, 0], methodname)
-                Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
-            Xt = self._Xvec.reconstruct(Xts, overwrite_index=False)
+                Xts = []
+                for i in range(n):
+                    transformer = clone(self).fit(X=Xs[i], y=ys[i], **kwargs)
+                    method = getattr(transformer, methodname)
+                    Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
+                Xt = X.reconstruct(Xts, overwrite_index=False)
 
             return Xt
+
+    # todo: do sth with this
+    #     # convert to expected output format
+    #     ###################################
+    #     if inverse:
+    #         output_scitype = self.get_tag("scitype:transform-input")
+    #     else:
+    #         output_scitype = self.get_tag("scitype:transform-output")
+    #     # if the output is Series, Xt is a Panel and we convert back
+    #     if output_scitype == "Series":
+    #         Xt = convert_to(
+    #             Xt,
+    #             to_type=X_input_mtype,
+    #             as_scitype="Panel",
+    #             store=self._converter_store_X,
+    #             store_behaviour="freeze",
+    #         )
+
+    #     # if the output is Primitives, we have a list of one-row dataframes
+    #     # we concatenate those and overwrite the index with that of X
+    #     elif output_scitype == "Primitives":
+    #         Xt = pd.concat(Xt)
+    #         Xt = Xt.reset_index(drop=True)
+    #     return Xt
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
