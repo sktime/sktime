@@ -5,7 +5,7 @@ from copy import deepcopy
 from inspect import getfullargspec
 
 
-class MockEstimatorMixin:
+class _MockEstimatorMixin:
     """Mixin class for constructing Mock estimators."""
 
     def __init__(self):
@@ -17,7 +17,7 @@ class MockEstimatorMixin:
         return self._log
 
 
-def method_logger(method):
+def _method_logger(method):
     """Log the method and it's arguments."""
 
     def wrapper(self, *args, **kwargs):

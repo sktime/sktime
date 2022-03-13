@@ -5,10 +5,10 @@ __author__ = ["ltsaprounis"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.estimators._base import MockEstimatorMixin, method_logger
+from sktime.utils.estimators._base import _method_logger, _MockEstimatorMixin
 
 
-class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
+class MockUnivariateForecaster(BaseForecaster, _MockEstimatorMixin):
     """Mock univariate forecaster that logs the methods called and their parameters.
 
     Parameters
@@ -46,7 +46,7 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         self.prediction_constant = prediction_constant
         super(MockUnivariateForecaster, self).__init__()
 
-    @method_logger
+    @_method_logger
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -78,7 +78,7 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         """
         return self
 
-    @method_logger
+    @_method_logger
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
@@ -107,7 +107,7 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         index = fh.to_absolute(self.cutoff)
         return pd.Series(self.prediction_constant, index=index)
 
-    @method_logger
+    @_method_logger
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
@@ -144,7 +144,7 @@ class MockUnivariateForecaster(BaseForecaster, MockEstimatorMixin):
         """
         return self
 
-    @method_logger
+    @_method_logger
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
