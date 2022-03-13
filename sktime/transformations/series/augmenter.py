@@ -104,7 +104,7 @@ class ReverseAugmenter(_AugmenterTags, BaseTransformer):
     3    2
     4    1
     dtype: int64
-    
+
     References and Footnotes
     ----------
 
