@@ -130,6 +130,7 @@ class BaseTransformer(BaseEstimator):
         # "pd-wide",
         # "pd-long",
         "df-list",
+        "pd_multiindex_hier",
     ]
 
     def __init__(self):
