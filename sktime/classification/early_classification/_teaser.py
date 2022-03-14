@@ -285,6 +285,8 @@ class TEASER(BaseClassifier):
 
     def _predict_proba(self, X, state_info=None):
         n_instances, _, series_length = X.shape
+
+        # TODO maybe use the largest index that is smaller than the series length?
         idx = self._classification_point_dictionary.get(series_length, -1)
         if idx == -1:
             raise ValueError(
@@ -334,17 +336,9 @@ class TEASER(BaseClassifier):
                     "making for later inputs."
                 )
 
-            probas = self._estimators[idx].predict_proba(X)
-
-            # find predicted class for each instance
-            rng = check_random_state(self.random_state)
-            preds = [
-                int(rng.choice(np.flatnonzero(prob == prob.max()))) for prob in probas
-            ]
-
-            # make a decision based on the one class classifier prediction
             if self._one_class_classifiers[idx] is not None:
-                X_oc = self._generate_one_class_features(X, preds, probas)
+                X_oc, probas, preds = self._predict_proba_for_estimator(X, idx)
+                # make a decision based on the one class classifier prediction
                 decisions = np.array(
                     self._one_class_classifiers[idx].predict(X_oc) == 1, dtype=bool
                 )
@@ -360,18 +354,11 @@ class TEASER(BaseClassifier):
             )
 
             # if we have the full series, always decide True
-            if idx == len(self._classification_points) - 1:
+            last_index = idx == len(self._classification_points) - 1
+            if last_index:
                 decisions = np.ones(n_instances, dtype=bool)
             else:
-                decisions = np.array(
-                    [
-                        True
-                        if state_info[i][1] >= self._consecutive_predictions
-                        else False
-                        for i in range(n_instances)
-                    ],
-                    dtype=bool,
-                )
+                decisions = state_info[:, 1] >= self._consecutive_predictions
 
         return (
             (probas, decisions, new_state_info)
@@ -463,9 +450,7 @@ class TEASER(BaseClassifier):
 
         # create data set for the one class classifier using predicted probas with the
         # minimum difference to the predicted probability
-        X_oc = []
-        if self._one_class_classifiers[i] is not None:
-            X_oc = self._generate_one_class_features(X, preds, probas)
+        X_oc = self._generate_one_class_features(X, preds, probas)
 
         return X_oc, probas, preds
 
@@ -510,8 +495,6 @@ class TEASER(BaseClassifier):
             state_info = np.array(
                 [
                     self._update_state_info(decisions, preds[i], state_info, n, i)
-                    # once we have finished with this case do not update the state info
-                    if not finished[n] else state_info[n]
                     for n in range(n_instances)
                 ]
             )
