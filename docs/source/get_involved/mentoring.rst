@@ -39,7 +39,7 @@ How to apply
 ------------
 
 #. Make PR on `our main repo <https://github.com/alan-turing-institute/sktime>`_ or contribute to sktime in any other way. Check out our `contributing guide <https://github.com/alan-turing-institute/sktime/blob/main/CONTRIBUTING.md>`_ to get started! If you've contributed to sktime previously, you can go straight to step 2.
-#. Submit an application through our `online form <https://forms.gle/2ejpry9bMRPwkjjNA>`_.
+#. Submit an application through our `online form <https://forms.gle/WyXVMWzwzwLon47YA>`_.
 
 We accept applications on a rolling basis and we will be in touch with you shortly!
 
