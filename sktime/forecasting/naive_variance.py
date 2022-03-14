@@ -53,10 +53,11 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-        return self.forecaster.fit(y, X, fh)
+        self.fitted_forecaster = clone(self.forecaster)
+        return self.fitted_forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh, X=None):
-        return self.forecaster.predict(fh, X)
+        return self.fitted_forecaster.predict(fh=fh, X=X)
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
         """Compute/return prediction quantiles for a forecast.
@@ -129,7 +130,7 @@ class NaiveVariance(BaseForecaster):
             try:
                 forecaster.fit(subset)
             except ValueError:
-                sys.stdout(
+                sys.stdout.write(
                     f"Couldn't fit the model on time series of length {len(subset)}."
                 )
                 continue
