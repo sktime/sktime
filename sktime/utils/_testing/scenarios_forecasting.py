@@ -24,7 +24,7 @@ from sktime.utils._testing.scenarios import TestScenario
 RAND_SEED = 42
 
 # number timepoints used for training in all scenarios
-NUM_T = 10
+NUM_T = 15
 
 
 class ForecasterTestScenario(TestScenario, BaseObject):
