@@ -70,7 +70,11 @@ class BaseClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+
+        # required for compatability with some sklearn interfaces
+        # i.e. CalibratedClassifierCV
         self._estimator_type = "classifier"
+
         super(BaseClassifier, self).__init__()
 
     def __rmul__(self, other):
