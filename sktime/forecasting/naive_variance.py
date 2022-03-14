@@ -53,11 +53,11 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-        self.fitted_forecaster = clone(self.forecaster)
-        return self.fitted_forecaster.fit(y=y, X=X, fh=fh)
+        self.forecaster_ = clone(self.forecaster)
+        return self.forecaster_.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh, X=None):
-        return self.fitted_forecaster.predict(fh=fh, X=X)
+        return self.forecaster_.predict(fh=fh, X=X)
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
         """Compute/return prediction quantiles for a forecast.
@@ -89,9 +89,10 @@ class NaiveVariance(BaseForecaster):
         z_scores = norm.ppf(alpha)
         errors = [pred_var ** 0.5 * z for z in z_scores]
 
-        pred_quantiles = pd.DataFrame()
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
-            pred_quantiles[a] = y_pred + error
+            pred_quantiles[("Quantiles", a)] = y_pred + error
 
         return pred_quantiles
 
@@ -126,19 +127,21 @@ class NaiveVariance(BaseForecaster):
         for id in y_index:
             forecaster = clone(self.forecaster)
             subset = self._y[:id]  # subset on which we fit
-
             try:
                 forecaster.fit(subset)
             except ValueError:
                 sys.stdout.write(
-                    f"Couldn't fit the model on time series of length {len(subset)}."
+                    f"Couldn't fit the model on time series of length {len(subset)}.\n"
                 )
                 continue
 
             y_true = self._y[id:]  # subset on which we predict
-            residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
-
-        # return residuals_matrix
+            try:
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
+            except IndexError:
+                sys.stdout.write(
+                    f"Couldn't predict on time series of length {len(subset)}.\n"
+                )
 
         if cov:
             fh_size = len(fh)
