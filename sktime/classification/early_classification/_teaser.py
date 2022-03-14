@@ -168,7 +168,7 @@ class TEASER(BaseClassifier):
 
         # tune consecutive predictions required to best harmonic mean
         best_hm = -1
-        for g in range(2, min(6, len(self._classification_points))):
+        for g in range(2, min(6, len(self._classification_points) + 1)):
             state_info, _ = self._predict_oc_classifier_n_timestamps(
                 train_preds,
                 X_oc,
@@ -487,11 +487,13 @@ class TEASER(BaseClassifier):
             decision_needed = np.ones(n_instances, dtype=bool)
         elif self._one_class_classifiers[idx] is not None:
             offsets = np.argwhere(finished == 0).flatten()
-            decisions_subset = (
-                self._one_class_classifiers[idx].predict(X_oc[offsets]) == 1
-            )
             decision_needed = np.ones(n_instances, dtype=bool)
-            decision_needed[offsets] = decisions_subset
+            if len(offsets) > 0:
+                decisions_subset = (
+                    self._one_class_classifiers[idx].predict(X_oc[offsets]) == 1
+                )
+                decision_needed[offsets] = decisions_subset
+
         else:
             decision_needed = np.zeros(n_instances, dtype=bool)
 
@@ -518,13 +520,13 @@ class TEASER(BaseClassifier):
         # calculate harmonic mean from finished state info
         accuracy = np.average(
             [
-                state_info[i][2] == self._class_dictionary[y[i]]
+                state_info[i, 2] == self._class_dictionary[y[i]]
                 for i in range(n_instances)
             ]
         )
         earliness = 1 - np.average(
             [
-                self.classification_points[state_info[i][0]] / series_length
+                self.classification_points[state_info[i, 0] - 1] / series_length
                 for i in range(n_instances)
             ]
         )
