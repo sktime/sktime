@@ -482,8 +482,9 @@ class TEASER(BaseClassifier):
         finished = state_info[:, 1] >= n_consecutive_predictions
         n_instances = len(X_oc)
 
-        last_time_stamp = idx == len(self._classification_points) - 1
-        if last_time_stamp:
+        # TODO len(self._classification_points) or len(self.classification_points)???
+        full_length_ts = idx == len(self._classification_points) - 1
+        if full_length_ts:
             accept_decision = np.ones(n_instances, dtype=bool)
         elif self._one_class_classifiers[idx] is not None:
             offsets = np.argwhere(finished == 0).flatten()
@@ -510,7 +511,7 @@ class TEASER(BaseClassifier):
         )
 
         # check safety of decisions
-        if last_time_stamp:
+        if full_length_ts:
             # Force prediction at last time stamp
             accept_decision = np.ones(n_instances, dtype=bool)
         else:
