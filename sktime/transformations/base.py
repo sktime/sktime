@@ -64,10 +64,8 @@ from sktime.datatypes import (
     convert_to,
     mtype_to_scitype,
 )
-from sktime.datatypes._series_as_panel import (
-    convert_Panel_to_Series,
-    convert_Series_to_Panel,
-)
+from sktime.datatypes._series_as_panel import convert_to_scitype
+
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -616,7 +614,7 @@ class BaseTransformer(BaseEstimator):
             f" the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
         )
         if not X_valid:
-            raise TypeError("X" + msg_invalid_input)
+            raise TypeError("X " + msg_invalid_input)
 
         X_scitype = X_metadata["scitype"]
         X_mtype = X_metadata["mtype"]
@@ -625,7 +623,7 @@ class BaseTransformer(BaseEstimator):
         metadata["_X_input_scitype"] = X_scitype
 
         if X_mtype not in ALLOWED_MTYPES:
-            raise TypeError("X" + msg_invalid_input)
+            raise TypeError("X " + msg_invalid_input)
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
@@ -654,7 +652,7 @@ class BaseTransformer(BaseEstimator):
                 y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
             )
             if not y_valid:
-                raise TypeError("y" + msg_invalid_input)
+                raise TypeError("y " + msg_invalid_input)
 
             y_scitype = y_metadata["scitype"]
 
@@ -674,12 +672,16 @@ class BaseTransformer(BaseEstimator):
         #  if X/y is None, then no conversion takes place (returns None)
         #  if vectorization is required, we wrap in Vect
 
-        # case 2. internal only has Panel but X is Series:
-        #   consider X as one-instance Panel or Hirarchical
+        # case 2. internal only has higher scitype, e.g., inner is Panel and X Series
+        #       or inner is Hierarchical and X is Panel or Series
+        #   then, consider X as one-instance Panel or Hierarchical
         if case == "case 2: higher scitype supported":
-            # todo: extend this to Hierarchical
-            X = convert_Series_to_Panel(X)
-            # then pass to case 1, which we've reduced to
+            if X_scitype == "Series" and "Panel" in X_inner_scitype:
+                as_scitype = "Panel"
+            else:
+                as_scitype = "Hierarchical"
+            X = convert_to_scitype(X, to_scitype=as_scitype, from_scitype=X_scitype)
+            # then pass to case 1, which we've reduced to, X now has inner scitype
 
         # case 1. scitype of X is supported internally
         if case in ["case 1: scitype supported", "case 2: higher scitype supported"]:
@@ -766,7 +768,7 @@ class BaseTransformer(BaseEstimator):
                 Xt,
                 to_type=["pd-multiindex", "numpy3D", "df-list", "pd_multiindex_hier"],
             )
-            Xt = convert_Panel_to_Series(Xt)
+            Xt = convert_to_scitype(Xt, to_scitype=X_input_scitype)
 
         # now, in all cases, Xt is in the right scitype,
         #   but not necessarily in the right mtype.
