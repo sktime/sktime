@@ -268,6 +268,23 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         self._set_params("_estimators", **kwargs)
         return self
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.classification.interval_based import TimeSeriesForestClassifier
+
+        TSCs = [
+            ("tsf1", TimeSeriesForestClassifier.create_test_instance()),
+            ("tsf2", TimeSeriesForestClassifier.create_test_instance()),
+        ]
+        params = {"estimators": [(name, estimator, 0) for (name, estimator) in TSCs]}
+        return params
+
 
 def _get_column(X, key):
     """
