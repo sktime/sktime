@@ -191,7 +191,7 @@ def test_panel_in_panel_out_not_supported_but_series():
     X input to fit/transform has Panel scitype
     X output from fit/transform should be Panel
     """
-    # one example for a transformer which supports Panel internally
+    # one example for a transformer which supports Series internally but not Panel
     cls = BoxCoxTransformer
     est = cls.create_test_instance()
     # ensure cls is a good example, if this fails, choose another example
@@ -259,7 +259,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     X input to fit/transform has Panel scitype
     X output from fit/transform should be Table
     """
-    # one example for a transformer which supports Series internally
+    # one example for a transformer which supports Series internally but not Panel
     cls = SummaryTransformer
     est = cls.create_test_instance()
     # ensure cls is a good example, if this fails, choose another example
@@ -295,7 +295,7 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
     X input to fit/transform has Series scitype
     X output from fit/transform should be Table
     """
-    # one example for a transformer which supports Series internally
+    # one example for a transformer which supports Panel internally but not Series
     cls = TSFreshFeatureExtractor
     est = cls.create_test_instance()
     # ensure cls is a good example, if this fails, choose another example
@@ -331,7 +331,7 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     X input to fit/transform has Panel scitype
     X output from fit/transform should be Table
     """
-    # one example for a transformer which supports Series internally
+    # one example for a transformer which supports Panel internally
     cls = TSFreshRelevantFeatureExtractor
     est = cls.create_test_instance()
     # ensure cls is a good example, if this fails, choose another example
