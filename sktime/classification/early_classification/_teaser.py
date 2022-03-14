@@ -290,8 +290,8 @@ class TEASER(BaseClassifier):
     def _predict_proba(self, X, state_info=None):
         n_instances, _, series_length = X.shape
 
-        # TODO maybe use the largest index that is smaller than the series length?
-        next_idx = self._classification_point_dictionary.get(series_length, -1)
+        # maybe use the largest index that is smaller than the series length
+        next_idx = self._get_next_idx(series_length)
 
         if next_idx == -1:
             raise ValueError(
@@ -337,6 +337,14 @@ class TEASER(BaseClassifier):
             if self.return_safety_decisions
             else probas
         )
+
+    def _get_next_idx(self, series_length):
+        """Return the largest index smaller than the series length."""
+        next_idx = 0
+        for idx, offset in enumerate(np.sort(self._classification_points)):
+            if offset <= series_length:
+                next_idx = idx
+        return next_idx
 
     def _fit_estimator(self, X, y, i):
         rs = 255 if self.random_state == 0 else self.random_state
