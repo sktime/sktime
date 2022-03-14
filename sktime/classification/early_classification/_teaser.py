@@ -168,7 +168,7 @@ class TEASER(BaseClassifier):
 
         # tune consecutive predictions required to best harmonic mean
         best_hm = -1
-        for g in range(2, min(6, len(self._classification_points) + 1)):
+        for g in range(2, min(6, len(self._classification_points))):
             state_info, _ = self._predict_oc_classifier_n_timestamps(
                 train_preds,
                 X_oc,
