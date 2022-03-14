@@ -54,10 +54,26 @@ class NaiveVariance(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         self.forecaster_ = clone(self.forecaster)
-        return self.forecaster_.fit(y=y, X=X, fh=fh)
+        self.forecaster_.fit(y=y, X=X, fh=fh)
+        return self
 
     def _predict(self, fh, X=None):
         return self.forecaster_.predict(fh=fh, X=X)
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional (default=True)
+        Returns
+        -------
+        self : an instance of self
+        """
+
+        self.forecaster_.update(y, X, update_params=update_params)
+        return self
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
         """Compute/return prediction quantiles for a forecast.
