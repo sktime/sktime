@@ -169,8 +169,12 @@ class TEASER(BaseClassifier):
         # tune consecutive predictions required to best harmonic mean
         best_hm = -1
         for g in range(2, min(6, len(self._classification_points))):
-            state_info, _ = self._predict_n_timestamps(
-                train_preds, X_oc, g, len(self._classification_points)
+            state_info, _ = self._predict_oc_classifier_n_timestamps(
+                train_preds,
+                X_oc,
+                g,
+                last_idx=0,
+                next_idx=len(self._classification_points),
             )
 
             # calculate harmonic mean from finished state info
@@ -287,81 +291,49 @@ class TEASER(BaseClassifier):
         n_instances, _, series_length = X.shape
 
         # TODO maybe use the largest index that is smaller than the series length?
-        idx = self._classification_point_dictionary.get(series_length, -1)
-        if idx == -1:
+        next_idx = self._classification_point_dictionary.get(series_length, -1)
+
+        if next_idx == -1:
             raise ValueError(
                 f"Input series length does not match the classification points produced"
                 f" in fit. Current classification points: {self._classification_points}"
             )
 
-        # if no state_info is provided, consider all previous time stamps up to the
-        # input series_length
-        # else use previous state_info if idx > 0
-        if state_info is None and idx > 0:
-            m = getattr(self.estimator, "n_jobs", None)
-            threads = self._threads_to_use if m is None else 1
+        m = getattr(self.estimator, "n_jobs", None)
+        threads = self._threads_to_use if m is None else 1
 
-            out = Parallel(n_jobs=threads)(
-                delayed(self._predict_proba_for_estimator)(
-                    X,
-                    i,
-                )
-                for i in range(idx + 1)
+        # Always consider all previous time stamps up to the input series_length
+        if state_info is None or state_info == []:
+            state_info = np.zeros((n_instances, 3), dtype=int)
+        elif not all(si[0] == next_idx - 1 for si in state_info):
+            raise ValueError(
+                "All state_info input instances must be from the "
+                "previous classification point series length."
             )
 
-            X_oc, probas, preds = zip(*out)
+        # determine last index used
+        last_idx = state_info[0, 0]
 
-            new_state_info, decisions = self._predict_n_timestamps(
-                preds, X_oc, self._consecutive_predictions, idx + 1
+        # compute all new updates since then
+        out = Parallel(n_jobs=threads)(
+            delayed(self._predict_proba_for_estimator)(
+                X,
+                i,
             )
+            for i in range(last_idx, next_idx + 1)
+        )
 
-            probas = np.array(
-                [probas[new_state_info[i][0]][i] for i in range(n_instances)]
-            )
-        else:
-            # if this is the smallest dataset, there should be no state_info, else we
-            # should have state info for each, and they should all be the same length
-            if idx == 0 and (state_info is None or state_info == []):
-                state_info = np.zeros((n_instances, 3), dtype=int)
-            elif isinstance(state_info, np.ndarray) and idx > 0:
-                if not all(si[0] == idx - 1 for si in state_info):
-                    raise ValueError(
-                        "All state_info input instances must be from the "
-                        "previous classification point series length."
-                    )
-            else:
-                raise ValueError(
-                    "state_info should be None or an empty List for first time input, "
-                    "and a list of state_info outputs from the previous decision "
-                    "making for later inputs."
-                )
+        X_oc, probas, preds = zip(*out)
+        new_state_info, accept_decision = self._predict_oc_classifier_n_timestamps(
+            preds, X_oc, self._consecutive_predictions, last_idx, next_idx + 1
+        )
 
-            if self._one_class_classifiers[idx] is not None:
-                X_oc, probas, preds = self._predict_proba_for_estimator(X, idx)
-                # make a decision based on the one class classifier prediction
-                decisions = np.array(
-                    self._one_class_classifiers[idx].predict(X_oc) == 1, dtype=bool
-                )
-            else:
-                decisions = np.zeros(n_instances, dtype=bool)
-
-            # record consecutive class decisions
-            new_state_info = np.array(
-                [
-                    self._update_state_info(decisions, preds, state_info, i, idx)
-                    for i in range(n_instances)
-                ]
-            )
-
-            # if we have the full series, always decide True
-            last_index = idx == len(self._classification_points) - 1
-            if last_index:
-                decisions = np.ones(n_instances, dtype=bool)
-            else:
-                decisions = state_info[:, 1] >= self._consecutive_predictions
+        probas = np.array(
+            [probas[new_state_info[i, 0] - last_idx][i] for i in range(n_instances)]
+        )
 
         return (
-            (probas, decisions, new_state_info)
+            (probas, accept_decision, new_state_info)
             if self.return_safety_decisions
             else probas
         )
@@ -466,42 +438,73 @@ class TEASER(BaseClassifier):
                     )
         return X_oc
 
-    def _predict_n_timestamps(self, preds, X_oc, consecutive_predictions, n_timestamps):
-        n_instances = len(preds[0])
-
+    def _predict_oc_classifier_n_timestamps(
+        self,
+        estimator_preds,
+        X_oc,
+        n_consecutive_predictions,
+        last_idx,
+        next_idx,
+        state_info=None,
+    ):
         # a List containing the state info for case, edited at each time stamp.
         # contains 1. the index of the time stamp, 2. the number of consecutive
         # positive decisions made, and 3. the prediction made
-        state_info = np.zeros((n_instances, 3), dtype=int)
+        if state_info is None:
+            state_info = np.zeros((len(estimator_preds[0]), 3), dtype=int)
+
+        # only compute new indices
+        for i in range(last_idx, next_idx):
+            finished, state_info = self._predict_oc_classifier(
+                X_oc[i - last_idx],
+                n_consecutive_predictions,
+                i,
+                estimator_preds[i - last_idx],
+                state_info,
+            )
+
+        return state_info, finished
+
+    def _predict_oc_classifier(
+        self, X_oc, n_consecutive_predictions, idx, estimator_preds, state_info
+    ):
 
         # stores whether we have made a final decision on a prediction, if true
         # state info won't be edited in later time stamps
-        finished = np.zeros(n_instances, dtype=bool)
+        finished = state_info[:, 1] >= n_consecutive_predictions
+        n_instances = len(X_oc)
 
-        for i in range(n_timestamps):
-            if i == len(self._classification_points) - 1:
-                decisions = np.ones(n_instances, dtype=bool)
-            elif self._one_class_classifiers[i] is not None:
-                offsets = np.argwhere(finished == 0).flatten()
-                decisions_subset = (
-                    self._one_class_classifiers[i].predict(X_oc[i][offsets]) == 1
-                )
-                decisions = np.ones(n_instances, dtype=bool)
-                decisions[offsets] = decisions_subset
-            else:
-                decisions = np.zeros(n_instances, dtype=bool)
-
-            # record consecutive class decisions
-            state_info = np.array(
-                [
-                    self._update_state_info(decisions, preds[i], state_info, n, i)
-                    for n in range(n_instances)
-                ]
+        last_time_stamp = idx == len(self._classification_points) - 1
+        if last_time_stamp:
+            decision_needed = np.ones(n_instances, dtype=bool)
+        elif self._one_class_classifiers[idx] is not None:
+            offsets = np.argwhere(finished == 0).flatten()
+            decisions_subset = (
+                self._one_class_classifiers[idx].predict(X_oc[offsets]) == 1
             )
-            # safety of decisions
-            finished = state_info[:, 1] >= consecutive_predictions
+            decision_needed = np.ones(n_instances, dtype=bool)
+            decision_needed[offsets] = decisions_subset
+        else:
+            decision_needed = np.zeros(n_instances, dtype=bool)
 
-        return state_info, finished
+        # record consecutive class decisions
+        state_info = np.array(
+            [
+                self._update_state_info(
+                    decision_needed, estimator_preds, state_info, i, idx
+                )
+                for i in range(n_instances)
+            ]
+        )
+
+        # check safety of decisions
+        if last_time_stamp:
+            # Force prediction at last time stamp
+            accept_decision = np.ones(n_instances, dtype=bool)
+        else:
+            accept_decision = state_info[:, 1] >= n_consecutive_predictions
+
+        return accept_decision, state_info
 
     def _compute_harmonic_mean(self, n_instances, series_length, state_info, y):
         # calculate harmonic mean from finished state info
@@ -520,13 +523,13 @@ class TEASER(BaseClassifier):
         return (2 * accuracy * earliness) / (accuracy + earliness)
 
     @staticmethod
-    def _update_state_info(decisions, preds, state_info, idx, time_stamp):
+    def _update_state_info(acccept_decision, preds, state_info, idx, time_stamp):
         # consecutive predictions, add one if positive decision and same class
-        if decisions[idx] and preds[idx] == state_info[idx][2]:
+        if acccept_decision[idx] and preds[idx] == state_info[idx][2]:
             return time_stamp, state_info[idx][1] + 1, preds[idx]
         # set to 0 if the decision is negative, 1 if its positive but different class
         else:
-            return time_stamp, 1 if decisions[idx] else 0, preds[idx]
+            return time_stamp, 1 if acccept_decision[idx] else 0, preds[idx]
 
     @classmethod
     def get_test_params(cls):

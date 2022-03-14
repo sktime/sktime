@@ -10,12 +10,17 @@ from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
 
-def test_teaser_on_unit_test_data():
-    """Test of TEASER on unit test data."""
-    # load unit test data
+def load_unit_data():
+    """Load unit test data."""
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+    return X_test, X_train, indices, y_train
+
+
+def test_teaser_on_unit_test_data():
+    """Test of TEASER on unit test data."""
+    X_test, X_train, indices, y_train = load_unit_data()
 
     # train probability threshold
     teaser = TEASER(
@@ -43,11 +48,8 @@ def test_teaser_on_unit_test_data():
 
 
 def test_teaser_with_different_decision_maker():
-    """Test of TEASER on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+    """Test of TEASER with different One-Class-Classifier."""
+    X_test, X_train, indices, y_train = load_unit_data()
 
     # train probability threshold
     teaser = TEASER(
@@ -78,90 +80,30 @@ def test_teaser_with_different_decision_maker():
 
 teaser_unit_test_probas = np.array(
     [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.5,
-            0.5,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.7,
-            0.3,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.2,
-            0.8,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
+        [0.0, 1.0],
+        [0.5, 0.5],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.7, 0.3],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.1, 0.9],
+        [0.9, 0.1],
+        [1.0, 0.0],
     ]
 )
 
 teaser_if_unit_test_probas = np.array(
     [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.5,
-            0.5,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.7,
-            0.3,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.2,
-            0.8,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
+        [0.0, 1.0],
+        [0.7, 0.3],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.7, 0.3],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.2, 0.8],
+        [0.9, 0.1],
+        [1.0, 0.0],
     ]
 )
