@@ -12,9 +12,7 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.classification.compose import (
-    ComposableTimeSeriesForestClassifier,
-)
+from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.classification.dictionary_based import (
     MUSE,
     WEASEL,
