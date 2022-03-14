@@ -526,7 +526,7 @@ class TEASER(BaseClassifier):
         )
         earliness = 1 - np.average(
             [
-                self.classification_points[state_info[i, 0] - 1] / series_length
+                self._classification_points[state_info[i, 0]] / series_length
                 for i in range(n_instances)
             ]
         )
