@@ -66,7 +66,6 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
 
-
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
 Primitives = np.ndarray
