@@ -25,6 +25,7 @@ from sktime.transformations.series.boxcox import BoxCoxTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.utils._testing.scenarios_transformers import (
+    TransformerFitTransformHierarchicalUnivariate,
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
     TransformerFitTransformSeriesUnivariate,
@@ -351,3 +352,75 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     # todo: possibly, add mtype check, use metadata return
     # length of Xt should be seven = number of samples in the scenario
     assert len(Xt) == 7
+
+
+def test_hierarchical_in_hierarchical_out_not_supported_but_series():
+    """Test that fit/transform runs and returns the correct output type.
+
+    Setting: transformer has tags
+        "scitype:transform-input" = "Series"
+        "scitype:transform-output" = "Series"
+        "fit-in-transform" = False
+        "X_inner_mtype" supports "Series" but not "Panel" and not "Hierarchical
+
+    X input to fit/transform has Hierarchical scitype
+    X output from fit/transform should be Hierarchical
+    """
+    # one example for a transformer which supports Series internally
+    cls = BoxCoxTransformer
+    est = cls.create_test_instance()
+    # ensure cls is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of cls, but we need to choose another example)
+    assert "Series" in inner_X_scitypes(est)
+    assert "Panel" not in inner_X_scitypes(est)
+    assert "Hierarchical" not in inner_X_scitypes(est)
+    assert not est.get_tag("fit-in-transform")
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Series"
+
+    # scenario in which series are passed to fit/transform
+    scenario = TransformerFitTransformHierarchicalUnivariate()
+    Xt = scenario.run(est, method_sequence=["fit", "transform"])
+
+    valid, _, _ = check_is_scitype(Xt, scitype="Hierarchical", return_metadata=True)
+    assert valid, "fit.transform does not return a Table when given a Table"
+    # todo: possibly, add mtype check, use metadata return
+    # length of Xt should be number of hierarchy levels times number of time points
+    assert len(Xt) == 2 * 4 * 12
+
+
+def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transform():
+    """Test that fit/transform runs and returns the correct output type.
+
+    Setting: transformer has tags
+        "scitype:transform-input" = "Series"
+        "scitype:transform-output" = "Series"
+        "fit-in-transform" = True
+        "X_inner_mtype" supports "Series" but not "Panel" and not "Hierarchical
+
+    X input to fit/transform has Hierarchical scitype
+    X output from fit/transform should be Hierarchical
+    """
+    # one example for a transformer which supports Series internally
+    cls = ExponentTransformer
+    est = cls.create_test_instance()
+    # ensure cls is a good example, if this fails, choose another example
+    #   (if this changes, it may be due to implementing more scitypes)
+    #   (then this is not a failure of cls, but we need to choose another example)
+    assert "Series" in inner_X_scitypes(est)
+    assert "Panel" not in inner_X_scitypes(est)
+    assert "Hierarchical" not in inner_X_scitypes(est)
+    assert est.get_tag("fit-in-transform")
+    assert est.get_tag("scitype:transform-input") == "Series"
+    assert est.get_tag("scitype:transform-output") == "Series"
+
+    # scenario in which series are passed to fit/transform
+    scenario = TransformerFitTransformHierarchicalUnivariate()
+    Xt = scenario.run(est, method_sequence=["fit", "transform"])
+
+    valid, _, _ = check_is_scitype(Xt, scitype="Hierarchical", return_metadata=True)
+    assert valid, "fit.transform does not return a Table when given a Table"
+    # todo: possibly, add mtype check, use metadata return
+    # length of Xt should be number of hierarchy levels times number of time points
+    assert len(Xt) == 2 * 4 * 12
