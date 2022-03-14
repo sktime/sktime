@@ -128,7 +128,7 @@ if __name__ == "__main__":
         dataset = "GunPoint"
         resample = 0
         tf = True
-        distance = "ddtw"
+        distance = "wdtw"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -142,9 +142,9 @@ if __name__ == "__main__":
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
     else:
-        window = 0.2
+        window = 1.0
         name = clusterer + "-" + distance
-    parameters = {"window": window, "epsilon": epsilon}
+    parameters = {"window": window, "epsilon": epsilon, "g": 0.05}
 
     clst = config_clusterer(
         averaging_method="mean",
