@@ -28,6 +28,10 @@ NUM_T = 10
 
 
 class ForecasterTestScenario(TestScenario, BaseObject):
+
+    # default tags
+    _tags = {"has_nans": False}
+
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
 
@@ -67,7 +71,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
             return False
 
         # if scenario contains NA, applicable only if forecaster can handle the
-        scenario_has_nans = self.get_tag("has_nans", False)
+        scenario_has_nans = self.get_tag("has_nans")
 
         if scenario_has_nans and not get_tag(obj, "handles-missing-data"):
             return False
