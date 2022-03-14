@@ -484,25 +484,27 @@ class TEASER(BaseClassifier):
 
         last_time_stamp = idx == len(self._classification_points) - 1
         if last_time_stamp:
-            decision_needed = np.ones(n_instances, dtype=bool)
+            accept_decision = np.ones(n_instances, dtype=bool)
         elif self._one_class_classifiers[idx] is not None:
             offsets = np.argwhere(finished == 0).flatten()
-            decision_needed = np.ones(n_instances, dtype=bool)
+            accept_decision = np.ones(n_instances, dtype=bool)
             if len(offsets) > 0:
                 decisions_subset = (
                     self._one_class_classifiers[idx].predict(X_oc[offsets]) == 1
                 )
-                decision_needed[offsets] = decisions_subset
+                accept_decision[offsets] = decisions_subset
 
         else:
-            decision_needed = np.zeros(n_instances, dtype=bool)
+            accept_decision = np.zeros(n_instances, dtype=bool)
 
         # record consecutive class decisions
         state_info = np.array(
             [
                 self._update_state_info(
-                    decision_needed, estimator_preds, state_info, i, idx
+                    accept_decision, estimator_preds, state_info, i, idx
                 )
+                if not finished[i]
+                else state_info[i]
                 for i in range(n_instances)
             ]
         )
