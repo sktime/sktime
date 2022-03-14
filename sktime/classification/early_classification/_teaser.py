@@ -340,7 +340,7 @@ class TEASER(BaseClassifier):
 
     def _get_next_idx(self, series_length):
         """Return the largest index smaller than the series length."""
-        next_idx = 0
+        next_idx = -1
         for idx, offset in enumerate(np.sort(self._classification_points)):
             if offset <= series_length:
                 next_idx = idx
