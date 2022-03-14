@@ -62,17 +62,19 @@ class NaiveVariance(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
+
         Parameters
         ----------
         y : pd.Series
         X : pd.DataFrame
         update_params : bool, optional (default=True)
+
         Returns
         -------
         self : an instance of self
         """
-
         self.forecaster_.update(y, X, update_params=update_params)
+
         return self
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
@@ -156,7 +158,8 @@ class NaiveVariance(BaseForecaster):
                 residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
             except IndexError:
                 sys.stdout.write(
-                    f"Couldn't predict on time series of length {len(subset)}.\n"
+                    f"Couldn't predict after fitting on time series of length \
+                     {len(subset)}.\n"
                 )
 
         if cov:
