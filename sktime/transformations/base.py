@@ -612,7 +612,7 @@ class BaseTransformer(BaseEstimator):
             f"or with MultiIndex and lowest level a sktime compatible time index. "
             f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
         )
         if not X_valid:
             raise TypeError("X " + msg_invalid_input)
