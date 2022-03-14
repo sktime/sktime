@@ -15,7 +15,7 @@ from sklearn.utils import check_random_state
 from sktime.utils._testing.series import _make_index
 
 
-def _make_hierachical(
+def _make_hierarchical(
     hierarchy_levels: Tuple = (2, 4),
     max_timepoints: int = 12,
     min_timepoints: int = 12,
