@@ -23,6 +23,7 @@ from sktime.transformations.base import (
 )
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
@@ -190,6 +191,12 @@ class TransformerTestScenario(TestScenario, BaseObject):
         return args
 
 
+X_series = _make_series(n_timepoints=10, random_state=RAND_SEED)
+X_panel = _make_panel_X(
+    n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+)
+
+
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Series X."""
 
@@ -265,8 +272,16 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     }
 
     args = {
-        "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=10)},
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=10)},
+        "fit": {
+            "X": _make_panel_X(
+                n_instances=7, n_columns=2, n_timepoints=10, random_state=RAND_SEED
+            )
+        },
+        "transform": {
+            "X": _make_panel_X(
+                n_instances=7, n_columns=2, n_timepoints=10, random_state=RAND_SEED
+            )
+        },
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -284,11 +299,15 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
 
     args = {
         "fit": {
-            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10),
+            "X": _make_panel_X(
+                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+            ),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
         "transform": {
-            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10),
+            "X": _make_panel_X(
+                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+            ),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
     }
@@ -316,6 +335,23 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
     default_method_sequence = ["fit", "transform"]
 
 
+class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
+    """Fit/transform, univariate Hierarchical X."""
+
+    _tags = {
+        "X_scitype": "Hierarchical",
+        "X_univariate": True,
+        "pre-refactor": False,
+        "has_y": False,
+    }
+
+    args = {
+        "fit": {"X": _make_hierarchical(random_state=RAND_SEED)},
+        "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
 # todo: scenario for Panel X
 #   where test and training set has different n_instances or n_timepoints
 #   may need a tag that tells us whethe transformer can cope with this
@@ -328,4 +364,5 @@ scenarios_transformers = [
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
     TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
+    TransformerFitTransformHierarchicalUnivariate,
 ]
