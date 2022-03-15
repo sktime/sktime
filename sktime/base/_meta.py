@@ -87,7 +87,6 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
         return subsetted_dict
 
-
     def _check_estimators(self, estimators, attr_name="steps", cls_type=None):
         """Check that estimators is a list of estimators or list of str/est tuples.
 
