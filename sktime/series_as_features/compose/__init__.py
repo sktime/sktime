@@ -1,6 +1,5 @@
-#!/usr/bin/env python3 -u
-"""Deprecated - init for FeatureUnion module."""
 # -*- coding: utf-8 -*-
+"""Deprecated - init for FeatureUnion module."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
