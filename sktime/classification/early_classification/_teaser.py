@@ -592,13 +592,17 @@ class TEASER(BaseClassifier):
                 for i in range(len(state_info))
             ]
         )
-        earliness = 1 - np.average(
+        earliness = np.average(
             [
                 self._classification_points[state_info[i, 0]] / series_length
                 for i in range(len(state_info))
             ]
         )
-        return (2 * accuracy * earliness) / (accuracy + earliness), accuracy, earliness
+        return (
+            (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness)),
+            accuracy,
+            earliness,
+        )
 
     @staticmethod
     def _update_state_info(acccept_decision, preds, state_info, idx, time_stamp):
