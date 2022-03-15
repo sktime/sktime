@@ -305,6 +305,7 @@ class TEASER(BaseClassifier):
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
             state_info = np.zeros((n_instances, 3), dtype=int)
+
         elif not all(si[0] == next_idx - 1 for si in state_info):
             raise ValueError(
                 "All state_info input instances must be from the "
@@ -312,7 +313,7 @@ class TEASER(BaseClassifier):
             )
 
         # determine last index used
-        last_idx = state_info[0, 0]
+        last_idx = np.max(state_info[:, 0])
 
         # compute all new updates since then
         out = Parallel(n_jobs=threads)(

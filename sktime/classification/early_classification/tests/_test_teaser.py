@@ -16,12 +16,29 @@ def load_unit_data():
     X_train, y_train = load_unit_test(split="train", return_X_y=True)
     X_test, y_test = load_unit_test(split="test", return_X_y=True)
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-    return X_test, X_train, indices, y_train
+    return X_train, y_train, X_test, y_test, indices
+
+
+def test_teaser_full_length():
+    """Test of TEASER on the full data."""
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
+
+    # train probability threshold
+    teaser = TEASER(
+        random_state=0,
+        classification_points=[6, 10, 16, 24],
+        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+        return_safety_decisions=False,  # must be enforced?!
+    )
+    teaser.fit(X_train, y_train)
+
+    score = teaser.score(X_test, y_test)
+    testing.assert_allclose(score, 0.9090909090909091)
 
 
 def test_teaser_on_unit_test_data():
     """Test of TEASER on unit test data."""
-    X_test, X_train, indices, y_train = load_unit_data()
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
 
     # train probability threshold
     teaser = TEASER(
@@ -50,7 +67,7 @@ def test_teaser_on_unit_test_data():
 
 def test_teaser_with_different_decision_maker():
     """Test of TEASER with different One-Class-Classifier."""
-    X_test, X_train, indices, y_train = load_unit_data()
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
 
     # train probability threshold
     teaser = TEASER(
@@ -81,7 +98,7 @@ def test_teaser_with_different_decision_maker():
 
 def test_teaser_near_classification_points():
     """Test of TEASER with incremental time stamps outside defined class points."""
-    X_test, X_train, indices, y_train = load_unit_data()
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
 
     # train probability threshold
     teaser = TEASER(
