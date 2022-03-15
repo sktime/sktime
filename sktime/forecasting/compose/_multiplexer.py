@@ -64,14 +64,14 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
     ...     load_airline)
-    >>> y = load_airline()
+    >>> y = load_airline()[0:24]
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
     ...     ("naive", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
-    ...     step_length=24)
+    ...     step_length=12)
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "arima", "naive"]},
