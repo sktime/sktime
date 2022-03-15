@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for Mock Forecasters."""
 
+from copy import deepcopy
+
 import pytest
 
 from sktime.datasets import load_airline
@@ -42,15 +44,17 @@ def test_mock_univariate_forecaster_log(y, X_train, X_pred, fh):
     forecaster.update(y, X_train, fh)
     forecaster.predict_quantiles(fh=fh, X=X_pred, alpha=[0.1, 0.9])
 
-    assert deep_equals(
-        forecaster.log,
-        [
-            ("_fit", {"y": y_series, "X": X_frame_train, "fh": fh}),
-            ("_predict", {"fh": fh, "X": X_frame_pred}),
-            ("_update", {"y": y_series, "X": X_frame_train, "fh": fh}),
-            (
-                " _predict_quantiles",
-                {"fh": fh, "X": X_frame_pred, "alpha": [0.1, 0.9]},
-            ),
-        ],
-    )
+    _X_train = deepcopy(X_frame_train) if X_train is not None else None
+    _X_pred = deepcopy(X_frame_pred) if X_pred is not None else None
+
+    expected_log = [
+        ("_fit", {"y": y_series, "X": _X_train, "fh": fh}),
+        ("_predict", {"fh": fh, "X": _X_pred}),
+        ("_update", {"y": y_series, "X": _X_train, "update_params": fh}),
+        (
+            "_predict_quantiles",
+            {"fh": fh, "X": _X_pred, "alpha": [0.1, 0.9]},
+        ),
+    ]
+
+    assert deep_equals(forecaster.log, expected_log)
