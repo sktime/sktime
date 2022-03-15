@@ -22,6 +22,8 @@ For a detailed overview of current and future work, check out our :ref:`roadmap`
 We are particularly motivated to support new contributors
 and people who are looking to learn and develop their skills.
 
+Recommended steps to get started with contributions:
+
 1. Say hello and get set up for development, see `instructions in the developer guide<https://www.sktime.org/en/stable/developer_guide.html>`_ 
 2. Pick a good first issue to work on, see a collection `in this summary issue <https://github.com/alan-turing-institute/sktime/issues/1147>`_ , or from `this list <https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_ 
    suggestion: pick something small with simple content to learn the “process”
