@@ -110,6 +110,7 @@ class HIVECOTEV1(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "hybrid",
     }
 
     def __init__(
