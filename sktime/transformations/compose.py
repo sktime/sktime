@@ -485,6 +485,47 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self.transformer_list = value
         self.transformer_list_ = self._check_estimators(value, cls_type=BaseTransformer)
 
+    def __add__(self, other):
+        """Magic + method, return (right) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        # we don't use names but _get_estimator_names to get the *original* names
+        #   to avoid multiple "make unique" calls which may grow strings too much
+        _, trafos = zip(*self.transformer_list_)
+        names = tuple(self._get_estimator_names(self.transformer_list))
+        if isinstance(other, FeatureUnion):
+            _, trafos_o = zip(*other.transformer_list_)
+            names_o = tuple(other._get_estimator_names(other.transformer_list))
+            new_names = names + names_o
+            new_trafos = trafos + trafos_o
+        elif isinstance(other, BaseTransformer):
+            new_names = names + (type(other).__name__,)
+            new_trafos = trafos + (other,)
+        elif self._is_name_and_trafo(other):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = names + (other_name,)
+            new_trafos = trafos + (other_trafo,)
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
+            return FeatureUnion(transformer_list=list(new_trafos))
+        else:
+            return FeatureUnion(transformer_list=list(zip(new_names, new_trafos)))
+
     @staticmethod
     def _is_name_and_trafo(obj):
         if not isinstance(obj, tuple) or len(obj) != 2:
@@ -535,10 +576,10 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         transformed version of X
         """
         # retrieve fitted transformers, apply to the new data individually
-        transformer_list_ = self.transformer_list_
-        Xt_list = [trafo[1].transform(X, y) for trafo in transformer_list_]
+        transformers = self._get_estimator_list(self.transformer_list_)
+        Xt_list = [trafo.transform(X, y) for trafo in transformers]
 
-        transformer_names = [x[0] for x in self.transformer_list]
+        transformer_names = self._get_estimator_names(self.transformer_list_)
 
         Xt = pd.concat(
             Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]

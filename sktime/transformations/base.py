@@ -184,6 +184,56 @@ class BaseTransformer(BaseEstimator):
         else:
             return NotImplemented
 
+    def __add__(self, other):
+        """Magic + method, return (right) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        FeatureUnion object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.compose import FeatureUnion
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the FeatureUnion does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = FeatureUnion(transformer_list=[self])
+            return self_as_pipeline + other
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        """Magic + method, return (left) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        FeatureUnion object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-FeatureUnion `sktime` transformers
+        """
+        from sktime.transformations.compose import FeatureUnion
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = FeatureUnion(transformer_list=[self])
+            return other + self_as_pipeline
+        else:
+            return NotImplemented
+
     def fit(self, X, y=None, Z=None):
         """Fit transformer to X, optionally to y.
 
