@@ -375,7 +375,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
+    >>> y = load_airline()[0:36]
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
@@ -400,12 +400,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.transformations.series.impute import Imputer
-    >>> y = load_airline()
+    >>> y = load_airline()[0:36]
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),
     ...     ("forecaster", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
-    ...     initial_window=48,
+    ...     initial_window=24,
     ...     step_length=12,
     ...     start_with_window=True,
     ...     fh=[1,2,3])
