@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 """Tests for deep_equals utility."""
-import pytest
-
-import pandas as pd
-import numpy as np
-
 from copy import deepcopy
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils._testing.deep_equals import deep_equals
-
 
 # examples used for comparison below
 EXAMPLES = [
