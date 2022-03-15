@@ -36,8 +36,8 @@ def average_of_slope_transform(X: np.ndarray):
     derivative_X = []
     for val in Xt:
         derivative_X.append(average_of_slope(val))
-    derivative_X = derivative_X.transpose((0, 2, 1))
-    return np.array(derivative_X)
+    derivative_X = np.array(derivative_X).transpose((0, 2, 1))
+    return derivative_X
 
 
 @njit(cache=True, fastmath=True)
