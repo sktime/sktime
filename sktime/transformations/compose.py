@@ -5,7 +5,6 @@
 from warnings import warn
 
 import pandas as pd
-from sklearn import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
@@ -97,7 +96,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     def __init__(self, steps):
 
         self.steps = steps
-        self.steps_ = self._check_estimators(steps, cls_type=BaseTransformer)
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
 
         super(TransformerPipeline, self).__init__()
 
@@ -258,6 +257,8 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self: reference to self
         """
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+
         Xt = X
         for _, transformer in self.steps_:
             Xt = transformer.fit_transform(X=Xt, y=y)
@@ -482,22 +483,60 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     @_transformer_list.setter
     def _transformer_list(self, value):
         self.transformer_list = value
+        self.transformer_list_ = self._check_estimators(value, cls_type=BaseTransformer)
+
+    @staticmethod
+    def _is_name_and_trafo(obj):
+        if not isinstance(obj, tuple) or len(obj) != 2:
+            return False
+        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
+            return False
+        return True
 
     def _fit(self, X, y=None):
-        """Fit parameters."""
-        transformer_list = self.transformer_list
+        """Fit transformer to X and y.
 
-        # clone and fit transformers in transformer_list, store fitted copies
-        transformer_list_ = [clone(trafo[1]).fit(X, y) for trafo in transformer_list]
-        self.transformer_list_ = transformer_list_
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self.transformer_list_ = self._check_estimators(
+            self.transformer_list, cls_type=BaseTransformer
+        )
+
+        for _, transformer in self.transformer_list_:
+            transformer.fit(X=X, y=y)
 
         return self
 
     def _transform(self, X, y=None):
-        """Transform X separately by each transformer, concatenate results."""
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
         # retrieve fitted transformers, apply to the new data individually
         transformer_list_ = self.transformer_list_
-        Xt_list = [trafo.transform(X, y) for trafo in transformer_list_]
+        Xt_list = [trafo[1].transform(X, y) for trafo in transformer_list_]
 
         transformer_names = [x[0] for x in self.transformer_list]
 
