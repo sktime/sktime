@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 -u
+"""Deprecated - init for FeatureUnion module."""
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
