@@ -114,7 +114,6 @@ def test_teaser_full_length():
         random_state=0,
         classification_points=[6, 10, 16, 24],
         estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-        return_safety_decisions=False,  # must be enforced?!
     )
     teaser.fit(X_train, y_train)
 

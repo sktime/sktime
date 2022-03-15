@@ -13,6 +13,7 @@ import copy
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV, cross_val_predict
 from sklearn.svm import OneClassSVM
 from sklearn.utils import check_random_state
@@ -185,7 +186,7 @@ class TEASER(BaseClassifier):
 
         return self
 
-    def predict(self, X, state_info=None):
+    def predict(self, X, state_info=None) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -242,7 +243,7 @@ class TEASER(BaseClassifier):
 
         return (preds, out[1], out[2]) if self.return_safety_decisions else preds
 
-    def predict_proba(self, X, state_info=None):
+    def predict_proba(self, X, state_info=None) -> np.ndarray:
         """Decide on the safety of an early classification.
 
         Parameters
@@ -355,6 +356,43 @@ class TEASER(BaseClassifier):
             (probas, accept_decision, new_state_info)
             if self.return_safety_decisions
             else probas
+        )
+
+    def score(self, X, y) -> float:
+        """Scores predicted labels against ground truth labels on X.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : 1D np.ndarray of int, of shape [n_instances] - class labels (ground truth)
+            indices correspond to instance indices in X
+
+        Returns
+        -------
+        float, accuracy score of predict(X) vs y
+        """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
+        if X.shape[2] != self._classification_points[-1]:
+            raise ValueError(
+                "TEASER score function requires the full series length currently."
+            )
+
+        out = self._predict(X)
+
+        return accuracy_score(
+            y, out[0] if self.return_safety_decisions else out, normalize=True
         )
 
     def _get_next_idx(self, series_length):
