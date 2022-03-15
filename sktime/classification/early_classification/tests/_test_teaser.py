@@ -116,8 +116,9 @@ def test_teaser_full_length():
     )
     teaser.fit(X_train, y_train)
 
-    score = teaser.score(X_test, y_test)
-    testing.assert_allclose(score, 0.818182, rtol=0.01)
+    hm, acc, earl = teaser.score(X_test, y_test)
+    testing.assert_allclose(acc, 0.818182, rtol=0.01)
+    testing.assert_allclose(earl, 0.2121212, rtol=0.01)
     testing.assert_allclose(teaser._train_accuracy, 0.9, rtol=0.01)
     testing.assert_allclose(teaser._train_earliness, 0.266, rtol=0.01)
 
@@ -125,14 +126,14 @@ def test_teaser_full_length():
 teaser_unit_test_probas = np.array(
     [
         [0.0, 1.0],
-        [0.5, 0.5],
+        [0.9, 0.1],
         [0.0, 1.0],
         [1.0, 0.0],
-        [0.7, 0.3],
+        [1.0, 0.0],
         [1.0, 0.0],
         [1.0, 0.0],
         [0.1, 0.9],
-        [0.9, 0.1],
+        [1.0, 0.0],
         [1.0, 0.0],
     ]
 )
