@@ -215,39 +215,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return False
         return True
 
-    def _make_strings_unique(self, strlist):
-        """Make a list or tuple of strings unique by appending _int of occurrence."""
-        # if already unique, just return
-        if len(set(strlist)) == len(strlist):
-            return strlist
-
-        # we convert internally to list, but remember whether it was tuple
-        if isinstance(strlist, tuple):
-            strlist = list(strlist)
-            was_tuple = True
-        else:
-            was_tuple = False
-
-        from collections import Counter
-
-        strcount = Counter(strlist)
-
-        # if any duplicates, we append _integer of occurrence to non-uniques
-        nowcount = Counter()
-        uniquestr = strlist
-        for i, x in enumerate(uniquestr):
-            if strcount[x] > 1:
-                nowcount.update([x])
-                uniquestr[i] = x + "_" + str(nowcount[x])
-
-        if was_tuple:
-            uniquestr = tuple(uniquestr)
-
-        # repeat until all are unique
-        #   the algorithm recurses, but will always terminate
-        #   because potential clashes are lexicographically increasing
-        return self._make_strings_unique(uniquestr)
-
     def _anytagis(self, tag_name, value):
         """Return whether any estimator in list has tag `tag_name` of value `value`."""
         tagis = [est.get_tag(tag_name, value) == value for _, est in self.steps_]
@@ -486,6 +453,12 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         preserve_dataframe=True,
         flatten_transform_index=True,
     ):
+
+        self.transformer_list = transformer_list
+        self.transformer_list_ = self._check_estimators(
+            transformer_list, cls_type=BaseTransformer
+        )
+
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.preserve_dataframe = preserve_dataframe
@@ -498,10 +471,17 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
                 "output format specification for sktime transformers. "
                 "To convert the output to another format, use datatypes.convert_to"
             )
-        self.transformer_list = transformer_list
         self.flatten_transform_index = flatten_transform_index
 
         super(FeatureUnion, self).__init__()
+
+    @property
+    def _transformer_list(self):
+        return self._get_estimator_tuples(self.transformer_list, clone_ests=False)
+
+    @_transformer_list.setter
+    def _transformer_list(self, value):
+        self.transformer_list = value
 
     def _fit(self, X, y=None):
         """Fit parameters."""
