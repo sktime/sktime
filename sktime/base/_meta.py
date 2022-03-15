@@ -87,6 +87,65 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
         return subsetted_dict
 
+
+    def _check_estimators(self, estimators, attr_name="steps", cls_type=None):
+        """Check that estimators is a list of estimators or list of str/est tuples.
+
+        Parameters
+        ----------
+        estimators : any object
+            should be list of estimators or list of (str, estimator) tuples
+            estimators should inherit from cls_type class
+        attr_name : str, optional. Default = "steps"
+            Name of checked attribute in error messages
+        cls_type : class, optional. Default = BaseEstimator.
+            class that all estimators are checked to be an instance of
+
+        Returns
+        -------
+        est_tuples : list of (str, estimator) tuples
+            if estimators was a list of (str, estimator) tuples, then identical/cloned
+            if was a list of estimators, then str are generated via _get_estimator_names
+
+        Raises
+        ------
+        TypeError, if estimators is not a list of estimators or (str, estimator) tuples
+        TypeError, if estimators in the list are not instances of cls_type
+        """
+
+        msg = (
+            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
+            " of estimators, or a list of (string, estimator) tuples. "
+        )
+        if cls_type is None:
+            cls_type = BaseEstimator
+        else:
+            msg += f"All estimators must be of type {cls_type}."
+
+
+        if (
+            estimators is None
+            or len(estimators) == 0
+            or not isinstance(estimators, list)
+        ):
+            raise TypeError(msg)
+
+        if not isinstance(estimators[0], (cls_type, tuple)):
+            raise TypeError(msg)
+
+        if isinstance(estimators[0], cls_type):
+            if not all(isinstance(est, cls_type) for est in estimators):
+                raise TypeError(msg)
+        if isinstance(estimators[0], tuple):
+            if not all(isinstance(est, tuple) for est in estimators):
+                raise TypeError(msg)
+            if not all(isinstance(est[0], str) for est in estimators):
+                raise TypeError(msg)
+            if not all(isinstance(est[1], cls_type) for est in estimators):
+                raise TypeError(msg)
+
+        return self._get_estimator_tuples(estimators, clone_ests=True)
+
     def _get_estimator_list(self, estimators):
         """Return list of estimators, from a list or tuple.
 
@@ -147,7 +206,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         -------
         est_tuples : list of (str, estimator) tuples
             if estimators was a list of (str, estimator) tuples, then identical/cloned
-            if was a list of estimators, then str are generated via _name_names
+            if was a list of estimators, then str are generated via _get_estimator_names
         """
         ests = self._get_estimator_list(estimators)
         if clone_ests:
