@@ -6,9 +6,9 @@
 __author__ = ["Markus Löning"]
 __all__ = ["FeatureUnion"]
 
-from sktime.transformations.compose import FeatureUnion
-
 from warnings import warn
+
+from sktime.transformations.compose import FeatureUnion
 
 warn(
     "FeatureUnion has been moved to sktime.transformations.compose in 0.11.0. "
