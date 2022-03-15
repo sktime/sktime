@@ -42,8 +42,13 @@ def test_deep_equals_positive(fixture):
     assert deep_equals(x, y), msg
 
 
-@pytest.mark.parametrize("fixture1", EXAMPLES)
-@pytest.mark.parametrize("fixture2", EXAMPLES)
+n = len(EXAMPLES)
+DIFFERENT_PAIRS = [
+    (EXAMPLES[i], EXAMPLES[j]) for i in range(n) for j in range(n) if i != j
+]
+
+
+@pytest.mark.parametrize("fixture1,fixture2", DIFFERENT_PAIRS)
 def test_deep_equals_negative(fixture1, fixture2):
     """Tests that deep_equals correctly identifies unequal objects as unequal."""
     x = deepcopy(fixture1)
