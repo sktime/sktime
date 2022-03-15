@@ -153,7 +153,7 @@ class BaseForecaster(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -231,7 +231,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred = self._predict(fh=fh, X=X_inner)
             else:
                 # otherwise we call the vectorized version of predict
-                self._vectorize("predict", X=X_inner, fh=fh)
+                y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -349,7 +349,7 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -1065,16 +1065,19 @@ class BaseForecaster(BaseEstimator):
         """
         # we only need to modify _y if y is not None
         if y is not None:
+            # if y is vectorized, unwrap it first
+            if isinstance(y, VectorizedDF):
+                y = y.X
             # we want to ensure that y is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             y = convert_to(
                 y,
                 to_type=[
-                    "np.ndarray",
-                    "numpy3D",
-                    "pd.Series",
                     "pd.DataFrame",
+                    "pd.Series",
+                    "np.ndarray",
                     "pd-multiindex",
+                    "numpy3D",
                     "pd_multiindex_hier",
                 ],
             )
@@ -1099,15 +1102,18 @@ class BaseForecaster(BaseEstimator):
 
         # we only need to modify _X if X is not None
         if X is not None:
+            # if X is vectorized, unwrap it first
+            if isinstance(X, VectorizedDF):
+                X = X.X
             # we want to ensure that X is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             X = convert_to(
                 X,
                 to_type=[
-                    "np.ndarray",
-                    "numpy3D",
                     "pd.DataFrame",
+                    "np.ndarray",
                     "pd-multiindex",
+                    "numpy3D",
                     "pd_multiindex_hier",
                 ],
             )
@@ -1327,8 +1333,11 @@ class BaseForecaster(BaseEstimator):
             y = kwargs.pop("y")
             X = kwargs.pop("X", None)
 
+            self._yvec = y
+
             idx = y.get_iter_indices()
             ys = y.as_list()
+
             if X is None:
                 Xs = [None] * len(ys)
             else:
@@ -1351,7 +1360,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._ys.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -1453,10 +1462,14 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called."
             )
+            # we need to overwrite the mtype last seen, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
             self.fit(self._y, self._X, self.fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
 
         return self
 
