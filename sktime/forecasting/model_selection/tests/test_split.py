@@ -1,37 +1,50 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = [
-    "Markus Löning",
-    "Kutay Koralturk",
-]
+"""Test splitters."""
+
+__author__ = ["Markus Löning", "Kutay Koralturk", "khrapovs"]
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.model_selection import CutoffSplitter
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
-from sktime.forecasting.model_selection import SingleWindowSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests._config import TEST_FHS
-from sktime.forecasting.tests._config import TEST_OOS_FHS
-from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
-from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests._config import TEST_YS
-from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
+from sktime.forecasting.model_selection import (
+    CutoffSplitter,
+    ExpandingWindowSplitter,
+    SingleWindowSplitter,
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
+from sktime.forecasting.model_selection._split import (
+    _cutoffs_fh_window_length_types_are_supported,
+)
+from sktime.forecasting.tests._config import (
+    TEST_CUTOFFS,
+    TEST_FHS,
+    TEST_FHS_TIMEDELTA,
+    TEST_INITIAL_WINDOW,
+    TEST_OOS_FHS,
+    TEST_STEP_LENGTHS,
+    TEST_WINDOW_LENGTHS,
+    TEST_YS,
+    VALID_INDEX_FH_COMBINATIONS,
+)
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
-from sktime.utils.validation import is_int
+from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.validation import (
+    array_is_datetime64,
+    array_is_int,
+    array_is_timedelta_or_date_offset,
+    is_int,
+    is_timedelta_or_date_offset,
+)
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
-CUTOFFS = [
-    np.array([21, 22]),
-    np.array([3, 7, 10]),
-]
 
 
 def _get_windows(cv, y):
@@ -60,7 +73,7 @@ def _check_windows(windows, allow_empty_window=False):
 
 def _check_cutoffs(cutoffs):
     assert isinstance(cutoffs, np.ndarray)
-    assert np.issubdtype(cutoffs.dtype, np.integer)
+    assert array_is_int(cutoffs) or array_is_datetime64(cutoffs)
     assert cutoffs.ndim == 1
     assert len(cutoffs) > 0
 
@@ -70,23 +83,48 @@ def _check_n_splits(n_splits):
     assert n_splits > 0
 
 
-def _check_cutoffs_against_test_windows(cutoffs, windows, fh):
+def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     # We check for the last value. Some windows may be incomplete, with no first
     # value, whereas the last value will always be there.
     fh = check_fh(fh)
-    expected = np.array([window[-1] - fh[-1] for window in windows])
+    if is_int(fh[-1]):
+        expected = np.array([window[-1] - fh[-1] for window in windows])
+    elif array_is_timedelta_or_date_offset(fh):
+        expected = np.array(
+            [(y.index[window[-1]] - fh[-1]).to_datetime64() for window in windows]
+        )
+    else:
+        raise ValueError(f"Provided `fh` type is not supported: {type(fh[-1])}")
     np.testing.assert_array_equal(cutoffs, expected)
 
 
-def _check_cutoffs_against_train_windows(cutoffs, windows):
+def _check_cutoffs_against_train_windows(cutoffs, windows, y):
     # Cutoffs should always be the last values of the train windows.
-    actual = np.array([window[-1] for window in windows[1:]])
+    if array_is_int(cutoffs):
+        actual = np.array([window[-1] for window in windows[1:]])
+    elif array_is_datetime64(cutoffs):
+        actual = np.array(
+            [y.index[window[-1]].to_datetime64() for window in windows[1:]]
+        )
+    else:
+        raise ValueError(
+            f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
+        )
     np.testing.assert_array_equal(actual, cutoffs[1:])
 
     # We treat the first window separately, since it may be empty when setting
     # `start_with_window=False`.
     if len(windows[0]) > 0:
-        np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
+        if array_is_int(cutoffs):
+            np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
+        elif array_is_datetime64(cutoffs):
+            np.testing.assert_array_equal(
+                y.index[windows[0][-1]].to_datetime64(), cutoffs[0]
+            )
+        else:
+            raise ValueError(
+                f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
+            )
 
 
 def _check_cv(cv, y, allow_empty_window=False):
@@ -96,8 +134,8 @@ def _check_cv(cv, y, allow_empty_window=False):
 
     cutoffs = cv.get_cutoffs(y)
     _check_cutoffs(cutoffs)
-    _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh)
-    _check_cutoffs_against_train_windows(cutoffs, train_windows)
+    _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh, y)
+    _check_cutoffs_against_train_windows(cutoffs, train_windows, y)
 
     n_splits = cv.get_n_splits(y)
     _check_n_splits(n_splits)
@@ -110,14 +148,16 @@ def _check_cv(cv, y, allow_empty_window=False):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_splitter(y, fh, window_length):
+    """Test SingleWindowSplitter."""
     cv = SingleWindowSplitter(fh=fh, window_length=window_length)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
     train_window = train_windows[0]
     test_window = test_windows[0]
-
     assert n_splits == 1
-    assert train_window.shape[0] == window_length
+    assert train_window.shape[0] == _coerce_duration_to_int(
+        duration=window_length, freq="D"
+    )
     assert test_window.shape[0] == len(check_fh(fh))
 
     np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
@@ -126,6 +166,7 @@ def test_single_window_splitter(y, fh, window_length):
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 def test_single_window_splitter_default_window_length(y, fh):
+    """Test SingleWindowSplitter."""
     cv = SingleWindowSplitter(fh=fh)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
@@ -145,13 +186,21 @@ def test_single_window_splitter_default_window_length(y, fh):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("cutoffs", CUTOFFS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("cutoffs", TEST_CUTOFFS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
+    """Test CutoffSplitter."""
     cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
-    train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
-    np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
+    if _cutoffs_fh_window_length_types_are_supported(
+        cutoffs=cutoffs, fh=ForecastingHorizon(fh), window_length=window_length
+    ):
+        train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
+        np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            _check_cv(cv, y)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -159,6 +208,7 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
+    """Test SlidingWindowSplitter."""
     cv = SlidingWindowSplitter(
         fh=fh,
         window_length=window_length,
@@ -167,18 +217,40 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert np.vstack(train_windows).shape == (n_splits, window_length)
+    assert np.vstack(train_windows).shape == (
+        n_splits,
+        _coerce_duration_to_int(duration=window_length, freq="D"),
+    )
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+
+
+def _args_are_all_of_the_same_type(*args) -> bool:
+    return all([type(args[0]) == type(arg) for arg in args])
+
+
+def _windows_are_incompatible(initial_window, window_length) -> bool:
+    return (
+        is_timedelta_or_date_offset(x=initial_window)
+        and not is_timedelta_or_date_offset(x=window_length)
+    ) or (
+        is_timedelta_or_date_offset(x=window_length)
+        and not is_timedelta_or_date_offset(x=initial_window)
+    )
 
 
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-@pytest.mark.parametrize("initial_window", [7, 10])
+@pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
 ):
+    """Test SlidingWindowSplitter."""
+    if _windows_are_incompatible(initial_window, window_length):
+        pytest.skip(
+            "Incompatible initial_window and window_length are tested elsewhere."
+        )
     cv = SlidingWindowSplitter(
         fh=fh,
         window_length=window_length,
@@ -188,13 +260,46 @@ def test_sliding_window_splitter_with_initial_window(
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert train_windows[0].shape[0] == initial_window
-    assert np.vstack(train_windows[1:]).shape == (n_splits - 1, window_length)
+    assert train_windows[0].shape[0] == _coerce_duration_to_int(
+        duration=initial_window, freq="D"
+    )
+    assert np.vstack(train_windows[1:]).shape == (
+        n_splits - 1,
+        _coerce_duration_to_int(duration=window_length, freq="D"),
+    )
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
 
-def _get_n_incomplete_windows(window_length, step_length):
-    return int(np.ceil(window_length / step_length))
+@pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
+@pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
+def test_sliding_window_splitter_with_incompatible_initial_window_and_window_length(
+    y, fh, window_length, step_length, initial_window
+):
+    """Test SlidingWindowSplitter with incompatible initial_window and window_length."""
+    if not _windows_are_incompatible(initial_window, window_length):
+        pytest.skip("Compatible initial_window and window_length are tested elsewhere.")
+    cv = SlidingWindowSplitter(
+        fh=fh,
+        window_length=window_length,
+        step_length=step_length,
+        initial_window=initial_window,
+        start_with_window=True,
+    )
+    match = "The `initial_window` and `window_length` types are incompatible"
+    with pytest.raises(TypeError, match=match):
+        _check_cv(cv, y)
+
+
+def _get_n_incomplete_windows(window_length, step_length) -> int:
+    return int(
+        np.ceil(
+            _coerce_duration_to_int(duration=window_length, freq="D")
+            / _coerce_duration_to_int(duration=step_length, freq="D")
+        )
+    )
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -204,6 +309,7 @@ def _get_n_incomplete_windows(window_length, step_length):
 def test_sliding_window_splitter_start_with_empty_window(
     y, fh, window_length, step_length
 ):
+    """Test SlidingWindowSplitter."""
     cv = SlidingWindowSplitter(
         fh=fh,
         window_length=window_length,
@@ -216,10 +322,15 @@ def test_sliding_window_splitter_start_with_empty_window(
 
     n_incomplete = _get_n_incomplete_windows(window_length, step_length)
     train_windows = train_windows[n_incomplete:]
-    assert np.vstack(train_windows).shape == (n_splits - n_incomplete, window_length)
+
+    assert np.vstack(train_windows).shape == (
+        n_splits - n_incomplete,
+        _coerce_duration_to_int(duration=window_length, freq="D"),
+    )
 
 
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
+    """Test SlidingWindowSplitter."""
     y = _make_series()
     cv = SlidingWindowSplitter(
         fh=1,
@@ -232,6 +343,7 @@ def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_e
 
 
 def test_sliding_window_splitter_initial_window_smaller_than_window_raise_error():
+    """Test SlidingWindowSplitter."""
     y = _make_series()
     cv = SlidingWindowSplitter(
         fh=1,
@@ -261,6 +373,7 @@ def _check_expanding_windows(windows):
 def test_expanding_window_splitter_start_with_empty_window(
     y, fh, initial_window, step_length
 ):
+    """Test ExpandingWindowSplitter."""
     cv = ExpandingWindowSplitter(
         fh=fh,
         initial_window=initial_window,
@@ -280,6 +393,7 @@ def test_expanding_window_splitter_start_with_empty_window(
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):
+    """Test ExpandingWindowSplitter."""
     cv = ExpandingWindowSplitter(
         fh=fh,
         initial_window=initial_window,
@@ -288,12 +402,15 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
     )
     train_windows, test_windows, _, n_splits = _check_cv(cv, y)
     assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-    assert train_windows[0].shape[0] == initial_window
+    assert train_windows[0].shape[0] == _coerce_duration_to_int(
+        duration=initial_window, freq="D"
+    )
     _check_expanding_windows(train_windows)
 
 
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
+    """Test WindowSplitter."""
     y = np.arange(10)
     fh = ForecastingHorizon([-2, 0])
     window_length = 3
@@ -305,6 +422,7 @@ def test_window_splitter_in_sample_fh_smaller_than_window_length(CV):
 
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
 def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
+    """Test WindowSplitter."""
     y = np.arange(10)
     fh = ForecastingHorizon([-5, -3])
     window_length = 3
@@ -319,6 +437,7 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
 )
 @pytest.mark.parametrize("values", TEST_OOS_FHS)
 def test_split_by_fh(index_type, fh_type, is_relative, values):
+    """Test temporal_train_test_split."""
     y = _make_series(20, index_type=index_type)
     cutoff = y.index[10]
     fh = _make_fh(cutoff, values, fh_type, is_relative)

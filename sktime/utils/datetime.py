@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 """Time format related utilities."""
 
-__author__ = ["mloning", "xiaobenbenecho"]
+__author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 import re
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -28,36 +29,47 @@ def _coerce_duration_to_int(duration, freq=None):
     ret : int
         Duration in integer values for given unit
     """
-    if isinstance(duration, pd.tseries.offsets.DateOffset):
+    if isinstance(duration, int):
+        return duration
+    elif isinstance(duration, pd.tseries.offsets.DateOffset):
         return duration.n
     elif isinstance(duration, pd.Index) and isinstance(
         duration[0], pd.tseries.offsets.BaseOffset
     ):
-        return pd.Int64Index([d.n for d in duration])
+        count = _get_intervals_count_and_unit(freq)[0]
+        return pd.Int64Index([d.n / count for d in duration])
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
-        if freq is None:
-            raise ValueError("`unit` missing")
-        # Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
-        # extract the count and the unit. See
-        # https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
-        m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
-        if not m:
-            raise ValueError("pandas frequency %s not understood." % freq)
-        count, unit = m.groups()
-        count = 1 if not count else int(count)
+        count, unit = _get_intervals_count_and_unit(freq)
         # integer conversion only works reliably with non-ambiguous units (
         # e.g. days, seconds but not months, years)
         try:
             if isinstance(duration, pd.Timedelta):
                 return int(duration / pd.Timedelta(count, unit))
             if isinstance(duration, pd.TimedeltaIndex):
-                return (duration / pd.Timedelta(count, unit)).astype(np.int)
+                return (duration / pd.Timedelta(count, unit)).astype(int)
         except ValueError:
             raise ValueError(
                 "Index type not supported. Please consider using pd.PeriodIndex."
             )
     else:
         raise TypeError("`duration` type not understood.")
+
+
+def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
+    """Extract interval count and unit from frequency string.
+
+    Supports eg: W, 3W, W-SUN, BQS, (B)Q(S)-MAR patterns, from which we
+    extract the count and the unit. See
+    https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-offset-aliases
+    """
+    if freq is None:
+        raise ValueError("frequency is missing")
+    m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
+    if not m:
+        raise ValueError(f"pandas frequency {freq} not understood.")
+    count, unit = m.groups()
+    count = 1 if not count else int(count)
+    return count, unit
 
 
 def _get_freq(x):

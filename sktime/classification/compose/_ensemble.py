@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Configurable time series ensembles."""
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__author__ = ["mloning", "Ayushmaan Seth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
 import numbers
@@ -182,6 +182,10 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         `oob_decision_function_` might contain NaN.
     """
 
+    _tags = {
+        "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -233,6 +237,27 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
+
+    def fit(self, X, y, **kwargs):
+        """Wrap fit to call BaseClassifier.fit.
+
+        This is a fix to get around the problem with multiple inheritance. The
+        problem is that if we just override _fit, this class inherits the fit from
+        the sklearn class BaseTimeSeriesForest. This is the simplest solution,
+        albeit a little hacky.
+        """
+        return BaseClassifier.fit(self, X=X, y=y, **kwargs)
+
+    def predict(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict to call BaseClassifier.predict."""
+        return BaseClassifier.predict(self, X=X, **kwargs)
+
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
+        """Wrap predict_proba to call BaseClassifier.predict_proba."""
+        return BaseClassifier.predict_proba(self, X=X, **kwargs)
+
+    def _fit(self, X, y):
+        BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _validate_estimator(self):
 
@@ -296,7 +321,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict class for X.
 
         The predicted class of an input sample is a vote by the trees in
@@ -366,7 +391,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
 
             return proba
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample are computed as
@@ -467,7 +492,7 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         self.classes_ = []
         self.n_classes_ = []
 
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+        y_store_unique_indices = np.zeros(y.shape, dtype=int)
         for k in range(self.n_outputs_):
             classes_k, y_store_unique_indices[:, k] = np.unique(
                 y[:, k], return_inverse=True

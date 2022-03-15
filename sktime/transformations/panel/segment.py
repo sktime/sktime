@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
+"""Interval and window segmenter transformers."""
 import math
 
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.datatypes._panel._convert import _concat_nested_arrays
-from sktime.datatypes._panel._convert import _get_column_names
-from sktime.datatypes._panel._convert import _get_time_index
+from sktime.datatypes._panel._convert import (
+    _concat_nested_arrays,
+    _get_column_names,
+    _get_time_index,
+)
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.panel import check_X
 
 
-class IntervalSegmenter(_PanelToPanelTransformer):
-    """
-    Interval segmentation transformer.
+class IntervalSegmenter(BaseTransformer):
+    """Interval segmentation transformer.
 
     Parameters
     ----------
@@ -28,7 +30,17 @@ class IntervalSegmenter(_PanelToPanelTransformer):
         and the second column giving end points of intervals
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+    }
 
     def __init__(self, intervals=10):
         self.intervals = intervals
@@ -36,16 +48,17 @@ class IntervalSegmenter(_PanelToPanelTransformer):
         self.input_shape_ = ()
         super(IntervalSegmenter, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """
         Fit transformer, generating random interval indices.
 
         Parameters
         ----------
-        X : pandas DataFrame of shape [n_samples, n_features]
-            Input data
-        y : pandas Series, shape (n_samples, ...), optional
-            Targets for supervised learning.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
@@ -65,6 +78,7 @@ class IntervalSegmenter(_PanelToPanelTransformer):
             if not self.intervals <= n_timepoints // 2:
                 raise ValueError(
                     "The number of intervals must be half the number of time points"
+                    " or less"
                 )
             self.intervals_ = np.array_split(self._time_index, self.intervals)
 
@@ -73,19 +87,21 @@ class IntervalSegmenter(_PanelToPanelTransformer):
                 f"Intervals must be either an integer, an array with "
                 f"start and end points, but found: {self.intervals}"
             )
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
-        """
+    def _transform(self, X, y=None):
+        """Transform input series.
+
         Transform X, segments time-series in each column into random
         intervals using interval indices generated
         during `fit`.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_samples, n_features]
-            Nested dataframe with time-series in cells.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to be transformed
+        y : ignored argument for interface compatibility
 
         Returns
         -------
@@ -93,10 +109,6 @@ class IntervalSegmenter(_PanelToPanelTransformer):
           Transformed pandas DataFrame with same number of rows and one
           column for each generated interval.
         """
-
-        # Check inputs.
-        self.check_is_fitted()
-
         # Tabularise assuming series
         # have equal indexes in any given column
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
@@ -120,9 +132,27 @@ class IntervalSegmenter(_PanelToPanelTransformer):
         Xt.columns = new_column_names
         return Xt
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # small number of intervals for testing
+        params = {"intervals": 2}
+        return params
+
 
 class RandomIntervalSegmenter(IntervalSegmenter):
-    """Transformer that segments time-series into random intervals with
+    """Random interval segmenter transformer.
+
+    Transformer that segments time-series into random intervals with
     random starting points and lengths. Some
     intervals may overlap and may be duplicates.
 
@@ -151,6 +181,12 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         by `np.random`.
     """
 
+    _tags = {
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd_Series_Table",
+        # which mtypes do _fit/_predict support for y?
+    }
+
     def __init__(
         self, n_intervals="sqrt", min_length=None, max_length=None, random_state=None
     ):
@@ -160,16 +196,16 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self.random_state = random_state
         super(RandomIntervalSegmenter, self).__init__()
 
-    def fit(self, X, y=None):
-        """
-        Fit transformer, generating random interval indices.
+    def _fit(self, X, y=None):
+        """Fit transformer, generating random interval indices.
 
         Parameters
         ----------
-        X : pandas DataFrame of shape [n_samples, n_features]
-            Input data
-        y : pandas Series, shape (n_samples, ...), optional
-            Targets for supervised learning.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to fit transform to
+        y : any container with method shape, optional, default=None
+            y.shape[0] determines n_timepoints, 1 if None
 
         Returns
         -------
@@ -195,7 +231,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             if not min_length < self.max_length:
                 raise ValueError("`max_length` must be bigger than `min_length`.")
 
-        X = check_X(X, enforce_univariate=True)
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
@@ -223,12 +258,28 @@ class RandomIntervalSegmenter(IntervalSegmenter):
                 max_length=self.max_length,
                 random_state=self.random_state,
             )
-        self._is_fitted = True
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # we need to override this, or it inherits from IntervalSegmenter
+        #   but this estimator does not have an "intervals" parameter
+        return {}
 
 
 def _rand_intervals_rand_n(x, random_state=None):
-    """
+    """Sample a random number of intervals.
+
     Compute a random number of intervals from index (x) with
     random starting points and lengths. Intervals are unique, but may
     overlap.
@@ -266,7 +317,8 @@ def _rand_intervals_rand_n(x, random_state=None):
 def _rand_intervals_fixed_n(
     x, n_intervals, min_length=1, max_length=None, random_state=None
 ):
-    """
+    """Sample a fixed number of intervals.
+
     Compute a fixed number (n) of intervals from index (x) with
     random starting points and lengths. Intervals may overlap and may
     not be unique.
@@ -292,8 +344,9 @@ def _rand_intervals_fixed_n(
     return np.column_stack([starts, ends])
 
 
-class SlidingWindowSegmenter(_PanelToPanelTransformer):
-    """
+class SlidingWindowSegmenter(BaseTransformer):
+    """Sliding window segmenter transformer.
+
     This class is to transform a univariate series into a
     multivariate one by extracting sets of subsequences.
     It does this by firstly padding the time series on either end
@@ -324,27 +377,37 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
     Proposed in the ShapeDTW algorithm.
     """
 
-    _tags = {"univariate-only": True, "fit-in-transform": True}
+    _tags = {
+        "univariate-only": True,
+        "fit-in-transform": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+    }
 
     def __init__(self, window_length=5):
         self.window_length = window_length
         super(SlidingWindowSegmenter, self).__init__()
 
-    def transform(self, X, y=None):
-        """
-        Function to perform the transformation on the time series data.
+    def _transform(self, X, y=None):
+        """Transform time series.
 
         Parameters
         ----------
-        X : a pandas dataframe of shape = [n_instances, 1]
-            The training input samples.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to be transformed
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         dims: a pandas data frame of shape = [n_instances, n_timepoints]
         """
         # get the number of attributes and instances
-        self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
@@ -379,8 +442,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
         return df.transpose()
 
     def _extract_subsequences(self, instance, n_timepoints):
-        """
-        Function to extract a set of subsequences from a list of instances.
+        """Extract a set of subsequences from a list of instances.
 
         Adopted from -
         https://stackoverflow.com/questions/4923617/efficient-numpy-2d-array-
@@ -392,9 +454,7 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
         return np.lib.stride_tricks.as_strided(instance, shape=shape, strides=strides)
 
     def _check_parameters(self, n_timepoints):
-        """
-        Function for checking the values of parameters inserted
-        into SlidingWindowSegmenter.
+        """Check the values of parameters for interval segmenter.
 
         Throws
         ------
@@ -416,9 +476,8 @@ class SlidingWindowSegmenter(_PanelToPanelTransformer):
 
 
 def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
-    """
-    Get number of intervals from number of time points for various allowed
-    input arguments.
+    """Get number of intervals from number of time points.
+
     Helpful to compute number of intervals relative to time series length,
     e.g. using floats or functions.
 
@@ -490,5 +549,5 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
         )
 
     # make sure n_intervals is an integer and there is at least one interval
-    n_intervals_ = np.maximum(1, np.int(n_intervals_))
+    n_intervals_ = np.maximum(1, int(n_intervals_))
     return n_intervals_

@@ -58,7 +58,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "fit-in-transform",
-        "transformer",
+        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
         "does fit contain no logic and can be skipped? yes/no",
     ),
@@ -105,12 +105,6 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "coerce-X-to-numpy",
-        ["forecaster", "classifier", "regressor"],
-        "bool",
-        "should X be coerced to numpy type in check_X? yes/no",
-    ),
-    (
         "symmetric",
         ["transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
@@ -141,7 +135,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_mtype",
-        ["forecaster", "transformer"],
+        ["forecaster", "transformer", "transformer-pairwise-panel"],
         (
             "list",
             [
@@ -181,10 +175,22 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_y",
+        "transformer",
+        "bool",
+        "does this transformer require y to be passed in fit and transform?",
+    ),
+    (
+        "capability:inverse_transform",
+        "transformer",
+        "bool",
+        "is the transformer capable of carrying out an inverse transform?",
+    ),
+    (
         "capability:pred_int",
         "forecaster",
         "bool",
-        "is the forecaster capable of returning prediction intervals in predict?",
+        "does the forecaster implement predict_interval or predict_quantiles?",
     ),
     (
         "capability:multivariate",
@@ -205,7 +211,7 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:missing_values",
         "classifier",
         "bool",
-        "can the estimator handle missing data (NA, np.nan) in inputs?",
+        "can the classifier handle missing data (NA, np.nan) in inputs?",
     ),
     (
         "capability:train_estimate",
@@ -217,7 +223,15 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:contractable",
         "classifier",
         "bool",
-        "contract time setting, i.e. does the estimator support limiting max fit time?",
+        "contract time setting, does the estimator support limiting max fit time?",
+    ),
+    (
+        "capability:early_prediction",
+        "classifier",
+        "bool",
+        "is the classifier an early classification algorithm? Can predict make "
+        "classifications on incomplete time series and make a decision on if the "
+        "prediction is trustworthy?",
     ),
     (
         "capability:multithreading",
@@ -226,29 +240,23 @@ ESTIMATOR_TAG_REGISTER = [
         "can the classifier set n_jobs to use multiple threads?",
     ),
     (
-        "coerce-X-to-pandas",
-        ["classifier", "transformer"],
-        "bool",
-        "should X be coerced to a nested pandas DataFrame?",
+        "classifier_type",
+        "classifier",
+        (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "which type the classifier falls under in the taxonomy of time series "
+        "classification algorithms.",
     ),
-    # (
-    #     "handles-panel",
-    #     "annotator",
-    #     "bool",
-    #     "can handle panel annotations, i.e., list X/y?",
-    # ),
-    # (
-    #     "annotation-type",
-    #     "annotator",
-    #     "str",
-    #     "which annotation type? can be 'point', 'segment' or 'both'",
-    # ),
-    # (
-    #     "annotation-kind",
-    #     "annotator",
-    #     "str",
-    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
-    # ),
     (
         "capability:multiple-alignment",
         "aligner",
@@ -266,6 +274,30 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "requires-y-train",
+        "estimator",
+        "bool",
+        "does metric require y-train data to be passed?",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "estimator",
+        "bool",
+        "does metric require a predictive benchmark?",
+    ),
+    (
+        "univariate-metric",
+        "estimator",
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
+    (
+        "scitype:y_pred",
+        "estimator",
+        "str",
+        "What is the scitype of y_pred: quantiles, proba, interval?",
     ),
 ]
 

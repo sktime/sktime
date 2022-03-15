@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for pmdarima forecasters to be used in sktime framework."""
 
-__author__ = ["Markus Löning", "Hongyi Yang"]
+__author__ = ["mloning", "hyang1996", "kejsitake", "fkiraly"]
 __all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
@@ -16,7 +16,7 @@ class _PmdArimaAdapter(BaseForecaster):
     """Base class for interfacing pmdarima."""
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
@@ -49,42 +49,56 @@ class _PmdArimaAdapter(BaseForecaster):
         self._forecaster.fit(y, X=X, **fit_params)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
+        """Make forecasts.
+
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
         fh_ins = fh.to_in_sample(self.cutoff)
 
-        kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
-
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
-            return self._predict_fixed_cutoff(fh_oos, **kwargs)
+            return self._predict_fixed_cutoff(fh_oos, X=X)
 
         # all values are in-sample
         elif fh.is_all_in_sample(self.cutoff):
-            return self._predict_in_sample(fh_ins, **kwargs)
+            return self._predict_in_sample(fh_ins, X=X)
 
         # both in-sample and out-of-sample values
         else:
-            if return_pred_int:
-                y_ins_pred, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
-                y_oos_pred, y_oos_pred_int = self._predict_fixed_cutoff(
-                    fh_oos, **kwargs
-                )
-                return y_ins_pred.append(y_oos_pred), y_ins_pred_int.append(
-                    y_oos_pred_int
-                )
-            else:
-                y_ins = self._predict_in_sample(fh_ins, **kwargs)
-                y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
-                return y_ins.append(y_oos)
+            y_ins = self._predict_in_sample(fh_ins, X=X)
+            y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
+            return y_ins.append(y_oos)
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        if isinstance(alpha, (list, tuple)):
-            raise NotImplementedError("multiple `alpha` values are not yet supported")
+        """Generate in sample predictions.
 
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
         if hasattr(self, "order"):
             diff_order = self.order[1]
         else:
@@ -94,7 +108,6 @@ class _PmdArimaAdapter(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs)
-        pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
 
         # for in-sample predictions, pmdarima requires zero-based integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
@@ -117,17 +130,26 @@ class _PmdArimaAdapter(BaseForecaster):
             start=start,
             end=end,
             X=X,
-            return_conf_int=return_pred_int,
-            alpha=alpha,
+            return_conf_int=False,
+            alpha=DEFAULT_ALPHA,
         )
 
         if return_pred_int:
+            pred_ints = []
+            for a in alpha:
+                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
+                result = self._forecaster.predict_in_sample(
+                    start=start,
+                    end=end,
+                    X=X,
+                    return_conf_int=return_pred_int,
+                    alpha=a,
+                )
+                pred_int.loc[fh_abs] = result[1][fh_idx, :]
+                pred_ints.append(pred_int)
             # unpack results
-            y_pred.loc[fh_abs], pred_int.loc[fh_abs] = (
-                result[0][fh_idx],
-                result[1][fh_idx, :],
-            )
-            return y_pred, pred_int
+            y_pred.loc[fh_abs] = result[0][fh_idx]
+            return y_pred, pred_ints
         else:
             y_pred.loc[fh_abs] = result[fh_idx]
             return y_pred
@@ -135,26 +157,121 @@ class _PmdArimaAdapter(BaseForecaster):
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        # make prediction
+        """Make predictions out of sample.
+
+        Parameters
+        ----------
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is
+            one-step ahead forecast, i.e. np.array([1]).
+
+        Returns
+        -------
+        y_pred : pandas.Series
+        Returns series of predicted values.
+        """
         n_periods = int(fh.to_relative(self.cutoff)[-1])
         result = self._forecaster.predict(
             n_periods=n_periods,
             X=X,
-            return_conf_int=return_pred_int,
-            alpha=alpha,
+            return_conf_int=False,
+            alpha=DEFAULT_ALPHA,
         )
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
         if return_pred_int:
-            y_pred, pred_int = result
-            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(
-                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
-            )
-            return y_pred, pred_int
+            pred_ints = []
+            for a in alpha:
+                result = self._forecaster.predict(
+                    n_periods=n_periods,
+                    X=X,
+                    return_conf_int=True,
+                    alpha=a,
+                )
+                pred_int = result[1]
+                pred_int = pd.DataFrame(
+                    pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+                )
+                pred_ints.append(pred_int)
+            return result[0], pred_ints
         else:
             return pd.Series(result[fh_idx], index=fh_abs)
+
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        # initializaing cutoff and fh related info
+        cutoff = self.cutoff
+        fh_oos = fh.to_out_of_sample(cutoff)
+        fh_ins = fh.to_in_sample(cutoff)
+        fh_is_in_sample = fh.is_all_in_sample(cutoff)
+        fh_is_oosample = fh.is_all_out_of_sample(cutoff)
+
+        # prepare the return DataFrame - empty with correct cols
+        var_names = ["Coverage"]
+        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        pred_int = pd.DataFrame(columns=int_idx)
+
+        kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
+        # all values are out-of-sample
+        if fh_is_oosample:
+            _, y_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
+
+        # all values are in-sample
+        elif fh_is_in_sample:
+            _, y_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+
+        # if all in-sample/out-of-sample, we put y_pred_int in the required format
+        if fh_is_in_sample or fh_is_oosample:
+            # needs to be replaced, also seems duplicative, identical to part A
+            for intervals, a in zip(y_pred_int, coverage):
+                pred_int[("Coverage", a, "lower")] = intervals["lower"]
+                pred_int[("Coverage", a, "upper")] = intervals["upper"]
+            return pred_int
+
+        # both in-sample and out-of-sample values (we reach this line only then)
+        # in this case, we additionally need to concat in and out-of-sample returns
+        _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
+        _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
+        for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
+            pred_int[("Coverage", a, "lower")] = ins_int.append(oos_int)["lower"]
+            pred_int[("Coverage", a, "upper")] = ins_int.append(oos_int)["upper"]
+
+        return pred_int
 
     def get_fitted_params(self):
         """Get fitted parameters.

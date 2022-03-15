@@ -10,6 +10,7 @@ __all__ = ["RocketClassifier"]
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.rocket import (
@@ -82,6 +83,7 @@ class RocketClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "kernel",
     }
 
     def __init__(
@@ -170,7 +172,8 @@ class RocketClassifier(BaseClassifier):
 
         self._pipeline = rocket_pipeline = make_pipeline(
             rocket,
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+            StandardScaler(with_mean=False),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10)),
         )
         rocket_pipeline.fit(X, y)
 
@@ -210,3 +213,20 @@ class RocketClassifier(BaseClassifier):
             dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+
+        """
+        params = {"num_kernels": 100}
+
+        return params

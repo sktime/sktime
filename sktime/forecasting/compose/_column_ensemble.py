@@ -21,20 +21,19 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     Parameters
     ----------
-    forecasters: forecaster, or list of tuples (str, estimator, int or str)
+    forecasters : sktime forecaster, or list of tuples (str, estimator, int or str)
         if tuples, with name = str, estimator is forecaster, index as str or int
 
-    If forecaster, clones of forecaster are applied to all columns.
-    If list of tuples, forecaster in tuple is applied to column with the int/str index
+        If forecaster, clones of forecaster are applied to all columns.
+        If list of tuples, forecaster in tuple is applied to column with int/str index
 
     Examples
     --------
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
-    >>> _, y = load_longley()
-    >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
+    >>> from sktime.datasets import load_macroeconomic
+    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
     ...     ("ses", ExponentialSmoothing(trend='add'), 1),
@@ -148,7 +147,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
-            y_pred[:, index] = forecaster.predict(fh)
+            y_pred[:, index] = forecaster.predict(fh=fh, X=X)
 
         y_pred = pd.DataFrame(data=y_pred, columns=self.y_columns)
         y_pred.index = self.fh.to_absolute(self.cutoff)
@@ -221,3 +220,22 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "One estimator per column required. Found %s" % len(indices)
             )
         return self.forecasters
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        # imports
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": FORECASTER}
+        return params

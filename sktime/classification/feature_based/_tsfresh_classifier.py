@@ -82,12 +82,13 @@ class TSFreshClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
         self,
         default_fc_parameters="efficient",
-        relevant_feature_extractor=False,
+        relevant_feature_extractor=True,
         estimator=None,
         verbose=0,
         n_jobs=1,

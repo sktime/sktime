@@ -4,12 +4,11 @@
 """Implement transformers for summarizing a time series."""
 
 __author__ = ["mloning", "RNKuhns"]
-__all__ = ["SummaryTransformer", "MeanTransformer"]
+__all__ = ["SummaryTransformer"]
 
 import pandas as pd
-from deprecated.sphinx import deprecated
 
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import BaseTransformer
 
 ALLOWED_SUM_FUNCS = [
     "mean",
@@ -92,7 +91,7 @@ def _check_quantiles(quantiles):
     return quantiles
 
 
-class SummaryTransformer(_SeriesToPrimitivesTransformer):
+class SummaryTransformer(BaseTransformer):
     """Calculate summary value of a time series.
 
     For :term:`univariate time series` a combination of summary functions and
@@ -131,8 +130,15 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
     """
 
     _tags = {
-        "fit-in-transform": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit-in-transform": True,
     }
 
     def __init__(
@@ -144,13 +150,17 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
         self.quantiles = quantiles
         super(SummaryTransformer, self).__init__()
 
-    def _transform(self, Z, X=None):
-        """Logic to transform series.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series or pd.DataFrame
-            The series to transform.
+        X : pd.Series or pd.DataFrame
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
@@ -158,6 +168,8 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
             If `series_or_df` is univariate then a scalar is returned. Otherwise,
             a pd.Series is returned.
         """
+        Z = X
+
         if self.summary_function is None and self.quantiles is None:
             raise ValueError(
                 "One of `summary_function` and `quantiles` must not be None."
@@ -168,6 +180,7 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
         summary_value = Z.agg(summary_function)
         if quantiles is not None:
             quantile_value = Z.quantile(quantiles)
+            quantile_value.index = [str(s) for s in quantile_value.index]
             summary_value = pd.concat([summary_value, quantile_value])
 
         if isinstance(Z, pd.Series):
@@ -175,33 +188,3 @@ class SummaryTransformer(_SeriesToPrimitivesTransformer):
             summary_value = pd.DataFrame(summary_value)
 
         return summary_value.T
-
-
-class MeanTransformer(SummaryTransformer):
-    """Calculate mean value of a time series.
-
-    See Also
-    --------
-    SummaryTransformer :
-        Calculate summary values of a time series.
-
-    Examples
-    --------
-    >>> from sktime.transformations.series.summarize import MeanTransformer
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> transformer = MeanTransformer()
-    >>> y_mean = transformer.fit_transform(y)
-    """
-
-    @deprecated(
-        version="0.9.0",
-        reason=(
-            "MeanTransformer will be removed in release v0.10.0. Please use "
-            "`SummaryTransformer` from `sktime.transformation.series.summarize` "
-            "instead."
-        ),
-        category=FutureWarning,
-    )
-    def __init__(self):
-        super().__init__(summary_function="mean", quantiles=None)

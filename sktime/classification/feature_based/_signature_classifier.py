@@ -102,8 +102,8 @@ class SignatureClassifier(BaseClassifier):
     """
 
     _tags = {
-        "coerce-X-to-numpy": False,
         "capability:multivariate": True,
+        "classifier_type": "feature",
     }
 
     def __init__(

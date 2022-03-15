@@ -13,12 +13,17 @@ from sktime.datatypes._check import (
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import (
+    MTYPE_LIST_HIERARCHICAL,
     MTYPE_LIST_PANEL,
+    MTYPE_LIST_PROBA,
     MTYPE_LIST_SERIES,
+    MTYPE_LIST_TABLE,
     MTYPE_REGISTER,
     SCITYPE_REGISTER,
     mtype_to_scitype,
 )
+from sktime.datatypes._utilities import get_cutoff
+from sktime.datatypes._vectorize import VectorizedDF
 
 __all__ = [
     "check_is",
@@ -28,10 +33,15 @@ __all__ = [
     "convert",
     "convert_to",
     "mtype",
+    "get_cutoff",
     "get_examples",
     "mtype_to_scitype",
     "MTYPE_REGISTER",
+    "MTYPE_LIST_HIERARCHICAL",
     "MTYPE_LIST_PANEL",
+    "MTYPE_LIST_PROBA",
     "MTYPE_LIST_SERIES",
+    "MTYPE_LIST_TABLE",
     "SCITYPE_REGISTER",
+    "VectorizedDF",
 ]

@@ -8,11 +8,12 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
+from sklearn import clone
 
 from sktime.alignment.base import BaseAligner
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("dtw")
+_check_soft_dependencies("dtw", severity="warning")
 
 
 class AlignerDTW(BaseAligner):
@@ -65,6 +66,8 @@ class AlignerDTW(BaseAligner):
         variable_to_align=None,
     ):
         """Construct instance."""
+        _check_soft_dependencies("dtw", severity="error", object=self)
+
         super(AlignerDTW, self).__init__()
 
         self.dist_method = dist_method
@@ -234,6 +237,7 @@ class AlignerDTWfromDist(BaseAligner):
         super(AlignerDTWfromDist, self).__init__()
 
         self.dist_trafo = dist_trafo
+        self.dist_trafo_ = clone(self.dist_trafo)
         self.step_pattern = step_pattern
         self.window_type = window_type
         self.open_begin = open_begin
@@ -256,7 +260,7 @@ class AlignerDTWfromDist(BaseAligner):
         from dtw import dtw
 
         # these variables from self are accessed
-        dist_trafo = self.dist_trafo
+        dist_trafo = self.dist_trafo_
         step_pattern = self.step_pattern
         window_type = self.window_type
         open_begin = self.open_begin
