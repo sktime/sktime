@@ -74,7 +74,7 @@ Inside the extension templates, necessary actions are marked with ``todo``.
 The typical workflow goes through the extension template by searching for ``todo``, and carrying out
 the action described next to the ``todo``.
 
-Extension templates typically have the following ``todo``s:
+Extension templates typically have the following ``todo``:
 
 *   choosing name and parameters for the estimator
 *   filling in the ``__init__``: writing parameters to ``self``, calling ``super``'s ``__init__``
@@ -101,7 +101,7 @@ Some common caveats, also described in extension template text:
 *   non-state changing methods should not write to ``self`` in general
 *   typically, implementing ``get_params`` and ``set_params`` is not needed, since ``sktime``'s ``BaseEstimator`` inherits from ``sklearn``'s.
     Custom ``get_params``, ``set_params`` are typically needed only for complex cases only heterogeneous composites, e.g., pipelines with
-    parameters that are nested structures containing estiamtors.
+    parameters that are nested structures containing estimators.
 
 
 How to test interface conformance
