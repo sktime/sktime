@@ -10,6 +10,8 @@ from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
+# from sktime.datasets import load_arrow_head
+
 
 def load_unit_data():
     """Load unit test data."""
@@ -122,6 +124,24 @@ def test_teaser_full_length():
 
     testing.assert_allclose(teaser._train_accuracy, 0.9, rtol=0.01)
     testing.assert_allclose(teaser._train_earliness, 0.7333, rtol=0.01)
+
+
+# def test_runtime():
+#     # Load all arrow head
+#     arrow_X, arrow_y = load_arrow_head(return_type="numpy2d")
+#
+#     # Load default train/test splits from sktime/datasets/data
+#     arrow_train_X, arrow_train_y = load_arrow_head(split="train",
+#                                       return_type="numpy2d")
+#     arrow_test_X, arrow_test_y = load_arrow_head(split="test",
+#                                       return_type="numpyflat")
+#
+#     teaser = TEASER(
+#         random_state=0,
+#         classification_points=[25, 50, 75, 100, 125, 150, 175, 200, 251],
+#         n_jobs=-1
+#     )
+#     teaser.fit(arrow_train_X, arrow_train_y)
 
 
 teaser_unit_test_probas = np.array(
