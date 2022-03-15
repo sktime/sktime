@@ -153,7 +153,7 @@ class BaseForecaster(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -231,7 +231,7 @@ class BaseForecaster(BaseEstimator):
                 y_pred = self._predict(fh=fh, X=X_inner)
             else:
                 # otherwise we call the vectorized version of predict
-                self._vectorize("predict", X=X_inner, fh=fh)
+                y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
             # convert to output mtype, identical with last y mtype seen
             y_out = convert_to(
@@ -349,7 +349,7 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = isinstance(y_inner, VectorizedDF)
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -1065,16 +1065,19 @@ class BaseForecaster(BaseEstimator):
         """
         # we only need to modify _y if y is not None
         if y is not None:
+            # if y is vectorized, unwrap it first
+            if isinstance(y, VectorizedDF):
+                y = y.X
             # we want to ensure that y is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             y = convert_to(
                 y,
                 to_type=[
-                    "np.ndarray",
-                    "numpy3D",
-                    "pd.Series",
                     "pd.DataFrame",
+                    "pd.Series",
+                    "np.ndarray",
                     "pd-multiindex",
+                    "numpy3D",
                     "pd_multiindex_hier",
                 ],
             )
@@ -1099,15 +1102,18 @@ class BaseForecaster(BaseEstimator):
 
         # we only need to modify _X if X is not None
         if X is not None:
+            # if X is vectorized, unwrap it first
+            if isinstance(X, VectorizedDF):
+                X = X.X
             # we want to ensure that X is either numpy (1D, 2D, 3D)
             # or in one of the long pandas formats
             X = convert_to(
                 X,
                 to_type=[
-                    "np.ndarray",
-                    "numpy3D",
                     "pd.DataFrame",
+                    "np.ndarray",
                     "pd-multiindex",
+                    "numpy3D",
                     "pd_multiindex_hier",
                 ],
             )
@@ -1327,8 +1333,11 @@ class BaseForecaster(BaseEstimator):
             y = kwargs.pop("y")
             X = kwargs.pop("X", None)
 
+            self._yvec = y
+
             idx = y.get_iter_indices()
             ys = y.as_list()
+
             if X is None:
                 Xs = [None] * len(ys)
             else:
@@ -1351,7 +1360,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._ys.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -1453,10 +1462,14 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called."
             )
+            # we need to overwrite the mtype last seen, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
             self.fit(self._y, self._X, self.fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
 
         return self
 
@@ -1759,59 +1772,5 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         y_pred = pd.concat(y_preds)
     else:
         y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
-
-    return y_pred
-
-
-def _convert_pred_interval_to_quantiles(y_pred, inplace=False):
-    """Convert interval predictions to quantile predictions.
-
-    Parameters
-    ----------
-    y_pred : pd.DataFrame
-        Column has multi-index: first level is variable name from y in fit,
-            second level coverage fractions for which intervals were computed.
-                in the same order as in input `coverage`.
-            Third level is string "lower" or "upper", for lower/upper interval end.
-        Row index is fh. Entries are forecasts of lower/upper interval end,
-            for var in col index, at nominal coverage in selencond col index,
-            lower/upper depending on third col index, for the row index.
-            Upper/lower interval end forecasts are equivalent to
-            quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
-    inplace : bool, optional, default=False
-        whether to copy the input data frame (False), or modify (True)
-
-    Returns
-    -------
-    y_pred : pd.DataFrame
-        Column has multi-index: first level is variable name from y in fit,
-            second level being the values of alpha passed to the function.
-        Row index is fh. Entries are quantile forecasts, for var in col index,
-            at quantile probability in second col index, for the row index.
-    """
-    if not inplace:
-        y_pred = y_pred.copy()
-
-    # all we need to do is to replace the index with var_names/alphas
-    # var_names will be the same as interval level 0
-    idx = y_pred.columns
-    var_names = idx.get_level_values(0)
-
-    # alpha, we compute by the coverage/alphas formula correspondence
-    coverages = idx.get_level_values(1)
-    alphas = np.array(coverages.copy())
-
-    # assumes that level 2 is "lower"/"upper" alternating
-    n = len(idx)
-    lower_selector = range(0, n, 2)
-    upper_selector = range(1, n, 2)
-
-    alphas[lower_selector] = 0.5 - 0.5 * alphas[lower_selector]
-    alphas[upper_selector] = 0.5 + 0.5 * alphas[upper_selector]
-
-    # idx returned by _predict_quantiles
-    #   is 2-level MultiIndex with variable names, alpha
-    int_idx = pd.MultiIndex.from_arrays([var_names, alphas])
-    y_pred.columns = int_idx
 
     return y_pred

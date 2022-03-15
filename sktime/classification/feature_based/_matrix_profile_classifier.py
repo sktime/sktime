@@ -67,6 +67,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
