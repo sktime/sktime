@@ -67,9 +67,10 @@ def test_vectorization_series_to_hier(mtype):
     hierarchy_levels = (2, 4)
     n_instances = reduce(mul, hierarchy_levels)
 
-    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
+    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=42)
     logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
+    logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
 
     # y = get_examples(mtype, "Hierarchical")[1]
     # n_instances = 6
