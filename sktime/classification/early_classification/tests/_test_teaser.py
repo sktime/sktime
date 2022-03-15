@@ -112,7 +112,7 @@ def test_teaser_full_length():
     # train probability threshold
     teaser = TEASER(
         random_state=0,
-        classification_points=[10, 16, 24],
+        classification_points=[6, 10, 16, 24],
     )
     teaser.fit(X_train, y_train)
 
