@@ -22,14 +22,11 @@ For a detailed overview of current and future work, check out our :ref:`roadmap`
 We are particularly motivated to support new contributors
 and people who are looking to learn and develop their skills.
 
--  **Good-first issues.** Check out our `good-first
-   issues <https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_.
-   If you are interested in one of them, simply comment on the issue!
--  **Mentoring.** New to sktime? Apply to sktime’s own
-   :ref:`mentoring program <mentoring>`!
--  **The Turing Way**. Check out their
-   `Guide for Reproducible
-   Research <https://the-turing-way.netlify.app/reproducible-research/reproducible-research.html>`_ to get started and learn more about open-source collaboration.
+1. Say hello and get set up for development, see `instructions in the developer guide<https://www.sktime.org/en/stable/developer_guide.html>`_ 
+2. Pick a good first issue to work on, see a collection `in this summary issue <https://github.com/alan-turing-institute/sktime/issues/1147>`_ , or from `this list <https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22>`_ 
+   suggestion: pick something small with simple content to learn the “process”
+3. Feel free to attend the regular community collab sessions or one of the topic specific stand-ups and tech sessions (see schedule on `Slack`_)
+4. Once your first PR is merged and you’ve seen how things work, think about your regular time commitment. Optionally, continue attending the Friday community collaboration sessions and stand-ups; or, optionally, `apply for mentoring<mentoring>`_ 
 
 .. _Discord: https://discord.com/invite/gqSab2K
 .. _Slack: https://join.slack.com/t/sktime-group/shared_invite/zt-62i7aejn-vXc3nOWF26S_P3VXFPWisQ
