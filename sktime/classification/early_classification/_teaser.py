@@ -144,9 +144,9 @@ class TEASER(BaseClassifier):
         self._classification_points = list(set(self._classification_points))
         self._classification_points.sort()
         # remove classification points that are less than 3 time stamps
-        min = 6 if self.estimator is None else 3
+        minimum = 7 if self.estimator is None else 3
         self._classification_points = [
-            i for i in self._classification_points if i >= min
+            i for i in self._classification_points if i >= minimum
         ]
         # make sure the full series length is included
         if self._classification_points[-1] != series_length:
