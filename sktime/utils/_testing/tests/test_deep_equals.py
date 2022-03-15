@@ -36,7 +36,7 @@ def test_deep_equals_positive(fixture):
     y = deepcopy(fixture)
 
     msg = (
-        f"deep_copy incorrectly returned False for two copies of "
+        f"deep_copy incorrectly returned False for two identical copies of "
         f"the following object: {x}"
     )
     assert deep_equals(x, y), msg
@@ -51,6 +51,6 @@ def test_deep_equals_negative(fixture1, fixture2):
 
     msg = (
         f"deep_copy incorrectly returned True when comparing "
-        f"the following different objects: x={x}, y={y}"
+        f"the following, different objects: x={x}, y={y}"
     )
     assert not deep_equals(x, y), msg
