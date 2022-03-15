@@ -4,6 +4,7 @@
 
 __author__ = ["fkiraly"]
 
+import logging
 from functools import reduce
 from operator import mul
 
@@ -11,7 +12,7 @@ import pytest
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.forecasting.arima import ARIMA
-from sktime.utils._testing.hierarchical import _make_hierachical
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -66,7 +67,8 @@ def test_vectorization_series_to_hier(mtype):
     hierarchy_levels = (2, 4)
     n_instances = reduce(mul, hierarchy_levels)
 
-    y = _make_hierachical(hierarchy_levels=hierarchy_levels, random_state=84)
+    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
+    logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     # y = get_examples(mtype, "Hierarchical")[1]
