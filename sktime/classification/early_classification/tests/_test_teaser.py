@@ -106,19 +106,20 @@ def test_teaser_near_classification_points():
 
 
 def test_teaser_full_length():
-    """Test of TEASER on the full data."""
+    """Test of TEASER on the full data with the default estimator."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
 
     # train probability threshold
     teaser = TEASER(
         random_state=0,
-        classification_points=[6, 10, 16, 24],
-        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+        classification_points=[10, 16, 24],
     )
     teaser.fit(X_train, y_train)
 
     score = teaser.score(X_test, y_test)
-    testing.assert_allclose(score, 0.9090909090909091)
+    testing.assert_allclose(score, 0.818182, rtol=0.01)
+    testing.assert_allclose(teaser._train_accuracy, 0.9, rtol=0.01)
+    testing.assert_allclose(teaser._train_earliness, 0.266, rtol=0.01)
 
 
 teaser_unit_test_probas = np.array(

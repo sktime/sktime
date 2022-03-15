@@ -179,9 +179,13 @@ class TEASER(BaseClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            hm = self._compute_harmonic_mean(n_instances, series_length, state_info, y)
+            hm, acc, earl = self._compute_harmonic_mean(
+                n_instances, series_length, state_info, y
+            )
             if hm > best_hm:
                 best_hm = hm
+                self._train_accuracy = acc
+                self._train_earliness = earl
                 self._consecutive_predictions = g
 
         return self
@@ -590,7 +594,7 @@ class TEASER(BaseClassifier):
                 for i in range(n_instances)
             ]
         )
-        return (2 * accuracy * earliness) / (accuracy + earliness)
+        return (2 * accuracy * earliness) / (accuracy + earliness), accuracy, earliness
 
     @staticmethod
     def _update_state_info(acccept_decision, preds, state_info, idx, time_stamp):
