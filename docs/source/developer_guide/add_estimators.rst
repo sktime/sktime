@@ -140,8 +140,8 @@ additional things need to be done:
 *   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the
     correct ``rst`` file inside ``docs/source/api_reference``.
 *   authors of the estimator should add themselves to ``CODEOWNERS``, as owners of the contributed estimator.
-*   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the "dependencies"
-    developer guide (:ref:`here <coding_standards>`) should be followed
+*   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the :ref:`"dependencies"
+    developer guide <dependencies>` should be followed
 *   ensure that the estimator passes the entire local test suite of ``sktime``, with the estimator in its target location.
     To run tests only for the estimator, the command ``pytest -k "EstimatorName"`` can be used (or vs code GUI filter functionality)
 *   ensure that test parameters in ``get_test_params`` are chosen such that runtime of estimator specific tests remains in the seconds order
