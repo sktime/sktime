@@ -111,7 +111,6 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         TypeError, if estimators is not a list of estimators or (str, estimator) tuples
         TypeError, if estimators in the list are not instances of cls_type
         """
-
         msg = (
             f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
             " of estimators, or a list of (string, estimator) tuples. "
@@ -120,7 +119,6 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
             cls_type = BaseEstimator
         else:
             msg += f"All estimators must be of type {cls_type}."
-
 
         if (
             estimators is None
