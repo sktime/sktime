@@ -46,7 +46,7 @@ Adding a soft dependency
 Soft dependencies in sktime should usually be restricted to estimators.
 
 When adding a new soft dependency or changing the version of an existing one,
-the following files need to be updated: 
+the following files need to be updated:
 
 *  `pyproject.toml <https://github.com/alan-turing-institute/sktime/blob/main/pyproject.toml>`__,
    adding the dependency or version bounds in the ``all_extras`` dependency set.
