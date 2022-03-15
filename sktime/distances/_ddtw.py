@@ -32,6 +32,7 @@ def average_of_slope_transform(X: np.ndarray):
                 len(q.shape[1]))
 
     """
+
     derivative_X = []
     for val in X:
         derivative_X.append(average_of_slope(val))

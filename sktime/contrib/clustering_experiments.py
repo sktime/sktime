@@ -137,7 +137,7 @@ if __name__ == "__main__":
     )
 #    normalize(train_X, norm="l1", copy=False)
 #    normalize(test_X, norm="l1", copy=False)
-    epsilon = 0.01
+    epsilon = 0.2
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
