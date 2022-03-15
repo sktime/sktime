@@ -228,6 +228,9 @@ class TEASER(BaseClassifier):
             An array containing the state info for each decision in X, contains
             information for future decisions on the data. Returned if
             return_safety_decisions is True.
+            Each row contains information for a case from the latest decision on its
+            safety. It records in order: the time stamp index, the number of
+            consecutive  decisions made, the predicted class and the series length.
         """
         self.check_is_fitted()
 
@@ -287,6 +290,9 @@ class TEASER(BaseClassifier):
             An array containing the state info for each decision in X, contains
             information for future decisions on the data. Returned if
             return_safety_decisions is True.
+            Each row contains information for a case from the latest decision on its
+            safety. It records in order: the time stamp index, the number of
+            consecutive  decisions made, the predicted class and the series length.
         """
         self.check_is_fitted()
 
@@ -313,7 +319,7 @@ class TEASER(BaseClassifier):
 
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
-            state_info = np.zeros((n_instances, 3), dtype=int)
+            state_info = np.zeros((n_instances, 4), dtype=int)
         elif last_idx >= next_idx:
             raise ValueError(
                 f"All state_info input instances must be from a lesser classification "
@@ -524,7 +530,7 @@ class TEASER(BaseClassifier):
         # contains 1. the index of the time stamp, 2. the number of consecutive
         # positive decisions made, and 3. the prediction made
         if state_info is None:
-            state_info = np.zeros((len(estimator_preds[0]), 3), dtype=int)
+            state_info = np.zeros((len(estimator_preds[0]), 4), dtype=int)
 
         # only compute new indices
         for i in range(last_idx, next_idx):
@@ -547,7 +553,6 @@ class TEASER(BaseClassifier):
         finished = state_info[:, 1] >= n_consecutive_predictions
         n_instances = len(X_oc)
 
-        # TODO len(self._classification_points) or len(self.classification_points)???
         full_length_ts = idx == len(self._classification_points) - 1
         if full_length_ts:
             accept_decision = np.ones(n_instances, dtype=bool)
@@ -600,14 +605,23 @@ class TEASER(BaseClassifier):
         )
         return (2 * accuracy * earliness) / (accuracy + earliness), accuracy, earliness
 
-    @staticmethod
-    def _update_state_info(acccept_decision, preds, state_info, idx, time_stamp):
+    def _update_state_info(self, acccept_decision, preds, state_info, idx, time_stamp):
         # consecutive predictions, add one if positive decision and same class
         if acccept_decision[idx] and preds[idx] == state_info[idx][2]:
-            return time_stamp, state_info[idx][1] + 1, preds[idx]
+            return (
+                time_stamp,
+                state_info[idx][1] + 1,
+                preds[idx],
+                self._classification_points[time_stamp],
+            )
         # set to 0 if the decision is negative, 1 if its positive but different class
         else:
-            return time_stamp, 1 if acccept_decision[idx] else 0, preds[idx]
+            return (
+                time_stamp,
+                1 if acccept_decision[idx] else 0,
+                preds[idx],
+                self._classification_points[time_stamp],
+            )
 
     @classmethod
     def get_test_params(cls):
