@@ -63,8 +63,8 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ...     NaiveForecaster,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
-    ...     load_airline)
-    >>> y = load_airline()[0:24]
+    ...     load_shampoo_sales)
+    >>> y = load_shampoo_sales()
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
