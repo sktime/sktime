@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Base utils and classes for Mock Estimators."""
 
+__author__ = ["ltsaprounis"]
+
 from copy import deepcopy
 from inspect import getcallargs
 
