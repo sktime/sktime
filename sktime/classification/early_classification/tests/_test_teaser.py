@@ -19,23 +19,6 @@ def load_unit_data():
     return X_train, y_train, X_test, y_test, indices
 
 
-def test_teaser_full_length():
-    """Test of TEASER on the full data."""
-    X_train, y_train, X_test, y_test, indices = load_unit_data()
-
-    # train probability threshold
-    teaser = TEASER(
-        random_state=0,
-        classification_points=[6, 10, 16, 24],
-        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-        return_safety_decisions=False,  # must be enforced?!
-    )
-    teaser.fit(X_train, y_train)
-
-    score = teaser.score(X_test, y_test)
-    testing.assert_allclose(score, 0.9090909090909091)
-
-
 def test_teaser_on_unit_test_data():
     """Test of TEASER on unit test data."""
     X_train, y_train, X_test, y_test, indices = load_unit_data()
@@ -103,23 +86,40 @@ def test_teaser_near_classification_points():
     # train probability threshold
     teaser = TEASER(
         random_state=0,
-        classification_points=[6, 10, 16, 24],
+        classification_points=[6, 10, 14, 18, 24],
         estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
     )
     teaser.fit(X_train, y_train)
 
     # use test_points that are not within list above
-    test_points = [7, 10, 17, 18]
+    test_points = [7, 11, 19, 20]
 
     X_test = from_nested_to_3d_numpy(X_test)
     states = None
     for i in test_points:
         X = X_test[indices, :, :i]
-        if i == 18:
+        if i == 20:
             with pytest.raises(ValueError):
                 probas, decisions, states = teaser.predict_proba(X, state_info=states)
         else:
             probas, decisions, states = teaser.predict_proba(X, state_info=states)
+
+
+def test_teaser_full_length():
+    """Test of TEASER on the full data."""
+    X_train, y_train, X_test, y_test, indices = load_unit_data()
+
+    # train probability threshold
+    teaser = TEASER(
+        random_state=0,
+        classification_points=[6, 10, 16, 24],
+        estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+        return_safety_decisions=False,  # must be enforced?!
+    )
+    teaser.fit(X_train, y_train)
+
+    score = teaser.score(X_test, y_test)
+    testing.assert_allclose(score, 0.9090909090909091)
 
 
 teaser_unit_test_probas = np.array(

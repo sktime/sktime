@@ -129,7 +129,7 @@ class TEASER(BaseClassifier):
 
     def _fit(self, X, y):
         m = getattr(self.estimator, "predict_proba", None)
-        if not callable(m):
+        if self.estimator is not None and not callable(m):
             raise ValueError("Base estimator must have a predict_proba method.")
 
         n_instances, _, series_length = X.shape
@@ -299,21 +299,29 @@ class TEASER(BaseClassifier):
                 f" in fit. Current classification points: {self._classification_points}"
             )
 
-        m = getattr(self.estimator, "n_jobs", None)
-        threads = self._threads_to_use if m is None else 1
+        # determine last index used
+        last_idx = 0 if state_info is None else np.max(state_info[:, 0])
 
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
             state_info = np.zeros((n_instances, 3), dtype=int)
-
-        elif not all(si[0] == next_idx - 1 for si in state_info):
+        elif last_idx >= next_idx:
             raise ValueError(
-                "All state_info input instances must be from the "
-                "previous classification point series length."
+                f"All state_info input instances must be from a lesser classification "
+                f"point time stamp than the input series. Required series length for "
+                f"current state_info: >={self._classification_points[last_idx + 1]}"
+            )
+        elif not all(
+            si[0] == last_idx or si[1] >= self._consecutive_predictions
+            for si in state_info
+        ):
+            raise ValueError(
+                "All state_info input instances must be from the same classification "
+                "point time stamp or have already made a decision."
             )
 
-        # determine last index used
-        last_idx = np.max(state_info[:, 0])
+        m = getattr(self.estimator, "n_jobs", None)
+        threads = self._threads_to_use if m is None else 1
 
         # compute all new updates since then
         out = Parallel(n_jobs=threads)(
@@ -326,11 +334,21 @@ class TEASER(BaseClassifier):
 
         X_oc, probas, preds = zip(*out)
         new_state_info, accept_decision = self._predict_oc_classifier_n_timestamps(
-            preds, X_oc, self._consecutive_predictions, last_idx, next_idx + 1
+            preds,
+            X_oc,
+            self._consecutive_predictions,
+            last_idx,
+            next_idx + 1,
+            state_info=state_info,
         )
 
         probas = np.array(
-            [probas[new_state_info[i, 0] - last_idx][i] for i in range(n_instances)]
+            [
+                probas[new_state_info[i][0] - last_idx][i]
+                if accept_decision[i]
+                else [-1 for _ in range(self.n_classes_)]
+                for i in range(n_instances)
+            ]
         )
 
         return (
