@@ -13,7 +13,6 @@ import copy
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV, cross_val_predict
 from sklearn.svm import OneClassSVM
 from sklearn.utils import check_random_state
@@ -182,9 +181,8 @@ class TEASER(BaseClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            hm, acc, earl = self._compute_harmonic_mean(
-                n_instances, series_length, state_info, y
-            )
+            hm, acc, earl = self._compute_harmonic_mean(series_length, state_info, y)
+
             if hm > best_hm:
                 best_hm = hm
                 self._train_accuracy = acc
@@ -234,11 +232,12 @@ class TEASER(BaseClassifier):
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        return self._predict(X, state_info=state_info)
+        out = self._predict(X, state_info=state_info)
+        return out if self.return_safety_decisions else out[0]
 
     def _predict(self, X, state_info=None):
         out = self._predict_proba(X, state_info=state_info)
-        probas = out[0] if self.return_safety_decisions else out
+        probas = out[0]
 
         rng = check_random_state(self.random_state)
         preds = np.array(
@@ -248,7 +247,7 @@ class TEASER(BaseClassifier):
             ]
         )
 
-        return (preds, out[1], out[2]) if self.return_safety_decisions else preds
+        return (preds, out[1], out[2])
 
     def predict_proba(self, X, state_info=None) -> np.ndarray:
         """Decide on the safety of an early classification.
@@ -293,7 +292,9 @@ class TEASER(BaseClassifier):
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        return self._predict_proba(X, state_info=state_info)
+        out = self._predict_proba(X, state_info=state_info)
+
+        return out if self.return_safety_decisions else out[0]
 
     def _predict_proba(self, X, state_info=None):
         n_instances, _, series_length = X.shape
@@ -309,7 +310,7 @@ class TEASER(BaseClassifier):
             )
 
         # determine last index used
-        last_idx = 0 if state_info is None else np.max(state_info[:][0])
+        last_idx = 0 if state_info is None else np.max(state_info[:, 0])
 
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
@@ -360,11 +361,7 @@ class TEASER(BaseClassifier):
             ]
         )
 
-        return (
-            (probas, accept_decision, new_state_info)
-            if self.return_safety_decisions
-            else probas
-        )
+        return (probas, accept_decision, new_state_info)
 
     def score(self, X, y) -> float:
         """Scores predicted labels against ground truth labels on X.
@@ -398,10 +395,13 @@ class TEASER(BaseClassifier):
             )
 
         out = self._predict(X)
+        # predictions = out[0]
+        # accept = out[1]
+        state_info = out[2]
 
-        return accuracy_score(
-            y, out[0] if self.return_safety_decisions else out, normalize=True
-        )
+        hm, acc, earl = self._compute_harmonic_mean(X.shape[2], state_info, y)
+
+        return (hm, acc, earl)
 
     def _get_next_idx(self, series_length):
         """Return the largest index smaller than the series length."""
@@ -584,18 +584,18 @@ class TEASER(BaseClassifier):
 
         return accept_decision, state_info
 
-    def _compute_harmonic_mean(self, n_instances, series_length, state_info, y):
+    def _compute_harmonic_mean(self, series_length, state_info, y):
         # calculate harmonic mean from finished state info
         accuracy = np.average(
             [
                 state_info[i, 2] == self._class_dictionary[y[i]]
-                for i in range(n_instances)
+                for i in range(len(state_info))
             ]
         )
         earliness = 1 - np.average(
             [
                 self._classification_points[state_info[i, 0]] / series_length
-                for i in range(n_instances)
+                for i in range(len(state_info))
             ]
         )
         return (2 * accuracy * earliness) / (accuracy + earliness), accuracy, earliness
