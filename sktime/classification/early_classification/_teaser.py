@@ -5,7 +5,7 @@ An early classifier using a one class SVM's to determine decision safety with a
 time series classifier.
 """
 
-__author__ = ["MatthewMiddlehurst"]
+__author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["TEASER"]
 
 import copy
@@ -144,7 +144,10 @@ class TEASER(BaseClassifier):
         self._classification_points = list(set(self._classification_points))
         self._classification_points.sort()
         # remove classification points that are less than 3 time stamps
-        self._classification_points = [i for i in self._classification_points if i >= 3]
+        min = 6 if self.estimator is None else 3
+        self._classification_points = [
+            i for i in self._classification_points if i >= min
+        ]
         # make sure the full series length is included
         if self._classification_points[-1] != series_length:
             self._classification_points.append(series_length)
@@ -301,11 +304,12 @@ class TEASER(BaseClassifier):
         if next_idx == -1:
             raise ValueError(
                 f"Input series length does not match the classification points produced"
-                f" in fit. Current classification points: {self._classification_points}"
+                f" in fit. Input series length must be greater then the first point. "
+                f"Current classification points: {self._classification_points}"
             )
 
         # determine last index used
-        last_idx = 0 if state_info is None else np.max(state_info[:, 0])
+        last_idx = 0 if state_info is None else np.max(state_info[:][0])
 
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
