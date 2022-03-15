@@ -2,7 +2,7 @@
 """Base utils and classes for Mock Estimators."""
 
 from copy import deepcopy
-from inspect import getfullargspec
+from inspect import getcallargs
 
 
 class _MockEstimatorMixin:
@@ -21,12 +21,11 @@ def _method_logger(method):
     """Log the method and it's arguments."""
 
     def wrapper(self, *args, **kwargs):
+        args_dict = getcallargs(method, self, *args, **kwargs)
         if not isinstance(self, _MockEstimatorMixin):
-            raise TypeError("Estimator is not a Mock Estimator")
-        arg_spec = getfullargspec(method)
-        inputs_dict = dict(zip(arg_spec.args, deepcopy(args)))
-        inputs_dict.update(deepcopy(kwargs))
-        self._log.append((method.__name__, inputs_dict))
+            raise TypeError("method_logger requires a MockEstimator class")
+        args_dict.pop("self")
+        self._log.append((method.__name__, deepcopy(args_dict)))
         return method(self, *args, **kwargs)
 
     return wrapper
