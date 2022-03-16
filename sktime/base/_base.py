@@ -405,12 +405,7 @@ class TagAliaserMixin:
             Value of the `tag_name` tag in self. If not found, returns
             `tag_value_default`.
         """
-        collected_tags = cls.get_class_tags()
-
-        new_tag = cls._get_alias_tag(tag_name)
-        if new_tag in collected_tags.keys():
-            tag_name = new_tag
-
+        cls._deprecate_tag_warn([tag_name])
         return super(TagAliaserMixin, cls).get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
