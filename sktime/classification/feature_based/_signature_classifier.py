@@ -103,6 +103,7 @@ class SignatureClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
