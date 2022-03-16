@@ -13,7 +13,9 @@ from sktime.datatypes._check import (
 from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import (
+    MTYPE_LIST_HIERARCHICAL,
     MTYPE_LIST_PANEL,
+    MTYPE_LIST_PROBA,
     MTYPE_LIST_SERIES,
     MTYPE_LIST_TABLE,
     MTYPE_REGISTER,
@@ -35,7 +37,9 @@ __all__ = [
     "get_examples",
     "mtype_to_scitype",
     "MTYPE_REGISTER",
+    "MTYPE_LIST_HIERARCHICAL",
     "MTYPE_LIST_PANEL",
+    "MTYPE_LIST_PROBA",
     "MTYPE_LIST_SERIES",
     "MTYPE_LIST_TABLE",
     "SCITYPE_REGISTER",
