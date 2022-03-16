@@ -109,6 +109,7 @@ class _WdtwDistance(NumbaDistance):
         ) -> float:
             cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
             return cost_matrix[-1, -1]
+
         return numba_wdtw_distance
 
 
