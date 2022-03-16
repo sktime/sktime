@@ -115,7 +115,11 @@ def evaluate(
 
         # predict
         start_pred = time.perf_counter()
-        y_pred = forecaster.predict(fh, X=X_test)
+        if scoring.get_tag("scitype:y_pred") == "pred_quantiles":
+            y_pred = forecaster.predict_quantiles(fh, X=X_test, **fit_params)
+        else:
+            y_pred = forecaster.predict(fh, X=X_test)
+
         pred_time = time.perf_counter() - start_pred
 
         # score
