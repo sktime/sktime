@@ -96,11 +96,10 @@ class TEASER(BaseEarlyClassifier):
     >>> clf = TEASER(
     ...     classification_points=[6, 16, 24],
     ...     estimator=TimeSeriesForestClassifier(n_estimators=10),
-    ...     return_safety_decisions=False,
     ... )
     >>> clf.fit(X_train, y_train)
     TEASER(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> y_pred, decisions, state_info = clf.predict(X_test)
     """
 
     _tags = {

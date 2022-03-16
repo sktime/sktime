@@ -48,14 +48,24 @@ def test_classifier_output(estimator):
     X_new = _make_args(estimator, "predict")[0]
 
     # check predict
-    y_pred = estimator.predict(X_new)
+    y_pred, decisions, state_info = estimator.predict(X_new)
     assert isinstance(y_pred, np.ndarray)
     assert y_pred.shape == (X_new.shape[0],)
     assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
+    assert isinstance(decisions, np.ndarray)
+    assert decisions.shape == (X_new.shape[0],)
+    assert decisions.dtype == bool
+    assert isinstance(state_info, np.ndarray)
+    assert state_info.shape[0] == X_new.shape[0]
 
     # check predict proba
     if hasattr(estimator, "predict_proba"):
-        y_proba = estimator.predict_proba(X_new)
+        y_proba, decisions, state_info = estimator.predict_proba(X_new)
         assert isinstance(y_proba, np.ndarray)
         assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
+        assert isinstance(decisions, np.ndarray)
+        assert decisions.shape == (X_new.shape[0],)
+        assert decisions.dtype == bool
+        assert isinstance(state_info, np.ndarray)
+        assert state_info.shape[0] == X_new.shape[0]
