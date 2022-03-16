@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Extension template for transformers.
+Extension template for transformers, SIMPLE version.
+
+Contains only bare minimum of implementation requirements for a functional transformer.
+Also assumes *no composition*, i.e., no transformer or other estimator components.
+For advanced cases (inverse transform, composition, etc),
+    see full extension template in forecasting.py
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -22,11 +27,6 @@ How to use this implementation template to implement a new estimator:
 Mandatory implements:
     fitting         - _fit(self, X, y=None)
     transformation  - _transform(self, X, y=None)
-
-Optional implements:
-    inverse transformation      - _inverse_transform(self, X, y=None)
-    update                      - _update(self, X, y=None)
-    fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime transformer (not needed locally):
     get default parameters for test instance(s) - get_test_params()
@@ -61,11 +61,6 @@ class MyTransformer(BaseTransformer):
         descriptive explanation of paramb
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
     and so on
     """
 
@@ -110,40 +105,18 @@ class MyTransformer(BaseTransformer):
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
     }
-    # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__
-    #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+    def __init__(self, parama, paramb="default", paramc=None):
 
-        # todo: write any hyper-parameters and components to self
-        self.est = est
+        # todo: write any hyper-parameters to self
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
         # important: no checking or other logic should happen here
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.est2 = MyDefaultEstimator()
-
         # todo: change "MyTransformer" to the name of the class
         super(MyTransformer, self).__init__()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
@@ -170,8 +143,6 @@ class MyTransformer(BaseTransformer):
         #
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
         #
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
@@ -213,83 +184,6 @@ class MyTransformer(BaseTransformer):
         #  -------
         #  X_transformed : Series of mtype pd.DataFrame
         #       transformed version of X
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _inverse_transform method
-    # inverse transform exists only if transform does not change scitype
-    #  i.e., Series transformed to Series
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform, inverse operation to transform.
-
-        private _inverse_transform containing core logic, called from inverse_transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # type conventions are exactly those in _transform, reversed
-        #
-        # for example: if transform-output is "Series":
-        #  return should be of same mtype as input, X_inner_mtype
-        #  if multiple X_inner_mtype are supported, ensure same input/output
-        #
-        # todo: add the return mtype/scitype to the docstring, e.g.,
-        #  Returns
-        #  -------
-        #  X_inv_transformed : Series of mtype pd.DataFrame
-        #       inverse transformed version of X
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
-    # standard behaviour is "no update"
-    # also delete in the case where there is no fitting
-    def _update(self, X, y=None):
-        """Update transformer with X and y.
-
-        private _update containing the core logic, called from update
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _update must support all types in it
-            Data to update transformer with
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
-
-        Returns
-        -------
-        self: reference to self
-        """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # implement here
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
