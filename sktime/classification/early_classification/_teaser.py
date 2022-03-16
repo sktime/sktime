@@ -370,7 +370,7 @@ class TEASER(BaseClassifier):
 
         probas = np.array(
             [
-                probas[max(len(probas) - 1, new_state_info[i, 0] - (last_idx + 1))][i]
+                probas[max(0, new_state_info[i, 0] - (last_idx + 1))][i]
                 if accept_decision[i]
                 else [-1 for _ in range(self.n_classes_)]
                 for i in range(n_instances)
