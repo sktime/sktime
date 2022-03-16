@@ -109,10 +109,11 @@ def _print_array(test_name, array):
     print(test_name)
     print("[")
     for sub_array in array:
-        print("[")
-        for value in sub_array:
+        print("[", end="")
+        for i, value in enumerate(sub_array):
             print(value.astype(str), end="")
-            print(", ")
+            if i < len(sub_array) - 1:
+                print(", ", end="")
         print("],")
     print("]")
 

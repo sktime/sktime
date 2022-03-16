@@ -9,6 +9,7 @@ __author__ = ["MatthewMiddlehurst", "patrickzib"]
 __all__ = ["TEASER"]
 
 import copy
+from typing import Tuple
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -316,7 +317,7 @@ class TEASER(BaseClassifier):
             )
 
         # determine last index used
-        last_idx = 0 if state_info is None else np.max(state_info[:, 0])
+        last_idx = -1 if state_info is None else np.max(state_info[:, 0])
 
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
@@ -343,9 +344,9 @@ class TEASER(BaseClassifier):
         out = Parallel(n_jobs=threads)(
             delayed(self._predict_proba_for_estimator)(
                 X,
-                i,
+                i + 1,
             )
-            for i in range(last_idx, next_idx + 1)
+            for i in range(last_idx, next_idx)
         )
 
         X_oc, probas, preds = zip(*out)
@@ -353,14 +354,14 @@ class TEASER(BaseClassifier):
             preds,
             X_oc,
             self._consecutive_predictions,
-            last_idx,
+            last_idx + 1,
             next_idx + 1,
             state_info=state_info,
         )
 
         probas = np.array(
             [
-                probas[new_state_info[i][0] - last_idx][i]
+                probas[new_state_info[i][0] - (last_idx + 1)][i]
                 if accept_decision[i]
                 else [-1 for _ in range(self.n_classes_)]
                 for i in range(n_instances)
@@ -369,7 +370,7 @@ class TEASER(BaseClassifier):
 
         return (probas, accept_decision, new_state_info)
 
-    def score(self, X, y) -> float:
+    def score(self, X, y) -> Tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
 
         Parameters
@@ -400,14 +401,11 @@ class TEASER(BaseClassifier):
                 "TEASER score function requires the full series length currently."
             )
 
-        out = self._predict(X)
-        # predictions = out[0]
-        # accept = out[1]
-        state_info = out[2]
+        state_info = self._predict(X)[2]
 
         hm, acc, earl = self._compute_harmonic_mean(X.shape[2], state_info, y)
 
-        return (hm, acc, earl)
+        return hm, acc, earl
 
     def _get_next_idx(self, series_length):
         """Return the largest index smaller than the series length."""
@@ -428,15 +426,18 @@ class TEASER(BaseClassifier):
             rng,
         )
 
-        # fit estimator for this threshold
-        estimator.fit(X[:, :, : self._classification_points[i]], y)
-
         m = getattr(estimator, "n_jobs", None)
         if m is not None:
             estimator.n_jobs = self._threads_to_use
 
+        # fit estimator for this threshold
+        estimator.fit(X[:, :, : self._classification_points[i]], y)
+
         # get train set probability estimates for this estimator
-        if callable(getattr(estimator, "_get_train_probs", None)):
+        if callable(getattr(estimator, "_get_train_probs", None)) and (
+            getattr(estimator, "_save_transformed_data", False)
+            or getattr(estimator, "_save_train_predictions", False)
+        ):
             train_probas = estimator._get_train_probs(X, y)
         else:
             cv_size = 5
@@ -461,6 +462,7 @@ class TEASER(BaseClassifier):
             if train_preds[i] == self._class_dictionary[y[i]]:
                 X_oc.append(train_probas[i])
 
+        # fit one class classifier and grid search parameters if a grid is provided
         one_class_classifier = None
         if len(X_oc) > 1:
             one_class_classifier = (
@@ -593,13 +595,13 @@ class TEASER(BaseClassifier):
         # calculate harmonic mean from finished state info
         accuracy = np.average(
             [
-                state_info[i, 2] == self._class_dictionary[y[i]]
+                state_info[i][2] == self._class_dictionary[y[i]]
                 for i in range(len(state_info))
             ]
         )
         earliness = np.average(
             [
-                self._classification_points[state_info[i, 0]] / series_length
+                self._classification_points[state_info[i][0]] / series_length
                 for i in range(len(state_info))
             ]
         )
