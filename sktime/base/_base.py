@@ -488,8 +488,9 @@ class TagAliaserMixin:
         """Add all aliased and aliasing tags to the dictionary."""
         alias_dict = cls.alias_dict
         deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
+        new_tags = set(tag_dict.keys()).intersection(alias_dict.values())
 
-        if len(deprecated_tags) > 0:
+        if len(deprecated_tags) > 0 or len(new_tags) > 0:
             new_tag_dict = deepcopy(tag_dict)
             # for all tag strings being set, write the value
             #   to all tags that could *be aliased by* the string
