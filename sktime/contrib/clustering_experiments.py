@@ -103,12 +103,12 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/post_1_3_22/tuned/kmeans/"
+        results_dir = "/home/ajb/results/kmeans/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
@@ -125,26 +125,26 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "Chinatown"
+        dataset = "GunPoint"
         resample = 0
         tf = True
-        distance = "dtw"
+        distance = "wdtw"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    normalize(train_X, norm="l1", copy=False)
-    normalize(test_X, norm="l1", copy=False)
-    epsilon = 0.5
+#    normalize(train_X, norm="l1", copy=False)
+#    normalize(test_X, norm="l1", copy=False)
+    epsilon = 0.2
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
     else:
-        window = 0.2
+        window = 1.0
         name = clusterer + "-" + distance
-    parameters = {"window": window, "epsilon": epsilon}
+    parameters = {"window": window, "epsilon": epsilon, "g": 0.05, "c": 1}
 
     clst = config_clusterer(
         averaging_method="mean",
@@ -164,5 +164,6 @@ if __name__ == "__main__":
         cls_name=name,
         dataset_name=dataset,
         resample_id=resample,
+        overwrite=True,
     )
     print("done")
