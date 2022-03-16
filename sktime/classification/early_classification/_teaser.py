@@ -19,16 +19,19 @@ from sklearn.svm import OneClassSVM
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import MUSE, WEASEL
+from sktime.classification.early_classification.base import BaseEarlyClassifier
 from sktime.classification.feature_based import Catch22Classifier
 
 
-class TEASER(BaseClassifier):
+class TEASER(BaseEarlyClassifier):
     """Two-tier Early and Accurate Series Classifier (TEASER).
 
     An early classifier which uses one class SVM's trained on prediction probabilities
     to determine whether an early prediction is safe or not.
+
+    state_info records in order: the time stamp index, the number of consecutive
+    decisions made, the predicted class and the series length.
 
     Overview:
         Build n classifiers, where n is the number of classification_points.
@@ -64,14 +67,17 @@ class TEASER(BaseClassifier):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
-    return_safety_decisions : bool, default=True
-        Whether to return decisions and decision state information alongside
-        predictions/predicted probabiltiies in predict and predict_proba.
 
     Attributes
     ----------
     n_classes_ : int
         The number of classes.
+    n_instances_ : int
+        The number of train cases.
+    n_dims_ : int
+        The number of dimensions per case.
+    series_length_ : int
+        The full length of each series.
     classes_ : list
         The unique class labels.
 
@@ -100,7 +106,6 @@ class TEASER(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
-        "capability:early_prediction": True,
     }
 
     def __init__(
@@ -111,7 +116,6 @@ class TEASER(BaseClassifier):
         classification_points=None,
         n_jobs=1,
         random_state=None,
-        return_safety_decisions=True,
     ):
         self.estimator = estimator
         self.one_class_classifier = one_class_classifier
@@ -120,12 +124,15 @@ class TEASER(BaseClassifier):
 
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.return_safety_decisions = return_safety_decisions
 
         self._estimators = []
         self._one_class_classifiers = []
         self._classification_points = []
         self._consecutive_predictions = 0
+
+        self.n_instances_ = 0
+        self.n_dims_ = 0
+        self.series_length_ = 0
 
         self._svm_gammas = [100, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1.5, 1]
         self._svm_nu = 0.05
@@ -138,12 +145,12 @@ class TEASER(BaseClassifier):
         if self.estimator is not None and not callable(m):
             raise ValueError("Base estimator must have a predict_proba method.")
 
-        n_instances, _, series_length = X.shape
+        self.n_instances_, self.n_dims_, self.series_length_ = X.shape
 
         self._classification_points = (
             copy.deepcopy(self.classification_points)
             if self.classification_points is not None
-            else [round(series_length / i) for i in range(1, 21)]
+            else [round(self.series_length_ / i) for i in range(1, 21)]
         )
         # remove duplicates
         self._classification_points = list(set(self._classification_points))
@@ -154,8 +161,8 @@ class TEASER(BaseClassifier):
             i for i in self._classification_points if i >= min_length
         ]
         # make sure the full series length is included
-        if self._classification_points[-1] != series_length:
-            self._classification_points.append(series_length)
+        if self._classification_points[-1] != self.series_length_:
+            self._classification_points.append(self.series_length_)
         # create dictionary of classification point indices
         self._classification_point_dictionary = {}
         for index, classification_point in enumerate(self._classification_points):
@@ -187,7 +194,9 @@ class TEASER(BaseClassifier):
             )
 
             # calculate harmonic mean from finished state info
-            hm, acc, earl = self._compute_harmonic_mean(series_length, state_info, y)
+            hm, acc, earl = self._compute_harmonic_mean(
+                self.series_length_, state_info, y
+            )
 
             if hm > best_hm:
                 best_hm = hm
@@ -196,53 +205,6 @@ class TEASER(BaseClassifier):
                 self._consecutive_predictions = g
 
         return self
-
-    def predict(self, X, state_info=None) -> np.ndarray:
-        """Predicts labels for sequences in X.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None or an
-            empty List for the first decision made, the returned List new_state_info for
-            subsequent decisions.
-            If no state_info is provided and the input series_length is greater than
-            the first classification_points time stamp, all previous time stamps are
-            considered up to the input series_length and the class value for the first
-            safe prediction is returned.
-
-        Returns
-        -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
-        decisions : 1D bool array
-            An array of booleans, containing the decision of whether a prediction is
-            safe to use or not. Returned if return_safety_decisions is True.
-        new_state_info : 2D int array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Returned if
-            return_safety_decisions is True.
-            Each row contains information for a case from the latest decision on its
-            safety. It records in order: the time stamp index, the number of
-            consecutive  decisions made, the predicted class and the series length.
-        """
-        self.check_is_fitted()
-
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
-        out = self._predict(X, state_info=state_info)
-        return out if self.return_safety_decisions else out[0]
 
     def _predict(self, X, state_info=None):
         out = self._predict_proba(X, state_info=state_info)
@@ -257,56 +219,6 @@ class TEASER(BaseClassifier):
         )
 
         return (preds, out[1], out[2])
-
-    def predict_proba(self, X, state_info=None) -> np.ndarray:
-        """Decide on the safety of an early classification.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None or an
-            empty List for the first decision made, the returned List new_state_info for
-            subsequent decisions.
-            If no state_info is provided and the input series_length is greater than
-            the first classification_points time stamp, all previous time stamps are
-            considered up to the input series_length and the probabilities for the first
-            safe prediction are returned.
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
-        decisions : 1D bool array
-            An array of booleans, containing the decision of whether a prediction is
-            safe to use or not. Returned if return_safety_decisions is True.
-        new_state_info : 2D int array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Returned if
-            return_safety_decisions is True.
-            Each row contains information for a case from the latest decision on its
-            safety. It records in order: the time stamp index, the number of
-            consecutive  decisions made, the predicted class and the series length.
-        """
-        self.check_is_fitted()
-
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
-        out = self._predict_proba(X, state_info=state_info)
-
-        return out if self.return_safety_decisions else out[0]
 
     def _predict_proba(self, X, state_info=None):
         n_instances, _, series_length = X.shape
@@ -379,41 +291,10 @@ class TEASER(BaseClassifier):
 
         return (probas, accept_decision, new_state_info)
 
-    def score(self, X, y) -> Tuple[float, float, float]:
-        """Scores predicted labels against ground truth labels on X.
-
-        Parameters
-        ----------
-        X : 3D np.array (any number of dimensions, equal length series)
-                of shape [n_instances, n_dimensions, series_length]
-            or 2D np.array (univariate, equal length series)
-                of shape [n_instances, series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
-                (any number of dimensions, equal or unequal length series)
-            or of any other supported Panel mtype
-                for list of mtypes, see datatypes.SCITYPE_REGISTER
-                for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        y : 1D np.ndarray of int, of shape [n_instances] - class labels (ground truth)
-            indices correspond to instance indices in X
-
-        Returns
-        -------
-        float, accuracy score of predict(X) vs y
-        """
-        self.check_is_fitted()
-
-        # boilerplate input checks for predict-like methods
-        X = self._check_convert_X_for_predict(X)
-
-        # Outdated. But the earliness is only correct for the full length TS
-        # as there is no way to determine the full length, given only partial data
-        # if X.shape[2] != self._classification_points[-1]:
-        #    raise ValueError(
-        #        "TEASER score function requires the full series length currently."
-        #    )
-
+    def _score(self, X, y) -> Tuple[float, float, float]:
         state_info = self._predict(X)[2]
-        hm, acc, earl = self._compute_harmonic_mean(X.shape[2], state_info, y)
+
+        hm, acc, earl = self._compute_harmonic_mean(self.series_length_, state_info, y)
 
         return hm, acc, earl
 
@@ -653,6 +534,5 @@ class TEASER(BaseClassifier):
             "estimator": Catch22Classifier(
                 estimator=RandomForestClassifier(n_estimators=2)
             ),
-            "return_safety_decisions": False,
         }
         return params
