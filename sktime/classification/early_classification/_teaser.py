@@ -75,6 +75,11 @@ class TEASER(BaseClassifier):
     classes_ : list
         The unique class labels.
 
+    References
+    ----------
+    .. [1] Schäfer, Patrick, and Ulf Leser. "TEASER: early and accurate time series
+        classification." Data mining and knowledge discovery 34, no. 5 (2020)
+
     Examples
     --------
     >>> from sktime.classification.early_classification import TEASER
@@ -322,6 +327,10 @@ class TEASER(BaseClassifier):
         # Always consider all previous time stamps up to the input series_length
         if state_info is None or state_info == []:
             state_info = np.zeros((n_instances, 4), dtype=int)
+        elif all(si[1] >= self._consecutive_predictions for si in state_info):
+            raise ValueError(
+                "All input series have already had a successful prediction made."
+            )
         elif last_idx >= next_idx:
             raise ValueError(
                 f"All state_info input instances must be from a lesser classification "
@@ -362,7 +371,7 @@ class TEASER(BaseClassifier):
         probas = np.array(
             [
                 probas[new_state_info[i][0] - (last_idx + 1)][i]
-                if accept_decision[i]
+                if accept_decision[i] and new_state_info[i][0] == last_idx + 1
                 else [-1 for _ in range(self.n_classes_)]
                 for i in range(n_instances)
             ]
