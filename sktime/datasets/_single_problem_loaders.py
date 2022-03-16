@@ -852,12 +852,12 @@ def load_macroeconomic():
 
     References
     ----------
-    ..[1] Wrapped via statsmodels:
+    .. [1] Wrapped via statsmodels:
           https://www.statsmodels.org/dev/datasets/generated/macrodata.html
-    ..[2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
+    .. [2] Data Source: FRED, Federal Reserve Economic Data, Federal Reserve
           Bank of St. Louis; http://research.stlouisfed.org/fred2/;
           accessed December 15, 2009.
-    ..[3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
+    .. [3] Data Source: Bureau of Labor Statistics, U.S. Department of Labor;
           http://www.bls.gov/data/; accessed December 15, 2009.
     """
     y = sm.datasets.macrodata.load_pandas().data

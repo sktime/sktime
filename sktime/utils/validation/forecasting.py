@@ -15,7 +15,7 @@ __all__ = [
     "check_sp",
     "check_regressor",
 ]
-__author__ = ["Markus Löning", "@big-o"]
+__author__ = ["mloning", "@big-o", "khrapovs"]
 
 from datetime import timedelta
 from typing import Optional, Union
@@ -25,8 +25,17 @@ import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sktime.utils.validation import is_date_offset, is_int, is_timedelta
+from sktime.utils.validation import (
+    array_is_datetime64,
+    array_is_int,
+    is_date_offset,
+    is_int,
+    is_timedelta,
+)
 from sktime.utils.validation.series import check_equal_time_index, check_series
+
+ACCEPTED_CUTOFF_TYPES = np.ndarray, pd.Index
+VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
 
 
 def check_y_X(
@@ -321,7 +330,7 @@ def check_alpha(alpha):
     return alpha
 
 
-def check_cutoffs(cutoffs: Union[np.ndarray, pd.Index]) -> np.ndarray:
+def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
     """Validate the cutoff.
 
     Parameters
@@ -339,11 +348,11 @@ def check_cutoffs(cutoffs: Union[np.ndarray, pd.Index]) -> np.ndarray:
         If cutoffs array is empty.
 
     """
-    if not isinstance(cutoffs, (np.ndarray, pd.Index)):
+    if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
         raise ValueError(
-            f"`cutoffs` must be a np.array or pd.Index, " f"but found: {type(cutoffs)}"
+            f"`cutoffs` must be a np.array or pd.Index, but found: {type(cutoffs)}"
         )
-    assert np.issubdtype(cutoffs.dtype, np.integer)
+    assert array_is_int(cutoffs) or array_is_datetime64(cutoffs)
 
     if len(cutoffs) == 0:
         raise ValueError("Found empty `cutoff` array")

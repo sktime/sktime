@@ -18,7 +18,13 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (
+    pd.Int64Index,
+    pd.RangeIndex,
+    pd.PeriodIndex,
+    pd.DatetimeIndex,
+    pd.TimedeltaIndex,
+)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -212,8 +218,11 @@ def check_equal_time_index(*ys, mode="equal"):
 
     Parameters
     ----------
-    *ys : tuple of pd.Series, pd.DataFrame or 1/2D np.ndarray, or None
-        One or more time series
+    *ys : tuple of sktime compatible time series data containers
+        must be pd.Series, pd.DataFrame or 1/2D np.ndarray, or None
+        can be Series, Panel, Hierarchical, but mist be pandas or numpy
+        note: this assumption is not checked by the function itself
+            if check is needed, use check_is_scitype or check_is_mtype before call
     mode : str, "equal" or "contained", optional, default = "equal"
         if "equal" will check for all indices being exactly equal
         if "contained", will check whether all indices are subset of ys[0].index
@@ -240,15 +249,11 @@ def check_equal_time_index(*ys, mode="equal"):
     else:
         first_index = y_not_None[0].index
 
-    check_time_index(first_index)
-
     for i, y in enumerate(y_not_None[1:]):
         if isinstance(y, np.ndarray):
             y_index = pd.Index(y)
         else:
             y_index = y.index
-
-        check_time_index(y_index)
 
         if mode == "equal":
             failure_cond = not first_index.equals(y_index)

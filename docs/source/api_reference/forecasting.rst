@@ -44,6 +44,7 @@ Trend
 
     TrendForecaster
     PolynomialTrendForecaster
+    STLForecaster
 
 Exponential Smoothing
 ---------------------
@@ -217,6 +218,7 @@ Model Evaluation (Backtesting)
     evaluate
 
 VAR (Vector Autoregression)
+---------------------------
 
 .. currentmodule:: sktime.forecasting.var
 

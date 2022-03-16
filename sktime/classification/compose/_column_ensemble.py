@@ -226,8 +226,8 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(split="train")
     >>> X_test, y_test = load_basic_motions(split="test")
-    >>> clf = DrCIF(n_estimators=10)
-    >>> estimators = [("DrCIF", clf, [0, 1, 2, 3, 4, 5])]
+    >>> clf = DrCIF(n_estimators=3)
+    >>> estimators = [("DrCIF", clf, [0, 1])]
     >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
     >>> col_ens.fit(X_train, y_train)
     ColumnEnsembleClassifier(...)

@@ -1461,6 +1461,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/20466981?v=4",
       "profile": "https://www.imes.uni-hannover.de/de/institut/team/m-sc-karl-philipp-kortmann/",
       "contributions": [
+        "code",
         "doc"
       ]
     },
@@ -1488,7 +1489,35 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/74055102?v=4",
       "profile": "https://github.com/Saransh-cpp",
       "contributions": [
-        "doc"
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "RishiKumarRay",
+      "name": "Rishi Kumar Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87641376?v=4",
+      "profile": "https://github.com/RishiKumarRay",
+      "contributions": [
+        "infra"
+     ]
+    },
+    {
+      "login": "cdahlin",
+      "name": "Christopher Dahlin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1567780?v=4",
+      "profile": "https://github.com/cdahlin",
+      "contributions": [
+        "code"
+     ]
+    }
+    {
+      "login": "iljamaurer",
+      "name": "Ilja Maurer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45882103?v=4",
+      "profile": "https://github.com/iljamaurer",
+      "contributions": [
+        "code"
       ]
     }
   ],

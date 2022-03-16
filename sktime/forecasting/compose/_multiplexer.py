@@ -63,15 +63,15 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ...     NaiveForecaster,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
-    ...     load_airline)
-    >>> y = load_airline()
+    ...     load_shampoo_sales)
+    >>> y = load_shampoo_sales()
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
     ...     ("naive", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
-    ...     step_length=24)
+    ...     step_length=12)
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "arima", "naive"]},
@@ -197,3 +197,23 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         """
         self.forecaster_.update(y, X, update_params=update_params)
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        params = {
+            "forecasters": [
+                ("Naive_mean", NaiveForecaster(strategy="mean")),
+                ("Naive_last", NaiveForecaster(strategy="last")),
+                ("Naive_drift", NaiveForecaster(strategy="drift")),
+            ],
+            "selected_forecaster": "Naive_mean",
+        }
+        return params

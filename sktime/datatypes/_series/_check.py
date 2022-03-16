@@ -49,7 +49,7 @@ FREQ_SET_CHECK = False
 check_dict = dict()
 
 
-def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
+def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -103,10 +103,10 @@ def check_pdDataFrame_Series(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd.DataFrame", "Series")] = check_pdDataFrame_Series
+check_dict[("pd.DataFrame", "Series")] = check_pddataframe_series
 
 
-def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
+def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -160,10 +160,10 @@ def check_pdSeries_Series(obj, return_metadata=False, var_name="obj"):
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("pd.Series", "Series")] = check_pdSeries_Series
+check_dict[("pd.Series", "Series")] = check_pdseries_series
 
 
-def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
+def check_numpy_series(obj, return_metadata=False, var_name="obj"):
 
     metadata = dict()
 
@@ -194,12 +194,12 @@ def check_numpy_Series(obj, return_metadata=False, var_name="obj"):
 
     # check whether there any nans; compute only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return ret(True, None, metadata, return_metadata)
 
 
-check_dict[("np.ndarray", "Series")] = check_numpy_Series
+check_dict[("np.ndarray", "Series")] = check_numpy_series
 
 
 def _index_equally_spaced(index):
