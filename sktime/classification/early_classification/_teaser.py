@@ -370,8 +370,8 @@ class TEASER(BaseClassifier):
 
         probas = np.array(
             [
-                probas[new_state_info[i][0] - (last_idx + 1)][i]
-                if accept_decision[i] and new_state_info[i][0] == last_idx + 1
+                probas[max(0, new_state_info[i, 0] - (last_idx + 1))][i]
+                if accept_decision[i]
                 else [-1 for _ in range(self.n_classes_)]
                 for i in range(n_instances)
             ]
@@ -405,13 +405,14 @@ class TEASER(BaseClassifier):
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        if X.shape[2] != self._classification_points[-1]:
-            raise ValueError(
-                "TEASER score function requires the full series length currently."
-            )
+        # Outdated. But the earliness is only correct for the full length TS
+        # as there is no way to determine the full length, given only partial data
+        # if X.shape[2] != self._classification_points[-1]:
+        #    raise ValueError(
+        #        "TEASER score function requires the full series length currently."
+        #    )
 
         state_info = self._predict(X)[2]
-
         hm, acc, earl = self._compute_harmonic_mean(X.shape[2], state_info, y)
 
         return hm, acc, earl
