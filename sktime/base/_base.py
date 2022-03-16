@@ -456,7 +456,7 @@ class TagAliaserMixin:
         return super(TagAliaserMixin, self).get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
-            raise_error=raise_error
+            raise_error=raise_error,
         )
 
     def set_tags(self, **tag_dict):
