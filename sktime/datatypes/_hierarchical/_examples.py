@@ -70,3 +70,35 @@ example_dict_metadata[("Hierarchical", 0)] = {
     "n_instances": 6,
     "n_panels": 2,
 }
+
+
+###
+# example 1: univariate, equally sampled
+
+cols = ["foo", "bar", "timepoints"] + [f"var_{i}" for i in range(1)]
+
+Xlist = [
+    pd.DataFrame([["a", 0, 0, 1], ["a", 0, 1, 2], ["a", 0, 2, 3]], columns=cols),
+    pd.DataFrame([["a", 1, 0, 1], ["a", 1, 1, 2], ["a", 1, 2, 3]], columns=cols),
+    pd.DataFrame([["a", 2, 0, 1], ["a", 2, 1, 2], ["a", 2, 2, 3]], columns=cols),
+    pd.DataFrame([["b", 0, 0, 1], ["b", 0, 1, 2], ["b", 0, 2, 3]], columns=cols),
+    pd.DataFrame([["b", 1, 0, 1], ["b", 1, 1, 2], ["b", 1, 2, 3]], columns=cols),
+    pd.DataFrame([["b", 2, 0, 1], ["b", 2, 1, 2], ["b", 2, 2, 3]], columns=cols),
+]
+X = pd.concat(Xlist)
+X = X.set_index(["foo", "bar", "timepoints"])
+
+example_dict[("pd_multiindex_hier", "Hierarchical", 1)] = X
+example_dict_lossy[("pd_multiindex_hier", "Hierarchical", 1)] = False
+
+example_dict_metadata[("Hierarchical", 1)] = {
+    "is_univariate": True,
+    "is_one_panel": False,
+    "is_one_series": False,
+    "is_equally_spaced": True,
+    "is_equal_length": True,
+    "is_empty": False,
+    "has_nans": False,
+    "n_instances": 6,
+    "n_panels": 2,
+}
