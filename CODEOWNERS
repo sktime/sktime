@@ -31,6 +31,7 @@ sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/difference.py @rnkuhns
 sktime/transformations/series/exponent.py @rnkuhns
 sktime/transformations/series/scaledlogit.py @ltsaprounis
+sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/naive.py @Flix6x
