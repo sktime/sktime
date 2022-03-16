@@ -79,7 +79,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             index_df = self._evaluate_by_index(y_true, y_pred, multioutput)
             return index_df.mean(axis=0)
         except RecursionError:
-            print("Must implement one of _evaluate or _evaluate_by_index")
+            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point.
@@ -123,7 +123,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
                 )
             return out_series
         except RecursionError:
-            print("Must implement one of _evaluate or _evaluate_by_index")
+            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
 
     def _check_consistent_input(self, y_true, y_pred, multioutput):
         check_consistent_length(y_true, y_pred)
