@@ -5,6 +5,8 @@
 
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/early_classification/_teaser.py @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/ @MatthewMiddlehurst @TonyBagnall
 sktime/classification/feature_based/_signature_classifier.py @jambo6
 sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
@@ -29,6 +31,7 @@ sktime/transformations/series/theta.py @GuzalBulatova
 sktime/transformations/series/difference.py @rnkuhns
 sktime/transformations/series/exponent.py @rnkuhns
 sktime/transformations/series/scaledlogit.py @ltsaprounis
+sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
 sktime/forecasting/naive.py @Flix6x

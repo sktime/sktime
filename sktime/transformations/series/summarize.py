@@ -180,6 +180,7 @@ class SummaryTransformer(BaseTransformer):
         summary_value = Z.agg(summary_function)
         if quantiles is not None:
             quantile_value = Z.quantile(quantiles)
+            quantile_value.index = [str(s) for s in quantile_value.index]
             summary_value = pd.concat([summary_value, quantile_value])
 
         if isinstance(Z, pd.Series):

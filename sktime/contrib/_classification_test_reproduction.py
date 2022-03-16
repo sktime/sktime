@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
 from sktime.classification.dictionary_based import (
     MUSE,
@@ -14,6 +14,10 @@ from sktime.classification.distance_based import (
     ElasticEnsemble,
     ProximityForest,
     ShapeDTW,
+)
+from sktime.classification.early_classification import (
+    TEASER,
+    ProbabilityThresholdEarlyClassifier,
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
@@ -36,6 +40,7 @@ from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
@@ -60,6 +65,30 @@ def _reproduce_classification_basic_motions(estimator):
     return estimator.predict_proba(X_test.iloc[indices])
 
 
+def _reproduce_early_classification_unit_test(estimator):
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+
+    estimator.fit(X_train, y_train)
+
+    final_probas = np.zeros((10, 2))
+    final_decisions = np.zeros(10)
+
+    X_test = from_nested_to_3d_numpy(X_test)
+    states = None
+    for i in estimator.classification_points:
+        X = X_test[indices, :, :i]
+        probas, decisions, states = estimator.predict_proba(X, state_info=states)
+
+        for n in range(10):
+            if decisions[n] and final_decisions[n] == 0:
+                final_probas[n] = probas[n]
+                final_decisions[n] = i
+
+    return final_probas
+
+
 def _reproduce_transform_unit_test(estimator):
     X_train, y_train = load_unit_test(split="train")
     indices = np.random.RandomState(0).choice(len(y_train), 5, replace=False)
@@ -80,10 +109,11 @@ def _print_array(test_name, array):
     print(test_name)
     print("[")
     for sub_array in array:
-        print("[")
-        for value in sub_array:
+        print("[", end="")
+        for i, value in enumerate(sub_array):
             print(value.astype(str), end="")
-            print(", ")
+            if i < len(sub_array) - 1:
+                print(", ", end="")
         print("],")
     print("]")
 
@@ -416,6 +446,40 @@ if __name__ == "__main__":
                 n_shapelet_samples=500,
                 batch_size=100,
                 random_state=0,
+            )
+        ),
+    )
+
+    _print_array(
+        "ProbabilityThresholdEarlyClassifier - UnitTest",
+        _reproduce_early_classification_unit_test(
+            ProbabilityThresholdEarlyClassifier(
+                random_state=0,
+                classification_points=[6, 16, 24],
+                probability_threshold=1,
+                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+            )
+        ),
+    )
+    _print_array(
+        "TEASER - UnitTest",
+        _reproduce_early_classification_unit_test(
+            TEASER(
+                random_state=0,
+                classification_points=[6, 10, 16, 24],
+                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+            )
+        ),
+    )
+    _print_array(
+        "TEASER-IF - UnitTest",
+        _reproduce_early_classification_unit_test(
+            TEASER(
+                random_state=0,
+                classification_points=[6, 10, 16, 24],
+                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+                one_class_classifier=IsolationForest(n_estimators=5),
+                one_class_param_grid={"bootstrap": [True, False]},
             )
         ),
     )

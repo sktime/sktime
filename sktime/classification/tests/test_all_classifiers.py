@@ -18,13 +18,13 @@ from sktime.utils._testing.estimator_checks import _has_capability, _make_args
 CLASSIFIERS = all_estimators(
     "classifier", return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
 )
-N_CLASSES = 3
+n_classes = 3
 
 
-@pytest.mark.parametrize("Estimator", CLASSIFIERS)
-def test_3d_numpy_input(Estimator):
+@pytest.mark.parametrize("estimator", CLASSIFIERS)
+def test_3d_numpy_input(estimator):
     """Test classifiers handle 3D numpy input correctly."""
-    estimator = Estimator.create_test_instance()
+    estimator = estimator.create_test_instance()
     fit_args = _make_args(estimator, "fit", return_numpy=True)
     estimator.fit(*fit_args)
 
@@ -45,14 +45,14 @@ def test_3d_numpy_input(Estimator):
                 )
 
 
-@pytest.mark.parametrize("Estimator", CLASSIFIERS)
-def test_multivariate_input(Estimator):
+@pytest.mark.parametrize("estimator", CLASSIFIERS)
+def test_multivariate_input(estimator):
     """Test classifiers handle multivariate pd.DataFrame input correctly."""
     # check if multivariate input is correctly handled
     n_columns = 2
     error_msg = "X must be univariate"
 
-    estimator = Estimator.create_test_instance()
+    estimator = estimator.create_test_instance()
     X_train, y_train = _make_args(estimator, "fit", n_columns=n_columns)
 
     # check if estimator can handle multivariate data
@@ -71,15 +71,15 @@ def test_multivariate_input(Estimator):
         )
 
 
-@pytest.mark.parametrize("Estimator", CLASSIFIERS)
-def test_classifier_output(Estimator):
+@pytest.mark.parametrize("estimator", CLASSIFIERS)
+def test_classifier_output(estimator):
     """Test classifier outputs the correct data types and values.
 
     Test predict produces a np.array or pd.Series with only values seen in the train
     data, and that predict_proba probability estimates add up to one.
     """
-    estimator = Estimator.create_test_instance()
-    X_train, y_train = _make_args(estimator, "fit", n_classes=N_CLASSES)
+    estimator = estimator.create_test_instance()
+    X_train, y_train = _make_args(estimator, "fit", n_classes=n_classes)
     estimator.fit(X_train, y_train)
 
     X_new = _make_args(estimator, "predict")[0]
@@ -94,5 +94,5 @@ def test_classifier_output(Estimator):
     if hasattr(estimator, "predict_proba"):
         y_proba = estimator.predict_proba(X_new)
         assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape == (X_new.shape[0], N_CLASSES)
+        assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
