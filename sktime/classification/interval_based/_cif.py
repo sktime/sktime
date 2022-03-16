@@ -182,8 +182,8 @@ class CanonicalIntervalForest(BaseClassifier):
         if self.att_subsample_size > 25:
             self._att_subsample_size = 25
 
-        if self.series_length_ < self.min_interval:
-            self._min_interval = self.series_length_
+        if self.series_length_ <= self.min_interval:
+            self._min_interval = self.series_length_ - 1
         elif self.min_interval < 3:
             self._min_interval = 3
 
