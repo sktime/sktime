@@ -374,6 +374,21 @@ class TagAliaserMixin:
         super(TagAliaserMixin, self).__init__()
 
     @classmethod
+    def get_class_tags(cls):
+        """Get class tags from estimator class and all its parent classes.
+
+        Returns
+        -------
+        collected_tags : dict
+            Dictionary of tag name : tag value pairs. Collected from _tags
+            class attribute via nested inheritance. NOT overridden by dynamic
+            tags set by set_tags or mirror_tags.
+        """
+        collected_tags = super(TagAliaserMixin, cls).get_class_tags()
+        collected_tags = cls._complete_dict(collected_tags)
+        return collected_tags
+
+    @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
         """Get tag value from estimator class (only class tags).
 
@@ -390,19 +405,29 @@ class TagAliaserMixin:
             Value of the `tag_name` tag in self. If not found, returns
             `tag_value_default`.
         """
-        if tag_name in cls.alias_dict.keys():
-            version = cls.deprecate_dict[tag_name]
-            new_tag = cls.alias_dict[tag_name]
-            msg = (
-                f'tag "{tag_name} will be deprecated in sktime version {version}, '
-                f'use tag "{new_tag}" instead'
-            )
-            warnings.warn(msg, category=DeprecationWarning)
+        collected_tags = cls.get_class_tags()
+
+        new_tag = cls._get_alias_tag(tag_name)
+        if new_tag in collected_tags.keys():
             tag_name = new_tag
 
         return super(TagAliaserMixin, cls).get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
+
+    def get_tags(self):
+        """Get tags from estimator class and dynamic tag overrides.
+
+        Returns
+        -------
+        collected_tags : dict
+            Dictionary of tag name : tag value pairs. Collected from _tags
+            class attribute via nested inheritance and then any overrides
+            and new tags from _tags_dynamic object attribute.
+        """
+        collected_tags = super(TagAliaserMixin, self).get_tags()
+        collected_tags = self._complete_dict(collected_tags)
+        return collected_tags
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
         """Get tag value from estimator class and dynamic tag overrides.
@@ -427,20 +452,11 @@ class TagAliaserMixin:
         ValueError if raise_error is True i.e. if tag_name is not in self.get_tags(
         ).keys()
         """
-        if tag_name in self.alias_dict.keys():
-            version = self.deprecate_dict[tag_name]
-            new_tag = self.alias_dict[tag_name]
-            msg = (
-                f'tag "{tag_name} will be deprecated in sktime version {version}, '
-                f'use tag "{new_tag}" instead'
-            )
-            warnings.warn(msg, category=DeprecationWarning)
-            tag_name = new_tag
-
+        self._deprecate_tag_warn([tag_name])
         return super(TagAliaserMixin, self).get_tag(
             tag_name=tag_name,
             tag_value_default=tag_value_default,
-            raise_error=raise_error,
+            raise_error=raise_error
         )
 
     def set_tags(self, **tag_dict):
@@ -461,74 +477,55 @@ class TagAliaserMixin:
         Changes object state by settting tag values in tag_dict as dynamic tags
         in self.
         """
-        alias_dict = self.alias_dict
+        self._deprecate_tag_warn(tag_dict.keys())
+
+        tag_dict = self._complete_dict(tag_dict)
+        super(TagAliaserMixin, self).set_tags(**tag_dict)
+        return self
+
+    @classmethod
+    def _complete_dict(cls, tag_dict):
+        """Add all aliased and aliasing tags to the dictionary."""
+        alias_dict = cls.alias_dict
         deprecated_tags = set(tag_dict.keys()).intersection(alias_dict.keys())
 
         if len(deprecated_tags) > 0:
-            tags_instead = [alias_dict[tag] for tag in deprecated_tags]
-            msg = (
-                f"tags {deprecated_tags} will be deprecated in sktime versions "
-                f"{[self.deprecate_dict[tag] for tag in deprecated_tags]}, "
-                f"use the following tags instead: {tags_instead}"
-            )
-            new_tag_dict = dict()
-            for tag in tag_dict:
-                if tag in alias_dict.keys():
-                    new_tag_dict[alias_dict[tag]] = tag_dict[tag]
-                else:
-                    new_tag_dict[tag] = tag_dict[tag]
-            warnings.warn(msg, category=DeprecationWarning)
-            tag_dict = new_tag_dict
+            new_tag_dict = deepcopy(tag_dict)
+            # for all tag strings being set, write the value
+            #   to all tags that could *be aliased by* the string
+            #   and all tags that could be *aliasing* the string
+            # this way we ensure upwards and downwards compatibility
+            for old_tag, new_tag in alias_dict.items():
+                for tag in tag_dict:
+                    if tag == old_tag:
+                        new_tag_dict[new_tag] = tag_dict[tag]
+                    if tag == new_tag:
+                        new_tag_dict[old_tag] = tag_dict[tag]
+            return new_tag_dict
+        else:
+            return tag_dict
 
-        super(TagAliaserMixin, self).set_tags(**tag_dict)
-
-        return self
-
-    def clone_tags(self, estimator, tag_names=None):
-        """clone/mirror tags from another estimator as dynamic override.
+    @classmethod
+    def _deprecate_tag_warn(cls, tags):
+        """Print warning message for tag deprecation.
 
         Parameters
         ----------
-        estimator : estimator inheriting from :class:BaseEstimator
-        tag_names : str or list of str, default = None
-            Names of tags to clone. If None then all tags in estimator are used
-            as `tag_names`.
+        tags : list of str
 
-        Returns
-        -------
-        Self :
-            Reference to self.
-
-        Notes
-        -----
-        Changes object state by setting tag values in tag_set from estimator as
-        dynamic tags in self.
+        Raises
+        ------
+        DeprecationWarning for each tag in tags that is aliased by cls.alias_dict
         """
-        if tag_names is not None:
-            alias_dict = self.alias_dict
-            deprecated_tags = set(tag_names).intersection(alias_dict.keys())
-
-            if len(deprecated_tags) > 0:
-                tags_instead = [alias_dict[tag] for tag in deprecated_tags]
+        for tag_name in tags:
+            if tag_name in cls.alias_dict.keys():
+                version = cls.deprecate_dict[tag_name]
+                new_tag = cls.alias_dict[tag_name]
                 msg = (
-                    f"tags {deprecated_tags} will be deprecated in sktime versions "
-                    f"{[self.deprecate_dict[tag] for tag in deprecated_tags]}, "
-                    f"use the following tags instead: {tags_instead}"
+                    f'tag "{tag_name} will be deprecated in sktime version {version}, '
+                    f'use tag "{new_tag}" instead'
                 )
-                new_tag_list = []
-                for tag in tag_names:
-                    if tag in alias_dict.keys():
-                        new_tag_list += [alias_dict[tag]]
-                    else:
-                        new_tag_list += [tag]
                 warnings.warn(msg, category=DeprecationWarning)
-                tag_names = new_tag_list
-
-        super(TagAliaserMixin, self).clone_tags(
-            estimator=estimator, tag_names=tag_names
-        )
-
-        return self
 
 
 class BaseEstimator(TagAliaserMixin, BaseObject):
