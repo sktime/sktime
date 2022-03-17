@@ -135,8 +135,8 @@ if __name__ == "__main__":
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-#    normalize(train_X, norm="l1", copy=False)
-#    normalize(test_X, norm="l1", copy=False)
+    #    normalize(train_X, norm="l1", copy=False)
+    #    normalize(test_X, norm="l1", copy=False)
     epsilon = 0.2
     if tune:
         window = tune_window(distance, train_X)
