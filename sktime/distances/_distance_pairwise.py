@@ -33,15 +33,12 @@ def _extend_docstring_3d(docstring):
     """Change docstring to include 3D numpy support."""
     # the indentation must be this way, since tabs are included in the string
     #   if one more tab is added, the replacement is not correctly done
-    to_replace = (
-    """x: np.ndarray (1d or 2d array)
+    to_replace = """x: np.ndarray (1d or 2d array)
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
     """  # noqa
-    )
-    replace_by = (
-    """x: np.ndarray (1d, 2d, or 3d array)
+    replace_by = """x: np.ndarray (1d, 2d, or 3d array)
         First time series or panel of time series.
         Indices are (n_instances, n_variables, n_series).
         If index is not present, n_variables=1 resp n_series=1 is assumed.
@@ -50,25 +47,20 @@ def _extend_docstring_3d(docstring):
         Indices are (n_instances, n_variables, n_series).
         If index is not present, n_variables=1 resp n_series=1 is assumed.
     """  # noqa
-    )
     print(to_replace in docstring)
     docstring = docstring.replace(to_replace, replace_by)
 
-    to_replace = (
-    """Returns
+    to_replace = """Returns
     -------
     float
     """  # noqa
-    )
-    replace_by = (
-    """Returns
+    replace_by = """Returns
     -------
     float if x, y are both 1d or 2d
         distance between single series x and y
     2d np.ndarray if x and y are both 3d
         (i, j)-th entry is distance between i-th instance in x and j-th in y
     """  # noqa
-    )
     docstring = docstring.replace(to_replace, replace_by)
 
     return docstring
