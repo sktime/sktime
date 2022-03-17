@@ -28,7 +28,12 @@ class HIVECOTEV1(BaseClassifier):
     """Hierarchical Vote Collective of Transformation-based Ensembles (HIVE-COTE) V1.
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
-    representations using the CAWPE structure as described in [1]_.
+    representations using the CAWPE structure as described in [1]_. The default
+    implementation differs from the one described in [1]_, in that it uses the out of
+    bag error (OOB) estimates for weights (described in [2]_) rather than the cross
+    validation estimate. OOB is an order of magnitude faster and on average as good
+    as CV. This means that this version of HIVE COTE is a bit faster than HC2,
+    although less accurate on average.
 
     Parameters
     ----------
@@ -84,6 +89,9 @@ class HIVECOTEV1(BaseClassifier):
        Matthew Middlehurst. "On the usage and performance of the Hierarchical Vote
        Collective of Transformation-based Ensembles version 1.0 (hive-cote v1.0)"
        International Workshop on Advanced Analytics and Learning on Temporal Data 2020
+    .. [2] Middlehurst, Matthew, James Large, Michael Flynn, Jason Lines, Aaron Bostrom,
+       and Anthony Bagnall. "HIVE-COTE 2.0: a new meta ensemble for time series
+       classification." Machine Learning (2021).
 
     Examples
     --------
