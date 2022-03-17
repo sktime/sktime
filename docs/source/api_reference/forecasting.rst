@@ -218,6 +218,7 @@ Model Evaluation (Backtesting)
     evaluate
 
 VAR (Vector Autoregression)
+---------------------------
 
 .. currentmodule:: sktime.forecasting.var
 

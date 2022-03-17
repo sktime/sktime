@@ -137,7 +137,7 @@ def check_numpy3d_panel(obj, return_metadata=False, var_name="obj"):
 
     # check whether there any nans; only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -160,15 +160,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} have a MultiIndex with 2 levels, found {nlevels}"
         return _ret(False, msg, None, return_metadata)
 
-    correct_names = ["instances", "timepoints"]
-    objnames = obj.index.names
-    if not objnames == correct_names:
-        msg = (
-            f"{var_name}  must have a MultiIndex with names"
-            f" {correct_names}, found {objnames}"
-        )
-        return _ret(False, msg, None, return_metadata)
-
     # check instance index being integer or range index
     instind = obj.index.droplevel(1)
     if not isinstance(instind, VALID_MULTIINDEX_TYPES):
@@ -180,7 +171,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     check_res = [
         check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
     ]
-    bad_inds = [i for i in inst_inds if not check_res[i][0]]
+    bad_inds = [i for i in range(len(inst_inds)) if not check_res[i][0]]
 
     if len(bad_inds) > 0:
         msg = (
@@ -270,11 +261,11 @@ def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
     """
     cases = len(X)
     dimensions = len(X.columns)
-    for i in range(0, cases):
-        for j in range(0, dimensions):
+    for i in range(cases):
+        for j in range(dimensions):
             s = X.iloc[i, j]
-            for k in range(0, s.size):
-                if pd.isna(s[k]):
+            for k in range(s.size):
+                if pd.isna(s.iloc[k]):
                     return True
     return False
 

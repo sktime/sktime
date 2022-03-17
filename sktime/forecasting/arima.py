@@ -9,7 +9,7 @@ __all__ = ["AutoARIMA", "ARIMA"]
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("pmdarima")
+_check_soft_dependencies("pmdarima", severity="warning")
 
 
 class AutoARIMA(_PmdArimaAdapter):
@@ -267,6 +267,8 @@ class AutoARIMA(_PmdArimaAdapter):
         **kwargs
     ):
 
+        _check_soft_dependencies("pmdarima", severity="error", object=self)
+
         self.start_p = start_p
         self.d = d
         self.start_q = start_q
@@ -354,6 +356,23 @@ class AutoARIMA(_PmdArimaAdapter):
             with_intercept=self.with_intercept,
             **self.model_kwargs
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "d": 0,
+            "suppress_warnings": True,
+            "max_p": 2,
+            "max_q": 2,
+            "seasonal": False,
+        }
+        return params
 
 
 class ARIMA(_PmdArimaAdapter):
@@ -555,6 +574,9 @@ class ARIMA(_PmdArimaAdapter):
         with_intercept=True,
         **sarimax_kwargs
     ):
+
+        _check_soft_dependencies("pmdarima", severity="error", object=self)
+
         self.order = order
         self.seasonal_order = seasonal_order
         self.start_params = start_params

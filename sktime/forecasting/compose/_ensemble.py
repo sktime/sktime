@@ -222,6 +222,20 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         return y_pred
 
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        return params
+
 
 def _get_weights(regressor):
     # tree-based models from sklearn which have feature importance values
@@ -335,6 +349,20 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
         return y_pred
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        return params
 
 
 def _aggregate(y, aggfunc, weights):

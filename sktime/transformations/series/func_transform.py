@@ -121,7 +121,7 @@ class FunctionTransformer(BaseTransformer):
                 " 'check_inverse=False'."
             )
 
-    def _fit(self, Z, X=None):
+    def _fit(self, X, y=None):
         """
         Fit transformer to X and y.
 
@@ -139,7 +139,7 @@ class FunctionTransformer(BaseTransformer):
         self: a fitted instance of the estimator
         """
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
-            self._check_inverse_transform(Z)
+            self._check_inverse_transform(X)
         return self
 
     def _transform(self, X, y=None):

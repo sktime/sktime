@@ -9,9 +9,7 @@ __all__ = ["MatrixProfileTransformer"]
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("stumpy")
-
-import stumpy  # noqa: E402
+_check_soft_dependencies("stumpy", severity="warning")
 
 
 class MatrixProfileTransformer(BaseTransformer):
@@ -58,6 +56,7 @@ class MatrixProfileTransformer(BaseTransformer):
     }
 
     def __init__(self, window_length=3):
+        _check_soft_dependencies("stumpy", severity="error", object=self)
         self.window_length = window_length
         super(MatrixProfileTransformer, self).__init__()
 
@@ -80,6 +79,8 @@ class MatrixProfileTransformer(BaseTransformer):
             Matrix Profile of time series as output with length as
             (n_timepoints-window_length+1)
         """
+        import stumpy
+
         X = X.flatten()
         Xt = stumpy.stump(X, self.window_length)
         Xt = Xt[:, 0].astype("float")

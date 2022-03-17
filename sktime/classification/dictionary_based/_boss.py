@@ -119,6 +119,7 @@ class BOSSEnsemble(BaseClassifier):
     _tags = {
         "capability:train_estimate": True,
         "capability:multithreading": True,
+        "classifier_type": "dictionary",
     }
 
     def __init__(
