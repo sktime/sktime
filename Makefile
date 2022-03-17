@@ -28,7 +28,8 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v -n 2 --showlocals --durations=20 --pyargs $(PACKAGE)
+	cd ${TEST_DIR}; python -m pytest -v --showlocals --durations=20 --pyargs $(PACKAGE) -k "test_multiprocessing_idempotent"
+	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v -n 2 --showlocals --durations=20 --pyargs $(PACKAGE) -k "not test_multiprocessing_idempotent"
 
 tests: test
 
