@@ -13,17 +13,24 @@ Implementing an ``sktime`` compatible estimator
 
 The high-level steps to implement ``sktime`` compatible estimators are as follows:
 
-1.  identify the scitype of the estimator: forecaster, classifier, etc
+1.  identify the type of the estimator: forecaster, classifier, etc
 2.  copy the extension template for that kind of estimator to its intended location
 3.  complete the extension template
 4.  run the ``sktime`` test suite on the implemented estimator
 5.  if the test suite highlights bugs or issues, fix them and go to 4
 
 
-What is my scitype?
--------------------
+What is my learning task?
+-------------------------
 
-The estimator scitypes map onto the different extension templates found in the ``extension_templates``
+``sktime`` is structured along modules encompassing specific learning tasks,
+e.g., forecasting or time series classification.
+For brevity, we define an estimator's scientific type or "scitype" by the formal learning task that it solves.
+For example, the scitype of an estimator that solves the forecasting task is "forecaster".
+The scitype of an estimator that solves the time series classification task is "time series classifier".
+
+Estimators for a given scitype should be located in the respective module.
+The estimator scitypes also map onto the different extension templates found in the ``extension_templates``
 directory of ``sktime``.
 
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
