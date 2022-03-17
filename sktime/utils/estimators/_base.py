@@ -3,8 +3,11 @@
 
 __author__ = ["ltsaprounis"]
 
+import re
 from copy import deepcopy
-from inspect import getcallargs
+from inspect import getcallargs, getfullargspec
+
+from sktime.base import BaseEstimator
 
 
 class _MockEstimatorMixin:
@@ -31,3 +34,45 @@ def _method_logger(method):
         return method(self, *args, **kwargs)
 
     return wrapper
+
+
+def make_mock_estimator(
+    estimator_class: BaseEstimator, method_regex: str = ".*"
+) -> BaseEstimator:
+    r"""Transform any estimator class into a mock estimator class.
+
+    Parameters
+    ----------
+    estimator_class : BaseEstimator
+        any sktime estimator
+    method_regex : str, optional
+        regex to filter methods on, by default ".*"
+        Useful regex examples:
+            - everything: '.*'
+            - private methods only: '^(?!^__\w+__$)^_\w'
+            - public methods only: '(?!^_\w+)'
+
+    Returns
+    -------
+    BaseEstimator
+        input estimator class with logging feature enabled
+    """
+    dunder_methods_regex = r"^__\w+__$"
+
+    class _MockEstimator(estimator_class, _MockEstimatorMixin):
+        def __init__(self):
+            super().__init__()
+
+    for attr_name in dir(estimator_class):
+        attr = getattr(_MockEstimator, attr_name)
+        # exclude dunder methods (e.g. __eq__, __class__ etc.) from logging
+        if not re.match(dunder_methods_regex, attr_name) and callable(attr):
+            # match the given regex pattern
+            # exclude static and class methods from logging
+            if (
+                re.match(method_regex, attr_name)
+                and "self" in getfullargspec(attr).args
+            ):
+                setattr(_MockEstimator, attr_name, _method_logger(attr))
+
+    return _MockEstimator
