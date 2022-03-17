@@ -37,7 +37,7 @@ Testing - implement if sktime transformer (not needed locally):
 #       estimators of your own do not need to have permissive or BSD-3 copyright
 
 
-__author__ = ["ciaran-g"]
+__author__ = ["ciaran-g", "eenticott-shell", "k1m190r"]
 
 import numpy as np
 import pandas as pd
@@ -87,17 +87,18 @@ class reconciler(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        "scitype:transform-input": "Panel",
-        "scitype:transform-output": "Panel",
+        "scitype:transform-input": "Hierarchical",
+        "scitype:transform-output": "Hierarchical",
         "scitype:transform-labels": "None",
         # todo instance wise?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd_multiindex_hier",
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-        "univariate-only": False,  # can the transformer handle multivariate X?
+        "univariate-only": True,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": True,  # index type that needs to be enforced in X/y
@@ -106,6 +107,7 @@ class reconciler(BaseTransformer):
         # does transform return have the same time index as input X
     }
 
+    # test that method is recognised
     def __init__(self, method="bu"):
         self.method = method
         # self._g_dispatch = {
@@ -116,6 +118,9 @@ class reconciler(BaseTransformer):
         super(reconciler, self).__init__()
 
     # todo: implement this, mandatory (except in special case below)
+    # test for type of input?
+    # test for __total present in index?
+    # tests for index matching at each time point?
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -154,14 +159,18 @@ class reconciler(BaseTransformer):
         # self.g_matrix = self._g_dispatch[self.method](X)
         if self.method == "bu":
             self.g_matrix = _get_g_matrix_bu(X)
-        else:
+        elif self.method == "ols":
             self.g_matrix = _get_g_matrix_ols(X)
+        else:
+            self.g_matrix = _get_g_matrix_wls_str(X)
 
         self.s_matrix = _get_s_matrix(X)
 
         return self
 
     # todo: implement this, mandatory
+    # tests for index matching?
+    # tests for actually hierarchical predictions?
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -238,11 +247,14 @@ class reconciler(BaseTransformer):
         # return params
 
 
+# include index between matrices here as in df.dot()
 def _reconcile(base_fc, s_matrix, g_matrix):
     # return s_matrix.dot(g_matrix.dot(base_fc))
     return np.dot(s_matrix, np.dot(g_matrix, base_fc))
 
 
+# tests for matrix index?
+# what happens if two end-points have the same name?
 def _get_s_matrix(X):
     # get bottom level indexes
     bl_inds = (
@@ -287,6 +299,7 @@ def _get_s_matrix(X):
     return s_matrix
 
 
+# tests for matrix index?
 def _get_g_matrix_bu(X):
     # get bottom level indexes
     bl_inds = (
@@ -314,16 +327,41 @@ def _get_g_matrix_bu(X):
 
 
 def _get_g_matrix_ols(X):
-    """Triple double quotes."""
+    # get s matrix
     smat = _get_s_matrix(X)
     # get g
     g_ols = pd.DataFrame(
         np.dot(inv(np.dot(np.transpose(smat), smat)), np.transpose(smat))
     )
-
+    # set indexes of matrix
     g_ols = g_ols.transpose()
     g_ols = g_ols.set_index(smat.index)
     g_ols.columns = smat.columns
     g_ols = g_ols.transpose()
 
     return g_ols
+
+
+# this is similar to the ols except we have a new matrix W
+# W is a matrix which simply counts the number of dissaggregated
+# series connected to that node
+# for quarterly temporal series W = diag(4, 2, 2, 1, 1, 1, 1)
+def _get_g_matrix_wls_str(X):
+
+    smat = _get_s_matrix(X)
+    diag_data = np.diag(smat.sum(axis=1).values)
+    w_mat = pd.DataFrame(diag_data, index=smat.index, columns=smat.index)
+
+    g_wls_str = pd.DataFrame(
+        np.dot(
+            inv(np.dot(np.transpose(smat), np.dot(w_mat, smat))),
+            np.dot(np.transpose(smat), w_mat),
+        )
+    )
+    # set indexes of matrix
+    g_wls_str = g_wls_str.transpose()
+    g_wls_str = g_wls_str.set_index(smat.index)
+    g_wls_str.columns = smat.columns
+    g_wls_str = g_wls_str.transpose()
+
+    return g_wls_str
