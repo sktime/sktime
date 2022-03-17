@@ -25,19 +25,16 @@ def _average_of_slope(q: np.ndarray):
 
     Computes the average of the slope of the line through the point in question and
     its left neighbour, and the slope of the line through the left neighbour and the
-    right neighbour.
-
-    Mathematically this is defined at:
+    right neighbour. proposed in [1] for use in this context.
 
     .. math::
-        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+    q'_(i) = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
 
-    Where q is the original timeseries and d_q is the derived timeseries.
+    Where q is the original time series and q' is the derived time series.
 
     Parameters
     ----------
-    q: np.ndarray (2d array)
-        A timeseries.
+    q: np.ndarray (2d array) A times series.
 
     Returns
     -------
@@ -45,13 +42,20 @@ def _average_of_slope(q: np.ndarray):
                 len(q.shape[1]))
         Array containing the derivative of q.
 
+    References
+    ----------
+    .. [1] Keogh E, Pazzani M Derivative dynamic time warping. In: proceedings of 1st
+    SIAM International Conference on Data Mining, 2001
     """
-    # Taken from https://github.com/tslearn-team/tslearn/issues/180
     return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
 
 
 class _DdtwDistance(NumbaDistance):
-    """Derivative dynamic time warping (ddtw) between two timeseries."""
+    """Derivative dynamic time warping (ddtw) between two time series.
+
+    Takes the derivative of the series, then applies DTW (using the _cost_matrix from
+    _DtwDistance)
+    """
 
     def _distance_factory(
         self,
@@ -68,14 +72,14 @@ class _DdtwDistance(NumbaDistance):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         window: float, defaults = None
-            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            Float that is the radius of the Sakoe-Chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
-            Gradient of the slope for itakura parallelogram (if using Itakura
+            Gradient of the slope for Itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
         bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                         defaults = None
@@ -98,8 +102,8 @@ class _DdtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.

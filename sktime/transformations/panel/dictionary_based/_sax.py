@@ -19,7 +19,9 @@ __author__ = "Matthew Middlehurst"
 
 
 class SAX(_PanelToPanelTransformer):
-    """SAX (Symbolic Aggregate approXimation) Transformer, as described in
+    """SAX (Symbolic Aggregate approXimation) transformer.
+
+    as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
     Data Mining and Knowledge Discovery, 15(2):107-144
@@ -80,7 +82,7 @@ class SAX(_PanelToPanelTransformer):
         super(SAX, self).__init__()
 
     def transform(self, X, y=None):
-        """
+        """Transform data.
 
         Parameters
         ----------
@@ -184,3 +186,19 @@ class SAX(_PanelToPanelTransformer):
                 sys.float_info.max,
             ],
         }[self.alphabet_size]
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # small word length, window size for testing
+        params = {"word_length": 2, "window_size": 4}
+        return params

@@ -15,7 +15,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.datatypes import convert
 from sktime.transformations.panel.dictionary_based._paa import PAA
 from sktime.transformations.panel.dwt import DWTTransformer
 from sktime.transformations.panel.hog1d import HOG1DTransformer
@@ -245,6 +245,7 @@ class ShapeDTW(BaseClassifier):
         # the test/training data. It extracts the subsequences
         # and then performs the shape descriptor function on
         # each subsequence.
+        X = convert(X, from_type="numpy3D", to_type="nested_univ")
         X = self.sw.transform(X)
 
         # Feed X into the appropriate shape descriptor function
@@ -459,12 +460,11 @@ class ShapeDTW(BaseClassifier):
         # Convert the dataframes into arrays
         for x in first_desc.columns:
             first_desc_array.append(
-                from_nested_to_2d_array(first_desc[x], return_numpy=True)
+                convert(first_desc[x], from_type="nested_univ", to_type="numpyflat")
             )
-
         for x in second_desc.columns:
             second_desc_array.append(
-                from_nested_to_2d_array(second_desc[x], return_numpy=True)
+                convert(first_desc[x], from_type="nested_univ", to_type="numpyflat")
             )
 
         # Concatenate the arrays together

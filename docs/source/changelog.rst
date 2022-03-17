@@ -14,28 +14,123 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+[0.10.1] - 2022-02-20
+---------------------
+
+Highlights
+~~~~~~~~~~
+
+* This release is mainly a maintenance patch which upper bounds ``scipy<1.8.0`` to prevent bugs due to interface changes in ``scipy``.
+* Once ``sktime`` is compatible with ``scipy 1.8.0``, the upper bound will be relaxed
+* New forecaster: ``STLForecaster`` (:pr:`1963`) :user:`aiwalter`
+* New transformer: lagged window summarizer transformation (:pr:`1924`) :user:`danbartl`
+* Loaders for ``.tsf`` data format (:pr:`1934`) :user:`rakshitha123`
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+* Introduction of bound ``scipy<1.8.0``, to prevent bugs due to interface changes in ``scipy``
+* Once ``sktime`` is compatible with ``scipy 1.8.0``, the upper bound will be relaxed
+
+Added
+~~~~~
+
+Documentation
+^^^^^^^^^^^^^
+
+* [DOC] improvements to the forecasting tutorial (:pr:`1834)` :user:`baggiponte`
+* [DOC] Fix wrong conda command to install packages (:pr:`1973`) :user:`schettino72``
+* [DOC] Removed gitter from README (:pr:`2025`) :user:`aiwalter`
+* [DOC] Fix minor documentation issues (:pr:`2035`) :user:`Saransh-cpp`
+* [DOC] Fixed link from README to classification notebook (:pr:`2042`) :user:`Rubiel1`
+* [DOC] Added merlion as related software (:pr:`2050`) :user:`aiwalter`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Added loaders for ``.tsf`` data format (:pr:`1934`) :user:`rakshitha123`
+* [ENH] Added ``.tsf`` dataset for unit testing (:pr:`1996`) :user:`rakshitha123`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``convert`` store reset/freeze behaviour & fix of bug 1976 (:pr:`1977`) :user:`fkiraly`
+* [ENH] new ``Table`` mtypes: ``pd.Series`` based, ``list`` of ``dict`` (as used in bag of words transformers) (:pr:`2076`) :user:`fkiraly``
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Added ``STLForecaster`` (:pr:`1963`) :user:`aiwalter`
+* [ENH] moving forecaster test params from ``_config`` into classes - all forecasters excluding reduction (:pr:`1902`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Lagged window summarizer transformation (:pr:`1924`) :user:`danbartl`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] Update wheels CI/CD workflow after dropping C extensions and Cython (:pr:`1972`) :user:`lmmentel`
+* [MNT] Rename classification notebooks (:pr:`1980`) :user:`TonyBagnall`
+* [MNT] hotfix: scipy upper bound from ``1.8.0`` (:pr:`1995`) :user:`fkiraly`
+* [MNT] replace deprecated ``np.str`` and ``np.float`` (:pr:`1997`) :user:`fkiraly`
+* [MNT] Remove ``pytest-xdist`` from CI-CD, un-skip `test_multiprocessing_idempotent` (:pr:`2004`) :user:`fkiraly`
+* [MNT] Changing function names in datatypes check to lower_snake_case (:pr:`2014`) :user:`chicken-biryani`
+* [MNT] verbose output for ``linux`` and ``mac`` tests (:pr:`2045`) :user:`Saransh-cpp`
+* [MNT] GitHub Actions: cancel old but running workflows of a PR when pushing again (:pr:`2063`) :user:`RishiKumarRay`
+
+Fixed
+~~~~~
+* [BUG] remove MrSEQL notebook in docs (:pr:`1974`) :user:`TonyBagnall`
+* [BUG] fix import on clustering extension template (:pr:`1978`) :user:`schettino72`
+* [BUG] HC2 component bugfixes (:pr:`2020`) :user:`MatthewMiddlehurst`
+* [BUG] Fix a bug in ``PeriodIndex`` arithmetic (:pr:`1981`) :user:`khrapovs`
+* [BUG] fix conversion of ``nested_univ`` to ``pd-multiindex`` mtype if series have names (:pr:`2000`) :user:`fkiraly`
+* [BUG] ``MiniRocket`` to comply with sklearn init specification, fix ``random_state`` modification in ``__init__`` (:pr:`2027`) :user:`fkiraly`
+* [BUG] naive forecaster window error (:pr:`2047`) :user:`eenticott-shell`
+* [BUG] Fix silent bug in ``ColumnsEnsembleForecaster._predict`` (:pr:`2083`) :user:`aiwalter`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`baggiponte`,
+:user:`chicken-biryani`,
+:user:`danbartl`,
+:user:`eenticott-shell`,
+:user:`fkiraly`,
+:user:`khrapovs`,
+:user:`lmmentel`,
+:user:`MatthewMiddlehurst`,
+:user:`rakshitha123`,
+:user:`RishiKumarRay`,
+:user:`Rubiel1`,
+:user:`Saransh-cpp`,
+:user:`schettino72`,
+
+
 [0.10.0] - 2022-02-02
 ---------------------
 
 Highlights
 ~~~~~~~~~~
 
-* `sktime` now supports python 3.7-3.9. Python 3.6 is no longer supported, due to end of life. Last `sktime` version to support python 3.6 was 0.9.0.
-* `sktime` now supports, and requires, `numpy>=1.21.0` and `statsmodels>=0.12.1`
+* ``sktime`` now supports python 3.7-3.9. Python 3.6 is no longer supported, due to end of life. Last ``sktime`` version to support python 3.6 was 0.9.0.
+* ``sktime`` now supports, and requires, ``numpy>=1.21.0`` and ``statsmodels>=0.12.1``
 * overhaul of docs for installation and first-time developers (:pr:`1707`) :user:`amrith-shell`
-* all probabilistic forecasters now provide `predict_interval` and `predict_quantiles` interfaces
+* all probabilistic forecasters now provide ``predict_interval`` and ``predict_quantiles`` interfaces
   (:pr:`1842`, :pr:`1874`, :pr:`1879`, :pr:`1910`, :pr:`1961`) :user:`fkiraly` :user:`k1m190r` :user:`kejsitake`
 * new transformation based pipeline classifiers (:pr:`1721`) :user:`MatthewMiddlehurst`
-* developer install for `sktime` no longer requires C compilers and `cython` (:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`
+* developer install for ``sktime`` no longer requires C compilers and ``cython`` (:pr:`1761`, :pr:`1847`, :pr:`1932`, :pr:`1927`) :user:`TonyBagnall`
 * CI/CD moved completely to GitHub actions (:pr:`1620`, :pr:`1920`) :user:`lmmentel`
 
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
-* `sktime` now supports `python` 3.7-3.9 on windows, mac, and unix-based systems
-* `sktime` now supports, and requires, `numpy>=1.21.0` and `statsmodels>=0.12.1`
-* `sktime` `Prophet` interface now uses `prophet` instead of deprecated `fbprophet`
-* developer install for `sktime` no longer requires C compilers and `cython`
+* ``sktime`` now supports ``python`` 3.7-3.9 on windows, mac, and unix-based systems
+* ``sktime`` now supports, and requires, ``numpy>=1.21.0`` and ``statsmodels>=0.12.1``
+* ``sktime`` ``Prophet`` interface now uses ``prophet`` instead of deprecated ``fbprophet``
+* developer install for ``sktime`` no longer requires C compilers and ``cython``
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -65,8 +160,8 @@ Base interface refactor rolled out to series transformers (:pr:`1790`, :pr:`1795
 * ``fit``, ``transform``, ``fit_transform`` now accept both ``Series`` and ``Panel`` as argument
 * if ``Panel`` is passed to a series transformer, it is applied to all instances
 * all transformers now have signature ``transform(X, y=None)`` and ``inverse_transform(X, y=None)``. This is enforced by the new base interface.
-* `Z` (former first argument) aliases `X` until 0.11.0 in series transformers, will then be removed
-* `X` (former second argument) was not used in those transformers, was changed to `y`
+* ``Z`` (former first argument) aliases ``X`` until 0.11.0 in series transformers, will then be removed
+* ``X`` (former second argument) was not used in those transformers, was changed to ``y``
 * see transformer base API and transformer extension template
 
 Deprecations and removals

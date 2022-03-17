@@ -131,8 +131,12 @@ class ThetaForecaster(ExponentialSmoothing):
         super(ThetaForecaster, self)._fit(y, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
+        # compute and store historical residual standard error
+        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (len(y) - 1))
+
         # compute trend
         self.trend_ = self._compute_trend(y)
+
         return self
 
     def _predict(self, fh, X=None):
@@ -209,10 +213,6 @@ class ThetaForecaster(ExponentialSmoothing):
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
 
-        # compute historical residual standard error
-        n_timepoints = len(self._y)
-
-        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(
             self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
         )
