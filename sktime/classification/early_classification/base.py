@@ -115,14 +115,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
         state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None or an
-            empty List for the first decision made, the returned List new_state_info for
-            subsequent decisions.
-            If no state_info is provided and the input series_length is greater than
-            the first classification_points time stamp, all previous time stamps are
-            considered up to the input series_length and the class value for the first
-            safe prediction is returned.
+            A List containing the state information for each prediction safety decision
+            made for X. Contains classifier dependant information for future decisions
+            when more data is available.
+            Input should be None or an empty List for the first decision made. The
+            returned array new_state_info should be input if subsequent decisions are
+            required.
 
         Returns
         -------
@@ -130,13 +128,13 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             indices correspond to instance indices in X
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
-            safe to use or not. Returned if return_safety_decisions is True.
+            safe to use or not.
         new_state_info : 2D int array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Returned if
-            return_safety_decisions is True.
-            Each row contains information for a case from the latest decision on its
-            safety.
+            information for future decisions on the data. Each row contains information
+            for a case from the latest decision on its safety.
+            state_info will cease updating after a positive decision is made, though
+            predictions will continue to be returned for the case.
         """
         self.check_is_fitted()
 
@@ -162,14 +160,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
         state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None or an
-            empty List for the first decision made, the returned List new_state_info for
-            subsequent decisions.
-            If no state_info is provided and the input series_length is greater than
-            the first classification_points time stamp, all previous time stamps are
-            considered up to the input series_length and the probabilities for the first
-            safe prediction are returned.
+            A List containing the state information for each prediction safety decision
+            made for X. Contains classifier dependant information for future decisions
+            when more data is available.
+            Input should be None or an empty List for the first decision made. The
+            returned array new_state_info should be input if subsequent decisions are
+            required.
 
         Returns
         -------
@@ -179,13 +175,13 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
-            safe to use or not. Returned if return_safety_decisions is True.
+            safe to use or not.
         new_state_info : 2D int array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Returned if
-            return_safety_decisions is True.
-            Each row contains information for a case from the latest decision on its
-            safety.
+            information for future decisions on the data. Each row contains information
+            for a case from the latest decision on its safety.
+            state_info will cease updating after a positive decision is made, though
+            predictions will continue to be returned for the case.
         """
         self.check_is_fitted()
 
@@ -268,14 +264,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None or an
-            empty List for the first decision made, the returned List new_state_info for
-            subsequent decisions.
-            If no state_info is provided and the input series_length is greater than
-            the first classification_points time stamp, all previous time stamps are
-            considered up to the input series_length and the class value for the first
-            safe prediction is returned.
+            A List containing the state information for each prediction safety decision
+            made for X. Contains classifier dependant information for future decisions
+            when more data is available.
+            Input should be None or an empty List for the first decision made. The
+            returned array new_state_info should be input if subsequent decisions are
+            required.
 
         Returns
         -------
@@ -283,13 +277,13 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             indices correspond to instance indices in X
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
-            safe to use or not. Returned if return_safety_decisions is True.
+            safe to use or not.
         new_state_info : 2D int array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Returned if
-            return_safety_decisions is True.
-            Each row contains information for a case from the latest decision on its
-            safety.
+            information for future decisions on the data. Each row contains information
+            for a case from the latest decision on its safety.
+            state_info will cease updating after a positive decision is made, though
+            predictions will continue to be returned for the case.
         """
         ...
 
@@ -312,14 +306,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         state_info : List or None
-            A List containing the state info for each decision in X. contains
-            information for future decisions on the data. Inputs should be None or an
-            empty List for the first decision made, the returned List new_state_info for
-            subsequent decisions.
-            If no state_info is provided and the input series_length is greater than
-            the first classification_points time stamp, all previous time stamps are
-            considered up to the input series_length and the probabilities for the first
-            safe prediction are returned.
+            A List containing the state information for each prediction safety decision
+            made for X. Contains classifier dependant information for future decisions
+            when more data is available.
+            Input should be None or an empty List for the first decision made. The
+            returned array new_state_info should be input if subsequent decisions are
+            required.
 
         Returns
         -------
@@ -329,13 +321,13 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             (i, j)-th entry is predictive probability that i-th instance is of class j
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
-            safe to use or not. Returned if return_safety_decisions is True.
+            safe to use or not.
         new_state_info : 2D int array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Returned if
-            return_safety_decisions is True.
-            Each row contains information for a case from the latest decision on its
-            safety.
+            information for future decisions on the data. Each row contains information
+            for a case from the latest decision on its safety.
+            state_info will cease updating after a positive decision is made, though
+            predictions will continue to be returned for the case.
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds, decisions, state_info = self._predict(X, state_info=state_info)
