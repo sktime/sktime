@@ -65,7 +65,8 @@ def make_mock_estimator(
 
     for attr_name in dir(estimator_class):
         attr = getattr(_MockEstimator, attr_name)
-        # exclude dunder methods (e.g. __eq__, __class__ etc.) from logging
+        # exclude dunder methods (e.g. __eq__, __class__ etc.) and non callables
+        # from logging
         if not re.match(dunder_methods_regex, attr_name) and callable(attr):
             # match the given regex pattern
             # exclude static and class methods from logging
