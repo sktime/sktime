@@ -47,7 +47,6 @@ def _extend_docstring_3d(docstring):
         Indices are (n_instances, n_variables, n_series).
         If index is not present, n_variables=1 resp n_series=1 is assumed.
     """  # noqa
-    print(to_replace in docstring)
     docstring = docstring.replace(to_replace, replace_by)
 
     to_replace = """Returns
