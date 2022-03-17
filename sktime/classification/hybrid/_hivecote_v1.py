@@ -29,11 +29,11 @@ class HIVECOTEV1(BaseClassifier):
 
     An ensemble of the STC, TSF, RISE and cBOSS classifiers from different feature
     representations using the CAWPE structure as described in [1]_. The default
-    implementation differs from the one described in [1]_, in that it uses the out of
-    bag error (OOB) estimates for weights (described in [2]_) rather than the cross
-    validation estimate. OOB is an order of magnitude faster and on average as good
-    as CV. This means that this version of HIVE COTE is a bit faster than HC2,
-    although less accurate on average.
+    implementation differs from the one described in [1]_, in that the STC component
+    uses the out of bag error (OOB) estimates for weights (described in [2]_) rather
+    than the cross validation estimate. OOB is an order of magnitude faster and on
+    average as good as CV. This means that this version of HIVE COTE is a bit faster
+    than HC2, although less accurate on average.
 
     Parameters
     ----------
