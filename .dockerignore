@@ -1,0 +1,14 @@
+.binder
+.eggs
+.git
+.github
+.ipynb_checkpoints
+.pytest_cache
+.vscode
+build
+build_tools
+dist
+docs/_build
+htmlcov
+sktime.egg-info
+testdir
