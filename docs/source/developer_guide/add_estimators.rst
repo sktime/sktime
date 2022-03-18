@@ -92,7 +92,7 @@ Extension templates typically have the following ``todo``:
     This is useful in case the inner functionality assumes ``numpy.ndarray``, or ``pandas.DataFrame``, and helps avoid conversion boilerplate.
     The type strings can be found in ``datatypes.MTYPE_REGISTER``. For a tutorial on data type conventions, see ``examples/AA_datatypes_and_datasets``.
 *   Filling in the "inner" methods, e.g., ``_fit`` and ``_predict``. The docstrings and comments in the extension template should be followed here.
-    The docstrings also describe the guaranteese on the inputs to the "inner" methods, which are typically stronger than the guarantees on
+    The docstrings also describe the guarantees on the inputs to the "inner" methods, which are typically stronger than the guarantees on
     inputs to the public methods, and determined by values of tags that have been set.
     For instance, setting the tag ``y_inner_mtype`` to ``pd.DataFrame`` for a forecaster guarantees that the ``y`` seen by ``_fit`` will be
     a ``pandas.DataFrame``, complying with additional data container specifications in ``sktime`` (e.g., index types).
@@ -125,11 +125,12 @@ suite can be run instead. The ``sktime`` test suite (and CI/CD) will automatical
 collect all estimators of a certain type and run relevant tests on them.
 
 
-Testing for a third party extension
------------------------------------
+Testing within a third party extension package
+----------------------------------------------
 
-For third party packages (open or closed), the ``sktime`` test suite can be imported
-and extended in two ways:
+For third party extension packages to ``sktime`` (open or closed),
+or third party modules that aim for interface compliance with ``sktime``,
+the ``sktime`` test suite can be imported and extended in two ways:
 
 *   importing ``check_estimator``, this will carry out the tests defined in ``sktime``
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
