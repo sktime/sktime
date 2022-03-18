@@ -31,7 +31,7 @@ class PaddingTransformer(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": False,
+        "fit_is_empty": False,
     }
 
     def __init__(self, pad_length=None, fill_value=0):

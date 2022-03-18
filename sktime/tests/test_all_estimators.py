@@ -885,14 +885,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 dict_after = estimator.__dict__
 
                 if method == "transform" and estimator.get_class_tag(
-                    "fit-in-transform"
+                    "fit_is_empty"
                 ):
                     # Some transformations fit during transform, as they apply
                     # some transformation to each series passed to transform,
                     # so transform will actually change the state of these estimator.
                     continue
 
-                if method == "predict" and estimator.get_class_tag("fit-in-predict"):
+                if method == "predict" and estimator.get_class_tag("fit_is_empty"):
                     # Some annotators fit during predict, as they apply
                     # some apply annotation to each series passed to predict,
                     # so predict will actually change the state of these annotators.
