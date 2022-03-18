@@ -367,13 +367,15 @@ class TagAliaserMixin:
         For removal, add an entry "old_tag_name": ""
         For renaming, add an entry "old_tag_name": "new_tag_name"
     deprecate_dict contains the version number of renaming or removal.
+        the keys in deprecate_dict should be the same as in alias_dict.
+        values in deprecate_dict should be strings, the version of removal/renaming.
 
     The class will ensure that new tags alias old tags and vice versa, during
     the deprecation period. Informative warnings will be raised whenever the
     deprecated tags are being accessed.
 
     When removing tags, ensure to remove the removed tags from this class.
-    If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed), 
+    If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
     ensure toremove this class as a parent of BaseObject or BaseEstimator.
     """
 
@@ -382,7 +384,7 @@ class TagAliaserMixin:
     alias_dict = {"fit-in-transform": "fit_is_empty", "fit-in-predict": "fit_is_empty"}
 
     # dictionary of removal version
-    # key = old tag; value = version in which tag will be removed
+    # key = old tag; value = version in which tag will be removed, as string
     deprecate_dict = {"fit-in-transform": "0.12.0", "fit-in-predict": "0.12.0"}
 
     def __init__(self):
