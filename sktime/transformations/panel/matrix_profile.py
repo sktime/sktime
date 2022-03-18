@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Matrix profile transformer."""
+
+__author__ = ["Claudia Rincon Sanchez"]
+
 import numpy as np
 import pandas as pd
 
