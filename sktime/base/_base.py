@@ -360,14 +360,29 @@ class BaseObject(_BaseEstimator):
 
 
 class TagAliaserMixin:
-    """Mixin class for tag aliasing and deprecation of old tags."""
+    """Mixin class for tag aliasing and deprecation of old tags.
+
+    To deprecate tags, add the TagAliaserMixin to BaseObject or BaseEstimator.
+    alias_dict contains the deprecated tags, and supports removal and renaming.
+        For removal, add an entry "old_tag_name": ""
+        For renaming, add an entry "old_tag_name": "new_tag_name"
+    deprecate_dict contains the version number of renaming or removal.
+
+    The class will ensure that new tags alias old tags and vice versa, during
+    the deprecation period. Informative warnings will be raised whenever the
+    deprecated tags are being accessed.
+
+    When removing tags, ensure to remove the removed tags from this class.
+    If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed), 
+    ensure toremove this class as a parent of BaseObject or BaseEstimator.
+    """
 
     # dictionary of aliases
     # key = old tag; value = new tag, aliased by old tag
     alias_dict = {"fit-in-transform": "fit_is_empty", "fit-in-predict": "fit_is_empty"}
 
-    # dictionary of deprecation version
-    # key = old tag; value = version in which tag will be deprecated
+    # dictionary of removal version
+    # key = old tag; value = version in which tag will be removed
     deprecate_dict = {"fit-in-transform": "0.12.0", "fit-in-predict": "0.12.0"}
 
     def __init__(self):
@@ -493,7 +508,7 @@ class TagAliaserMixin:
             # this way we ensure upwards and downwards compatibility
             for old_tag, new_tag in alias_dict.items():
                 for tag in tag_dict:
-                    if tag == old_tag:
+                    if tag == old_tag and new_tag != "":
                         new_tag_dict[new_tag] = tag_dict[tag]
                     if tag == new_tag:
                         new_tag_dict[old_tag] = tag_dict[tag]
@@ -518,9 +533,16 @@ class TagAliaserMixin:
                 version = cls.deprecate_dict[tag_name]
                 new_tag = cls.alias_dict[tag_name]
                 msg = (
-                    f'tag "{tag_name} will be deprecated in sktime version {version}, '
-                    f'use tag "{new_tag}" instead'
+                    f'tag "{tag_name}" is will be removed in sktime version {version}'
                 )
+                if new_tag != "":
+                    msg += (
+                        f' and replaced by "{new_tag}", please use "{new_tag}" instead'
+                    )
+                else:
+                    msg += (
+                        ', please remove code that access or sets "{tag_name}"'
+                    )
                 warnings.warn(msg, category=DeprecationWarning)
 
 
