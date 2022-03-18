@@ -76,6 +76,8 @@ Core Developers
      - :user:`patrickzib`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
 
 Former Core Developers (inactive)
 ---------------------------------

@@ -239,24 +239,24 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),
-    # (
-    #     "handles-panel",
-    #     "annotator",
-    #     "bool",
-    #     "can handle panel annotations, i.e., list X/y?",
-    # ),
-    # (
-    #     "annotation-type",
-    #     "annotator",
-    #     "str",
-    #     "which annotation type? can be 'point', 'segment' or 'both'",
-    # ),
-    # (
-    #     "annotation-kind",
-    #     "annotator",
-    #     "str",
-    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
-    # ),
+    (
+        "classifier_type",
+        "classifier",
+        (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "which type the classifier falls under in the taxonomy of time series "
+        "classification algorithms.",
+    ),
     (
         "capability:multiple-alignment",
         "aligner",
