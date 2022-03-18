@@ -364,7 +364,7 @@ class TagAliaserMixin:
 
     # dictionary of aliases
     # key = old tag; value = new tag, aliased by old tag
-    alias_dict = {"fit-in-transform": "fit-is-empty", "fit-in-predict": "fit-is-empty"}
+    alias_dict = {"fit-in-transform": "fit_is_empty", "fit-in-predict": "fit_is_empty"}
 
     # dictionary of deprecation version
     # key = old tag; value = version in which tag will be deprecated

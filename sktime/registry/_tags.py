@@ -69,10 +69,10 @@ ESTIMATOR_TAG_REGISTER = [
         "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
     ),
     (
-        "fit-is-empty",
+        "fit_is_empty",
         "estimator",
         "bool",
-        "does fit contain no logic and can be skipped?",
+        "does fit contain no logic and can be skipped? Yes=True, No=False",
     ),
     (
         "transform-returns-same-time-index",
