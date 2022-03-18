@@ -16,14 +16,28 @@ def difference_test():
     """
     X_train, y_train = load_unit_test(split="train", return_type="numpy2d")
     d1 = X_train[0]
-    d2 = X_train[1]
+    d2 = X_train[2]
     d3 = np.array([1, 2, 3, 4, 5, 6])
     d4 = np.array([3, 4, 5, 6, 7, 8])
 
     dist1 = dtw_distance(d1, d2)
     dist2 = dtw_distance(d3, d4)
     print(" SHAPE  = ", d1.shape)
-    print(" distance 1D numpy input dist 1 = ", dist1, " distance 2 = ", dist2)
+    print(
+        " 100% window distance 1D numpy input dist 1 = ", dist1, " distance 2 = ", dist2
+    )
+    dist1 = dtw_distance(d1, d2, window=0.1)
+    dist2 = dtw_distance(d3, d4, window=0.1)
+    print(" SHAPE  = ", d1.shape)
+    print(
+        " 10% window distance 1D numpy input dist 1 = ", dist1, " distance 2 = ", dist2
+    )
+    dist1 = dtw_distance(d1, d2, window=0.0)
+    dist2 = dtw_distance(d3, d4, window=0.0)
+    print(" SHAPE  = ", d1.shape)
+    print(
+        " 0% window distance 1D numpy input dist 1 = ", dist1, " distance 2 = ", dist2
+    )
     X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
     c1 = X_train[0]
     c2 = X_train[1]
