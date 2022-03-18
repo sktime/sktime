@@ -168,15 +168,6 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         msg = f"{var_name} have a MultiIndex with 2 levels, found {nlevels}"
         return ret(False, msg, None, return_metadata)
 
-    # correct_names = ["instances", "timepoints"]
-    # objnames = obj.index.names
-    # if not objnames == correct_names:
-    #     msg = (
-    #         f"{var_name}  must have a MultiIndex with names"
-    #         f" {correct_names}, found {objnames}"
-    #     )
-    #     return ret(False, msg, None, return_metadata)
-
     # check instance index being integer or range index
     instind = obj.index.droplevel(1)
     if not isinstance(instind, VALID_MULTIINDEX_TYPES):
