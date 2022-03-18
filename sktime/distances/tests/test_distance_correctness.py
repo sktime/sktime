@@ -57,3 +57,8 @@ def test_dtw():
     d = dtw_distance(trainX[0], trainX[2], window=0.0)
     assert d == unit_test_distances["dtw"][2]
     trainX, trainy = load_basic_motions(return_type="numpy3D")
+    d = dtw_distance(trainX[0], trainX[2], window=1.0)
+    assert d == unit_test_distances["dtw"][0]
+    d = dtw_distance(trainX[0], trainX[2], window=0.1)
+    assert d == unit_test_distances["dtw"][1]
+    d = dtw_distance(trainX[0], trainX[2], window=0.0)

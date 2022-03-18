@@ -2,7 +2,7 @@
 """Test the move from (m,d) to (d,m)."""
 import numpy as np
 
-from sktime.contrib.datasets import load_basic_motions, load_unit_test
+from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.distances import dtw_distance
 
 
@@ -66,6 +66,13 @@ def difference_test():
     print(" distance 1 = ", dist1)
     dist2 = dtw_distance(a3, a4)
     print(" distance 2 = ", dist2)
+    X_train, y_train = load_basic_motions(split="train", return_type="numpy3d")
+    dist2 = dtw_distance(X_train[0], X_train[1], window=0.0)
+    print(" Window = 0.0, BASIC MOTIONS DIST = ", dist2)
+    dist2 = dtw_distance(X_train[0], X_train[1], window=0.1)
+    print(" Window = 0.1, BASIC MOTIONS DIST = ", dist2)
+    dist2 = dtw_distance(X_train[0], X_train[1], window=1.0)
+    print(" Window = 1, BASIC MOTIONS DIST = ", dist2)
 
 
 if __name__ == "__main__":
