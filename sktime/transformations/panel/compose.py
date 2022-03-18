@@ -10,14 +10,18 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
-from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import (
+    from_2d_array_to_nested,
+    from_3d_numpy_to_2d_array,
+    from_nested_to_2d_array,
+)
+from sktime.transformations.base import (
+    BaseTransformer,
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]

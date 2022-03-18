@@ -884,9 +884,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 _ = scenario.run(estimator, method_sequence=[method])
                 dict_after = estimator.__dict__
 
-                if method == "transform" and estimator.get_class_tag(
-                    "fit_is_empty"
-                ):
+                if method == "transform" and estimator.get_class_tag("fit_is_empty"):
                     # Some transformations fit during transform, as they apply
                     # some transformation to each series passed to transform,
                     # so transform will actually change the state of these estimator.
