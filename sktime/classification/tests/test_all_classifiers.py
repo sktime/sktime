@@ -7,12 +7,16 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 import numpy as np
 import pytest
 
-from sktime.tests._config import NON_STATE_CHANGING_METHODS
-from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.utils._testing.scenarios_classification import (
-    ClassifierFitPredictMultivariate
+from sktime.classification.tests._expected_outputs import (
+    basic_motions_proba,
+    unit_test_proba,
 )
-from sktime.utils._testing.estimator_checks import _has_capability, _make_args
+from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
+from sktime.utils._testing.scenarios_classification import (
+    ClassifierFitPredictMultivariate,
+)
 
 n_classes = 3
 
@@ -78,3 +82,47 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert isinstance(y_proba, np.ndarray)
         assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
+
+    def test_classifier_on_unit_test_data(self, estimator_instance):
+        """Test classifier on unit test data."""
+        classname = type(estimator_instance).__name__
+
+        if classname in unit_test_proba.keys():
+            expected_probas = unit_test_proba[classname]
+        else:
+            # skip test if no expected probas are registered
+            return None
+
+        # load unit test data
+        X_train, y_train = load_unit_test(split="train")
+        X_test, _ = load_unit_test(split="test")
+        indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
+
+        # train classifier and predict probas
+        estimator_instance.fit(X_train, y_train)
+        y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
+
+        # assert probabilities are the same
+        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+
+    def test_classifier_on_basic_motions(self, estimator_instance):
+        """Test classifier on basic motions data."""
+        classname = type(estimator_instance).__name__
+
+        if classname in basic_motions_proba.keys():
+            expected_probas = basic_motions_proba[classname]
+        else:
+            # skip test if no expected probas are registered
+            return None
+
+        # load unit test data
+        X_train, y_train = load_basic_motions(split="train")
+        X_test, _ = load_basic_motions(split="test")
+        indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
+
+        # train classifier and predict probas
+        estimator_instance.fit(X_train, y_train)
+        y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
+
+        # assert probabilities are the same
+        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
