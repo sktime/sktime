@@ -57,7 +57,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,
         "enforce_index_type": None,
-        "fit-in-transform": False,
+        "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
     }
