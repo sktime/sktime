@@ -83,6 +83,7 @@ class ClassifierTestScenario(TestScenario, BaseObject):
 
         return True
 
+
 y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
 X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
 X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
