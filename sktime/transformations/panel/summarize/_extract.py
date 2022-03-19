@@ -351,8 +351,8 @@ class FittedParamExtractor(BaseTransformer):
         ----------
         X : pd.DataFrame
             Univariate time series to transform.
-        y : pd.DataFrame, optional (default=False)
-            Exogenous variables
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
