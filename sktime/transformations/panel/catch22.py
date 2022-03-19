@@ -173,8 +173,6 @@ class Catch22(BaseTransformer):
         -------
         Numpy array containing a catch22 feature for each input series.
         """
-        X = convert_to(X, to_type="numpy3D", as_scitype="Panel")
-
         if isinstance(feature, (int, np.integer)) or isinstance(
             feature, (float, float)
         ):
@@ -187,6 +185,9 @@ class Catch22(BaseTransformer):
                 raise ValueError("Invalid catch22 feature name")
         else:
             raise ValueError("catch22 feature name or ID required")
+
+        if isinstance(X, pd.DataFrame):
+            X = convert_to(X, "numpy3D")
 
         if len(X.shape) > 2:
             n_instances, n_dims, series_length = X.shape
