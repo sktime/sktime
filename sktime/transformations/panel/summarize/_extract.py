@@ -33,7 +33,7 @@ class PlateauFinder(_PanelToPanelTransformer):
         finder.
     """
 
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+    _tags = {"fit_is_empty": True, "univariate-only": True}
 
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
@@ -325,6 +325,7 @@ class FittedParamExtractor(BaseTransformer):
     """
 
     _required_parameters = ["forecaster"]
+
     _tags = {
         "fit_is_empty": True,
         "univariate-only": True,
