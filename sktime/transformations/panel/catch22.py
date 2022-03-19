@@ -14,12 +14,11 @@ import pandas as pd
 from joblib import Parallel, delayed
 from numba import njit
 
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X
 
 
-class Catch22(_PanelToTabularTransformer):
+class Catch22(BaseTransformer):
     """Canonical Time-series Characteristics (catch22).
 
     Overview: Input n series with d dimensions of length m
@@ -92,8 +91,6 @@ class Catch22(_PanelToTabularTransformer):
         -------
         Pandas dataframe containing 22 features for each input series.
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
         n_instances = X.shape[0]
 
         if self.n_jobs == -1:
@@ -164,7 +161,7 @@ class Catch22(_PanelToTabularTransformer):
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series. Currently univariate only.
+        X : np.ndarray, 3D, in numpy3D mtype format
         feature : int, catch22 feature id or String, catch22 feature
                   name.
         case_id : int, identifier for the current set of cases. If the case_id is not
@@ -187,9 +184,6 @@ class Catch22(_PanelToTabularTransformer):
                 raise ValueError("Invalid catch22 feature name")
         else:
             raise ValueError("catch22 feature name or ID required")
-
-        if isinstance(X, pd.DataFrame):
-            X = from_nested_to_3d_numpy(X)
 
         if len(X.shape) > 2:
             n_instances, n_dims, series_length = X.shape
