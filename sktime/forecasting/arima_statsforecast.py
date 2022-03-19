@@ -10,6 +10,8 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
+_check_soft_dependencies("statsforecast", severity="warning")
+
 
 class AutoARIMA(BaseForecaster):
     """StatsForecast AutoARIMA estimator.
@@ -184,6 +186,7 @@ class AutoARIMA(BaseForecaster):
         num_cores: int = 2,
         period: int = 1
     ):
+        _check_soft_dependencies("statsforecast", severity="error", object=self)
 
         self.d=d
         self.D=D
