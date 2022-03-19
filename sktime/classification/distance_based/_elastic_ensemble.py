@@ -346,7 +346,7 @@ class ElasticEnsemble(BaseClassifier):
             self.train_accs_by_classifier[dm] = acc
         return self
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -402,7 +402,7 @@ class ElasticEnsemble(BaseClassifier):
         output_probas = np.divide(output_probas, train_sum)
         return output_probas
 
-    def _predict(self, X, return_preds_and_probas=False):
+    def _predict(self, X, return_preds_and_probas=False) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
