@@ -11,7 +11,7 @@ from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.scenarios_transformers import (
-    TransformerFitTransformSeriesMultivariate
+    TransformerFitTransformSeriesMultivariate,
 )
 
 
@@ -146,6 +146,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             else:
                 # All other estimators should raise the error in fit.
                 scenario.run(estimator_instance, method_sequence=["fit"])
+
 
 # todo: add testing of inverse_transform
 # todo: refactor the below, equivalent index check
