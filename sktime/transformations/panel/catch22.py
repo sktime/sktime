@@ -14,6 +14,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from numba import njit
 
+from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 
 
@@ -161,6 +162,7 @@ class Catch22(BaseTransformer):
         Parameters
         ----------
         X : np.ndarray, 3D, in numpy3D mtype format
+            or other sktime data container of Panel scitype
         feature : int, catch22 feature id or String, catch22 feature
                   name.
         case_id : int, identifier for the current set of cases. If the case_id is not
@@ -171,6 +173,8 @@ class Catch22(BaseTransformer):
         -------
         Numpy array containing a catch22 feature for each input series.
         """
+        X = convert_to(X, to_type="numpy3D", as_scitype="Panel")
+
         if isinstance(feature, (int, np.integer)) or isinstance(
             feature, (float, float)
         ):
