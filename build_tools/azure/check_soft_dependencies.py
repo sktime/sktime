@@ -20,7 +20,7 @@ SOFT_DEPENDENCIES = {
     "sktime.benchmarking.experiments": ["tsfresh", "esig"],
     "sktime.forecasting.all": ["pmdarima", "prophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
-    "sktime.forecasting.arima_statsforecast": ["statsforecast"],
+    "sktime.forecasting.statsforecast": ["statsforecast"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
