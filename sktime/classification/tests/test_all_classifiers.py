@@ -9,8 +9,10 @@ import pytest
 
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
+from sktime.utils._testing.scenarios_classification import (
+    ClassifierFitPredictMultivariate
+)
 from sktime.utils._testing.estimator_checks import _has_capability, _make_args
-
 
 n_classes = 3
 
@@ -39,66 +41,40 @@ class ClassifierFixtureGenerator(BaseFixtureGenerator):
 class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     """Module level tests for all sktime classifiers."""
 
-    def test_get_fitted_params(self, estimator_instance, scenario):
-        """Test get_fitted_params."""
-        scenario.run(estimator_instance, method_sequence=["fit"])
-        try:
-            params = estimator_instance.get_fitted_params()
-            assert isinstance(params, dict)
+    def test_multivariate_input_exception(estimator_instance):
+        """Test univariate classifiers raise exception on multivariate X."""
+        # check if multivariate input raises error for univariate classifiers
 
-        except NotImplementedError:
-            pass
+        # if handles multivariate, no error is to be raised
+        #   that classifier works on multivariate data is tested in test_all_estimators
+        if estimator_instance.get_tag("capability:multivariate"):
+            return None
 
+        error_msg = "X must be univariate"
 
+        scenario = ClassifierFitPredictMultivariate()
 
-@pytest.mark.parametrize("estimator", CLASSIFIERS)
-def test_multivariate_input(estimator):
-    """Test classifiers handle multivariate pd.DataFrame input correctly."""
-    # check if multivariate input is correctly handled
-    n_columns = 2
-    error_msg = "X must be univariate"
+        # check if estimator raises appropriate error message
+        with pytest.raises(ValueError, match=error_msg):
+            scenario.run(estimator_instance, method_sequence=["fit"])
 
-    estimator = estimator.create_test_instance()
-    X_train, y_train = _make_args(estimator, "fit", n_columns=n_columns)
+    def test_classifier_output(self, estimator_instance, scenario):
+        """Test classifier outputs the correct data types and values.
 
-    # check if estimator can handle multivariate data
-    try:
-        estimator.fit(X_train, y_train)
-        for method in ("predict", "predict_proba"):
-            X = _make_args(estimator, method, n_columns=n_columns)[0]
-            getattr(estimator, method)(X)
+        Test predict produces a np.array or pd.Series with only values seen in the train
+        data, and that predict_proba probability estimates add up to one.
+        """
+        X_new = scenario.args["predict"]["X"]
+        y_train = scenario.args["fit"]["y"]
+        y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
 
-    # if not, check if we raise error with appropriate message
-    except ValueError as e:
-        assert error_msg in str(e), (
-            f"{estimator.__class__.__name__} does not handle multivariate "
-            f"data and does not raise an appropriate error when multivariate "
-            f"data is passed"
-        )
+        # check predict
+        assert isinstance(y_pred, np.ndarray)
+        assert y_pred.shape == (X_new.shape[0],)
+        assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
-
-@pytest.mark.parametrize("estimator", CLASSIFIERS)
-def test_classifier_output(estimator):
-    """Test classifier outputs the correct data types and values.
-
-    Test predict produces a np.array or pd.Series with only values seen in the train
-    data, and that predict_proba probability estimates add up to one.
-    """
-    estimator = estimator.create_test_instance()
-    X_train, y_train = _make_args(estimator, "fit", n_classes=n_classes)
-    estimator.fit(X_train, y_train)
-
-    X_new = _make_args(estimator, "predict")[0]
-
-    # check predict
-    y_pred = estimator.predict(X_new)
-    assert isinstance(y_pred, np.ndarray)
-    assert y_pred.shape == (X_new.shape[0],)
-    assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
-
-    # check predict proba
-    if hasattr(estimator, "predict_proba"):
-        y_proba = estimator.predict_proba(X_new)
+        # check predict proba (all classifiers have predict_proba by default)
+        y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
         assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
