@@ -223,9 +223,9 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     Examples
     --------
     >>> from sktime.classification.interval_based import DrCIF
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
     >>> clf = DrCIF(n_estimators=3)
     >>> estimators = [("DrCIF", clf, [0, 1])]
     >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
