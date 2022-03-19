@@ -43,7 +43,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         """Test that the capability:inverse_transform tag is set correctly."""
         capability_tag = estimator_instance.get_tag("capability:inverse_transform")
         if capability_tag:
-            assert estimator_instance._has_implementation_of("inverse_transform")
+            assert estimator_instance._has_implementation_of("_inverse_transform")
 
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
@@ -97,7 +97,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         )
 
         msg = (
-            f"{type(estimator_instance).__name}.transform should return an object of "
+            f"{type(estimator_instance).__name__}.transform should return an object of "
             f"scitype {Xt_expected_scitype} when given an input of scitype {X_scitype},"
             f" but found the following return: {Xt}"
         )
@@ -141,7 +141,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         scenario = TransformerFitTransformSeriesMultivariate()
         with pytest.raises(ValueError, match=r"univariate"):
             # error should be raised in fit, unless fit is skipped
-            if estimator_instance.get_tag("fit_in_transform", False):
+            if estimator_instance.get_tag("fit_is_empty", False):
                 scenario.run(estimator_instance, method_sequence=["fit", "transform"])
             else:
                 # All other estimators should raise the error in fit.
