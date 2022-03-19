@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """TSFreshClassifier test code."""
 import numpy as np
+import pytest
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.feature_based._tsfresh_classifier import TSFreshClassifier
@@ -32,6 +33,7 @@ def test_tsfresh_classifier_on_unit_test_data():
     # )
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_tsfresh_classifier_on_basic_motions():
     """Test of TSFreshClassifier on basic motions."""
     # load basic motions data

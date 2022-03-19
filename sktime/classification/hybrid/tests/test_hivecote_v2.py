@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """HIVE-COTE v2 test code."""
 import numpy as np
+import pytest
 from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
 
@@ -65,6 +66,7 @@ def test_contracted_hivecote_v2_on_unit_test_data():
     hc2.fit(X_train, y_train)
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_hivecote_v2_on_basic_motions():
     """Test of HIVEVOTEV2 on basic motions data."""
     # load basic motions data

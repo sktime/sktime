@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """SignatureClassifier test code."""
-import pytest
-
 import numpy as np
+import pytest
 from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
 

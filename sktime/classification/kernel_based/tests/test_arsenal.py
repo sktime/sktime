@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Arsenal test code."""
 import numpy as np
+import pytest
 from numpy import testing
 from sklearn.metrics import accuracy_score
 
@@ -48,6 +49,7 @@ def test_contracted_arsenal_on_unit_test_data():
     assert len(arsenal.estimators_) > 1
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_arsenal_on_basic_motions():
     """Test of Arsenal on basic motions data."""
     # load basic motions data

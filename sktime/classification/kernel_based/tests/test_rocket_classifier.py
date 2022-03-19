@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """RocketClassifier test code."""
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.kernel_based import RocketClassifier
@@ -23,6 +24,7 @@ def test_rocket_on_unit_test_data():
     testing.assert_array_almost_equal(probas, rocket_unit_test_probas, decimal=2)
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_rocket_on_basic_motions():
     """Test of RocketClassifier on basic motions."""
     # load basic motions data

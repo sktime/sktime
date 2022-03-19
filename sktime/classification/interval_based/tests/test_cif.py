@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """CanonicalIntervalForest test code."""
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.interval_based import CanonicalIntervalForest
@@ -37,6 +38,7 @@ def test_dtc_on_unit_test_data():
     cif.predict_proba(X_test.iloc[indices])
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_cif_on_basic_motions():
     """Test of CanonicalIntervalForest on basic motions data."""
     # load basic motions data

@@ -2,9 +2,8 @@
 """Column ensemble test code."""
 __author__ = ["TonyBagnall"]
 
-import pytest
-
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.compose import ColumnEnsembleClassifier

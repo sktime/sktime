@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """MUSE test code."""
 
-import pytest
-
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.dictionary_based import MUSE

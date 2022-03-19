@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ShapeletTransformClassifier test code."""
 import numpy as np
+import pytest
 from numpy import testing
 from sklearn.metrics import accuracy_score
 
@@ -54,6 +55,7 @@ def test_contracted_stc_on_unit_test_data():
     stc.fit(X_train, y_train)
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_stc_on_basic_motions():
     """Test of ShapeletTransformClassifier on basic motions data."""
     # load basic motions data

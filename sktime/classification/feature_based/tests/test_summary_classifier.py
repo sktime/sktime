@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """SummaryClassifier test code."""
 import numpy as np
+import pytest
 from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
 
@@ -28,6 +29,7 @@ def test_summary_classifier_on_unit_test_data():
     )
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_summary_classifier_on_basic_motions():
     """Test of SummaryClassifier on basic motions."""
     # load basic motions data
