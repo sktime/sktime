@@ -2,30 +2,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests common to all transformers."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = []
 
-import numpy as np
-import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_scitype
-from sktime.datatypes._panel._check import is_nested_dataframe
-from sktime.registry import all_estimators
-from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
-from sktime.transformations.base import (
-    BaseTransformer,
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-    _SeriesToPrimitivesTransformer,
-    _SeriesToSeriesTransformer,
-)
-from sktime.utils._testing.estimator_checks import (
-    _assert_array_almost_equal,
-    _has_capability,
-    _make_args,
-)
+from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesMultivariate
 )
@@ -55,6 +39,12 @@ class TransformerFixtureGenerator(BaseFixtureGenerator):
 class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     """Module level tests for all sktime forecasters."""
 
+    def test_capability_inverse_tag_is_correct(self, estimator_instance):
+        """Test that the capability:inverse_transform tag is set correctly."""
+        capability_tag = estimator_instance.get_tag("capability:inverse_transform")
+        if capability_tag:
+            assert estimator_instance._has_implementation_of("inverse_transform")
+
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
 
@@ -81,35 +71,63 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_fit_transform_output(self, estimator_instance, scenario):
         """Test that transform output is of expected scitype."""
+        X = scenario.args["transform"]["X"]
         Xt = scenario.run(estimator_instance, method_sequence=["fit", "transform"])
 
         X_scitype = scenario.get_tag("X_scitype")
         trafo_input = estimator_instance.get_tag("scitype:transform-input")
         trafo_output = estimator_instance.get_tag("scitype:transform-output")
 
-        expected_scitype = self._expected_trafo_output_scitype(
+        # get metadata for X and ensure that X_scitype tag was correct
+        valid_X_scitype, _, X_metadata = check_is_scitype(
+            Xt, scitype=X_scitype, return_metadata=True
+        )
+        msg = (
+            f"error with scenario {type(scenario).__name__}, X_scitype tag "
+            f'was "{X_scitype}", but checke_is_scitype does not confirm this'
+        )
+        assert valid_X_scitype, msg
+
+        Xt_expected_scitype = self._expected_trafo_output_scitype(
             X_scitype, trafo_input, trafo_output
         )
 
-        valid_scitype = check_is_scitype(Xt, scitype=expected_scitype)
+        valid_scitype, _, Xt_metadata = check_is_scitype(
+            Xt, scitype=Xt_expected_scitype, return_metadata=True
+        )
 
         msg = (
             f"{type(estimator_instance).__name}.transform should return an object of "
-            f"scitype {expected_scitype} when given an input of scitype {X_scitype}, "
-            f"but found the following return: {Xt}"
+            f"scitype {Xt_expected_scitype} when given an input of scitype {X_scitype},"
+            f" but found the following return: {Xt}"
         )
-
         assert valid_scitype, msg
+
+        # we now know that Xt has its expected scitype
+        # assign this variable for better readability
+        Xt_scitype = Xt_expected_scitype
+
+        # if we vectorize, number of instances before/after transform should be same
+        if trafo_input == "Series" and trafo_output == "Series":
+            if X_scitype == "Series" and Xt_scitype == "Series":
+                if estimator_instance.get_tag("transform-returns-same-time-index"):
+                    assert X.shape[0] == Xt.shape[0]
+            if X_scitype == "Panel" and Xt_scitype == "Panel":
+                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
+            if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
+                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
+        if trafo_input == "Panel" and trafo_output == "Panel":
+            if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
+                assert X_metadata["n_panels"] == Xt_metadata["n_panels"]
 
         # todo: also test the expected mtype
 
-        # todo also test indices, similar to this:
-        # if estimator.get_tag("transform-returns-same-time-index"):
-        #    assert out.shape[0] == n_timepoints
-
-
     def test_transform_inverse_transform_equivalent(self, estimator_instance, scenario):
         """Test that inverse_transform is indeed inverse to transform."""
+        # skip this test if the estimator does not have inverse_transform
+        if not estimator_instance.get_class_tag("capability:inverse_transform", False):
+            return None
+
         X = scenario.args["transform"]["X"]
         Xt = scenario.run(estimator_instance, method_sequence=["fit", "transform"])
         Xit = estimator_instance.inverse_transform(Xt)
@@ -129,6 +147,9 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 # All other estimators should raise the error in fit.
                 scenario.run(estimator_instance, method_sequence=["fit"])
 
+# todo: add testing of inverse_transform
+# todo: refactor the below, equivalent index check
+
 # def check_transform_returns_same_time_index(Estimator):
 #     estimator = Estimator.create_test_instance()
 #     if estimator.get_tag("transform-returns-same-time-index"):
@@ -141,4 +162,3 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 #                 X = _make_args(estimator, method)[0]
 #                 Xt = estimator.transform(X)
 #                 np.testing.assert_array_equal(X.index, Xt.index)
-
