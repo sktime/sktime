@@ -15,7 +15,6 @@ from joblib import Parallel, delayed
 from numba import njit
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.panel import check_X
 
 
 class Catch22(BaseTransformer):
