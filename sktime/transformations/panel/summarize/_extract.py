@@ -8,10 +8,7 @@ from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.datatypes import convert_to
-from sktime.transformations.base import (
-    BaseTransformer,
-    _PanelToPanelTransformer,
-)
+from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils.validation.panel import check_X
 
