@@ -45,11 +45,22 @@ class Catch22(_PanelToTabularTransformer):
     Journal of the Royal Society Interface, 10(83), 20130048.
     """
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+    }
+
     def __init__(
         self,
         outlier_norm=False,
         replace_nans=False,
-        n_jobs=1,
+        n_jobs=-1,
     ):
         self.outlier_norm = outlier_norm
         self.replace_nans = replace_nans
@@ -69,12 +80,12 @@ class Catch22(_PanelToTabularTransformer):
 
         super(Catch22, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform data into the catch22 features.
 
         Parameters
         ----------
-        X : pandas DataFrame or 3d numpy array, input time series.
+        X : 3d numpy array, input time series panel.
         y : array_like, target values (optional, ignored).
 
         Returns
@@ -85,12 +96,15 @@ class Catch22(_PanelToTabularTransformer):
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
         n_instances = X.shape[0]
 
-        c22_list = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._transform_case)(
-                X[i],
+        if self.n_jobs == -1:
+            c22_list = [self._transform_case(X[i]) for i in range(n_instances)]
+        else:
+            c22_list = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._transform_case)(
+                    X[i],
+                )
+                for i in range(n_instances)
             )
-            for i in range(n_instances)
-        )
 
         if self.replace_nans:
             c22_list = np.nan_to_num(c22_list, False, 0, 0, 0)
