@@ -205,7 +205,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -214,7 +214,7 @@ class CanonicalIntervalForest(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
