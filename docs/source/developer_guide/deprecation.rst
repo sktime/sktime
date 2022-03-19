@@ -94,7 +94,10 @@ There are two common scenarios: removing a tag, or renaming a tag.
 
 For either scenario, the helper class ``TagAliaserMixin`` (in ``sktime.base``) can be used.
 
-To deprecate tags, add the ``TagAliaserMixin`` to ``BaseObject`` or ``BaseEstimator``.
+To deprecate tags, add the ``TagAliaserMixin`` to ``BaseEstimator``, or another ``BaseObject`` descendant.
+It is advised to select the youngest descendant that fully covers use of the deprecated tag.
+``TagAliaserMixin`` overrides the tag family of methods, and should hence be the first class to inherit from
+(or in case of multiple mixins, earlier than ``BaseObject``).
 
 ``alias_dict`` in ``TagAliaserMixin`` contains a dictionary of deprecated tags:
 For removal, add an entry ``"old_tag_name": ""``.
