@@ -10,6 +10,7 @@ from sklearn.base import clone
 from sktime.transformations.base import (
     _PanelToPanelTransformer,
     _PanelToTabularTransformer,
+    BaseTransformer,
 )
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils.validation.panel import check_X
@@ -301,7 +302,7 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         return Xt
 
 
-class FittedParamExtractor(_PanelToTabularTransformer):
+class FittedParamExtractor(BaseTransformer):
     """Fitted parameter extractor.
 
     Extract parameters of a fitted forecaster as features for a subsequent
@@ -324,7 +325,17 @@ class FittedParamExtractor(_PanelToTabularTransformer):
     """
 
     _required_parameters = ["forecaster"]
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+    _tags = {
+        "fit_is_empty": True,
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, forecaster, param_names, n_jobs=None):
         self.forecaster = forecaster
@@ -332,7 +343,7 @@ class FittedParamExtractor(_PanelToTabularTransformer):
         self.n_jobs = n_jobs
         super(FittedParamExtractor, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X.
 
         Parameters
@@ -347,8 +358,6 @@ class FittedParamExtractor(_PanelToTabularTransformer):
         Xt : pd.DataFrame
             Extracted parameters; columns are parameter values
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 
