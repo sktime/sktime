@@ -3,6 +3,8 @@
 """Implements AutoARIMA model from StatsForecast"""
 
 __author__ = ["FedericoGarza"]
+__all__ = ["AutoARIMA"]
+
 
 from typing import Dict, Optional
 
