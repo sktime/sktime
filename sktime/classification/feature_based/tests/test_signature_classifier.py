@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """SignatureClassifier test code."""
+import pytest
+
 import numpy as np
 from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
@@ -28,6 +30,7 @@ def test_signatures_on_unit_test_data():
     )
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_signature_classifier_on_basic_motions():
     """Test of SignatureClassifier on basic motions."""
     # load basic motions data

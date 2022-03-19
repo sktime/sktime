@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """RandomIntervalClassifier test code."""
+import pytest
+
 import numpy as np
 from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
@@ -35,6 +37,7 @@ def test_random_interval_classifier_on_unit_test_data():
     )
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_random_interval_classifier_on_basic_motions():
     """Test of RandomIntervalClassifier on basic motions."""
     # load basic motions data

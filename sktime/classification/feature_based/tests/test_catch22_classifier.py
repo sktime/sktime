@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Catch22Classifier test code."""
+import pytest
+
 import numpy as np
 from numpy import testing
 from sklearn.ensemble import RandomForestClassifier
@@ -30,6 +32,7 @@ def test_catch22_classifier_on_unit_test_data():
     )
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_catch22_classifier_on_basic_motions():
     """Test of Catch22Classifier on basic motions."""
     # load basic motions data

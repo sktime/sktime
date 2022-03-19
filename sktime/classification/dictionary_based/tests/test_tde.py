@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """TDE test code."""
+import pytest
+
 import numpy as np
 from numpy import testing
 from sklearn.metrics import accuracy_score
@@ -58,6 +60,7 @@ def test_contracted_tde_on_unit_test_data():
     assert len(tde.estimators_) > 1
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_tde_on_basic_motions():
     """Test of TDE on basic motions data."""
     # load basic motions data

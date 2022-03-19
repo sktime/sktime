@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """MUSE test code."""
 
+import pytest
+
 import numpy as np
 from numpy import testing
 
@@ -24,6 +26,7 @@ def test_muse_on_unit_test_data():
     testing.assert_array_almost_equal(probas, muse_unit_test_probas, decimal=2)
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_muse_on_basic_motions():
     """Test MUSE on basic motions data."""
     # load basic motions data

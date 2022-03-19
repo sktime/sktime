@@ -2,6 +2,7 @@
 """Column ensemble test code."""
 __author__ = ["TonyBagnall"]
 
+import pytest
 
 import numpy as np
 from numpy import testing
@@ -12,6 +13,7 @@ from sktime.classification.interval_based import DrCIF
 from sktime.datasets import load_basic_motions, load_unit_test
 
 
+@pytest.mark.skip(reason="skipped due to high runtime")
 def test_col_ens_on_basic_motions():
     """Test of ColumnEnsembleClassifier on basic motions data."""
     # load basic motions data
