@@ -588,9 +588,12 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     X : pd.DataFrame
         The multi-index pandas DataFrame
 
+    instance_index, time_index are deprecated since 0.11.0 and will be removed in 0.12.0
+        these are not necessary, since: as of before 0.11.0, the column names are
+            guaranteed if the mtype is pd-multiindex, and after 0.12.0 the condition
+            on column names is relaxed
     instance_index : str
         Name of the multi-index level corresponding to the DataFrame's instances
-
     time_index : str
         Name of multi-index level corresponding to DataFrame's timepoints
 
@@ -602,23 +605,8 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     if X.index.nlevels != 2:
         raise ValueError("Multi-index DataFrame should have 2 levels.")
 
-    if (instance_index is None) or (time_index is None):
-        msg = "Must supply parameters instance_index and time_index"
-        raise ValueError(msg)
-
-    n_instances = len(X.groupby(level=instance_index))
-    # Alternative approach is more verbose
-    # n_instances = (multi_ind_dataframe
-    #                    .index
-    #                    .get_level_values(instance_index)
-    #                    .unique()).shape[0]
-    n_timepoints = len(X.groupby(level=time_index))
-    # Alternative approach is more verbose
-    # n_instances = (multi_ind_dataframe
-    #                    .index
-    #                    .get_level_values(time_index)
-    #                    .unique()).shape[0]
-
+    n_instances = len(X.index.get_level_values(0).unique())
+    n_timepoints = len(X.index.get_level_values(1).unique())
     n_columns = X.shape[1]
 
     X_3d = X.values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
@@ -628,9 +616,11 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
 
 def from_multi_index_to_3d_numpy_adp(obj, store=None):
 
-    return from_multi_index_to_3d_numpy(
-        X=obj, instance_index="instances", time_index="timepoints"
-    )
+    res = from_multi_index_to_3d_numpy(X=obj)
+    if isinstance(store, dict):
+        store["columns"] = obj.columns
+
+    return res
 
 
 convert_dict[("pd-multiindex", "numpy3D", "Panel")] = from_multi_index_to_3d_numpy_adp
@@ -700,8 +690,14 @@ def from_3d_numpy_to_multi_index(
 
 
 def from_3d_numpy_to_multi_index_adp(obj, store=None):
-
-    return from_3d_numpy_to_multi_index(X=obj)
+    res = from_3d_numpy_to_multi_index(X=obj)
+    if (
+        isinstance(store, dict)
+        and "columns" in store.keys()
+        and len(store["columns"]) == obj.shape[1]
+    ):
+        res.columns = store["columns"]
+    return res
 
 
 convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_index_adp
@@ -730,7 +726,7 @@ def from_multi_index_to_nested(
         The nested version of the DataFrame
     """
     if instance_index is None:
-        raise ValueError("Supply a value for the instance_index parameter.")
+        instance_index = 0
 
     # get number of distinct cases (note: a case may have 1 or many dimensions)
     instance_idxs = multi_ind_dataframe.index.get_level_values(instance_index).unique()

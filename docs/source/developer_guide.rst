@@ -38,6 +38,7 @@ If you’re already familiar with scikit-learn, you may still learn something ne
    developer_guide/add_estimators
    developer_guide/add_dataset
    developer_guide/deprecation
+   developer_guide/dependencies
    developer_guide/documentation
    developer_guide/testing_framework
    developer_guide/release
