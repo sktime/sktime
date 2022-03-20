@@ -13,6 +13,7 @@ from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
@@ -71,8 +72,11 @@ class ClassifierTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        # applicable only if obj inherits from BaseClassifier
-        if not isinstance(obj, BaseClassifier) and not issubclass(obj, BaseClassifier):
+        regr_or_classf = (BaseClassifier, BaseRegressor)
+
+        # applicable only if obj inherits from BaseClassifier or BaseRegressor
+        #   currently we test both classifiers and regressors using these scenarios
+        if not isinstance(obj, regr_or_classf) and not issubclass(obj, regr_or_classf):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate
