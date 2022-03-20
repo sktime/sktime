@@ -45,7 +45,7 @@ class ClassifierFixtureGenerator(BaseFixtureGenerator):
 class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     """Module level tests for all sktime classifiers."""
 
-    def test_multivariate_input_exception(estimator_instance):
+    def test_multivariate_input_exception(self, estimator_instance):
         """Test univariate classifiers raise exception on multivariate X."""
         # check if multivariate input raises error for univariate classifiers
 
