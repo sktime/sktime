@@ -48,7 +48,8 @@ class Tabularizer(BaseTransformer):
         Xt : pandas DataFrame
             Transformed dataframe with only primitives in cells.
         """
-        X = convert_to(X, to_type="numpyflat", as_scitype="Panel")
+        Xt = convert_to(X, to_type="numpyflat", as_scitype="Panel")
+        return Xt
 
     def inverse_transform(self, X, y=None):
         """Transform tabular pandas dataframe into nested dataframe.
@@ -64,4 +65,5 @@ class Tabularizer(BaseTransformer):
         Xt : pandas DataFrame
             Transformed dataframe with series in cells.
         """
-        X = convert(X, from_type="numpyflat", to_type="numpy3D", as_scitype="Panel")
+        Xt = convert(X, from_type="numpyflat", to_type="numpy3D", as_scitype="Panel")
+        return Xt
