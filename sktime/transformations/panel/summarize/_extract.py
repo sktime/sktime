@@ -1,6 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Sequence feature extraction transformers"""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+
+__author__ = ["mloning"]
 
 import numpy as np
 import pandas as pd
@@ -13,7 +15,7 @@ from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils.validation.panel import check_X
 
 
-class PlateauFinder(_PanelToPanelTransformer):
+class PlateauFinder(BaseTransformer):
     """Plateau finder transformer.
 
     Transformer that finds segments of the same given value, plateau in
@@ -30,14 +32,24 @@ class PlateauFinder(_PanelToPanelTransformer):
         finder.
     """
 
-    _tags = {"fit_is_empty": True, "univariate-only": True}
+    _tags = {
+        "fit_is_empty": True,
+        "univariate-only": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
         self.min_length = min_length
         super(PlateauFinder, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X.
 
         Parameters
@@ -50,10 +62,6 @@ class PlateauFinder(_PanelToPanelTransformer):
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-        # input checks
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-
         # get column name
         column_name = X.columns[0]
 
