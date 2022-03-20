@@ -108,6 +108,7 @@ class MiniRocketMultivariate(BaseTransformer):
         -------
         pandas DataFrame, transformed features
         """
+        X = X.astype(np.float32)
         # change n_jobs dependend on value and existing cores
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
