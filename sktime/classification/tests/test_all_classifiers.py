@@ -18,8 +18,6 @@ from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
 
-n_classes = 3
-
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for classifier tests.
@@ -68,6 +66,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         Test predict produces a np.array or pd.Series with only values seen in the train
         data, and that predict_proba probability estimates add up to one.
         """
+        n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         y_train = scenario.args["fit"]["y"]
         y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
