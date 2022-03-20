@@ -46,7 +46,7 @@ import pandas as pd
 from sktime.datatypes._series._check import check_pddataframe_series
 
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
-VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
+VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.Index)
 
 
 def _ret(valid, msg, metadata, return_metadata):
@@ -161,9 +161,12 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         return _ret(False, msg, None, return_metadata)
 
     # check instance index being integer or range index
-    instind = obj.index.get_level_values(1)
+    instind = obj.index.get_level_values(0)
     if not isinstance(instind, VALID_MULTIINDEX_TYPES):
-        msg = f"instance index must be {VALID_MULTIINDEX_TYPES}, found {type(instind)}"
+        msg = (
+            f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
+            f"but found {type(instind)}"
+        )
         return _ret(False, msg, None, return_metadata)
 
     inst_inds = np.unique(obj.index.get_level_values(0))
