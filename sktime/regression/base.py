@@ -12,8 +12,6 @@ from sktime.base import BaseEstimator
 class BaseRegressor(BaseEstimator):
     """Base class for regressors, for identification."""
 
-    _tags = {"capability:multivariate": False}
-
     def fit(self, X, y):
         """Fit regressor to training data.
 
