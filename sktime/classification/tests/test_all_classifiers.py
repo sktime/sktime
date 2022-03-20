@@ -83,10 +83,13 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
 
-    def test_classifier_on_unit_test_data(self, estimator_instance):
+    def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
-        classname = type(estimator_instance).__name__
+        # we only use the first estimator instance for testing
+        classname = estimator_class.__name__
+        estimator_instance = estimator_class.create_test_instance()
 
+        # retrieve expected predict_proba output, and skip test if not available
         if classname in unit_test_proba.keys():
             expected_probas = unit_test_proba[classname]
         else:
@@ -110,10 +113,13 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
-    def test_classifier_on_basic_motions(self, estimator_instance):
+    def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
-        classname = type(estimator_instance).__name__
+        # we only use the first estimator instance for testing
+        classname = estimator_class.__name__
+        estimator_instance = estimator_class.create_test_instance()
 
+        # retrieve expected predict_proba output, and skip test if not available
         if classname in basic_motions_proba.keys():
             expected_probas = basic_motions_proba[classname]
         else:
