@@ -227,13 +227,14 @@ class MatrixProfile(BaseTransformer):
 
         Parameters
         ----------
-        X: pandas.DataFrame
-           Time series dataset.
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        Xt: pandas.DataFrame
-            Dataframe with the same number of rows as the input.
+        Xt : pandas.DataFrame in nested_univ mtype format
+            Dataframe with the n_instances rows as the input.
             The number of columns equals the number of subsequences
             of the desired length in each time series.
         """
