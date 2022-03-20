@@ -86,13 +86,17 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     def test_classifier_on_unit_test_data(self, estimator_instance):
         """Test classifier on unit test data."""
         classname = type(estimator_instance).__name__
-        estimator_instance = clone(estimator_instance).set_params(random_state=0)
 
         if classname in unit_test_proba.keys():
             expected_probas = unit_test_proba[classname]
         else:
             # skip test if no expected probas are registered
             return None
+
+        # set random seed if possible
+        estimator_instance = clone(estimator_instance)
+        if "random_seed" in estimator_instance.get_params().keys():
+            estimator_instance.set_params(random_state=0)
 
         # load unit test data
         X_train, y_train = load_unit_test(split="train")
@@ -109,13 +113,17 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     def test_classifier_on_basic_motions(self, estimator_instance):
         """Test classifier on basic motions data."""
         classname = type(estimator_instance).__name__
-        estimator_instance = clone(estimator_instance).set_params(random_state=0)
 
         if classname in basic_motions_proba.keys():
             expected_probas = basic_motions_proba[classname]
         else:
             # skip test if no expected probas are registered
             return None
+
+        # set random seed if possible
+        estimator_instance = clone(estimator_instance)
+        if "random_seed" in estimator_instance.get_params().keys():
+            estimator_instance.set_params(random_state=0)
 
         # load unit test data
         X_train, y_train = load_basic_motions(split="train")
