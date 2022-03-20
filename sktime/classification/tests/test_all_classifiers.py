@@ -87,7 +87,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         """Test classifier on unit test data."""
         # we only use the first estimator instance for testing
         classname = estimator_class.__name__
-        estimator_instance = estimator_class.create_test_instance()
 
         # retrieve expected predict_proba output, and skip test if not available
         if classname in unit_test_proba.keys():
@@ -96,8 +95,9 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             # skip test if no expected probas are registered
             return None
 
+        # we only use the first estimator instance for testing
+        estimator_instance = clone(estimator_class.create_test_instance())
         # set random seed if possible
-        estimator_instance = clone(estimator_instance)
         if "random_seed" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
@@ -117,7 +117,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         """Test classifier on basic motions data."""
         # we only use the first estimator instance for testing
         classname = estimator_class.__name__
-        estimator_instance = estimator_class.create_test_instance()
 
         # retrieve expected predict_proba output, and skip test if not available
         if classname in basic_motions_proba.keys():
@@ -126,8 +125,9 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             # skip test if no expected probas are registered
             return None
 
+        # we only use the first estimator instance for testing
+        estimator_instance = clone(estimator_class.create_test_instance())
         # set random seed if possible
-        estimator_instance = clone(estimator_instance)
         if "random_seed" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
