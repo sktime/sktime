@@ -16,6 +16,10 @@ class TSInterpolator(BaseTransformer):
     and samples user defined number of points. Points are generated
     by numpy.linspace. After transformation each cell will be a numpy.array
     of defined size.
+
+    Parameters
+    ----------
+    length : integer, the length of time series to resize to.
     """
 
     _tags = {
