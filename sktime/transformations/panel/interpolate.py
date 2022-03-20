@@ -83,11 +83,12 @@ class TSInterpolator(BaseTransformer):
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_samples, n_features]
-            Nested dataframe with time-series in cells.
+            Nested dataframe with time series in cells, following nested_univ format.
+        y : ignored argument for interface compatibility
 
         Returns
         -------
-        pandas DataFrame : Transformed pandas DataFrame with same number
-                            of rows and columns
+        pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
+            follows nested_univ format
         """
         return X.apply(self._resize_col)
