@@ -5,7 +5,6 @@ from scipy import interpolate
 
 from sktime.transformations.base import BaseTransformer
 
-
 __author__ = ["mloning"]
 
 
