@@ -295,7 +295,7 @@ class STLBootstrapTransformer(BaseTransformer):
         if len(X) <= self.block_length_:
             raise ValueError(
                 "STLBootstrapTransformer requires that block_length is"
-                " greater than the length of X"
+                " strictly smaller than the length of X"
             )
 
         X_index = X.index
