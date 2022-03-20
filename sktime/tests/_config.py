@@ -95,6 +95,8 @@ EXCLUDE_ESTIMATORS = [
     #    unless it inherits from the old mixins, which hard coded the y
     #    should be removed once test_all_transformers has been refactored to scenarios
     "TSFreshRelevantFeatureExtractor",
+    # PlateauFinder seems to be broken, see #2259
+    "PlateauFinder",
 ]
 
 
