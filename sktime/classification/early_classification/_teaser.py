@@ -244,7 +244,7 @@ class TEASER(BaseClassifier):
         out = self._predict(X, state_info=state_info)
         return out if self.return_safety_decisions else out[0]
 
-    def _predict(self, X, state_info=None):
+    def _predict(self, X, state_info=None) -> np.ndarray:
         out = self._predict_proba(X, state_info=state_info)
         probas = out[0]
 
@@ -308,7 +308,7 @@ class TEASER(BaseClassifier):
 
         return out if self.return_safety_decisions else out[0]
 
-    def _predict_proba(self, X, state_info=None):
+    def _predict_proba(self, X, state_info=None) -> np.ndarray:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
