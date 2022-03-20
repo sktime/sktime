@@ -282,7 +282,7 @@ def test_mtype_infer(scitype, mtype, fixture_index):
 
 # exclude these scitypes in inference of scitype test
 #  would lead to ambiguous results
-SKIP_SCITYPES = ["Alignment", "Table"]
+SKIP_SCITYPES = ["Alignment", "Table", "Proba"]
 SCITYPES_FOR_INFER_TEST = list(set(SCITYPE_LIST).difference(SKIP_SCITYPES))
 
 
