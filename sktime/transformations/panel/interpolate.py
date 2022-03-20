@@ -4,7 +4,6 @@ import numpy as np
 from scipy import interpolate
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation.panel import check_X
 
 
 __author__ = ["mloning"]
