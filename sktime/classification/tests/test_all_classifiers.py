@@ -6,7 +6,6 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 import numpy as np
 import pytest
-
 from sklearn import clone
 
 from sktime.classification.tests._expected_outputs import (
