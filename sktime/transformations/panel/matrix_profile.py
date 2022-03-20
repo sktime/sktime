@@ -6,8 +6,7 @@ __author__ = ["Claudia Rincon Sanchez"]
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 
 def _sliding_dot_products(q, t, q_len, t_len):
@@ -195,7 +194,7 @@ def _stomp_self(ts, m):
     return mp
 
 
-class MatrixProfile(_PanelToTabularTransformer):
+class MatrixProfile(BaseTransformer):
     """Return the matrix profile and index profile for each time series of a dataset.
 
     Example of use:
@@ -207,13 +206,23 @@ class MatrixProfile(_PanelToTabularTransformer):
     corresponding time series.
     """
 
-    _tags = {"univariate-only": True, "fit_is_empty": True}
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, m=10):
         self.m = m  # subsequence length
         super(MatrixProfile, self).__init__()
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Return the matrix profile for each single time series of the dataset.
 
         Parameters
@@ -229,8 +238,6 @@ class MatrixProfile(_PanelToTabularTransformer):
             of the desired length in each time series.
         """
         # Input checks
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         n_instances = X.shape[0]
         Xt = pd.DataFrame([_stomp_self(X[i], self.m) for i in range(n_instances)])
         return Xt
