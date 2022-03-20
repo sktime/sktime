@@ -80,7 +80,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
         # get metadata for X and ensure that X_scitype tag was correct
         valid_X_scitype, _, X_metadata = check_is_scitype(
-            Xt, scitype=X_scitype, return_metadata=True
+            X, scitype=X_scitype, return_metadata=True
         )
         msg = (
             f"error with scenario {type(scenario).__name__}, X_scitype tag "
