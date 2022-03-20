@@ -5,8 +5,8 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = ["Tabularizer"]
 
-from sktime.transformations.base import BaseTransformer
 from sktime.datatypes import convert, convert_to
+from sktime.transformations.base import BaseTransformer
 
 
 class Tabularizer(BaseTransformer):
