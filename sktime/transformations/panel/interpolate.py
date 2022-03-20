@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Time series interpolator/re-sampler."""
 import numpy as np
+import pandas as pd
 from scipy import interpolate
 
 from sktime.transformations.base import BaseTransformer
@@ -14,8 +15,10 @@ class TSInterpolator(BaseTransformer):
     Transformer that rescales series for another number of points.
     For each cell in dataframe transformer fits scipy linear interp1d
     and samples user defined number of points. Points are generated
-    by numpy.linspace. After transformation each cell will be a numpy.array
-    of defined size.
+    by numpy.linspace.
+
+    After transformation each cell will be a pd.Series of given length.
+    Indices of the pd.Series will be changed to integer indices.
 
     Parameters
     ----------
@@ -65,21 +68,8 @@ class TSInterpolator(BaseTransformer):
         numpy.array : with user defined size
         """
         f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), cell.to_numpy())
-        return f(np.linspace(0, 1, self.length))
-
-    def _resize_col(self, coll):
-        """Resizes column cell-wise.
-
-        Parameters
-        ----------
-        coll : pandas.Series : a column with array-like objects in each cell
-
-        Returns
-        -------
-        pandas.Series : a column with numpy.array in each cell with user
-                        defined size
-        """
-        return coll.apply(self._resize_cell)
+        Xt = f(np.linspace(0, 1, self.length))
+        return pd.Series(Xt)
 
     def _transform(self, X, y=None):
         """Take series in each cell, train linear interpolation and samples n.
@@ -95,4 +85,4 @@ class TSInterpolator(BaseTransformer):
         pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
             follows nested_univ format
         """
-        return X.apply(self._resize_col)
+        return X.applymap(self._resize_col)
