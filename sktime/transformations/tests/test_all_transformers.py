@@ -67,7 +67,7 @@ def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
 def _check_raises_error(Estimator, **kwargs):
     with pytest.raises(ValueError, match=r"univariate"):
         estimator = Estimator.create_test_instance()
-        if estimator.get_tag("fit-in-transform", False):
+        if estimator.get_tag("fit_is_empty", False):
             # As some estimators have an empty fit method, we here check if
             # they raise the appropriate error in transform rather than fit.
             _construct_fit_transform(Estimator, **kwargs)

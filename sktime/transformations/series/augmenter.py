@@ -29,7 +29,7 @@ class _AugmenterTags:
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "X-y-must-have-same-index": False,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "transform-returns-same-time-index": False,
         "capability:inverse_transform": False,
     }
