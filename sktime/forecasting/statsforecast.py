@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements AutoARIMA model from StatsForecast"""
+"""Implements AutoARIMA model from StatsForecast."""
 
 __author__ = ["FedericoGarza"]
 __all__ = ["AutoARIMA"]
@@ -9,6 +9,7 @@ __all__ = ["AutoARIMA"]
 from typing import Dict, Optional
 
 import pandas as pd
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -20,7 +21,8 @@ class AutoARIMA(BaseForecaster):
     """StatsForecast AutoARIMA estimator.
 
     Returns best ARIMA model according to either AIC, AICc or BIC value.
-    The function conducts a search over possible model within the order constraints provided.
+    The function conducts a search over possible model within
+    the order constraints provided.
 
     Parameters
     ----------
@@ -140,6 +142,7 @@ class AutoARIMA(BaseForecaster):
     ----------
     [1] hhttps://github.com/robjhyndman/forecast
     """
+
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -264,7 +267,7 @@ class AutoARIMA(BaseForecaster):
             biasadj=self.biasadj,
             parallel=self.parallel,
             num_cores=self.num_cores,
-            period=self.period
+            period=self.period,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -348,12 +351,14 @@ class AutoARIMA(BaseForecaster):
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         """Generate in sample predictions.
+
         Parameters
         ----------
         fh : array-like
             The forecasters horizon with the steps ahead to to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
+
         Returns
         -------
         y_pred : pandas.Series
@@ -375,7 +380,7 @@ class AutoARIMA(BaseForecaster):
                 pred_int.loc[fh_abs] = result.drop("mean", axis=1).values[fh_idx, :]
                 pred_ints.append(pred_int)
             return y_pred, pred_ints
-        
+
         return y_pred
 
     def _predict_fixed_cutoff(
@@ -423,6 +428,7 @@ class AutoARIMA(BaseForecaster):
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction quantiles for a forecast.
+
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
         State required:
@@ -430,6 +436,7 @@ class AutoARIMA(BaseForecaster):
         Accesses in self:
             Fitted model attributes ending in "_"
             self.cutoff
+
         Parameters
         ----------
         fh : int, list, np.array or ForecastingHorizon
@@ -438,6 +445,7 @@ class AutoARIMA(BaseForecaster):
             Exogenous time series
         coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
+
         Returns
         -------
         pred_int : pd.DataFrame
