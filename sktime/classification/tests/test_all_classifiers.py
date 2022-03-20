@@ -83,6 +83,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
 
+    @pytest.mark.skip(reason="these tests have not been fully migrated, see #2257")
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
         # we only use the first estimator instance for testing
@@ -113,6 +114,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
+    @pytest.mark.skip(reason="these tests have not been fully migrated, see #2257")
     def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
         # we only use the first estimator instance for testing
