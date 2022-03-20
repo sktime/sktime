@@ -170,16 +170,16 @@ class AutoARIMA(BaseForecaster):
         start_Q: int = 1,
         stationary: bool = False,
         seasonal: bool = True,
-        ic: str = 'aicc',
+        ic: str = "aicc",
         stepwise: bool = True,
         nmodels: int = 94,
         trace: bool = False,
         approximation: Optional[bool] = None,
         method: Optional[str] = None,
         truncate: Optional[bool] = None,
-        test: str = 'kpss',
+        test: str = "kpss",
         test_kwargs: Optional[str] = None,
-        seasonal_test: str = 'seas',
+        seasonal_test: str = "seas",
         seasonal_test_kwargs: Optional[Dict] = None,
         allowdrift: bool = True,
         allowmean: bool = True,
@@ -187,43 +187,43 @@ class AutoARIMA(BaseForecaster):
         biasadj: bool = False,
         parallel: bool = False,
         num_cores: int = 2,
-        period: int = 1
+        period: int = 1,
     ):
         _check_soft_dependencies("statsforecast", severity="error", object=self)
 
-        self.d=d
-        self.D=D
-        self.max_p=max_p
-        self.max_q=max_q
-        self.max_P=max_P
-        self.max_Q=max_Q
-        self.max_order=max_order
-        self.max_d=max_d
-        self.max_D=max_D
-        self.start_p=start_p
-        self.start_q=start_q
-        self.start_P=start_P
-        self.start_Q=start_Q
-        self.stationary=stationary
-        self.seasonal=seasonal
-        self.ic=ic
-        self.stepwise=stepwise
-        self.nmodels=nmodels
-        self.trace=trace
-        self.approximation=approximation
-        self.method=method
-        self.truncate=truncate
-        self.test=test
-        self.test_kwargs=test_kwargs
-        self.seasonal_test=seasonal_test
-        self.seasonal_test_kwargs=seasonal_test_kwargs
-        self.allowdrift=allowdrift
-        self.allowmean=allowmean
-        self.blambda=blambda
-        self.biasadj=biasadj
-        self.parallel=parallel
-        self.num_cores=num_cores
-        self.period=period
+        self.d = d
+        self.D = D
+        self.max_p = max_p
+        self.max_q = max_q
+        self.max_P = max_P
+        self.max_Q = max_Q
+        self.max_order = max_order
+        self.max_d = max_d
+        self.max_D = max_D
+        self.start_p = start_p
+        self.start_q = start_q
+        self.start_P = start_P
+        self.start_Q = start_Q
+        self.stationary = stationary
+        self.seasonal = seasonal
+        self.ic = ic
+        self.stepwise = stepwise
+        self.nmodels = nmodels
+        self.trace = trace
+        self.approximation = approximation
+        self.method = method
+        self.truncate = truncate
+        self.test = test
+        self.test_kwargs = test_kwargs
+        self.seasonal_test = seasonal_test
+        self.seasonal_test_kwargs = seasonal_test_kwargs
+        self.allowdrift = allowdrift
+        self.allowmean = allowmean
+        self.blambda = blambda
+        self.biasadj = biasadj
+        self.parallel = parallel
+        self.num_cores = num_cores
+        self.period = period
 
         super(AutoARIMA, self).__init__()
 
@@ -232,40 +232,40 @@ class AutoARIMA(BaseForecaster):
         from statsforecast.arima import AutoARIMA as _AutoARIMA
 
         return _AutoARIMA(
-                    d=self.d,
-                    D=self.D,
-                    max_p=self.max_p,
-                    max_q=self.max_q,
-                    max_P=self.max_P,
-                    max_Q=self.max_Q,
-                    max_order=self.max_order,
-                    max_d=self.max_d,
-                    max_D=self.max_D,
-                    start_p=self.start_p,
-                    start_q=self.start_q,
-                    start_P=self.start_P,
-                    start_Q=self.start_Q,
-                    stationary=self.stationary,
-                    seasonal=self.seasonal,
-                    ic=self.ic,
-                    stepwise=self.stepwise,
-                    nmodels=self.nmodels,
-                    trace=self.trace,
-                    approximation=self.approximation,
-                    method=self.method,
-                    truncate=self.truncate,
-                    test=self.test,
-                    test_kwargs=self.test_kwargs,
-                    seasonal_test=self.seasonal_test,
-                    seasonal_test_kwargs=self.seasonal_test_kwargs,
-                    allowdrift=self.allowdrift,
-                    allowmean=self.allowmean,
-                    blambda=self.blambda,
-                    biasadj=self.biasadj,
-                    parallel=self.parallel,
-                    num_cores=self.num_cores,
-                    period=self.period
-                )
+            d=self.d,
+            D=self.D,
+            max_p=self.max_p,
+            max_q=self.max_q,
+            max_P=self.max_P,
+            max_Q=self.max_Q,
+            max_order=self.max_order,
+            max_d=self.max_d,
+            max_D=self.max_D,
+            start_p=self.start_p,
+            start_q=self.start_q,
+            start_P=self.start_P,
+            start_Q=self.start_Q,
+            stationary=self.stationary,
+            seasonal=self.seasonal,
+            ic=self.ic,
+            stepwise=self.stepwise,
+            nmodels=self.nmodels,
+            trace=self.trace,
+            approximation=self.approximation,
+            method=self.method,
+            truncate=self.truncate,
+            test=self.test,
+            test_kwargs=self.test_kwargs,
+            seasonal_test=self.seasonal_test,
+            seasonal_test_kwargs=self.seasonal_test_kwargs,
+            allowdrift=self.allowdrift,
+            allowmean=self.allowmean,
+            blambda=self.blambda,
+            biasadj=self.biasadj,
+            parallel=self.parallel,
+            num_cores=self.num_cores,
+            period=self.period
+        )
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -359,20 +359,20 @@ class AutoARIMA(BaseForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        #initialize return objects
+        # initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs)
 
         result = self._forecaster.predict_in_sample()
-        y_pred.loc[fh_abs] = result['mean'].values[fh_idx]
+        y_pred.loc[fh_abs] = result["mean"].values[fh_idx]
 
         if return_pred_int:
             pred_ints = []
             for a in alpha:
                 pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
                 result = self._forecaster.predict_in_sample(level=int(100 * a))
-                pred_int.loc[fh_abs] = result.drop('mean', axis=1).values[fh_idx, :]
+                pred_int.loc[fh_abs] = result.drop("mean", axis=1).values[fh_idx, :]
                 pred_ints.append(pred_int)
             return y_pred, pred_ints
         
@@ -403,7 +403,7 @@ class AutoARIMA(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
-        mean = pd.Series(result['mean'].values[fh_idx], index=fh_abs)
+        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs)
         if return_pred_int:
             pred_ints = []
             for a in alpha:
@@ -412,7 +412,7 @@ class AutoARIMA(BaseForecaster):
                     X=X.values if X is not None else X,
                     level=int(100 * a),
                 )
-                pred_int = result.drop('mean', axis=1).values
+                pred_int = result.drop("mean", axis=1).values
                 pred_int = pd.DataFrame(
                     pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
                 )
