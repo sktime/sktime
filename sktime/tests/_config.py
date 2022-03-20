@@ -106,7 +106,7 @@ EXCLUDED_TESTS = {
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
     # test fails in the Panel case for Differencer, see #2522
-    "Differencer": ["test_transform_inverse_transform_equivalent"]
+    "Differencer": ["test_transform_inverse_transform_equivalent"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
