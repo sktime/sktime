@@ -22,7 +22,7 @@ def _make_panel_X(
     n_columns=1,
     n_timepoints=20,
     y=None,
-    all_positive=True,
+    all_positive=False,
     return_numpy=False,
     random_state=None,
 ):
