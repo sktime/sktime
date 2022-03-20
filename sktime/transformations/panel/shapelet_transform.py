@@ -143,6 +143,7 @@ class RandomShapeletTransform(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # and for y?
+        "requires_y": True,
     }
 
     def __init__(
