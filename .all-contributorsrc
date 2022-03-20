@@ -1510,7 +1510,7 @@
       "contributions": [
         "code"
      ]
-    }
+    },
     {
       "login": "iljamaurer",
       "name": "Ilja Maurer",
@@ -1518,6 +1518,16 @@
       "profile": "https://github.com/iljamaurer",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "FedericoGarza",
+      "name": "Federico Garza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10517170?v=4",
+      "profile": "https://github.com/FedericoGarza",
+      "contributions": [
+        "code",
+	"example"
       ]
     }
   ],
