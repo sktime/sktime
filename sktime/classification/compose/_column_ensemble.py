@@ -169,13 +169,13 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for X using 'soft' voting."""
         self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 

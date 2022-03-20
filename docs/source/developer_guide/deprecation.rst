@@ -79,3 +79,35 @@ Classes
     @deprecated(version="0.9.0", reason="MyOldClass will be removed in v0.11.0", category=FutureWarning)
     class MyOldClass:
         pass
+
+
+Special deprecations
+====================
+
+This section outlines the deprecation process for cases which use of ``deprecated`` does not cover.
+
+Deprecating tags
+----------------
+
+To deprecate tags, it needs to be ensured that warnings are raised when the tag is used.
+There are two common scenarios: removing a tag, or renaming a tag.
+
+For either scenario, the helper class ``TagAliaserMixin`` (in ``sktime.base``) can be used.
+
+To deprecate tags, add the ``TagAliaserMixin`` to ``BaseEstimator``, or another ``BaseObject`` descendant.
+It is advised to select the youngest descendant that fully covers use of the deprecated tag.
+``TagAliaserMixin`` overrides the tag family of methods, and should hence be the first class to inherit from
+(or in case of multiple mixins, earlier than ``BaseObject``).
+
+``alias_dict`` in ``TagAliaserMixin`` contains a dictionary of deprecated tags:
+For removal, add an entry ``"old_tag_name": ""``.
+For renaming, add an entry ``"old_tag_name": "new_tag_name"``
+``deprecate_dict`` contains the version number of renaming or removal, and should have the same keys as ``alias_dict``.
+
+The ``TagAliaserMixin`` class will ensure that new tags alias old tags and vice versa, during
+the deprecation period. Informative warnings will be raised whenever the deprecated tags are being accessed.
+
+When removing/renaming tags after the deprecation period,
+ensure to remove the removed tags from the dictionaries in ``TagAliaserMixin`` class.
+If no tags are deprecated anymore (e.g., all deprecated tags are removed/renamed),
+ensure to remove this class as a parent of ``BaseObject`` or ``BaseEstimator``.

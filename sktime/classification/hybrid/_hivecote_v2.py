@@ -120,6 +120,7 @@ class HIVECOTEV2(BaseClassifier):
         "capability:multivariate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "hybrid",
     }
 
     def __init__(
@@ -300,7 +301,7 @@ class HIVECOTEV2(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -321,7 +322,7 @@ class HIVECOTEV2(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X, return_component_probas=False):
+    def _predict_proba(self, X, return_component_probas=False) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters

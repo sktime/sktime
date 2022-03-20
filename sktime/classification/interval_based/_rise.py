@@ -188,6 +188,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -302,7 +303,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X.
 
         Built on top of `predict_proba`.
@@ -322,7 +323,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         proba = self._predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters

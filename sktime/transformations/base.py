@@ -108,7 +108,7 @@ class BaseTransformer(BaseEstimator):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
@@ -133,6 +133,56 @@ class BaseTransformer(BaseEstimator):
         self._converter_store_X = dict()  # storage dictionary for in/output conversion
 
         super(BaseTransformer, self).__init__()
+
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformerPipeline(steps=[self])
+            return self_as_pipeline * other
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformerPipeline(steps=[self])
+            return other * self_as_pipeline
+        else:
+            return NotImplemented
 
     def fit(self, X, y=None, Z=None):
         """Fit transformer to X, optionally to y.
@@ -166,8 +216,8 @@ class BaseTransformer(BaseEstimator):
 
         self._is_fitted = False
 
-        # skip everything if fit-in-transform is True
-        if self.get_tag("fit-in-transform"):
+        # skip everything if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
             self._is_fitted = True
             return self
 
@@ -610,8 +660,8 @@ class BaseTransformer(BaseEstimator):
         if not update_params:
             return self
 
-        # skip everything if fit-in-transform is True
-        if self.get_tag("fit-in-transform"):
+        # skip everything if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
             return self
 
         # input checks and minor coercions on X, y
@@ -709,7 +759,7 @@ class BaseTransformer(BaseEstimator):
         )
 
         # depending on whether fitting happens, apply fitted or unfitted instances
-        if not self.get_tag("fit-in-transform"):
+        if not self.get_tag("fit_is_empty"):
             # these are the transformers-per-instance, fitted in fit
             transformers = self.transformers_
             if len(transformers) != len(X):

@@ -52,7 +52,7 @@ class MatrixProfileTransformer(BaseTransformer):
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?,
         "univariate-only": True,
-        "fit-in-transform": True,  # for unit test cases
+        "fit_is_empty": True,  # for unit test cases
     }
 
     def __init__(self, window_length=3):

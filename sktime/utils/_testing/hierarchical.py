@@ -15,11 +15,11 @@ from sklearn.utils import check_random_state
 from sktime.utils._testing.series import _make_index
 
 
-def _make_hierachical(
+def _make_hierarchical(
     hierarchy_levels: Tuple = (2, 4),
     max_timepoints: int = 12,
     min_timepoints: int = 12,
-    same_cuttoff: bool = True,
+    same_cutoff: bool = True,
     n_columns: int = 1,
     all_positive: bool = True,
     index_type: str = None,
@@ -36,7 +36,7 @@ def _make_hierachical(
         maximum time points a series can have, by default 12
     min_timepoints : int, optional
         minimum time points a seires can have, by default 12
-    same_cuttoff : bool, optional
+    same_cutoff : bool, optional
         If it's True all series will end at the same date, by default True
     n_columns : int, optional
         number of columns in the output dataframe, by default 1
@@ -71,7 +71,7 @@ def _make_hierachical(
         df_list = []
         for levels_tuple in product(*levels):
             n_timepoints = rng.randint(low=min_timepoints, high=max_timepoints)
-            if same_cuttoff:
+            if same_cutoff:
                 time_index = _make_index(max_timepoints, index_type)[-n_timepoints:]
             else:
                 time_index = _make_index(n_timepoints, index_type)
