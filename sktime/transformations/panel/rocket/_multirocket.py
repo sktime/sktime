@@ -125,7 +125,7 @@ class MultiRocket(BaseTransformer):
         -------
         self
         """
-        X = X[:, 0, :].astype(np.float64)
+        X = X.astype(np.float64)
         X = convert(X, from_type="numpy3D", to_type="numpyflat", as_scitype="Panel")
         if self.normalise:
             X = (X - X.mean(axis=-1, keepdims=True)) / (
@@ -152,7 +152,7 @@ class MultiRocket(BaseTransformer):
         -------
         pandas DataFrame, transformed features
         """
-        X = X[:, 0, :].astype(np.float64)
+        X = X.astype(np.float64)
         X = convert(X, from_type="numpy3D", to_type="numpyflat", as_scitype="Panel")
         if self.normalise:
             X = (X - X.mean(axis=-1, keepdims=True)) / (
