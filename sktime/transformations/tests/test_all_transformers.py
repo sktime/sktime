@@ -138,6 +138,9 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 
     def test_multivariate_raises_error(self, estimator_instance):
         """Test error raised for multivariate data passed to univariate transformer."""
+        # test is only for univariate transformers, skip multivariate ones
+        if estimator_instance.get_tag("capability:multivariate"):
+            return None
         scenario = TransformerFitTransformSeriesMultivariate()
         with pytest.raises(ValueError, match=r"univariate"):
             # error should be raised in fit, unless fit is skipped
