@@ -34,6 +34,7 @@ sktime/transformations/series/scaledlogit.py @ltsaprounis
 sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
 
 sktime/forecasting/base/ @fkiraly @mloning @aiwalter
+sktime/forecasting/base/adapters/_statsforecast.py @FedericoGarza
 sktime/forecasting/naive.py @Flix6x
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
