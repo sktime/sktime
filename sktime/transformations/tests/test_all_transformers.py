@@ -84,7 +84,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         )
         msg = (
             f"error with scenario {type(scenario).__name__}, X_scitype tag "
-            f'was "{X_scitype}", but checke_is_scitype does not confirm this'
+            f'was "{X_scitype}", but check_is_scitype does not confirm this'
         )
         assert valid_X_scitype, msg
 
