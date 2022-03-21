@@ -3,7 +3,7 @@
 """Implements AutoARIMA model from StatsForecast."""
 
 __author__ = ["FedericoGarza"]
-__all__ = ["AutoARIMA"]
+__all__ = ["StatsForecastAutoARIMA"]
 
 
 from typing import Dict, Optional
@@ -14,7 +14,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 _check_soft_dependencies("statsforecast", severity="warning")
 
 
-class AutoARIMA(_StatsForecastAdapter):
+class StatsForecastAutoARIMA(_StatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
     Returns best ARIMA model according to either AIC, AICc or BIC value.
@@ -212,7 +212,7 @@ class AutoARIMA(_StatsForecastAdapter):
         self.num_cores = num_cores
         self.period = period
 
-        super(AutoARIMA, self).__init__()
+        super(StatsForecastAutoARIMA, self).__init__()
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
