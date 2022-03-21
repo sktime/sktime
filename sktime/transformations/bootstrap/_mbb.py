@@ -248,9 +248,14 @@ class STLBootstrapTransformer(BaseTransformer):
         -------
         self: reference to self
         """
-        if self.sp <= 2:
+        if self.sp <= 1:
             raise NotImplementedError(
                 "STLBootstrapTransformer does not support non-seasonal data"
+            )
+
+        if not isinstance(self.sp, int):
+            raise ValueError(
+                "sp parameter of STLBootstrapTransformer must be an integer"
             )
 
         if len(X) <= self.sp:
