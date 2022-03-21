@@ -640,7 +640,6 @@ class BaseForecaster(BaseEstimator):
     def update_predict_single(
         self,
         y=None,
-        y_new=None,
         fh=None,
         X=None,
         update_params=True,
@@ -676,8 +675,6 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("scitype:y")=="multivariate":
                 must have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        y_new : alias for y for downwards compatibility, pass only one of y, y_new
-            deprecated since version 0.10.0 and will be removed in 0.11.0
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
@@ -691,20 +688,10 @@ class BaseForecaster(BaseEstimator):
         y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Point forecasts at fh, with same index as fh
             y_pred has same type as y
-        pred_ints : pd.DataFrame
-            Prediction intervals
         """
         self.check_is_fitted()
         fh = self._check_fh(fh)
 
-        # handle input alias, remove in v 0.11.0
-        if y is None:
-            y = y_new
-            msg = (
-                "argument y_new in update_predict_single is deprecated since "
-                "version 0.10.0 and will be removed in version 0.11.0"
-            )
-            warn(msg, category=DeprecationWarning)
         if y is None:
             raise ValueError("y must be of Series type and cannot be None")
 
