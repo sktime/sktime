@@ -223,8 +223,8 @@ class Imputer(BaseTransformer):
         Xt = X.fillna(method="ffill").fillna(method="backfill")
         return Xt
 
-    def _check_method(self, method):
-        if method not in self.ALLOWED_METHODS:
+    def _check_method(self):
+        if self.method not in self.ALLOWED_METHODS:
             raise ValueError(f"`method`: {self.method} not available.")
         if (
             self.value is not None
