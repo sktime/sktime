@@ -1197,8 +1197,9 @@ class BaseForecaster(BaseEstimator):
         """
         cutoff_idx = get_cutoff(y, self.cutoff)
         logging.warning(
-            f"_set_cutoff_from_y\ncutoff:\n{cutoff_idx}\n"
-            f"cutoff freq:\n{cutoff_idx.freqstr}\ny:{y}"
+            f"_set_cutoff_from_y\ncutoff_idx:\n{cutoff_idx}\n"
+            f"cutoff_idx freq:\n{cutoff_idx.freqstr}\ny:{y}"
+            f"\nself.cutoff:\n{self.cutoff}"
         )
         self._cutoff = cutoff_idx
 
