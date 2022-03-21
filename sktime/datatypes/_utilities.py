@@ -161,7 +161,7 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         max_cutoffs = max(cutoffs)
         logging.warning(
             f"get_cutoff - max(cutoffs):\n{max_cutoffs}\n{type(max_cutoffs)}"
-            f"\n{max_cutoffs.__dict__}"
+            f"\n{max_cutoffs.freqstr}"
         )
         return max(cutoffs)
 
