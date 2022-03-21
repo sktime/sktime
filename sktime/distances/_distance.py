@@ -572,6 +572,7 @@ def ddtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> ddtw_distance(x_1d, y_1d)
@@ -662,6 +663,7 @@ def dtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> dtw_distance(x_1d, y_1d)
@@ -779,6 +781,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> squared_distance(x_1d, y_1d)
@@ -831,6 +834,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> euclidean_distance(x_1d, y_1d)
@@ -902,6 +906,7 @@ def distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> distance(x_1d, y_1d, metric='dtw')
@@ -1059,6 +1064,7 @@ def pairwise_distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
@@ -1161,3 +1167,17 @@ _METRIC_CALLABLES = dict(
     (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
 )
 _METRICS_NAMES = list(_METRICS.keys())
+
+
+ALL_DISTANCES = (
+    ddtw_distance,
+    dtw_distance,
+    edr_distance,
+    erp_distance,
+    euclidean_distance,
+    lcss_distance,
+    msm_distance,
+    squared_distance,
+    wddtw_distance,
+    wdtw_distance,
+)
