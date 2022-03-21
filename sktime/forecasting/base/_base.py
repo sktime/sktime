@@ -1768,6 +1768,28 @@ class BaseForecaster(BaseEstimator):
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
+    # TODO: remove in v0.11.0
+    def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
+        name = pred_int_new.columns.get_level_values(0).unique()[0]
+        alpha = check_alpha(alpha)
+        alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
+        pred_int_old_format = [
+            pd.DataFrame(
+                {
+                    "lower": pred_int_new[(name, a, "lower")],
+                    "upper": pred_int_new[(name, a, "upper")],
+                }
+            )
+            for a in alphas
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if len(alphas) == 1:
+            return pred_int_old_format[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int_old_format
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions.
