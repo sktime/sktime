@@ -6,6 +6,7 @@
 __author__ = ["mloning", "fkiraly", "eenticott-shell", "khrapovs"]
 __all__ = ["ForecastingHorizon"]
 
+import logging
 from functools import lru_cache
 from typing import Optional, Union
 
@@ -582,6 +583,9 @@ def _coerce_to_period(x, freq=None):
         Index coerced to preferred format.
     """
     if freq is None:
+        logging.warning(
+            f"Frequency is {str(freq)}\ninput is:\n{str(x)}" f"\nof type {type(x)}"
+        )
         freq = _get_freq(x)
     try:
         return x.to_period(freq)
@@ -589,7 +593,7 @@ def _coerce_to_period(x, freq=None):
         msg = str(e)
         if "Invalid frequency" in msg or "_period_dtype_code" in msg:
             raise ValueError(
-                "Invalid frequency. Please select a frequency that can "
+                f"Invalid frequency ({freq}). Please select a frequency that can "
                 "be converted to a regular `pd.PeriodIndex`. For other "
                 "frequencies, basic arithmetic operation to compute "
                 "durations currently do not work reliably."
