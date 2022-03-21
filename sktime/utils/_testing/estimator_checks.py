@@ -165,14 +165,11 @@ def _make_predict_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         fh = 1
         return (fh,)
-    elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+    elif isinstance(estimator, (BaseClassifier, BaseRegressor, BaseClusterer)):
         X = _make_panel_X(**kwargs)
         return (X,)
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(n_timepoints=10, **kwargs)
-        return (X,)
-    elif isinstance(estimator, BaseClusterer):
-        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -336,4 +333,14 @@ def _has_capability(est, method: str) -> bool:
         return False
     if method == "inverse_transform":
         return est.get_class_tag("capability:inverse_transform", False)
+    if method in [
+        "predict_proba",
+        "predict_interval",
+        "predict_quantiles",
+        "predict_var",
+    ]:
+        # all classifiers implement predict_proba
+        if method == "predict_proba" and isinstance(est, BaseClassifier):
+            return True
+        return est.get_class_tag("capability:pred_int", False)
     return True

@@ -8,6 +8,7 @@ classifier.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["FreshPRINCE"]
 
+import numpy as np
 
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
@@ -78,6 +79,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:train_estimate": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
@@ -153,7 +155,7 @@ class FreshPRINCE(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -168,7 +170,7 @@ class FreshPRINCE(BaseClassifier):
         """
         return self._rotf.predict(self._tsfresh.transform(X))
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -183,7 +185,7 @@ class FreshPRINCE(BaseClassifier):
         """
         return self._rotf.predict_proba(self._tsfresh.transform(X))
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 

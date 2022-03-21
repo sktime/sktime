@@ -41,6 +41,7 @@ from sktime.datatypes._hierarchical._registry import (
     MTYPE_REGISTER_HIERARCHICAL,
 )
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL, MTYPE_REGISTER_PANEL
+from sktime.datatypes._proba._registry import MTYPE_LIST_PROBA, MTYPE_REGISTER_PROBA
 from sktime.datatypes._series._registry import MTYPE_LIST_SERIES, MTYPE_REGISTER_SERIES
 from sktime.datatypes._table._registry import MTYPE_LIST_TABLE, MTYPE_REGISTER_TABLE
 
@@ -50,6 +51,7 @@ MTYPE_REGISTER += MTYPE_REGISTER_PANEL
 MTYPE_REGISTER += MTYPE_REGISTER_HIERARCHICAL
 MTYPE_REGISTER += MTYPE_REGISTER_ALIGNMENT
 MTYPE_REGISTER += MTYPE_REGISTER_TABLE
+MTYPE_REGISTER += MTYPE_REGISTER_PROBA
 
 
 __all__ = [
@@ -59,6 +61,7 @@ __all__ = [
     "MTYPE_LIST_SERIES",
     "MTYPE_LIST_ALIGNMENT",
     "MTYPE_LIST_TABLE",
+    "MTYPE_LIST_PROBA",
     "SCITYPE_REGISTER",
 ]
 
@@ -69,7 +72,10 @@ SCITYPE_REGISTER = [
     ("Hierarchical", "hierarchical panel of time series with 3 or more levels"),
     ("Alignment", "series or sequence alignment"),
     ("Table", "data table with primitive column types"),
+    ("Proba", "probability distribution or distribution statistics, return types"),
 ]
+
+SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
 
 
 def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
@@ -78,7 +84,8 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     Parameters
     ----------
     mtype : str, or list of str, or nested list/str object, or None
-        mtype(s) to find scitype of
+        mtype(s) to find scitype of, a valid mtype string
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
 
     Returns
     -------

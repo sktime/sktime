@@ -219,7 +219,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     >>> scores = clasp.scores
     """
 
-    _tags = {"univariate-only": True, "fit-in-predict": True}  # for unit test cases
+    _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
 
     def __init__(self, period_length=10, n_cps=1, fmt="sparse"):
         self.period_length = int(period_length)
