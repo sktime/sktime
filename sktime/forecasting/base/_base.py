@@ -1744,7 +1744,6 @@ class BaseForecaster(BaseEstimator):
         -------
         y_pred = pd.Series
         """
-
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
