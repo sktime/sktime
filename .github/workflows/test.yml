@@ -45,7 +45,7 @@ jobs:
   #       shell: bash
 
   test-windows:
-    needs: code-quality
+    # needs: code-quality
     runs-on: windows-2019
     strategy:
       matrix:
