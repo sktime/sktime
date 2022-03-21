@@ -23,6 +23,13 @@ class Imputer(BaseTransformer):
     The Imputer transforms input series by replacing missing values according
     to an imputation strategy specified by `method`.
 
+    IMPORTANT NOTE: this transformer may lead to information leakage on the test set
+        for some choices of method when used for forecasting.
+        It is safe for time series classification, or in a panel setting where entire
+        series are either in the training or in the test set.
+        Leakage-free methods in all settings are:
+            "constant", "mean_fit", "median_fit"
+
     Parameters
     ----------
     method : str, default="drift"
