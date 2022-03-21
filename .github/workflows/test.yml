@@ -84,12 +84,12 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
-      - name: Display coverage report
-        run: ls -l ./testdir/
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./testdir/coverage.xml
+      # - name: Display coverage report
+      #   run: ls -l ./testdir/
+      # - name: Publish code coverage
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     file: ./testdir/coverage.xml
 
   test-linux:
     # needs: code-quality
@@ -116,12 +116,12 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
-      - name: Display coverage report
-        run: ls -l ./testdir/
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./testdir/coverage.xml
+      # - name: Display coverage report
+      #   run: ls -l ./testdir/
+      # - name: Publish code coverage
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     file: ./testdir/coverage.xml
 
   # test-mac:
   #   needs: code-quality
