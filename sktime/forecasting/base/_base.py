@@ -35,6 +35,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
 
 __all__ = ["BaseForecaster"]
 
+import logging
 from contextlib import contextmanager
 from warnings import warn
 
@@ -1195,6 +1196,10 @@ class BaseForecaster(BaseEstimator):
         Set self._cutoff to latest index seen in `y`.
         """
         cutoff_idx = get_cutoff(y, self.cutoff)
+        logging.warning(
+            f"_set_cutoff_from_y\ncutoff:\n{cutoff_idx}\n"
+            f"cutoff freq:\n{cutoff_idx.freqstr}\ny:{y}"
+        )
         self._cutoff = cutoff_idx
 
     @contextmanager
@@ -1350,6 +1355,7 @@ class BaseForecaster(BaseEstimator):
 
             return self
         elif methodname in PREDICT_METHODS:
+            logging.warning(f"_vectorize:\n{kwargs}")
             n = len(self.forecasters_.index)
             X = kwargs.pop("X", None)
             if X is None:

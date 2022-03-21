@@ -4,7 +4,7 @@
 
 __author__ = ["fkiraly"]
 
-import logging
+# import logging
 from functools import reduce
 from operator import mul
 
@@ -68,12 +68,12 @@ def test_vectorization_series_to_hier(mtype):
     n_instances = reduce(mul, hierarchy_levels)
 
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=42)
-    logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
+    # logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
     if mtype != "pd_multiindex_hier":
         y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
     else:
         pass
-    logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
+    # logging.warning(str(y.index.to_frame().dtypes) + f"\n\nmtype = {mtype}")
 
     # y = get_examples(mtype, "Hierarchical")[1]
     # n_instances = 6

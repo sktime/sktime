@@ -6,6 +6,8 @@
 __author__ = ["mloning", "hyang1996", "kejsitake", "fkiraly"]
 __all__ = ["_PmdArimaAdapter"]
 
+import logging
+
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
@@ -171,6 +173,7 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred : pandas.Series
         Returns series of predicted values.
         """
+        logging.warning(f"_PmdArimaAdapter:\nfh:\n{fh}")
         n_periods = int(fh.to_relative(self.cutoff)[-1])
         result = self._forecaster.predict(
             n_periods=n_periods,
@@ -178,7 +181,7 @@ class _PmdArimaAdapter(BaseForecaster):
             return_conf_int=False,
             alpha=DEFAULT_ALPHA,
         )
-
+        logging.warning(f"_PmdArimaAdapter:\nfh:\n{self.cutoff}")
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
         if return_pred_int:
