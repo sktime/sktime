@@ -27,7 +27,6 @@ __all__ = [
 from typing import List, Union
 
 import numpy as np
-from deprecated.sphinx import deprecated
 
 from sktime.datatypes._alignment import check_dict_Alignment
 from sktime.datatypes._hierarchical import check_dict_Hierarchical
