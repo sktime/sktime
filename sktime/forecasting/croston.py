@@ -7,7 +7,6 @@
 import numpy as np
 import pandas as pd
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class Croston(BaseForecaster):
@@ -130,8 +129,6 @@ class Croston(BaseForecaster):
         self,
         fh=None,
         X=None,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
     ):
         """Predict forecast.
 

@@ -10,7 +10,6 @@ import inspect
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -56,7 +55,7 @@ class _StatsModelsAdapter(BaseForecaster):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Make forecasts.
 
         Parameters
@@ -67,17 +66,12 @@ class _StatsModelsAdapter(BaseForecaster):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series
             Returns series of predicted values.
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
