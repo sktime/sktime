@@ -280,7 +280,11 @@ class Imputer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = [{"method": x} for x in cls.ALLOWED_METHODS]
+        from sktime.forecasting.naive import NaiveForecaster
+        methods_wo_param = set(cls.ALLOWED_METHODS).difference("constant", "forecaster")
+        params = [{"method": x} for x in methods_wo_param]
+        params += [{"method": "constant", "value": 42}]
+        params += [{"method": "forecaster", "forecaster": NaiveForecaster()}]
 
         return params
 
