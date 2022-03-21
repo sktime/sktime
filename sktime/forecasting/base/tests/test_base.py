@@ -102,3 +102,5 @@ def test_vectorization_series_to_hier(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+    raise ValueError("Dummy Error to check all the logs")
