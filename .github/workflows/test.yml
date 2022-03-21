@@ -96,7 +96,7 @@ jobs:
           file: ./testdir/coverage.xml
 
   test-linux:
-  #   # needs: code-quality
+    # needs: code-quality
     runs-on: ubuntu-20.04
     strategy:
       matrix:
