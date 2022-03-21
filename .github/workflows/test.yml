@@ -83,11 +83,7 @@ jobs:
 
       - name: Run tests
         run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime -v -n 2 --pyargs sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
+          python -m pytest sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
@@ -119,11 +115,7 @@ jobs:
 
       - name: Run tests
         run: |
-          mkdir -p testdir/
-          cp .coveragerc testdir/
-          cp setup.cfg testdir/
-          cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime -v -n 2 --pyargs sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
+          python -m pytest sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
       - name: Display coverage report
         run: ls -l ./testdir/
       - name: Publish code coverage
