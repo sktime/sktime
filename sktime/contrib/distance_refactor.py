@@ -6,9 +6,12 @@ from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.distances import (
     ddtw_distance,
     dtw_distance,
+    edr_distance,
     erp_distance,
+    euclidean_distance,
     lcss_distance,
     msm_distance,
+    wddtw_distance,
     wdtw_distance,
 )
 
@@ -29,12 +32,22 @@ def difference_test():
     #    d1 = d1.transpose()
     #    d1 = d2.transpose()
     print("Shape  = ", d1.shape)
-    name = "LCSS"
-    dist1 = lcss_distance(d1, d2, epsilon=0.0)
+    name = "DDTW"
+    dist1 = euclidean_distance(d1, d2, window=0.0)
+    print(name, " w = 0 dist = ", dist1)
+    dist1 = euclidean_distance(d1, d2, window=0.1)
+    print(name, " w = 0.1. dist 1 = ", dist1)
+    dist1 = euclidean_distance(d1, d2, window=1.0)
+    print(name, " w = 1 dist 1 = ", dist1)
+    print(" SHAPE  = ", d1.shape)
+    X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
+    print(" SHAPE  = ", X_train[0].shape)
+    name = "WDDTW"
+    dist1 = wddtw_distance(d1, d2, g=0.0)
     print(name, " g = 0 dist = ", dist1)
-    dist1 = lcss_distance(d1, d2, epsilon=50.0)
+    dist1 = wddtw_distance(d1, d2, g=0.1)
     print(name, " g = 0.1. dist 1 = ", dist1)
-    dist1 = lcss_distance(d1, d2, epsilon=200.0)
+    dist1 = wddtw_distance(d1, d2, g=1.0)
     print(name, " g window = 1 dist 1 = ", dist1)
     print(" SHAPE  = ", d1.shape)
     X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
