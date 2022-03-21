@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -102,15 +101,19 @@ def _cost_matrix(
     distance: float
         Dtw distance between the x and y time series.
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    dimensions = x.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
     cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
     cost_matrix[0, 0] = 0.0
 
     for i in range(x_size):
         for j in range(y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                cost_matrix[i + 1, j + 1] = _local_squared_distance(x[i], y[j])
+                sum = 0
+                for k in range(dimensions):
+                    sum += (x[k][i] - y[k][j]) * (x[k][i] - y[k][j])
+                cost_matrix[i + 1, j + 1] = sum
                 cost_matrix[i + 1, j + 1] += min(
                     cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
                 )
