@@ -281,6 +281,7 @@ class Imputer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sktime.forecasting.naive import NaiveForecaster
+
         methods_wo_param = set(cls.ALLOWED_METHODS).difference("constant", "forecaster")
         params = [{"method": x} for x in methods_wo_param]
         params += [{"method": "constant", "value": 42}]
