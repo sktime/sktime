@@ -62,7 +62,9 @@ class Imputer(BaseTransformer):
     forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
         Use a given Forecaster to impute by insample predictions when
         method="forecaster". Before fitting, missing data is imputed with
-        method="ffill" or "bfill" as heuristic.
+            method="ffill" or "bfill" as heuristic.
+        if X is multivariate, forecaster must be able to handle multivariate data
+            (otherwise use ColumnEnsembleForecaster to wrap a univariate forecaster)
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 
@@ -175,7 +177,7 @@ class Imputer(BaseTransformer):
 
         Returns
         -------
-        Z : pd.Series or pd.DataFrame, same type as X
+        Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
         self._check_method()
@@ -189,36 +191,37 @@ class Imputer(BaseTransformer):
 
         if self.method == "random":
             if isinstance(X, pd.DataFrame):
-                for col in X:
-                    X[col] = X[col].apply(
-                        lambda i: self._get_random(X[col]) if np.isnan(i) else i
+                Xt = X
+                for col in Xt:
+                    Xt[col] = Xt[col].apply(
+                        lambda i: self._get_random(Xt[col]) if np.isnan(i) else i
                     )
             else:
-                X = X.apply(lambda i: self._get_random(X) if np.isnan(i) else i)
+                Xt = X.apply(lambda i: self._get_random(X) if np.isnan(i) else i)
         elif self.method == "constant":
-            X = X.fillna(value=self.value)
+            Xt = X.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
-            X = X.fillna(method=self.method)
+            Xt = X.fillna(method=self.method)
         elif self.method == "drift":
             forecaster = PolynomialTrendForecaster(degree=1)
-            X = _impute_with_forecaster(forecaster, X)
+            Xt = _impute_with_forecaster(forecaster, X)
         elif self.method == "forecaster":
             forecaster = clone(self.forecaster)
-            X = _impute_with_forecaster(forecaster, X)
+            Xt = _impute_with_forecaster(forecaster, X)
         elif self.method == "mean":
-            X = X.fillna(value=X.mean())
+            Xt = X.fillna(value=X.mean())
         elif self.method == "median":
-            X = X.fillna(value=X.median())
+            Xt = X.fillna(value=X.median())
         elif self.method in ["mean_fit", "median_fit"]:
-            X = X.fillna(value=self._fillconst)
+            Xt = X.fillna(value=self._fillconst)
         elif self.method in ["nearest", "linear"]:
-            X = X.interpolate(method=self.method)
+            Xt = X.interpolate(method=self.method)
         else:
             raise ValueError(f"`method`: {self.method} not available.")
         # fill first/last elements of series,
         # as some methods (e.g. "linear") cant impute those
-        X = X.fillna(method="ffill").fillna(method="backfill")
-        return X
+        Xt = X.fillna(method="ffill").fillna(method="backfill")
+        return Xt
 
     def _check_method(self, method):
         if method not in self.ALLOWED_METHODS:
