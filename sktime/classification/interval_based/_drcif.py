@@ -349,7 +349,7 @@ class DrCIF(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -358,7 +358,7 @@ class DrCIF(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -399,7 +399,7 @@ class DrCIF(BaseClassifier):
         )
         return output
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 

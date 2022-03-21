@@ -14,6 +14,8 @@ import pytest
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import VotingClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
+
+# StratifiedGroupKFold, removed because it is not available in sklearn 0.24
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -27,7 +29,6 @@ from sklearn.model_selection import (
     RandomizedSearchCV,
     RepeatedKFold,
     ShuffleSplit,
-    StratifiedGroupKFold,
     StratifiedKFold,
     StratifiedShuffleSplit,
     TimeSeriesSplit,
@@ -43,6 +44,7 @@ DATA_ARGS = [
     {"return_numpy": True, "n_columns": 2},
     {"return_numpy": False, "n_columns": 2},
 ]
+# StratifiedGroupKFold(n_splits=2), , removed, not available in sklearn 0.24
 CROSS_VALIDATION_METHODS = [
     KFold(n_splits=2),
     RepeatedKFold(n_splits=2, n_repeats=2),
@@ -52,7 +54,6 @@ CROSS_VALIDATION_METHODS = [
     StratifiedKFold(n_splits=2),
     StratifiedShuffleSplit(n_splits=2, test_size=0.25),
     GroupKFold(n_splits=2),
-    StratifiedGroupKFold(n_splits=2),
     LeavePGroupsOut(n_groups=5),
     GroupShuffleSplit(n_splits=2, test_size=0.25),
     TimeSeriesSplit(n_splits=2),

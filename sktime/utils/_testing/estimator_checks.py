@@ -333,4 +333,14 @@ def _has_capability(est, method: str) -> bool:
         return False
     if method == "inverse_transform":
         return est.get_class_tag("capability:inverse_transform", False)
+    if method in [
+        "predict_proba",
+        "predict_interval",
+        "predict_quantiles",
+        "predict_var",
+    ]:
+        # all classifiers implement predict_proba
+        if method == "predict_proba" and isinstance(est, BaseClassifier):
+            return True
+        return est.get_class_tag("capability:pred_int", False)
     return True

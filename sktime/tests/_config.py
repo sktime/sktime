@@ -99,8 +99,6 @@ EXCLUDE_ESTIMATORS = [
 
 
 EXCLUDED_TESTS = {
-    # known issue caused by inheritane from sklearn feature union, #1662
-    "FeatureUnion": ["test_fit_does_not_overwrite_hyper_params"],
     # known issue when X is passed, wrong time indices are returned, #1364
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
@@ -286,6 +284,7 @@ VALID_ESTIMATOR_TAGS = tuple(ESTIMATOR_TAG_LIST)
 # "apply" the fitted estimator to data and useful for checking results.
 NON_STATE_CHANGING_METHODS = (
     "predict",
+    "predict_var",
     "predict_proba",
     "decision_function",
     "transform",
