@@ -29,6 +29,7 @@ from sktime.dists_kernels._base import (
     BasePairwiseTransformerPanel,
 )
 from sktime.exceptions import NotFittedError
+from sktime.forecasting.base import BaseForecaster
 from sktime.registry import all_estimators
 from sktime.tests._config import (
     EXCLUDE_ESTIMATORS,
@@ -809,6 +810,13 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # todo: may have to rework this, due to "if estimator has param"
         for method in NON_STATE_CHANGING_METHODS:
+            # for now, we have to skip predict_proba, since current output comparison
+            #   does not work for tensorflow Distribution
+            if (
+                isinstance(estimator_instance, BaseForecaster)
+                and method == "predict_proba"
+            ):
+                continue
             if _has_capability(estimator, method):
                 set_random_state(estimator)
                 results = scenario.run(
@@ -954,6 +962,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Compare against results after pickling
         for method, vanilla_result in results.items():
+            # escape predict_proba for forecasters, tfp distributions cannot be pickled
+            if (
+                isinstance(estimator_instance, BaseForecaster)
+                and method == "predict_proba"
+            ):
+                continue
             unpickled_result = scenario.run(
                 unpickled_estimator, method_sequence=[method]
             )
