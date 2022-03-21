@@ -224,9 +224,7 @@ class BaseForecaster(BaseEstimator):
 
         return y_out
 
-    def fit_predict(
-        self, y, X=None, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def fit_predict(self, y, X=None, fh=None):
         """Fit and forecast time series at future horizon.
 
         State change:
@@ -254,18 +252,12 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series to fit to and to predict from
             if self.get_tag("X-y-must-have-same-index"),
             X.index must contain y.index and fh.index
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Point forecasts at fh, with same index as fh
             y_pred has same type as y
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            in this case, return is 2-tuple (otherwise a single y_pred)
-            Prediction intervals
         """
         # if fit is called, fitted state is re-set
         self._is_fitted = False
@@ -292,9 +284,7 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = True
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
-        return self.predict(
-            fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.predict(fh=fh, X=X_inner)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
@@ -1390,18 +1380,11 @@ class BaseForecaster(BaseEstimator):
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-            - Will be removed in v 0.10.0
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : series of a type in self.get_tag("y_inner_mtype")
             Point forecasts at fh, with same index as fh
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals - deprecate in v 0.10.1
-
         """
         raise NotImplementedError("abstract method")
 
@@ -1426,16 +1409,11 @@ class BaseForecaster(BaseEstimator):
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------
         y_pred : series of a type in self.get_tag("y_inner_mtype")
             Point forecasts at fh, with same index as fh
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
         if update_params:
             # default to re-fitting if update is not implemented
@@ -1462,9 +1440,6 @@ class BaseForecaster(BaseEstimator):
         fh,
         X=None,
         update_params=True,
-        # todo: deprecate return_pred_int in v 10.0.1
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
     ):
         """Update forecaster and then make forecasts.
 
@@ -1472,8 +1447,8 @@ class BaseForecaster(BaseEstimator):
         sequentially, but can be overwritten by subclasses
         to implement more efficient updating algorithms when available.
         """
-        self.update(y, X, update_params=update_params)
-        return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        self.update(y=y, X=X, update_params=update_params)
+        return self.predict(fh=fh, X=X)
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
@@ -1755,15 +1730,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
@@ -1772,15 +1739,11 @@ class BaseForecaster(BaseEstimator):
         cv : temporal cross-validation generator
         X : pd.DataFrame
         update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
         y_pred = pd.Series
         """
-        if return_pred_int:
-            raise NotImplementedError()
 
         fh = cv.get_fh()
         y_preds = []
@@ -1801,8 +1764,6 @@ class BaseForecaster(BaseEstimator):
                     fh,
                     X,
                     update_params=update_params,
-                    return_pred_int=return_pred_int,
-                    alpha=alpha,
                 )
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
