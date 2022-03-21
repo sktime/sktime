@@ -9,8 +9,11 @@ __author__ = ["fkiraly"]
 __all__ = ["scenarios_classification", "scenarios_regression"]
 
 from copy import deepcopy
+from inspect import isclass
 
 from sktime.base import BaseObject
+from sktime.classification.base import BaseClassifier
+from sktime.regression.base import BaseRegressor
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
@@ -50,16 +53,57 @@ class ClassifierTestScenario(TestScenario, BaseObject):
 
         return args
 
+    def is_applicable(self, obj):
+        """Check whether scenario is applicable to obj.
+
+        Parameters
+        ----------
+        obj : class or object to check against scenario
+
+        Returns
+        -------
+        applicable: bool
+            True if self is applicable to obj, False if not
+        """
+
+        def get_tag(obj, tag_name):
+            if isclass(obj):
+                return obj.get_class_tag(tag_name)
+            else:
+                return obj.get_tag(tag_name)
+
+        regr_or_classf = (BaseClassifier, BaseRegressor)
+
+        # applicable only if obj inherits from BaseClassifier or BaseRegressor
+        #   currently we test both classifiers and regressors using these scenarios
+        if not isinstance(obj, regr_or_classf) and not issubclass(obj, regr_or_classf):
+            return False
+
+        # if X is multivariate, applicable only if can handle multivariate
+        is_multivariate = not self.get_tag("X_univariate")
+
+        if is_multivariate and not get_tag(obj, "capability:multivariate"):
+            return False
+
+        return True
+
 
 y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
 X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
 X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
 
+X_multivariate = _make_panel_X(
+    n_instances=10, n_columns=2, n_timepoints=20, random_state=RAND_SEED, y=y
+)
+X_test_multivariate = _make_panel_X(
+    n_instances=5, n_columns=2, n_timepoints=20, random_state=RAND_SEED
+)
+
 
 class ClassifierFitPredict(ClassifierTestScenario):
-    """Fit/predict with panel X and labels y."""
+    """Fit/predict with univariate panel X and labels y."""
 
-    _tags = {"X_univariate": True, "pre-refactor": True}
+    _tags = {"X_univariate": True, "pre-refactor": True, "n_classes": 2}
 
     args = {
         "fit": {"y": y, "X": X},
@@ -69,11 +113,26 @@ class ClassifierFitPredict(ClassifierTestScenario):
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
+class ClassifierFitPredictMultivariate(ClassifierTestScenario):
+    """Fit/predict with multivariate panel X and labels y."""
+
+    _tags = {"X_univariate": False, "pre-refactor": True, "n_classes": 2}
+
+    args = {
+        "fit": {"y": y, "X": X_multivariate},
+        "predict": {"X": X_test_multivariate},
+    }
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+
+
 scenarios_classification = [
     ClassifierFitPredict,
+    ClassifierFitPredictMultivariate,
 ]
 
 # we use the same scenarios for regression, as in the old test suite
 scenarios_regression = [
     ClassifierFitPredict,
+    ClassifierFitPredictMultivariate,
 ]
