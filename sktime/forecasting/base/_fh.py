@@ -335,6 +335,8 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
+        logging.warning(f"to_absolute: cuttof = {cutoff}\ncuttof type = {type(cutoff)}")
+
         if not self.is_relative:
             return self._new()
 
