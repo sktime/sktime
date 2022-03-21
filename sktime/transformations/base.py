@@ -111,7 +111,7 @@ class BaseTransformer(BaseEstimator):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
@@ -221,8 +221,8 @@ class BaseTransformer(BaseEstimator):
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
-        # skip everything if fit-in-transform is True
-        if self.get_tag("fit-in-transform"):
+        # skip everything if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
             self._is_fitted = True
             return self
 
@@ -484,8 +484,8 @@ class BaseTransformer(BaseEstimator):
         if not update_params:
             return self
 
-        # skip everything if fit-in-transform is True
-        if self.get_tag("fit-in-transform"):
+        # skip everything if fit_is_empty is True
+        if self.get_tag("fit_is_empty"):
             return self
 
         # if requires_y is set, y is required in fit and update
@@ -859,7 +859,7 @@ class BaseTransformer(BaseEstimator):
 
         if methodname in TRAFO_METHODS:
             # loop through fitted transformers one-by-one, and transform series/panels
-            if not self.get_tag("fit-in-transform"):
+            if not self.get_tag("fit_is_empty"):
                 X, _, Xs, ys, n, _ = unwrap(kwargs)
 
                 n_fit = len(self.transformers_.index)
@@ -878,7 +878,7 @@ class BaseTransformer(BaseEstimator):
                     Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
-            # if fit-in-transform: don't store transformers, run fit/transform in one
+            # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
                 X, _, Xs, ys, n, _ = unwrap(kwargs)
 

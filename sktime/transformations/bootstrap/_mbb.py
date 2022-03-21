@@ -183,7 +183,7 @@ class STLBootstrapTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
     }
 
@@ -240,19 +240,22 @@ class STLBootstrapTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X : pd.Series
+            Data to be transformed
+        y : ignored, for interface compatibility
 
         Returns
         -------
         self: reference to self
         """
-        if self.sp <= 2:
+        if self.sp <= 1:
             raise NotImplementedError(
                 "STLBootstrapTransformer does not support non-seasonal data"
+            )
+
+        if not isinstance(self.sp, int):
+            raise ValueError(
+                "sp parameter of STLBootstrapTransformer must be an integer"
             )
 
         if len(X) <= self.sp:
@@ -282,11 +285,9 @@ class STLBootstrapTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
+        X : pd.Series
             Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        y : ignored, for interface compatibility
 
         Returns
         -------
@@ -295,7 +296,7 @@ class STLBootstrapTransformer(BaseTransformer):
         if len(X) <= self.block_length_:
             raise ValueError(
                 "STLBootstrapTransformer requires that block_length is"
-                " greater than the length of X"
+                " strictly smaller than the length of X"
             )
 
         X_index = X.index
@@ -480,7 +481,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
     }
 
