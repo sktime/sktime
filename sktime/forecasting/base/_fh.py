@@ -582,11 +582,17 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index coerced to preferred format.
     """
+    logging.warning(
+        f"_coerce_to_period: Frequency is {str(freq)}\ninput is:\n{str(x)}"
+        f"\nof type {type(x)}"
+    )
     if freq is None:
-        logging.warning(
-            f"Frequency is {str(freq)}\ninput is:\n{str(x)}" f"\nof type {type(x)}"
-        )
         freq = _get_freq(x)
+        logging.warning("_coerce_to_period: Entered the if loop in _coerce_to_period")
+    logging.warning(
+        f"_coerce_to_period: Frequency is {str(freq)}\ninput is:\n{str(x)}"
+        f"\nof type {type(x)}"
+    )
     try:
         return x.to_period(freq)
     except (ValueError, AttributeError) as e:

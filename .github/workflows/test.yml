@@ -95,37 +95,41 @@ jobs:
         with:
           file: ./testdir/coverage.xml
 
-  # test-linux:
+  test-linux:
   #   # needs: code-quality
-  #   runs-on: ubuntu-20.04
-  #   strategy:
-  #     matrix:
-  #       python-version: [3.8]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: ${{ matrix.python-version }}
-  #     - name: Display Python version
-  #       run: python -c "import sys; print(sys.version)"
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
 
-  #     - name: Install sktime and dependencies
-  #       run: |
-  #         python -m pip install .[all_extras,dev]
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[all_extras,dev]
 
-  #     - name: Show dependecies
-  #       run: python -m pip list
+      - name: Show dependecies
+        run: python -m pip list
 
-  #     - name: Run tests
-  #       run: make tests
-
-  #     - name: Display coverage report
-  #       run: ls -l ./testdir/
-  #     - name: Publish code coverage
-  #       uses: codecov/codecov-action@v1
-  #       with:
-  #         file: ./testdir/coverage.xml
+      - name: Run tests
+        run: |
+          mkdir -p testdir/
+          cp .coveragerc testdir/
+          cp setup.cfg testdir/
+          cd testdir/
+          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime -v -n 2 --pyargs sktime/forecasting/base/tests/test_base.py -k "test_vectorization_series_to_hier"
+      - name: Display coverage report
+        run: ls -l ./testdir/
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./testdir/coverage.xml
 
   # test-mac:
   #   needs: code-quality
