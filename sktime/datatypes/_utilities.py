@@ -130,7 +130,7 @@ def get_cutoff(obj, cutoff=0, return_index=False):
     if isinstance(obj, pd.Series):
         logging.warning("get_cutoff:\npd.Series")
         _cf = obj.index[[-1]] if return_index else obj.index[-1]
-        logging.warning(f"get_cutoff:\n{_cf}\n{type(_cf)}\n{_cf.__dict__}")
+        logging.warning(f"get_cutoff:\n{_cf}\n{type(_cf)}\n{_cf.freqstr}")
         return obj.index[[-1]] if return_index else obj.index[-1]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
