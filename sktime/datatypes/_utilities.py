@@ -2,6 +2,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Eclectic utilities for the datatypes module."""
 
+import logging
+
 import numpy as np
 import pandas as pd
 
@@ -115,6 +117,7 @@ def get_cutoff(obj, cutoff=0, return_index=False):
 
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
+        logging.warning("get_cutoff:\nnp.ndarray")
         if obj.ndim == 3:
             cutoff_ind = obj.shape[-1] + cutoff
         if obj.ndim < 3 and obj.ndim > 0:
@@ -125,10 +128,14 @@ def get_cutoff(obj, cutoff=0, return_index=False):
             return cutoff_ind
 
     if isinstance(obj, pd.Series):
+        logging.warning("get_cutoff:\npd.Series")
+        _cf = obj.index[[-1]] if return_index else obj.index[-1]
+        logging.warning(f"get_cutoff:\n{_cf}\n{_cf.type()}\n{_cf.__dict__}")
         return obj.index[[-1]] if return_index else obj.index[-1]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
+        logging.warning("get_cutoff:\nnested_univ or pd.DataFrame")
         objcols = [x for x in obj.columns if obj.dtypes[x] == "object"]
         # pd.DataFrame
         if len(objcols) == 0:
@@ -143,12 +150,18 @@ def get_cutoff(obj, cutoff=0, return_index=False):
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
+        logging.warning("get_cutoff:\npd-multiindex or Hierarchical")
         idx = obj.index
         series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
         if return_index:
             cutoffs = [x[[-1]] for x in series_idx]
         else:
             cutoffs = [x[-1] for x in series_idx]
+        max_cutoffs = max(cutoffs)
+        logging.warning(
+            f"get_cutoff - max(cutoffs):\n{max_cutoffs}\n{type(max_cutoffs)}"
+            f"\n{max_cutoffs.__dict__}"
+        )
         return max(cutoffs)
 
     # df-list (Panel)
