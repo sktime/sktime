@@ -148,19 +148,20 @@ class Imputer(BaseTransformer):
         self: a fitted instance of the estimator
         """
         self._check_method()
+        method = self.method
 
-        if self.method not in self.METHODS_REQUIRE_FIT:
+        if method not in self.METHODS_REQUIRE_FIT:
             raise ValueError(
-                f"bug, unreachable code: {self.method} passed and _fit was called. "
+                f"bug, unreachable code: {method} passed and _fit was called. "
                 "_fit shouhld not be entered since the method does not require _fit."
             )
 
-        if self.method == "mean_fit":
+        if method == "mean_fit":
             self._fillconst = X.mean()
-        elif self.method == "median_fit":
+        elif method == "median_fit":
             self._fillconst = X.median()
         else:
-            raise ValueError(f"bug, unreachable code: {self.method} passed.")
+            raise ValueError(f"bug, unreachable code: {method} passed.")
 
         return self
 
@@ -181,6 +182,7 @@ class Imputer(BaseTransformer):
             transformed version of X
         """
         self._check_method()
+        method = self.method
 
         # replace missing_values with np.nan
         if self.missing_values:
@@ -189,7 +191,7 @@ class Imputer(BaseTransformer):
         if not _has_missing_values(X):
             return X
 
-        if self.method == "random":
+        if method == "random":
             if isinstance(X, pd.DataFrame):
                 Xt = X
                 for col in Xt:
@@ -198,38 +200,40 @@ class Imputer(BaseTransformer):
                     )
             else:
                 Xt = X.apply(lambda i: self._get_random(X) if np.isnan(i) else i)
-        elif self.method == "constant":
+        elif method == "constant":
             Xt = X.fillna(value=self.value)
-        elif self.method in ["backfill", "bfill", "pad", "ffill"]:
-            Xt = X.fillna(method=self.method)
-        elif self.method == "drift":
+        elif method in ["backfill", "bfill", "pad", "ffill"]:
+            Xt = X.fillna(method=method)
+        elif method == "drift":
             forecaster = PolynomialTrendForecaster(degree=1)
             Xt = _impute_with_forecaster(forecaster, X)
-        elif self.method == "forecaster":
+        elif method == "forecaster":
             forecaster = clone(self.forecaster)
             Xt = _impute_with_forecaster(forecaster, X)
-        elif self.method == "mean":
+        elif method == "mean":
             Xt = X.fillna(value=X.mean())
-        elif self.method == "median":
+        elif method == "median":
             Xt = X.fillna(value=X.median())
-        elif self.method in ["mean_fit", "median_fit"]:
+        elif method in ["mean_fit", "median_fit"]:
             Xt = X.fillna(value=self._fillconst)
-        elif self.method in ["nearest", "linear"]:
-            Xt = X.interpolate(method=self.method)
+        elif method in ["nearest", "linear"]:
+            Xt = X.interpolate(method=method)
         else:
-            raise ValueError(f"`method`: {self.method} not available.")
+            raise ValueError(f"`method`: {method} not available.")
         # fill first/last elements of series,
         # as some methods (e.g. "linear") cant impute those
         Xt = X.fillna(method="ffill").fillna(method="backfill")
         return Xt
 
     def _check_method(self):
-        if self.method not in self.ALLOWED_METHODS:
-            raise ValueError(f"`method`: {self.method} not available.")
+        method = self.method
+
+        if method not in self.ALLOWED_METHODS:
+            raise ValueError(f"`method`: {method} not available.")
         if (
             self.value is not None
-            and self.method != "constant"
-            or self.method == "constant"
+            and method != "constant"
+            or method == "constant"
             and self.value is None
         ):
             raise ValueError(
@@ -238,8 +242,8 @@ class Imputer(BaseTransformer):
             )
         elif (
             self.forecaster is not None
-            and self.method != "forecaster"
-            or self.method == "forecaster"
+            and method != "forecaster"
+            or method == "forecaster"
             and self.forecaster is None
         ):
             raise ValueError(
