@@ -47,6 +47,7 @@ from sktime.transformations.base import BaseTransformer
 
 # todo: add any necessary sktime internal imports here
 
+# todo: remove dependency on level names in index
 
 class reconciler(BaseTransformer):
     """Custom transformer. todo: write docstring.
@@ -102,7 +103,7 @@ class reconciler(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": True,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
         # does transform return have the same time index as input X
     }
