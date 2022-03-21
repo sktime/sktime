@@ -9,40 +9,40 @@ on:
       - main
 
 jobs:
-  code-quality:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.4
-        with:
-          output: " "
-      - name: List changed files
-        run: echo '${{ steps.file_changes.outputs.files}}'
-      - uses: pre-commit/action@v2.0.0
-        with:
-          extra_args: --files ${{ steps.file_changes.outputs.files}}
-      - name: Check for missing init files
-        run: build_tools/fail_on_missing_init_files.sh
-        shell: bash
+#   code-quality:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-python@v2
+#       - id: file_changes
+#         uses: trilom/file-changes-action@v1.2.4
+#         with:
+#           output: " "
+#       - name: List changed files
+#         run: echo '${{ steps.file_changes.outputs.files}}'
+#       - uses: pre-commit/action@v2.0.0
+#         with:
+#           extra_args: --files ${{ steps.file_changes.outputs.files}}
+#       - name: Check for missing init files
+#         run: build_tools/fail_on_missing_init_files.sh
+#         shell: bash
 
-  run-notebook-examples:
-    needs: code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[all_extras,binder,dev]
-      - name: Run example notebooks
-        run: build_tools/run_examples.sh
-        shell: bash
+  # run-notebook-examples:
+  #   needs: code-quality
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.7
+  #     - name: Install dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         python -m pip install .[all_extras,binder,dev]
+  #     - name: Run example notebooks
+  #       run: build_tools/run_examples.sh
+  #       shell: bash
 
   test-windows:
     needs: code-quality
@@ -95,52 +95,52 @@ jobs:
         with:
           file: ./testdir/coverage.xml
 
-  test-linux:
-    needs: code-quality
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python-version: [3.7, 3.8, 3.9]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+  # test-linux:
+  #   needs: code-quality
+  #   runs-on: ubuntu-20.04
+  #   strategy:
+  #     matrix:
+  #       python-version: [3.7, 3.8, 3.9]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #     - name: Display Python version
+  #       run: python -c "import sys; print(sys.version)"
 
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras,dev]
+  #     - name: Install sktime and dependencies
+  #       run: |
+  #         python -m pip install .[all_extras,dev]
 
-      - name: Show dependecies
-        run: python -m pip list
+  #     - name: Show dependecies
+  #       run: python -m pip list
 
-      - name: Run tests
-        run: make tests
+  #     - name: Run tests
+  #       run: make tests
 
-      - name: Display coverage report
-        run: ls -l ./testdir/
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./testdir/coverage.xml
+  #     - name: Display coverage report
+  #       run: ls -l ./testdir/
+  #     - name: Publish code coverage
+  #       uses: codecov/codecov-action@v1
+  #       with:
+  #         file: ./testdir/coverage.xml
 
-  test-mac:
-    needs: code-quality
-    runs-on: macOS-10.15
-    strategy:
-      matrix:
-        python-version: [3.7, 3.8, 3.9]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+  # test-mac:
+  #   needs: code-quality
+  #   runs-on: macOS-10.15
+  #   strategy:
+  #     matrix:
+  #       python-version: [3.7, 3.8, 3.9]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: ${{ matrix.python-version }}
+  #     - name: Display Python version
+  #       run: python -c "import sys; print(sys.version)"
 
       # - run: brew install libomp
 
@@ -155,19 +155,19 @@ jobs:
       #     echo "LDFLAGS=$LDFLAGS -Wl,-rpath,/opt/local/lib/libomp -L/opt/local/lib/libomp -lomp" >> $GITHUB_ENV
       #     echo "PATH=/usr/local/opt/ccache/libexec:$PATH" >> $GITHUB_ENV
 
-      - name: Install sktime and dependencies
-        run: |
-          python -m pip install .[all_extras,dev]
+      # - name: Install sktime and dependencies
+      #   run: |
+      #     python -m pip install .[all_extras,dev]
 
-      - name: Show dependecies
-        run: python -m pip list
+      # - name: Show dependecies
+      #   run: python -m pip list
 
-      - name: Run tests
-        run: make tests
+      # - name: Run tests
+      #   run: make tests
 
-      - name: Display coverage report
-        run: ls -l ./testdir/
-      - name: Publish code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          file: ./testdir/coverage.xml
+      # - name: Display coverage report
+      #   run: ls -l ./testdir/
+      # - name: Publish code coverage
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     file: ./testdir/coverage.xml
