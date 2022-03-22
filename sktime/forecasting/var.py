@@ -26,8 +26,25 @@ class VAR(_StatsModelsAdapter):
         Estimation method to use
     verbose : bool (default = False)
         Print order selection output to the screen
+    trend : str {"c", "ct", "ctt", "n"}
+        "c" - add constant
+        "ct" - constant and trend
+        "ctt" - constant, linear and quadratic trend
+        "n" - co constant, no trend
+        Note that these are prepended to the columns of the dataset.
     missing: str, optional (default='none')
         A string specifying if data is missing
+    freq: str, tuple, datetime.timedelta, DateOffset or None, optional
+    dates: array_like
+        Must match number of rows of endog
+        A frequency specification for either `dates` or the row labels from
+        the endog / exog data.
+    ic: {'aic', 'fpe', 'hqic', 'bic', None}
+        Information criterion to use for VAR order selection.
+        aic : Akaike
+        fpe : Final prediction error
+        hqic : Hannan-Quinn
+        bic : Bayesian a.k.a. Schwarz
 
     References
     ----------
@@ -63,6 +80,9 @@ class VAR(_StatsModelsAdapter):
         verbose=False,
         trend="c",
         missing="none",
+        dates=None,
+        freq=None,
+        ic=None
     ):
         # Model params
         self.trend = trend
@@ -70,6 +90,9 @@ class VAR(_StatsModelsAdapter):
         self.method = method
         self.verbose = verbose
         self.missing = missing
+        self.dates = dates
+        self.freq = freq
+        self.ic = ic
 
         super(VAR, self).__init__()
 
@@ -90,12 +113,19 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
-        self._forecaster = _VAR(endog=y, exog=X, missing=self.missing)
+        self._forecaster = _VAR(
+            endog=y, exog=X,
+            dates=None,
+            freq=None,
+            missing=self.missing)
         self._fitted_forecaster = self._forecaster.fit(
             trend=self.trend,
             maxlags=self.maxlags,
             method=self.method,
             verbose=self.verbose,
+            ic=None,
+            trend="c",
+            verbose=False
         )
         return self
 

@@ -20,11 +20,11 @@ repos:
       - id: isort
         name: isort
 
-  - repo: https://github.com/psf/black
-    rev: 21.11b1
-    hooks:
-      - id: black
-        language_version: python3
+#  - repo: https://github.com/psf/black
+#    rev: 21.11b1
+#    hooks:
+#      - id: black
+#        language_version: python3
         # args: [--line-length 79]
 
   - repo: https://github.com/pycqa/flake8
@@ -53,11 +53,11 @@ repos:
         args: [--nbqa-dont-skip-bad-cells, "--extend-ignore=E402,E203"]
         additional_dependencies: [flake8==3.8.3]
 
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
-    hooks:
-      - id: pydocstyle
-        args: ["--config=setup.cfg"]
+#  - repo: https://github.com/pycqa/pydocstyle
+#    rev: 6.1.1
+#    hooks:
+#      - id: pydocstyle
+#        args: ["--config=setup.cfg"]
 
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
