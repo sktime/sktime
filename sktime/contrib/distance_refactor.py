@@ -44,13 +44,13 @@ expected_rand_basic_motions = {
 distances = [
     "euclidean",
     "dtw",
-    "erp",
-    "edr",
     "wdtw",
-    "lcss",
-    "msm",
-    "ddtw",
-    "wddtw",
+    #    "erp",
+    #    "edr",
+    #    "lcss",
+    #    "msm",
+    #    "ddtw",
+    #    "wddtw",
 ]
 
 
