@@ -575,7 +575,10 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         """
         # retrieve fitted transformers, apply to the new data individually
         transformers = self._get_estimator_list(self.transformer_list_)
-        Xt_list = [trafo.transform(X, y) for trafo in transformers]
+        if not self.get_tag("fit_is_empty", False):
+            Xt_list = [trafo.transform(X, y) for trafo in transformers]
+        else:
+            Xt_list = [trafo.fit_transform(X, y) for trafo in transformers]
 
         transformer_names = self._get_estimator_names(self.transformer_list_)
 
