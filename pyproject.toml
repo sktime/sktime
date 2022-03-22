@@ -64,8 +64,11 @@ all_extras = [
     "pystan==2.19.1.1",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
+    "statsforecast>=0.5.2",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
+    "tensorflow",
+    "tensorflow-probability",
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2"
 ]
@@ -93,6 +96,11 @@ docs = [
     "sphinx-panels==0.6.0",
     "sphinx==4.1.1",
     "tabulate",
+]
+
+dl = [
+    "tensorflow",
+    "tensorflow-probability",
 ]
 
 [project.urls]
