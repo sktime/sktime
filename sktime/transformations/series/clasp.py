@@ -395,7 +395,7 @@ class ClaSPTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
     }
 
     def __init__(self, window_length=10, scoring_metric="ROC_AUC"):

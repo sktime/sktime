@@ -39,7 +39,7 @@ class IntervalSegmenter(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
     }
 
     def __init__(self, intervals=10):
@@ -379,7 +379,7 @@ class SlidingWindowSegmenter(BaseTransformer):
 
     _tags = {
         "univariate-only": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

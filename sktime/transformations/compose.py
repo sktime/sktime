@@ -109,7 +109,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         self._anytagis_then_set("scitype:instancewise", False, True)
         self._anytagis_then_set("X-y-must-have-same-index", True, False)
-        self._anytagis_then_set("fit-in-transform", False, True)
+        self._anytagis_then_set("fit_is_empty", False, True)
         self._anytagis_then_set("transform-returns-same-time-index", False, True)
         self._anytagis_then_set("skip-inverse-transform", True, False)
         self._anytagis_then_set("capability:inverse_transform", False, True)
@@ -313,7 +313,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         """
         Xt = X
         for _, transformer in self.steps_:
-            if not self.get_tag("fit-in-transform", False):
+            if not self.get_tag("fit_is_empty", False):
                 Xt = transformer.transform(X=Xt, y=y)
             else:
                 Xt = transformer.fit_transform(X=Xt, y=y)
