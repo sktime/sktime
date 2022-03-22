@@ -181,9 +181,7 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
     num_dims = _x.ndim
     shape = _x.shape
     if num_dims == 1:
-        _x = np.reshape(_x, (shape[0], 1))
-    if num_dims == 2 and shape[0] == 1:
-        _x = np.reshape(_x, (shape[1], shape[0]))
+        _x = np.reshape(_x, (1, shape[0]))
 
     elif num_dims > 2:
         raise ValueError(

@@ -6,12 +6,12 @@ from sktime.classification.distance_based._time_series_neighbors import (
 from sktime.datasets import load_unit_test
 
 distance_functions = [
-    "euclidean",
+    # '"euclidean",
     "dtw",
-    "wdtw",
+    # "wdtw",
     # "msm",
-    "erp",
-    "lcss",
+    # '"erp",
+    # "lcss",
 ]
 
 # expected correct on test set using default parameters.

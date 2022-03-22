@@ -43,7 +43,10 @@ basic_motions_distances = {
 def test_dtw():
     """Test dtw correctness."""
     trainX, trainy = load_unit_test(return_type="numpy3D")
-    d = dtw_distance(trainX[0], trainX[2], window=1.0)
+    d = dtw_distance(trainX[0], trainX[1], window=0.01)
+    from sktime.distances import squared_distance
+    test = squared_distance(trainX[0], trainX[1])
+    joe = ''
     assert d == unit_test_distances["dtw"][0]
     d = dtw_distance(trainX[0], trainX[2], window=0.1)
     assert d == unit_test_distances["dtw"][1]

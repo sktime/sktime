@@ -140,7 +140,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
         """
         # Transpose to work correctly with distance functions
-        X = X.transpose((0, 2, 1))
+        # X = X.transpose((0, 2, 1))
         if isinstance(self.distance, str):
             if self.distance_params is None:
                 self.metric = distance_factory(X[0], X[0], metric=self.distance)
@@ -220,7 +220,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
         # Transpose to work correctly with distance functions
-        X = X.transpose((0, 2, 1))
+        # X = X.transpose((0, 2, 1))
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
