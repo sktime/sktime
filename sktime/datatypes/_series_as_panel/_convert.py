@@ -22,6 +22,10 @@ from sktime.datatypes import convert_to, mtype, mtype_to_scitype
 def convert_Series_to_Panel(obj, store=None):
     """Convert series to a single-series panel.
 
+    Adds a dummy dimension to the series.
+    For pd.Series or DataFrame, this results in a list of DataFram (dim added is list).
+    For numpy array, this results in a third dimension being added.
+
     Assumes input is conformant with one of the three Series mtypes.
     This method does not perform full mtype checks, use mtype or check_is_mtype for
     checks.
@@ -56,6 +60,8 @@ def convert_Series_to_Panel(obj, store=None):
 def convert_Panel_to_Series(obj, store=None):
     """Convert single-series panel to a series.
 
+    Removes panel index from the single-series panel to obtain a series.
+
     Assumes input is conformant with one of three main panel mtypes.
     This method does not perform full mtype checks, use mtype or check_is_mtype for
     checks.
@@ -89,6 +95,8 @@ def convert_Panel_to_Series(obj, store=None):
 def convert_Series_to_Hierarchical(obj, store=None):
     """Convert series to a single-series hierarchical object.
 
+    Adds two dimensions to the series to obtain a 3-level MultiIndex, 2 levels added.
+
     Assumes input is conformant with one of the three Series mtypes.
     This method does not perform full mtype checks, use mtype or check_is_mtype for
     checks.
@@ -113,6 +121,8 @@ def convert_Series_to_Hierarchical(obj, store=None):
 def convert_Hierarchical_to_Series(obj, store=None):
     """Convert single-series hierarchical object to a series.
 
+    Removes two dimensions to obtain a series, by removing 2 levels from MultiIndex.
+
     Assumes input is conformant with Hierarchical mtype.
     This method does not perform full mtype checks, use mtype or check_is_mtype for
     checks.
@@ -133,6 +143,8 @@ def convert_Hierarchical_to_Series(obj, store=None):
 
 def convert_Panel_to_Hierarchical(obj, store=None):
     """Convert panel to a single-panel hierarchical object.
+
+    Adds a dimensions to the panel to obtain a 3-level MultiIndex, 1 level is added.
 
     Assumes input is conformant with one of the Panel mtypes.
     This method does not perform full mtype checks, use mtype or check_is_mtype for
@@ -156,6 +168,8 @@ def convert_Panel_to_Hierarchical(obj, store=None):
 
 def convert_Hierarchical_to_Panel(obj, store=None):
     """Convert single-series hierarchical object to a series.
+
+    Removes one dimensions to obtain a panel, by removing 1 level from MultiIndex.
 
     Assumes input is conformant with Hierarchical mtype.
     This method does not perform full mtype checks, use mtype or check_is_mtype for
