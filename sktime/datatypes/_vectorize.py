@@ -131,9 +131,14 @@ class VectorizedDF:
         """Initialize indices that are iterated over in vectorization."""
         iterate_as = self.iterate_as
         X = self.X_multiindex
+        logging.warning(
+            f"VectorizedDF _init_iter_indices X:"
+            f"\n{X.index.get_level_values(-1)[-1].freqstr}"
+        )
 
         if iterate_as == "Series":
             ix = X.index.droplevel(-1).unique()
+            logging.warning(f"_init_iter_indices:\n{ix}\ntype={type(ix)}")
             return ix
         elif iterate_as == "Panel":
             ix = X.index.droplevel([-1, -2]).unique()
