@@ -1730,7 +1730,15 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
+    def _predict_moving_cutoff(
+        self,
+        y,
+        cv,
+        X=None,
+        update_params=True,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
@@ -1739,11 +1747,16 @@ class BaseForecaster(BaseEstimator):
         cv : temporal cross-validation generator
         X : pd.DataFrame
         update_params : bool
+        return_pred_int : bool
+        alpha : float or array-like
 
         Returns
         -------
         y_pred = pd.Series
         """
+        if return_pred_int:
+            raise NotImplementedError()
+
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
@@ -1763,7 +1776,13 @@ class BaseForecaster(BaseEstimator):
                     fh,
                     X,
                     update_params=update_params,
+                    return_pred_int=return_pred_int,
+                    alpha=alpha,
                 )
+                if return_pred_int:
+                    y_pred_int = self.predict_interval(fh, X, alpha=alpha)
+                    y_pred_int = self._convert_new_to_old_pred_int(y_pred_int)
+                    y_pred = (y_pred, y_pred_int)
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
