@@ -6,11 +6,11 @@ from importlib import import_module
 
 
 def _check_soft_dependencies(*packages, severity="error", object=None):
-    """Check if requred soft dependencies are installed and raise error or warning.
+    """Check if required soft dependencies are installed and raise error or warning.
 
     Parameters
     ----------
-    packages : str
+    packages : str or tuple of str
         One or more package names to check
     severity : str, "error" (default) or "warning"
         whether the check should raise an error, or only a warning
@@ -55,3 +55,29 @@ def _check_soft_dependencies(*packages, severity="error", object=None):
                     "Error in calling _check_soft_dependencies, severity "
                     f'argument must bee "error" or "warning", found "{severity}".'
                 )
+
+
+def _check_dl_dependencies(msg=None):
+    """Check if deep learning dependencies are installed.
+
+    Parameters
+    ----------
+    msg : str, optional, default= default message (msg below)
+        error message to be returned in the `ModuleNotFoundError`, overrides default
+
+    Raises
+    ------
+    ModuleNotFoundError
+        User friendly error with suggested action to install deep learning dependencies
+    """
+    if not isinstance(msg, str):
+        msg = (
+            "tensorflow and tensorflow-probability are required for "
+            "deep learning and probabilistic functionality in `sktime`. "
+            "To install these dependencies, run: `pip install sktime[dl]`"
+        )
+    try:
+        import_module("tensorflow")
+        import_module("tensorflow_probability")
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(msg) from e

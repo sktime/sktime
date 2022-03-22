@@ -13,6 +13,7 @@ __all__ = [
 ]
 
 
+from copy import deepcopy
 from inspect import isclass
 
 from sktime.base import BaseObject
@@ -64,6 +65,36 @@ class ForecasterTestScenario(TestScenario, BaseObject):
             return False
 
         return True
+
+    def get_args(self, key, obj=None, deepcopy_args=True):
+        """Return args for key. Can be overridden for dynamic arg generation.
+
+        If overridden, must not have any side effects on self.args
+            e.g., avoid assignments args[key] = x without deepcopying self.args first
+
+        Parameters
+        ----------
+        key : str, argument key to construct/retrieve args for
+        obj : obj, optional, default=None. Object to construct args for.
+        deepcopy_args : bool, optional, default=True. Whether to deepcopy return.
+
+        Returns
+        -------
+        args : argument dict to be used for a method, keyed by `key`
+            names for keys need not equal names of methods these are used in
+                but scripted method will look at key with same name as default
+        """
+        PREDICT_LIKE_FUNCTIONS = ["predict", "predict_var", "predict_proba"]
+        # use same args for predict-like functions as for predict
+        if key in PREDICT_LIKE_FUNCTIONS:
+            key = "predict"
+
+        args = self.args[key]
+
+        if deepcopy_args:
+            args = deepcopy(args)
+
+        return args
 
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
