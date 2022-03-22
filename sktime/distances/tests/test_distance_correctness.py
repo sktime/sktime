@@ -27,6 +27,11 @@ distances = [
     "wdtw",
     "msm",
     "ddtw",
+    "euclidean",
+    "erp",
+    "lcss",
+    "ddtw",
+    "wddtw",
 ]
 distance_functions = {
     "dtw": dtw_distance,
