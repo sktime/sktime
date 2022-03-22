@@ -106,17 +106,21 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
         self.clone_tags(last_trafo, "scitype:transform-output")
 
-        self._anytag_notnone_set("y_inner_mtype")
-        self._anytag_notnone_set("scitype:transform-labels")
+        # abbreviate for readability
+        ests = self.steps_
 
-        self._anytagis_then_set("scitype:instancewise", False, True)
-        self._anytagis_then_set("X-y-must-have-same-index", True, False)
-        self._anytagis_then_set("fit_is_empty", False, True)
-        self._anytagis_then_set("transform-returns-same-time-index", False, True)
-        self._anytagis_then_set("skip-inverse-transform", True, False)
-        self._anytagis_then_set("capability:inverse_transform", False, True)
-        self._anytagis_then_set("handles-missing-data", False, True)
-        self._anytagis_then_set("univariate-only", True, False)
+        # set property tags based on tags of components
+        self._anytag_notnone_set("y_inner_mtype", ests)
+        self._anytag_notnone_set("scitype:transform-labels", ests)
+
+        self._anytagis_then_set("scitype:instancewise", False, True, ests)
+        self._anytagis_then_set("X-y-must-have-same-index", True, False, ests)
+        self._anytagis_then_set("fit_is_empty", False, True, ests)
+        self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
+        self._anytagis_then_set("skip-inverse-transform", True, False, ests)
+        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        self._anytagis_then_set("handles-missing-data", False, True, ests)
+        self._anytagis_then_set("univariate-only", True, False, ests)
 
     @property
     def _steps(self):
@@ -213,32 +217,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
             return False
         return True
-
-    def _anytagis(self, tag_name, value):
-        """Return whether any estimator in list has tag `tag_name` of value `value`."""
-        tagis = [est.get_tag(tag_name, value) == value for _, est in self.steps_]
-        return any(tagis)
-
-    def _anytagis_then_set(self, tag_name, value, value_if_not):
-        """Set self's `tag_name` tag to `value` if any estimator on the list has it."""
-        if self._anytagis(tag_name=tag_name, value=value):
-            self.set_tags(**{tag_name: value})
-        else:
-            self.set_tags(**{tag_name: value_if_not})
-
-    def _anytag_notnone_val(self, tag_name):
-        """Return first non-'None' value of tag `tag_name` in estimator list."""
-        for _, est in self.steps_:
-            tag_val = est.get_tag(tag_name)
-            if tag_val != "None":
-                return tag_val
-        return tag_val
-
-    def _anytag_notnone_set(self, tag_name):
-        """Set self's `tag_name` tag to first non-'None' value in estimator list."""
-        tag_val = self._anytag_notnone_val(tag_name=tag_name)
-        if tag_val != "None":
-            self.set_tags(**{tag_name: tag_val})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -475,6 +453,26 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self.flatten_transform_index = flatten_transform_index
 
         super(FeatureUnion, self).__init__()
+
+        # todo: check for transform-input, transform-output
+        #   for now, we assume it's always Series/Series or Series/Panel
+        #   but no error is currently raised
+
+        # abbreviate for readability
+        ests = self.transformer_list_
+
+        # set property tags based on tags of components
+        self._anytag_notnone_set("y_inner_mtype", ests)
+        self._anytag_notnone_set("scitype:transform-labels", ests)
+
+        self._anytagis_then_set("scitype:instancewise", False, True, ests)
+        self._anytagis_then_set("X-y-must-have-same-index", True, False, ests)
+        self._anytagis_then_set("fit_is_empty", False, True, ests)
+        self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
+        self._anytagis_then_set("skip-inverse-transform", True, False, ests)
+        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        self._anytagis_then_set("handles-missing-data", False, True, ests)
+        self._anytagis_then_set("univariate-only", True, False, ests)
 
     @property
     def _transformer_list(self):

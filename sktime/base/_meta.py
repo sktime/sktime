@@ -272,6 +272,74 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         #   because potential clashes are lexicographically increasing
         return self._make_strings_unique(uniquestr)
 
+    def _anytagis(self, tag_name, value, estimators):
+        """Return whether any estimator in list has tag `tag_name` of value `value`.
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag to check
+        value : value of the tag to check for
+        estimators : list of (str, estimator) pairs to query for the tag/value
+
+        Return
+        ------
+        bool : True iff at least one estimator in the list has value in tag tag_name
+        """
+        tagis = [est.get_tag(tag_name, value) == value for _, est in estimators]
+        return any(tagis)
+
+    def _anytagis_then_set(self, tag_name, value, value_if_not, estimators):
+        """Set self's `tag_name` tag to `value` if any estimator on the list has it.
+
+        Writes to self:
+        tag with name tag_name, sets to value if _anytagis(tag_name, value) is True
+            otherwise sets the tag to `value_if_not`
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag
+        value : value to check and to set tag to if one of the tag values is `value`
+        value_if_not : value to set in self if none of the tag values is `value`
+        estimators : list of (str, estimator) pairs to query for the tag/value
+        """
+        if self._anytagis(tag_name=tag_name, value=value, estimators=estimators):
+            self.set_tags(**{tag_name: value})
+        else:
+            self.set_tags(**{tag_name: value_if_not})
+
+    def _anytag_notnone_val(self, tag_name, estimators):
+        """Return first non-'None' value of tag `tag_name` in estimator list.
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag
+        estimators : list of (str, estimator) pairs to query for the tag/value
+
+        Return
+        ------
+        tag_val : first non-'None' value of tag `tag_name` in estimator list.
+        """
+        for _, est in estimators:
+            tag_val = est.get_tag(tag_name)
+            if tag_val != "None":
+                return tag_val
+        return tag_val
+
+    def _anytag_notnone_set(self, tag_name, estimators):
+        """Set self's `tag_name` tag to first non-'None' value in estimator list.
+
+        Writes to self:
+        tag with name tag_name, sets to _anytag_notnone_val(tag_name, estimators)
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag
+        estimators : list of (str, estimator) pairs to query for the tag/value
+        """
+        tag_val = self._anytag_notnone_val(tag_name=tag_name, estimators=estimators)
+        if tag_val != "None":
+            self.set_tags(**{tag_name: tag_val})
+
 
 def flatten(obj):
     """Flatten nested list/tuple structure.
