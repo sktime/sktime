@@ -282,7 +282,9 @@ class Imputer(BaseTransformer):
         """
         from sktime.forecasting.naive import NaiveForecaster
 
-        methods_wo_param = set(cls.ALLOWED_METHODS).difference("constant", "forecaster")
+        methods_wo_param = set(cls.ALLOWED_METHODS).difference(
+            ["constant", "forecaster"]
+        )
         params = [{"method": x} for x in methods_wo_param]
         params += [{"method": "constant", "value": 42}]
         params += [{"method": "forecaster", "forecaster": NaiveForecaster()}]
