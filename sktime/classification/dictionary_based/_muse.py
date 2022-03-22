@@ -107,6 +107,7 @@ class MUSE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "X_inner_mtype": "nested_univ",  # MUSE requires nested datafrane
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -288,7 +289,7 @@ class MUSE(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -304,7 +305,7 @@ class MUSE(BaseClassifier):
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters

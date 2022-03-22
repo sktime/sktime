@@ -12,6 +12,7 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -39,6 +40,7 @@ class _TbatsAdapter(BaseForecaster):
         multiprocessing_start_method="spawn",
         context=None,
     ):
+        _check_soft_dependencies("tbats", severity="error", object=self)
 
         self.use_box_cox = use_box_cox
         self.box_cox_bounds = box_cox_bounds
@@ -55,6 +57,14 @@ class _TbatsAdapter(BaseForecaster):
         self._yname = None  # .fit(y) -> y.name
 
         super(_TbatsAdapter, self).__init__()
+
+    def _create_model_class(self):
+        """Instantiate (T)BATS model.
+
+        This method should write a (T)BATS model to self._ModelClass,
+            and should be overridden by concrete classes.
+        """
+        raise NotImplementedError
 
     def _instantiate_model(self):
         n_jobs = check_n_jobs(self.n_jobs)
@@ -89,6 +99,7 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._create_model_class()
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
         self._yname = y.name
