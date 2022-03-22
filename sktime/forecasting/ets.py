@@ -142,6 +142,29 @@ class AutoETS(_StatsModelsAdapter):
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
+    method : Determines which solver from `scipy.optimize`
+            is used, must be among the following strings:
+            - 'newton' for Newton-Raphson
+            - 'nm' for Nelder-Mead
+            - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+            - 'lbfgs' for limited-memory BFGS with optional box constraints
+            - 'powell' for modified Powell's method
+            - 'cg' for conjugate gradient
+            - 'ncg' for Newton-conjugate gradient
+            - 'basinhopping' for global basin-hopping solver
+    skip_hessian : bool, deault = False
+        If False, then the negative inverse hessian is calculated after the optimization
+        If True, then the hessian will not be calculated. However, it will be
+        available in methods that use the hessian in the optimization
+        (currently only with "newton").
+    approx_centered : bool, default = False
+        Whether to use a centered scheme for finite difference
+        approximation.
+    approx_complex_step : bool, default = True
+        Whether to use complex step differentiation for approximation
+    return_raw : bool, default = False
+        Whether to return only the state space results or the full results
+        object. Default is ``False``.
 
     References
     ----------
@@ -200,6 +223,11 @@ class AutoETS(_StatsModelsAdapter):
         additive_only=False,
         ignore_inf_ic=True,
         n_jobs=None,
+        method="lbfgs",
+        skip_hessian=True,
+        approx_centered=False,
+        approx_complex_step=True,
+        return_raw=False,
         **kwargs
     ):
         # Model params
@@ -231,6 +259,17 @@ class AutoETS(_StatsModelsAdapter):
         self.additive_only = additive_only
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
+
+        # Fit params, inherited from mlemodel.py
+        self.method = method
+        self.skip_hessian = skip_hessian
+
+        # hessian and score params
+        self.approx_centered = approx_centered
+        self.approx_complex_step = approx_complex_step
+
+        # smooth params
+        self.return_raw = return_raw
 
         super(AutoETS, self).__init__()
 
