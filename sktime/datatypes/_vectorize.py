@@ -172,6 +172,7 @@ class VectorizedDF:
         logging.warning(
             f"VectorizedDF __getitem__ item:"
             f"\n{item}\ntype={type(item)}\n{item.index.freq}\n{type(item.index)}"
+            f"\ninfered freq = {pd.infer_freq(item.index)}"
         )
         # pd-multiindex type (Panel case) expects these index names:
         if self.iterate_as == "Panel":
