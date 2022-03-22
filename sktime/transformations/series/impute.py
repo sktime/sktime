@@ -93,11 +93,11 @@ class Imputer(BaseTransformer):
     }
 
     ALLOWED_METHODS = [
+        "mean",
         "drift",
         "linear",
         "nearest",
         "constant",
-        "mean",
         "mean_fit",
         "median",
         "median_fit",
