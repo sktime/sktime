@@ -1776,8 +1776,6 @@ class BaseForecaster(BaseEstimator):
                     fh,
                     X,
                     update_params=update_params,
-                    return_pred_int=return_pred_int,
-                    alpha=alpha,
                 )
                 if return_pred_int:
                     y_pred_int = self.predict_interval(fh, X, alpha=alpha)
