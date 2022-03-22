@@ -219,7 +219,7 @@ class Imputer(BaseTransformer):
         elif method in ["nearest", "linear"]:
             Xt = X.interpolate(method=method)
         else:
-            raise ValueError(f"`method`: {method} not available.")
+            raise ValueError(f'`method`: "{method}" not available.')
         # fill first/last elements of series,
         # as some methods (e.g. "linear") cant impute those
         Xt = X.fillna(method="ffill").fillna(method="backfill")
@@ -229,7 +229,7 @@ class Imputer(BaseTransformer):
         method = self.method
 
         if method not in self.ALLOWED_METHODS:
-            raise ValueError(f"`method`: {method} not available.")
+            raise ValueError(f'`method`: "{method}" not available.')
         if (
             self.value is not None
             and method != "constant"
