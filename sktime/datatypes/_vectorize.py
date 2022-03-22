@@ -174,6 +174,8 @@ class VectorizedDF:
             f"\n{item}\ntype={type(item)}\n{item.index.freq}\n{type(item.index)}"
             f"\ninfered freq = {pd.infer_freq(item.index)}"
         )
+        if hasattr(item.index, "freq") and item.index.freq is None:
+            item.index.freq = pd.infer_freq(item.index)
         # pd-multiindex type (Panel case) expects these index names:
         if self.iterate_as == "Panel":
             item.index.set_names(["instances", "timepoints"], inplace=True)
