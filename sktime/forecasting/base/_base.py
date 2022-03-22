@@ -147,6 +147,7 @@ class BaseForecaster(BaseEstimator):
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+        logging.warning(f"ARIMA - fit: {y_inner}")
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
@@ -895,6 +896,12 @@ class BaseForecaster(BaseEstimator):
         _y_mtype_last_seen : str, mtype of y
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
+        try:
+            logging.warning(
+                f"_check_X_y [1] - {y.index.get_level_values(-1)[-1].freqstr}"
+            )
+        except AttributeError:
+            pass
         if X is None and y is None:
             return None, None
 
@@ -1020,7 +1027,14 @@ class BaseForecaster(BaseEstimator):
             )
         else:
             iterate_as = _most_complex_scitype(y_inner_scitype)
+            logging.warning(f"_check_X_y [2] iterate as is {iterate_as}")
             if y is not None:
+                try:
+                    logging.warning(
+                        f"_check_X_y [3] - {y.index.get_level_values(-1)[-1].freqstr}"
+                    )
+                except AttributeError:
+                    pass
                 y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
             else:
                 y_inner = None
@@ -1201,6 +1215,7 @@ class BaseForecaster(BaseEstimator):
             f"cutoff_idx freq:\n{cutoff_idx.freqstr}\ny:{y}"
             f"\nself.cutoff:\n{self.cutoff}"
         )
+
         self._cutoff = cutoff_idx
 
     @contextmanager

@@ -5,6 +5,8 @@
 Contains VectorizedDF class.
 """
 
+import logging
+
 import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
@@ -52,7 +54,12 @@ class VectorizedDF:
     def __init__(self, X, y=None, iterate_as="Series", is_scitype="Panel"):
 
         self.X = X
-
+        try:
+            logging.warning(
+                f"VectorizedDF X - {X.index.get_level_values(-1)[-1].freqstr}"
+            )
+        except AttributeError:
+            pass
         if is_scitype is None:
             possible_scitypes = ["Panel", "Hierarchical"]
             _, _, metadata = check_is_scitype(
@@ -92,6 +99,13 @@ class VectorizedDF:
     def _init_conversion(self, X):
         """Convert X to a pandas multiindex format."""
         is_scitype = self.is_scitype
+        try:
+            logging.warning(
+                f"VectorizedDF _init_conversion:"
+                f"\n{X.index.get_level_values(-1)[-1].freqstr}"
+            )
+        except AttributeError:
+            pass
 
         if is_scitype == "Panel":
             return convert_to(

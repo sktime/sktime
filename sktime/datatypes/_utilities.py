@@ -110,6 +110,7 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         pd.Index of length 1 (if return_index=True)
     """
     logging.warning(f"get_cutoff - obj:\n{obj}")
+    logging.warning(f"get_cutoff - obj:\n{obj}")
     if cutoff is None:
         cutoff = 0
 

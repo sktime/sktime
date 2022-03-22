@@ -4,7 +4,7 @@
 
 __author__ = ["fkiraly"]
 
-# import logging
+import logging
 from functools import reduce
 from operator import mul
 
@@ -78,6 +78,7 @@ def test_vectorization_series_to_hier(mtype):
     # y = get_examples(mtype, "Hierarchical")[1]
     # n_instances = 6
 
+    logging.warning(f"test: {y.index.get_level_values(-1)[-1].freqstr}")
     y_pred = ARIMA().fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
