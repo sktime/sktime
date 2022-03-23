@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder", "jlines"]
+__author__ = ["chrisholder", "jlines", "TonyBagnall"]
 
 import warnings
 
@@ -15,9 +15,27 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _MsmDistance(NumbaDistance):
-    """Move-split-merge (MSM) distance between two timeseries.
+    r"""Move-split-merge (MSM) distance between two timeseries.
+
+    (MSM) [1] is a distance measure that is conceptually similar to other edit
+    distance-based approaches, where similarity is calculated by using a set of
+    operations to transform one series into another. Each operation has an
+    associated cost, and three operations are defined for MSM: move, split, and merge.
+    Move is synonymous with a substitution operation, where one value is replaced by
+    another. Split and merge differ from other approaches, as they attempt to add
+    context to insertions and deletions. The cost of inserting and deleting values
+    depends on the value itself and adjacent values, rather than treating all
+    insertions and deletions equally (for example, as in ERP). Therefore, the split
+    operation is introduced to insert an identical copy of a value immediately after
+    itself, and the merge operation is used to delete a value if it directly follows
+    an identical value.
 
     Currently only works with univariate series.
+
+    References
+    ----------
+    .. [1] Stefan A., Athitsos V., Das G.: The Move-Split-Merge metric for time
+    series. IEEE Transactions on Knowledge and Data Engineering 25(6):1425–1438, 2013
     """
 
     def _distance_factory(
@@ -32,12 +50,16 @@ class _MsmDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled MSM distance callable.
 
+        Series should be shape (1, m), where m is the seroes length. Series can be
+        different
+        lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+        x: np.ndarray (2d array of shape (1,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (1,m2)).
+            Second time series.
         c: float
             parameter used in MSM (update later!)
 
@@ -49,8 +71,12 @@ class _MsmDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series have more than one dimension (shape[0] > 1)
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
+            If epsilon is not a float.
         """
         if x.shape[0] > 1 or y.shape[0] > 1:
             raise ValueError(
@@ -113,7 +139,6 @@ def _calc_cost_cell(
 def _cost_function(x: float, y: float, z: float, c: float) -> float:
     if (y <= x and x <= z) or (y >= x and x >= z):
         return c
-    # np.min and abs do not work properly here with numba, no match to floats
     a = x - y
     if a < 0:
         a = -a
