@@ -371,8 +371,6 @@ class CanonicalIntervalForest(BaseClassifier):
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
-
         """
-        params = {"n_estimators": 3, "n_intervals": 2, "att_subsample_size": 2}
-
+        params = {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
         return params
