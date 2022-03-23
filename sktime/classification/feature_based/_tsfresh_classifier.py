@@ -214,8 +214,7 @@ class TSFreshClassifier(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         params = {
-            "augmentation_list": ("basepoint", "addtime"),
-            "depth": 3,
-            "window_name": "global",
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "default_fc_parameters": "minimal",
         }
         return params

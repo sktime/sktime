@@ -226,6 +226,8 @@ class SignatureClassifier(BaseClassifier):
         """
         params = {
             "estimator": RandomForestClassifier(n_estimators=2),
-            "default_fc_parameters": "minimal",
+            "augmentation_list": ("basepoint", "addtime"),
+            "depth": 3,
+            "window_name": "global",
         }
         return params

@@ -324,7 +324,6 @@ class ShapeletTransformClassifier(BaseClassifier):
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
-
         """
         params = {
             "estimator": RotationForest(n_estimators=2),
@@ -332,5 +331,4 @@ class ShapeletTransformClassifier(BaseClassifier):
             "n_shapelet_samples": 10,
             "batch_size": 5,
         }
-
         return params
