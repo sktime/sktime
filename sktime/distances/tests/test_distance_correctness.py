@@ -108,10 +108,8 @@ def test_multivariate_correctness():
         #        assert_almost_equal(d, basic_motions_distances["edr"][j], 4)
         d = ddtw_distance(case1, case2, window=distance_parameters["ddtw"][j])
         assert_almost_equal(d, basic_motions_distances["ddtw"][j], 4)
-
-
-#        d = wddtw_distance(case1, case2, g=distance_parameters["wddtw"][j])
-#        assert_almost_equal(d, basic_motions_distances["wddtw"][j], 4)
+        d = wddtw_distance(case1, case2, g=distance_parameters["wddtw"][j])
+        assert_almost_equal(d, basic_motions_distances["wddtw"][j], 4)
 
 
 def test_univariate_correctness():
