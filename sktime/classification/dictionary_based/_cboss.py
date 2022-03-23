@@ -132,6 +132,7 @@ class ContractableBOSS(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -293,7 +294,7 @@ class ContractableBOSS(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -314,7 +315,7 @@ class ContractableBOSS(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -359,7 +360,7 @@ class ContractableBOSS(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
 

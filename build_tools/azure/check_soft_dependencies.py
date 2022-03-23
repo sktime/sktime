@@ -20,6 +20,7 @@ SOFT_DEPENDENCIES = {
     "sktime.benchmarking.experiments": ["tsfresh", "esig"],
     "sktime.forecasting.all": ["pmdarima", "prophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
+    "sktime.forecasting.statsforecast": ["statsforecast"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
@@ -30,6 +31,7 @@ SOFT_DEPENDENCIES = {
     "sktime.transformations.panel.signature_based": ["esig"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
     "sktime.alignment.dtw_python": ["dtw"],
+    "sktime.clustering": ["tslearn"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 

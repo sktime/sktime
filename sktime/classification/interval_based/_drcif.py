@@ -143,6 +143,7 @@ class DrCIF(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -258,12 +259,12 @@ class DrCIF(BaseClassifier):
             self._min_interval = self.min_interval
         else:
             raise ValueError("DrCIF min_interval must be an int or list of length 3.")
-        if self.series_length_ < self._min_interval[0]:
-            self._min_interval[0] = self.series_length_
-        if X_p.shape[2] < self._min_interval[1]:
-            self._min_interval[1] = X_p.shape[2]
-        if X_d.shape[2] < self._min_interval[2]:
-            self._min_interval[2] = X_d.shape[2]
+        if self.series_length_ <= self._min_interval[0]:
+            self._min_interval[0] = self.series_length_ - 1
+        if X_p.shape[2] <= self._min_interval[1]:
+            self._min_interval[1] = X_p.shape[2] - 1
+        if X_d.shape[2] <= self._min_interval[2]:
+            self._min_interval[2] = X_d.shape[2] - 1
 
         if self.max_interval is None:
             self._max_interval = [
@@ -348,7 +349,7 @@ class DrCIF(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -357,7 +358,7 @@ class DrCIF(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -398,7 +399,7 @@ class DrCIF(BaseClassifier):
         )
         return output
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 

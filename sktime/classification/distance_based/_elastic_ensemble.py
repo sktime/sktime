@@ -76,11 +76,13 @@ class ElasticEnsemble(BaseClassifier):
     --------
     >>> from sktime.classification.distance_based import ElasticEnsemble
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = ElasticEnsemble(
     ...     proportion_of_param_options=0.1,
     ...     proportion_train_for_test=0.1,
+    ...     distance_measures = ["dtw","ddtw"],
+    ...     majority_vote=True,
     ... )
     >>> clf.fit(X_train, y_train)
     ElasticEnsemble(...)
@@ -89,6 +91,7 @@ class ElasticEnsemble(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -343,7 +346,7 @@ class ElasticEnsemble(BaseClassifier):
             self.train_accs_by_classifier[dm] = acc
         return self
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -399,7 +402,7 @@ class ElasticEnsemble(BaseClassifier):
         output_probas = np.divide(output_probas, train_sum)
         return output_probas
 
-    def _predict(self, X, return_preds_and_probas=False):
+    def _predict(self, X, return_preds_and_probas=False) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters

@@ -88,6 +88,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -166,7 +167,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -189,7 +190,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters

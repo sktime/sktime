@@ -92,6 +92,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -312,11 +313,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 return dist, neigh_ind
             return neigh_ind
 
-    def predict(self, X, **kwargs):
+    def predict(self, X, **kwargs) -> np.ndarray:
         """Predict wrapper."""
         return BaseClassifier.predict(self, X, **kwargs)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict the class labels for the provided data.
 
         Parameters
@@ -368,11 +369,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = temp
         return y_pred
 
-    def predict_proba(self, X, **kwargs):
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Predict proba wrapper."""
         return BaseClassifier.predict_proba(self, X, **kwargs)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Return probability estimates for the test data X.
 
         Parameters

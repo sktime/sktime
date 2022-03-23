@@ -11,7 +11,7 @@ import pytest
 
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.registry import all_estimators
-from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.tests._config import EXCLUDE_ESTIMATORS, VALID_TRANSFORMER_TYPES
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
@@ -25,7 +25,11 @@ from sktime.utils._testing.estimator_checks import (
     _make_args,
 )
 
-ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
+ALL_TRANSFORMERS = all_estimators(
+    estimator_types="transformer",
+    return_names=False,
+    exclude_estimators=EXCLUDE_ESTIMATORS,
+)
 
 
 @pytest.mark.parametrize("Estimator", ALL_TRANSFORMERS)
@@ -63,7 +67,7 @@ def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
 def _check_raises_error(Estimator, **kwargs):
     with pytest.raises(ValueError, match=r"univariate"):
         estimator = Estimator.create_test_instance()
-        if estimator.get_tag("fit-in-transform", False):
+        if estimator.get_tag("fit_is_empty", False):
             # As some estimators have an empty fit method, we here check if
             # they raise the appropriate error in transform rather than fit.
             _construct_fit_transform(Estimator, **kwargs)
@@ -81,7 +85,6 @@ def check_series_to_primitive_transform_multivariate(Estimator):
         out = _construct_fit_transform(Estimator, n_columns=n_columns)
         assert isinstance(out, pd.DataFrame)
         # We don't know how many primitives wil be returned, so # of columns unknown.
-        assert out.shape[0] == n_columns
 
 
 def check_series_to_series_transform_univariate(Estimator):

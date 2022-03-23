@@ -106,7 +106,7 @@ class TimeSeriesForestClassifier(
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -154,6 +154,20 @@ class TimeSeriesForestClassifier(
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return {"n_estimators": 3}
 
 
 def _predict_single_classifier_proba(X, estimator, intervals):
