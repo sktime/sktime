@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -86,7 +85,7 @@ class _EdrDistance(NumbaDistance):
             else:
                 _epsilon = epsilon
             cost_matrix = _edr_cost_matrix(x, y, _bounding_matrix, _epsilon)
-            return float(cost_matrix[-1, -1] / max(x.shape[0], y.shape[0]))
+            return float(cost_matrix[-1, -1] / max(x.shape[1], y.shape[1]))
 
         return numba_edr_distance
 
@@ -118,14 +117,20 @@ def _edr_cost_matrix(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Edr cost matrix between x and y.
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    dimensions = x.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
 
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                curr_dist = _local_euclidean_distance(x[i - 1], y[j - 1])
+                curr_dist = 0
+                for k in range(dimensions):
+                    curr_dist += (x[k][i - 1] - y[k][j - 1]) * (
+                        x[k][i - 1] - y[k][j - 1]
+                    )
+                curr_dist = np.sqrt(curr_dist)
                 if curr_dist < epsilon:
                     cost = 0
                 else:

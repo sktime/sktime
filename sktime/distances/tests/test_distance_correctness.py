@@ -10,10 +10,11 @@ from numpy.testing import assert_almost_equal
 
 from sktime.datasets import load_basic_motions, load_unit_test
 
-# edr_distance,; ,; erp_distance,
+# ,; ,; erp_distance,
 from sktime.distances import (
     ddtw_distance,
     dtw_distance,
+    edr_distance,
     euclidean_distance,
     lcss_distance,
     msm_distance,
@@ -103,9 +104,8 @@ def test_multivariate_correctness():
         #        # Need to rescale epsilon for BasicMotions
         #        d = erp_distance(case1, case2, window=distance_parameters["erp"][j])
         #        assert_almost_equal(d, basic_motions_distances["erp"][j], 4)
-        #        d = edr_distance(case1, case2, epsilon=distance_parameters["edr"][j]
-        #       / 50.0)
-        #        assert_almost_equal(d, basic_motions_distances["edr"][j], 4)
+        d = edr_distance(case1, case2, epsilon=distance_parameters["edr"][j] / 50.0)
+        assert_almost_equal(d, basic_motions_distances["edr"][j], 4)
         d = ddtw_distance(case1, case2, window=distance_parameters["ddtw"][j])
         assert_almost_equal(d, basic_motions_distances["ddtw"][j], 4)
         d = wddtw_distance(case1, case2, g=distance_parameters["wddtw"][j])
@@ -146,10 +146,10 @@ def test_univariate_correctness():
         # d2 = erp_distance(cases1[1], cases2[1], window=distance_parameters["erp"][j])
         # assert_almost_equal(d, unit_test_distances["erp"][j], 4)
         # assert d == d2
-        # d = edr_distance(cases1[0], cases2[0], epsilon=distance_parameters["edr"][j])
-        # d2 = edr_distance(cases1[1], cases2[1], epsilon=distance_parameters["edr"][j])
-        # assert_almost_equal(d, unit_test_distances["edr"][j], 4)
-        # assert d == d2
+        d = edr_distance(cases1[0], cases2[0], epsilon=distance_parameters["edr"][j])
+        d2 = edr_distance(cases1[1], cases2[1], epsilon=distance_parameters["edr"][j])
+        assert_almost_equal(d, unit_test_distances["edr"][j], 4)
+        assert d == d2
         d = ddtw_distance(cases1[0], cases2[0], window=distance_parameters["ddtw"][j])
         d2 = ddtw_distance(cases1[1], cases2[1], window=distance_parameters["ddtw"][j])
         assert_almost_equal(d, unit_test_distances["ddtw"][j], 4)
