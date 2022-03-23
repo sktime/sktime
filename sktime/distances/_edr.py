@@ -16,7 +16,20 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _EdrDistance(NumbaDistance):
-    """Edit distance for real sequences (edr) between two time series."""
+    """Edit distance for real sequences (EDR) between two time series.
+
+    ERP was adapted in [1] specifically for distances between trajectories. Like LCSS,
+    EDR uses a distance threshold to define when two elements of a series match.
+    However, rather than simply count matches and look for the longest sequence,
+    ERP applies a (constant) penalty for non-matching elements
+    where gaps are inserted to create an optimal alignment.
+
+    References
+    ----------
+    ..[1] Chen L, Ozsu MT, Oria V: Robust and fast similarity search for moving
+    object trajectories. In: Proceedings of the ACM SIGMOD International Conference
+    on Management of Data, 2005
+    """
 
     def _distance_factory(
         self,
@@ -30,20 +43,22 @@ class _EdrDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled edr distance callable.
 
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -63,8 +78,8 @@ class _EdrDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series are not numpy array.
+            If the input time series do not have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
