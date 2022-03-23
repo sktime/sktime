@@ -113,12 +113,30 @@ def evaluate(
             forecaster.update(y_train, X_train)
         fit_time = time.perf_counter() - start_fit
 
+        pred_type = {
+            "pred_quantiles": "forecaster.predict_quantiles",
+            "pred_intervals": "forecaster.predict_interval",
+            "pred_proba": "forecaster.predict_proba",
+            None: "forecaster.predict",
+        }
         # predict
         start_pred = time.perf_counter()
-        if scoring.get_tag("scitype:y_pred") == "pred_quantiles":
-            y_pred = forecaster.predict_quantiles(fh, X=X_test, **fit_params)
-        else:
-            y_pred = forecaster.predict(fh, X=X_test)
+
+        if hasattr(scoring, "metric_args"):
+            metric_args = scoring.metric_args
+
+        try:
+            scitype = scoring.get_tag("scitype:y_pred")
+        except ValueError:
+            # If no scitype exists then metric is not proba and no args needed
+            scitype = None
+            metric_args = {}
+
+        y_pred = eval(pred_type[scitype])(
+            fh,
+            X_test,
+            **metric_args,
+        )
 
         pred_time = time.perf_counter() - start_pred
 
