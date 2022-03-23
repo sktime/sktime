@@ -262,7 +262,6 @@ ESTIMATOR_TEST_PARAMS = {
         "max_ensemble_size": 3,
         "randomly_selected_params": 5,
     },
-    TSFC: {"n_estimators": 3},
     ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     SupervisedTimeSeriesForest: {"n_estimators": 3},
