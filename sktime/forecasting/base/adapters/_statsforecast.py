@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements adapter for pmdarima forecasters to be used in sktime framework."""
+"""Implements adapter for StatsForecast forecasters to be used in sktime framework."""
 
-__author__ = ["mloning", "hyang1996", "kejsitake", "fkiraly"]
-__all__ = ["_PmdArimaAdapter"]
+__author__ = ["FedericoGarza"]
+__all__ = ["_StatsForecastAdapter"]
+
 
 import pandas as pd
 
@@ -12,57 +12,87 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
-class _PmdArimaAdapter(BaseForecaster):
-    """Base class for interfacing pmdarima."""
+class _StatsForecastAdapter(BaseForecaster):
+    """Base class for interfacing StatsForecast."""
 
     _tags = {
-        "ignores-exogeneous-X": False,
-        "capability:pred_int": True,
-        "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
+        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
+        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
+        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
     }
 
     def __init__(self):
         self._forecaster = None
-        super(_PmdArimaAdapter, self).__init__()
+        super(_StatsForecastAdapter, self).__init__()
 
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
-        """Fit to training data.
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : reference to self
         """
         self._forecaster = self._instantiate_model()
-        self._forecaster.fit(y, X=X, **fit_params)
+        self._forecaster.fit(y.values, X.values if X is not None else X)
+
         return self
 
     def _predict(self, fh, X=None):
-        """Make forecasts.
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
-        fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
-            Default is
-            one-step ahead forecast, i.e. np.array([1]).
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
-        y_pred : pandas.Series
-            Returns series of predicted values.
+        y_pred : pd.Series
+            Point predictions
         """
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
@@ -99,60 +129,24 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        if hasattr(self, "order"):
-            diff_order = self.order[1]
-        else:
-            diff_order = self._forecaster.model_.order[1]
-
-        # Initialize return objects
+        # initialize return objects
         fh_abs = fh.to_absolute(self.cutoff).to_numpy()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs)
 
-        # for in-sample predictions, pmdarima requires zero-based integer indicies
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        if start < 0:
-            # Can't forecasts earlier to train starting point
-            raise ValueError("Can't make predictions earlier to train starting point")
-        elif start < diff_order:
-            # Can't forecasts earlier to arima's differencing order
-            # But we return NaN for these supposedly forecastable points
-            start = diff_order
-            if end < start:
-                # since we might have forced `start` to surpass `end`
-                end = diff_order
-            # get rid of unforcastable points
-            fh_abs = fh_abs[fh_idx >= diff_order]
-            # reindex accordingly
-            fh_idx = fh_idx[fh_idx >= diff_order] - diff_order
-
-        result = self._forecaster.predict_in_sample(
-            start=start,
-            end=end,
-            X=X,
-            return_conf_int=False,
-            alpha=DEFAULT_ALPHA,
-        )
+        result = self._forecaster.predict_in_sample()
+        y_pred.loc[fh_abs] = result["mean"].values[fh_idx]
 
         if return_pred_int:
             pred_ints = []
             for a in alpha:
                 pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
-                result = self._forecaster.predict_in_sample(
-                    start=start,
-                    end=end,
-                    X=X,
-                    return_conf_int=return_pred_int,
-                    alpha=a,
-                )
-                pred_int.loc[fh_abs] = result[1][fh_idx, :]
+                result = self._forecaster.predict_in_sample(level=int(100 * a))
+                pred_int.loc[fh_abs] = result.drop("mean", axis=1).values[fh_idx, :]
                 pred_ints.append(pred_int)
-            # unpack results
-            y_pred.loc[fh_abs] = result[0][fh_idx]
             return y_pred, pred_ints
-        else:
-            y_pred.loc[fh_abs] = result[fh_idx]
-            return y_pred
+
+        return y_pred
 
     def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -173,41 +167,37 @@ class _PmdArimaAdapter(BaseForecaster):
         """
         n_periods = int(fh.to_relative(self.cutoff)[-1])
         result = self._forecaster.predict(
-            n_periods=n_periods,
-            X=X,
-            return_conf_int=False,
-            alpha=DEFAULT_ALPHA,
+            h=n_periods,
+            X=X.values if X is not None else X,
         )
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
+        mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs)
         if return_pred_int:
             pred_ints = []
             for a in alpha:
                 result = self._forecaster.predict(
-                    n_periods=n_periods,
-                    X=X,
-                    return_conf_int=True,
-                    alpha=a,
+                    h=n_periods,
+                    X=X.values if X is not None else X,
+                    level=int(100 * a),
                 )
-                pred_int = result[1]
+                pred_int = result.drop("mean", axis=1).values
                 pred_int = pd.DataFrame(
                     pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
                 )
                 pred_ints.append(pred_int)
-            return result[0], pred_ints
+            return mean, pred_ints
         else:
-            return pd.Series(result[fh_idx], index=fh_abs)
+            return pd.Series(mean, index=fh_abs)
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
-
         State required:
             Requires state to be "fitted".
-
         Accesses in self:
             Fitted model attributes ending in "_"
             self.cutoff
@@ -246,8 +236,7 @@ class _PmdArimaAdapter(BaseForecaster):
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
-        alpha = [1 - x for x in coverage]
-        kwargs = {"X": X, "return_pred_int": True, "alpha": alpha}
+        kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
         # all values are out-of-sample
         if fh_is_oosample:
             _, y_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
@@ -273,51 +262,3 @@ class _PmdArimaAdapter(BaseForecaster):
             pred_int[("Coverage", a, "upper")] = ins_int.append(oos_int)["upper"]
 
         return pred_int
-
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        self.check_is_fitted()
-        names = self._get_fitted_param_names()
-        params = self._get_fitted_params()
-        fitted_params = {name: param for name, param in zip(names, params)}
-
-        if hasattr(self._forecaster, "model_"):  # AutoARIMA
-            fitted_params["order"] = self._forecaster.model_.order
-            fitted_params["seasonal_order"] = self._forecaster.model_.seasonal_order
-            res = self._forecaster.model_.arima_res_
-        elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
-            res = self._forecaster.arima_res_
-        else:
-            res = None
-
-        for name in ["aic", "aicc", "bic", "hqic"]:
-            fitted_params[name] = getattr(res, name, None)
-
-        return fitted_params
-
-    def _get_fitted_params(self):
-        # Return parameter values under `arima_res_`
-        if hasattr(self._forecaster, "model_"):  # AutoARIMA
-            return self._forecaster.model_.arima_res_._results.params
-        elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
-            return self._forecaster.arima_res_._results.params
-        else:
-            raise NotImplementedError()
-
-    def _get_fitted_param_names(self):
-        # Return parameter names under `arima_res_`
-        if hasattr(self._forecaster, "model_"):  # AutoARIMA
-            return self._forecaster.model_.arima_res_._results.param_names
-        elif hasattr(self._forecaster, "arima_res_"):  # ARIMA
-            return self._forecaster.arima_res_._results.param_names
-        else:
-            raise NotImplementedError()
-
-    def summary(self):
-        """Summary of the fitted model."""
-        return self._forecaster.summary()
