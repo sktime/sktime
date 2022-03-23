@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
 
 import warnings
 from typing import Any
@@ -16,10 +16,46 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _DtwDistance(NumbaDistance):
-    """Dynamic time warping (dtw) between two time series.
+    r"""Dynamic time warping (dtw) between two time series.
 
-    The DTW between series involves compensating between possible offset errors by
-    optimally aligning series.
+    DTW is the most widely researched and used elastic distance measure. It mitigates
+    distortions in the time axis by realligning (warping) the series to best match
+    each other. A good background into DTW can be found in [1]. For two series
+    :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
+    b_m\}',  (assumed equal length for simplicity), DTW first calculates  :math:'M(
+    \mathbf{a},\mathbf{b})', the :math:'m \times m'
+    pointwise distance matrix between series :math:'\mathbf{a}' and :math:'\mathbf{b}',
+    where :math:'M_{i,j}=   (a_i-b_j)^2'. A warping path
+    .. math::  P=<(e_1,f_1),(e_2,f_2),\ldots, (e_s,f_s)>
+    is a set of pairs of indices that  define a traversal of matrix :math:'M'. A
+    valid warping path must start at location :math:'(1,1)' and end at point :math:'(
+    m,m)' and not backtrack, i.e. :math:'0 \leq e_{i+1}-e_{i} \leq 1' and :math:'0
+    \leq f_{i+1}- f_i \leq 1' for all :math:'1< i < m'. The DTW distance between
+    series is the path through :math:'M' that minimizes the total distance. The
+    distance for any path :math:'P' of length :math:'s' is
+    .. math::  D_P(\mathbf{a},\mathbf{b}, M) =\sum_{i=1}^s M_{e_i,f_i}.
+    If :math:'\mathcal{P}' is the space of all possible paths, the DTW path :math:'P^*'
+    is the path that has the minimum distance, hence the DTW distance between series is
+    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) =D_{P*}(\mathbf{a},\mathbf{b}, M).
+    The optimal warping path $P^*$ can be found exactly through a dynamic programming
+    formulation. This can be a time consuming operation, and it is common to put a
+    restriction on the amount of warping allowed. This is implemented through
+    the bounding_matrix structure, that supplies a mask for allowable warpings.
+    Common bounding strategies include the Sakoe-Chiba band [2] and the Itakura
+    parallelogram [3]. The Sakoe-Chiba band creates a warping path window that has
+    the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
+    for less warping at the start or end of the series than in the middle.
+
+    References
+    ----------
+    ..[1] Ratanamahatana C and Keogh E.: Three myths about dynamic time warping data
+    mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
+    ..[2] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
+    spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
+    Processing 26(1):43–49, 1978
+    ..[3] Itakura F: Minimum prediction residual principle applied to speech
+    recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
+    1):67–72, 1975
     """
 
     def _distance_factory(
