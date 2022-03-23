@@ -108,6 +108,7 @@ def _erp_cost_matrix(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Erp cost matrix between x and y.
     """
+    dimensions = x.shape[0]
     x_size = x.shape[0]
     y_size = y.shape[0]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
@@ -123,9 +124,14 @@ def _erp_cost_matrix(
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
+                curr_dist = 0
+                for k in range(dimensions):
+                    curr_dist += \
+                        (x[k][i - 1] - y[k][j - 1]) * (x[k][i - 1] - y[k][j - 1])
+                curr_dist = np.sqrt(curr_dist)
                 cost_matrix[i, j] = min(
                     cost_matrix[i - 1, j - 1]
-                    + _local_euclidean_distance(x[i - 1], y[j - 1]),
+                    + curr_dist,
                     cost_matrix[i - 1, j] + gx_distance[i - 1],
                     cost_matrix[i, j - 1] + gy_distance[j - 1],
                 )
