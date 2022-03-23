@@ -6,11 +6,11 @@ from sktime.classification.distance_based._time_series_neighbors import (
 from sktime.datasets import load_unit_test
 
 distance_functions = [
-    # '"euclidean",
+    # "euclidean",
     "dtw",
     # "wdtw",
     # "msm",
-    # '"erp",
+    # "erp",
     # "lcss",
 ]
 
@@ -28,8 +28,8 @@ expected_correct = {
 def test_knn_on_unit_test():
     """Test function for elastic knn, to be reinstated soon."""
     # load arrowhead data for unit tests
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train", return_type="numpy3D")
+    X_test, y_test = load_unit_test(split="test", return_type="numpy3D")
     for i in range(0, len(distance_functions)):
         knn = KNeighborsTimeSeriesClassifier(
             distance=distance_functions[i],

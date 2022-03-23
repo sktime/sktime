@@ -179,7 +179,7 @@ class RocketClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -194,7 +194,7 @@ class RocketClassifier(BaseClassifier):
         """
         return self._pipeline.predict(X)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters

@@ -148,7 +148,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -157,7 +157,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         _, _, series_length = X.shape
         idx = self._classification_point_dictionary.get(series_length, -1)
         if idx == -1:

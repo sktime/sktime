@@ -106,7 +106,7 @@ class TimeSeriesForestClassifier(
     def _fit(self, X, y):
         BaseTimeSeriesForest._fit(self, X=X, y=y)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
