@@ -169,13 +169,13 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for X using 'soft' voting."""
         self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 
@@ -274,15 +274,22 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
         Returns
         -------
-        params : dict or list of dict
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.classification.interval_based import TimeSeriesForestClassifier
+        from sktime.classification.interval_based import (
+            TimeSeriesForestClassifier as TSFC,
+        )
 
-        TSCs = [
-            ("tsf1", TimeSeriesForestClassifier.create_test_instance()),
-            ("tsf2", TimeSeriesForestClassifier.create_test_instance()),
-        ]
-        params = {"estimators": [(name, estimator, 0) for (name, estimator) in TSCs]}
+        params = {
+            "estimators": [
+                ("tsf1", TSFC(n_estimators=2), 0),
+                ("tsf2", TSFC(n_estimators=2), 0),
+            ]
+        }
         return params
 
 

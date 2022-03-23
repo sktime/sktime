@@ -138,6 +138,8 @@ def _sliding_window_transform(
 class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
+    _tags = {"ignores-exogeneous-X": False}  # reduction uses X in non-trivial way
+
     _required_parameters = ["estimator"]
 
     def __init__(self, estimator, window_length=10):
