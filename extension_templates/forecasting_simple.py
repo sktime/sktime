@@ -50,8 +50,8 @@ class MyForecaster(BaseForecaster):
 
     todo: describe your custom forecaster here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
