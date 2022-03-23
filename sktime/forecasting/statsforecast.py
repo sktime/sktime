@@ -17,6 +17,9 @@ _check_soft_dependencies("statsforecast", severity="warning")
 class StatsForecastAutoARIMA(_StatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
+    This implementation is inspired by Hyndman's forecast::auto.arima [1]_
+    and based on the Python implementation of StatsForecast [2]_ by Nixtla.
+
     Returns best ARIMA model according to either AIC, AICc or BIC value.
     The function conducts a search over possible model within
     the order constraints provided.
@@ -142,14 +145,20 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         is done in parallel.
         This can give a significant speedup on multicore machines.
 
-    Notes
-    -----
-    * This implementation is a mirror of Hyndman's forecast::auto.arima.
-    * This implementation is a wrapper of AutoARIMA from StatsForecast.
-
     References
     ----------
-    [1] https://github.com/robjhyndman/forecast
+    .. [1] https://github.com/robjhyndman/forecast
+    .. [2] https://github.com/Nixtla/statsforecast
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import AutoARIMA
+    >>> y = load_airline()
+    >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2)
+    >>> forecaster.fit(y)
+    AutoARIMA(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     def __init__(
