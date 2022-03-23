@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 
-"""Implements Generalized Autoregressive Conditional Heteroskedasticity (GARCH) models and its variants."""
+"""Implements Generalized Autoregressive Conditional Heteroskedasticity (GARCH) models and it's variants."""
 
 __author__ = ["Vasudeva-bit"]
 
@@ -81,9 +81,9 @@ class ARCH(BaseForecaster):
     ----------
     .. [1] Jason Brownlee. How to Model Volatility with ARCH and GARCH for Time Series Forecasting.
        https://machinelearningmastery.com/develop-arch-and-garch-models-for-time-series-forecasting-in-python/
-    .. [2] GitHub repository of arch package (dependency). 
+    .. [2] GitHub repository of arch package (soft dependency). 
        https://github.com/bashtage/arch 
-    .. [3] Documentation of arch package (dependency). Forecasting Volatility with ARCH and its variants.
+    .. [3] Documentation of arch package (soft dependency). Forecasting Volatility with ARCH and it's variants.
        https://arch.readthedocs.io/en/latest/univariate/introduction.html 
 
     Examples
@@ -218,15 +218,6 @@ class ARCH(BaseForecaster):
 
     def _predict(self, fh, X=None, **predict_params):
         """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
 
         Parameters
         ----------
