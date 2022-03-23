@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -63,10 +62,15 @@ class _LcssDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled lcss distance callable.
 
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array), First time series.
-        y: np.ndarray (2d array), Second time series.
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
         epsilon : float, default = 1.
             Matching threshold to determine if two subsequences are considered close
             enough to be considered 'common'.
@@ -74,12 +78,12 @@ class _LcssDistance(NumbaDistance):
         Sakoe-Chiba lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None, gradient of the slope for bounding
         parallelogram (if using Itakura parallelogram lower bounding). Must be
-                between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(
-        y)), defaults = None, Custom bounding matrix to use. If defined then other
-        lower_bounding params are ignored. The matrix should be structure so that
-        indexes considered in bound should be the value 0. and indexes outside the
-        bounding matrix should be infinity.
+            between 0 and 1.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
         kwargs: Any Extra kwargs.
 
         Returns
@@ -108,8 +112,8 @@ class _LcssDistance(NumbaDistance):
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            x_size = _x.shape[0]
-            y_size = _y.shape[0]
+            x_size = _x.shape[1]
+            y_size = _y.shape[1]
             cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
             return 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
 
@@ -141,14 +145,19 @@ def _sequence_cost_matrix(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Lcss cost matrix between x and y.
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    dimensions = x.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
-
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
-                curr_dist = _local_euclidean_distance(x[i - 1], y[j - 1])
+                curr_dist = 0
+                for k in range(dimensions):
+                    curr_dist += (x[k][i - 1] - y[k][j - 1]) * (
+                        x[k][i - 1] - y[k][j - 1]
+                    )
+                curr_dist = np.sqrt(curr_dist)
                 if curr_dist < epsilon:
                     cost_matrix[i, j] = 1 + cost_matrix[i - 1, j - 1]
                 else:
