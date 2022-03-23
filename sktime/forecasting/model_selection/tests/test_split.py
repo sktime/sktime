@@ -18,8 +18,13 @@ from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
+from sktime.forecasting.model_selection._split import (
+    _cutoffs_fh_window_length_types_are_supported,
+)
 from sktime.forecasting.tests._config import (
+    TEST_CUTOFFS,
     TEST_FHS,
+    TEST_FHS_TIMEDELTA,
     TEST_INITIAL_WINDOW,
     TEST_OOS_FHS,
     TEST_STEP_LENGTHS,
@@ -30,11 +35,16 @@ from sktime.forecasting.tests._config import (
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.series import _make_series
 from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.validation import is_int, is_timedelta_or_date_offset
+from sktime.utils.validation import (
+    array_is_datetime64,
+    array_is_int,
+    array_is_timedelta_or_date_offset,
+    is_int,
+    is_timedelta_or_date_offset,
+)
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = 30
-CUTOFFS = [np.array([21, 22]), np.array([3, 7, 10])]
 
 
 def _get_windows(cv, y):
@@ -63,7 +73,7 @@ def _check_windows(windows, allow_empty_window=False):
 
 def _check_cutoffs(cutoffs):
     assert isinstance(cutoffs, np.ndarray)
-    assert np.issubdtype(cutoffs.dtype, np.integer)
+    assert array_is_int(cutoffs) or array_is_datetime64(cutoffs)
     assert cutoffs.ndim == 1
     assert len(cutoffs) > 0
 
@@ -73,23 +83,48 @@ def _check_n_splits(n_splits):
     assert n_splits > 0
 
 
-def _check_cutoffs_against_test_windows(cutoffs, windows, fh):
+def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     # We check for the last value. Some windows may be incomplete, with no first
     # value, whereas the last value will always be there.
     fh = check_fh(fh)
-    expected = np.array([window[-1] - fh[-1] for window in windows])
+    if is_int(fh[-1]):
+        expected = np.array([window[-1] - fh[-1] for window in windows])
+    elif array_is_timedelta_or_date_offset(fh):
+        expected = np.array(
+            [(y.index[window[-1]] - fh[-1]).to_datetime64() for window in windows]
+        )
+    else:
+        raise ValueError(f"Provided `fh` type is not supported: {type(fh[-1])}")
     np.testing.assert_array_equal(cutoffs, expected)
 
 
-def _check_cutoffs_against_train_windows(cutoffs, windows):
+def _check_cutoffs_against_train_windows(cutoffs, windows, y):
     # Cutoffs should always be the last values of the train windows.
-    actual = np.array([window[-1] for window in windows[1:]])
+    if array_is_int(cutoffs):
+        actual = np.array([window[-1] for window in windows[1:]])
+    elif array_is_datetime64(cutoffs):
+        actual = np.array(
+            [y.index[window[-1]].to_datetime64() for window in windows[1:]]
+        )
+    else:
+        raise ValueError(
+            f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
+        )
     np.testing.assert_array_equal(actual, cutoffs[1:])
 
     # We treat the first window separately, since it may be empty when setting
     # `start_with_window=False`.
     if len(windows[0]) > 0:
-        np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
+        if array_is_int(cutoffs):
+            np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
+        elif array_is_datetime64(cutoffs):
+            np.testing.assert_array_equal(
+                y.index[windows[0][-1]].to_datetime64(), cutoffs[0]
+            )
+        else:
+            raise ValueError(
+                f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
+            )
 
 
 def _check_cv(cv, y, allow_empty_window=False):
@@ -99,8 +134,8 @@ def _check_cv(cv, y, allow_empty_window=False):
 
     cutoffs = cv.get_cutoffs(y)
     _check_cutoffs(cutoffs)
-    _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh)
-    _check_cutoffs_against_train_windows(cutoffs, train_windows)
+    _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh, y)
+    _check_cutoffs_against_train_windows(cutoffs, train_windows, y)
 
     n_splits = cv.get_n_splits(y)
     _check_n_splits(n_splits)
@@ -151,14 +186,21 @@ def test_single_window_splitter_default_window_length(y, fh):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("cutoffs", CUTOFFS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("cutoffs", TEST_CUTOFFS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
     cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
-    train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
-    np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
+    if _cutoffs_fh_window_length_types_are_supported(
+        cutoffs=cutoffs, fh=ForecastingHorizon(fh), window_length=window_length
+    ):
+        train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
+        np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            _check_cv(cv, y)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -247,7 +289,7 @@ def test_sliding_window_splitter_with_incompatible_initial_window_and_window_len
         start_with_window=True,
     )
     match = "The `initial_window` and `window_length` types are incompatible"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(TypeError, match=match):
         _check_cv(cv, y)
 
 

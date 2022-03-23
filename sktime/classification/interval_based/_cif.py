@@ -119,6 +119,7 @@ class CanonicalIntervalForest(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -181,8 +182,8 @@ class CanonicalIntervalForest(BaseClassifier):
         if self.att_subsample_size > 25:
             self._att_subsample_size = 25
 
-        if self.series_length_ < self.min_interval:
-            self._min_interval = self.series_length_
+        if self.series_length_ <= self.min_interval:
+            self._min_interval = self.series_length_ - 1
         elif self.min_interval < 3:
             self._min_interval = 3
 
@@ -204,7 +205,7 @@ class CanonicalIntervalForest(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -213,7 +214,7 @@ class CanonicalIntervalForest(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length_:
             raise ValueError(
@@ -358,3 +359,20 @@ class CanonicalIntervalForest(BaseClassifier):
             curves /= counts
 
         return curves
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+
+        """
+        params = {"n_estimators": 3, "n_intervals": 2, "att_subsample_size": 2}
+
+        return params

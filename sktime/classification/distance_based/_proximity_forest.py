@@ -949,7 +949,7 @@ class ProximityStump(BaseClassifier):
         self.entropy = self.get_gain(self.y, self.y_branches)
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -977,7 +977,7 @@ class ProximityStump(BaseClassifier):
 
         return y
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1165,7 +1165,7 @@ class ProximityTree(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -1193,7 +1193,7 @@ class ProximityTree(BaseClassifier):
 
         return y
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1300,6 +1300,7 @@ class ProximityForest(BaseClassifier):
     _tags = {
         "X_inner_mtype": "nested_univ",  # which type do _fit/_predict, support for X?
         "capability:multithreading": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -1466,7 +1467,7 @@ class ProximityForest(BaseClassifier):
         """
         return tree.predict_proba(X)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -1494,7 +1495,7 @@ class ProximityForest(BaseClassifier):
 
         return y
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters

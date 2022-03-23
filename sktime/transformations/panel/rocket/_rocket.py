@@ -6,16 +6,14 @@ import multiprocessing
 
 import numpy as np
 import pandas as pd
+from numba import get_num_threads, njit, prange, set_num_threads
 
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
 
-from numba import njit, get_num_threads, set_num_threads
-from numba import prange
-
 
 class Rocket(_PanelToTabularTransformer):
-    """ROCKET
+    """ROCKET.
 
     RandOm Convolutional KErnel Transform
 
@@ -47,7 +45,9 @@ class Rocket(_PanelToTabularTransformer):
         super(Rocket, self).__init__()
 
     def fit(self, X, y=None):
-        """Infers time series length and number of channels / dimensions (
+        """Generate random kernels adjusted to time series shape.
+
+        Infers time series length and number of channels / dimensions (
         for multivariate time series) from input pandas DataFrame,
         and generates random kernels.
 
@@ -69,7 +69,7 @@ class Rocket(_PanelToTabularTransformer):
         return self
 
     def transform(self, X, y=None):
-        """Transforms input time series using random convolutional kernels.
+        """Transform input time series using random convolutional kernels.
 
         Parameters
         ----------
@@ -92,14 +92,14 @@ class Rocket(_PanelToTabularTransformer):
         else:
             n_jobs = self.n_jobs
         set_num_threads(n_jobs)
-        t = pd.DataFrame(_apply_kernels(_X, self.kernels))
+        t = pd.DataFrame(_apply_kernels(_X.astype(np.float32), self.kernels))
         set_num_threads(prev_threads)
         return t
 
 
 @njit(
-    "Tuple((float64[:],int32[:],float64[:],int32[:],int32[:],int32[:],"
-    "int32[:]))(int64,int64,int64,optional(int64))",
+    "Tuple((float32[:],int32[:],float32[:],int32[:],int32[:],int32[:],"
+    "int32[:]))(int32,int32,int32,optional(int32))",
     cache=True,
 )
 def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
@@ -107,7 +107,7 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         np.random.seed(seed)
 
     candidate_lengths = np.array((7, 9, 11), dtype=np.int32)
-    lengths = np.random.choice(candidate_lengths, num_kernels)
+    lengths = np.random.choice(candidate_lengths, num_kernels).astype(np.int32)
 
     num_channel_indices = np.zeros(num_kernels, dtype=np.int32)
     for i in range(num_kernels):
@@ -118,11 +118,11 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
 
     weights = np.zeros(
         np.int32(
-            np.dot(lengths.astype(np.float64), num_channel_indices.astype(np.float64))
+            np.dot(lengths.astype(np.float32), num_channel_indices.astype(np.float32))
         ),
-        dtype=np.float64,
+        dtype=np.float32,
     )
-    biases = np.zeros(num_kernels, dtype=np.float64)
+    biases = np.zeros(num_kernels, dtype=np.float32)
     dilations = np.zeros(num_kernels, dtype=np.int32)
     paddings = np.zeros(num_kernels, dtype=np.int32)
 
@@ -134,7 +134,9 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         _length = lengths[i]
         _num_channel_indices = num_channel_indices[i]
 
-        _weights = np.random.normal(0, 1, _num_channel_indices * _length)
+        _weights = np.random.normal(0, 1, _num_channel_indices * _length).astype(
+            np.float32
+        )
 
         b1 = a1 + (_num_channel_indices * _length)
         b2 = a2 + _num_channel_indices
@@ -206,7 +208,7 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
         if _sum > 0:
             _ppv += 1
 
-    return _ppv / output_length, _max
+    return np.float32(_ppv / output_length), np.float32(_max)
 
 
 @njit(fastmath=True, cache=True)
@@ -243,11 +245,11 @@ def _apply_kernel_multivariate(
         if _sum > 0:
             _ppv += 1
 
-    return _ppv / output_length, _max
+    return np.float32(_ppv / output_length), np.float32(_max)
 
 
 @njit(
-    "float64[:,:](float64[:,:,:],Tuple((float64[::1],int32[:],float64[:],"
+    "float32[:,:](float32[:,:,:],Tuple((float32[::1],int32[:],float32[:],"
     "int32[:],int32[:],int32[:],int32[:])))",
     parallel=True,
     fastmath=True,
@@ -268,7 +270,7 @@ def _apply_kernels(X, kernels):
     num_kernels = len(lengths)
 
     _X = np.zeros(
-        (n_instances, num_kernels * 2), dtype=np.float64
+        (n_instances, num_kernels * 2), dtype=np.float32
     )  # 2 features per kernel
 
     for i in prange(n_instances):
@@ -313,4 +315,4 @@ def _apply_kernels(X, kernels):
             a2 = b2
             a3 = b3
 
-    return _X
+    return _X.astype(np.float32)
