@@ -171,6 +171,17 @@ Composition
 
     make_reduction
 
+ARCH
+-----
+
+.. currentmodule:: sktime.forecasting.arch
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARCH
+
 Online Forecasting
 ------------------
 
