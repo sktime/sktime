@@ -137,7 +137,15 @@ class reconciler(BaseTransformer):
 # tests for matrix index?
 # what happens if two end-points have the same name?
 def _get_s_matrix(X):
-    """Determine the summation "S" matrix."""
+    """Determine the summation "S" matrix.
+
+    Returns
+    -------
+    s_matrix : pd.DataFrame
+        Summation matrix with multiindex on rows, where each row is a level in
+        the hierarchy. Single index on columns for each bottom level of the
+        hierarchy.
+    """
     # get bottom level indexes
     bl_inds = (
         X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
@@ -183,7 +191,13 @@ def _get_s_matrix(X):
 
 # tests for matrix index?
 def _get_g_matrix_bu(X):
-    """Determine the reconciliation "G" matrix for the bottom up method."""
+    """Determine the reconciliation "G" matrix for the bottom up method.
+
+    Returns
+    -------
+    g_matrix : pd.DataFrame
+        Summation matrix with single index on rows and multiindex on columns.
+    """
     # get bottom level indexes
     bl_inds = (
         X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
@@ -210,7 +224,13 @@ def _get_g_matrix_bu(X):
 
 
 def _get_g_matrix_ols(X):
-    """Determine the reconciliation "G" matrix for the ols method."""
+    """Determine the reconciliation "G" matrix for the ols method.
+
+    Returns
+    -------
+    g_ols : pd.DataFrame
+        Summation matrix with single index on rows and multiindex on columns.
+    """
     # get s matrix
     smat = _get_s_matrix(X)
     # get g
@@ -227,7 +247,13 @@ def _get_g_matrix_ols(X):
 
 
 def _get_g_matrix_wls_str(X):
-    """Determine the reconciliation "G" matrix for the wls_str method."""
+    """Determine the reconciliation "G" matrix for the wls_str method.
+
+    Returns
+    -------
+    g_wls_str : pd.DataFrame
+        Summation matrix with single index on rows and multiindex on columns.
+    """
     # this is similar to the ols except we have a new matrix W
     smat = _get_s_matrix(X)
 
