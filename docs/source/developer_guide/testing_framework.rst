@@ -257,7 +257,7 @@ This base class defines generics such as ``is_applicable``, or tag handling, for
 
 Scenarios should usually define:
 * an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
-  The ``args`` parameter may be set as a class variable, or set by the contructor.
+* The ``args`` parameter may be set as a class variable, or set by the contructor.
 * optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
   These define the sequence in which methods are called, with which argument set,
   if ``run`` is called. Both may be class variables, or object variable set in the constructor.
