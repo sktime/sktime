@@ -60,14 +60,21 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         If True, restricts search to stationary models.
     information_criterion: str (default 'aicc')
         Information criterion to be used in model selection.
+        It can be chosen from among the following strings:
+        - 'aicc' for Akaike's information criterion corrected.
+        - 'aic' for Akaike's information criterion.
+        - 'bic' for bayesian information criterion.
     test: str (default 'kpss')
         Type of unit root test to use. See ndiffs for details.
+        Only 'kpss' for the Kwiatkowski-Phillip-Schmidt-Shin test
+        is allowed.
     seasonal_test: str (default 'seas')
         This determines which method is used to select the number
         of seasonal differences.
-        The default method is to use a measure of seasonal
+        The default method ('seas') is to use a measure of seasonal
         strength computed from an STL decomposition.
         Other possibilities involve seasonal unit root tests.
+        Only 'seas' is allowed.
     stepwise: bool (default True)
         If True, will do stepwise selection (faster).
         Otherwise, it searches over all models.
@@ -86,6 +93,11 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         The default (unless there are missing values)
         is to use conditional-sum-of-squares to find starting values,
         then maximum likelihood. Can be abbreviated.
+        It can be chosen from among the following strings:
+        - 'CSS-ML' for conditional sum-of-squares to find starting values and
+          then maximum likelihood.
+        - 'ML' for maximum likelihood.
+        - 'CSS' for conditional sum-of-squares.
     offset_test_args: dict optional (default None)
         Additional arguments to be passed to the unit root test.
     seasonal_test_args: dict optional (default None)
