@@ -18,7 +18,7 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
     """StatsForecast AutoARIMA estimator.
 
     This implementation is inspired by Hyndman's forecast::auto.arima [1]_
-    and based on the Python implementation of StatsForecast [2]_ by Nixtla.
+    and based on the Python implementation of statsforecast [2]_ by Nixtla.
 
     Returns best ARIMA model according to either AIC, AICc or BIC value.
     The function conducts a search over possible model within
