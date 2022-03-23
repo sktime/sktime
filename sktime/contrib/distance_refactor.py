@@ -92,17 +92,17 @@ def difference_test():
     X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
     d1 = X_train[0]
     d2 = X_train[2]
-    dist = lcss_distance
+    dist = msm_distance
     #    d1=np.transpose(d1)
     #    d2=np.transpose(d2)
     print("Shape  = ", d1.shape)
-    name = "LCSS"
+    name = "msm"
     no_window = np.zeros((d1.shape[1], d2.shape[1]))
-    dist1 = dist(d1, d2, epsilon=0.0)
+    dist1 = dist(d1, d2, c=0.0)
     print(name, " w = 0 dist = ", dist1)
-    dist1 = dist(d1, d2, epsilon=50.0)
+    dist1 = dist(d1, d2, c=0.1)
     print(name, " w = 0.1. dist 1 = ", dist1)
-    dist1 = dist(d1, d2, epsilon=200.0)
+    dist1 = dist(d1, d2, c=1)
     print(name, " w = 1 dist 1 = ", dist1)
     print(" SHAPE  = ", d1.shape)
     X_train, y_train = load_basic_motions(split="train", return_type="numpy3d")
@@ -110,6 +110,7 @@ def difference_test():
     b2 = X_train[1]
     #    b1 = np.transpose(b1)
     #    b2 = np.transpose(b2)
+    dist = dtw_distance
     print("BM shape = ", b1.shape)
     dist2 = dist(b1, b2, epsilon=0.0)
     print(" g = 0.0, BASIC MOTIONS DIST = ", dist2)
