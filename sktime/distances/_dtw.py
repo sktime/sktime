@@ -16,7 +16,11 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _DtwDistance(NumbaDistance):
-    """Dynamic time warping (dtw) between two time series."""
+    """Dynamic time warping (dtw) between two time series.
+
+    The DTW between series involves compensating between possible offset errors by
+    optimally aligning series.
+    """
 
     def _distance_factory(
         self,
@@ -29,20 +33,22 @@ class _DtwDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled dtw distance callable.
 
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+        x: np.ndarray (2d array of shape dxm1).
+            First time series.
+        y: np.ndarray (2d array of shape dxm1).
+            Second time series.
         window: Float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None
+        bounding_matrix: np.ndarray (2d array of shape m1xm2), defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -86,13 +92,16 @@ def _cost_matrix(
 ) -> float:
     """Dtw distance compiled to no_python.
 
+    Series should be shape (d, m), where d is the number of dimensions, m the series
+    length. Series can be different lengths.
+
     Parameters
     ----------
-    x: np.ndarray (2d array)
+    x: np.ndarray (2d array of shape dxm1).
         First time series.
-    y: np.ndarray (2d array)
+    y: np.ndarray (2d array of shape dxm1).
         Second time series.
-    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
+    bounding_matrix: np.ndarray (2d array of shape m1xm2)
         Bounding matrix where the index in bound finite values (0.) and indexes
         outside bound points are infinite values (non finite).
 

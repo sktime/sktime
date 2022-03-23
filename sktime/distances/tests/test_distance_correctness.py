@@ -11,19 +11,24 @@ from numpy.testing import assert_almost_equal
 from sktime.datasets import load_basic_motions, load_unit_test
 
 # edr_distance,; msm_distance,; erp_distance,
-# ,; lcss_distance,; wddtw_distance,; ddtw_distance,
-from sktime.distances import dtw_distance, euclidean_distance, wdtw_distance
+# ,; ,; wddtw_distance,; ddtw_distance,
+from sktime.distances import (
+    dtw_distance,
+    euclidean_distance,
+    lcss_distance,
+    wdtw_distance,
+)
 
 distances = [
     "dtw",
     "wdtw",
-    "msm",
-    "ddtw",
-    "euclidean",
-    "erp",
-    "lcss",
-    "ddtw",
-    "wddtw",
+    #    "msm",
+    #    "ddtw",
+    #    "euclidean",
+    #    "erp",
+    #    "lcss",
+    #    "ddtw",
+    #    "wddtw",
 ]
 distance_functions = {
     "dtw": dtw_distance,
@@ -90,13 +95,13 @@ def test_multivariate_correctness():
         assert_almost_equal(d, basic_motions_distances["wdtw"][j], 4)
 
 
+#        d = lcss_distance(case1, case2, epsilon=distance_parameters["lcss"][j] / 50.0)
+#        assert_almost_equal(d, basic_motions_distances["lcss"][j], 4)
 #        d = msm_distance(case1, case2, c=distance_parameters["msm"][j])
 #        assert_almost_equal(d, basic_motions_distances["msm"][j], 4)
 #        # Need to rescale epsilon for BasicMotions
 #        d = erp_distance(case1, case2, window=distance_parameters["erp"][j])
 #        assert_almost_equal(d, basic_motions_distances["erp"][j], 4)
-#        d = lcss_distance(case1, case2, epsilon=distance_parameters["lcss"][j] / 50.0)
-#        assert_almost_equal(d, basic_motions_distances["lcss"][j], 4)
 #        d = edr_distance(case1, case2, epsilon=distance_parameters["edr"][j] / 50.0)
 #        assert_almost_equal(d, basic_motions_distances["edr"][j], 4)
 #        d = ddtw_distance(case1, case2, window=distance_parameters["ddtw"][j])
@@ -127,6 +132,10 @@ def test_univariate_correctness():
         d2 = wdtw_distance(cases1[1], cases2[1], g=distance_parameters["wdtw"][j])
         assert_almost_equal(d, unit_test_distances["wdtw"][j], 4)
         assert d == d2
+        d = lcss_distance(cases1[0], cases2[0], epsilon=distance_parameters["lcss"][j])
+        d2 = lcss_distance(cases1[1], cases2[1], epsilon=distance_parameters["lcss"][j])
+        assert_almost_equal(d, unit_test_distances["lcss"][j], 4)
+        assert d == d2
         # d = msm_distance(cases1[0], cases2[0], c=distance_parameters["msm"][j])
         # d2 = msm_distance(cases1[1], cases2[1], c=distance_parameters["msm"][j])
         # assert_almost_equal(d, unit_test_distances["msm"][j], 4)
@@ -134,10 +143,6 @@ def test_univariate_correctness():
         # d = erp_distance(cases1[0], cases2[0], window=distance_parameters["erp"][j])
         # d2 = erp_distance(cases1[1], cases2[1], window=distance_parameters["erp"][j])
         # assert_almost_equal(d, unit_test_distances["erp"][j], 4)
-        # assert d == d2
-        # d=lcss_distance(cases1[0], cases2[0], epsilon=distance_parameters["lcss"][j])
-        # d2=lcss_distance(cases1[1], cases2[1], epsilon=distance_parameters["lcss"][j])
-        # assert_almost_equal(d, unit_test_distances["lcss"][j], 4)
         # assert d == d2
         # d = edr_distance(cases1[0], cases2[0], epsilon=distance_parameters["edr"][j])
         # d2 = edr_distance(cases1[1], cases2[1], epsilon=distance_parameters["edr"][j])

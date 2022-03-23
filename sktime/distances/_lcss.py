@@ -17,20 +17,21 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _LcssDistance(NumbaDistance):
-    r"""Longest common subsequence (Lcss) between two time series.
+    r"""Longest common subsequence (LCSS) between two time series.
 
-    The Longest Common Subsequence (LCSS) distance is based on the solution to the
+    The LCSS distance for time series is based on the solution to the
     longest common subsequence problem in pattern matching [1]. The typical problem
-    is to
-    find the longest subsequence that is common to two discrete series based on the
-    edit distance. This approach can be extended to consider real-valued time series
+    is to find the longest subsequence that is common to two discrete series based on
+    the edit distance. This approach can be extended to consider real-valued time series
     by using a distance threshold epsilon, which defines the maximum difference
     between a pair of values that is allowed for them to be considered a match.
     LCSS finds the optimal alignment between two series by find the greatest number
-    of matching pairs. The LCSS distance uses a matrix L that records the sequence of
-    matches over valid warpings. for two series a = a_1,... a_m and b = b_1,
-    ... b_m, L is found by iterating over all valid windows (i.e.
-    where |i-j|<window*m, where m is series length), then calculating
+    of matching pairs. The LCSS distance uses a matrix :math:'L' that records the
+    sequence of matches over valid warpings. For two series :math:'a = a_1,... a_m
+    and b = b_1,... b_m, L' is found by iterating over all valid windows (i.e.
+    where bounding_matrix is not infinity, which by default is the constant band
+    :math:'|i-j|<w*m', where :math:'w' is the window parameter value and m is series
+    length), then calculating
 
     ::math
     if(|a_i - b_j| < espilon) \\
@@ -41,6 +42,8 @@ class _LcssDistance(NumbaDistance):
     The distance is an inverse function of the final LCSS.
     ::math
     d_{LCSS}({\bf a,b}) = 1- \frac{LCSS({\bf a,b})}{m}.\]
+
+    Note that series a and b need not be equal length.
 
     References
     ----------

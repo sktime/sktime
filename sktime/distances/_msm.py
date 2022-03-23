@@ -93,12 +93,15 @@ def _calc_cost_cell(
 def _cost_matrix(x: np.ndarray, y: np.ndarray, c: float) -> float:
     """MSM distance compiled to no_python.
 
+    Series should be shape (d, m), where d is the number of dimensions, m the series
+    length.
+
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the index in bound finite values (0.) and indexes
         outside bound points are infinite values (non finite).
