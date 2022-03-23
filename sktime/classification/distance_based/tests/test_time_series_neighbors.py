@@ -8,10 +8,10 @@ from sktime.datasets import load_unit_test
 distance_functions = [
     # "euclidean",
     "dtw",
-    # "wdtw",
-    # "msm",
+    "wdtw",
+    "msm",
     # "erp",
-    # "lcss",
+    "lcss",
 ]
 
 # expected correct on test set using default parameters.
@@ -45,8 +45,8 @@ def test_knn_on_unit_test():
 
 def test_knn_bounding_matrix():
     """Test knn with custom bounding parameters."""
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     for i in range(0, len(distance_functions)):
         knn = KNeighborsTimeSeriesClassifier(
             distance=distance_functions[i], distance_params={"window": 0.5}
