@@ -74,7 +74,7 @@ def average_of_slope(q: np.ndarray):
 class _DdtwDistance(NumbaDistance):
     """Derivative dynamic time warping (ddtw) between two time series.
 
-    Takes the slope based derivative of the series (using average_of_slope),
+    Takes the slope based derivative of the series (using compute_derivative),
     then applies DTW (using the _cost_matrix from _DtwDistance)
     """
 
