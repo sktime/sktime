@@ -1712,17 +1712,15 @@ class BaseForecaster(BaseEstimator):
 
         if implements_interval:
 
-            coverage = []
+            pred_int = pd.DataFrame()
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals
-                if a < 0.5:
-                    coverage.extend([2 * a])
-                else:
-                    coverage.extend([2 * (1 - a)])
+                #  this uses symmetric predictive intervals:
+                coverage = abs(1 - 2 * a)
 
-            # compute quantile forecasts corresponding to upper/lower
-            pred_int = self._predict_interval(fh=fh, X=X, coverage=coverage)
+                # compute quantile forecasts corresponding to upper/lower
+                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+                pred_int = pd.concat([pred_int, pred_a], axis=1)
 
             # now we need to subset to lower/upper depending
             #   on whether alpha was < 0.5 or >= 0.5
