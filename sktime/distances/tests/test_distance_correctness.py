@@ -22,11 +22,11 @@ from sktime.distances import (
 distances = [
     "dtw",
     "wdtw",
+    "lcss",
     #    "msm",
     #    "ddtw",
     #    "euclidean",
     #    "erp",
-    #    "lcss",
     #    "ddtw",
     #    "wddtw",
 ]
