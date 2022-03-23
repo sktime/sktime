@@ -200,13 +200,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multivariate",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier handle unequal length time series?",
     ),
@@ -215,7 +215,7 @@ ESTIMATOR_TAG_REGISTER = [
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
     ),
@@ -231,6 +231,7 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "contract time setting, does the estimator support limiting max fit time?",
     ),
+    # todo, deprecate. We have base class for this now.
     (
         "capability:early_prediction",
         "classifier",
@@ -241,7 +242,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multithreading",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),

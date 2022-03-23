@@ -35,15 +35,22 @@ def test_teaser_on_unit_test_data():
     final_decisions = np.zeros(10)
 
     X_test = from_nested_to_3d_numpy(X_test)
-    states = None
-    for i in teaser.classification_points:
-        X = X_test[indices, :, :i]
-        probas, decisions, states = teaser.predict_proba(X, state_info=states)
+    X_test = X_test[indices, :, :]
 
-        for n in range(10):
-            if decisions[n] and final_decisions[n] == 0:
-                final_probas[n] = probas[n]
-                final_decisions[n] = i
+    ec_idx = np.arange(0, 10)
+    decisions = np.zeros(len(X_test), dtype=bool)
+    for i in teaser.classification_points:
+        inv_dec = np.invert(decisions)
+        X_test = X_test[inv_dec, :, :]
+        ec_idx = ec_idx[inv_dec]
+
+        X = X_test[:, :, :i]
+        probas, decisions, states = teaser.update_predict_proba(X)
+
+        for n in range(len(X)):
+            if decisions[n] and final_decisions[ec_idx[n]] == 0:
+                final_probas[ec_idx[n]] = probas[n]
+                final_decisions[ec_idx[n]] = i
 
     testing.assert_array_equal(final_probas, teaser_unit_test_probas)
 
@@ -66,15 +73,22 @@ def test_teaser_with_different_decision_maker():
     final_decisions = np.zeros(10)
 
     X_test = from_nested_to_3d_numpy(X_test)
-    states = None
-    for i in teaser.classification_points:
-        X = X_test[indices, :, :i]
-        probas, decisions, states = teaser.predict_proba(X, state_info=states)
+    X_test = X_test[indices, :, :]
 
-        for n in range(10):
-            if decisions[n] and final_decisions[n] == 0:
-                final_probas[n] = probas[n]
-                final_decisions[n] = i
+    ec_idx = np.arange(0, 10)
+    decisions = np.zeros(len(X_test), dtype=bool)
+    for i in teaser.classification_points:
+        inv_dec = np.invert(decisions)
+        X_test = X_test[inv_dec, :, :]
+        ec_idx = ec_idx[inv_dec]
+
+        X = X_test[:, :, :i]
+        probas, decisions, states = teaser.update_predict_proba(X)
+
+        for n in range(len(X)):
+            if decisions[n] and final_decisions[ec_idx[n]] == 0:
+                final_probas[ec_idx[n]] = probas[n]
+                final_decisions[ec_idx[n]] = i
 
     testing.assert_array_equal(final_probas, teaser_if_unit_test_probas)
 
@@ -95,14 +109,18 @@ def test_teaser_near_classification_points():
     test_points = [7, 11, 19, 20]
 
     X_test = from_nested_to_3d_numpy(X_test)
-    states = None
+    X_test = X_test[indices]
+
+    decisions = np.zeros(len(X_test), dtype=bool)
     for i in test_points:
-        X = X_test[indices, :, :i]
+        X_test = X_test[np.invert(decisions)]
+        X = X_test[:, :, :i]
+
         if i == 20:
             with pytest.raises(ValueError):
-                probas, decisions, states = teaser.predict_proba(X, state_info=states)
+                teaser.update_predict_proba(X)
         else:
-            probas, decisions, states = teaser.predict_proba(X, state_info=states)
+            _, decisions, _ = teaser.update_predict_proba(X)
 
 
 def test_teaser_full_length():

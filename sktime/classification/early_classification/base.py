@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Abstract base class for time series classifiers.
+Abstract base class for early time series classifiers.
 
     class name: BaseEarlyClassifier
 
 Defining methods:
-    fitting         - fit(self, X, y)
-    predicting      - predict(self, X, state_info=None)
-                    - predict_proba(self, X, state_info=None)
+    fitting                 - fit(self, X, y)
+    predicting              - predict(self, X)
+                            - predict_proba(self, X)
+    updating predictions    - update_predict(self, X)
+                            - update_predict_proba(self, X)
 
 Inherited inspection methods:
     hyper-parameter inspection  - get_params()
@@ -38,7 +40,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
     """Abstract base class for early time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
-    early classifiers have to implement. Attributes with a underscore suffix are set in
+    early classifiers have to implement. Attributes with an underscore suffix are set in
     the method fit.
 
     Parameters
@@ -48,6 +50,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
     fit_time_           : integer, time (in milliseconds) for fit to run.
     _class_dictionary   : dictionary mapping classes_ onto integers 0...n_classes_-1.
     _threads_to_use     : number of threads to use in fit as determined by n_jobs.
+    _state_info         : An array containing the state info for each decision in X.
     """
 
     _tags = {
@@ -56,9 +59,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
-        "capability:train_estimate": False,
-        "capability:contractable": False,
-        "capability:early_prediction": True,
         "capability:multithreading": False,
     }
 
@@ -68,6 +68,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+        self._state_info = None
 
         super(BaseEarlyClassifier, self).__init__()
 
@@ -100,8 +101,15 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         fit = BaseClassifier.fit
         return fit(self, X, y)
 
-    def predict(self, X, state_info=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
+
+        Early classifiers can predict at series lengths shorter than the train data
+        series length.
+
+        Predict will return -1 for cases which it cannot make a decision on yet. The
+        output is only guaranteed to return a valid class label for all cases when
+        using the full series length.
 
         Parameters
         ----------
@@ -114,13 +122,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        state_info : List or None
-            A List containing the state information for each prediction safety decision
-            made for X. Contains classifier dependant information for future decisions
-            when more data is available.
-            Input should be None or an empty List for the first decision made. The
-            returned array new_state_info should be input if subsequent decisions are
-            required.
 
         Returns
         -------
@@ -129,24 +130,32 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D int array
+        state_info : 2D array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Each row contains information
-            for a case from the latest decision on its safety.
-            state_info will cease updating after a positive decision is made, though
-            predictions will continue to be returned for the case.
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
         """
         self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        return self._predict(X, state_info=state_info)
+        return self._predict(X)
 
-    def predict_proba(
-        self, X, state_info=None
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Decide on the safety of an early classification.
+    def update_predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Update label prediction for sequences in X at a larger series length.
+
+        Uses information stored in the classifiers state from previous predictions and
+        updates at shorter series lengths. Update will only accept cases which have not
+        yet had a decision made, cases which have had a positive decision should be
+        removed from the input with the row ordering preserved.
+
+        If no state information is present, predict will be called instead.
+
+        Prediction updates will return -1 for cases which it cannot make a decision on
+        yet. The output is only guaranteed to return a valid class label for all cases
+        when using the full series length.
 
         Parameters
         ----------
@@ -159,13 +168,51 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
             or of any other supported Panel mtype
                 for list of mtypes, see datatypes.SCITYPE_REGISTER
                 for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        state_info : List or None
-            A List containing the state information for each prediction safety decision
-            made for X. Contains classifier dependant information for future decisions
-            when more data is available.
-            Input should be None or an empty List for the first decision made. The
-            returned array new_state_info should be input if subsequent decisions are
-            required.
+
+        Returns
+        -------
+        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+            indices correspond to instance indices in X
+        decisions : 1D bool array
+            An array of booleans, containing the decision of whether a prediction is
+            safe to use or not.
+        state_info : 2D array
+            An array containing the state info for each decision in X, contains
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
+        """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
+        if self._state_info is None:
+            return self._predict(X)
+        else:
+            return self._update_predict(X)
+
+    def predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Predicts labels probabilities for sequences in X.
+
+        Early classifiers can predict at series lengths shorter than the train data
+        series length.
+
+        Probability predictions will return [-1]*n_classes_ for cases which it cannot
+        make a decision on yet. The output is only guaranteed to return a valid class
+        label for all cases when using the full series length.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
@@ -176,19 +223,69 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D int array
+        new_state_info : 2D array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Each row contains information
-            for a case from the latest decision on its safety.
-            state_info will cease updating after a positive decision is made, though
-            predictions will continue to be returned for the case.
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
         """
         self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        return self._predict_proba(X, state_info=state_info)
+        return self._predict_proba(X)
+
+    def update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Update label probabilities for sequences in X at a larger series length.
+
+        Uses information stored in the classifiers state from previous predictions and
+        updates at shorter series lengths. Update will only accept cases which have not
+        yet had a decision made, cases which have had a positive decision should be
+        removed from the input with the row ordering preserved.
+
+        If no state information is present, predict_proba will be called instead.
+
+        Probability predictions updates will return [-1]*n_classes_ for cases which it
+        cannot make a decision on yet. The output is only guaranteed to return a valid
+        class label for all cases when using the full series length.
+
+        Parameters
+        ----------
+        X : 3D np.array (any number of dimensions, equal length series)
+                of shape [n_instances, n_dimensions, series_length]
+            or 2D np.array (univariate, equal length series)
+                of shape [n_instances, series_length]
+            or pd.DataFrame with each column a dimension, each cell a pd.Series
+                (any number of dimensions, equal or unequal length series)
+            or of any other supported Panel mtype
+                for list of mtypes, see datatypes.SCITYPE_REGISTER
+                for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
+        decisions : 1D bool array
+            An array of booleans, containing the decision of whether a prediction is
+            safe to use or not.
+        state_info : 2D array
+            An array containing the state info for each decision in X, contains
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
+        """
+        self.check_is_fitted()
+
+        # boilerplate input checks for predict-like methods
+        X = self._check_convert_X_for_predict(X)
+
+        if self._state_info is None:
+            return self._predict_proba(X)
+        else:
+            return self._update_predict_proba(X)
 
     def score(self, X, y) -> Tuple[float, float, float]:
         """Scores predicted labels against ground truth labels on X.
@@ -217,6 +314,10 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         X = self._check_convert_X_for_predict(X)
 
         return self._score(X, y)
+
+    def reset_update_state_info(self):
+        """Reset the state information used in update()."""
+        self._state_info = None
 
     @abstractmethod
     def _fit(self, X, y):
@@ -249,7 +350,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _predict(self, X, state_info=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
@@ -263,13 +364,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
                 pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        state_info : List or None
-            A List containing the state information for each prediction safety decision
-            made for X. Contains classifier dependant information for future decisions
-            when more data is available.
-            Input should be None or an empty List for the first decision made. The
-            returned array new_state_info should be input if subsequent decisions are
-            required.
 
         Returns
         -------
@@ -278,23 +372,19 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D int array
+        new_state_info : 2D array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Each row contains information
-            for a case from the latest decision on its safety.
-            state_info will cease updating after a positive decision is made, though
-            predictions will continue to be returned for the case.
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
         """
         ...
 
-    def _predict_proba(
-        self, X, state_info=None
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Predicts labels probabilities for sequences in X.
+    @abstractmethod
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Update label prediction for sequences in X at a larger series length.
 
-        Default behaviour is to call _predict and set the predicted class probability
-        to 1, other class probabilities to 0. Override if better estimates are
-        obtainable.
+        Abstract method, must be implemented.
 
         Parameters
         ----------
@@ -305,13 +395,38 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
                 pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
-        state_info : List or None
-            A List containing the state information for each prediction safety decision
-            made for X. Contains classifier dependant information for future decisions
-            when more data is available.
-            Input should be None or an empty List for the first decision made. The
-            returned array new_state_info should be input if subsequent decisions are
-            required.
+
+        Returns
+        -------
+        y : 1D np.array of int, of shape [n_instances] - predicted class labels
+            indices correspond to instance indices in X
+        decisions : 1D bool array
+            An array of booleans, containing the decision of whether a prediction is
+            safe to use or not.
+        new_state_info : 2D array
+            An array containing the state info for each decision in X, contains
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
+        """
+        ...
+
+    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Predicts labels probabilities for sequences in X.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0 if a positive decision is made. Override if
+        better estimates are obtainable.
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
@@ -322,17 +437,61 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D int array
+        new_state_info : 2D array
             An array containing the state info for each decision in X, contains
-            information for future decisions on the data. Each row contains information
-            for a case from the latest decision on its safety.
-            state_info will cease updating after a positive decision is made, though
-            predictions will continue to be returned for the case.
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
-        preds, decisions, state_info = self._predict(X, state_info=state_info)
+        preds, decisions, state_info = self._predict(X)
         for i in range(0, X.shape[0]):
-            dists[i, self._class_dictionary[preds[i]]] = 1
+            if decisions[i]:
+                dists[i, self._class_dictionary[preds[i]]] = 1
+            else:
+                dists[i, :] = -1
+
+        return dists, decisions, state_info
+
+    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Update label probabilities for sequences in X at a larger series length.
+
+        Default behaviour is to call _update_predict and set the predicted class
+        probability to 1, other class probabilities to 0 if a positive decision is made.
+        Override if better estimates are obtainable.
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+                pd.DataFrame with each column a dimension, each cell a pd.Series
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+            1st dimension indices correspond to instance indices in X
+            2nd dimension indices correspond to possible labels (integers)
+            (i, j)-th entry is predictive probability that i-th instance is of class j
+        decisions : 1D bool array
+            An array of booleans, containing the decision of whether a prediction is
+            safe to use or not.
+        new_state_info : 2D array
+            An array containing the state info for each decision in X, contains
+            information for future decisions on the data and information on when a
+            cases decision has been made. Each row contains information for a case from
+            the latest decision on its safety.
+        """
+        dists = np.zeros((X.shape[0], self.n_classes_))
+        preds, decisions, state_info = self._update_predict(X)
+        for i in range(0, X.shape[0]):
+            if decisions[i]:
+                dists[i, self._class_dictionary[preds[i]]] = 1
+            else:
+                dists[i, :] = -1
 
         return dists, decisions, state_info
 

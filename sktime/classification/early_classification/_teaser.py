@@ -188,14 +188,12 @@ class TEASER(BaseEarlyClassifier):
                 train_preds,
                 X_oc,
                 g,
-                last_idx=0,
-                next_idx=len(self._classification_points),
+                0,
+                len(self._classification_points),
             )
 
             # calculate harmonic mean from finished state info
-            hm, acc, earl = self._compute_harmonic_mean(
-                self.series_length_, state_info, y
-            )
+            hm, acc, earl = self._compute_harmonic_mean(state_info, y)
 
             if hm > best_hm:
                 best_hm = hm
@@ -205,56 +203,26 @@ class TEASER(BaseEarlyClassifier):
 
         return self
 
-    def _predict(self, X, state_info=None) -> np.ndarray:
-        out = self._predict_proba(X, state_info=state_info)
-        probas = out[0]
+    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        out = self._predict_proba(X)
+        return self._proba_output_to_preds(out)
 
-        rng = check_random_state(self.random_state)
-        preds = np.array(
-            [
-                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in probas
-            ]
-        )
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        out = self._update_predict_proba(X)
+        return self._proba_output_to_preds(out)
 
-        return (preds, out[1], out[2])
-
-    def _predict_proba(self, X, state_info=None) -> np.ndarray:
+    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
-        next_idx = self._get_next_idx(series_length)
+        next_idx = self._get_next_idx(series_length) + 1
 
-        if next_idx == -1:
+        # if the input series length is invalid
+        if next_idx == 0:
             raise ValueError(
                 f"Input series length does not match the classification points produced"
                 f" in fit. Input series length must be greater then the first point. "
                 f"Current classification points: {self._classification_points}"
-            )
-
-        # determine last index used
-        last_idx = -1 if state_info is None else np.max(state_info[:, 0])
-
-        # Always consider all previous time stamps up to the input series_length
-        if state_info is None or state_info == []:
-            state_info = np.zeros((n_instances, 4), dtype=int)
-        elif all(si[1] >= self._consecutive_predictions for si in state_info):
-            raise ValueError(
-                "All input series have already had a successful prediction made."
-            )
-        elif last_idx >= next_idx:
-            raise ValueError(
-                f"All state_info input instances must be from a lesser classification "
-                f"point time stamp than the input series. Required series length for "
-                f"current state_info: >={self._classification_points[last_idx + 1]}"
-            )
-        elif not all(
-            si[0] == last_idx or si[1] >= self._consecutive_predictions
-            for si in state_info
-        ):
-            raise ValueError(
-                "All state_info input instances must be from the same classification "
-                "point time stamp or have already made a decision."
             )
 
         m = getattr(self.estimator, "n_jobs", None)
@@ -264,7 +232,75 @@ class TEASER(BaseEarlyClassifier):
         out = Parallel(n_jobs=threads)(
             delayed(self._predict_proba_for_estimator)(
                 X,
-                i + 1,
+                i,
+            )
+            for i in range(0, next_idx)
+        )
+
+        X_oc, probas, preds = zip(*out)
+        new_state_info, accept_decision = self._predict_oc_classifier_n_timestamps(
+            preds,
+            X_oc,
+            self._consecutive_predictions,
+            0,
+            next_idx,
+        )
+
+        probas = np.array(
+            [
+                probas[new_state_info[i][0]][i]
+                if accept_decision[i]
+                else [-1 for _ in range(self.n_classes_)]
+                for i in range(n_instances)
+            ]
+        )
+
+        self._state_info = new_state_info[np.invert(accept_decision)]
+
+        return probas, accept_decision, new_state_info
+
+    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        n_instances, _, series_length = X.shape
+
+        # maybe use the largest index that is smaller than the series length
+        next_idx = self._get_next_idx(series_length) + 1
+
+        # determine last index used
+        last_idx = np.max(self._state_info[0][0]) + 1
+
+        # if the input series length is invalid
+        if next_idx == 0:
+            raise ValueError(
+                f"Input series length does not match the classification points produced"
+                f" in fit. Input series length must be greater then the first point. "
+                f"Current classification points: {self._classification_points}"
+            )
+        # check state info and X have the same length
+        if len(X) > len(self._state_info):
+            raise ValueError(
+                f"Input number of instances does not match the length of recorded "
+                f"state_info: {len(self._state_info)}. Cases with positive decisions "
+                f"returned should be removed from the array with the row ordering "
+                f"preserved, or the state information should be reset if new data is "
+                f"used."
+            )
+        # check if series length has increased from last time
+        elif last_idx >= next_idx:
+            raise ValueError(
+                f"All input instances must be from a larger classification point time "
+                f"stamp than the recorded state information. Required series length "
+                f"for current state information: "
+                f">={self._classification_points[last_idx]}"
+            )
+
+        m = getattr(self.estimator, "n_jobs", None)
+        threads = self._threads_to_use if m is None else 1
+
+        # compute all new updates since then
+        out = Parallel(n_jobs=threads)(
+            delayed(self._predict_proba_for_estimator)(
+                X,
+                i,
             )
             for i in range(last_idx, next_idx)
         )
@@ -274,26 +310,28 @@ class TEASER(BaseEarlyClassifier):
             preds,
             X_oc,
             self._consecutive_predictions,
-            last_idx + 1,
-            next_idx + 1,
-            state_info=state_info,
+            last_idx,
+            next_idx,
+            state_info=self._state_info,
         )
 
         probas = np.array(
             [
-                probas[max(0, new_state_info[i, 0] - (last_idx + 1))][i]
+                probas[max(0, new_state_info[i][0] - last_idx)][i]
                 if accept_decision[i]
                 else [-1 for _ in range(self.n_classes_)]
                 for i in range(n_instances)
             ]
         )
 
-        return (probas, accept_decision, new_state_info)
+        self._state_info = new_state_info[np.invert(accept_decision)]
+
+        return probas, accept_decision, new_state_info
 
     def _score(self, X, y) -> Tuple[float, float, float]:
         state_info = self._predict(X)[2]
 
-        hm, acc, earl = self._compute_harmonic_mean(self.series_length_, state_info, y)
+        hm, acc, earl = self._compute_harmonic_mean(state_info, y)
 
         return hm, acc, earl
 
@@ -481,7 +519,7 @@ class TEASER(BaseEarlyClassifier):
 
         return accept_decision, state_info
 
-    def _compute_harmonic_mean(self, series_length, state_info, y):
+    def _compute_harmonic_mean(self, state_info, y):
         # calculate harmonic mean from finished state info
         accuracy = np.average(
             [
@@ -491,7 +529,7 @@ class TEASER(BaseEarlyClassifier):
         )
         earliness = np.average(
             [
-                self._classification_points[state_info[i][0]] / series_length
+                self._classification_points[state_info[i][0]] / self.series_length_
                 for i in range(len(state_info))
             ]
         )
@@ -518,6 +556,20 @@ class TEASER(BaseEarlyClassifier):
                 preds[idx],
                 self._classification_points[time_stamp],
             )
+
+    def _proba_output_to_preds(self, out):
+        rng = check_random_state(self.random_state)
+        preds = np.array(
+            [
+                self.classes_[
+                    int(rng.choice(np.flatnonzero(out[0][i] == out[0][i].max())))
+                ]
+                if out[1][i]
+                else -1
+                for i in range(len(out[0]))
+            ]
+        )
+        return preds, out[1], out[2]
 
     @classmethod
     def get_test_params(cls):
