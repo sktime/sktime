@@ -317,25 +317,3 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         params1 = {}
         params2 = {"alpha": [0.1, 0.5, 0.9]}
         return [params1, params2]
-
-
-class CoverageLoss(_BaseForecastingErrorMetric):
-    """Evaluate the pinball loss at all quantiles given in data.
-
-    Parameters
-    ----------
-    multioutput : string "uniform_average" or "raw_values" determines how multioutput
-    results will be treated
-    """
-
-    _tags = {
-        "scitype:y_pred": "pred_interval",
-        "lower_is_better": True,
-    }
-
-    def __init__(self, multioutput="uniform_average"):
-        name = "CoverageLoss"
-        super().__init__(name=name, multioutput=multioutput)
-
-    def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
-        NotImplementedError()
