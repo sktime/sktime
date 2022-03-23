@@ -19,20 +19,19 @@ class _WdtwDistance(NumbaDistance):
     r"""Weighted dynamic time warping (wdtw) distance between two time series.
 
     Uses DTW with a weighted pairwise distance matrix rather than a window. When
-    creating the distance matrix $M$, a weight penalty  $w_{|i-j|}$ for a warping
-    distance of $|i-j|$ is applied, so that for series a = <a_1, ..., a_m> and
-    b=<b_1,...,b_m>,
-
+    creating the distance matrix :math:'M', a weight penalty  :math:'w_{|i-j|}' for a
+    warping distance of :math:'|i-j|' is applied, so that for series
+    :math:'a = <a_1, ..., a_m>' and :math:'b=<b_1,...,b_m>',
     .. math::
     M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
-    A logistic weight function, proposed in [1] is used, so that a warping of $x$ places
-    imposes a weighting of
+    A logistic weight function, proposed in [1] is used, so that a warping of :math:'x'
+    places imposes a weighting of
     .. math::
     w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
-    where $w_{max}$ is an upper bound on the weight (set to 1), $m$ is the series
-    length and $g$ is a parameter that controls the penalty level for larger warpings.
-    The greater $g$ is, the greater the penalty for warping. Once $M$ is found,
-    standard dynamic time warping is applied.
+    where :math:'w_{max}' is an upper bound on the weight (set to 1), :math:'m' is
+    the series length and :math:'g' is a parameter that controls the penalty level
+    for larger warpings. The greater :math:'g' is, the greater the penalty for warping.
+    Once :math:'M' is found, standard dynamic time warping is applied.
 
     References
     ----------
