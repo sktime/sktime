@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements AutoARIMA model from StatsForecast."""
+"""Implements AutoARIMA model from statsforecast by Nixtla."""
 
 __author__ = ["FedericoGarza"]
 __all__ = ["StatsForecastAutoARIMA"]
