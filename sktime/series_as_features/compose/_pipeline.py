@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
+"""Feature union pipeline element."""
 
-import numpy as np
+from warnings import warn
+
 import pandas as pd
-from scipy import sparse
-from sklearn.pipeline import FeatureUnion as _FeatureUnion
+from sklearn import clone
 
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.base import _HeterogenousMetaEstimator
+from sktime.transformations.base import BaseTransformer
 
 __all__ = ["FeatureUnion"]
-__author__ = ["Markus Löning"]
+__author__ = ["mloning, fkiraly"]
 
 
-class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
+class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -35,11 +37,30 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
-    preserve_dataframe : bool
-        Save constructed dataframe.
+    preserve_dataframe : bool - deprecated
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "transformer__variablename"
+        if False, columns are MultiIndex (transformer, variablename)
+        has no effect if return mtypes is one without column names
     """
 
     _required_parameters = ["transformer_list"]
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "scitype:transform-labels": "None",
+        "scitype:instancewise": False,  # depends on components
+        "univariate-only": False,  # depends on components
+        "handles-missing-data": False,  # depends on components
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": "None",
+        "X-y-must-have-same-index": False,
+        "enforce_index_type": None,
+        "fit_is_empty": False,
+        "transform-returns-same-time-index": False,
+        "skip-inverse-transform": False,
+    }
 
     def __init__(
         self,
@@ -47,43 +68,89 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         n_jobs=None,
         transformer_weights=None,
         preserve_dataframe=True,
+        flatten_transform_index=True,
     ):
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
         self.preserve_dataframe = preserve_dataframe
-        super(FeatureUnion, self).__init__(
-            transformer_list, n_jobs=n_jobs, transformer_weights=transformer_weights
-        )
+        if not preserve_dataframe:
+            warn(
+                "the preserve_dataframe arg has been deprecated in 0.11.0, "
+                "and will be removed in 0.12.0. It has no effect on the output format, "
+                "but can still be set to avoid compatibility issues in the deprecation "
+                "period. FeatureUnion now follows the "
+                "output format specification for sktime transformers. "
+                "To convert the output to another format, use datatypes.convert_to"
+            )
+        self.transformer_list = transformer_list
+        self.flatten_transform_index = flatten_transform_index
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
+        super(FeatureUnion, self).__init__()
 
-    def fit(self, X, y=None, **fit_params):
+    def _fit(self, X, y=None):
         """Fit parameters."""
-        super().fit(X, y, **fit_params)
-        self._is_fitted = True
+        transformer_list = self.transformer_list
+
+        # clone and fit transformers in transformer_list, store fitted copies
+        transformer_list_ = [clone(trafo[1]).fit(X, y) for trafo in transformer_list]
+        self.transformer_list_ = transformer_list_
+
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X separately by each transformer, concatenate results."""
-        self.check_is_fitted()
-        return super().transform(X)
+        # retrieve fitted transformers, apply to the new data individually
+        transformer_list_ = self.transformer_list_
+        Xt_list = [trafo.transform(X, y) for trafo in transformer_list_]
 
-    def fit_transform(self, X, y, **fit_params):
-        """Transform X separately by each transformer, concatenate results."""
-        return self.fit(X, y, **fit_params).transform(X)
+        transformer_names = [x[0] for x in self.transformer_list]
 
-    def _hstack(self, Xs):
+        Xt = pd.concat(
+            Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
+        )
+
+        if self.flatten_transform_index:
+            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
+            Xt.columns = flat_index
+
+        return Xt
+
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `_forecasters`.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
         """
-        Stacks X horizontally.
+        return self._get_params("transformer_list", deep=deep)
 
-        Supports input types (X): list of
-            numpy arrays, sparse arrays and DataFrames.
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `_forecasters`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
         """
-        if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
+        self._set_params("transformer_list", **kwargs)
+        return self
 
-        types = {type(X) for X in Xs}
-        if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
-            return pd.concat(Xs, axis=1)
+    @classmethod
+    def get_test_params(cls):
+        """Test parameters for FeatureUnion."""
+        from sktime.transformations.series.exponent import ExponentTransformer
 
-        else:
-            return np.hstack(Xs)
+        TRANSFORMERS = [
+            ("transformer1", ExponentTransformer(power=4)),
+            ("transformer2", ExponentTransformer(power=0.25)),
+        ]
+
+        return {"transformer_list": TRANSFORMERS}

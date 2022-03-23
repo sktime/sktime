@@ -291,7 +291,6 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
             out[i] = self._handle_multioutput(loss, multioutput)
 
         out_df = pd.DataFrame([out], columns=alphas)
-
         return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
