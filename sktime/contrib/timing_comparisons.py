@@ -7,6 +7,10 @@ or conversely to assess whether changes give significant speed up.
 """
 __author__ = ["TonyBagnall"]
 
+import numpy as np
+
 
 def distance_timing():
     """Time distance functions for increased series length."""
+    for i in range(100):
+        first = np.ndarray()
