@@ -474,3 +474,23 @@ class ElasticEnsemble(BaseClassifier):
             raise NotImplementedError(
                 "EE does not currently support: " + str(distance_measure)
             )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {
+            "proportion_of_param_options": 0.01,
+            "proportion_train_for_test": 0.1,
+            "majority_vote": True,
+            "distance_measures": ["dtw"],
+        }
+        return params
