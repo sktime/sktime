@@ -399,14 +399,13 @@ class NaiveForecaster(BaseForecaster):
 class NaiveVariance(BaseForecaster):
     r"""Compute the prediction variance based on a naive strategy.
 
-    NaiveVariance adds to a `forecaster` the ability to compute the 
+    NaiveVariance adds to a `forecaster` the ability to compute the
     prediction variance based on naive assumptions about the time series.
     The simple strategy is as follows:
     - Let :math:`y_1,\dots,y_T` be the time series we fit the estimator :math:`f` to.
     - Let :math:`\widehat{y}_{ij}` be the forecast for time point :math:`j`, obtained
     from fitting the forecaster to the partial time series :math:`y_1,\dots,y_i`.
-    - We compute the residuals matrix
-    :math:`R=(r_{ij})=(y_j-\widehat{y}_{ij})`.
+    - We compute the residuals matrix :math:`R=(r_{ij})=(y_j-\widehat{y}_{ij})`.
     - The variance prediction :math:`v_k` for :math:`y_{T+k}` is
     :math:`\frac{1}{T-k}\sum_{i=1}^{T-k} a_{i,i+k}^2`
     because we are averaging squared residuals of all forecasts that are :math:`k`
