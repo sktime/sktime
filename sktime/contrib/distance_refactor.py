@@ -92,7 +92,7 @@ def difference_test():
     X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
     d1 = X_train[0]
     d2 = X_train[2]
-    dist = msm_distance
+    dist = erp_distance
     #    d1=np.transpose(d1)
     #    d2=np.transpose(d2)
     print("Shape  = ", d1.shape)

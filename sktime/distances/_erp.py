@@ -108,24 +108,34 @@ def _erp_cost_matrix(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Erp cost matrix between x and y.
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    dimensions = x.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
 
-    x_g = np.full_like(x[0], g)
-    y_g = np.full_like(y[0], g)
+    x_g = np.full_like(x[1], g)
+    # print("x_g shape = ", x_g.shape)
 
+    y_g = np.full_like(y[0], g)
     gx_distance = np.array([abs(_local_euclidean_distance(x_g, ts)) for ts in x])
+    # print("gx shape = ", gx_distance.shape)
     gy_distance = np.array([abs(_local_euclidean_distance(y_g, ts)) for ts in y])
+    # print("gy shape = ", gy_distance.shape)
+
     cost_matrix[1:, 0] = np.sum(gx_distance)
     cost_matrix[0, 1:] = np.sum(gy_distance)
 
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
+                curr_dist = 0
+                for k in range(dimensions):
+                    curr_dist += (x[k][i - 1] - y[k][j - 1]) * (
+                        x[k][i - 1] - y[k][j - 1]
+                    )
+                curr_dist = np.sqrt(curr_dist)
                 cost_matrix[i, j] = min(
-                    cost_matrix[i - 1, j - 1]
-                    + _local_euclidean_distance(x[i - 1], y[j - 1]),
+                    cost_matrix[i - 1, j - 1] + curr_dist,
                     cost_matrix[i - 1, j] + gx_distance[i - 1],
                     cost_matrix[i, j - 1] + gy_distance[j - 1],
                 )
