@@ -7,6 +7,7 @@ from sktime.distances import dtw_distance
 
 
 def test_1d_uni():
+    """Test 1D univariate."""
     X_train, y_train = load_unit_test(split="train", return_type="numpy2d")
     d1 = X_train[0]
     d2 = X_train[2]
@@ -32,7 +33,9 @@ def test_1d_uni():
         " 0% window distance 1D numpy input dist 1 = ", dist1, " distance 2 = ", dist2
     )
 
+
 def test_2d_uni():
+    """Test 2D univariate."""
     # X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
     # c1 = X_train[0]
     # c2 = X_train[1]
@@ -62,7 +65,9 @@ def test_2d_uni():
     # dist2 = dtw_distance(a3, a4)
     # print(" distance 2 = ", dist2)
 
+
 def test_2d_multi():
+    """Test 2D multivariate."""
     X_train, y_train = load_basic_motions(split="train", return_type="numpy3d")
     dist2 = dtw_distance(X_train[0], X_train[1], window=0.0)
     print(" Window = 0.0, BASIC MOTIONS DIST = ", dist2)
