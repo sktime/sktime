@@ -82,6 +82,7 @@ class TSFreshClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
@@ -162,7 +163,7 @@ class TSFreshClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -177,7 +178,7 @@ class TSFreshClassifier(BaseClassifier):
         """
         return self._estimator.predict(self._transformer.transform(X))
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -199,3 +200,21 @@ class TSFreshClassifier(BaseClassifier):
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "default_fc_parameters": "minimal",
+        }
+        return params
