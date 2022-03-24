@@ -86,7 +86,7 @@ StatsForecast
     :toctree: auto_generated/
     :template: class.rst
 
-    AutoARIMA
+    StatsForecastAutoARIMA
 
 Theta
 -----

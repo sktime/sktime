@@ -61,9 +61,6 @@ class reconciler(BaseTransformer):
 
         super(reconciler, self).__init__()
 
-    # test for type of input?
-    # test for __total present in index?
-    # tests for index matching at each time point?
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -79,6 +76,12 @@ class reconciler(BaseTransformer):
         -------
         self: reference to self
         """
+        self._check_method()
+
+        # check index and bottom level of hierarchy are named correctly
+        _check_index_good(X)
+        _check_bl_good(X)
+
         if self.method == "bu":
             self.g_matrix = _get_g_matrix_bu(X)
         elif self.method == "ols":
@@ -90,9 +93,6 @@ class reconciler(BaseTransformer):
 
         return self
 
-    # todo: implement this, mandatory
-    # tests for index matching?
-    # tests for actually hierarchical predictions?
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -116,6 +116,14 @@ class reconciler(BaseTransformer):
 
         return recon_preds
 
+    def _check_method(self):
+        """Raise warning if method is not defined correctly."""
+        default_list = ["bu", "ols", "wls_str"]
+        if not np.isin(self.method, default_list):
+            raise ValueError(f"""method must be one of {default_list}.""")
+        else:
+            pass
+
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -133,8 +141,6 @@ class reconciler(BaseTransformer):
         return params
 
 
-# tests for matrix index?
-# what happens if two end-points have the same name?
 def _get_s_matrix(X):
     """Determine the summation "S" matrix.
 
@@ -188,7 +194,6 @@ def _get_s_matrix(X):
     return s_matrix
 
 
-# tests for matrix index?
 def _get_g_matrix_bu(X):
     """Determine the reconciliation "G" matrix for the bottom up method.
 
@@ -272,3 +277,54 @@ def _get_g_matrix_wls_str(X):
     g_wls_str = g_wls_str.transpose()
 
     return g_wls_str
+
+
+# TODO: check for any missing timepoint indexes?
+def _check_index_good(X):
+    """Check the index of X and return boolean."""
+    ind_names = list(X.index.names)
+
+    # check the length of index
+    nmln_chk = len(ind_names) >= 2
+
+    # check the first index elements for "__total"
+    tot_chk = np.any(X.index.get_level_values(level=1).isin(["__total"]))
+
+    all_ok = np.logical_and.reduce([nmln_chk, tot_chk])
+
+    if not all_ok:
+        raise ValueError(
+            """Please check the index of X
+                    1) Contains an aggregated node named "__total".
+                    2) Has more than one level.
+            """
+        )
+    else:
+        pass
+
+
+def _check_bl_good(X):
+
+    # check botom level indexes are unique
+    bl_inds = list(
+        X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
+        .index.droplevel(level=-1)
+        .unique()
+    )
+    bl_inds = ["__".join(str(x)) for x in bl_inds]
+
+    agg_inds = list(X.index.get_level_values(level=-2).unique())
+    agg_inds.remove("__total")
+    bl_chk = len(agg_inds) == len(bl_inds)
+
+    if not bl_chk:
+        raise ValueError(
+            """Please check the bottom level nodes of the hierarchy have unique
+            names.
+            """
+        )
+    else:
+        pass
+
+
+# TODO: test predictions for each method to guarantee coherency for single example?
