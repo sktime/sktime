@@ -78,6 +78,17 @@ ARIMA
     AutoARIMA
     ARIMA
 
+StatsForecast
+-------------
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoARIMA
+
 Theta
 -----
 
@@ -219,6 +230,7 @@ Model Evaluation (Backtesting)
     evaluate
 
 VAR (Vector Autoregression)
+---------------------------
 
 .. currentmodule:: sktime.forecasting.var
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pipeline with a classifier."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
+import numpy as np
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -208,7 +208,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict labels for sequences in X.
 
         core logic
@@ -224,7 +224,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         Xt = self.transformers_.transform(X)
         return self.classifier_.predict(Xt)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
