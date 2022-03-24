@@ -606,10 +606,10 @@ class CutoffSplitter(BaseSplitter):
                     f"`cutoff`: {type(cutoff)}"
                 )
 
-            if is_int(x=cutoff):
-                training_window = np.arange(train_start, cutoff) + 1
-            else:
-                training_window = np.arange(train_start, y.get_loc(cutoff)) + 1
+            cutoff_datetime = y[cutoff] if is_int(x=cutoff) else cutoff
+            training_window = np.argwhere(
+                (y >= y[max(0, train_start)]) & (y <= cutoff_datetime)
+            ).flatten()
 
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
