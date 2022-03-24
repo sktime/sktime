@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_mtype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
@@ -343,24 +344,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-            if estimator_instance._has_predict_quantiles_been_refactored():
-                y_pred = estimator_instance.predict()
-                pred_ints = estimator_instance.predict_interval(
-                    fh_int_oos, coverage=alpha
-                )
 
-                pred_ints = estimator_instance._convert_new_to_old_pred_int(
-                    pred_ints, alpha
-                )
-            else:
-                y_pred, pred_ints = estimator_instance.predict(
-                    return_pred_int=True, alpha=alpha
-                )
-            self._check_pred_ints(pred_ints, y_train, y_pred, fh_int_oos)
+            pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
+            assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                estimator_instance.predict(return_pred_int=True, alpha=alpha)
+                estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
 
     def _check_predict_quantiles(
         self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
