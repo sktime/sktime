@@ -75,7 +75,7 @@ class _ErpDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
-        @njit(cache=True)
+        # @njit(cache=True)
         def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
             cost_matrix = _erp_cost_matrix(x, y, _bounding_matrix, g)
 
@@ -112,15 +112,21 @@ def _erp_cost_matrix(
     x_size = x.shape[1]
     y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
+    x_g = np.full(x_size, g)
+    y_g = np.full(y_size, g)
 
-    x_g = np.full_like(x[1], g)
-    # print("x_g shape = ", x_g.shape)
-
-    y_g = np.full_like(y[0], g)
-    gx_distance = np.array([abs(_local_euclidean_distance(x_g, ts)) for ts in x])
-    # print("gx shape = ", gx_distance.shape)
-    gy_distance = np.array([abs(_local_euclidean_distance(y_g, ts)) for ts in y])
-    # print("gy shape = ", gy_distance.shape)
+    gx_distance = np.array(
+        [
+            abs(_local_euclidean_distance(x_g, ts))
+            for ts in x.reshape((x.shape[1], x.shape[0]))
+        ]
+    )
+    gy_distance = np.array(
+        [
+            abs(_local_euclidean_distance(y_g, ts))
+            for ts in y.reshape((y.shape[1], y.shape[0]))
+        ]
+    )
 
     cost_matrix[1:, 0] = np.sum(gx_distance)
     cost_matrix[0, 1:] = np.sum(gy_distance)
