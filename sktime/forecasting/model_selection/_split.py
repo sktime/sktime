@@ -1025,7 +1025,7 @@ class SingleWindowSplitter(BaseSplitter):
             start = y.get_loc(y[end - 1] - window_length) + 1
         else:
             start = end - window_length
-        train = np.arange(start, end)
+        train = np.argwhere((y >= y[max(0, start)]) & (y <= y[end - 1])).flatten()
         test = end + fh.to_numpy() - 1
         yield train, test
 
