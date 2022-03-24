@@ -32,12 +32,10 @@ def average_of_slope_transform(X: np.ndarray):
                 len(q.shape[1]))
 
     """
-    Xt = X.transpose((0, 2, 1))
     derivative_X = []
-    for val in Xt:
+    for val in X:
         derivative_X.append(average_of_slope(val))
-    derivative_X = np.array(derivative_X).transpose((0, 2, 1))
-    return derivative_X
+    return np.array(derivative_X)
 
 
 @njit(cache=True, fastmath=True)
@@ -68,7 +66,10 @@ def average_of_slope(q: np.ndarray):
     .. [1] Keogh E, Pazzani M Derivative dynamic time warping. In: proceedings of 1st
     SIAM International Conference on Data Mining, 2001
     """
-    return 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
+    q = q.transpose()
+    q2 = 0.25 * q[2:] + 0.5 * q[1:-1] - 0.75 * q[:-2]
+    q2 = q2.transpose()
+    return q2
 
 
 class _DdtwDistance(NumbaDistance):

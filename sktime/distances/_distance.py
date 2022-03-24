@@ -992,9 +992,9 @@ def distance_factory(
         If the metric type cannot be determined.
     """
     if x is None:
-        x = np.zeros((10, 10))
+        x = np.zeros((1, 10))
     if y is None:
-        y = np.zeros((10, 10))
+        y = np.zeros((1, 10))
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
