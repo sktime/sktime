@@ -23,9 +23,9 @@ def _validate_bounding_result(
     matrix: np.ndarray (2d array)
         Bounding matrix.
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries.
+        Second time series.
     all_finite: bool, default = False
         Boolean that when true will check all the values are finite.
     all_infinite: bool, default = False

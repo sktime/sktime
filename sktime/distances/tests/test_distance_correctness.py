@@ -28,21 +28,10 @@ distances = [
     "msm",
     "ddtw",
     "euclidean",
-    #    "erp",
+    "erp",
     "ddtw",
     "wddtw",
 ]
-distance_functions = {
-    "dtw": dtw_distance,
-    "wdtw": wdtw_distance,
-    # "msm": msm_distance,
-    # "ddtw": ddtw_distance
-    #    "euclidean",
-    #    "erp",
-    #    "lcss",
-    #    "ddtw",
-    #    "wddtw",
-}
 
 distance_parameters = {
     "dtw": [0.0, 0.1, 1.0],  # window
@@ -52,7 +41,7 @@ distance_parameters = {
     "erp": [0.0, 0.1, 1.0],  # window
     "lcss": [0.0, 50.0, 200.0],  # espilon
     "edr": [0.0, 50.0, 200.0],  # espilon
-    "ddtw": [0.0, 0.1, 1.0],
+    "ddtw": [0.0, 0.1, 1.0],  # window
 }
 unit_test_distances = {
     "euclidean": 619.7959,
@@ -79,15 +68,10 @@ basic_motions_distances = {
 
 
 def test_multivariate_correctness():
-    """Test distance correctness on BasicMotions: univariate, equal length."""
+    """Test distance correctness on BasicMotions: multivariate, equal length."""
     trainX, trainy = load_basic_motions(return_type="numpy3D")
     case1 = trainX[0]
     case2 = trainX[1]
-    # TEMPORARY: REMOVE WHEN REFACTORED
-    # case1 = np.transpose(case1)
-    # case2 = np.transpose(case2)
-
-    # Add test cases1 and 2 are the same
     d = euclidean_distance(case1, case2)
     assert_almost_equal(d, basic_motions_distances["euclidean"], 4)
     for j in range(0, 3):
@@ -97,11 +81,8 @@ def test_multivariate_correctness():
         assert_almost_equal(d, basic_motions_distances["wdtw"][j], 4)
         d = lcss_distance(case1, case2, epsilon=distance_parameters["lcss"][j] / 50.0)
         assert_almost_equal(d, basic_motions_distances["lcss"][j], 4)
-        #        d = msm_distance(case1, case2, c=distance_parameters["msm"][j])
-        #        assert_almost_equal(d, basic_motions_distances["msm"][j], 4)
-        #        # Need to rescale epsilon for BasicMotions
-        # d = erp_distance(case1, case2, window=distance_parameters["erp"][j])
-        # assert_almost_equal(d, basic_motions_distances["erp"][j], 4)
+        d = erp_distance(case1, case2, window=distance_parameters["erp"][j])
+        assert_almost_equal(d, basic_motions_distances["erp"][j], 4)
         d = edr_distance(case1, case2, epsilon=distance_parameters["edr"][j] / 50.0)
         assert_almost_equal(d, basic_motions_distances["edr"][j], 4)
         d = ddtw_distance(case1, case2, window=distance_parameters["ddtw"][j])
@@ -114,8 +95,7 @@ def test_univariate_correctness():
     """Test dtw correctness on UnitTest: univariate, equal length."""
     trainX, trainy = load_unit_test(return_type="numpy3D")
     trainX2, trainy2 = load_unit_test(return_type="numpy2D")
-    #    trainX3, trainy3 = load_basic_motions(return_type="numpy3D")
-    # Test instances from UnitTest
+    # Test 2D and 3D instances from UnitTest
     cases1 = [trainX[0], trainX2[0]]
     cases2 = [trainX[2], trainX2[2]]
     # Add test cases1 and 2 are the same

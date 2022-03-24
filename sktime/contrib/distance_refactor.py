@@ -4,7 +4,7 @@ import numpy as np
 from sklearn import metrics
 
 from sktime.clustering.k_means import TimeSeriesKMeans
-from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.datasets import load_arrow_head, load_basic_motions, load_unit_test
 from sktime.distances import (
     ddtw_distance,
     dtw_distance,
@@ -52,6 +52,23 @@ distances = [
     "ddtw",
     "wddtw",
 ]
+from sktime.clustering.utils.plotting._plot_partitions import plot_cluster_algorithm
+
+
+def time_clusterers():
+    """Time tests for clusterers."""
+    k_means = TimeSeriesKMeans(
+        n_clusters=5,  # Number of desired centers
+        init_algorithm="forgy",  # Center initialisation technique
+        max_iter=10,  # Maximum number of iterations for refinement on training set
+        metric="dtw",  # Distance metric to use
+        averaging_method="mean",  # Averaging technique to use
+        random_state=1,
+    )
+    X_train, y_train = load_arrow_head(split="train")
+    X_test, y_test = load_arrow_head(split="test")
+    k_means.fit(X_train)
+    plot_cluster_algorithm(k_means, X_test, k_means.n_clusters)
 
 
 def debug_clusterers():
@@ -130,4 +147,5 @@ def difference_test():
 
 if __name__ == "__main__":
     #    debug_clusterers()
-    difference_test()
+    # difference_test()
+    time_clusterers()
