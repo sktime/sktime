@@ -121,6 +121,7 @@ class BaseFixtureGenerator:
             fixture_vars=fixture_vars,
             generator_dict=self.generator_dict(),
             fixture_sequence=fixture_sequence,
+            raise_exceptions=True,
         )
 
         metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
