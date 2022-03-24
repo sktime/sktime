@@ -28,9 +28,10 @@ class reconciler(BaseTransformer):
     Parameters
     ----------
     method : {"bu", "ols", "wls_str"}, default="ols"
-        The reconciliation approach applied to the forecasts where "bu" is
-        bottom-up, "ols" is ordinary least squares, "wls_str" is weighted least
-        squares (structural). [1]_
+        The reconciliation approach applied to the forecasts
+            "bu" - bottom-up
+            "ols" - ordinary least squares
+            "wls_str" - weighted least squares (structural)
 
     References
     ----------
@@ -38,11 +39,10 @@ class reconciler(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Hierarchical",
-        "scitype:transform-output": "Hierarchical",
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
-        # todo instance wise?
-        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "pd_multiindex_hier",
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -50,7 +50,6 @@ class reconciler(BaseTransformer):
         "univariate-only": True,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "enforce_index_type": True,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": True,
     }
