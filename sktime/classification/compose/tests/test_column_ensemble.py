@@ -32,7 +32,7 @@ def test_col_ens_on_basic_motions():
 
     # train column ensemble
     col_ens = ColumnEnsembleClassifier(estimators=estimators)
-    col_ens.fit(X_train, y_train)
+    col_ens.fit(X_train.iloc[indices], y_train[indices])
 
     probas = col_ens.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, col_ens_basic_motions_probas, decimal=2)

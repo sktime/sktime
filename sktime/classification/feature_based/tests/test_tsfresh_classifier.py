@@ -22,6 +22,7 @@ def test_tsfresh_classifier_on_unit_test_data():
         estimator=RandomForestClassifier(n_estimators=10),
         random_state=0,
     )
+    tsfc.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = tsfc.predict_proba(X_test.iloc[indices])
@@ -44,6 +45,7 @@ def test_tsfresh_classifier_on_basic_motions():
         estimator=RandomForestClassifier(n_estimators=10),
         random_state=0,
     )
+    tsfc.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
     probas = tsfc.predict_proba(X_test.iloc[indices])

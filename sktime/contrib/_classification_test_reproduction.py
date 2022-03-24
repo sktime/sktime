@@ -49,8 +49,8 @@ from sktime.transformations.series.summarize import SummaryTransformer
 
 
 def _reproduce_classification_unit_test(estimator):
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     estimator.fit(X_train, y_train)
@@ -58,8 +58,8 @@ def _reproduce_classification_unit_test(estimator):
 
 
 def _reproduce_classification_basic_motions(estimator):
-    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
-    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train")
+    X_test, y_test = load_basic_motions(split="test")
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     estimator.fit(X_train.iloc[indices], y_train[indices])
@@ -67,8 +67,8 @@ def _reproduce_classification_basic_motions(estimator):
 
 
 def _reproduce_early_classification_unit_test(estimator):
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     estimator.fit(X_train, y_train)

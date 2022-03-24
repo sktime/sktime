@@ -15,7 +15,9 @@ def test_cif_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
+    cif = CanonicalIntervalForest(
+        n_estimators=10, n_intervals=2, att_subsample_size=4, random_state=0
+    )
     cif.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -31,7 +33,13 @@ def test_dtc_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train CIF with the sklearn decision tree classifier
-    cif = CanonicalIntervalForest(n_estimators=10, base_estimator="dtc", random_state=0)
+    cif = CanonicalIntervalForest(
+        n_estimators=10,
+        n_intervals=2,
+        att_subsample_size=4,
+        base_estimator="dtc",
+        random_state=0,
+    )
     cif.fit(X_train, y_train)
 
     cif.predict_proba(X_test.iloc[indices])
@@ -45,7 +53,9 @@ def test_cif_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train CIF
-    cif = CanonicalIntervalForest(n_estimators=10, random_state=0)
+    cif = CanonicalIntervalForest(
+        n_estimators=10, n_intervals=2, att_subsample_size=4, random_state=0
+    )
     cif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same

@@ -59,7 +59,7 @@ def test_stc_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
-    indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train STC
     stc = ShapeletTransformClassifier(
@@ -72,7 +72,7 @@ def test_stc_on_basic_motions():
     stc.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = stc.predict_proba(X_test.iloc[indices[:10]])
+    probas = stc.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(probas, stc_basic_motions_probas, decimal=2)
 
 

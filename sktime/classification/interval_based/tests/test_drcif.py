@@ -16,7 +16,13 @@ def test_drcif_on_unit_test_data():
     indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
 
     # train DrCIF
-    drcif = DrCIF(n_estimators=10, random_state=0, save_transformed_data=True)
+    drcif = DrCIF(
+        n_estimators=10,
+        n_intervals=2,
+        att_subsample_size=4,
+        random_state=0,
+        save_transformed_data=True,
+    )
     drcif.fit(X_train, y_train)
 
     # assert probabilities are the same
@@ -38,6 +44,8 @@ def test_contracted_drcif_on_unit_test_data():
     drcif = DrCIF(
         time_limit_in_minutes=0.25,
         contract_max_n_estimators=10,
+        n_intervals=2,
+        att_subsample_size=4,
         random_state=0,
     )
     drcif.fit(X_train, y_train)
@@ -53,7 +61,7 @@ def test_drcif_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train DrCIF
-    drcif = DrCIF(n_estimators=10, random_state=0)
+    drcif = DrCIF(n_estimators=10, n_intervals=2, att_subsample_size=4, random_state=0)
     drcif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same

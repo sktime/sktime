@@ -33,7 +33,7 @@ def test_hivecote_v2_on_unit_test_data():
         },
         random_state=0,
     )
-    hc2.fit(X_train.iloc[indices], y_train[indices])
+    hc2.fit(X_train, y_train)
 
     # assert probabilities are the same
     probas = hc2.predict_proba(X_test.iloc[indices])
@@ -75,7 +75,7 @@ def test_hivecote_v2_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
-    indices = np.random.RandomState(4).choice(len(y_train), 15, replace=False)
+    indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train HIVE-COTE v2
     hc2 = HIVECOTEV2(
@@ -97,7 +97,7 @@ def test_hivecote_v2_on_basic_motions():
     hc2.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
-    probas = hc2.predict_proba(X_test.iloc[indices[:10]])
+    probas = hc2.predict_proba(X_test.iloc[indices])
     testing.assert_array_almost_equal(
         probas, hivecote_v2_basic_motions_probas, decimal=2
     )
