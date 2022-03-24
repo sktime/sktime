@@ -397,13 +397,20 @@ class NaiveForecaster(BaseForecaster):
 
 
 class NaiveVariance(BaseForecaster):
-    """Compute the prediction variance using a naive strategy.
+    """Compute the prediction variance based on a naive strategy.
 
-    The strategy works as follows:
-    -train the internal forecaster on subsets of `self._y` (rolling window)
-    -computes the residuals of the rest of the time series for each subset
-    -for each point k in `fh`, computes the variance of the prediction
-        by averaging the squared residuals that are k steps ahead.
+    The Naive Variance adds to a `forecaster` the ability to compute the 
+    prediction variance based on naive assumptions about the time series.
+    The simple strategy is as follows:
+    - Let :math:`y_1,\dots,y_T` be the time series we fit the estimator :math:`f` to. 
+    - Let :math:`\widehat{y}_{ij}` be the forecast for time point :math:`j`, obtained 
+    from fitting the forecaster to the partial time series :math:`y_1,\dots,y_i`.
+    - We compute the residuals matrix 
+    :math:``R=(r_{ij})=(y_j-\widehat{y}_{ij})``
+    - The variance prediction :math:`v_k` for :math:`y_{T+k}` is :math:`\frac{1}{T-k}\sum_{i=1}^{T-k} a_{i,i+k}^2`
+    because we are averaging squared residuals of all forecasts that are :math:`k`
+    time points ahead.
+    - And for the covariance matrix prediction, the formula becomes :math:`Cov(y_k, y_l)=\frac{\sum_{i=1}^N \hat{r}_{k,k+i}*\hat{r}_{l,l+i}}{N}`
     """
 
     _required_parameters = ["forecaster"]
@@ -443,20 +450,7 @@ class NaiveVariance(BaseForecaster):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
-        """Update fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series
-        X : pd.DataFrame
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        self : an instance of self
-        """
         self.forecaster_.update(y, X, update_params=update_params)
-
         return self
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
