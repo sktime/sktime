@@ -155,9 +155,6 @@ def numba_wrapper(distance_measure):
     def distance(instance_a, instance_b, **params):
         instance_a = from_nested_to_2d_array(instance_a, return_numpy=True)
         instance_b = from_nested_to_2d_array(instance_b, return_numpy=True)
-        # dimension rather than whole thing?
-        instance_a = np.transpose(instance_a)
-        instance_b = np.transpose(instance_b)
         return distance_measure(instance_a, instance_b, **params)
 
     return distance

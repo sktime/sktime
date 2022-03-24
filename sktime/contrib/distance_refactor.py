@@ -16,6 +16,7 @@ from sktime.distances import (
     wddtw_distance,
     wdtw_distance,
 )
+from sktime.distances.tests._utils import create_test_distance_numpy
 
 # Clustering Wtih num custers set to 2 and transpose
 expected_rand_unit_test = {
@@ -96,6 +97,16 @@ def debug_clusterers():
         # train_rand2 = metrics.rand_score(y_train2, y_pred)
         # assert train_rand == train_rand2
         # print(" Rand score on with 2D unit test = ",train_rand)
+
+
+def generate_test_results_clusterers():
+    """Generate test results."""
+    x = create_test_distance_numpy(10)
+    y = create_test_distance_numpy(10, random_state=2)
+    print(x)
+    print(y)
+    d = euclidean_distance(x, y)
+    print(d)
 
 
 def difference_test():
