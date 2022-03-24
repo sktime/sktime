@@ -5,12 +5,13 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
-from sktime.datatypes._check import check_dict, check_is_mtype
+from sktime.datatypes import MTYPE_REGISTER, SCITYPE_LIST
+from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_dict, check_is_mtype
 from sktime.datatypes._check import mtype as infer_mtype
+from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
 
-SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
+SCITYPES = SCITYPE_LIST
 
 # scitypes where mtype inference is not unique
 # alignment is excluded since mtypes can be ambiguous
@@ -29,7 +30,7 @@ def _get_all_mtypes_for_scitype(scitype):
     -------
     mtypes : list of str - list of mtypes for scitype
     """
-    if scitype not in [s[0] for s in SCITYPE_REGISTER]:
+    if scitype not in SCITYPE_LIST:
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
     mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
 
@@ -127,7 +128,9 @@ def test_check_positive(scitype, mtype, fixture_index):
 
     Parameters
     ----------
-    scitype : str - name of scitype for which mtype conversions are tested
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
 
     Raises
     ------
@@ -158,7 +161,9 @@ def test_check_metadata_inference(scitype, mtype, fixture_index):
 
     Parameters
     ----------
-    scitype : str - name of scitype for which mtype conversions are tested
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
 
     Raises
     ------
@@ -201,7 +206,8 @@ def test_check_negative(scitype, mtype):
 
     Parameters
     ----------
-    scitype : str - name of scitype for which mtype conversions are tested
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
 
     Raises
     ------
@@ -247,7 +253,9 @@ def test_mtype_infer(scitype, mtype, fixture_index):
 
     Parameters
     ----------
-    scitype : str - name of scitype for which mtype conversions are tested
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
 
     Raises
     ------
@@ -268,5 +276,43 @@ def test_mtype_infer(scitype, mtype, fixture_index):
     # check fixtures that exist against checks that exist
     if fixture is not None and check_is_defined:
         assert mtype == infer_mtype(
-            fixture, as_scitype=scitype
+            fixture, as_scitype=scitype, exclude_mtypes=[]
+        ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"
+
+
+# exclude these scitypes in inference of scitype test
+#  would lead to ambiguous results
+SKIP_SCITYPES = ["Alignment", "Table", "Proba"]
+SCITYPES_FOR_INFER_TEST = list(set(SCITYPE_LIST).difference(SKIP_SCITYPES))
+
+
+def test_scitype_infer(scitype, mtype, fixture_index):
+    """Tests that scitype correctly infers the mtype of examples.
+
+    Parameters
+    ----------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+
+    Raises
+    ------
+    RuntimeError if scitype is not defined or has no mtypes or examples
+    AssertionError if mtype of examples is not correctly identified
+    error if check itself raises an error
+    """
+    # if mtypes are ambiguous, then this test should be skipped
+    if scitype in SKIP_SCITYPES or mtype in AMBIGUOUS_MTYPES:
+        return None
+
+    # retrieve fixture for checking
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    # todo: possibly remove this once all checks are defined
+    check_is_defined = (mtype, scitype) in check_dict.keys()
+
+    # check fixtures that exist against checks that exist
+    if fixture is not None and check_is_defined:
+        assert scitype == infer_scitype(
+            fixture, candidate_scitypes=SCITYPES_FOR_INFER_TEST
         ), f"mtype {mtype} not correctly identified for fixture {fixture_index}"

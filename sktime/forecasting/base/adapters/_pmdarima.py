@@ -246,7 +246,8 @@ class _PmdArimaAdapter(BaseForecaster):
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(columns=int_idx)
 
-        kwargs = {"X": X, "return_pred_int": True, "alpha": coverage}
+        alpha = [1 - x for x in coverage]
+        kwargs = {"X": X, "return_pred_int": True, "alpha": alpha}
         # all values are out-of-sample
         if fh_is_oosample:
             _, y_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
