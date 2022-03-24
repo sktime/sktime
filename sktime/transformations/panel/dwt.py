@@ -23,12 +23,12 @@ class DWTTransformer(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Series",
+        "scitype:transform-input": "Panel",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd-multiindex",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit-in-transform": True,
     }
@@ -62,27 +62,27 @@ class DWTTransformer(BaseTransformer):
         col_names = X.columns
 
         Xt = pd.DataFrame()
-        for x in col_names:
-            # Convert one of the columns in the dataframe to numpy array
-            arr = convert(
-                pd.DataFrame(X[x]),
+        # for x in col_names:
+        # Convert one of the columns in the dataframe to numpy array
+        arr = convert(
+                pd.DataFrame(X),
                 from_type="nested_univ",
                 to_type="numpyflat",
-                as_scitype="Panel",
+                # as_scitype="Panel",
             )
 
-            transformedData = self._extract_wavelet_coefficients(arr)
+        transformedData = self._extract_wavelet_coefficients(arr)
 
-            # Convert to a numpy array
-            transformedData = np.asarray(transformedData)
+         # Convert to a numpy array
+        transformedData = np.asarray(transformedData)
 
-            # Add it to the dataframe
-            colToAdd = []
-            for i in range(len(transformedData)):
+          # Add it to the dataframe
+        colToAdd = []
+        for i in range(len(transformedData)):
                 inst = transformedData[i]
                 colToAdd.append(pd.Series(inst))
 
-            Xt[x] = colToAdd
+        Xt = colToAdd
 
         return Xt
 
