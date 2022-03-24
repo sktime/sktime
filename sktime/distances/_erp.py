@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -75,7 +74,7 @@ class _ErpDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
-        # @njit(cache=True)
+        @njit(cache=True)
         def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
             cost_matrix = _erp_cost_matrix(x, y, _bounding_matrix, g)
 
@@ -112,22 +111,16 @@ def _erp_cost_matrix(
     x_size = x.shape[1]
     y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
-    x_g = np.full(x_size, g)
-    y_g = np.full(y_size, g)
-
-    gx_distance = np.array(
-        [
-            abs(_local_euclidean_distance(x_g, ts))
-            for ts in x.reshape((x.shape[1], x.shape[0]))
-        ]
-    )
-    gy_distance = np.array(
-        [
-            abs(_local_euclidean_distance(y_g, ts))
-            for ts in y.reshape((y.shape[1], y.shape[0]))
-        ]
-    )
-
+    gx_distance = np.zeros(x_size)
+    gy_distance = np.zeros(y_size)
+    for j in range(x_size):
+        for i in range(dimensions):
+            gx_distance[j] += (x[i][j] - g) * (x[i][j] - g)
+        gx_distance[j] = np.sqrt(gx_distance[j])
+    for j in range(y_size):
+        for i in range(dimensions):
+            gy_distance[j] += (y[i][j] - g) * (y[i][j] - g)
+        gy_distance[j] = np.sqrt(gy_distance[j])
     cost_matrix[1:, 0] = np.sum(gx_distance)
     cost_matrix[0, 1:] = np.sum(gy_distance)
 

@@ -45,12 +45,12 @@ distances = [
     "euclidean",
     "dtw",
     "wdtw",
-    #    "erp",
-    #    "edr",
-    #    "lcss",
-    #    "msm",
-    #    "ddtw",
-    #    "wddtw",
+    "erp",
+    "edr",
+    "lcss",
+    "msm",
+    "ddtw",
+    "wddtw",
 ]
 
 
@@ -96,13 +96,14 @@ def difference_test():
     #    d1=np.transpose(d1)
     #    d2=np.transpose(d2)
     print("Shape  = ", d1.shape)
-    name = "msm"
+    name = "ERP"
     no_window = np.zeros((d1.shape[1], d2.shape[1]))
-    dist1 = dist(d1, d2, c=0.0)
+    # "wi [0.0, 0.1, 1.0],  # window
+    dist1 = dist(d1, d2, window=0.0)
     print(name, " w = 0 dist = ", dist1)
-    dist1 = dist(d1, d2, c=0.1)
+    dist1 = dist(d1, d2, window=0.1)
     print(name, " w = 0.1. dist 1 = ", dist1)
-    dist1 = dist(d1, d2, c=1)
+    dist1 = dist(d1, d2, window=1.0)
     print(name, " w = 1 dist 1 = ", dist1)
     print(" SHAPE  = ", d1.shape)
     X_train, y_train = load_basic_motions(split="train", return_type="numpy3d")
