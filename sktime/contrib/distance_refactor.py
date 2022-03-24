@@ -92,47 +92,41 @@ def difference_test():
     X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
     d1 = X_train[0]
     d2 = X_train[2]
-    dist = dtw_distance
+    dist = msm_distance
+    #    d1=np.transpose(d1)
+    #    d2=np.transpose(d2)
     print("Shape  = ", d1.shape)
-    name = "DTW"
-    dist1 = dist(d1, d2, window=0.0)
+    name = "msm"
+    no_window = np.zeros((d1.shape[1], d2.shape[1]))
+    dist1 = dist(d1, d2, c=0.0)
     print(name, " w = 0 dist = ", dist1)
-    dist1 = dist(d1, d2, window=0.1)
+    dist1 = dist(d1, d2, c=0.1)
     print(name, " w = 0.1. dist 1 = ", dist1)
-    dist1 = dist(d1, d2, window=1.0)
+    dist1 = dist(d1, d2, c=1)
     print(name, " w = 1 dist 1 = ", dist1)
     print(" SHAPE  = ", d1.shape)
-    X_train, y_train = load_unit_test(split="train", return_type="numpy3d")
-    print(" SHAPE  = ", X_train[0].shape)
-    name = "DTW"
-    dist1 = dist(d1, d2, window=0.0)
-    print(name, " g = 0 dist = ", dist1)
-    dist1 = dist(d1, d2, window=0.1)
-    print(name, " g = 0.1. dist 1 = ", dist1)
-    dist1 = dist(d1, d2, window=1.0)
-    print(name, " g window = 1 dist 1 = ", dist1)
-    print(" SHAPE  = ", d1.shape)
-
     X_train, y_train = load_basic_motions(split="train", return_type="numpy3d")
     b1 = X_train[0]
     b2 = X_train[1]
     #    b1 = np.transpose(b1)
     #    b2 = np.transpose(b2)
+    dist = dtw_distance
     print("BM shape = ", b1.shape)
-    dist2 = dist(b1, b2, window=0.0)
+    dist2 = dist(b1, b2, epsilon=0.0)
     print(" g = 0.0, BASIC MOTIONS DIST = ", dist2)
-    dist2 = dist(b1, b2, window=0.1)
+    dist2 = dist(b1, b2, epsilon=1.0)
     print(" g = 0.1, BASIC MOTIONS DIST = ", dist2)
-    dist2 = dist(b1, b2, window=1.0)
+    dist2 = dist(b1, b2, epsilon=4.0)
     print(" g = 1, BASIC MOTIONS DIST = ", dist2)
 
-    dist2 = euclidean_distance(b1, b2)
-    print(" ED BASIC MOTIONS DIST = ", dist2)
+
+#   dist2 = euclidean_distance(b1, b2)
+#   print(" ED BASIC MOTIONS DIST = ", dist2)
 
 
 #  print(" Window = 1, BASIC MOTIONS DIST = ", dist2)
 
 
 if __name__ == "__main__":
-    debug_clusterers()
-#    difference_test()
+    #    debug_clusterers()
+    difference_test()

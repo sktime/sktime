@@ -74,8 +74,8 @@ def average_of_slope(q: np.ndarray):
 class _DdtwDistance(NumbaDistance):
     """Derivative dynamic time warping (ddtw) between two time series.
 
-    Takes the derivative of the series, then applies DTW (using the _cost_matrix from
-    _DtwDistance)
+    Takes the slope based derivative of the series (using compute_derivative),
+    then applies DTW (using the _cost_matrix from _DtwDistance)
     """
 
     def _distance_factory(
@@ -90,11 +90,14 @@ class _DdtwDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled ddtw distance callable.
 
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array)
+        x: np.ndarray (2d array of shape (d,m1)).
             First time series.
-        y: np.ndarray (2d array)
+        y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
         window: float, defaults = None
             Float that is the radius of the Sakoe-Chiba window (if using Sakoe-Chiba
@@ -102,8 +105,7 @@ class _DdtwDistance(NumbaDistance):
         itakura_max_slope: float, defaults = None
             Gradient of the slope for Itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
