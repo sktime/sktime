@@ -919,7 +919,9 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
             )
-            train = self._get_train_window(y, train_start, split_point)
+            train = self._get_train_window(
+                y=y, train_start=train_start, split_point=split_point
+            )
             test = split_point + fh - 1
             yield train, test
 
@@ -987,7 +989,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
             )
-            train = self._get_train_window(y, train_start, split_point)
+            train = self._get_train_window(
+                y=y, train_start=train_start, split_point=split_point
+            )
             test = split_point + fh - 1
             yield train, test
 
