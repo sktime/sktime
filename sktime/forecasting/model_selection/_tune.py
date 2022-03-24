@@ -15,7 +15,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -75,12 +74,10 @@ class BaseGridSearch(BaseForecaster):
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
-        return self.best_forecaster_._predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.best_forecaster_._predict(fh=fh, X=X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
