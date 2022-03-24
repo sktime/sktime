@@ -220,7 +220,7 @@ class FreshPRINCE(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = {
-            "n_estimators": 3,
+            "n_estimators": 2,
             "default_fc_parameters": "minimal",
         }
         return params
