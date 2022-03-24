@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 # todo: add any necessary sktime internal imports here
 
 
-class aggregate_df(BaseTransformer):
+class aggregator(BaseTransformer):
     """Prepare hierarchical data, including aggregate levels, from bottom level.
 
     This transformer adds aggregate levels via summation to a DataFrame with a
@@ -22,8 +22,8 @@ class aggregate_df(BaseTransformer):
     Parameters
     ----------
     flatten_single_level : boolean (default=True)
-        Remove aggregate levels, i.e. ("__total"), where there is only a single
-        child in the level
+        Remove aggregate nodes, i.e. ("__total"), where there is only a single
+        child to the level
     """
 
     _tags = {
@@ -48,9 +48,10 @@ class aggregate_df(BaseTransformer):
 
         self.flatten_single_levels = flatten_single_levels
 
-        super(aggregate_df, self).__init__()
+        super(aggregator, self).__init__()
 
-    # todo: implement this, mandatory
+    # todo: test that "__total" is not named in index?
+    # todo: test that the index is named
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -66,6 +67,16 @@ class aggregate_df(BaseTransformer):
         -------
         df_out : multi-indexed pd.DataFrame of Panel mtype pd_multiindex
         """
+        # check the tests are ok
+        if not _check_index_good(X):
+            raise ValueError(
+                """Please check the index of X
+                    1) Does not contain any elements named "__total".
+                    2) Has all named levels.
+                    2) Has more than one level.
+                    """
+            )
+
         # names from index
         hier_names = list(X.index.names)
 
@@ -81,7 +92,7 @@ class aggregate_df(BaseTransformer):
             mask1 = X.index.get_level_values(level=-1).isin(mask1)
             top = X.loc[mask1].groupby(level=-1).sum()
         else:
-            top = X.loc[mask1].groupby(level=-1).sum()
+            top = X.groupby(level=-1).sum()
 
         ind_names = hier_names[:-1]
         for i in ind_names:
@@ -95,7 +106,9 @@ class aggregate_df(BaseTransformer):
         if len(hier_names) > 2:
             for i in range(len(hier_names) - 2):
                 # list of levels to aggregate
+                # aggregate from left index inward
                 agg_levels = hier_names[0 : (i + 1)]
+                # add in the final index (e.g. timepoints)
                 agg_levels.append(hier_names[-1])
 
                 # remove aggregations that only have one level from below
@@ -131,8 +144,6 @@ class aggregate_df(BaseTransformer):
         df_out.sort_index(inplace=True)
         return df_out
 
-    # todo: return default parameters, so that a test instance can be created
-    #   required for automated unit and integration testing of estimator
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -145,23 +156,26 @@ class aggregate_df(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        params = {"flatten_single_levels": True}
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        #
-        # this can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
+        return params
+
+
+def _check_index_good(X):
+    """Check the index of X and return boolean."""
+    # check the index is named
+    ind_names = list(X.index.names)
+    nm_chk = sum([y is not None for y in ind_names]) == len(ind_names)
+
+    # check the length of index
+    nmln_chk = len(ind_names) >= 2
+
+    # check the elements of the index for "__total"
+    chk_list = []
+    for i in list(X.index.names)[:-1]:
+        chk_list.append(X.index.get_level_values(level=i).isin(["__total"]).sum())
+    tot_chk = sum(chk_list) == 0
+
+    all_ok = np.logical_and.reduce([nm_chk, nmln_chk, tot_chk])
+
+    return all_ok
