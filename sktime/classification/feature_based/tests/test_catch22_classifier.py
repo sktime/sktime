@@ -17,9 +17,9 @@ def test_catch22_classifier_on_unit_test_data():
 
     # train catch22 classifier
     c22c = Catch22Classifier(
-        random_state=0,
         estimator=RandomForestClassifier(n_estimators=10),
         outlier_norm=True,
+        random_state=0,
     )
     c22c.fit(X_train, y_train)
 
@@ -39,7 +39,9 @@ def test_catch22_classifier_on_basic_motions():
 
     # train catch22 classifier
     c22c = Catch22Classifier(
-        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+        estimator=RandomForestClassifier(n_estimators=10),
+        outlier_norm=True,
+        random_state=0,
     )
     c22c.fit(X_train.iloc[indices], y_train[indices])
 
@@ -52,109 +54,29 @@ def test_catch22_classifier_on_basic_motions():
 
 catch22_classifier_unit_test_probas = np.array(
     [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.1,
-            0.9,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            0.6,
-            0.4,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.6,
-            0.4,
-        ],
-        [
-            0.2,
-            0.8,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.1, 0.9],
+        [0.8, 0.2],
+        [0.6, 0.4],
+        [0.9, 0.1],
+        [0.6, 0.4],
+        [0.2, 0.8],
+        [0.8, 0.2],
+        [0.8, 0.2],
     ]
 )
 catch22_classifier_basic_motions_probas = np.array(
     [
-        [
-            0.0,
-            0.2,
-            0.2,
-            0.6,
-        ],
-        [
-            0.0,
-            0.9,
-            0.0,
-            0.1,
-        ],
-        [
-            0.2,
-            0.2,
-            0.3,
-            0.3,
-        ],
-        [
-            0.1,
-            0.5,
-            0.4,
-            0.0,
-        ],
-        [
-            0.0,
-            0.2,
-            0.1,
-            0.7,
-        ],
-        [
-            0.0,
-            0.0,
-            0.4,
-            0.6,
-        ],
-        [
-            0.1,
-            0.4,
-            0.3,
-            0.2,
-        ],
-        [
-            0.2,
-            0.0,
-            0.6,
-            0.2,
-        ],
-        [
-            0.1,
-            0.7,
-            0.1,
-            0.1,
-        ],
-        [
-            0.0,
-            0.9,
-            0.0,
-            0.1,
-        ],
+        [0.0, 0.2, 0.2, 0.6],
+        [0.0, 0.9, 0.0, 0.1],
+        [0.2, 0.2, 0.3, 0.3],
+        [0.2, 0.5, 0.3, 0.0],
+        [0.0, 0.2, 0.1, 0.7],
+        [0.0, 0.0, 0.4, 0.6],
+        [0.2, 0.4, 0.2, 0.2],
+        [0.1, 0.0, 0.7, 0.2],
+        [0.1, 0.7, 0.1, 0.1],
+        [0.0, 0.9, 0.0, 0.1],
     ]
 )

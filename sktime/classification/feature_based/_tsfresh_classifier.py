@@ -216,5 +216,6 @@ class TSFreshClassifier(BaseClassifier):
         params = {
             "estimator": RandomForestClassifier(n_estimators=2),
             "default_fc_parameters": "minimal",
+            "relevant_feature_extractor": False,
         }
         return params

@@ -5,23 +5,7 @@ import numpy as np
 from numpy import testing
 
 from sktime.classification.dictionary_based import MUSE
-from sktime.datasets import load_basic_motions, load_unit_test
-
-
-def test_muse_on_unit_test_data():
-    """Test of MUSE on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train")
-    X_test, y_test = load_unit_test(split="test")
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-
-    # train MUSE
-    muse = MUSE(random_state=0, window_inc=4, use_first_order_differences=False)
-    muse.fit(X_train, y_train)
-
-    # assert probabilities are the same
-    probas = muse.predict_proba(X_test.iloc[indices])
-    testing.assert_array_almost_equal(probas, muse_unit_test_probas, decimal=2)
+from sktime.datasets import load_basic_motions
 
 
 def test_muse_on_basic_motions():
@@ -32,7 +16,7 @@ def test_muse_on_basic_motions():
     indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
     # train MUSE
-    muse = MUSE(random_state=0, window_inc=4, use_first_order_differences=False)
+    muse = MUSE(window_inc=4, use_first_order_differences=False, random_state=0)
     muse.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -40,50 +24,6 @@ def test_muse_on_basic_motions():
     testing.assert_array_almost_equal(probas, muse_basic_motions_probas, decimal=2)
 
 
-muse_unit_test_probas = np.array(
-    [
-        [
-            0.5188702628480195,
-            0.48112973715198043,
-        ],
-        [
-            0.6356096946273173,
-            0.36439030537268274,
-        ],
-        [
-            0.07671090583536311,
-            0.9232890941646369,
-        ],
-        [
-            0.9777183534209937,
-            0.022281646579006317,
-        ],
-        [
-            0.8318769068654864,
-            0.16812309313451354,
-        ],
-        [
-            0.8783136574895891,
-            0.12168634251041094,
-        ],
-        [
-            0.7741193105790317,
-            0.22588068942096828,
-        ],
-        [
-            0.05536101985998121,
-            0.9446389801400188,
-        ],
-        [
-            0.939336763271401,
-            0.06066323672859898,
-        ],
-        [
-            0.8893828431193025,
-            0.11061715688069752,
-        ],
-    ]
-)
 muse_basic_motions_probas = np.array(
     [
         [

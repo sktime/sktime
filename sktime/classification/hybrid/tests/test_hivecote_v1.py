@@ -17,15 +17,16 @@ def test_hivecote_v1_on_unit_test_data():
 
     # train HIVE-COTE v1
     hc1 = HIVECOTEV1(
-        random_state=0,
         stc_params={
             "estimator": RandomForestClassifier(n_estimators=3),
-            "n_shapelet_samples": 500,
-            "max_shapelets": 20,
+            "n_shapelet_samples": 50,
+            "max_shapelets": 5,
+            "batch_size": 10,
         },
-        tsf_params={"n_estimators": 10},
-        rise_params={"n_estimators": 10},
-        cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
+        tsf_params={"n_estimators": 3},
+        rise_params={"n_estimators": 3},
+        cboss_params={"n_parameter_samples": 5, "max_ensemble_size": 3},
+        random_state=0,
     )
     hc1.fit(X_train, y_train)
 
@@ -36,45 +37,15 @@ def test_hivecote_v1_on_unit_test_data():
 
 hivecote_v1_unit_test_probas = np.array(
     [
-        [
-            0.08232436967368748,
-            0.9176756303263125,
-        ],
-        [
-            0.5161621848368437,
-            0.48383781516315627,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.925,
-            0.075,
-        ],
-        [
-            0.8261138340619067,
-            0.17388616593809328,
-        ],
-        [
-            0.9676756303263125,
-            0.03232436967368746,
-        ],
-        [
-            0.7869430829690466,
-            0.2130569170309533,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.7661621848368437,
-            0.23383781516315624,
-        ],
-        [
-            0.95,
-            0.05000000000000001,
-        ],
+        [0.0, 1.0],
+        [0.5524211502822163, 0.4475788497177836],
+        [0.0, 1.0],
+        [0.8284767137362622, 0.17152328626373778],
+        [0.883912529989341, 0.11608747001065901],
+        [0.9746366325363073, 0.025363367463692665],
+        [0.718066236959776, 0.28193376304022405],
+        [0.0, 1.0],
+        [0.7911461963597987, 0.20885380364020145],
+        [0.7167389773758789, 0.283261022624121],
     ]
 )

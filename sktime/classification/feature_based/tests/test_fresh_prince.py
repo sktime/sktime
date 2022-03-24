@@ -15,9 +15,9 @@ def test_fresh_prince_on_unit_test_data():
 
     # train FreshPRINCE classifier
     fp = FreshPRINCE(
-        random_state=0,
         default_fc_parameters="minimal",
         n_estimators=10,
+        random_state=0,
         save_transformed_data=True,
     )
     fp.fit(X_train, y_train)
@@ -32,15 +32,15 @@ def test_fresh_prince_on_unit_test_data():
 
 fp_classifier_unit_test_probas = np.array(
     [
-        [0.20000, 0.80000],
-        [1.00000, 0.00000],
-        [0.10000, 0.90000],
-        [1.00000, 0.00000],
-        [0.90000, 0.10000],
-        [1.00000, 0.00000],
-        [0.90000, 0.10000],
-        [0.80000, 0.20000],
-        [0.90000, 0.10000],
-        [1.00000, 0.00000],
+        [0.2, 0.8],
+        [1.0, 0.0],
+        [0.1, 0.9],
+        [1.0, 0.0],
+        [0.9, 0.1],
+        [1.0, 0.0],
+        [0.9, 0.1],
+        [0.8, 0.2],
+        [0.9, 0.1],
+        [1.0, 0.0],
     ]
 )

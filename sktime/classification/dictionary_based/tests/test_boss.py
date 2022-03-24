@@ -4,7 +4,7 @@ import numpy as np
 from numpy import testing
 from sklearn.metrics import accuracy_score
 
-from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
+from sktime.classification.dictionary_based import BOSSEnsemble
 from sktime.datasets import load_unit_test
 
 
@@ -31,108 +31,17 @@ def test_boss_on_unit_test_data():
     assert accuracy_score(y_train, train_preds) >= 0.75
 
 
-def test_individual_boss_on_unit_test():
-    """Test of IndividualBOSS on unit test data."""
-    # load unit test data
-    X_train, y_train = load_unit_test(split="train")
-    X_test, y_test = load_unit_test(split="test")
-    indices = np.random.RandomState(0).choice(len(y_train), 10, replace=False)
-
-    # train IndividualBOSS
-    indiv_boss = IndividualBOSS(random_state=0)
-    indiv_boss.fit(X_train, y_train)
-    # assert probabilities are the same
-    probas = indiv_boss.predict_proba(X_test.iloc[indices])
-    testing.assert_array_almost_equal(
-        probas, individual_boss_unit_test_probas, decimal=2
-    )
-
-
 boss_unit_test_probas = np.array(
     [
-        [
-            0.4,
-            0.6,
-        ],
-        [
-            0.4,
-            0.6,
-        ],
-        [
-            0.2,
-            0.8,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            0.2,
-            0.8,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-    ]
-)
-individual_boss_unit_test_probas = np.array(
-    [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
+        [0.4, 0.6],
+        [0.4, 0.6],
+        [0.2, 0.8],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.8, 0.2],
+        [0.8, 0.2],
+        [0.2, 0.8],
+        [1.0, 0.0],
+        [1.0, 0.0],
     ]
 )

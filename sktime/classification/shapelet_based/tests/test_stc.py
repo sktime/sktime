@@ -18,10 +18,10 @@ def test_stc_on_unit_test_data():
 
     # train STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(n_estimators=3),
+        estimator=RotationForest(n_estimators=5),
         max_shapelets=20,
-        n_shapelet_samples=500,
-        batch_size=100,
+        n_shapelet_samples=200,
+        batch_size=50,
         random_state=0,
         save_transformed_data=True,
     )
@@ -44,11 +44,11 @@ def test_contracted_stc_on_unit_test_data():
 
     # train contracted STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(contract_max_n_estimators=3),
+        estimator=RotationForest(contract_max_n_estimators=5),
         max_shapelets=20,
         time_limit_in_minutes=0.25,
-        contract_max_n_shapelet_samples=500,
-        batch_size=100,
+        contract_max_n_shapelet_samples=200,
+        batch_size=50,
         random_state=0,
     )
     stc.fit(X_train, y_train)
@@ -63,10 +63,10 @@ def test_stc_on_basic_motions():
 
     # train STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(n_estimators=3),
+        estimator=RotationForest(n_estimators=5),
         max_shapelets=20,
-        n_shapelet_samples=500,
-        batch_size=100,
+        n_shapelet_samples=200,
+        batch_size=50,
         random_state=0,
     )
     stc.fit(X_train.iloc[indices], y_train[indices])
@@ -78,109 +78,29 @@ def test_stc_on_basic_motions():
 
 stc_unit_test_probas = np.array(
     [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.3333333333333333,
-            0.6666666666666666,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
+        [0.0, 1.0],
+        [0.4, 0.6],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.8, 0.2],
+        [0.2, 0.8],
+        [1.0, 0.0],
+        [0.8, 0.2],
     ]
 )
 stc_basic_motions_probas = np.array(
     [
-        [
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        ],
-        [
-            0.6666666666666666,
-            0.0,
-            0.0,
-            0.3333333333333333,
-        ],
-        [
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-        ],
-        [
-            0.6666666666666666,
-            0.3333333333333333,
-            0.0,
-            0.0,
-        ],
-        [
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        ],
-        [
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-        ],
-        [
-            0.0,
-            0.0,
-            1.0,
-            0.0,
-        ],
-        [
-            0.3333333333333333,
-            0.3333333333333333,
-            0.0,
-            0.3333333333333333,
-        ],
-        [
-            0.0,
-            1.0,
-            0.0,
-            0.0,
-        ],
+        [0.0, 0.2, 0.4, 0.4],
+        [0.6, 0.0, 0.0, 0.4],
+        [0.2, 0.0, 0.8, 0.0],
+        [0.6, 0.2, 0.2, 0.0],
+        [0.0, 0.2, 0.2, 0.6],
+        [0.0, 0.0, 0.4, 0.6],
+        [0.8, 0.0, 0.2, 0.0],
+        [0.0, 0.2, 0.8, 0.0],
+        [0.6, 0.4, 0.0, 0.0],
+        [0.6, 0.2, 0.2, 0.0],
     ]
 )

@@ -18,13 +18,13 @@ def test_random_interval_classifier_on_unit_test_data():
 
     # train random interval classifier
     ric = RandomIntervalClassifier(
-        random_state=0,
-        n_intervals=5,
+        n_intervals=3,
         interval_transformers=SummaryTransformer(
             summary_function=("mean", "std", "min", "max"),
             quantiles=(0.25, 0.5, 0.75),
         ),
         estimator=RandomForestClassifier(n_estimators=10),
+        random_state=0,
     )
     ric.fit(X_train, y_train)
 
@@ -44,13 +44,13 @@ def test_random_interval_classifier_on_basic_motions():
 
     # train random interval classifier
     ric = RandomIntervalClassifier(
-        random_state=0,
-        n_intervals=5,
+        n_intervals=3,
         interval_transformers=SummaryTransformer(
             summary_function=("mean", "std", "min", "max"),
             quantiles=(0.25, 0.5, 0.75),
         ),
         estimator=RandomForestClassifier(n_estimators=10),
+        random_state=0,
     )
     ric.fit(X_train.iloc[indices], y_train[indices])
 
@@ -63,109 +63,29 @@ def test_random_interval_classifier_on_basic_motions():
 
 random_interval_classifier_unit_test_probas = np.array(
     [
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.2,
-            0.8,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [0.2, 0.8],
+        [0.8, 0.2],
+        [1.0, 0.0],
     ]
 )
 random_interval_classifier_basic_motions_probas = np.array(
     [
-        [
-            0.0,
-            0.0,
-            0.2,
-            0.8,
-        ],
-        [
-            0.2,
-            0.3,
-            0.1,
-            0.4,
-        ],
-        [
-            0.0,
-            0.0,
-            0.8,
-            0.2,
-        ],
-        [
-            0.2,
-            0.6,
-            0.0,
-            0.2,
-        ],
-        [
-            0.0,
-            0.0,
-            0.2,
-            0.8,
-        ],
-        [
-            0.0,
-            0.1,
-            0.5,
-            0.4,
-        ],
-        [
-            0.3,
-            0.2,
-            0.1,
-            0.4,
-        ],
-        [
-            0.0,
-            0.0,
-            0.9,
-            0.1,
-        ],
-        [
-            0.0,
-            0.9,
-            0.0,
-            0.1,
-        ],
-        [
-            0.2,
-            0.8,
-            0.0,
-            0.0,
-        ],
+        [0.0, 0.0, 0.2, 0.8],
+        [0.3, 0.1, 0.1, 0.5],
+        [0.0, 0.0, 0.8, 0.2],
+        [0.2, 0.7, 0.0, 0.1],
+        [0.0, 0.1, 0.4, 0.5],
+        [0.0, 0.0, 0.4, 0.6],
+        [0.2, 0.3, 0.1, 0.4],
+        [0.0, 0.1, 0.9, 0.0],
+        [0.1, 0.8, 0.0, 0.1],
+        [0.1, 0.7, 0.0, 0.2],
     ]
 )

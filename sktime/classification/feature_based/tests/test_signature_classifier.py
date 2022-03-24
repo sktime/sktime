@@ -17,7 +17,7 @@ def test_signatures_on_unit_test_data():
 
     # train signature classifier
     sigc = SignatureClassifier(
-        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+        estimator=RandomForestClassifier(n_estimators=10), random_state=0
     )
     sigc.fit(X_train, y_train)
 
@@ -37,7 +37,7 @@ def test_signature_classifier_on_basic_motions():
 
     # train signature classifier
     sigc = SignatureClassifier(
-        random_state=0, estimator=RandomForestClassifier(n_estimators=10)
+        estimator=RandomForestClassifier(n_estimators=10), random_state=0
     )
     sigc.fit(X_train.iloc[indices], y_train[indices])
 
@@ -50,109 +50,29 @@ def test_signature_classifier_on_basic_motions():
 
 signature_classifier_unit_test_probas = np.array(
     [
-        [
-            0.1,
-            0.9,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
-        [
-            0.9,
-            0.1,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.8,
-            0.2,
-        ],
-        [
-            1.0,
-            0.0,
-        ],
+        [0.1, 0.9],
+        [1.0, 0.0],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [0.9, 0.1],
+        [0.8, 0.2],
+        [0.8, 0.2],
+        [0.0, 1.0],
+        [0.8, 0.2],
+        [1.0, 0.0],
     ]
 )
 signature_classifier_basic_motions_probas = np.array(
     [
-        [
-            0.0,
-            0.0,
-            0.5,
-            0.5,
-        ],
-        [
-            0.4,
-            0.0,
-            0.3,
-            0.3,
-        ],
-        [
-            0.0,
-            0.0,
-            0.9,
-            0.1,
-        ],
-        [
-            0.2,
-            0.3,
-            0.1,
-            0.4,
-        ],
-        [
-            0.0,
-            0.0,
-            0.4,
-            0.6,
-        ],
-        [
-            0.0,
-            0.0,
-            0.7,
-            0.3,
-        ],
-        [
-            0.1,
-            0.0,
-            0.6,
-            0.3,
-        ],
-        [
-            0.0,
-            0.0,
-            0.9,
-            0.1,
-        ],
-        [
-            0.0,
-            0.7,
-            0.1,
-            0.2,
-        ],
-        [
-            0.2,
-            0.3,
-            0.1,
-            0.4,
-        ],
+        [0.0, 0.0, 0.5, 0.5],
+        [0.4, 0.0, 0.3, 0.3],
+        [0.0, 0.0, 0.9, 0.1],
+        [0.2, 0.3, 0.1, 0.4],
+        [0.0, 0.0, 0.4, 0.6],
+        [0.0, 0.0, 0.7, 0.3],
+        [0.1, 0.0, 0.6, 0.3],
+        [0.0, 0.0, 0.9, 0.1],
+        [0.0, 0.7, 0.1, 0.2],
+        [0.2, 0.3, 0.1, 0.4],
     ]
 )
