@@ -5,7 +5,6 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 from pyod.models.knn import KNN
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
@@ -13,35 +12,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.classification.compose import (
-    ColumnEnsembleClassifier,
-    ComposableTimeSeriesForestClassifier,
-)
-from sktime.classification.dictionary_based import (
-    MUSE,
-    WEASEL,
-    BOSSEnsemble,
-    ContractableBOSS,
-    TemporalDictionaryEnsemble,
-)
-from sktime.classification.distance_based import ElasticEnsemble
-from sktime.classification.feature_based import (
-    Catch22Classifier,
-    MatrixProfileClassifier,
-    RandomIntervalClassifier,
-    SignatureClassifier,
-    SummaryClassifier,
-    TSFreshClassifier,
-)
-from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
-from sktime.classification.interval_based import (
-    DrCIF,
-    RandomIntervalSpectralEnsemble,
-    SupervisedTimeSeriesForest,
-)
-from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.forecasting.compose import (
     DirectTabularRegressionForecaster,
     DirectTimeSeriesRegressionForecaster,
@@ -75,7 +45,6 @@ from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.summarize import SummaryTransformer
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
@@ -126,11 +95,6 @@ TRANSFORMERS = [
 ]
 REGRESSOR = LinearRegression()
 ANOMALY_DETECTOR = KNN()
-TIME_SERIES_CLASSIFIER = TSFC(n_estimators=3)
-TIME_SERIES_CLASSIFIERS = [
-    ("tsf1", TIME_SERIES_CLASSIFIER),
-    ("tsf2", TIME_SERIES_CLASSIFIER),
-]
 FORECASTER = NaiveForecaster()
 FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
 STEPS = [
@@ -155,11 +119,6 @@ ESTIMATOR_TEST_PARAMS = {
     DirRecTimeSeriesRegressionForecaster: {
         "estimator": make_pipeline(Tabularizer(), REGRESSOR)
     },
-    ColumnEnsembleClassifier: {
-        "estimators": [
-            (name, estimator, 0) for (name, estimator) in TIME_SERIES_CLASSIFIERS
-        ]
-    },
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
@@ -175,98 +134,16 @@ ESTIMATOR_TEST_PARAMS = {
     ColumnTransformer: {
         "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
     },
-    ShapeletTransformClassifier: {
-        "estimator": RotationForest(n_estimators=3),
-        "max_shapelets": 5,
-        "n_shapelet_samples": 50,
-        "batch_size": 20,
-    },
     RandomShapeletTransform: {
         "max_shapelets": 5,
         "n_shapelet_samples": 50,
         "batch_size": 20,
     },
-    SignatureClassifier: {
-        "augmentation_list": ("basepoint", "addtime"),
-        "depth": 3,
-        "window_name": "global",
-    },
-    ElasticEnsemble: {
-        "proportion_of_param_options": 0.01,
-        "proportion_train_for_test": 0.1,
-        "majority_vote": True,
-        "distance_measures": ["dtw"],
-    },
-    Catch22Classifier: {
-        "estimator": RandomForestClassifier(n_estimators=3),
-    },
-    MatrixProfileClassifier: {
-        "subsequence_length": 4,
-    },
-    TSFreshClassifier: {
-        "estimator": RandomForestClassifier(n_estimators=3),
-        "default_fc_parameters": "minimal",
-    },
     RandomIntervals: {
         "n_intervals": 3,
     },
-    RandomIntervalClassifier: {
-        "n_intervals": 3,
-        "estimator": RandomForestClassifier(n_estimators=3),
-        "interval_transformers": SummaryTransformer(
-            summary_function=("mean", "min", "max"),
-        ),
-    },
-    SummaryClassifier: {
-        "estimator": RandomForestClassifier(n_estimators=3),
-        "summary_functions": ("mean", "min", "max"),
-    },
-    HIVECOTEV1: {
-        "stc_params": {
-            "estimator": RotationForest(n_estimators=2),
-            "max_shapelets": 5,
-            "n_shapelet_samples": 20,
-            "batch_size": 10,
-        },
-        "tsf_params": {"n_estimators": 2},
-        "rise_params": {"n_estimators": 2},
-        "cboss_params": {"n_parameter_samples": 4, "max_ensemble_size": 2},
-    },
-    HIVECOTEV2: {
-        "stc_params": {
-            "estimator": RotationForest(n_estimators=2),
-            "max_shapelets": 5,
-            "n_shapelet_samples": 20,
-            "batch_size": 10,
-        },
-        "drcif_params": {"n_estimators": 2},
-        "arsenal_params": {"num_kernels": 20, "n_estimators": 2},
-        "tde_params": {
-            "n_parameter_samples": 4,
-            "max_ensemble_size": 2,
-            "randomly_selected_params": 2,
-        },
-    },
     TSInterpolator: {"length": 10},
-    RandomIntervalSpectralEnsemble: {
-        "n_estimators": 3,
-        "acf_lag": 10,
-        "min_interval": 5,
-    },
-    BOSSEnsemble: {"max_ensemble_size": 3},
-    ContractableBOSS: {"n_parameter_samples": 10, "max_ensemble_size": 3},
-    WEASEL: {"window_inc": 4},
-    MUSE: {"window_inc": 4, "use_first_order_differences": False},
-    TemporalDictionaryEnsemble: {
-        "n_parameter_samples": 10,
-        "max_ensemble_size": 3,
-        "randomly_selected_params": 5,
-    },
-    TSFC: {"n_estimators": 3},
-    ComposableTimeSeriesForestClassifier: {"n_estimators": 3},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
-    SupervisedTimeSeriesForest: {"n_estimators": 3},
-    DrCIF: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},

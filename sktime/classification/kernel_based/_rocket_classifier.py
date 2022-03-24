@@ -225,8 +225,6 @@ class RocketClassifier(BaseClassifier):
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
-
         """
-        params = {"num_kernels": 100}
-
+        params = {"num_kernels": 20}
         return params
