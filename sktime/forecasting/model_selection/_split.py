@@ -708,7 +708,9 @@ class BaseWindowSplitter(BaseSplitter):
                 initial_end = y.get_loc(y[initial_start] + initial_window)
             else:
                 initial_end = initial_start + initial_window
-            train = np.arange(initial_start, initial_end)
+            train = np.argwhere(
+                (y >= y[initial_start]) & (y < y[initial_end])
+            ).flatten()
             test = initial_end + fh.to_numpy() - 1
             yield train, test
 
@@ -746,6 +748,17 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             train_start = start - window_length
         return train_start
+
+    @staticmethod
+    def _get_train_window(
+        y: ACCEPTED_Y_TYPES, train_start: int, split_point: int
+    ) -> np.ndarray:
+        if (split_point <= len(y)) & (split_point > 0):
+            return np.argwhere(
+                (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
+            ).flatten()
+        else:
+            return np.array([], dtype=np.int)
 
     def _get_start(self, y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
         """Get the first split point."""
@@ -906,7 +919,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
             )
-            train = np.arange(train_start, split_point)
+            train = self._get_train_window(y, train_start, split_point)
             test = split_point + fh - 1
             yield train, test
 
@@ -974,7 +987,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
             )
-            train = np.arange(train_start, split_point)
+            train = self._get_train_window(y, train_start, split_point)
             test = split_point + fh - 1
             yield train, test
 
