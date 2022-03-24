@@ -11,9 +11,32 @@ import numpy as np
 
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.clustering.k_medoids import TimeSeriesKMedoids
+from sktime.distances import distance_factory
+
+distances = [
+    "dtw",
+    "wdtw",
+    "lcss",
+    "msm",
+    "ddtw",
+    "euclidean",
+    "erp",
+    "ddtw",
+    "wddtw",
+]
 
 
 def distance_timing():
+    """Time distance functions for increased series length."""
+    for dist in distances:
+        dist = distance_factory(metric=dist)
+        for i in range(100):
+            first = np.ndarray((100, 100 * (i + 1)))
+            second = np.ndarray((100, 100 * (i + 1)))
+            d = dist(first, second)
+
+
+def clustering_timing():
     """Time distance functions for increased series length."""
     k_medoids = TimeSeriesKMedoids(
         n_clusters=5,  # Number of desired centers
