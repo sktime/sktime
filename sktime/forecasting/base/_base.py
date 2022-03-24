@@ -555,6 +555,10 @@ class BaseForecaster(BaseEstimator):
         """
         self.check_is_fitted()
 
+        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+            warn("empty y passed to update, no update was carried out")
+            return self
+
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
@@ -679,11 +683,9 @@ class BaseForecaster(BaseEstimator):
             Point forecasts at fh, with same index as fh
             y_pred has same type as y
         """
-        self.check_is_fitted()
-        fh = self._check_fh(fh)
-
-        if y is None:
-            raise ValueError("y must be of Series type and cannot be None")
+        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+            warn("empty y passed to update_predict, no update was carried out")
+            return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
