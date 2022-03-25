@@ -395,7 +395,7 @@ class MUSE(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "default" or parameter_set == "results_comparison":
-            return {"window_inc": 5, "use_first_order_differences": False}
+            return {"window_inc": 4, "use_first_order_differences": False}
         else:
             raise ValueError(
                 f"Estimator: {cls} does not have requested parameter set named: "

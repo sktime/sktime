@@ -337,15 +337,15 @@ class ShapeletTransformClassifier(BaseClassifier):
         if parameter_set == "default":
             return {
                 "estimator": RotationForest(n_estimators=2),
-                "max_shapelets": 3,
                 "n_shapelet_samples": 10,
+                "max_shapelets": 3,
                 "batch_size": 5,
             }
         elif parameter_set == "results_comparison":
             return {
-                "estimator": RotationForest(n_estimators=5),
-                "max_shapelets": 30,
+                "estimator": RotationForest(n_estimators=4),
                 "n_shapelet_samples": 200,
+                "max_shapelets": 30,
                 "batch_size": 50,
             }
         else:

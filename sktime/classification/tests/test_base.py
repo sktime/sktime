@@ -29,6 +29,11 @@ class _DummyClassifier(BaseClassifier):
         """Predict proba dummy."""
         return self
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test param dummy."""
+        return {}
+
 
 class _DummyHandlesAllInput(BaseClassifier):
     """Dummy classifier for testing base class fit/predict/predict_proba."""
@@ -51,6 +56,11 @@ class _DummyHandlesAllInput(BaseClassifier):
         """Predict proba dummy."""
         return self
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test param dummy."""
+        return {}
+
 
 class _DummyConvertPandas(BaseClassifier):
     """Dummy classifier for testing base class fit/predict/predict_proba."""
@@ -70,6 +80,11 @@ class _DummyConvertPandas(BaseClassifier):
     def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test param dummy."""
+        return {}
 
 
 multivariate_message = r"X must be univariate, this classifier cannot deal with"

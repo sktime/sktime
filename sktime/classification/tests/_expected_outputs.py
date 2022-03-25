@@ -130,10 +130,10 @@ unit_test_proba["MatrixProfileClassifier"] = np.array(
         [1.0, 0.0],
         [1.0, 0.0],
         [1.0, 0.0],
-        [1.0, 0.0],
         [0.0, 1.0],
-        [1.0, 0.0],
-        [1.0, 0.0],
+        [0.0, 1.0],
+        [0.0, 1.0],
+        [0.0, 1.0],
     ]
 )
 unit_test_proba["RandomIntervalClassifier"] = np.array(

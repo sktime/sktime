@@ -398,8 +398,8 @@ class HIVECOTEV2(BaseClassifier):
             return {
                 "stc_params": {
                     "estimator": RotationForest(n_estimators=1),
-                    "max_shapelets": 5,
                     "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
                     "batch_size": 5,
                 },
                 "drcif_params": {
@@ -418,8 +418,8 @@ class HIVECOTEV2(BaseClassifier):
             return {
                 "stc_params": {
                     "estimator": RotationForest(n_estimators=3),
-                    "max_shapelets": 50,
-                    "n_shapelet_samples": 5,
+                    "n_shapelet_samples": 50,
+                    "max_shapelets": 5,
                     "batch_size": 10,
                 },
                 "drcif_params": {
