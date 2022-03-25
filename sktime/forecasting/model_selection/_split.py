@@ -851,9 +851,30 @@ class BaseWindowSplitter(BaseSplitter):
             start = self._get_start(y=y, fh=fh)
 
         end = _get_end(y, fh)
-        step_length = self._get_step_length(x=step_length)
+        if is_int(x=step_length):
+            step_length = self._get_step_length(x=step_length)
+            return np.arange(start, end, step_length) - 1
+        else:
+            if start >= 1:
+                start_date = y[y < y[start]][-1]
+            else:
+                start_date = y[y < y[0] + step_length][-1]
 
-        return np.arange(start, end, step_length) - 1
+            if end <= len(y):
+                end_date = (
+                    y[y <= y[min(len(y), end) - 1] - step_length][-1] + step_length
+                )
+                inclusive = "left"
+            else:
+                end_date = y[-1]
+                inclusive = "both"
+            date_range = pd.date_range(
+                start=start_date, end=end_date, freq=step_length, inclusive=inclusive
+            )
+            train = np.argwhere(y.isin(date_range)).flatten()
+            if start <= 0:
+                train = np.hstack((-1, train))
+            return train
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
