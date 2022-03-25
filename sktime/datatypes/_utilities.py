@@ -214,8 +214,8 @@ def get_window(obj, window_length=None, lag=0):
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
         obj_len = len(obj)
-        window_start = max(- window_length - lag, - obj_len)
-        window_end = max(- lag, - obj_len)
+        window_start = max(-window_length - lag, -obj_len)
+        window_end = max(-lag, 
         if window_end == 0:
             return obj[window_start:]
         else:
