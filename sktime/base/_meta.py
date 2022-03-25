@@ -87,6 +87,62 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
         return subsetted_dict
 
+    def _check_estimators(self, estimators, attr_name="steps", cls_type=None):
+        """Check that estimators is a list of estimators or list of str/est tuples.
+
+        Parameters
+        ----------
+        estimators : any object
+            should be list of estimators or list of (str, estimator) tuples
+            estimators should inherit from cls_type class
+        attr_name : str, optional. Default = "steps"
+            Name of checked attribute in error messages
+        cls_type : class, optional. Default = BaseEstimator.
+            class that all estimators are checked to be an instance of
+
+        Returns
+        -------
+        est_tuples : list of (str, estimator) tuples
+            if estimators was a list of (str, estimator) tuples, then identical/cloned
+            if was a list of estimators, then str are generated via _get_estimator_names
+
+        Raises
+        ------
+        TypeError, if estimators is not a list of estimators or (str, estimator) tuples
+        TypeError, if estimators in the list are not instances of cls_type
+        """
+        msg = (
+            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
+            " of estimators, or a list of (string, estimator) tuples. "
+        )
+        if cls_type is None:
+            cls_type = BaseEstimator
+        else:
+            msg += f"All estimators must be of type {cls_type}."
+
+        if (
+            estimators is None
+            or len(estimators) == 0
+            or not isinstance(estimators, list)
+        ):
+            raise TypeError(msg)
+
+        if not isinstance(estimators[0], (cls_type, tuple)):
+            raise TypeError(msg)
+
+        if isinstance(estimators[0], cls_type):
+            if not all(isinstance(est, cls_type) for est in estimators):
+                raise TypeError(msg)
+        if isinstance(estimators[0], tuple):
+            if not all(isinstance(est, tuple) for est in estimators):
+                raise TypeError(msg)
+            if not all(isinstance(est[0], str) for est in estimators):
+                raise TypeError(msg)
+            if not all(isinstance(est[1], cls_type) for est in estimators):
+                raise TypeError(msg)
+
+        return self._get_estimator_tuples(estimators, clone_ests=True)
+
     def _get_estimator_list(self, estimators):
         """Return list of estimators, from a list or tuple.
 
@@ -147,7 +203,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         -------
         est_tuples : list of (str, estimator) tuples
             if estimators was a list of (str, estimator) tuples, then identical/cloned
-            if was a list of estimators, then str are generated via _name_names
+            if was a list of estimators, then str are generated via _get_estimator_names
         """
         ests = self._get_estimator_list(estimators)
         if clone_ests:
@@ -215,6 +271,74 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         #   the algorithm recurses, but will always terminate
         #   because potential clashes are lexicographically increasing
         return self._make_strings_unique(uniquestr)
+
+    def _anytagis(self, tag_name, value, estimators):
+        """Return whether any estimator in list has tag `tag_name` of value `value`.
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag to check
+        value : value of the tag to check for
+        estimators : list of (str, estimator) pairs to query for the tag/value
+
+        Return
+        ------
+        bool : True iff at least one estimator in the list has value in tag tag_name
+        """
+        tagis = [est.get_tag(tag_name, value) == value for _, est in estimators]
+        return any(tagis)
+
+    def _anytagis_then_set(self, tag_name, value, value_if_not, estimators):
+        """Set self's `tag_name` tag to `value` if any estimator on the list has it.
+
+        Writes to self:
+        tag with name tag_name, sets to value if _anytagis(tag_name, value) is True
+            otherwise sets the tag to `value_if_not`
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag
+        value : value to check and to set tag to if one of the tag values is `value`
+        value_if_not : value to set in self if none of the tag values is `value`
+        estimators : list of (str, estimator) pairs to query for the tag/value
+        """
+        if self._anytagis(tag_name=tag_name, value=value, estimators=estimators):
+            self.set_tags(**{tag_name: value})
+        else:
+            self.set_tags(**{tag_name: value_if_not})
+
+    def _anytag_notnone_val(self, tag_name, estimators):
+        """Return first non-'None' value of tag `tag_name` in estimator list.
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag
+        estimators : list of (str, estimator) pairs to query for the tag/value
+
+        Return
+        ------
+        tag_val : first non-'None' value of tag `tag_name` in estimator list.
+        """
+        for _, est in estimators:
+            tag_val = est.get_tag(tag_name)
+            if tag_val != "None":
+                return tag_val
+        return tag_val
+
+    def _anytag_notnone_set(self, tag_name, estimators):
+        """Set self's `tag_name` tag to first non-'None' value in estimator list.
+
+        Writes to self:
+        tag with name tag_name, sets to _anytag_notnone_val(tag_name, estimators)
+
+        Parameters
+        ----------
+        tag_name : str, name of the tag
+        estimators : list of (str, estimator) pairs to query for the tag/value
+        """
+        tag_val = self._anytag_notnone_val(tag_name=tag_name, estimators=estimators)
+        if tag_val != "None":
+            self.set_tags(**{tag_name: tag_val})
 
 
 def flatten(obj):

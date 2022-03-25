@@ -97,7 +97,7 @@ class ScaledLogitTransformer(BaseTransformer):
         "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "transform-returns-same-time-index": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "univariate-only": False,
         "capability:inverse_transform": True,
         "skip-inverse-transform": False,

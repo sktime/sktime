@@ -29,8 +29,6 @@ class _BaseWindowForecaster(BaseForecaster):
         cv=None,
         X=None,
         update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
     ):
         """Make and update predictions iteratively over the test set.
 
@@ -40,8 +38,6 @@ class _BaseWindowForecaster(BaseForecaster):
         cv : temporal cross-validation generator, optional (default=None)
         X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=True)
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list of ints, optional (default=None)
 
         Returns
         -------
@@ -60,16 +56,11 @@ class _BaseWindowForecaster(BaseForecaster):
             cv,
             X,
             update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
         )
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Predict core logic."""
-        if return_pred_int:
-            raise NotImplementedError()
-
-        kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
+        kwargs = {"X": X}
 
         # all values are out-of-sample
         if fh.is_all_out_of_sample(self.cutoff):
@@ -185,15 +176,7 @@ class _BaseWindowForecaster(BaseForecaster):
         """Predict nan if predictions are not possible."""
         return np.full(len(fh), np.nan)
 
-    def _update_predict_single(
-        self,
-        y,
-        fh,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update and make forecasts, core logic..
 
         Implements default behaviour of calling update and predict
@@ -206,18 +189,13 @@ class _BaseWindowForecaster(BaseForecaster):
         fh
         X
         update_params
-        return_pred_int
-        alpha
 
         Returns
         -------
         predictions
-
         """
-        if X is not None:
-            raise NotImplementedError()
-        self.update(y, X, update_params=update_params)
-        return self._predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        self.update(y=y, X=X, update_params=update_params)
+        return self._predict(fh=fh, X=X)
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

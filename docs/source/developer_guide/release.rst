@@ -14,7 +14,7 @@ different operating systems and Python versions.
    For more details, see the `Python guide for packaging <https://packaging.python.org/guides/>`__.
 
 
-We use :ref:`continuous integration <infrastructure>` services to automate the building of wheels on different platforms.
+We use :ref:`continuous integration <continuous_integration>` services to automate the building of wheels on different platforms.
 The release process is triggered by pushing a non-annotated `tagged
 commit <https://git-scm.com/book/en/v2/Git-Basics-Tagging>`__ using
 `semantic versioning <https://semver.org>`__.
