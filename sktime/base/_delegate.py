@@ -18,7 +18,12 @@ from sktime.forecasting.base import BaseForecaster
 class _DelegatedForecaster(BaseForecaster):
     """Delegator mixin that delegateas all methods to wrapped forecaster.
 
-    Delegates the following underscore methods:
+    Delegates inner forecaster methods to a wrapped estimator.
+        Wrapped estimator is value of attribute with name self._delegate_name.
+        By default, this is "estimator_", i.e., delegates to self.estimator_
+        To override delegation, override _delegate_name attribute in child class.
+
+    Delegates the following inner underscore methods:
         _fit, _predict, _update
         _predict_interval, _predict_quantiles, _predict_var, _predict_proba
 
@@ -26,393 +31,255 @@ class _DelegatedForecaster(BaseForecaster):
         get_params, set_params will hence use one additional nesting level by default.
     """
 
-    def get_params(self, deep=True):
-        """Return estimator parameters."""
-        raise NotImplementedError("abstract method")
+    _delegate_name = "estimator_"
 
-    def set_params(self, **params):
-        """Set estimator parameters."""
-        raise NotImplementedError("abstract method")
+    def _get_delegate(self):
+        return getattr(self, self._delegate_name)
 
-    def _get_params(self, attr, deep=True):
-        out = super().get_params(deep=deep)
-        if not deep:
-            return out
-        estimators = getattr(self, attr)
-        out.update(estimators)
-        for name, estimator in estimators:
-            if hasattr(estimator, "get_params"):
-                for key, value in estimator.get_params(deep=True).items():
-                    out["%s__%s" % (name, key)] = value
-        return out
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
 
-    def _set_params(self, attr, **params):
-        # Ensure strict ordering of parameter setting:
-        # 1. All steps
-        if attr in params:
-            setattr(self, attr, params.pop(attr))
-        # 2. Step replacement
-        items = getattr(self, attr)
-        names = []
-        if items:
-            names, _ = zip(*items)
-        for name in list(params.keys()):
-            if "__" not in name and name in names:
-                self._replace_estimator(attr, name, params.pop(name))
-        # 3. Step parameters and other initialisation arguments
-        super().set_params(**params)
-        return self
+        private _fit containing the core logic, called from fit
 
-    def _replace_estimator(self, attr, name, new_val):
-        # assumes `name` is a valid estimator name
-        new_estimators = list(getattr(self, attr))
-        for i, (estimator_name, _) in enumerate(new_estimators):
-            if estimator_name == name:
-                new_estimators[i] = (name, new_val)
-                break
-        setattr(self, attr, new_estimators)
-
-    def _check_names(self, names):
-        if len(set(names)) != len(names):
-            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
-        invalid_names = set(names).intersection(self.get_params(deep=False))
-        if invalid_names:
-            raise ValueError(
-                "Estimator names conflict with constructor "
-                "arguments: {0!r}".format(sorted(invalid_names))
-            )
-        invalid_names = [name for name in names if "__" in name]
-        if invalid_names:
-            raise ValueError(
-                "Estimator names must not contain __: got "
-                "{0!r}".format(invalid_names)
-            )
-
-    def _subset_dict_keys(self, dict_to_subset, keys):
-        """Subset dictionary d to keys in keys."""
-        keys_in_both = set(keys).intersection(dict_to_subset.keys())
-        subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
-        return subsetted_dict
-
-    def _check_estimators(self, estimators, attr_name="steps", cls_type=None):
-        """Check that estimators is a list of estimators or list of str/est tuples.
+        Writes to self:
+            Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
-        estimators : any object
-            should be list of estimators or list of (str, estimator) tuples
-            estimators should inherit from cls_type class
-        attr_name : str, optional. Default = "steps"
-            Name of checked attribute in error messages
-        cls_type : class, optional. Default = BaseEstimator.
-            class that all estimators are checked to be an instance of
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
 
         Returns
         -------
-        est_tuples : list of (str, estimator) tuples
-            if estimators was a list of (str, estimator) tuples, then identical/cloned
-            if was a list of estimators, then str are generated via _get_estimator_names
-
-        Raises
-        ------
-        TypeError, if estimators is not a list of estimators or (str, estimator) tuples
-        TypeError, if estimators in the list are not instances of cls_type
+        self : reference to self
         """
-        msg = (
-            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
-            " of estimators, or a list of (string, estimator) tuples. "
+        estimator = self._get_delegate()
+        return estimator._fit(y=y, fh=fh, X=X)
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        """
+        estimator = self._get_delegate()
+        return estimator._predict(fh=fh, X=X)
+
+    def _update(self, y, X=None, update_params=True):
+        """Update time series to incremental training data.
+
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Writes to self:
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series with which to update the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        estimator = self._get_delegate()
+        return estimator._update(y=y, X=X, update_params=update_params)
+
+    def _update_predict_single(self, y, fh, X=None, update_params=True):
+        """Update forecaster and then make forecasts.
+
+        Implements default behaviour of calling update and predict
+        sequentially, but can be overwritten by subclasses
+        to implement more efficient updating algorithms when available.
+        """
+        estimator = self._get_delegate()
+        return estimator._update_predict_single(
+            y=y, fh=fh, X=X, update_params=update_params
         )
-        if cls_type is None:
-            cls_type = BaseEstimator
-        else:
-            msg += f"All estimators must be of type {cls_type}."
 
-        if (
-            estimators is None
-            or len(estimators) == 0
-            or not isinstance(estimators, list)
-        ):
-            raise TypeError(msg)
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
 
-        if not isinstance(estimators[0], (cls_type, tuple)):
-            raise TypeError(msg)
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
 
-        if isinstance(estimators[0], cls_type):
-            if not all(isinstance(est, cls_type) for est in estimators):
-                raise TypeError(msg)
-        if isinstance(estimators[0], tuple):
-            if not all(isinstance(est, tuple) for est in estimators):
-                raise TypeError(msg)
-            if not all(isinstance(est[0], str) for est in estimators):
-                raise TypeError(msg)
-            if not all(isinstance(est[1], cls_type) for est in estimators):
-                raise TypeError(msg)
+        State required:
+            Requires state to be "fitted".
 
-        return self._get_estimator_tuples(estimators, clone_ests=True)
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
-    def _get_estimator_list(self, estimators):
-        """Return list of estimators, from a list or tuple.
-
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
-        list of estimators - identical with estimators if list of estimators
-            if list of (str, estimator) tuples, the str get removed
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
         """
-        if isinstance(estimators[0], tuple):
-            return [x[1] for x in estimators]
-        else:
-            return estimators
+        estimator = self._get_delegate()
+        return estimator._predict_quantiles(fh=fh, X=X, alpha=alpha)
 
-    def _get_estimator_names(self, estimators, make_unique=False):
-        """Return names for the estimators, optionally made unique.
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
 
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
-        make_unique : bool, optional, default=False
-            whether names should be made unique in the return
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
-        names : list of str, unique entries, of equal length as estimators
-            names for estimators in estimators
-            if make_unique=True, made unique using _make_strings_unique
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        if estimators is None or len(estimators) == 0:
-            names = []
-        elif isinstance(estimators[0], tuple):
-            names = [x[0] for x in estimators]
-        elif isinstance(estimators[0], BaseEstimator):
-            names = [type(e).__name__ for e in estimators]
-        else:
-            raise RuntimeError(
-                "unreachable condition in _get_estimator_names, "
-                " likely input assumptions are violated,"
-                " run _check_estimators before running _get_estimator_names"
-            )
-        if make_unique:
-            names = self._make_strings_unique(names)
-        return names
+        estimator = self._get_delegate()
+        return estimator._predict_interval(fh=fh, X=X, coverage=coverage)
 
-    def _get_estimator_tuples(self, estimators, clone_ests=False):
-        """Return list of estimator tuples, from a list or tuple.
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
 
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
-        clone_ests : bool, whether estimators get cloned in the process
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
 
         Returns
         -------
-        est_tuples : list of (str, estimator) tuples
-            if estimators was a list of (str, estimator) tuples, then identical/cloned
-            if was a list of estimators, then str are generated via _get_estimator_names
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh. Entries are variance forecasts, for var in col index.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
         """
-        ests = self._get_estimator_list(estimators)
-        if clone_ests:
-            ests = [clone(e) for e in ests]
-        unique_names = self._get_estimator_names(estimators, make_unique=True)
-        est_tuples = list(zip(unique_names, ests))
-        return est_tuples
+        estimator = self._get_delegate()
+        return estimator._predict_var(fh=fh, X=X, cov=cov)
 
-    def _make_strings_unique(self, strlist):
-        """Make a list or tuple of strings unique by appending _int of occurrence.
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
 
         Parameters
         ----------
-        strlist : nested list/tuple structure with string elements
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
 
         Returns
         -------
-        uniquestr : nested list/tuple structure with string elements
-            has same bracketing as `strlist`
-            string elements, if not unique, are replaced by unique strings
-                if any duplicates, _integer of occurrence is appended to non-uniques
-                e.g., "abc", "abc", "bcd" becomes "abc_1", "abc_2", "bcd"
-                in case of clashes, process is repeated until it terminates
-                e.g., "abc", "abc", "abc_1" becomes "abc_0", "abc_1_0", "abc_1_1"
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        # recursions to guarantee that strlist is flat list of strings
-        ##############################################################
-
-        # if strlist is not flat, flatten and apply, then unflatten
-        if not is_flat(strlist):
-            flat_strlist = flatten(strlist)
-            unique_flat_strlist = self._make_strings_unique(flat_strlist)
-            uniquestr = unflatten(unique_flat_strlist, strlist)
-            return uniquestr
-
-        # now we can assume that strlist is flat
-
-        # if strlist is a tuple, convert to list, apply this function, then convert back
-        if isinstance(strlist, tuple):
-            uniquestr = self._make_strings_unique(list(strlist))
-            uniquestr = tuple(strlist)
-            return uniquestr
-
-        # end of recursions
-        ###################
-        # now we can assume that strlist is a flat list
-
-        # if already unique, just return
-        if len(set(strlist)) == len(strlist):
-            return strlist
-
-        from collections import Counter
-
-        strcount = Counter(strlist)
-
-        # if any duplicates, we append _integer of occurrence to non-uniques
-        nowcount = Counter()
-        uniquestr = strlist
-        for i, x in enumerate(uniquestr):
-            if strcount[x] > 1:
-                nowcount.update([x])
-                uniquestr[i] = x + "_" + str(nowcount[x])
-
-        # repeat until all are unique
-        #   the algorithm recurses, but will always terminate
-        #   because potential clashes are lexicographically increasing
-        return self._make_strings_unique(uniquestr)
-
-    def _anytagis(self, tag_name, value, estimators):
-        """Return whether any estimator in list has tag `tag_name` of value `value`.
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag to check
-        value : value of the tag to check for
-        estimators : list of (str, estimator) pairs to query for the tag/value
-
-        Return
-        ------
-        bool : True iff at least one estimator in the list has value in tag tag_name
-        """
-        tagis = [est.get_tag(tag_name, value) == value for _, est in estimators]
-        return any(tagis)
-
-    def _anytagis_then_set(self, tag_name, value, value_if_not, estimators):
-        """Set self's `tag_name` tag to `value` if any estimator on the list has it.
-
-        Writes to self:
-        tag with name tag_name, sets to value if _anytagis(tag_name, value) is True
-            otherwise sets the tag to `value_if_not`
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag
-        value : value to check and to set tag to if one of the tag values is `value`
-        value_if_not : value to set in self if none of the tag values is `value`
-        estimators : list of (str, estimator) pairs to query for the tag/value
-        """
-        if self._anytagis(tag_name=tag_name, value=value, estimators=estimators):
-            self.set_tags(**{tag_name: value})
-        else:
-            self.set_tags(**{tag_name: value_if_not})
-
-    def _anytag_notnone_val(self, tag_name, estimators):
-        """Return first non-'None' value of tag `tag_name` in estimator list.
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag
-        estimators : list of (str, estimator) pairs to query for the tag/value
-
-        Return
-        ------
-        tag_val : first non-'None' value of tag `tag_name` in estimator list.
-        """
-        for _, est in estimators:
-            tag_val = est.get_tag(tag_name)
-            if tag_val != "None":
-                return tag_val
-        return tag_val
-
-    def _anytag_notnone_set(self, tag_name, estimators):
-        """Set self's `tag_name` tag to first non-'None' value in estimator list.
-
-        Writes to self:
-        tag with name tag_name, sets to _anytag_notnone_val(tag_name, estimators)
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag
-        estimators : list of (str, estimator) pairs to query for the tag/value
-        """
-        tag_val = self._anytag_notnone_val(tag_name=tag_name, estimators=estimators)
-        if tag_val != "None":
-            self.set_tags(**{tag_name: tag_val})
-
-
-def flatten(obj):
-    """Flatten nested list/tuple structure.
-
-    Parameters
-    ----------
-    obj: nested list/tuple structure
-
-    Returns
-    -------
-    list or tuple, tuple if obj was tuple, list otherwise
-        flat iterable, containing non-list/tuple elements in obj in same order as in obj
-
-    Example
-    -------
-    >>> flatten([1, 2, [3, (4, 5)], 6])
-    [1, 2, 3, 4, 5, 6]
-    """
-    if not isinstance(obj, (list, tuple)):
-        return [obj]
-    else:
-        return type(obj)([y for x in obj for y in flatten(x)])
-
-
-def unflatten(obj, template):
-    """Invert flattening, given template for nested list/tuple structure.
-
-    Parameters
-    ----------
-    obj : list or tuple of elements
-    template : nested list/tuple structure
-        number of non-list/tuple elements of obj and template must be equal
-
-    Returns
-    -------
-    rest : list or tuple of elements
-        has element bracketing exactly as `template`
-            and elements in sequence exactly as `obj`
-
-    Example
-    -------
-    >>> unflatten([1, 2, 3, 4, 5, 6], [6, 3, [5, (2, 4)], 1])
-    [1, 2, [3, (4, 5)], 6]
-    """
-    if not isinstance(template, (list, tuple)):
-        return obj[0]
-
-    list_or_tuple = type(template)
-    ls = [unflat_len(x) for x in template]
-    for i in range(1, len(ls)):
-        ls[i] += ls[i - 1]
-    ls = [0] + ls
-
-    res = [unflatten(obj[ls[i] : ls[i + 1]], template[i]) for i in range(len(ls) - 1)]
-
-    return list_or_tuple(res)
-
-
-def unflat_len(obj):
-    """Return number of non-list/tuple elements in obj."""
-    if not isinstance(obj, (list, tuple)):
-        return 1
-    else:
-        return sum([unflat_len(x) for x in obj])
-
-
-def is_flat(obj):
-    """Check whether list or tuple is flat, returns true if yes, false if nested."""
-    return not any(isinstance(x, (list, tuple)) for x in obj)
+        estimator = self._get_delegate()
+        return estimator._predict_proba(fh=fh, X=X, marginal=marginal)
