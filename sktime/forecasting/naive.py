@@ -331,7 +331,7 @@ class NaiveForecaster(BaseForecaster):
         )
         self._forecaster.fit(y=y, X=X, fh=fh)
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -341,9 +341,7 @@ class NaiveForecaster(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        y_pred = self._forecaster.predict(
-            fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        y_pred = self._forecaster.predict(fh=fh, X=X)
 
         # check for in-sample prediction, if first time point needs to be imputed
         if self._y.index[0] in y_pred.index:
