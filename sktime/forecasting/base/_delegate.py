@@ -10,8 +10,6 @@ For that purpose, inherit from this estimator and then override only the methods
 __author__ = ["fkiraly"]
 __all__ = ["_DelegatedForecaster"]
 
-from sklearn import clone
-
 from sktime.forecasting.base import BaseForecaster
 
 
