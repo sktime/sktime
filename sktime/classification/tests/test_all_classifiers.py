@@ -100,7 +100,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             estimator_class.create_test_instance(test_params="results_comparison")
         )
         # set random seed if possible
-        if "random_seed" in estimator_instance.get_params().keys():
+        if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
@@ -132,7 +132,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             estimator_class.create_test_instance(test_params="results_comparison")
         )
         # set random seed if possible
-        if "random_seed" in estimator_instance.get_params().keys():
+        if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
@@ -141,7 +141,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
         # train classifier and predict probas
-        estimator_instance.fit(X_train[indices], y_train[indices])
+        estimator_instance.fit(X_train.iloc[indices], y_train[indices])
         y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
 
         # assert probabilities are the same

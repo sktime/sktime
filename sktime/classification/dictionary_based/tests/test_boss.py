@@ -20,5 +20,6 @@ def test_boss_train_estimate():
 
     # test train estimate
     train_probas = boss._get_train_probs(X_train, y_train)
+    assert train_probas.shape == (20, 2)
     train_preds = boss.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.75
+    assert accuracy_score(y_train, train_preds) >= 0.6

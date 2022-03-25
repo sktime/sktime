@@ -23,5 +23,6 @@ def test_cboss_train_estimate():
 
     # test train estimate
     train_probas = cboss._get_train_probs(X_train, y_train)
+    assert train_probas.shape == (20, 2)
     train_preds = cboss.classes_[np.argmax(train_probas, axis=1)]
-    assert accuracy_score(y_train, train_preds) >= 0.75
+    assert accuracy_score(y_train, train_preds) >= 0.6
