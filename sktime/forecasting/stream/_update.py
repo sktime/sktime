@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 
 from sklearn import clone
 
+from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
@@ -19,20 +20,28 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
     Parameters
     ----------
-    refit_interval : difference of sktime time indices, (int or timedelta), optional
+    refit_interval : difference of sktime time indices (int or timedelta), optional
+        interval that needs to elapse after which the first update defaults to fit
         default = 0, i.e., always refits, never updates
-    refit_window : difference of sktime time indices, (int or timedelta), optional
+    refit_window_size : difference of sktime time indices (int or timedelta), optional
+        length of the data window to refit to in case update calls fit
         default = inf, i.e., refits to entire training data seen so far
+    refit_window_lag : difference of sktime indices (int or timedelta), optional
+        lag of the data window to refit to, w.r.t. cutoff, in case update calls fit
+        default = 0, i.e., refit window ends with and includes cutoff
     """
 
     _delegate_name = "forecaster_"
 
-    def __init__(self, forecaster, refit_interval=0, refit_window=None):
+    def __init__(
+        self, forecaster, refit_interval=0, refit_window_size=None, refit_window_lag=0
+    ):
         self.forecaster = forecaster
         self.forecaster_ = clone(forecaster)
 
         self.refit_interval = refit_interval
-        self.refit_window = refit_window
+        self.refit_window_size = refit_window_size
+        self.refit_window_lag = refit_window_lag
 
         super(UpdateRefitsEvery, self).__init__()
 
@@ -107,12 +116,13 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         """
         estimator = self._get_delegate()
         time_since_last_fit = self.cutoff - self.last_fit_cutoff_
-        refit_window = self.refit_window
-
-        # if refit_window is not None:
-        #  subset
+        refit_window_size = self.refit_window_size
+        refit_window_lag = self.refit_window_lag
 
         if time_since_last_fit >= self.refit_interval and update_params:
+            if refit_window_size is not None or refit_window_lag != 0:
+                y = get_window(y, window_length=refit_window_size, lag=refit_window_lag)
+                X = get_window(X, window_length=refit_window_size, lag=refit_window_lag)
             return estimator._fit(y=y, X=X, update_params=update_params)
         else:
             return estimator._update(y=y, X=X, update_params=update_params)
