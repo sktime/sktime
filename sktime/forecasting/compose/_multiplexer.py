@@ -5,7 +5,6 @@
 
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 __author__ = ["kkoralturk", "aiwalter"]
@@ -158,7 +157,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         self.forecaster_.fit(y, X=X, fh=fh, **forecaster_fit_params)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -167,20 +166,13 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=DEFAULT_ALPHA)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
-        return self.forecaster_.predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
         """Call predict on the forecaster with the best found parameters.

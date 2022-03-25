@@ -9,7 +9,7 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
@@ -247,7 +247,7 @@ class ForecastingPipeline(_Pipeline):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -256,16 +256,11 @@ class ForecastingPipeline(_Pipeline):
             Forecasting horizon
         X : pd.DataFrame, required
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=DEFAULT_ALPHA)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
         forecaster = self.steps_[-1][1]
 
@@ -273,11 +268,9 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                # todo: remove in 0.11.0
-                # add kwarg X= after removal of old trafo interface
-                X = transformer.transform(X)
+                X = transformer.transform(X=X)
 
-        return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        return forecaster.predict(fh, X)
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -397,7 +390,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.steps_[-1] = (name, f)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -406,35 +399,17 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=DEFAULT_ALPHA)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
         forecaster = self.steps_[-1][1]
-        if return_pred_int:
-            y_pred, pred_int = forecaster.predict(
-                fh, X, return_pred_int=return_pred_int, alpha=alpha
-            )
-            # inverse transform pred_int
-            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"], X)
-            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"], X)
-        else:
-            y_pred = forecaster.predict(
-                fh, X, return_pred_int=return_pred_int, alpha=alpha
-            )
+        y_pred = forecaster.predict(fh=fh, X=X)
         # inverse transform y_pred
         y_pred = self._get_inverse_transform(y_pred, X)
-        if return_pred_int:
-            return y_pred, pred_int
-        else:
-            return y_pred
+        return y_pred
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
