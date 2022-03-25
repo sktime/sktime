@@ -32,7 +32,6 @@ Naive
     :template: class.rst
 
     NaiveForecaster
-    NaiveVariance
 
 Trend
 -----
