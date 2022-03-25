@@ -291,10 +291,6 @@ class ForecastingPipeline(_Pipeline):
                 if hasattr(transformer, "update"):
                     transformer.update(X=X, y=y, update_params=update_params)
                     X = transformer.transform(X=X, y=y)
-                elif update_params:
-                    X = transformer.fit(X=self._X, y=self._y).transform(X=X, y=y)
-                else:
-                    X = transformer.transform(X=X, y=y)
 
         _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
@@ -431,10 +427,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             if hasattr(transformer, "update"):
                 transformer.update(X=y, y=X, update_params=update_params)
                 y = transformer.transform(X=y, y=X)
-            elif update_params:
-                X = transformer.fit(X=self._y, y=self._X).transform(X=y, y=X)
-            else:
-                X = transformer.transform(X=y, y=X)
 
         _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
