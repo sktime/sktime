@@ -88,6 +88,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "interval",
     }
 
     def __init__(
@@ -166,7 +167,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
 
         Parameters
@@ -189,7 +190,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -409,6 +410,21 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         )
 
         return estimator.predict_proba(transformed_x)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {"n_estimators": 2}
+        return params
 
 
 def _fisher_score(X, y, classes, class_counts):

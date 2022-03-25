@@ -116,6 +116,7 @@ class Arsenal(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "kernel",
     }
 
     def __init__(
@@ -269,7 +270,7 @@ class Arsenal(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -290,7 +291,7 @@ class Arsenal(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -316,7 +317,7 @@ class Arsenal(BaseClassifier):
             np.sum(y_probas, axis=0) / (np.ones(self.n_classes_) * self._weight_sum), 8
         )
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
@@ -408,3 +409,18 @@ class Arsenal(BaseClassifier):
             results[oob[n]][self._class_dictionary[pred]] += weight
 
         return results, weight, oob
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {"num_kernels": 10, "n_estimators": 2}
+        return params

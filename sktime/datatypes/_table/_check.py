@@ -128,7 +128,7 @@ def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = True
     # check whether there any nans; compute only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -153,7 +153,7 @@ def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
     metadata["is_univariate"] = obj.shape[1] < 2
     # check whether there any nans; compute only if requested
     if return_metadata:
-        metadata["has_nans"] = np.isnan(obj).any()
+        metadata["has_nans"] = pd.isnull(obj).any()
 
     return _ret(True, None, metadata, return_metadata)
 
@@ -196,7 +196,7 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
             multivariate = multivariate_because_one_row
         metadata["is_univariate"] = not multivariate
         metadata["has_nans"] = np.any(
-            [np.isnan(d[key]) for d in obj for key in d.keys()]
+            [pd.isnull(d[key]) for d in obj for key in d.keys()]
         )
         metadata["is_empty"] = len(obj) < 1 or np.all([len(x) < 1 for x in obj])
 

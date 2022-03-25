@@ -296,7 +296,7 @@ Datetime feature generation
 Lagged Window Summarizer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.window_summarizer
+.. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
     :toctree: auto_generated/
@@ -337,6 +337,21 @@ Theta
     :template: class.rst
 
     ThetaLinesTransformer
+
+Augmenter
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.augmenter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InvertAugmenter
+    RandomSamplesAugmenter
+    ReverseAugmenter
+    WhiteNoiseAugmenter
+
 
 Summary
 ~~~~~~~
