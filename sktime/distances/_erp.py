@@ -16,7 +16,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _ErpDistance(NumbaDistance):
-    """Edit distance with real penalty (erp) between two timeseries."""
+    """Edit distance with real penalty (erp) between two time series."""
 
     def _distance_factory(
         self,
