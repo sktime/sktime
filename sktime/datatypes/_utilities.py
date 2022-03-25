@@ -215,7 +215,7 @@ def get_window(obj, window_length=None, lag=0):
     if isinstance(obj, np.ndarray):
         obj_len = len(obj)
         window_start = max(-window_length - lag, -obj_len)
-        window_end = max(-lag, 
+        window_end = max(-lag, -obj_len)
         if window_end == 0:
             return obj[window_start:]
         else:
