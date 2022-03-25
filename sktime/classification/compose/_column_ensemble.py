@@ -269,8 +269,17 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results.
 
         Returns
         -------
@@ -280,17 +289,32 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.classification.dictionary_based import ContractableBOSS
+        from sktime.classification.interval_based import CanonicalIntervalForest
         from sktime.classification.interval_based import (
             TimeSeriesForestClassifier as TSFC,
         )
 
-        params = {
-            "estimators": [
-                ("tsf1", TSFC(n_estimators=2), 0),
-                ("tsf2", TSFC(n_estimators=2), 0),
-            ]
-        }
-        return params
+        if parameter_set == "default":
+            return {
+                "estimators": [
+                    ("tsf1", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=2), 0),
+                ]
+            }
+        elif parameter_set == "results_comparison":
+            cboss = ContractableBOSS(
+                n_parameter_samples=4, max_ensemble_size=2, random_state=0
+            )
+            cif = CanonicalIntervalForest(
+                n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+            )
+            return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
+        else:
+            raise ValueError(
+                f"Estimator: {cls} does not have requested parameter set named: "
+                f"{parameter_set}."
+            )
 
 
 def _get_column(X, key):

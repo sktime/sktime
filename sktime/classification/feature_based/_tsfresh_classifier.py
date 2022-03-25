@@ -202,8 +202,17 @@ class TSFreshClassifier(BaseClassifier):
             return dists
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results.
 
         Returns
         -------
@@ -213,9 +222,20 @@ class TSFreshClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {
-            "estimator": RandomForestClassifier(n_estimators=2),
-            "default_fc_parameters": "minimal",
-            "relevant_feature_extractor": False,
-        }
-        return params
+        if parameter_set == "default":
+            return {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "default_fc_parameters": "minimal",
+                "relevant_feature_extractor": False,
+            }
+        elif parameter_set == "results_comparison":
+            return {
+                "estimator": RandomForestClassifier(n_estimators=10),
+                "default_fc_parameters": "minimal",
+                "relevant_feature_extractor": False,
+            }
+        else:
+            raise ValueError(
+                f"Estimator: {cls} does not have requested parameter set named: "
+                f"{parameter_set}."
+            )

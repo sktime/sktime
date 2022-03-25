@@ -21,12 +21,10 @@ from sktime.classification.early_classification import (
 )
 from sktime.classification.feature_based import (
     Catch22Classifier,
-    FreshPRINCE,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
     SignatureClassifier,
     SummaryClassifier,
-    TSFreshClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
 from sktime.classification.interval_based import (
@@ -111,7 +109,7 @@ def _print_array(test_name, array):
     for sub_array in array:
         print("[", end="")
         for i, value in enumerate(sub_array):
-            print(value.astype(str), end="")
+            print(str(round(value, 4)), end="")
             if i < len(sub_array) - 1:
                 print(", ", end="")
         print("],")
@@ -198,7 +196,7 @@ if __name__ == "__main__":
                 proportion_of_param_options=0.1,
                 proportion_train_for_test=0.1,
                 majority_vote=True,
-                distance_measures=["dtw", "ddtw"],
+                distance_measures=["dtw", "ddtw", "wdtw"],
                 random_state=0,
             )
         ),
@@ -206,7 +204,7 @@ if __name__ == "__main__":
     _print_array(
         "ProximityForest - UnitTest",
         _reproduce_classification_unit_test(
-            ProximityForest(n_estimators=5, random_state=0)
+            ProximityForest(n_estimators=3, random_state=0)
         ),
     )
     _print_array("ShapeDTW - UnitTest", _reproduce_classification_unit_test(ShapeDTW()))
@@ -226,16 +224,6 @@ if __name__ == "__main__":
             Catch22Classifier(
                 estimator=RandomForestClassifier(n_estimators=10),
                 outlier_norm=True,
-                random_state=0,
-            )
-        ),
-    )
-    _print_array(
-        "FreshPRINCE - UnitTest",
-        _reproduce_classification_unit_test(
-            FreshPRINCE(
-                default_fc_parameters="minimal",
-                n_estimators=10,
                 random_state=0,
             )
         ),
@@ -301,28 +289,6 @@ if __name__ == "__main__":
         _reproduce_classification_basic_motions(
             SummaryClassifier(
                 estimator=RandomForestClassifier(n_estimators=10), random_state=0
-            )
-        ),
-    )
-    _print_array(
-        "TSFreshClassifier - UnitTest",
-        _reproduce_classification_unit_test(
-            TSFreshClassifier(
-                default_fc_parameters="minimal",
-                relevant_feature_extractor=False,
-                estimator=RandomForestClassifier(n_estimators=10),
-                random_state=0,
-            )
-        ),
-    )
-    _print_array(
-        "TSFreshClassifier - BasicMotions",
-        _reproduce_classification_basic_motions(
-            TSFreshClassifier(
-                default_fc_parameters="minimal",
-                relevant_feature_extractor=False,
-                estimator=RandomForestClassifier(n_estimators=10),
-                random_state=0,
             )
         ),
     )
@@ -442,25 +408,25 @@ if __name__ == "__main__":
     _print_array(
         "Arsenal - UnitTest",
         _reproduce_classification_unit_test(
-            Arsenal(num_kernels=200, n_estimators=5, random_state=0)
+            Arsenal(num_kernels=20, n_estimators=5, random_state=0)
         ),
     )
     _print_array(
         "Arsenal - BasicMotions",
         _reproduce_classification_basic_motions(
-            Arsenal(num_kernels=200, n_estimators=5, random_state=0)
+            Arsenal(num_kernels=20, n_estimators=5, random_state=0)
         ),
     )
     _print_array(
         "RocketClassifier - UnitTest",
         _reproduce_classification_unit_test(
-            RocketClassifier(num_kernels=500, random_state=0)
+            RocketClassifier(num_kernels=100, random_state=0)
         ),
     )
     _print_array(
         "RocketClassifier - BasicMotions",
         _reproduce_classification_basic_motions(
-            RocketClassifier(num_kernels=500, random_state=0)
+            RocketClassifier(num_kernels=100, random_state=0)
         ),
     )
     _print_array(
@@ -488,71 +454,71 @@ if __name__ == "__main__":
         ),
     )
 
-    _print_array(
-        "ProbabilityThresholdEarlyClassifier - UnitTest",
-        _reproduce_early_classification_unit_test(
-            ProbabilityThresholdEarlyClassifier(
-                random_state=0,
-                classification_points=[6, 16, 24],
-                probability_threshold=1,
-                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-            )
-        ),
-    )
-    _print_array(
-        "TEASER - UnitTest",
-        _reproduce_early_classification_unit_test(
-            TEASER(
-                random_state=0,
-                classification_points=[6, 10, 16, 24],
-                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-            )
-        ),
-    )
-    _print_array(
-        "TEASER-IF - UnitTest",
-        _reproduce_early_classification_unit_test(
-            TEASER(
-                random_state=0,
-                classification_points=[6, 10, 16, 24],
-                estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
-                one_class_classifier=IsolationForest(n_estimators=5),
-                one_class_param_grid={"bootstrap": [True, False]},
-            )
-        ),
-    )
-
-    _print_array(
-        "Catch22 - UnitTest",
-        _reproduce_transform_unit_test(Catch22(outlier_norm=True)),
-    )
-    _print_array(
-        "Catch22 - BasicMotions",
-        _reproduce_transform_basic_motions(Catch22()),
-    )
-    _print_array(
-        "RandomIntervals - UnitTest",
-        _reproduce_transform_unit_test(RandomIntervals(random_state=0, n_intervals=3)),
-    )
-    _print_array(
-        "RandomIntervals - BasicMotions",
-        _reproduce_transform_basic_motions(
-            RandomIntervals(random_state=0, n_intervals=3)
-        ),
-    )
-    _print_array(
-        "RandomShapeletTransform - UnitTest",
-        _reproduce_transform_unit_test(
-            RandomShapeletTransform(
-                max_shapelets=10, n_shapelet_samples=500, random_state=0
-            )
-        ),
-    )
-    _print_array(
-        "RandomShapeletTransform - BasicMotions",
-        _reproduce_transform_basic_motions(
-            RandomShapeletTransform(
-                max_shapelets=10, n_shapelet_samples=500, random_state=0
-            )
-        ),
-    )
+    # _print_array(
+    #     "ProbabilityThresholdEarlyClassifier - UnitTest",
+    #     _reproduce_early_classification_unit_test(
+    #         ProbabilityThresholdEarlyClassifier(
+    #             random_state=0,
+    #             classification_points=[6, 16, 24],
+    #             probability_threshold=1,
+    #             estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+    #         )
+    #     ),
+    # )
+    # _print_array(
+    #     "TEASER - UnitTest",
+    #     _reproduce_early_classification_unit_test(
+    #         TEASER(
+    #             random_state=0,
+    #             classification_points=[6, 10, 16, 24],
+    #             estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+    #         )
+    #     ),
+    # )
+    # _print_array(
+    #     "TEASER-IF - UnitTest",
+    #     _reproduce_early_classification_unit_test(
+    #         TEASER(
+    #             random_state=0,
+    #             classification_points=[6, 10, 16, 24],
+    #             estimator=TimeSeriesForestClassifier(n_estimators=10, random_state=0),
+    #             one_class_classifier=IsolationForest(n_estimators=5),
+    #             one_class_param_grid={"bootstrap": [True, False]},
+    #         )
+    #     ),
+    # )
+    #
+    # _print_array(
+    #     "Catch22 - UnitTest",
+    #     _reproduce_transform_unit_test(Catch22(outlier_norm=True)),
+    # )
+    # _print_array(
+    #     "Catch22 - BasicMotions",
+    #     _reproduce_transform_basic_motions(Catch22()),
+    # )
+    # _print_array(
+    #     "RandomIntervals - UnitTest",
+    #     _reproduce_transform_unit_test(RandomIntervals(random_state=0, n_intervals=3)),
+    # )
+    # _print_array(
+    #     "RandomIntervals - BasicMotions",
+    #     _reproduce_transform_basic_motions(
+    #         RandomIntervals(random_state=0, n_intervals=3)
+    #     ),
+    # )
+    # _print_array(
+    #     "RandomShapeletTransform - UnitTest",
+    #     _reproduce_transform_unit_test(
+    #         RandomShapeletTransform(
+    #             max_shapelets=10, n_shapelet_samples=500, random_state=0
+    #         )
+    #     ),
+    # )
+    # _print_array(
+    #     "RandomShapeletTransform - BasicMotions",
+    #     _reproduce_transform_basic_motions(
+    #         RandomShapeletTransform(
+    #             max_shapelets=10, n_shapelet_samples=500, random_state=0
+    #         )
+    #     ),
+    # )

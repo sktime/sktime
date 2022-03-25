@@ -179,8 +179,17 @@ class RandomIntervalClassifier(BaseClassifier):
             return dists
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results.
 
         Returns
         -------
@@ -194,11 +203,25 @@ class RandomIntervalClassifier(BaseClassifier):
 
         from sktime.transformations.series.summarize import SummaryTransformer
 
-        params = {
-            "n_intervals": 2,
-            "estimator": RandomForestClassifier(n_estimators=2),
-            "interval_transformers": SummaryTransformer(
-                summary_function=("mean", "min", "max"),
-            ),
-        }
-        return params
+        if parameter_set == "default":
+            return {
+                "n_intervals": 2,
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "min", "max"),
+                ),
+            }
+        elif parameter_set == "results_comparison":
+            return {
+                "n_intervals": 3,
+                "estimator": RandomForestClassifier(n_estimators=10),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "std", "min", "max"),
+                    quantiles=(0.25, 0.5, 0.75),
+                ),
+            }
+        else:
+            raise ValueError(
+                f"Estimator: {cls} does not have requested parameter set named: "
+                f"{parameter_set}."
+            )

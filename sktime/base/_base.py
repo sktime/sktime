@@ -224,8 +224,14 @@ class BaseObject(_BaseEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
 
         Returns
         -------
@@ -237,6 +243,12 @@ class BaseObject(_BaseEstimator):
         """
         # imported inside the function to avoid circular imports
         from sktime.tests._config import ESTIMATOR_TEST_PARAMS
+
+        if parameter_set != "default":
+            raise ValueError(
+                f"Estimator: {cls} does not have bespoke test "
+                f"parameters. Override the method to add alternatives."
+            )
 
         # if non-default parameters are required, but none have been found,
         # raise error
@@ -256,7 +268,7 @@ class BaseObject(_BaseEstimator):
         return params
 
     @classmethod
-    def create_test_instance(cls):
+    def create_test_instance(cls, test_params="default"):
         """Construct Estimator instance if possible.
 
         Returns
@@ -269,7 +281,7 @@ class BaseObject(_BaseEstimator):
         This function takes first or single dict that get_test_params returns, and
         constructs the object with that.
         """
-        params = cls.get_test_params()
+        params = cls.get_test_params(parameter_set=test_params)
         if isinstance(params, list):
             if isinstance(params[0], dict):
                 params = params[0]

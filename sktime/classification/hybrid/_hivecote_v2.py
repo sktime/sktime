@@ -372,8 +372,17 @@ class HIVECOTEV2(BaseClassifier):
         return dists / dists.sum(axis=1, keepdims=True)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results.
 
         Returns
         -------
@@ -385,23 +394,48 @@ class HIVECOTEV2(BaseClassifier):
         """
         from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 
-        params = {
-            "stc_params": {
-                "estimator": RotationForest(n_estimators=1),
-                "max_shapelets": 5,
-                "n_shapelet_samples": 5,
-                "batch_size": 5,
-            },
-            "drcif_params": {
-                "n_estimators": 1,
-                "n_intervals": 2,
-                "att_subsample_size": 2,
-            },
-            "arsenal_params": {"num_kernels": 5, "n_estimators": 1},
-            "tde_params": {
-                "n_parameter_samples": 1,
-                "max_ensemble_size": 1,
-                "randomly_selected_params": 1,
-            },
-        }
-        return params
+        if parameter_set == "default":
+            return {
+                "stc_params": {
+                    "estimator": RotationForest(n_estimators=1),
+                    "max_shapelets": 5,
+                    "n_shapelet_samples": 5,
+                    "batch_size": 5,
+                },
+                "drcif_params": {
+                    "n_estimators": 1,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 5, "n_estimators": 1},
+                "tde_params": {
+                    "n_parameter_samples": 1,
+                    "max_ensemble_size": 1,
+                    "randomly_selected_params": 1,
+                },
+            }
+        elif parameter_set == "results_comparison":
+            return {
+                "stc_params": {
+                    "estimator": RotationForest(n_estimators=3),
+                    "max_shapelets": 50,
+                    "n_shapelet_samples": 5,
+                    "batch_size": 10,
+                },
+                "drcif_params": {
+                    "n_estimators": 3,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 50, "n_estimators": 3},
+                "tde_params": {
+                    "n_parameter_samples": 5,
+                    "max_ensemble_size": 3,
+                    "randomly_selected_params": 3,
+                },
+            }
+        else:
+            raise ValueError(
+                f"Estimator: {cls} does not have requested parameter set named: "
+                f"{parameter_set}."
+            )
