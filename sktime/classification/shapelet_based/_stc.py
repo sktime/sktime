@@ -334,6 +334,8 @@ class ShapeletTransformClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sklearn.ensemble import RandomForestClassifier
+
         if parameter_set == "default":
             return {
                 "estimator": RotationForest(n_estimators=2),
@@ -343,10 +345,10 @@ class ShapeletTransformClassifier(BaseClassifier):
             }
         elif parameter_set == "results_comparison":
             return {
-                "estimator": RotationForest(n_estimators=3),
-                "n_shapelet_samples": 200,
-                "max_shapelets": 40,
-                "batch_size": 50,
+                "estimator": RandomForestClassifier(n_estimators=5),
+                "n_shapelet_samples": 50,
+                "max_shapelets": 10,
+                "batch_size": 10,
             }
         else:
             raise ValueError(
