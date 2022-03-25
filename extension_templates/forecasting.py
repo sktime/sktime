@@ -27,6 +27,8 @@ Optional implements:
     updating                    - _update(self, y, X=None, update_params=True):
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
+    predicting variance         - _predict_var(self, fh, X=None, cov=False)
+    distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
@@ -84,8 +86,7 @@ class MyForecaster(BaseForecaster):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        "capability:pred_int": False,  # does forecaster implement proba forecasts?
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -249,6 +250,9 @@ class MyForecaster(BaseForecaster):
     #   when interfacing or implementing, consider which of the two is easier
     #   both can be implemented if desired, but usually that is not necessary
     #
+    # if _predict_var or _predict_proba is implemented, this will have a default
+    #   implementation which uses _predict_proba or _predict_var under normal assumption
+    #
     # if implementing _predict_interval, delete _predict_quantiles
     # if not implementing either, delete both methods
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -334,6 +338,86 @@ class MyForecaster(BaseForecaster):
         #
         # Note: unlike in predict_interval where coverage can be float or list of float
         #   coverage in _predict_interval is guaranteed to be a list of float
+
+    # todo: consider implementing _predict_var
+    #
+    # if _predict_proba or interval/quantiles are implemented, this will have a default
+    #   implementation which uses _predict_proba or quantiles under normal assumption
+    #
+    # if not implementing, delete _predict_var
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh. Entries are variance forecasts, for var in col index.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+        """
+        # implement here
+        # implementing the cov=True case is optional and can be omitted
+
+    # todo: consider implementing _predict_proba
+    #
+    # if interval/quantiles or _predict_var are implemented, this will have a default
+    #   implementation which uses variance or quantiles under normal assumption
+    #
+    # if not implementing, delete _predict_proba
+    def _predict_proba(self, fh, X):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        # import tensorflow_probability as tfp
+        # tensorflow probability import should happen inside this function
+        #
+        # implement here
+        # implementing the marginal=False case is optional and can be omitted
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
