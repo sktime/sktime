@@ -2,6 +2,7 @@
 """Compute the distance between two time series."""
 
 from typing import Any, Callable, Union
+from numba import njit
 
 import numpy as np
 
@@ -22,6 +23,7 @@ from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
+from sktime.distances._numba_utils import _numba_to_timeseries
 
 
 def erp_distance(
@@ -410,7 +412,7 @@ def wdtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    g: float = 0.0,
+    g: float = 0.05,
     **kwargs: Any,
 ) -> float:
     """Compute the weighted dynamic time warping (WDTW) distance between time series.
@@ -998,7 +1000,15 @@ def distance_factory(
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    return _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+
+    @njit(cache=True)
+    def dist_callable(x: np.ndarray, y: np.ndarray):
+        _x = _numba_to_timeseries(x)
+        _y = _numba_to_timeseries(y)
+        return callable(_x, _y)
+
+    return dist_callable
 
 
 def pairwise_distance(

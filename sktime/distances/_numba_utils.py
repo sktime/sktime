@@ -30,7 +30,8 @@ def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
 
 
 def _compute_pairwise_distance(
-    x: np.ndarray, y: np.ndarray, symmetric: bool, distance_callable: DistanceCallable
+        x: np.ndarray, y: np.ndarray, symmetric: bool,
+        distance_callable: DistanceCallable
 ) -> np.ndarray:
     """Compute pairwise distance between two numpy arrays.
 
@@ -72,7 +73,7 @@ def _compute_pairwise_distance(
 
 
 def is_no_python_compiled_callable(
-    no_python_callable: Callable, raise_error: bool = False
+        no_python_callable: Callable, raise_error: bool = False
 ):
     """Check if a callable is no_python compiled.
 
@@ -139,10 +140,7 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
         _x = np.reshape(_x, (1, 1, shape[0]))
     elif num_dims == 2:
         shape = _x.shape
-        _x = np.reshape(_x, (shape[0], shape[1], 1))
-    elif num_dims == 3:
-        shape = _x.shape
-        _x = np.reshape(_x, (shape[0], shape[1], shape[2]))
+        _x = np.reshape(_x, (1, shape[1], shape[0]))
     elif num_dims > 3:
         raise ValueError(
             "The matrix provided has more than 3 dimensions. This is not"
@@ -180,9 +178,24 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
     _x = np.array(x, copy=True, dtype=float)
     num_dims = _x.ndim
     shape = _x.shape
-    if num_dims == 1:
+    if num_dims == 1 or (num_dims == 2 and _x.shape[1] == 1 and _x.shape[0] != 1):
         _x = np.reshape(_x, (1, shape[0]))
+    elif num_dims > 2:
+        raise ValueError(
+            "The matrix provided has more than 2 dimensions. This is not"
+            "supported. Please provide a matrix with less than "
+            "2 dimensions"
+        )
+    return _x
 
+
+@njit(cache=True)
+def _numba_to_timeseries(x: np.ndarray) -> np.ndarray:
+    _x = x.copy()
+    num_dims = _x.ndim
+    shape = _x.shape
+    if num_dims == 1 or (num_dims == 2 and _x.shape[1] == 1 and _x.shape[0] != 1):
+        _x = np.reshape(_x, (1, shape[0]))
     elif num_dims > 2:
         raise ValueError(
             "The matrix provided has more than 2 dimensions. This is not"

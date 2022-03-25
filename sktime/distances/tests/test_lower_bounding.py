@@ -168,35 +168,9 @@ def test_lower_bounding() -> None:
     )
 
     _validate_bounding(
-        x=np.array([10.0]),
-        y=np.array([15.0]),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10),
-        y=create_test_distance_numpy(10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
-    )
-
-    _validate_bounding(
         x=create_test_distance_numpy(10, 10),
         y=create_test_distance_numpy(10, 10, random_state=2),
     )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
-    )
-
 
 def test_incorrect_parameters() -> None:
     """Test to check correct errors raised."""
@@ -239,36 +213,3 @@ def test_incorrect_parameters() -> None:
         sakoe_chiba.create_bounding_matrix(
             numpy_x, numpy_y, sakoe_chiba_window_radius=1.2, itakura_max_slope=10.0
         )
-
-
-def test_numba_lower_bounding() -> None:
-    """Test numba implementation of bounding."""
-    _validate_bounding(
-        x=np.array([10.0]),
-        y=np.array([15.0]),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10),
-        y=create_test_distance_numpy(10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10),
-        y=create_test_distance_numpy(10, 10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
-    )
