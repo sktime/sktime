@@ -28,6 +28,7 @@ from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
+    DATETIME_INTERVAL_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
     array_is_datetime64,
     array_is_int,
@@ -850,31 +851,46 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             start = self._get_start(y=y, fh=fh)
 
-        end = _get_end(y, fh)
+        end = _get_end(y=y, fh=fh)
         if is_int(x=step_length):
-            step_length = self._get_step_length(x=step_length)
-            return np.arange(start, end, step_length) - 1
-        else:
-            if start >= 1:
-                start_date = y[y < y[start]][-1]
-            else:
-                start_date = y[y < y[0] + step_length][-1]
-
-            if end <= len(y):
-                end_date = (
-                    y[y <= y[min(len(y), end) - 1] - step_length][-1] + step_length
-                )
-                inclusive = "left"
-            else:
-                end_date = y[-1]
-                inclusive = "both"
-            date_range = pd.date_range(
-                start=start_date, end=end_date, freq=step_length, inclusive=inclusive
+            return self._get_cutoffs_with_integer_step_length(
+                end=end, start=start, step_length=step_length
             )
-            train = np.argwhere(y.isin(date_range)).flatten()
-            if start <= 0:
-                train = np.hstack((-1, train))
-            return train
+        else:
+            return self._get_cutoffs_with_non_integer_step_length(
+                end=end, start=start, step_length=step_length, y=y
+            )
+
+    @staticmethod
+    def _get_cutoffs_with_integer_step_length(
+        end: int, start: int, step_length: int
+    ) -> np.ndarray:
+        return np.arange(start, end, step_length) - 1
+
+    @staticmethod
+    def _get_cutoffs_with_non_integer_step_length(
+        end: int,
+        start: int,
+        step_length: DATETIME_INTERVAL_TYPES,
+        y: ACCEPTED_Y_TYPES,
+    ) -> np.ndarray:
+        if start >= 1:
+            start_date = y[y < y[start]][-1]
+        else:
+            start_date = y[y < y[0] + step_length][-1]
+        if end <= len(y):
+            end_date = y[y <= y[min(len(y), end) - 1] - step_length][-1] + step_length
+            inclusive = "left"
+        else:
+            end_date = y[-1]
+            inclusive = "both"
+        date_range = pd.date_range(
+            start=start_date, end=end_date, freq=step_length, inclusive=inclusive
+        )
+        train = np.argwhere(y.isin(date_range)).flatten()
+        if start <= 0:
+            train = np.hstack((-1, train))
+        return train
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
