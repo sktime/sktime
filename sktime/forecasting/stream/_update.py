@@ -50,7 +50,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.clone_tags(forecaster)
 
         # fit must be executed to fit the wrapped estimator and remember the cutoff
-        self.set_tasg(fit_is_empty=False)
+        self.set_tags(fit_is_empty=False)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
