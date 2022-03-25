@@ -49,7 +49,6 @@ __all__ = [
     "_PanelToPanelTransformer",
 ]
 
-import warnings
 from typing import Union
 
 import numpy as np
@@ -188,7 +187,57 @@ class BaseTransformer(BaseEstimator):
         else:
             return NotImplemented
 
-    def fit(self, X, y=None, Z=None):
+    def __add__(self, other):
+        """Magic + method, return (right) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        FeatureUnion object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.compose import FeatureUnion
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the FeatureUnion does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = FeatureUnion(transformer_list=[self])
+            return self_as_pipeline + other
+        else:
+            return NotImplemented
+
+    def __radd__(self, other):
+        """Magic + method, return (left) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        FeatureUnion object, concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-FeatureUnion `sktime` transformers
+        """
+        from sktime.transformations.compose import FeatureUnion
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformerPipeline does the rest, e.g., case distinctions on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = FeatureUnion(transformer_list=[self])
+            return other + self_as_pipeline
+        else:
+            return NotImplemented
+
+    def fit(self, X, y=None):
         """Fit transformer to X, optionally to y.
 
         State change:
@@ -209,15 +258,11 @@ class BaseTransformer(BaseEstimator):
                     examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
-        Z : possible alias for X; should not be passed when X is passed
-            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
         self : a fitted instance of the estimator
         """
-        X = _handle_alias(X, Z)
-
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -238,9 +283,7 @@ class BaseTransformer(BaseEstimator):
         vectorization_needed = isinstance(X_inner, VectorizedDF)
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            # todo 0.11.0: add kwargs call
-            # self._fit(X=X_inner, y=y_inner)
-            self._fit(X_inner, y_inner)
+            self._fit(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", X=X_inner, y=y_inner)
@@ -250,7 +293,7 @@ class BaseTransformer(BaseEstimator):
 
         return self
 
-    def transform(self, X, y=None, Z=None):
+    def transform(self, X, y=None):
         """Transform X and return a transformed version.
 
         State required:
@@ -271,8 +314,6 @@ class BaseTransformer(BaseEstimator):
                     examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
-        Z : possible alias for X; should not be passed when X is passed
-            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -304,8 +345,6 @@ class BaseTransformer(BaseEstimator):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
-        X = _handle_alias(X, Z)
-
         # check whether is fitted
         self.check_is_fitted()
 
@@ -323,7 +362,7 @@ class BaseTransformer(BaseEstimator):
 
         return X_out
 
-    def fit_transform(self, X, y=None, Z=None):
+    def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 
         Fits transformer to X and y with optional parameters fit_params
@@ -347,8 +386,6 @@ class BaseTransformer(BaseEstimator):
                     examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
-        Z : possible alias for X; should not be passed when X is passed
-            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -379,12 +416,11 @@ class BaseTransformer(BaseEstimator):
                 then the return is a `Panel` object of type `pd-multiindex`
                 Example: i-th instance of the output is the i-th window running over `X`
         """
-        X = _handle_alias(X, Z)
         # Non-optimized default implementation; override when a better
         # method is possible for a given algorithm.
         return self.fit(X, y).transform(X, y)
 
-    def inverse_transform(self, X, y=None, Z=None):
+    def inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
 
         Currently it is assumed that only transformers with tags
@@ -409,8 +445,6 @@ class BaseTransformer(BaseEstimator):
                     examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
-        Z : possible alias for X; should not be passed when X is passed
-            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
 
         Returns
         -------
@@ -421,8 +455,6 @@ class BaseTransformer(BaseEstimator):
             raise NotImplementedError(
                 f"{type(self)} does not implement inverse_transform"
             )
-
-        X = _handle_alias(X, Z)
 
         # check whether is fitted
         self.check_is_fitted()
@@ -441,7 +473,7 @@ class BaseTransformer(BaseEstimator):
 
         return X_out
 
-    def update(self, X, y=None, Z=None, update_params=True):
+    def update(self, X, y=None, update_params=True):
         """Update transformer with X, optionally y.
 
         State required:
@@ -465,8 +497,6 @@ class BaseTransformer(BaseEstimator):
                     examples/AA_datatypes_and_datasets.ipynb
         y : Series or Panel, default=None
             Additional data, e.g., labels for transformation
-        Z : possible alias for X; should not be passed when X is passed
-            alias Z is deprecated since version 0.10.0 and will be removed in 0.11.0
         update_params : bool, default=True
             whether the model is updated. Yes if true, if false, simply skips call.
             argument exists for compatibility with forecasting module.
@@ -475,8 +505,6 @@ class BaseTransformer(BaseEstimator):
         -------
         self : a fitted instance of the estimator
         """
-        X = _handle_alias(X, Z)
-
         # check whether is fitted
         self.check_is_fitted()
 
@@ -500,9 +528,7 @@ class BaseTransformer(BaseEstimator):
         vectorization_needed = isinstance(X_inner, VectorizedDF)
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            # todo 0.11.0: add kwargs call
-            # self._fit(X=X_inner, y=y_inner)
-            self._update(X_inner, y_inner)
+            self._update(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("update", X=X_inner, y=y_inner)
@@ -999,35 +1025,6 @@ class BaseTransformer(BaseEstimator):
         """
         # standard behaviour: no update takes place, new data is ignored
         return self
-
-
-def _handle_alias(X, Z):
-    """Handle Z as an alias for X, return X/Z.
-
-    Parameters
-    ----------
-    X: any object
-    Z: any object
-
-    Returns
-    -------
-    X if Z is None, Z if X is None
-
-    Raises
-    ------
-    ValueError both X and Z are not None
-    """
-    if Z is None:
-        return X
-    elif X is None:
-        msg = (
-            "argument Z will in transformers is deprecated since version 0.10.0 "
-            "and will be removed in version 0.11.0"
-        )
-        warnings.warn(msg, category=DeprecationWarning)
-        return Z
-    else:
-        raise ValueError("X and Z are aliases, at most one of them should be passed")
 
 
 class _SeriesToPrimitivesTransformer(BaseTransformer):
