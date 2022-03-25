@@ -29,6 +29,8 @@ class _DelegatedForecaster(BaseForecaster):
 
     Does NOT delegate get_params, set_params.
         get_params, set_params will hence use one additional nesting level by default.
+
+    Does NOT delegate or copy tags, this should be done in a child class if required.
     """
 
     _delegate_name = "estimator_"
