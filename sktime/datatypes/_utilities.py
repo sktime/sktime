@@ -168,6 +168,7 @@ GET_LATEST_WINDOW_SUPPORTED_MTYPES = [
     "numpy3D",
 ]
 
+
 def get_latest_window(obj, window_length=None):
     """Get cutoff = latest time point of time series or time series panel.
 
@@ -215,20 +216,17 @@ def get_latest_window(obj, window_length=None):
         else:
             return obj[-window_length:]
 
-    # pd.DataFrame(Series)
-    if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
+    # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
+    if isinstance(obj, pd.DataFrame):
         cutoff = get_cutoff(obj)
         window_start_excl = cutoff - window_length
-        time_indices = obj.index
+        
+        if not isinstance(obj.index, pd.MultiIndex):
+            time_indices = obj.index
+        else:
+            time_indices = obj.index.get_level_values(-1)
 
-        obj_subset = 
+        obj_subset = obj.iloc[time_indices > window_start_excl]
+        return convert_to(obj_subset, obj_in_mtype)
 
-    # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
-    if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
-        cutoff = get_cutoff(obj)
-        window_start_excl = cutoff - window_length
-        time_indices = obj.index.get_level_values(-1)
-
-        obj_subset = 
-
-    return convert_to(obj_subset, obj_in_mtype)
+    return obj
