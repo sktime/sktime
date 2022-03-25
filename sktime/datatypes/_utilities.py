@@ -103,6 +103,7 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         note: return_index=True may set freq attribute of time types to None
             return_index=False will typically preserve freq attribute
 
+    Returns
     -------
     cutoff_index : pandas compatible index element (if return_index=False)
         pd.Index of length 1 (if return_index=True)
@@ -169,11 +170,13 @@ GET_LATEST_WINDOW_SUPPORTED_MTYPES = [
 ]
 
 
-def get_latest_window(obj, window_length=None):
-    """Get cutoff = latest time point of time series or time series panel.
+def get_window(obj, window_length=None, lag=0):
+    """Slice obj to the time index window with given length and lag.
 
-    Assumptions on obj are not checked, these should be validated separately.
-    Function may return unexpected results without prior validation.
+    Returns time series or time series panel with time indices
+        strictly greater than cutoff - lag - window_length, and
+        equal or less than cutoff - lag.
+    Cutoff if of obj, as determined by get_cutoff.
 
     Parameters
     ----------
@@ -182,17 +185,17 @@ def get_latest_window(obj, window_length=None):
             pd.Series, pd.DataFrame, np.ndarray, of Series scitype
             pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
             pd_multiindex_hier, of Hierarchical scitype
-    cutoff : int, optional, default=0
-        current cutoff, used to offset index if obj is np.ndarray
-    return_index : bool, optional, default=False
-        whether a pd.Index object should be returned (True)
-            or a pandas compatible index element (False)
-        note: return_index=True may set freq attribute of time types to None
-            return_index=False will typically preserve freq attribute
+    window_length : int or timedelta, optional, default=-inf
+        must be int if obj is int indexed, timedelta if datetime indexed
+        length of the window to slice to. Default = window of infinite size
+    lag : int or timedelta, optional, default = 0
+        must be int if obj is int indexed, timedelta if datetime indexed
+        lag of the latest time in the window, with respect to cutoff of obj
 
+    Returns
     -------
-    cutoff_index : pandas compatible index element (if return_index=False)
-        pd.Index of length 1 (if return_index=True)
+    obj sub-set to time indices in the semi-open interval
+        (cutoff - window_length - lag, cutoff - lag)
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
@@ -211,22 +214,29 @@ def get_latest_window(obj, window_length=None):
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
         obj_len = len(obj)
-        if window_length >= obj_len:
-            return obj
+        window_start = max(- window_length - lag, - obj_len)
+        window_end = max(- lag, - obj_len)
+        if window_end == 0:
+            return obj[window_start:]
         else:
-            return obj[-window_length:]
+            return obj[window_start:window_end]
 
     # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame):
         cutoff = get_cutoff(obj)
-        window_start_excl = cutoff - window_length
-        
+        win_start_excl = cutoff - window_length - lag
+        win_end_incl = cutoff - lag
+
         if not isinstance(obj.index, pd.MultiIndex):
             time_indices = obj.index
         else:
             time_indices = obj.index.get_level_values(-1)
 
-        obj_subset = obj.iloc[time_indices > window_start_excl]
+        win_select = (time_indices > win_start_excl) & (time_indices <= win_end_incl)
+        obj_subset = obj.iloc[win_select]
+
         return convert_to(obj_subset, obj_in_mtype)
 
-    return obj
+    raise ValueError(
+        "bug in get_latest_window, unreachable condition, ifs should be exhaustive"
+    )
