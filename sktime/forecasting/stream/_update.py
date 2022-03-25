@@ -128,7 +128,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
             if refit_window_size is not None or refit_window_lag != 0:
                 y = get_window(y, window_length=refit_window_size, lag=refit_window_lag)
                 X = get_window(X, window_length=refit_window_size, lag=refit_window_lag)
-                fh = self.fh
+                fh = self._fh
             return estimator._fit(y=y, X=X, fh=fh, update_params=update_params)
         else:
             return estimator._update(y=y, X=X, update_params=update_params)
