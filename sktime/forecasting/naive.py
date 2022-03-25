@@ -124,7 +124,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
-        elif strategy == "last":
+        elif strategy == "last" or (strategy == "drift" and self.window_length_ == 1):
             if sp == 1:
                 last_valid_value = last_window[
                     (~np.isnan(last_window))[0::sp].cumsum().argmax()
@@ -419,7 +419,7 @@ class NaiveVariance(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> variance_forecaster = NaiveVariance(forecaster)
