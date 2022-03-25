@@ -8,7 +8,6 @@ from sktime.classification.dictionary_based import (
     WEASEL,
     BOSSEnsemble,
     ContractableBOSS,
-    IndividualBOSS,
     TemporalDictionaryEnsemble,
 )
 from sktime.classification.distance_based import (
@@ -126,15 +125,17 @@ if __name__ == "__main__":
             ColumnEnsembleClassifier(
                 estimators=[
                     (
-                        "TSF",
-                        TimeSeriesForestClassifier(n_estimators=3, random_state=0),
+                        "cBOSS",
+                        ContractableBOSS(
+                            n_parameter_samples=4, max_ensemble_size=2, random_state=0
+                        ),
                         [5],
                     ),
                     (
                         "CIF",
                         CanonicalIntervalForest(
                             n_estimators=2,
-                            n_intervals=2,
+                            n_intervals=4,
                             att_subsample_size=4,
                             random_state=0,
                         ),
