@@ -467,8 +467,8 @@ if __name__ == "__main__":
         "ShapeletTransformClassifier - UnitTest",
         _reproduce_classification_unit_test(
             ShapeletTransformClassifier(
-                estimator=RotationForest(n_estimators=5),
-                max_shapelets=20,
+                estimator=RotationForest(n_estimators=4),
+                max_shapelets=30,
                 n_shapelet_samples=200,
                 batch_size=50,
                 random_state=0,
@@ -479,8 +479,8 @@ if __name__ == "__main__":
         "ShapeletTransformClassifier - BasicMotions",
         _reproduce_classification_basic_motions(
             ShapeletTransformClassifier(
-                estimator=RotationForest(n_estimators=5),
-                max_shapelets=20,
+                estimator=RotationForest(n_estimators=4),
+                max_shapelets=30,
                 n_shapelet_samples=200,
                 batch_size=50,
                 random_state=0,

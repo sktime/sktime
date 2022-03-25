@@ -18,8 +18,8 @@ def test_stc_on_unit_test_data():
 
     # train STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(n_estimators=5),
-        max_shapelets=20,
+        estimator=RotationForest(n_estimators=4),
+        max_shapelets=30,
         n_shapelet_samples=200,
         batch_size=50,
         random_state=0,
@@ -44,8 +44,8 @@ def test_contracted_stc_on_unit_test_data():
 
     # train contracted STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(contract_max_n_estimators=5),
-        max_shapelets=20,
+        estimator=RotationForest(contract_max_n_estimators=4),
+        max_shapelets=30,
         time_limit_in_minutes=0.25,
         contract_max_n_shapelet_samples=200,
         batch_size=50,
@@ -63,8 +63,8 @@ def test_stc_on_basic_motions():
 
     # train STC
     stc = ShapeletTransformClassifier(
-        estimator=RotationForest(n_estimators=5),
-        max_shapelets=20,
+        estimator=RotationForest(n_estimators=4),
+        max_shapelets=30,
         n_shapelet_samples=200,
         batch_size=50,
         random_state=0,
@@ -79,28 +79,28 @@ def test_stc_on_basic_motions():
 stc_unit_test_probas = np.array(
     [
         [0.0, 1.0],
-        [0.4, 0.6],
+        [1.0, 0.0],
         [0.0, 1.0],
         [1.0, 0.0],
         [1.0, 0.0],
         [1.0, 0.0],
-        [0.8, 0.2],
-        [0.2, 0.8],
+        [0.75, 0.25],
+        [0.0, 1.0],
         [1.0, 0.0],
-        [0.8, 0.2],
+        [0.75, 0.25],
     ]
 )
 stc_basic_motions_probas = np.array(
     [
-        [0.0, 0.2, 0.4, 0.4],
-        [0.6, 0.0, 0.0, 0.4],
-        [0.2, 0.0, 0.8, 0.0],
-        [0.6, 0.2, 0.2, 0.0],
-        [0.0, 0.2, 0.2, 0.6],
-        [0.0, 0.0, 0.4, 0.6],
-        [0.8, 0.0, 0.2, 0.0],
-        [0.0, 0.2, 0.8, 0.0],
-        [0.6, 0.4, 0.0, 0.0],
-        [0.6, 0.2, 0.2, 0.0],
+        [0.0, 0.0, 0.25, 0.75],
+        [0.75, 0.25, 0.0, 0.0],
+        [0.25, 0.25, 0.25, 0.25],
+        [0.5, 0.25, 0.25, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 0.0, 0.5, 0.5],
+        [0.5, 0.25, 0.0, 0.25],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.5, 0.5, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
     ]
 )
