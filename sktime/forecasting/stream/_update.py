@@ -144,6 +144,6 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         forecaster = TrendForecaster.create_test_instance()
 
         param1 = {"forecaster": forecaster}
-        param2 = {"forecaster": forecaster, "refit_interval": 2, "refit_window": 3}
+        param2 = {"forecaster": forecaster, "refit_interval": 2, "refit_window_size": 3}
 
         return [param1, param2]
