@@ -9,7 +9,7 @@ import pytest
 from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.window_summarizer import WindowSummarizer
+from sktime.transformations.series.summarize import WindowSummarizer
 
 
 def check_eval(test_input, expected):

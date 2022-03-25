@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp
@@ -106,7 +105,7 @@ class _TbatsAdapter(BaseForecaster):
 
         return self
 
-    def _predict(self, fh, X, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
@@ -115,22 +114,13 @@ class _TbatsAdapter(BaseForecaster):
             Forecasting horizon
         X : (default=None)
             NOT USED BY TBATS
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float, optional (default=0.05)
-            Interpreted as "Confidence Interval" = 1 - alpha
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
-        if return_pred_int:
-            return self._tbats_forecast_with_interval(fh, alpha)
-        else:
-            return self._tbats_forecast(fh)
+        return self._tbats_forecast(fh)
 
     def _tbats_forecast(self, fh):
         """TBATS forecast without confidence interval.
