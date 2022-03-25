@@ -10,8 +10,9 @@ How to use this:
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-[- ensure interface compatibility by testing ??? no tests yet, fill this in later]
+- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     transforming    - _transform(self, X, X2=None)
