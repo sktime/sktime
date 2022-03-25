@@ -343,9 +343,9 @@ class ShapeletTransformClassifier(BaseClassifier):
             }
         elif parameter_set == "results_comparison":
             return {
-                "estimator": RotationForest(n_estimators=4),
+                "estimator": RotationForest(n_estimators=3),
                 "n_shapelet_samples": 200,
-                "max_shapelets": 30,
+                "max_shapelets": 40,
                 "batch_size": 50,
             }
         else:

@@ -381,12 +381,12 @@ class HIVECOTEV1(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+        from sklearn.ensemble import RandomForestClassifier
 
         if parameter_set == "default":
             return {
                 "stc_params": {
-                    "estimator": RotationForest(n_estimators=1),
+                    "estimator": RandomForestClassifier(n_estimators=1),
                     "n_shapelet_samples": 5,
                     "max_shapelets": 5,
                     "batch_size": 5,
@@ -398,7 +398,7 @@ class HIVECOTEV1(BaseClassifier):
         elif parameter_set == "results_comparison":
             return {
                 "stc_params": {
-                    "estimator": RotationForest(n_estimators=3),
+                    "estimator": RandomForestClassifier(n_estimators=3),
                     "n_shapelet_samples": 50,
                     "max_shapelets": 5,
                     "batch_size": 10,

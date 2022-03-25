@@ -253,7 +253,6 @@ class BaseClassifier(BaseEstimator, ABC):
         return accuracy_score(y, self.predict(X), normalize=True)
 
     @classmethod
-    @abstractmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
 
@@ -274,7 +273,7 @@ class BaseClassifier(BaseEstimator, ABC):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        ...
+        return super().get_test_params(parameter_set=parameter_set)
 
     @abstractmethod
     def _fit(self, X, y):
