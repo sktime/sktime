@@ -97,7 +97,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # we only use the first estimator instance for testing
         estimator_instance = clone(
-            estimator_class.create_test_instance(test_params="result_comparison")
+            estimator_class.create_test_instance(test_params="results_comparison")
         )
         # set random seed if possible
         if "random_seed" in estimator_instance.get_params().keys():
@@ -129,7 +129,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # we only use the first estimator instance for testing
         estimator_instance = clone(
-            estimator_class.create_test_instance(test_params="result_comparison")
+            estimator_class.create_test_instance(test_params="results_comparison")
         )
         # set random seed if possible
         if "random_seed" in estimator_instance.get_params().keys():

@@ -465,8 +465,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
 
         Returns
         -------
@@ -600,8 +606,14 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         )
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return. The method must be overridden
+            to have anything other than the default testing parameters as an option.
 
         Returns
         -------
