@@ -429,14 +429,6 @@ class BaseForecaster(BaseEstimator):
             if True, computes covariance matrix forecast.
             if False, computes marginal variance forecasts.
 
-
-        Returns
-        -------
-        pred_var : pd.DataFrame
-            Column names are exactly those of `y` passed in `fit`/`update`.
-                For nameless formats, column index will be a RangeIndex.
-            Row index is fh. Entries are variance forecasts, for var in col index.
-
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on `cov` variable
