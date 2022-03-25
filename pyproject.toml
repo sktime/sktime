@@ -85,6 +85,7 @@ binder = [
 ]
 
 docs = [
+    "jinja2<3.0.3",
     "jupyter",
     "myst-parser",
     "nbsphinx>=0.8.6",
