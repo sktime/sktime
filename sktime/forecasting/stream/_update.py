@@ -6,16 +6,16 @@ __author__ = ["fkiraly"]
 
 from sklearn import clone
 
-from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class UpdateRefitsEvery(BaseForecaster):
+class UpdateRefitsEvery(_DelegatedForecaster):
     """Refits periodically when update is called.
 
     If update is called with update_params=True and refit_interval or more has
-        elapsed since the last fit, refits the forecaster instead.
-        refit_window controls the lookback window on which refitting is done.
+        elapsed since the last fit, refits the forecaster instead (call to fit).
+        refit_window controls the lookback window on which refitting is done
+            refit data is cutoff (inclusive) to cutoff minus refit_window (exclusive)
 
     Parameters
     ----------
@@ -116,3 +116,24 @@ class UpdateRefitsEvery(BaseForecaster):
             return estimator._fit(y=y, X=X, update_params=update_params)
         else:
             return estimator._update(y=y, X=X, update_params=update_params)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.forecasting.trend import TrendForecaster
+
+        forecaster = TrendForecaster.create_test_instance()
+
+        param1 = {"forecaster": forecaster}
+        param2 = {"forecaster": forecaster, "refit_interval": 2, "refit_window": 3}
+
+        return [param1, param2]
