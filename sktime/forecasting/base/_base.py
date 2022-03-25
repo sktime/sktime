@@ -17,8 +17,10 @@ Convenience methods:
     forecast scores    - score(y, X=None, fh=None)
 
 Optional, special capability methods (check capability tags if available):
-    forecast intervals - predict_interval(fh=None, X=None, coverage=0.90)
-    forecast quantiles - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
+    forecast intervals    - predict_interval(fh=None, X=None, coverage=0.90)
+    forecast quantiles    - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
+    forecast variance     - predict_var(fh=None, X=None, cov=False)
+    distribution forecast - predict_proba(fh=None, X=None, marginal=True)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
@@ -404,11 +406,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
-    def predict_var(
-        self,
-        fh=None,
-        X=None,
-    ):
+    def predict_var(self, fh=None, X=None, cov=False):
         """Compute/return variance forecasts.
 
         State required:
@@ -427,6 +425,10 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
 
         Returns
         -------
@@ -434,8 +436,24 @@ class BaseForecaster(BaseEstimator):
             Column names are exactly those of `y` passed in `fit`/`update`.
                 For nameless formats, column index will be a RangeIndex.
             Row index is fh. Entries are variance forecasts, for var in col index.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh. Entries are variance forecasts, for var in col index.
                 A variance forecast for given variable and fh index is a predicted
                     variance for that variable and index, given observed data.
+
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
@@ -478,14 +496,22 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
 
         Returns
         -------
         pred_dist : tfp Distribution object
-            batch shape is 1D and same length as fh
-            event shape is 1D, with length equal to number of variables being forecast
-            i-th (batch) distribution is forecast for i-th entry of fh
-            j-th (event) component is j-th variable, same order as y in `fit`/`update`
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         msg = (
             "tensorflow-probability must be installed for fully probabilistic forecasts"
@@ -1595,14 +1621,10 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
-    def _predict_var(
-        self,
-        fh=None,
-        X=None,
-    ):
+    def _predict_var(self, fh=None, X=None, cov=False):
         """Compute/return variance forecasts.
 
-        private _predict_proba containing the core logic, called from predict_var
+        private _predict_var containing the core logic, called from predict_var
 
         Parameters
         ----------
@@ -1611,13 +1633,23 @@ class BaseForecaster(BaseEstimator):
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
 
         Returns
         -------
-        pred_var : pd.DataFrame
-            Column names are exactly those of `y` passed in `fit`/`update`.
-                For nameless formats, column index will be a RangeIndex.
-            Row index is fh. Entries are variance forecasts, for var in col index.
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh. Entries are variance forecasts, for var in col index.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh.
+                Entries are (co-)variance forecasts, for vars in col index, and
+                    covariance between time index in row and col.
         """
         from scipy.stats import norm
 
@@ -1690,14 +1722,22 @@ class BaseForecaster(BaseEstimator):
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
 
         Returns
         -------
         pred_dist : tfp Distribution object
-            batch shape is 2D, of shape [len(fh), 1]
-            event shape is 1D, with length equal to number of variables being forecast
-            i-th (batch) distribution is forecast for i-th entry of fh
-            j-th (event) component is j-th variable, same order as y in `fit`/`update`
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         import tensorflow_probability as tfp
 
