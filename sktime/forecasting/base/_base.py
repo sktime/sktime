@@ -1783,6 +1783,22 @@ class BaseForecaster(BaseEstimator):
                     y_pred = (y_pred, y_pred_int)
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
+
+                for i in range(len(y_preds)):
+                    if not return_pred_int:
+                        y_preds[i] = convert_to(
+                            y_preds[i],
+                            self._y_mtype_last_seen,
+                            store=self._converter_store_y,
+                            store_behaviour="freeze",
+                        )
+                    else:
+                        y_preds[i][0] = convert_to(
+                            y_preds[i][0],
+                            self._y_mtype_last_seen,
+                            store=self._converter_store_y,
+                            store_behaviour="freeze",
+                        )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     # TODO: remove in v0.11.0
@@ -1839,9 +1855,12 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
     ytype = type(y_preds[0])
     if isinstance(y_preds[0], pd.DataFrame):
         ycols = y_preds[0].columns
-    for y_pred in y_preds:
+    for i, y_pred in enumerate(y_preds):
         if not isinstance(y_pred, ytype):
-            raise ValueError("all elements of y_preds must be of the same type")
+            raise ValueError(
+                "all elements of y_preds must be of the same type, "
+                f"but y_pred[0] is {ytype} and y_pred[{i}] is {type(y_pred)}"
+            )
         if not len(y_pred) == ylen:
             raise ValueError("all elements of y_preds must be of the same length")
     if isinstance(y_preds[0], pd.DataFrame):
