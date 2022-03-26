@@ -28,31 +28,54 @@ class WindowSummarizer(BaseTransformer):
         Specifies which columns in X to target for applying the window functions.
         ``None`` will target the first column
     lag_config: dict of str and list, optional (default = dict containing first lag)
-        Dictionary specifying as key the `name` of the columns to be
-        generated. As value the dict specifies the type of function via the argument
-        `summarize` as well as the length 2 list argument `window`. The list `window`
-        will be resolved by the internal function _window_feature to `window length`
-        - the length of the window across which to apply the function - as well as
-        the argument `starting_at`, which will specify how far back in the past
-        the window will start.
+        Dictionary specifying as key the type of function to be used and as value
+        the argument `window`.
+        For all keys other than `lag`, the argument `window` is a length 2 list
+        containing the integer `starting_at`, which specifies how far back
+        in the past the window will start, and the integer `window length`,
+        which will give the length of the window across which to apply the function.
+        For ease of notation, for the key "lag", only a single integer
+        specifying the `starting_at` argument will be provided.
 
-        For example for `window = [4, 3]`, we have a `window_length` of 4 and
-        `starting_at` of 3 to target the four days prior to the last three days.
-        Here is a representation of the selected window:
+        Please see blow a graphical representation of the logic using the following
+        symbols:
 
-        |-------------------------------|
-        | x * * * * * * * x x x z - - - |
-        |-------------------------------|
-
-        ``-`` = future observations.
-        ``z`` = current observation, to which the window should be relative to.
-        ``x`` = past observations.
+        ``z`` = unobserved future observations (here a forecasting horizon of 2).
+        ``x`` = past observations that are not selected.
         ``*`` = selected window of past observations across which summarizer
                 function will be applied.
 
-        key (resolved to name) : str, name of the derived features, will be appended by
-                window_length and starting_at parameter.
-        first value (resolved to summarizer): either custom function call (to be
+        For `window = [1, 3]`, we have a `starting_at` of 1 and
+        `window_length` of 3 to target the three last days that were observed.
+
+        |-------------------------- |
+        | x x x x x x x x * * * z z |
+        |---------------------------|
+
+        For `window = [4, 5]`, we have a `starting_at` of 4 and
+        `window_length` of 5 to discard the three latest observations, start
+        at the 4th observation and cover a total of 5 observations.
+
+        |-------------------------- |
+        | x x x * * * * * x x x z z |
+        |---------------------------|
+
+        Special case ´lag´: Since lags are frequently used and window length is
+        redundant, a special notation will be used for lags. You need to provide a list
+        of `starting_at` values, and `window_length` is not available.
+        So `window = [1]` will result in the first lag:
+
+        |-------------------------- |
+        | x x x x x x x x x x * z z |
+        |---------------------------|
+
+        And `window = [1, 4]` will result in the first and fourth lag:
+
+        |-------------------------- |
+        | x x x x x x x * x x * z z |
+        |---------------------------|
+
+        key: either custom function call (to be
                 provided by user) or str corresponding to native pandas window function:
                 * "sum",
                 * "mean",
@@ -67,17 +90,18 @@ class WindowSummarizer(BaseTransformer):
                 * "skew",
                 * "sem"
                 See also: https://pandas.pydata.org/docs/reference/window.html.
+            The column generated will be named after the key provided, followed by the
+            starting_at parameter and the window_length (if not a lag).
         second value (window): list of integers
-            List containg window_length and starting_at parameters.
+            List containg starting_at and window_length parameters.
         truncate: str, optional (default = None)
             Defines how to deal with NAs that were created as a result of applying the
             functions in the lag_config dict across windows that are longer than
             the remaining history of data.
-            For example a lag config of [7, 14] - a window_length of 7 starting at 14
-            observations in the past - cannot be fully applied for the first 20
+            For example a lag config of [14, 7] cannot be fully applied for the first 20
             observations of the targeted column.
-            A lag_config of [[7, 14], [0, 28]] cannot be correctly applied for the
-            first 21 resp. 28 observations of  the targeted column. Possible values
+            A lag_config of [[8, 14], [1, 28]] cannot be correctly applied for the
+            first 21 resp. 28 observations of the targeted column. Possible values
             to deal with those NAs:
                 * None
                 * "bfill"
@@ -91,11 +115,8 @@ class WindowSummarizer(BaseTransformer):
     truncate_start : int
         See section Parameters - truncate for a more detailed explanation of truncation
         as a result of applying windows of certain lengths across past observations.
-        A lag_config of [[7, 14], [0, 28]] cannot be correctly applied for the
-        first 21 resp. 28 observations of  the targeted column. truncate_start will
-        give the maximum og observations that are filled with NAs across all arguments
-        of the lag_config, in this case 28.
-
+        Truncate_start will give the maximum of observations that are filled with NAs
+        across all arguments of the lag_config when truncate is set to None.
 
     Returns
     -------
@@ -116,9 +137,9 @@ class WindowSummarizer(BaseTransformer):
     >>> y = load_airline()
     >>> kwargs = {
     ...     "lag_config": {
-    ...         "lag": ["lag", [[1, 0]]],
-    ...         "mean": ["mean", [[3, 0], [12, 0]]],
-    ...         "std": ["std", [[4, 0]]],
+    ...         "lag": [1],
+    ...         "mean": [[1, 3], [3, 6]],
+    ...         "std": [[1, 4]],
     ...     }
     ... }
     >>> transformer = WindowSummarizer(**kwargs)
@@ -198,13 +219,12 @@ class WindowSummarizer(BaseTransformer):
         Attributes
         ----------
         truncate_start : int
-            See section Parameters - truncate for a more detailed explanation of
-            truncation as a result of applying windows of certain lengths across past
-            observations.
-            A lag_config of [[7, 14], [0, 28]] cannot be correctly applied for the
-            first 21 resp. 28 observations of  the targeted column. truncate_start will
-            give the maximum og observations that are filled with NAs across all
-            arguments of the lag_config, in this case 28.
+            See section class WindowSummarizer - Parameters - truncate for a more
+            detailed explanation of truncation as a result of applying windows of
+            certain lengths across past observations.
+            Truncate_start will give the maximum of observations that are filled
+            with NAs across all arguments of the lag_config when truncate is
+            set to None.
 
         Returns
         -------
@@ -229,25 +249,34 @@ class WindowSummarizer(BaseTransformer):
         else:
             self._target_cols = self.target_cols
 
+        # Convert lag config dictionary to pandas dataframe
         if self.lag_config is None:
             func_dict = pd.DataFrame(
                 {
-                    "lag": [1, 2, 3],
+                    "lag": [1],
                 }
             ).T.reset_index()
         else:
             func_dict = pd.DataFrame.from_dict(
                 self.lag_config, orient="index"
             ).reset_index()
-        func_dict = pd.melt(func_dict, id_vars="index", value_name="window").drop(
-            "variable", axis=1
+
+        func_dict = pd.melt(
+            func_dict, id_vars="index", value_name="window", ignore_index=False
         )
+        func_dict.sort_index(inplace=True)
+        func_dict.drop("variable", axis=1, inplace=True)
         func_dict.rename(
             columns={"index": "summarizer"},
             inplace=True,
         )
-
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
+        func_dict = func_dict.dropna(axis=0, how="any")
+        # Identify lags (since they can follow special notation)
+        lags = func_dict["summarizer"] == "lag"
+        # Convert lags to default list notation with window_length 1
+        boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+        func_dict.loc[lags, "window"] = boost_lag
+        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):
@@ -305,22 +334,22 @@ class WindowSummarizer(BaseTransformer):
         """
         params1 = {
             "lag_config": {
-                "lag": ["lag", [[1, 0]]],
-                "mean": ["mean", [[3, 0], [12, 0]]],
-                "std": ["std", [[4, 0]]],
+                "lag": [1],
+                "mean": [[1, 3], [1, 12]],
+                "std": [[1, 4]],
             }
         }
 
         params2 = {
             "lag_config": {
-                "lag": ["lag", [[3, 0], [6, 0]]],
+                "lag": [3, 6],
             }
         }
 
         params3 = {
             "lag_config": {
-                "mean": ["mean", [[7, 0], [7, 7]]],
-                "covar_feature": ["cov", [[28, 0]]],
+                "mean": [[1, 7], [8, 7]],
+                "cov": [[1, 28]],
             }
         }
 
@@ -436,13 +465,23 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     if bfill is True:
         feat = feat.fillna(method="bfill")
 
-    feat.rename(
-        columns={
-            feat.columns[0]: "name" + "_" + "_".join([str(item) for item in window])
-        },
-        inplace=True,
-    )
+    if callable(summarizer):
+        name = summarizer.__name__
+    else:
+        name = summarizer
 
+    if name == "lag":
+        feat.rename(
+            columns={feat.columns[0]: name + "_" + str(window[0])},
+            inplace=True,
+        )
+    else:
+        feat.rename(
+            columns={
+                feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
+            },
+            inplace=True,
+        )
     return feat
 
 
