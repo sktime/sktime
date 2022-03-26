@@ -232,19 +232,22 @@ class WindowSummarizer(BaseTransformer):
         if self.lag_config is None:
             func_dict = pd.DataFrame(
                 {
-                    "lag": ["lag", [[1, 0]]],
+                    "lag": [1, 2, 3],
                 }
             ).T.reset_index()
         else:
-            func_dict = pd.DataFrame(self.lag_config).T.reset_index()
-
+            func_dict = pd.DataFrame.from_dict(
+                self.lag_config, orient="index"
+            ).reset_index()
+        func_dict = pd.melt(func_dict, id_vars="index", value_name="window").drop(
+            "variable", axis=1
+        )
         func_dict.rename(
-            columns={"index": "name", 0: "summarizer", 1: "window"},
+            columns={"index": "summarizer"},
             inplace=True,
         )
-        func_dict = func_dict.explode("window")
-        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
 
+        self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1]).max()
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):
@@ -355,7 +358,7 @@ def get_name_list(Z):
     return Z_name
 
 
-def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
+def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """Compute window features and lag.
 
     Apply summarizer passed over a certain window
@@ -383,8 +386,8 @@ def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
         List containg window_length and starting_at parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
-    window_length = window[0]
-    starting_at = window[1] + 1
+    starting_at = window[0]
+    window_length = window[1]
 
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
@@ -433,12 +436,12 @@ def _window_feature(Z, name=None, summarizer=None, window=None, bfill=False):
     if bfill is True:
         feat = feat.fillna(method="bfill")
 
-    feat.rename(
-        columns={
-            feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
-        },
-        inplace=True,
-    )
+    # feat.rename(
+    #     columns={
+    #         feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
+    #     },
+    #     inplace=True,
+    # )
 
     return feat
 
