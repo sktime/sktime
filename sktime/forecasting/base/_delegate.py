@@ -66,7 +66,7 @@ class _DelegatedForecaster(BaseForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        estimator._fit(y=y, fh=fh, X=X)
+        estimator.fit(y=y, fh=fh, X=X)
         return self
 
     def _predict(self, fh, X=None):
@@ -95,7 +95,7 @@ class _DelegatedForecaster(BaseForecaster):
             Point predictions
         """
         estimator = self._get_delegate()
-        return estimator._predict(fh=fh, X=X)
+        return estimator.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -132,7 +132,7 @@ class _DelegatedForecaster(BaseForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        estimator._update(y=y, X=X, update_params=update_params)
+        estimator.update(y=y, X=X, update_params=update_params)
         return self
 
     def _update_predict_single(self, y, fh, X=None, update_params=True):
@@ -143,7 +143,7 @@ class _DelegatedForecaster(BaseForecaster):
         to implement more efficient updating algorithms when available.
         """
         estimator = self._get_delegate()
-        return estimator._update_predict_single(
+        return estimator.update_predict_single(
             y=y, fh=fh, X=X, update_params=update_params
         )
 
@@ -180,7 +180,7 @@ class _DelegatedForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         estimator = self._get_delegate()
-        return estimator._predict_quantiles(fh=fh, X=X, alpha=alpha)
+        return estimator.predict_quantiles(fh=fh, X=X, alpha=alpha)
 
     def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
@@ -219,7 +219,7 @@ class _DelegatedForecaster(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         estimator = self._get_delegate()
-        return estimator._predict_interval(fh=fh, X=X, coverage=coverage)
+        return estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -252,7 +252,7 @@ class _DelegatedForecaster(BaseForecaster):
                     covariance between time index in row and col.
         """
         estimator = self._get_delegate()
-        return estimator._predict_var(fh=fh, X=X, cov=cov)
+        return estimator.predict_var(fh=fh, X=X, cov=cov)
 
     def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
@@ -284,4 +284,4 @@ class _DelegatedForecaster(BaseForecaster):
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
         estimator = self._get_delegate()
-        return estimator._predict_proba(fh=fh, X=X, marginal=marginal)
+        return estimator.predict_proba(fh=fh, X=X, marginal=marginal)

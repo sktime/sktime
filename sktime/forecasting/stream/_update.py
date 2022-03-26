@@ -83,7 +83,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         """
         self.last_fit_cutoff_ = self.cutoff
         estimator = self._get_delegate()
-        estimator._fit(y=y, fh=fh, X=X)
+        estimator.fit(y=y, fh=fh, X=X)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -130,9 +130,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
                 y = get_window(y, window_length=refit_window_size, lag=refit_window_lag)
                 X = get_window(X, window_length=refit_window_size, lag=refit_window_lag)
                 fh = self._fh
-            estimator._fit(y=y, X=X, fh=fh, update_params=update_params)
+            estimator.fit(y=y, X=X, fh=fh, update_params=update_params)
         else:
-            estimator._update(y=y, X=X, update_params=update_params)
+            estimator.update(y=y, X=X, update_params=update_params)
         return self
 
     @classmethod
