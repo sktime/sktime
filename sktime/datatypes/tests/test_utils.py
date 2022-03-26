@@ -64,7 +64,7 @@ def test_get_cutoff(scitype, mtype, return_index):
             assert len(cutoff) == 1
 
 
-@pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (3, 5), (4, 1)])
+@pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_window_output_type(scitype, mtype, window_length, lag):
     """Tests that get_window runs for all mtypes, and returns output of same mtype.

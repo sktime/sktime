@@ -12,6 +12,7 @@ import pytest
 
 from sktime.datatypes import check_is_mtype
 from sktime.exceptions import NotFittedError
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
     temporal_train_test_split,
@@ -424,6 +425,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             or by defaulting to each other and/or _predict_proba
         """
         f = estimator_instance
+        # we skip the _DelegatedForecaster, since it implements delegation methods
+        #   which may look like the method is implemented, but in fact it is not
+        if isinstance(f, _DelegatedForecaster):
+            return None
+
+        # check which methods are implemented
         implements_interval = f._has_implementation_of("_predict_interval")
         implements_quantiles = f._has_implementation_of("_predict_quantiles")
         implements_proba = f._has_implementation_of("_predict_proba")
@@ -432,14 +439,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if not pred_int_works and f.get_class_tag("capability:pred_int", False):
             raise ValueError(
-                f"{f.__name__} does not implement probabilistic forecasting, "
+                f"{type(f).__name__} does not implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
         if pred_int_works and not f.get_class_tag("capability:pred_int", False):
             raise ValueError(
-                f"{f.__name__} does implement probabilistic forecasting, "
+                f"{type(f).__name__} does implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to False incorrectly. '
                 'The flag "capability:pred_int" should instead be set to True.'
             )

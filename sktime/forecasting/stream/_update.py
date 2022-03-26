@@ -33,7 +33,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
     _delegate_name = "forecaster_"
 
-    _tags = {"fit_is_empty": False}
+    _tags = {"fit_is_empty": False, "requires-fh-in-fit": False}
 
     def __init__(
         self, forecaster, refit_interval=0, refit_window_size=None, refit_window_lag=0
