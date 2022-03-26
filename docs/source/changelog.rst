@@ -71,7 +71,7 @@ Fixed
 *  [BUG] Fixed crash of kmeans, medoids when empty clusters are generated (:pr:`2060`) :user:`chrisholder`
 
 Documentation
-~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~
 
 *  [DOC] fix broken link to CoC (:pr:`2104`) :user:`mikofski`
 *  [DOC] adding "troubleshooting" link in sktime installation instructions (:pr:`2121`) :user:`eenticott-shell`
@@ -97,10 +97,9 @@ Documentation
 
 
 Maintenance
-~~~~~~~~~~~ 
+~~~~~~~~~~~
 
 *  [MNT] Update release drafter (:pr:`2096`) :user:`lmmentel`
-*  Release 0.10.1 (:pr:`2097`) :user:`lmmentel`
 *  speed up EE tests and ColumnEnsemble example (:pr:`2124`) :user:`TonyBagnall`
 *  [ENH] test framework: test classes (general & forecasters) plus pytest xdist (:pr:`2142`) :user:`fkiraly`
 *  [MNT] add xfails in `test_plotting` until #2066 is resolved (:pr:`2144`) :user:`fkiraly`
