@@ -73,6 +73,7 @@ import pandas as pd
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._hierarchical import convert_dict_Hierarchical
 from sktime.datatypes._panel import convert_dict_Panel
+from sktime.datatypes._proba import convert_dict_Proba
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes._table import convert_dict_Table
@@ -83,6 +84,7 @@ convert_dict.update(convert_dict_Series)
 convert_dict.update(convert_dict_Panel)
 convert_dict.update(convert_dict_Hierarchical)
 convert_dict.update(convert_dict_Table)
+convert_dict.update(convert_dict_Proba)
 
 
 def convert(
@@ -99,9 +101,12 @@ def convert(
     ----------
     obj : object to convert - any type, should comply with mtype spec for as_scitype
     from_type : str - the type to convert "obj" to, a valid mtype string
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
     to_type : str - the type to convert "obj" to, a valid mtype string
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
     as_scitype : str, optional - name of scitype the object "obj" is considered as
         default = inferred from from_type
+        valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
     store : optional, reference of storage for lossy conversions, default=None (no ref)
         is updated by side effect if not None and store_behaviour="reset" or "update"
     store_behaviour : str, optional, one of None (default), "reset", "freeze", "update"
@@ -183,9 +188,11 @@ def convert_to(
     ----------
     obj : object to convert - any type, should comply with mtype spec for as_scitype
     to_type : str - the type to convert "obj" to, a valid mtype string
-              or list - admissible types for conversion to
+            or list of str, this specifies admissible types for conversion to
+        valid mtype strings, with explanation, are in datatypes.MTYPE_REGISTER
     as_scitype : str, optional - name of scitype the object "obj" is considered as
         pre-specifying the scitype reduces the number of checks done in type inference
+        valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
         default = inferred from mtype of obj, which is in turn inferred internally
     store : reference of storage for lossy conversions, default=None (no store)
         is updated by side effect if not None and store_behaviour="reset" or "update"
@@ -271,6 +278,7 @@ def _conversions_defined(scitype: str):
     Parameters
     ----------
     scitype: str - name of scitype for which conversions are queried
+        valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
 
     Returns
     -------

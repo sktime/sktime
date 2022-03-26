@@ -33,6 +33,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 
 
@@ -70,7 +71,49 @@ class BaseClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+
+        # required for compatability with some sklearn interfaces
+        # i.e. CalibratedClassifierCV
+        self._estimator_type = "classifier"
+
         super(BaseClassifier, self).__init__()
+
+    def __rmul__(self, other):
+        """Magic * method, return concatenated ClassifierPipeline, transformers on left.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        """
+        from sktime.classification.compose import ClassifierPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # ClassifierPipeline already has the dunder method defined
+            if isinstance(self, ClassifierPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return ClassifierPipeline(classifier=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a ClassifierPipeline
+            else:
+                return ClassifierPipeline(classifier=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
 
     def fit(self, X, y):
         """Fit time series classifier to training data.
@@ -183,6 +226,7 @@ class BaseClassifier(BaseEstimator, ABC):
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
+
         return self._predict_proba(X)
 
     def score(self, X, y) -> float:

@@ -7,10 +7,9 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("hcrystalball")
+_check_soft_dependencies("hcrystalball", severity="warning")
 
 
 def _check_fh(fh, cutoff):
@@ -113,6 +112,7 @@ class HCrystalBallForecaster(BaseForecaster):
     }
 
     def __init__(self, model):
+        _check_soft_dependencies("hcrystalball", severity="error", object=self)
         self.model = model
         super(HCrystalBallForecaster, self).__init__()
 
@@ -138,7 +138,7 @@ class HCrystalBallForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Make forecasts for the given forecast horizon.
 
         Parameters
@@ -147,16 +147,11 @@ class HCrystalBallForecaster(BaseForecaster):
             The forecast horizon with the steps ahead to predict
         X : pd.DataFrame, optional (default=None)
             Exogenous variables (ignored)
-        return_pred_int : bool, optional (default=False)
-            Return the prediction intervals for the forecast.
-        alpha : float or list, optional (default=0.95)
-            If alpha is iterable, multiple intervals will be calculated.
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions for the forecast
-        y_pred_int : pd.DataFrame
         """
         X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
         y_pred = self.model_.predict(X=X_pred)

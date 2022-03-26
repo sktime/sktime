@@ -50,7 +50,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 # test _y setting
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_oh_setting(Forecaster):
-    """Check cuttoff and _y."""
+    """Check cutoff and _y."""
     # check _y and cutoff is None after construction
     f = Forecaster.create_test_instance()
     n_columns_list = _get_n_columns(f.get_tag("scitype:y"))

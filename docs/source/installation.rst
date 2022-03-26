@@ -219,7 +219,7 @@ In the ``anaconda prompt`` terminal:
 
    If you fail to satisfy all the requirements see the `troubleshooting section <https://www.sktime.org/en/stable/installation.html#release-versions-troubleshooting>`_.
 
-5. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
+5. Build an editable version of sktime :code:`pip install -e .[all_extras, dev]`
 6. If everything has worked you should see message "successfully installed sktime"
 
 Some users have experienced issues when installing NumPy, particularly version 1.19.4.

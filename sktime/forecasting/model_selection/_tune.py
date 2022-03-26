@@ -15,7 +15,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -75,12 +74,10 @@ class BaseGridSearch(BaseForecaster):
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
-        return self.best_forecaster_._predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.best_forecaster_._predict(fh=fh, X=X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -369,13 +366,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
+    >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
@@ -392,7 +389,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         Advanced model meta-tuning (model selection) with multiple forecasters
         together with hyper-parametertuning at same time using sklearn notation:
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -400,12 +397,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.transformations.series.impute import Imputer
-    >>> y = load_airline()
+    >>> y = load_shampoo_sales()
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),
     ...     ("forecaster", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
-    ...     initial_window=48,
+    ...     initial_window=24,
     ...     step_length=12,
     ...     start_with_window=True,
     ...     fh=[1,2,3])
