@@ -590,6 +590,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that fh different in fit and predict raises correct error."""
         f = estimator_instance
+        # if fh is not required in fit, can be overwritten, should not raise error
+        if not f.get_tag("requires-fh-in-fit"):
+            return None
         y_train = _make_series(n_columns=n_columns)
         f.fit(y_train, fh=FH0)
         np.testing.assert_array_equal(f.fh, FH0)
