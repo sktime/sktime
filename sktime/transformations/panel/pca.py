@@ -41,7 +41,7 @@ class PCATransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "univariate-only": False,
-        "fit-in-transform": False,
+        "fit_is_empty": False,
     }
 
     def __init__(self, n_components=None, **kwargs):
