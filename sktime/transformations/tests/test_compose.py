@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 __all__ = []
 
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -67,3 +68,23 @@ def test_dunder_add():
     assert [x.power for x in t123r.transformer_list] == [2, 5, 3]
 
     _assert_array_almost_equal(t123r.fit_transform(X), t123.fit_transform(X))
+
+
+def test_mul_sklearn_autoadapt():
+    """Test auto-adapter for sklearn in mul."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    t1 = ExponentTransformer(power=2)
+    t2 = StandardScaler()
+    t3 = ExponentTransformer(power=0.5)
+
+    t123 = t1 * t2 * t3
+    t123r = t1 * (t2 * t3)
+    t123l = (t1 * t2) * t3
+
+    assert isinstance(t123, TransformerPipeline)
+    assert isinstance(t123r, TransformerPipeline)
+    assert isinstance(t123l, TransformerPipeline)
+
+    _assert_array_almost_equal(t123.fit_transform(X), t123l.fit_transform(X))
+    _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
