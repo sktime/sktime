@@ -286,15 +286,14 @@ class ForecastingPipeline(_Pipeline):
         self : an instance of self
         """
         # If X is not given, just passthrough the data without transformation
-        if self._X is not None:
-            for step_idx, name, transformer in self._iter_transformers():
+        if X is not None:
+            for _, _, transformer in self._iter_transformers():
                 if hasattr(transformer, "update"):
-                    transformer.update(X, update_params=update_params)
-                    self.steps_[step_idx] = (name, transformer)
+                    transformer.update(X=X, y=y, update_params=update_params)
+                    X = transformer.transform(X=X, y=y)
 
-        name, forecaster = self.steps_[-1]
+        _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
         return self
 
 
@@ -380,13 +379,13 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            y = t.fit_transform(y, X)
+            y = t.fit_transform(X=y, y=X)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
         f = clone(forecaster)
-        f.fit(y, X, fh)
+        f.fit(y=y, X=X, fh=fh)
         self.steps_[-1] = (name, f)
         return self
 
@@ -424,14 +423,13 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-        for step_idx, name, transformer in self._iter_transformers():
+        for _, _, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
-                transformer.update(y, X, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
+                transformer.update(X=y, y=X, update_params=update_params)
+                y = transformer.transform(X=y, y=X)
 
-        name, forecaster = self.steps_[-1]
+        _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
         return self
 
     def transform(self, Z, X=None):
