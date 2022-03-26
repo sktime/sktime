@@ -26,6 +26,7 @@ Highlights
 * probabilistic forecasting: performance metrics for interval and quantile forecasts
 * dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion``
 * Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA``
+* Frequently requested ``tslearn`` interface for clustering
 * for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.org/en/stable/developer_guide/add_estimators.html>`_
 * for extenders: simplified extension templates for forecasters and transformers (for common cases)
 
@@ -33,6 +34,7 @@ Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
 * ``sktime`` has a new optional dependency set for deep learning, consisting of ``tensorflow`` and ``tensorflow-probability``
+* new soft dependency: ``tslearn`` (required for ``tslearn`` clusterers)
 * new soft dependency: ``statsforecast`` (required for ``StatsforecastAutoARIMA``)
 
 Core interface changes
