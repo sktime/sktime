@@ -109,7 +109,6 @@ Data types, checks, conversions
 *  [ENH] sklearn typing util (:pr:`2208`) :user:`fkiraly`
 *  [ENH] Relaxing `pd-multiindex` mtype to allow string instance index (:pr:`2262`) :user:`fkiraly`
 
-
 Data sets and data loaders
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -168,6 +167,7 @@ Testing framework
 Governance
 ^^^^^^^^^^
 
+*  added :user:`danbartl` to core developer list
 *  added :user:`ltsaprounis` to core developer list (:pr:`2236`) :user:`ltsaprounis`
 
 
