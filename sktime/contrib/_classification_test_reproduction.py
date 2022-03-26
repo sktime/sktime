@@ -436,7 +436,7 @@ if __name__ == "__main__":
         _reproduce_classification_unit_test(
             ShapeletTransformClassifier(
                 estimator=RandomForestClassifier(n_estimators=5),
-                n_shapelet_samples=500,
+                n_shapelet_samples=50,
                 max_shapelets=10,
                 batch_size=10,
                 random_state=0,
@@ -448,7 +448,7 @@ if __name__ == "__main__":
         _reproduce_classification_basic_motions(
             ShapeletTransformClassifier(
                 estimator=RandomForestClassifier(n_estimators=5),
-                n_shapelet_samples=500,
+                n_shapelet_samples=50,
                 max_shapelets=10,
                 batch_size=10,
                 random_state=0,
