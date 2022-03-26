@@ -83,7 +83,8 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         """
         self.last_fit_cutoff_ = self.cutoff
         estimator = self._get_delegate()
-        return estimator._fit(y=y, fh=fh, X=X)
+        estimator._fit(y=y, fh=fh, X=X)
+        return self
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
@@ -129,9 +130,10 @@ class UpdateRefitsEvery(_DelegatedForecaster):
                 y = get_window(y, window_length=refit_window_size, lag=refit_window_lag)
                 X = get_window(X, window_length=refit_window_size, lag=refit_window_lag)
                 fh = self._fh
-            return estimator._fit(y=y, X=X, fh=fh, update_params=update_params)
+            estimator._fit(y=y, X=X, fh=fh, update_params=update_params)
         else:
-            return estimator._update(y=y, X=X, update_params=update_params)
+            estimator._update(y=y, X=X, update_params=update_params)
+        return self
 
     @classmethod
     def get_test_params(cls):

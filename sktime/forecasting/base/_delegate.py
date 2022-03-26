@@ -66,7 +66,8 @@ class _DelegatedForecaster(BaseForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        return estimator._fit(y=y, fh=fh, X=X)
+        estimator._fit(y=y, fh=fh, X=X)
+        return self
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -131,7 +132,8 @@ class _DelegatedForecaster(BaseForecaster):
         self : reference to self
         """
         estimator = self._get_delegate()
-        return estimator._update(y=y, X=X, update_params=update_params)
+        estimator._update(y=y, X=X, update_params=update_params)
+        return self
 
     def _update_predict_single(self, y, fh, X=None, update_params=True):
         """Update forecaster and then make forecasts.
