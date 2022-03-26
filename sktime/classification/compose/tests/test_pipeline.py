@@ -5,6 +5,8 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
+from sklearn.preprocessing import StandardScaler
+
 from sktime.classification.compose import ClassifierPipeline
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.transformations.series.exponent import ExponentTransformer
@@ -34,5 +36,30 @@ def test_dunder_mul():
     y_pred = c.fit(X, y).predict(X_test)
 
     _assert_array_almost_equal(y_pred, t12c_1.fit(X, y).predict(X_test))
+    _assert_array_almost_equal(y_pred, t12c_2.fit(X, y).predict(X_test))
+    _assert_array_almost_equal(y_pred, t12c_3.fit(X, y).predict(X_test))
+
+
+def test_mul_sklearn_autoadapt():
+    """Test auto-adapter for sklearn in mul."""
+    RAND_SEED = 42
+    y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
+    X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+    X_test = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED)
+
+    t1 = ExponentTransformer(power=2)
+    t2 = StandardScaler()
+    c = KNeighborsTimeSeriesClassifier()
+
+    t12c_1 = t1 * (t2 * c)
+    t12c_2 = (t1 * t2) * c
+    t12c_3 = t1 * t2 * c
+
+    assert isinstance(t12c_1, ClassifierPipeline)
+    assert isinstance(t12c_2, ClassifierPipeline)
+    assert isinstance(t12c_3, ClassifierPipeline)
+
+    y_pred = t12c_1.fit(X, y).predict(X_test)
+
     _assert_array_almost_equal(y_pred, t12c_2.fit(X, y).predict(X_test))
     _assert_array_almost_equal(y_pred, t12c_3.fit(X, y).predict(X_test))
