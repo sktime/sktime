@@ -26,6 +26,8 @@ Highlights
 * probabilistic forecasting: performance metrics for interval and quantile forecasts
 * dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion``
 * Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA``
+* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.org/en/stable/developer_guide/add_estimators.html>`_
+* for extenders: simplified extension templates for forecasters and transformers (for common cases)
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
