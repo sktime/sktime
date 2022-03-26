@@ -14,11 +14,87 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 0.11.0 - 2022-03-22
+Version 0.11.0 - 2022-03-26
 ---------------------------
 
 Highlights
 ~~~~~~~~~~
+
+* hierarchical & global forecasting: forecaster and transformer interfaces are now compatible with hierarchical data
+* hierarchical & forecasting: forecasters and transformers now automatically vectorize over hierarchy levels - all forecasters are global/hierarchical out-of-the-box
+* probabilistic forecasting: ``predict_var`` (variance forecast) and ``predict_proba`` (full distribution forecast) interfaces
+* probabilistic forecasting: performance metrics for interval and quantile forecasts
+* dunder methods for transformer and classifier pipelines: write ``my_trafo1 * my_trafo2`` for pipeline, ``my_trafo1 + my_trafo2`` for ``FeatureUnion``
+* Frequently requested: ``AutoARIMA`` from ``statsforecast`` package available as ``StatsforecastAutoARIMA``
+* for extenders: detailed `"creating sktime compatible estimator" guide <https://www.sktime.org/en/stable/developer_guide/add_estimators.html>`_
+* for extenders: simplified extension templates for forecasters and transformers (for common cases)
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* ``sktime`` has a new optional dependency set for deep learning, consisting of ``tensorflow`` and ``tensorflow-probability``
+* new soft dependency: ``statsforecast`` (required for ``StatsforecastAutoARIMA``)
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* new ``Hierarchical`` scientific type for hierarchical time series data, with mtype format ``pd_multiindex_hier`` (row-multiindexed series)
+* new ``Table`` scientific type for "ordinary" tabular (2D data frame like) data which is not time series or sequential
+* multiple mtype formats for the ``Table`` scientific type: ``numpy1D``, ``numpy2D``, ``pd_DataFrame_Table``, ``pd_Series_Table``, ``list_of_dict``
+* new ``Proba`` scientific type for distributions and distribution like objects (used in probabilistic forecasting)
+
+Forecasting
+^^^^^^^^^^^
+
+* forecasters now also accept inputs of ``Panel`` type (panel and global forecasters) and ``Hierarchical`` type (hierarchical forecasters)
+* when a forecaster is given ``Panel`` or ``Hierarchical`` input, and only ``Series`` logic is defined, the forecaster will automatically loop over (series) instances
+* when a forecaster is given ``Hierarchical`` input, and only ``Panel`` or ``Series`` logic is defined, the forecaster will automatically loop over (panel) instances
+* new probabilistic forecasting interface for probabilistic forecasts:
+
+    * new method ``predict_var(fh, X, cov=False)`` for variance forecasts, returns time series of predictive variances
+    * new method ``predict_proba(fh, X, marginal=True)`` for distribution forecasts, returns ``tensorflow`` ``Distribution``
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* dunder method for pipelining classifier and transformers: ``my_trafo1 * my_trafo2 * my_clf`` will create a ``ClassifierPipeline`` (``sklearn`` compatible)
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* transformers now also accept inputs of ``Panel`` type (panel and global transformers) and ``Hierarchical`` type (hierarchical transformers)
+* when a transformer is given ``Panel`` or ``Hierarchical`` input, and only ``Series`` logic is defined, the transformer will automatically loop over (series) instances
+* when a transformer is given ``Hierarchical`` input, and only ``Panel`` or ``Series`` logic is defined, the transformer will automatically loop over (panel) instances
+* ``Table`` scientific type is used as output of transformers returning "primitives"
+* dunder method for pipelining transformers: ``my_trafo1 * my_trafo2 * my_trafo3`` will create a (single) ``TransformerPipeline`` (``sklearn`` compatible)
+* dunder method for ``FeatureUnion`` of transformers: ``my_trafo1 + my_trafo2 + my_trafo3`` will create a (single) ``FeatureUnion`` (``sklearn`` compatible)
+* transformer dunder pipeline is compatible with ``sklearn`` transformers, automatically wrapped in a ``TabularToSeriesAdaptor``
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* removed: ``check_is``, renamed to ``check_is_mtype`` (:pr:`1692`) :user:`mloning`
+
+Forecasting
+^^^^^^^^^^^
+
+* removed: ``return_pred_int`` argument in forecaster ``predict``, ``fit_predict``, ``update_predict_single``. Replaced by ``predict_interval`` and ``predict_quantiles`` interface.
+* deprecated: ``fit-in-predict`` tag is deprecated and renamed to ``fit_is_empty``. Old tag ``fit-in-predict`` can be used until 0.12.0 when it will be removed.
+* deprecated: forecasting metrics ``symmetric`` argument default will be changed to ``False`` in 0.12.0. Until then the default is ``True``.
+
+Transformations
+^^^^^^^^^^^^^^^
+* removed: series transformers no longer accept a `Z` argument - use first argument `X` instead (:pr:`1365`, :pr:`1730`)
+* deprecated: ``fit-in-transform`` tag is deprecated and renamed to ``fit_is_empty``. Old tag ``fit-in-transform`` can be used until 0.12.0 when it will be removed.
+* deprecated: old location in ``series_as_features`` of ``FeatureUnion``, has moved to ``transformations.compose``. Old location is still importable from until 0.12.0.
+* deprecated: ``preserve_dataframe`` argument of ``FeatureUnion``, will be removed in 0.12.0.
+* deprecated: old location in ``transformations.series.windows_summarizer`` of ``WindowSumamrizer``, has moved to ``transformations.series.summarize``. Old location is still importable from until 0.12.0.
 
 Enhancements
 ~~~~~~~~~~~~
@@ -75,7 +151,7 @@ Documentation
 
 *  [DOC] fix broken link to CoC (:pr:`2104`) :user:`mikofski`
 *  [DOC] adding "troubleshooting" link in sktime installation instructions (:pr:`2121`) :user:`eenticott-shell`
-*  Updated developer_guide.rst (:pr:`2131`) :user:`theanorak`
+*  [DOC] Updated developer_guide.rst (:pr:`2131`) :user:`theanorak`
 *  [DOC] enhance distance doc strings (:pr:`2122`) :user:`TonyBagnall`
 *  [BUG] Addressing doc build issue due to failed soft dependency imports (:pr:`2170`) :user:`fkiraly`
 *  [DOC] updated soft dependency docs with two tier check (:pr:`2182`) :user:`fkiraly`
@@ -134,12 +210,6 @@ Refactored
 *  [ENH] `FeatureUnion` refactor - moved to `transformations`, tags, dunder method (:pr:`2231`) :user:`fkiraly`
 *  [ENH] Rename AutoARIMA from StatsForecast to StatsForecastAutoARIMA (:pr:`2272`) :user:`FedericoGarza`
 *  Classification test parameter refactor (:pr:`2288`) :user:`MatthewMiddlehurst`
-
-Other Changes
-~~~~~~~~~~~~~
-
-*  Revert "[MNT] Update release drafter" (:pr:`2098`) :user:`fkiraly`
-*  Revert "Revert "[MNT] Update release drafter"" (:pr:`2099`) :user:`fkiraly`
 
 Contributors
 ~~~~~~~~~~~~
