@@ -7,6 +7,7 @@ and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
     [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
 """
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
@@ -103,6 +104,7 @@ class SignatureClassifier(BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
@@ -180,7 +182,7 @@ class SignatureClassifier(BaseClassifier):
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n_instances in X.
 
         Parameters
@@ -196,7 +198,7 @@ class SignatureClassifier(BaseClassifier):
 
     # Handle the sktime predict checks and convert to tensor format
     @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n_instances in X.
 
         Parameters
@@ -209,3 +211,23 @@ class SignatureClassifier(BaseClassifier):
             Predicted probability of each class.
         """
         return self.pipeline.predict_proba(X)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "augmentation_list": ("basepoint", "addtime"),
+            "depth": 3,
+            "window_name": "global",
+        }
+        return params

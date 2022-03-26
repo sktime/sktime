@@ -112,6 +112,10 @@ class ShapeDTW(BaseClassifier):
 
     """
 
+    _tags = {
+        "classifier_type": "distance",
+    }
+
     def __init__(
         self,
         n_neighbors=1,
@@ -253,7 +257,7 @@ class ShapeDTW(BaseClassifier):
 
         return X
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Perform predictions on the testing data X.
 
         This function returns the probabilities for each class.
@@ -273,7 +277,7 @@ class ShapeDTW(BaseClassifier):
         # Classify the test data
         return self.knn.predict_proba(X)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X.
 
         Parameters

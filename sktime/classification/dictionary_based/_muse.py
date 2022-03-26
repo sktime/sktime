@@ -51,7 +51,7 @@ class MUSE(BaseClassifier):
         Only applicable if labels are given
     bigrams: boolean, default=True
         whether to create bigrams of SFA words
-    window_inc: int, default=4
+    window_inc: int, default=2
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
      p_threshold: int, default=0.05 (disabled by default)
@@ -107,6 +107,7 @@ class MUSE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "X_inner_mtype": "nested_univ",  # MUSE requires nested datafrane
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -288,7 +289,7 @@ class MUSE(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -304,7 +305,7 @@ class MUSE(BaseClassifier):
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -371,3 +372,18 @@ class MUSE(BaseClassifier):
     @njit(fastmath=True, cache=True)
     def _shift_left(key, highest, ind, highest_dim_bit, window_size):
         return ((key << highest | ind) << highest_dim_bit) | window_size
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {"window_inc": 5, "use_first_order_differences": False}
+        return params

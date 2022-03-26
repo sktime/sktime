@@ -338,6 +338,21 @@ Theta
 
     ThetaLinesTransformer
 
+Augmenter
+~~~~~
+
+.. currentmodule:: sktime.transformations.series.augmenter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InvertAugmenter
+    RandomSamplesAugmenter
+    ReverseAugmenter
+    WhiteNoiseAugmenter
+
+
 Summary
 ~~~~~~~
 

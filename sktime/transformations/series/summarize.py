@@ -169,7 +169,7 @@ class WindowSummarizer(BaseTransformer):
         "handles-missing-data": True,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
     }
@@ -436,12 +436,12 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     if bfill is True:
         feat = feat.fillna(method="bfill")
 
-    # feat.rename(
-    #     columns={
-    #         feat.columns[0]: name + "_" + "_".join([str(item) for item in window])
-    #     },
-    #     inplace=True,
-    # )
+    feat.rename(
+        columns={
+            feat.columns[0]: "name" + "_" + "_".join([str(item) for item in window])
+        },
+        inplace=True,
+    )
 
     return feat
 
@@ -576,7 +576,7 @@ class SummaryTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": True,
+        "fit_is_empty": True,
     }
 
     def __init__(
@@ -618,6 +618,7 @@ class SummaryTransformer(BaseTransformer):
         summary_value = Z.agg(summary_function)
         if quantiles is not None:
             quantile_value = Z.quantile(quantiles)
+            quantile_value.index = [str(s) for s in quantile_value.index]
             summary_value = pd.concat([summary_value, quantile_value])
 
         if isinstance(Z, pd.Series):
