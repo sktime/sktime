@@ -122,9 +122,7 @@ class VAR(_StatsModelsAdapter):
             maxlags=self.maxlags,
             method=self.method,
             verbose=self.verbose,
-            ic=None,
-            trend="c",
-            verbose=False
+            ic=None
         )
         return self
 
