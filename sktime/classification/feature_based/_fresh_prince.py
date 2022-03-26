@@ -8,6 +8,7 @@ classifier.
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["FreshPRINCE"]
 
+import numpy as np
 
 from sktime.classification.base import BaseClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
@@ -78,6 +79,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:train_estimate": True,
+        "classifier_type": "feature",
     }
 
     def __init__(
@@ -153,7 +155,7 @@ class FreshPRINCE(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -168,7 +170,7 @@ class FreshPRINCE(BaseClassifier):
         """
         return self._rotf.predict(self._tsfresh.transform(X))
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -183,7 +185,7 @@ class FreshPRINCE(BaseClassifier):
         """
         return self._rotf.predict_proba(self._tsfresh.transform(X))
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
@@ -204,3 +206,21 @@ class FreshPRINCE(BaseClassifier):
             raise ValueError("Currently only works with saved transform data from fit.")
 
         return self._rotf._get_train_probs(self.transformed_data_, y)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = {
+            "n_estimators": 2,
+            "default_fc_parameters": "minimal",
+        }
+        return params

@@ -15,7 +15,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -36,6 +35,7 @@ class BaseGridSearch(BaseForecaster):
         strategy="refit",
         n_jobs=None,
         pre_dispatch=None,
+        backend="loky",
         refit=False,
         scoring=None,
         verbose=0,
@@ -47,6 +47,7 @@ class BaseGridSearch(BaseForecaster):
         self.strategy = strategy
         self.n_jobs = n_jobs
         self.pre_dispatch = pre_dispatch
+        self.backend = backend
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
@@ -73,12 +74,10 @@ class BaseGridSearch(BaseForecaster):
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
-        return self.best_forecaster_._predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.best_forecaster_._predict(fh=fh, X=X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -194,7 +193,9 @@ class BaseGridSearch(BaseForecaster):
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
-        parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
+        parallel = Parallel(
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
+        )
 
         def _fit_and_score(params):
             # Clone forecaster.
@@ -336,6 +337,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
+    backend: str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
 
     Attributes
     ----------
@@ -362,13 +366,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
+    >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
@@ -385,7 +389,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
         Advanced model meta-tuning (model selection) with multiple forecasters
         together with hyper-parametertuning at same time using sklearn notation:
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -393,12 +397,12 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.theta import ThetaForecaster
     >>> from sktime.transformations.series.impute import Imputer
-    >>> y = load_airline()
+    >>> y = load_shampoo_sales()
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer()),
     ...     ("forecaster", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
-    ...     initial_window=48,
+    ...     initial_window=24,
     ...     step_length=12,
     ...     start_with_window=True,
     ...     fh=[1,2,3])
@@ -439,6 +443,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         verbose=0,
         return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
+        backend="loky",
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -450,6 +455,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
+            backend=backend,
         )
         self.param_grid = param_grid
 
@@ -457,6 +463,26 @@ class ForecastingGridSearchCV(BaseGridSearch):
         """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return params
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -509,6 +535,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     pre_dispatch: str, optional (default='2*n_jobs')
+    backend: str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
 
     Attributes
     ----------
@@ -544,6 +573,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
+        backend="loky",
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -555,6 +585,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
+            backend=backend,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -567,3 +598,23 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
                 self.param_distributions, self.n_iter, random_state=self.random_state
             )
         )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return params

@@ -60,13 +60,19 @@ ESTIMATOR_TAG_REGISTER = [
         "fit-in-transform",
         ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
     ),
     (
         "fit-in-predict",
         "estimator",
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
+    ),
+    (
+        "fit_is_empty",
+        "estimator",
+        "bool",
+        "fit contains no logic and can be skipped? Yes=True, No=False",
     ),
     (
         "transform-returns-same-time-index",
@@ -175,6 +181,12 @@ ESTIMATOR_TAG_REGISTER = [
         "what is the scitype of y: None (not needed), Primitives, Series, Panel?",
     ),
     (
+        "requires_y",
+        "transformer",
+        "bool",
+        "does this transformer require y to be passed in fit and transform?",
+    ),
+    (
         "capability:inverse_transform",
         "transformer",
         "bool",
@@ -184,7 +196,13 @@ ESTIMATOR_TAG_REGISTER = [
         "capability:pred_int",
         "forecaster",
         "bool",
-        "is the forecaster capable of returning prediction intervals in predict?",
+        "does the forecaster implement predict_interval or predict_quantiles?",
+    ),
+    (
+        "capability:pred_var",
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
     ),
     (
         "capability:multivariate",
@@ -233,24 +251,24 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),
-    # (
-    #     "handles-panel",
-    #     "annotator",
-    #     "bool",
-    #     "can handle panel annotations, i.e., list X/y?",
-    # ),
-    # (
-    #     "annotation-type",
-    #     "annotator",
-    #     "str",
-    #     "which annotation type? can be 'point', 'segment' or 'both'",
-    # ),
-    # (
-    #     "annotation-kind",
-    #     "annotator",
-    #     "str",
-    #     "which annotations? can be 'outlier', 'change', 'label', 'none'",
-    # ),
+    (
+        "classifier_type",
+        "classifier",
+        (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "which type the classifier falls under in the taxonomy of time series "
+        "classification algorithms.",
+    ),
     (
         "capability:multiple-alignment",
         "aligner",
@@ -268,6 +286,36 @@ ESTIMATOR_TAG_REGISTER = [
         "aligner",
         "bool",
         "does aligner return pairwise distance matrix between aligned series?",
+    ),
+    (
+        "requires-y-train",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "does metric require y-train data to be passed?",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "does metric require a predictive benchmark?",
+    ),
+    (
+        "univariate-metric",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "Does the metric only work on univariate y data?",
+    ),
+    (
+        "scitype:y_pred",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "str",
+        "What is the scitype of y_pred: quantiles, proba, interval?",
+    ),
+    (
+        "lower_is_better",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
 ]
 

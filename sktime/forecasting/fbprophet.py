@@ -11,7 +11,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("fbprophet")
+_check_soft_dependencies("prophet", severity="warning")
 
 
 class Prophet(_ProphetAdapter):
@@ -19,7 +19,9 @@ class Prophet(_ProphetAdapter):
 
     Parameters
     ----------
-    freq: String of DatetimeIndex frequency. Refer [2]_ for possible values:
+    freq: str, default=None
+        A DatetimeIndex frequency. For possible values see
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
     add_seasonality: dict or None, default=None
         Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
@@ -99,7 +101,6 @@ class Prophet(_ProphetAdapter):
     References
     ----------
     .. [1] https://facebook.github.io/prophet
-    .. [2] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
 
     Examples
     --------
@@ -143,6 +144,8 @@ class Prophet(_ProphetAdapter):
         verbose=0,
         interval_width=0,
     ):
+        _check_soft_dependencies("prophet", severity="error", object=self)
+
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays
@@ -167,7 +170,7 @@ class Prophet(_ProphetAdapter):
         self.interval_width = interval_width
 
         # import inside method to avoid hard dependency
-        from fbprophet.forecaster import Prophet as _Prophet
+        from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
 
@@ -193,3 +196,21 @@ class Prophet(_ProphetAdapter):
             stan_backend=self.stan_backend,
         )
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        params = {
+            "n_changepoints": 0,
+            "yearly_seasonality": False,
+            "weekly_seasonality": False,
+            "daily_seasonality": False,
+            "uncertainty_samples": 1000,
+            "verbose": False,
+        }
+        return params

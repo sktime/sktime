@@ -106,8 +106,8 @@ def _x_equals_x2_test(transformation, x, transformer):
     # test X_equals_X2
     for i in range(len(x)):
         # Have to round or test breaks on github (even though works locally)
-        row = np.around((transformation[i, :]).T, decimals=5).astype(np.float)
-        column = np.around(transformation[:, i], decimals=5).astype(np.float)
+        row = np.around((transformation[i, :]).T, decimals=5).astype(float)
+        column = np.around(transformation[:, i], decimals=5).astype(float)
         assert np.array_equal(row, column)
     assert transformer.X_equals_X2, (
         f"X_equals_X2 is set to wrong value for {transformer} " f"when only X passed"

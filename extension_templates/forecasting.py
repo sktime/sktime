@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Extension template for forecasters.
 
@@ -24,14 +25,19 @@ Mandatory implements:
 
 Optional implements:
     updating                    - _update(self, y, X=None, update_params=True):
-    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=0.5)
+    predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
+    OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
+    predicting variance         - _predict_var(self, fh, X=None, cov=False)
+    distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - get_fitted_params()
 
 Testing - implement if sktime forecaster (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-
-copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
@@ -47,8 +53,8 @@ class MyForecaster(BaseForecaster):
 
     todo: describe your custom forecaster here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -56,9 +62,6 @@ class MyForecaster(BaseForecaster):
     paramc : boolean, optional (default= whether paramb is not the default)
         descriptive explanation of paramc
     and so on
-
-    Components
-    ----------
     est : sktime.estimator, BaseEstimator descendant
         descriptive explanation of est
     est2: another estimator
@@ -83,8 +86,7 @@ class MyForecaster(BaseForecaster):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        "capability:pred_int": False,  # does forecaster implement proba forecasts?
     }
     #  in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -165,6 +167,13 @@ class MyForecaster(BaseForecaster):
 
         private _predict containing the core logic, called from predict
 
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
@@ -188,6 +197,13 @@ class MyForecaster(BaseForecaster):
         """Update time series to incremental training data.
 
         private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Writes to self:
             Sets fitted model attributes ending in "_", if update_params=True.
@@ -229,26 +245,38 @@ class MyForecaster(BaseForecaster):
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _predict_quantiles method
-    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+    # todo: consider implementing one of _predict_quantiles and _predict_interval
+    #   if one is implemented, the other one works automatically
+    #   when interfacing or implementing, consider which of the two is easier
+    #   both can be implemented if desired, but usually that is not necessary
+    #
+    # if _predict_var or _predict_proba is implemented, this will have a default
+    #   implementation which uses _predict_proba or _predict_var under normal assumption
+    #
+    # if implementing _predict_interval, delete _predict_quantiles
+    # if not implementing either, delete both methods
+    def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
-            called from predict_quantiles and predict_interval
+            called from predict_quantiles and possibly predict_interval
 
-        If alpha is iterable, multiple quantiles will be calculated.
+        State required:
+            Requires state to be "fitted".
 
-        Users can also implement _predict_interval if calling it makes this faster.
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        alpha : float or list of float, optional (default=0.5)
-            A probability or list of, at which quantile forecasts are computed.
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
 
         Returns
         -------
@@ -260,6 +288,136 @@ class MyForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         # implement here
+        # IMPORTANT: avoid side effects to y, X, fh, alpha
+        #
+        # Note: unlike in predict_quantiles where alpha can be float or list of float
+        #   alpha in _predict_quantiles is guaranteed to be a list of float
+
+    # implement one of _predict_interval or _predict_quantiles (above), or delete both
+    #
+    # if implementing _predict_quantiles, delete _predict_interval
+    # if not implementing either, delete both methods
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        # implement here
+        # IMPORTANT: avoid side effects to y, X, fh, coverage
+        #
+        # Note: unlike in predict_interval where coverage can be float or list of float
+        #   coverage in _predict_interval is guaranteed to be a list of float
+
+    # todo: consider implementing _predict_var
+    #
+    # if _predict_proba or interval/quantiles are implemented, this will have a default
+    #   implementation which uses _predict_proba or quantiles under normal assumption
+    #
+    # if not implementing, delete _predict_var
+    def _predict_var(self, fh, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh. Entries are variance forecasts, for var in col index.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+        """
+        # implement here
+        # implementing the cov=True case is optional and can be omitted
+
+    # todo: consider implementing _predict_proba
+    #
+    # if interval/quantiles or _predict_var are implemented, this will have a default
+    #   implementation which uses variance or quantiles under normal assumption
+    #
+    # if not implementing, delete _predict_proba
+    def _predict_proba(self, fh, X):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        # import tensorflow_probability as tfp
+        # tensorflow probability import should happen inside this function
+        #
+        # implement here
+        # implementing the marginal=False case is optional and can be omitted
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method

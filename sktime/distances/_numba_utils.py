@@ -132,7 +132,7 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
             f"distance computation a numpy arrays must be provided."
         )
 
-    _x = np.array(x, copy=True, dtype=np.float)
+    _x = np.array(x, copy=True, dtype=float)
     num_dims = _x.ndim
     if num_dims == 1:
         shape = _x.shape
@@ -177,7 +177,7 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
             f"distance computation a numpy array must be provided."
         )
 
-    _x = np.array(x, copy=True, dtype=np.float)
+    _x = np.array(x, copy=True, dtype=float)
     num_dims = _x.ndim
     shape = _x.shape
     if num_dims == 1:

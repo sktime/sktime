@@ -32,6 +32,7 @@ Naive
     :template: class.rst
 
     NaiveForecaster
+    NaiveVariance
 
 Trend
 -----
@@ -44,6 +45,7 @@ Trend
 
     TrendForecaster
     PolynomialTrendForecaster
+    STLForecaster
 
 Exponential Smoothing
 ---------------------
@@ -75,6 +77,17 @@ ARIMA
 
     AutoARIMA
     ARIMA
+
+StatsForecast
+-------------
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoARIMA
 
 Theta
 -----
@@ -215,3 +228,14 @@ Model Evaluation (Backtesting)
     :template: function.rst
 
     evaluate
+
+VAR (Vector Autoregression)
+---------------------------
+
+.. currentmodule:: sktime.forecasting.var
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VAR

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 
@@ -32,9 +32,8 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> from sktime.forecasting.compose import ColumnEnsembleForecaster
     >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.datasets import load_longley
-    >>> _, y = load_longley()
-    >>> y = y.drop(columns=["UNEMP", "ARMED", "POP"])
+    >>> from sktime.datasets import load_macroeconomic
+    >>> y = load_macroeconomic()[["realgdp", "realcons"]]
     >>> forecasters = [
     ...     ("trend", PolynomialTrendForecaster(), 0),
     ...     ("ses", ExponentialSmoothing(trend='add'), 1),
@@ -144,11 +143,11 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             forecaster.update(y.iloc[:, index], X, update_params=update_params)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
 
         y_pred = np.zeros((len(fh), len(self.forecasters_)))
         for (_, forecaster, index) in self.forecasters_:
-            y_pred[:, index] = forecaster.predict(fh)
+            y_pred[:, index] = forecaster.predict(fh=fh, X=X)
 
         y_pred = pd.DataFrame(data=y_pred, columns=self.y_columns)
         y_pred.index = self.fh.to_absolute(self.cutoff)

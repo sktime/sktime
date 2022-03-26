@@ -153,6 +153,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "dictionary",
     }
 
     def __init__(
@@ -363,7 +364,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -384,7 +385,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -436,7 +437,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return possible_parameters
 
-    def _get_train_probs(self, X, y, train_estimate_method="loocv"):
+    def _get_train_probs(self, X, y, train_estimate_method="loocv") -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
@@ -479,6 +480,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             indices = range(n_instances)
             for i, clf in enumerate(self.estimators_):
                 oob = [n for n in indices if n not in clf._subsample]
+
+                if len(oob) == 0:
+                    continue
+
                 preds = clf.predict(X[oob])
 
                 for n, pred in enumerate(preds):
@@ -533,6 +538,25 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                     tde._train_predictions.append(c)
 
         return correct / train_size
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {
+            "n_parameter_samples": 5,
+            "max_ensemble_size": 2,
+            "randomly_selected_params": 3,
+        }
+        return params
 
 
 class IndividualTDE(BaseClassifier):
@@ -913,11 +937,8 @@ class IndividualTDE(BaseClassifier):
                 fin_transformers.append(transformers[i])
 
         if len(dims) > self.max_dims:
-            idx = self.random_state.choice(
-                len(dims),
-                self.max_dims,
-                replace=False,
-            ).tolist()
+            rng = check_random_state(self.random_state)
+            idx = rng.choice(len(dims), self.max_dims, replace=False).tolist()
             dims = [dims[i] for i in idx]
             fin_transformers = [fin_transformers[i] for i in idx]
 

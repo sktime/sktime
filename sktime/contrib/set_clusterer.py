@@ -3,7 +3,8 @@
 __author__ = ["TonyBagnall"]
 
 
-from sktime.clustering import TimeSeriesKMeans, TimeSeriesKMedoids
+from sktime.clustering.k_means import TimeSeriesKMeans
+from sktime.clustering.k_medoids import TimeSeriesKMedoids
 
 
 def set_clusterer(cls, resample_id=None):

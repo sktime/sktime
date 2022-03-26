@@ -169,13 +169,13 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for X using 'soft' voting."""
         self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 
@@ -226,8 +226,8 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(split="train")
     >>> X_test, y_test = load_basic_motions(split="test")
-    >>> clf = DrCIF(n_estimators=10)
-    >>> estimators = [("DrCIF", clf, [0, 1, 2, 3, 4, 5])]
+    >>> clf = DrCIF(n_estimators=3)
+    >>> estimators = [("DrCIF", clf, [0, 1])]
     >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
     >>> col_ens.fit(X_train, y_train)
     ColumnEnsembleClassifier(...)
@@ -267,6 +267,30 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         """
         self._set_params("_estimators", **kwargs)
         return self
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sktime.classification.interval_based import (
+            TimeSeriesForestClassifier as TSFC,
+        )
+
+        params = {
+            "estimators": [
+                ("tsf1", TSFC(n_estimators=2), 0),
+                ("tsf2", TSFC(n_estimators=2), 0),
+            ]
+        }
+        return params
 
 
 def _get_column(X, key):

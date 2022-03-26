@@ -45,6 +45,15 @@
         "ideas",
         "test",
         "tutorial"
+	]
+    },
+    {
+      "login": "Tomiiwa",
+      "name": "Ireoluwatomiwa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61966277?v=4",
+      "profile": "https://www.linkedin.com/in/ireoluwatomiwa-sanusi/",
+      "contributions": [
+        "doc",
       ]
     },
     {
@@ -1442,6 +1451,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/7654679?v=4",
       "profile": "https://github.com/rakshitha123",
       "contributions": [
+        "code",
         "doc"
       ]
     },
@@ -1460,6 +1470,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/20466981?v=4",
       "profile": "https://www.imes.uni-hannover.de/de/institut/team/m-sc-karl-philipp-kortmann/",
       "contributions": [
+        "code",
         "doc"
       ]
     },
@@ -1479,6 +1490,53 @@
       "profile": "https://github.com/khrapovs",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "Saransh-cpp",
+      "name": "Saransh Chopra",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74055102?v=4",
+      "profile": "https://github.com/Saransh-cpp",
+      "contributions": [
+        "doc",
+        "infra"
+      ]
+    },
+    {
+      "login": "RishiKumarRay",
+      "name": "Rishi Kumar Ray",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87641376?v=4",
+      "profile": "https://github.com/RishiKumarRay",
+      "contributions": [
+        "infra"
+     ]
+    },
+    {
+      "login": "cdahlin",
+      "name": "Christopher Dahlin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1567780?v=4",
+      "profile": "https://github.com/cdahlin",
+      "contributions": [
+        "code"
+     ]
+    },
+    {
+      "login": "iljamaurer",
+      "name": "Ilja Maurer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45882103?v=4",
+      "profile": "https://github.com/iljamaurer",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "FedericoGarza",
+      "name": "Federico Garza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10517170?v=4",
+      "profile": "https://github.com/FedericoGarza",
+      "contributions": [
+        "code",
+	"example"
       ]
     }
   ],
