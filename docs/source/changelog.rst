@@ -132,6 +132,7 @@ Forecasting
 ^^^^^^^^^^^
 
 *  [ENH] Add ``AutoARIMA`` from StatsForecast (:pr:`2251`) :user:`FedericoGarza`
+*  [ENH] Naive variance prediction estimator/wrapper (:pr:`1865`) :user:`IlyasMoutawwakil`
 *  [ENH] ``predict_proba`` for forecasters, `tensorflow-probability` dependency (:pr:`2100`) :user:`fkiraly`
 *  [ENH] Probabilistic forecasting metrics (:pr:`2232`) :user:`eenticott-shell`
 *  [ENH] ``_predict_fixed_cutoff`` for ``Hierarchical`` data  (:pr:`2094`) :user:`danbartl`
@@ -267,6 +268,7 @@ Contributors
 :user:`FedericoGarza`,
 :user:`fkiraly`,
 :user:`hmtbgc`,
+:user:`IlyasMoutawwakil`,
 :user:`kejsitake`,
 :user:`KishenSharma6`,
 :user:`lielleravid`,
