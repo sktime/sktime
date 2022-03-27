@@ -22,14 +22,13 @@ Test module architecture
 
 Module conventions are as follows:
 
-* each module contains a ``tests`` folder, which contains tests specific to that module.
-Sub-modules may also contain ``tests`` folders.
+* Each module contains a ``tests`` folder, which contains tests specific to that module.
+* Sub-modules may also contain ``tests`` folders.
 * ``tests`` folders may contain ``_config.py`` files to collect test configuration settings for that module
 * generic utilities for tests are located in the module ``utils._testing``.
- Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
-* each test module corresponding to a learning task and estimator scitype should contain
-module level tests in a test ``test_all_[name_of_scitype].py`` file that tests interface compliance of all estimators adhering to the scitype.
- For instance, ``forecasting/tests/test_all_forecasters.py``, or ``distances/tests/test_all_dist_kernels.py``.
+* Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
+* Each test module corresponding to a learning task and estimator scitype should containmodule level tests in a test ``test_all_[name_of_scitype].py`` file that tests   interface compliance of all estimators adhering to the scitype.
+  For instance, ``forecasting/tests/test_all_forecasters.py``, or    ``distances/tests/test_all_dist_kernels.py``.    
 * Learning task specific tests should not duplicate package level, generic estimator tests in ``test_all_estimators.py``
 
 Test code architecture
@@ -103,10 +102,10 @@ Currently, the ``sktime`` testing framework provides automated fixture parameter
 via ``mark.parameterize`` for the following fixtures, in module level tests:
 
 * ``estimator``: all estimator classes, inheriting from the base class of the given module.
-In the package level tests ``test_all_estimators``, that base class is ``BaseEstimator``.
+* In the package level tests ``test_all_estimators``, that base class is ``BaseEstimator``.
 * ``estimator_instance``: all estimator test instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
 * ``scenario``: test scenarios, applicable to ``estimator`` or ``estimator_instance``.
-   The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
+*  The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
 
 Further parameterization may happen for individual tests, the scope is usually explained in the test docstrings.
 
@@ -256,6 +255,7 @@ All scenarios inherit from a base class for that scitype, e.g., ``ForecasterTest
 This base class defines generics such as ``is_applicable``, or tag handling, for all scenarios of the same type.
 
 Scenarios should usually define:
+
 * an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
 * The ``args`` parameter may be set as a class variable, or set by the contructor.
 * optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
