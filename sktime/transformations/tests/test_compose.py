@@ -88,3 +88,26 @@ def test_mul_sklearn_autoadapt():
 
     _assert_array_almost_equal(t123.fit_transform(X), t123l.fit_transform(X))
     _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
+
+
+def test_featureunion_transform_cols():
+    """Test FeatureUnion name and number of columns."""
+    X = pd.DataFrame({"test1": [1, 2], "test2": [3, 4]})
+
+    t1 = ExponentTransformer(power=2)
+    t2 = ExponentTransformer(power=5)
+    t3 = ExponentTransformer(power=3)
+
+    t123 = t1 + t2 + t3
+
+    Xt = t123.fit_transform(X)
+    assert Xt.columns == pd.Index(
+        [
+            "ExponentTransformer1_test1",
+            "ExponentTransformer1_test2",
+            "ExponentTransformer2_test1",
+            "ExponentTransformer2_test2",
+            "ExponentTransformer3_test1",
+            "ExponentTransformer3_test2",
+        ]
+    ), "FeatureUnion creates incorrect column names for DataFrame output"
