@@ -16,6 +16,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
     If update is called with update_params=True and refit_interval or more has
         elapsed since the last fit, refits the forecaster instead (call to fit).
+            refitting is done on (potentially) all data seen so far.
         refit_window controls the lookback window on which refitting is done
             refit data is cutoff (inclusive) to cutoff minus refit_window (exclusive)
 
