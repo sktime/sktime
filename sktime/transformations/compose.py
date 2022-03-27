@@ -425,7 +425,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
-        "capability:inverse_transform": True,
+        "capability:inverse_transform": False,
+        # unclear what inverse transform should be, since multiple inverse_transform
+        #   would have to inverse transform to one
     }
 
     def __init__(
@@ -474,7 +476,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
-        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
 
@@ -591,7 +593,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
+            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
             Xt.columns = flat_index
 
         return Xt
@@ -626,7 +628,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
+            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
             Xt.columns = flat_index
 
         return Xt
@@ -670,3 +672,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
+
+    @staticmethod
+    def _underscore_join(iterable):
+        """Create flattened column names from multiindex tuple."""
+        iterable_as_str = [str(x) for x in iterable]
+        return "__".join(iterable_as_str)
