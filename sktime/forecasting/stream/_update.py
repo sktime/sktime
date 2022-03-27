@@ -4,6 +4,8 @@
 
 __author__ = ["fkiraly"]
 
+import pandas as pd
+
 from sklearn import clone
 
 from sktime.datatypes._utilities import get_window
@@ -23,6 +25,11 @@ class UpdateRefitsEvery(_DelegatedForecaster):
     refit_interval : difference of sktime time indices (int or timedelta), optional
         interval that needs to elapse after which the first update defaults to fit
         default = 0, i.e., always refits, never updates
+        if index of y seen in fit is integer or y is index-free container type,
+            refit_interval must be int, and is interpreted as difference of int location
+        if index of y seen in fit is timestamp, must be int or pd.Timedelta
+            if pd.Timedelta, will be interpreted as time since last refit elapsed
+            if int, will be interpreted as number of time stamps seen since last refit
     refit_window_size : difference of sktime time indices (int or timedelta), optional
         length of the data window to refit to in case update calls fit
         default = inf, i.e., refits to entire training data seen so far
@@ -81,6 +88,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        # we need to remember the time we last fit, to compare to it in _update
         self.last_fit_cutoff_ = self.cutoff
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
@@ -122,16 +130,33 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         """
         estimator = self._get_delegate()
         time_since_last_fit = self.cutoff - self.last_fit_cutoff_
+        refit_interval = self.refit_interval
         refit_window_size = self.refit_window_size
         refit_window_lag = self.refit_window_lag
 
-        if time_since_last_fit >= self.refit_interval and update_params:
+        _y = self._y
+        _X = self._X
+
+        # treat situation where indexing of y is in timedelta but refit_interval is int
+        #   in that case, interpret refit_interval as an iloc lag index
+        if isinstance(time_since_last_fit, pd.Timedelta):
+            if isinstance(refit_interval, int):
+                index = min(refit_interval, len(_y))
+                refit_interval = self.cutoff - _y.index.iloc[-index]
+        # case distinction based on whether the refit_interval period has elapsed
+        #   if yes: call fit, on the specified window sub-set of all observed data
+        if time_since_last_fit >= refit_interval and update_params:
             if refit_window_size is not None or refit_window_lag != 0:
-                y = get_window(y, window_length=refit_window_size, lag=refit_window_lag)
-                X = get_window(X, window_length=refit_window_size, lag=refit_window_lag)
+                y_win = get_window(
+                    _y, window_length=refit_window_size, lag=refit_window_lag
+                )
+                X_win = get_window(
+                    _X, window_length=refit_window_size, lag=refit_window_lag
+                )
                 fh = self._fh
-            estimator.fit(y=y, X=X, fh=fh, update_params=update_params)
+            estimator.fit(y=y_win, X=X_win, fh=fh, update_params=update_params)
         else:
+            # if no: call update as usual
             estimator.update(y=y, X=X, update_params=update_params)
         return self
 
