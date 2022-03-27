@@ -137,12 +137,20 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         _y = self._y
         _X = self._X
 
-        # treat situation where indexing of y is in timedelta but refit_interval is int
-        #   in that case, interpret refit_interval as an iloc lag index
+        # treat situation where indexing of y is in timedelta but differences are int
+        #   in that case, interpret any integers as iloc index differences
+        #   and replace integers with timedelta quantities before proceeding
         if isinstance(time_since_last_fit, pd.Timedelta):
+            if isinstance(refit_window_lag, int):
+                lag = min(refit_window_lag, len(_y))
+                refit_window_lag = self.cutoff - _y.index[-lag]
+            if isinstance(refit_window_size, int):
+                _y_lag = get_window(_y, lag=refit_window_lag)
+                window_size = min(refit_window_size, len(_y_lag))
+                refit_window_size = _y_lag.index[-window_size]
             if isinstance(refit_interval, int):
                 index = min(refit_interval, len(_y))
-                refit_interval = self.cutoff - _y.index.iloc[-index]
+                refit_interval = self.cutoff - _y.index[-index]
         # case distinction based on whether the refit_interval period has elapsed
         #   if yes: call fit, on the specified window sub-set of all observed data
         if time_since_last_fit >= refit_interval and update_params:
