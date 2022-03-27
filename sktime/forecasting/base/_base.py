@@ -90,6 +90,7 @@ class BaseForecaster(BaseEstimator):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     def __init__(self):
