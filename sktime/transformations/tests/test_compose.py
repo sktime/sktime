@@ -105,12 +105,12 @@ def test_featureunion_transform_cols():
 
     expected_cols = pd.Index(
         [
-            "ExponentTransformer1_test1",
-            "ExponentTransformer1_test2",
-            "ExponentTransformer2_test1",
-            "ExponentTransformer2_test2",
-            "ExponentTransformer3_test1",
-            "ExponentTransformer3_test2",
+            "ExponentTransformer_1_test1",
+            "ExponentTransformer_1_test2",
+            "ExponentTransformer_2_test1",
+            "ExponentTransformer_2_test2",
+            "ExponentTransformer_3_test1",
+            "ExponentTransformer_3_test2",
         ]
     )
 
