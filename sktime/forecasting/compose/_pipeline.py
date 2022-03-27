@@ -211,6 +211,7 @@ class ForecastingPipeline(_Pipeline):
         "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "capability:pred_int": True,
     }
 
     def __init__(self, steps):
