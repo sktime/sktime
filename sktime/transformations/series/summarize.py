@@ -213,6 +213,8 @@ class WindowSummarizer(BaseTransformer):
             The raw inputs to transformed columns will be dropped.
         self: reference to self
         """
+        self._X_memory = X
+
         X_name = get_name_list(X)
 
         if self.target_cols is not None:
@@ -259,6 +261,9 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        idx = X.index
+        X = pd.concat([self._X_memory, X])
+
         func_dict = self._func_dict
         target_cols = self._target_cols
 
@@ -286,6 +291,7 @@ class WindowSummarizer(BaseTransformer):
         Xt_out_df = pd.concat(Xt_out, axis=1)
         Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
 
+        Xt_return = Xt_return.loc[idx]
         return Xt_return
 
     @classmethod
