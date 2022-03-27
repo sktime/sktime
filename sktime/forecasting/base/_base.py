@@ -51,6 +51,7 @@ from sktime.datatypes import (
     convert_to,
     get_cutoff,
     mtype_to_scitype,
+    scitype_to_mtype,
 )
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
@@ -906,6 +907,7 @@ class BaseForecaster(BaseEstimator):
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+        FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
         # checking y
         if y is not None:
@@ -960,7 +962,15 @@ class BaseForecaster(BaseEstimator):
                 "or with MultiIndex and lowest level a sktime compatible time index. "
                 "See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "If you think X is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for X. "
+                "Possible mtype specification strings are as follows. "
             )
+            for scitype in ALLOWED_SCITYPES:
+                mtypes = set(scitype_to_mtype(scitype))
+                mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+                msg += f'"For {scitype} scitype: {mtypes}. '
             if not X_valid:
                 raise TypeError(msg)
 
