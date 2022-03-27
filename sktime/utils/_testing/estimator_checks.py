@@ -351,5 +351,5 @@ def _has_capability(est, method: str) -> bool:
         # all classifiers implement predict_proba
         if method == "predict_proba" and isinstance(est, BaseClassifier):
             return True
-        return est.get_tag(est, "capability:pred_int", False)
+        return get_tag(est, "capability:pred_int", False)
     return True
