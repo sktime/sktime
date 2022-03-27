@@ -156,9 +156,8 @@ def scitype_to_mtype(scitype: str):
     Raises
     ------
     TypeError, if input is not of the type specified
-    ValueError, if there are two scitypes for the/some mtype string
-        (this should not happen in general, it means there is a bug)
-    ValueError, if there is no scitype for the/some mtype string
+    ValueError, if one of the strings is not a valid scitype string
+    RuntimeError, if there is no mtype for the/some scitype string (this must be a bug)
     """
     msg = 'scitype argument must be str or list of str'
     # handle the "None" case first
@@ -173,6 +172,16 @@ def scitype_to_mtype(scitype: str):
     if not isinstance(scitype, str):
         raise TypeError(msg)
 
+    # now we know scitype is a string, check if it is in the register
+    if scitype not in SCITYPE_LIST:
+        raise ValueError(
+            f'"{scitype}" is not a valid scitype string, see datatypes.SCITYPE_REGISTER'
+        )
+
     mtypes = [k[0] for k in MTYPE_REGISTER if k[1] == scitype]
+
+    if len(mtypes) == 0:
+        # if there are no mtypes, this must have been reached by mistake/bug
+        raise RuntimeError("no mtypes defined for scitype " + scitype)
 
     return mtypes
