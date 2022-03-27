@@ -587,7 +587,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
+            flat_index = pd.Index("__".join([str(x) for x in Xt.columns]))
             Xt.columns = flat_index
 
         return Xt
