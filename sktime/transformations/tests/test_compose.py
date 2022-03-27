@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
@@ -101,7 +102,8 @@ def test_featureunion_transform_cols():
     t123 = t1 + t2 + t3
 
     Xt = t123.fit_transform(X)
-    assert Xt.columns == pd.Index(
+
+    expected_cols = pd.Index(
         [
             "ExponentTransformer1_test1",
             "ExponentTransformer1_test2",
@@ -110,4 +112,11 @@ def test_featureunion_transform_cols():
             "ExponentTransformer3_test1",
             "ExponentTransformer3_test2",
         ]
-    ), "FeatureUnion creates incorrect column names for DataFrame output"
+    )
+
+    msg = (
+        f"FeatureUnion creates incorrect column names for DataFrame output. "
+        f"Expected: {expected_cols}, found: {Xt.columns}"
+    )
+
+    assert deep_equals(Xt.columns, expected_cols), msg
