@@ -39,7 +39,7 @@ class MockUnivariateForecaster(BaseForecaster, _MockEstimatorMixin):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        # deprecated and likely to be removed in 0.12.0
     }
 
     def __init__(self, prediction_constant: float = 10):
