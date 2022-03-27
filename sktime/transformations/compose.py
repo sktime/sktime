@@ -587,7 +587,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join([str(x) for x in Xt.columns]))
+            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
             Xt.columns = flat_index
 
         return Xt
@@ -631,3 +631,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
+
+    @staticmethod
+    def _underscore_join(iterable):
+        """Create flattened column names from multiindex tuple."""
+        iterable_as_str = [str(x) for x in iterable]
+        return "__".join(iterable_as_str)
