@@ -129,16 +129,16 @@ example_dict_metadata[("Proba", 2)] = {
 pred_q = pd.DataFrame(
     {
         0.2: [1, 2, 3],
+        0.8: [2.5, 3.5, 4.5],
         0.4: [1.5, 2.5, 3.5],
         0.6: [2, 3, 4],
-        0.8: [2.5, 3.5, 4.5],
         42: [5, 3, -1],
         43: [5, 3, -1],
         44: [5, 3, -1],
         45: [5, 3, -1],
     }
 )
-pred_q.columns = pd.MultiIndex.from_product([["foo", "bar"], [0.2, 0.5, 0.6, 0.8]])
+pred_q.columns = pd.MultiIndex.from_product([["foo", "bar"], [0.2, 0.8, 0.4, 0.6]])
 
 example_dict[("pred_quantiles", "Proba", 3)] = pred_q
 example_dict_lossy[("pred_quantiles", "Proba", 3)] = False
