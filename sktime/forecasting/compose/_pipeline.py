@@ -454,6 +454,7 @@ class ForecastingPipeline(_Pipeline):
                 X = transformer.transform(X=X, y=y)
         return X
 
+
 # removed transform and inverse_transform as long as y can only be a pd.Series
 # def transform(self, Z, X=None):
 #     self.check_is_fitted()
