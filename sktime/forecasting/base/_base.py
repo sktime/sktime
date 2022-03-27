@@ -466,11 +466,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    def predict_proba(
-        self,
-        fh=None,
-        X=None,
-    ):
+    def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         State required:
@@ -526,7 +522,7 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_dist = self._predict_proba(fh=fh, X=X_inner)
+        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
 
         return pred_dist
 
