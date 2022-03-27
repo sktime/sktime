@@ -124,6 +124,19 @@ class WindowSummarizer(BaseTransformer):
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
+        Example where we transform on a different, later test set:
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> kwargs = {
+    ...     "lag_config": {
+    ...         "lag": ["lag", [[1, 0]]],
+    ...         "mean": ["mean", [[3, 0], [12, 0]]],
+    ...         "std": ["std", [[4, 0]]],
+    ...     }
+    ... }
+    >>> transformer = WindowSummarizer(**kwargs)
+    >>> y_test_transformed = transformer.fit(y_train).transform(y_test)
+
         Example with transforming multiple columns of exogeneous features
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
