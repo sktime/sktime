@@ -91,15 +91,17 @@ class ARCH(BaseForecaster):
     >>> from sktime.forecasting.arch import ARCH
     >>> y = load_airline()
     >>> forecaster = ARCH(
-    ...    mean='Constant',
-    ...    lags=0, vol='Garch',
+    ...    mean="Constant",
+    ...    lags=0,
+    ...    vol="Garch",
     ...    p=1,
     ...    o=0,
     ...    q=1,
     ...    power=2.0,
-    ...    dist='Normal',
+    ...    dist="Normal",
     ...    hold_back=None,
-    ...    rescale=None)
+    ...    rescale=None,
+    ...):
     >>> forecaster.fit(y)
     ARCH(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
@@ -115,15 +117,17 @@ class ARCH(BaseForecaster):
 
     def __init__(
         self,
-        mean='Constant',
-        lags=0, vol='Garch',
+        mean="Constant",
+        lags=0,
+        vol="Garch",
         p=1,
         o=0,
         q=1,
         power=2.0,
-        dist='Normal',
+        dist="Normal",
         hold_back=None,
-        rescale=None):
+        rescale=None,
+    ):
 
         _check_soft_dependencies("arch", severity="error", object=self)
 
@@ -199,8 +203,8 @@ class ARCH(BaseForecaster):
             power=self.power,
             dist=self.dist,
             hold_back=self.hold_back,
-            rescale=self.rescale
-            )
+            rescale=self.rescale,
+        )
 
         self._forecaster.fit(**fit_params)
         return self
@@ -301,14 +305,14 @@ class ARCH(BaseForecaster):
         params : dict or list of dict
         """
         params = {
-            "mean": 'Constant',
+            "mean": "Constant",
             "lags": 0,
-            "vol": 'Garch',
+            "vol": "Garch",
             "p": 1,
             "o": 0,
             "q": 1,
             "power": 2.0,
-            "dist": 'Normal',
+            "dist": "Normal",
             "hold_back": None,
             "rescale": None,
         }
