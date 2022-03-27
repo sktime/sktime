@@ -134,3 +134,45 @@ def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
         return [scitype[0]]
     else:
         return scitype[0]
+
+
+def scitype_to_mtype(scitype: str):
+    """Return list of all mtypes belonging to scitype.
+
+    Parameters
+    ----------
+    scitype : str, or list of str
+        scitype(s) to find mtypes for, a valid scitype string
+        valid scitype strings, with explanation, are in datatypes.SCITYPE_REGISTER
+
+    Returns
+    -------
+    mtypes : list of str
+        all mtypes such that mtype_to_scitype(element) is in the list scitype
+        if list, returns this function element-wise applied
+        if nested list/str object, replaces mtype str by scitype str
+        if None, returns None
+
+    Raises
+    ------
+    TypeError, if input is not of the type specified
+    ValueError, if there are two scitypes for the/some mtype string
+        (this should not happen in general, it means there is a bug)
+    ValueError, if there is no scitype for the/some mtype string
+    """
+    msg = 'scitype argument must be str or list of str'
+    # handle the "None" case first
+    if scitype is None or scitype == "None":
+        raise TypeError(msg)
+    # recurse if mtype is a list
+    if isinstance(scitype, list):
+        scitype_list = [y for x in scitype for y in scitype_to_mtype(x)]
+        return scitype_list
+
+    # checking for type. Checking str is enough, recursion above will do the rest.
+    if not isinstance(scitype, str):
+        raise TypeError(msg)
+
+    mtypes = [k[0] for k in MTYPE_REGISTER if k[1] == scitype]
+
+    return mtypes
