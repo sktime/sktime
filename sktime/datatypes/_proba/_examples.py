@@ -110,7 +110,7 @@ example_dict_lossy[("pred_quantiles", "Proba", 2)] = False
 
 pred_int = pred_q.copy()
 pred_int.columns = pd.MultiIndex.from_product(
-    [["Coverage"], [0.6, pseudo_0_2], ["lower", "uppwer"]]
+    [["Coverage"], [0.6, pseudo_0_2], ["lower", "upper"]]
 )
 
 example_dict[("pred_interval", "Proba", 2)] = pred_int
@@ -138,16 +138,14 @@ pred_q = pd.DataFrame(
         45: [5, 3, -1],
     }
 )
-pred_q.columns = pd.MultiIndex.from_product(
-    [["foo", "bar"], [0.2, 0.5, 0.6, 0.8]]
-)
+pred_q.columns = pd.MultiIndex.from_product([["foo", "bar"], [0.2, 0.5, 0.6, 0.8]])
 
 example_dict[("pred_quantiles", "Proba", 3)] = pred_q
 example_dict_lossy[("pred_quantiles", "Proba", 3)] = False
 
 pred_int = pred_q.copy()
 pred_int.columns = pd.MultiIndex.from_product(
-    [["foo", "bar"], [0.6, pseudo_0_2], ["lower", "uppwer"]]
+    [["foo", "bar"], [0.6, pseudo_0_2], ["lower", "upper"]]
 )
 
 example_dict[("pred_interval", "Proba", 3)] = pred_int
