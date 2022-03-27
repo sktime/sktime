@@ -146,19 +146,22 @@ class _Pipeline(
         """
         from sklearn.preprocessing import StandardScaler
 
+        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.series.exponent import ExponentTransformer
 
+        # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
             ("forecaster", NaiveForecaster()),
         ]
         params1 = {"steps": STEPS1}
 
+        # ARIMA has probabilistic methods, ExponentTransformer skips fit
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("forecaster", NaiveForecaster()),
+            ("forecaster", ARIMA()),
         ]
         params2 = {"steps": STEPS2}
 
