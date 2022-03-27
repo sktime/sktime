@@ -232,6 +232,7 @@ class ForecastingPipeline(_Pipeline):
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
         self.clone_tags(forecaster, tags_to_clone)
+        self._anytagis_then_set("fit_is_empty", False, True, steps)
 
     @property
     def forecaster_(self):
@@ -531,6 +532,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
         self.clone_tags(forecaster, tags_to_clone)
+        self._anytagis_then_set("fit_is_empty", False, True, steps)
 
     @property
     def forecaster_(self):
