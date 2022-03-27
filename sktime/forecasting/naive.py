@@ -442,9 +442,9 @@ class NaiveVariance(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        # deprecated and likely to be removed in 0.12.0
         "capability:pred_var": True,
-        # deprecated and will be renamed to capability:predict_variance in 0.11.0
+        # deprecated and likely to be removed in 0.12.0
     }
 
     def __init__(self, forecaster):
