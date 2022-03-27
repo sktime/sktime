@@ -1699,7 +1699,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
