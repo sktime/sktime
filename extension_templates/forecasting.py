@@ -384,7 +384,7 @@ class MyForecaster(BaseForecaster):
     #   implementation which uses variance or quantiles under normal assumption
     #
     # if not implementing, delete _predict_proba
-    def _predict_proba(self, fh, X):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
