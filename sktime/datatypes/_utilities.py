@@ -180,8 +180,8 @@ def get_window(obj, window_length=None, lag=0):
 
     Parameters
     ----------
-    obj : sktime compatible time series data container
-        must be of one of the following mtypes:
+    obj : sktime compatible time series data container or None
+        if not None, must be of one of the following mtypes:
             pd.Series, pd.DataFrame, np.ndarray, of Series scitype
             pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
             pd_multiindex_hier, of Hierarchical scitype
@@ -196,10 +196,11 @@ def get_window(obj, window_length=None, lag=0):
     -------
     obj sub-set to time indices in the semi-open interval
         (cutoff - window_length - lag, cutoff - lag)
+        None if obj was None
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
-    if window_length is None:
+    if window_length is None or obj is None:
         return obj
 
     valid, _, metadata = check_is_scitype(
