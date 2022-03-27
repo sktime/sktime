@@ -77,7 +77,7 @@ class MyForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        # deprecated and likely to be removed in 0.12.0
     }
 
     # todo: add any hyper-parameters and components to constructor
