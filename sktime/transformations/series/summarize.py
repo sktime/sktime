@@ -294,6 +294,20 @@ class WindowSummarizer(BaseTransformer):
         Xt_return = Xt_return.loc[idx]
         return Xt_return
 
+    def _update(self, X, y=None):
+        """Update X and return a transformed version.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+        y : None
+
+        Returns
+        -------
+        transformed version of X
+        """
+        self._X_memory = pd.concat([self._X_memory, X])
+
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
