@@ -476,7 +476,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
-        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
 
