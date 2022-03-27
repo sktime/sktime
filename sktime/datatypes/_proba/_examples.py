@@ -151,7 +151,7 @@ example_dict_lossy[("pred_quantiles", "Proba", 3)] = False
 
 pred_int = pred_q.copy()
 pred_int.columns = pd.MultiIndex.from_arrays(
-    [4 * ["foo", "bar"], 2 * coverage, 4 * ["lower", "upper"]]
+    [4 * ["foo"] + 4 * ["bar"], 2 * coverage, 4 * ["lower", "upper"]]
 )
 
 example_dict[("pred_interval", "Proba", 3)] = pred_int
