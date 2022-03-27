@@ -159,7 +159,7 @@ def scitype_to_mtype(scitype: str):
     ValueError, if one of the strings is not a valid scitype string
     RuntimeError, if there is no mtype for the/some scitype string (this must be a bug)
     """
-    msg = 'scitype argument must be str or list of str'
+    msg = "scitype argument must be str or list of str"
     # handle the "None" case first
     if scitype is None or scitype == "None":
         raise TypeError(msg)

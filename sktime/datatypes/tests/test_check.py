@@ -11,7 +11,6 @@ from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import SCITYPE_LIST, scitype_to_mtype
 
-
 SCITYPES = SCITYPE_LIST
 
 # scitypes where mtype inference is not unique

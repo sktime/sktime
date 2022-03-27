@@ -6,7 +6,9 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.datatypes._registry import (
-    mtype_to_scitype, scitype_to_mtype, MTYPE_REGISTER
+    MTYPE_REGISTER,
+    mtype_to_scitype,
+    scitype_to_mtype,
 )
 
 MTYPE_SCITYPE_PAIRS = [(k[0], k[1]) for k in MTYPE_REGISTER]
@@ -73,7 +75,7 @@ def test_scitype_to_mtype(mtype, scitype):
     """
     result = scitype_to_mtype(scitype)
     msg = (
-        f'mtype_to_scitype does not correctly retrieve all mtypes for scitype '
+        f"mtype_to_scitype does not correctly retrieve all mtypes for scitype "
         f'"{scitype}", mtype "{mtype}" is missing from result returned: {result}'
     )
     assert mtype in result, msg
