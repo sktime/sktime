@@ -31,48 +31,52 @@ class WindowSummarizer(BaseTransformer):
         Dictionary specifying as key the type of function to be used and as value
         the argument `window`.
         For all keys other than `lag`, the argument `window` is a length 2 list
-        containing the integer `starting_at`, which specifies how far back
+        containing the integer `lag`, which specifies how far back
         in the past the window will start, and the integer `window length`,
         which will give the length of the window across which to apply the function.
         For ease of notation, for the key "lag", only a single integer
-        specifying the `starting_at` argument will be provided.
+        specifying the `lag` argument will be provided.
 
         Please see blow a graphical representation of the logic using the following
         symbols:
 
-        ``z`` = unobserved future observations (here a forecasting horizon of 2).
-        ``x`` = past observations that are not selected.
-        ``*`` = selected window of past observations across which summarizer
-                function will be applied.
+        ``z`` = time stamp that the window is summarized *to*.
+        Part of the window if `lag` is between 0 and `1-window_length`, otherwise
+        not part of the window.
+        ``*`` = (other) time stamps in the window which is summarized
+        ``x`` = observations, past or future, not part of the window
 
-        For `window = [1, 3]`, we have a `starting_at` of 1 and
-        `window_length` of 3 to target the three last days that were observed.
+        The summarization function is applied to the window consisting of * and
+        potentially z.
 
+        For `window = [1, 3]`, we have a `lag` of 1 and
+        `window_length` of 3 to target the three last days (exclusive z) that were
+        observed. Summarization is done across windows like this:
         |-------------------------- |
-        | x x x x x x x x * * * z z |
+        | x x x x x x x x * * * z x |
         |---------------------------|
 
-        For `window = [4, 5]`, we have a `starting_at` of 4 and
-        `window_length` of 5 to discard the three latest observations, start
-        at the 4th observation and cover a total of 5 observations.
-
+        For `window = [0, 3]`, we have a `lag` of 0 and
+        `window_length` of 3 to target the three last days (inclusive z) that
+        were observed. Summarization is done across windows like this:
         |-------------------------- |
-        | x x x * * * * * x x x z z |
+        | x x x x x x x x * * z x x |
         |---------------------------|
+
 
         Special case ´lag´: Since lags are frequently used and window length is
         redundant, a special notation will be used for lags. You need to provide a list
-        of `starting_at` values, and `window_length` is not available.
+        of `lag` values, and `window_length` is not available.
         So `window = [1]` will result in the first lag:
 
         |-------------------------- |
-        | x x x x x x x x x x * z z |
+        | x x x x x x x x x x * z x |
         |---------------------------|
 
         And `window = [1, 4]` will result in the first and fourth lag:
 
         |-------------------------- |
-        | x x x x x x x * x x * z z |
+        | x x x x x x x * x x * z x |
         |---------------------------|
 
         key: either custom function call (to be
@@ -91,9 +95,9 @@ class WindowSummarizer(BaseTransformer):
                 * "sem"
                 See also: https://pandas.pydata.org/docs/reference/window.html.
             The column generated will be named after the key provided, followed by the
-            starting_at parameter and the window_length (if not a lag).
+            lag parameter and the window_length (if not a lag).
         second value (window): list of integers
-            List containg starting_at and window_length parameters.
+            List containg lag and window_length parameters.
         truncate: str, optional (default = None)
             Defines how to deal with NAs that were created as a result of applying the
             functions in the lag_config dict across windows that are longer than
@@ -395,7 +399,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     Z: pandas Dataframe with a single column.
     name : str, base string of the derived features, will be appended by
-        window length and starting at parameters defined in window.
+        `lag` and window length parameters defined in window.
     summarizer: either str corresponding to pandas window function, currently
             * "sum",
             * "mean",
@@ -412,45 +416,39 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        List containg window_length and starting_at parameters, see WindowSummarizer
+        List containg window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
-    starting_at = window[0]
+    lag = window[0]
     window_length = window[1]
 
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
             if bfill is False:
-                feat = getattr(
-                    Z.shift(starting_at).rolling(window_length), summarizer
-                )()
+                feat = getattr(Z.shift(lag).rolling(window_length), summarizer)()
             else:
                 feat = getattr(
-                    Z.shift(starting_at).fillna(method="bfill").rolling(window_length),
+                    Z.shift(lag).fillna(method="bfill").rolling(window_length),
                     summarizer,
                 )()
             feat = pd.DataFrame(feat)
         else:
             if bfill is False:
                 feat = Z.apply(
-                    lambda x: getattr(
-                        x.shift(starting_at).rolling(window_length), summarizer
-                    )()
+                    lambda x: getattr(x.shift(lag).rolling(window_length), summarizer)()
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(starting_at)
-                        .fillna(method="bfill")
-                        .rolling(window_length),
+                        x.shift(lag).fillna(method="bfill").rolling(window_length),
                         summarizer,
                     )()
                 )
     else:
         if bfill is False:
-            feat = Z.shift(starting_at)
+            feat = Z.shift(lag)
         else:
-            feat = Z.shift(starting_at).fillna(method="bfill")
+            feat = Z.shift(lag).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
             summarizer
         ):
