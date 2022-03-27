@@ -204,8 +204,9 @@ class Prophet(_ProphetAdapter):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to return. The method must be overridden
-            to have anything other than the default testing parameters as an option.
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a string, will always return the
+            `"default"` set.
 
         Returns
         -------

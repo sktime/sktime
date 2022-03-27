@@ -494,32 +494,3 @@ class ShapeDTW(BaseClassifier):
                 colToAdd.append(pd.Series(inst))
             df[col] = colToAdd
         return df
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return. The method must be overridden
-            to have anything other than the default testing parameters as an option.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results.
-
-        Returns
-        -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
-        """
-        if parameter_set == "default" or parameter_set == "results_comparison":
-            return {}
-        else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
