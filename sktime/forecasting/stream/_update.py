@@ -5,7 +5,6 @@
 __author__ = ["fkiraly"]
 
 import pandas as pd
-
 from sklearn import clone
 
 from sktime.datatypes._utilities import get_window
