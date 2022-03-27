@@ -37,7 +37,7 @@ example_dict_lossy = dict()
 example_dict_metadata = dict()
 
 ###
-# example 0: univariate
+# example 0: univariate, no upper/lower pairs
 
 pred_q = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4]})
 pred_q.columns = pd.MultiIndex.from_product([["Quantiles"], [0.2, 0.6]])
@@ -64,7 +64,7 @@ example_dict_metadata[("Proba", 0)] = {
 }
 
 ###
-# example 1: multi
+# example 1: multi, no upper/lower pairs
 
 pred_q = pd.DataFrame({0.2: [1, 2, 3], 0.6: [2, 3, 4], 42: [5, 3, -1], 46: [5, 3, -1]})
 pred_q.columns = pd.MultiIndex.from_product([["foo", "bar"], [0.2, 0.6]])
@@ -89,6 +89,72 @@ example_dict_lossy[("pred_interval", "Proba", 1)] = False
 
 
 example_dict_metadata[("Proba", 1)] = {
+    "is_univariate": False,
+    "is_empty": False,
+    "has_nans": False,
+}
+
+###
+# example 2: univariate, upper/lower pairs
+
+pred_q = pd.DataFrame(
+    {0.2: [1, 2, 3], 0.4: [1.5, 2.5, 3.5], 0.6: [2, 3, 4], 0.8: [2.5, 3.5, 4.5]}
+)
+pred_q.columns = pd.MultiIndex.from_product([["Quantiles"], [0.2, 0.4, 0.6, 0.8]])
+
+# we need to use this due to numerical inaccuracies from the binary based representation
+pseudo_0_2 = 2 * np.abs(0.6 - 0.5)
+
+example_dict[("pred_quantiles", "Proba", 2)] = pred_q
+example_dict_lossy[("pred_quantiles", "Proba", 2)] = False
+
+pred_int = pred_q.copy()
+pred_int.columns = pd.MultiIndex.from_product(
+    [["Coverage"], [0.6, pseudo_0_2], ["lower", "uppwer"]]
+)
+
+example_dict[("pred_interval", "Proba", 2)] = pred_int
+example_dict_lossy[("pred_interval", "Proba", 2)] = False
+
+
+example_dict_metadata[("Proba", 2)] = {
+    "is_univariate": True,
+    "is_empty": False,
+    "has_nans": False,
+}
+
+###
+# example 3: multi, no upper/lower pairs
+
+pred_q = pd.DataFrame(
+    {
+        0.2: [1, 2, 3],
+        0.4: [1.5, 2.5, 3.5],
+        0.6: [2, 3, 4],
+        0.8: [2.5, 3.5, 4.5],
+        42: [5, 3, -1],
+        43: [5, 3, -1],
+        44: [5, 3, -1],
+        45: [5, 3, -1],
+    }
+)
+pred_q.columns = pd.MultiIndex.from_product(
+    [["foo", "bar"], [0.2, 0.5, 0.6, 0.8]]
+)
+
+example_dict[("pred_quantiles", "Proba", 3)] = pred_q
+example_dict_lossy[("pred_quantiles", "Proba", 3)] = False
+
+pred_int = pred_q.copy()
+pred_int.columns = pd.MultiIndex.from_product(
+    [["foo", "bar"], [0.6, pseudo_0_2], ["lower", "uppwer"]]
+)
+
+example_dict[("pred_interval", "Proba", 3)] = pred_int
+example_dict_lossy[("pred_interval", "Proba", 3)] = False
+
+
+example_dict_metadata[("Proba", 3)] = {
     "is_univariate": False,
     "is_empty": False,
     "has_nans": False,
