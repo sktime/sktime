@@ -348,8 +348,9 @@ def _has_capability(est, method: str) -> bool:
         "predict_quantiles",
         "predict_var",
     ]:
-        # all classifiers implement predict_proba
-        if method == "predict_proba" and isinstance(est, BaseClassifier):
+        ALWAYS_HAVE_PREDICT_PROBA = (BaseClassifier, BaseClusterer)
+        # all classifiers and clusterers implement predict_proba
+        if method == "predict_proba" and isinstance(est, ALWAYS_HAVE_PREDICT_PROBA):
             return True
         return get_tag(est, "capability:pred_int", False)
     return True
