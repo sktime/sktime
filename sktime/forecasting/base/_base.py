@@ -309,12 +309,8 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
-            Note: a list can contain multiple copies of the same alpha.
-                In such a case, multiple quantile forecasts will be produced.
-                These quantile forecasts are conditionally independent samples produced
-                    by the model, in case the model is stochastic, and may be different.
 
         Returns
         -------
@@ -371,12 +367,8 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : float or list of float, optional (default=0.90)
+        coverage : float or list of float of unique values, optional (default=0.90)
             nominal coverage(s) of predictive interval(s)
-            Note: a list can contain multiple copies of the same coverage value.
-                In such a case, multiple interval forecasts will be produced.
-                These interval forecasts are conditionally independent samples produced
-                    by the model, in case the model is stochastic, and may be different.
 
         Returns
         -------
