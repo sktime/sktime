@@ -292,6 +292,11 @@ class MyForecaster(BaseForecaster):
         #
         # Note: unlike in predict_quantiles where alpha can be float or list of float
         #   alpha in _predict_quantiles is guaranteed to be a list of float
+        #
+        # Note: the logic in this function should be able to deal with the case
+        #   where multiple copies of the same quantile value are passed.
+        #   If the model is stochastic, the _predict_quantiles function should return
+        #       conditionally independent samples for each copy of the quantile value.
 
     # implement one of _predict_interval or _predict_quantiles (above), or delete both
     #
@@ -338,6 +343,11 @@ class MyForecaster(BaseForecaster):
         #
         # Note: unlike in predict_interval where coverage can be float or list of float
         #   coverage in _predict_interval is guaranteed to be a list of float
+        #
+        # Note: the logic in this function should be able to deal with the case
+        #   where multiple copies of the same coverage values are passed.
+        #   If the model is stochastic, the _predict_interval function should return
+        #       conditionally independent samples for each copy of the coverage value.
 
     # todo: consider implementing _predict_var
     #
