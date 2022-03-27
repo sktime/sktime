@@ -505,11 +505,12 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     _required_parameters = ["steps"]
     _tags = {
         "scitype:y": "both",
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
-        "ignores-exogeneous-X": True,
-        "univariate-only": False,
+        "y_inner_mtype": SUPPORTED_MTYPES,
+        "X_inner_mtype": SUPPORTED_MTYPES,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "capability:pred_int": True,
     }
 
     def __init__(self, steps):
@@ -517,7 +518,21 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.steps_ = self._check_steps()
         super(TransformedTargetForecaster, self).__init__()
         _, forecaster = self.steps[-1]
-        self.clone_tags(forecaster)
+        tags_to_clone = [
+            "scitype:y",  # which y are fine? univariate/multivariate/both
+            "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
+            "capability:pred_int",  # can the estimator produce prediction intervals?
+            "handles-missing-data",  # can estimator handle missing data?
+            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
+            "X-y-must-have-same-index",  # can estimator handle different X/y index?
+            "enforce_index_type",  # index type that needs to be enforced in X/y
+        ]
+        self.clone_tags(forecaster, tags_to_clone)
+
+    @property
+    def forecaster_(self):
+        """Return reference to the forecaster in the pipeline. Valid after _fit."""
+        return self.steps_[-1][1]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -563,8 +578,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         y_pred : pd.Series
             Point predictions
         """
-        forecaster = self.steps_[-1][1]
-        y_pred = forecaster.predict(fh=fh, X=X)
+        y_pred = self.forecaster_.predict(fh=fh, X=X)
         # inverse transform y_pred
         y_pred = self._get_inverse_transform(y_pred, X)
         return y_pred
@@ -587,8 +601,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
                 transformer.update(X=y, y=X, update_params=update_params)
                 y = transformer.transform(X=y, y=X)
 
-        _, forecaster = self.steps_[-1]
-        forecaster.update(y=y, X=X, update_params=update_params)
+        self.forecaster_.update(y=y, X=X, update_params=update_params)
         return self
 
     def transform(self, Z, X=None):
@@ -630,3 +643,79 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.check_is_fitted()
         Z = check_series(Z)
         return self._get_inverse_transform(Z, X)
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
+        """
+        pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
+        pred_int_transformed = self._get_inverse_transform(pred_int)
+        return pred_int_transformed
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
+        pred_int_transformed = self._get_inverse_transform(pred_int)
+        return pred_int_transformed
