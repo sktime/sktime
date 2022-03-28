@@ -448,9 +448,10 @@ class ForecastingHorizon:
         """Get index location of in-sample values."""
         relative = self.to_relative(cutoff).to_pandas()
         if relative.dtype == np.integer:
-            return relative <= 0
+            null = 0
         else:
-            return relative <= pd.Timedelta(0)
+            null = pd.Timedelta(0)
+        return relative <= null
 
     def is_all_in_sample(self, cutoff=None):
         """Whether the forecasting horizon is purely in-sample for given cutoff.
@@ -472,9 +473,10 @@ class ForecastingHorizon:
         # return ~self._in_sample_idx(cutoff)
         relative = self.to_relative(cutoff).to_pandas()
         if relative.dtype == np.integer:
-            return relative > 0
+            null = 0
         else:
-            return relative > pd.Timedelta(0)
+            null = pd.Timedelta(0)
+        return relative > null
 
     def is_all_out_of_sample(self, cutoff=None):
         """Whether the forecasting horizon is purely out-of-sample for given cutoff.

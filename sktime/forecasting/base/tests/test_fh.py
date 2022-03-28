@@ -63,7 +63,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
             )
         )
     ):
-        pytest.skip("steps are expected to be timedelta")
+        pytest.skip("steps and fh_type are incompatible")
     # generate data
     y = make_forecasting_problem(index_type=index_type)
     assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
@@ -83,7 +83,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
         steps = np.array([steps])
     elif isinstance(steps, pd.Timedelta):
         steps = pd.Index([steps])
-    elif isinstance(steps, list) and isinstance(steps[0], pd.Timedelta):
+    else:
         steps = pd.Index(steps)
 
     if steps.dtype == np.integer:
