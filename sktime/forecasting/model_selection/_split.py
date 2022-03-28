@@ -15,7 +15,6 @@ __author__ = ["mloning", "kkoralturk", "khrapovs"]
 import inspect
 import numbers
 import warnings
-from collections.abc import Iterable
 from inspect import signature
 from typing import Generator, Optional, Tuple, Union
 
@@ -278,14 +277,13 @@ def _fh_and_window_length_types_are_supported(
     -------
     True if all inputs are compatible, False otherwise
     """
-    fh_is_int = array_is_int(fh) if isinstance(fh, Iterable) else is_int(fh)
-    fh_is_timedelta_or_date_offset = (
-        array_is_timedelta_or_date_offset(fh)
-        if isinstance(fh, Iterable)
-        else is_timedelta_or_date_offset(fh)
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
     )
-    all_int = fh_is_int and (is_int(window_length) if window_length else True)
-    all_dates = fh_is_timedelta_or_date_offset and (
+    all_int = array_is_int(fh_horizon) and (
+        is_int(window_length) if window_length else True
+    )
+    all_dates = array_is_timedelta_or_date_offset(fh_horizon) and (
         is_timedelta_or_date_offset(window_length) if window_length else True
     )
     if all_int or all_dates:
@@ -315,14 +313,15 @@ def _cutoffs_fh_window_length_types_are_supported(
     -------
     True if all inputs are compatible, False otherwise
     """
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
     all_int = (
-        array_is_int(cutoffs)
-        and array_is_int(ForecastingHorizon(fh))
-        and is_int(window_length)
+        array_is_int(cutoffs) and array_is_int(fh_horizon) and is_int(window_length)
     )
     all_dates = (
         array_is_datetime64(cutoffs)
-        and array_is_timedelta_or_date_offset(ForecastingHorizon(fh))
+        and array_is_timedelta_or_date_offset(fh_horizon)
         and is_timedelta_or_date_offset(window_length)
     )
     if all_int or all_dates:
@@ -353,18 +352,17 @@ def _window_splitter_types_are_supported(
     -------
     True if all inputs are compatible, False otherwise
     """
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
     all_int = (
-        array_is_int(
-            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-        )
+        array_is_int(fh_horizon)
         and (is_int(initial_window) if initial_window else True)
         and (is_int(window_length) if window_length else True)
         and is_int(step_length)
     )
     all_dates = (
-        array_is_timedelta_or_date_offset(
-            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-        )
+        array_is_timedelta_or_date_offset(fh_horizon)
         and (is_timedelta_or_date_offset(initial_window) if initial_window else True)
         and (is_timedelta_or_date_offset(window_length) if window_length else True)
         and is_timedelta_or_date_offset(step_length)
