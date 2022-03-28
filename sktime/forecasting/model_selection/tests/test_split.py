@@ -205,16 +205,16 @@ def test_single_window_splitter_default_window_length(y, fh):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
-    cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
     if _cutoffs_fh_window_length_types_are_supported(
-        cutoffs=cutoffs, fh=ForecastingHorizon(fh), window_length=window_length
+        cutoffs=cutoffs, fh=fh, window_length=window_length
     ):
+        cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
         train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
     else:
         match = "Unsupported combination of types"
         with pytest.raises(TypeError, match=match):
-            _check_cv(cv, y)
+            CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
 
 @pytest.mark.parametrize("y", TEST_YS)

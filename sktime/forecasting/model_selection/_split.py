@@ -315,10 +315,14 @@ def _cutoffs_fh_window_length_types_are_supported(
     -------
     True if all inputs are compatible, False otherwise
     """
-    all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
+    all_int = (
+        array_is_int(cutoffs)
+        and array_is_int(ForecastingHorizon(fh))
+        and is_int(window_length)
+    )
     all_dates = (
         array_is_datetime64(cutoffs)
-        and array_is_timedelta_or_date_offset(fh)
+        and array_is_timedelta_or_date_offset(ForecastingHorizon(fh))
         and is_timedelta_or_date_offset(window_length)
     )
     if all_int or all_dates:
@@ -634,6 +638,9 @@ class CutoffSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
+        _check_cutoffs_fh_window_length(
+            cutoffs=cutoffs, fh=fh, window_length=window_length
+        )
         self.cutoffs = cutoffs
         super(CutoffSplitter, self).__init__(fh, window_length)
 
@@ -643,9 +650,6 @@ class CutoffSplitter(BaseSplitter):
         fh = _check_fh(fh=self.fh)
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
-        )
-        _check_cutoffs_fh_window_length(
-            cutoffs=cutoffs, fh=fh, window_length=window_length
         )
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
