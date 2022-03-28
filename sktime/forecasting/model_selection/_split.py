@@ -231,7 +231,7 @@ def _check_window_lengths(
         f"is smaller than the length of the time series `y` itself."
     )
     if is_timedelta_or_date_offset(x=window_length):
-        if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
+        if y[0] + window_length + fh_max > y[-1]:
             raise ValueError(error_msg_for_incompatible_window_length)
     else:
         if window_length + fh_max > n_timepoints:
@@ -284,9 +284,9 @@ def _fh_and_window_length_types_are_supported(
         if isinstance(fh, Iterable)
         else is_timedelta_or_date_offset(fh)
     )
-    all_int = fh_is_int and (is_int(window_length) or window_length is None)
+    all_int = fh_is_int and (is_int(window_length) if window_length else True)
     all_dates = fh_is_timedelta_or_date_offset and (
-        is_timedelta_or_date_offset(window_length) or window_length is None
+        is_timedelta_or_date_offset(window_length) if window_length else True
     )
     if all_int or all_dates:
         return True
@@ -324,6 +324,50 @@ def _cutoffs_fh_window_length_types_are_supported(
         array_is_datetime64(cutoffs)
         and array_is_timedelta_or_date_offset(ForecastingHorizon(fh))
         and is_timedelta_or_date_offset(window_length)
+    )
+    if all_int or all_dates:
+        return True
+    else:
+        return False
+
+
+def _window_splitter_types_are_supported(
+    fh: FORECASTING_HORIZON_TYPES,
+    step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
+    initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = None,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES = None,
+) -> bool:
+    """Check that combination of inputs is supported.
+
+    Currently, only two cases are allowed:
+    either all inputs are integers, or they are all datetime or timedelta
+
+    Parameters
+    ----------
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    step_length : int or timedelta or pd.DateOffset
+    initial_window : int or timedelta or pd.DateOffset
+    window_length : int or timedelta or pd.DateOffset
+
+    Returns
+    -------
+    True if all inputs are compatible, False otherwise
+    """
+    all_int = (
+        array_is_int(
+            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+        )
+        and (is_int(initial_window) if initial_window else True)
+        and (is_int(window_length) if window_length else True)
+        and is_int(step_length)
+    )
+    all_dates = (
+        array_is_timedelta_or_date_offset(
+            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+        )
+        and (is_timedelta_or_date_offset(initial_window) if initial_window else True)
+        and (is_timedelta_or_date_offset(window_length) if window_length else True)
+        and is_timedelta_or_date_offset(step_length)
     )
     if all_int or all_dates:
         return True
@@ -379,6 +423,38 @@ def _check_cutoffs_fh_window_length(
     """
     if not _cutoffs_fh_window_length_types_are_supported(
         cutoffs=cutoffs, fh=fh, window_length=window_length
+    ):
+        raise TypeError("Unsupported combination of types")
+
+
+def _check_base_window_splitter_arguments(
+    fh: FORECASTING_HORIZON_TYPES,
+    step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
+    initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = None,
+    window_length: ACCEPTED_WINDOW_LENGTH_TYPES = None,
+) -> None:
+    """Check that combination of inputs is supported.
+
+    Currently, only two cases are allowed:
+    either all inputs are integers, or they are all datetime or timedelta
+
+    Parameters
+    ----------
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    step_length : int or timedelta or pd.DateOffset
+    initial_window : int or timedelta or pd.DateOffset
+    window_length : int or timedelta or pd.DateOffset
+
+    Raises
+    ------
+    TypeError
+        if combination of inputs is not supported
+    """
+    if not _window_splitter_types_are_supported(
+        fh=fh,
+        initial_window=initial_window,
+        window_length=window_length,
+        step_length=step_length,
     ):
         raise TypeError("Unsupported combination of types")
 
@@ -729,6 +805,12 @@ class BaseWindowSplitter(BaseSplitter):
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
     ) -> None:
+        _check_base_window_splitter_arguments(
+            fh=fh,
+            initial_window=initial_window,
+            window_length=window_length,
+            step_length=step_length,
+        )
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
