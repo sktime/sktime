@@ -230,7 +230,7 @@ def _check_window_lengths(
         f"is smaller than the length of the time series `y` itself."
     )
     if is_timedelta_or_date_offset(x=window_length):
-        if y[0] + window_length + fh_max > y[-1]:
+        if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
             raise ValueError(error_msg_for_incompatible_window_length)
     else:
         if window_length + fh_max > n_timepoints:
