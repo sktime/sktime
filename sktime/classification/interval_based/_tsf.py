@@ -161,13 +161,14 @@ class TimeSeriesForestClassifier(
 
         Returns
         -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"n_estimators": 3}
+        params = {"n_estimators": 2}
+        return params
 
 
 def _predict_single_classifier_proba(X, estimator, intervals):
