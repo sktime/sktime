@@ -113,7 +113,7 @@ class VAR(_StatsModelsAdapter):
         self : returns an instance of self.
         """
         self._forecaster = _VAR(
-            endog=y, exog=X, dates=None, freq=None, missing=self.missing
+            endog=y, exog=X, dates=self.dates, freq=self.freq, missing=self.missing
         )
         self._fitted_forecaster = self._forecaster.fit(
             trend=self.trend,
