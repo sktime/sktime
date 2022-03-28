@@ -14,11 +14,11 @@ Test module architecture
 
 ``sktime`` testing happens on three layers, roughly corresponding to the inheritance layers of estimators.
 
-* "package level": testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in
-``tests/test_all_estimators.py``
-* "module level": testing interface compliance of concrete estimators with their scitype base class, for instance
-``forecasting/tests/test_all_forecasters.py``
-* "low level": testing individual functionality of estimators or other code, in individual files in ``tests`` folders
+* "package level": testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in ``tests/test_all_estimators.py``
+
+* "module level": testing interface compliance of concrete estimators with their scitype base class, for instance ``forecasting/tests/test_all_forecasters.py``
+
+* "low level": testing individual functionality of estimators or other code, in individual files in ``tests`` folders.
 
 Module conventions are as follows:
 
