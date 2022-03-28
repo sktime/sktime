@@ -2,6 +2,7 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements automatic and manually exponential time series smoothing models."""
+# Check commit"
 
 
 __author__ = ["hyang1996"]
@@ -490,7 +491,7 @@ class AutoETS(_StatsModelsAdapter):
         )
 
         pred_quantiles = pd.DataFrame()
-        for a, coverage in zip(alpha, coverage):
+        for a, coverage in zip(alpha, coverage):  # noqa To skip over B020 flake8
             pred_int = prediction_results.pred_int(1 - coverage)
             pred_int.columns = ["lower", "upper"]
             if a < 0.5:
