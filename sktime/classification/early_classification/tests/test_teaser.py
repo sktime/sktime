@@ -31,26 +31,16 @@ def test_teaser_on_unit_test_data():
     )
     teaser.fit(X_train, y_train)
 
+    X_test = from_nested_to_3d_numpy(X_test)[indices]
     final_probas = np.zeros((10, 2))
-    final_decisions = np.zeros(10)
+    open_idx = np.arange(0, 10)
 
-    X_test = from_nested_to_3d_numpy(X_test)
-    X_test = X_test[indices, :, :]
-
-    ec_idx = np.arange(0, 10)
-    decisions = np.zeros(len(X_test), dtype=bool)
     for i in teaser.classification_points:
-        inv_dec = np.invert(decisions)
-        X_test = X_test[inv_dec, :, :]
-        ec_idx = ec_idx[inv_dec]
+        probas, decisions, states = teaser.update_predict_proba(X_test[:, :, :i])
+        open_idx, final_idx = teaser.split_indices(open_idx, decisions)
 
-        X = X_test[:, :, :i]
-        probas, decisions, states = teaser.update_predict_proba(X)
-
-        for n in range(len(X)):
-            if decisions[n] and final_decisions[ec_idx[n]] == 0:
-                final_probas[ec_idx[n]] = probas[n]
-                final_decisions[ec_idx[n]] = i
+        final_probas[final_idx] = probas[decisions]
+        X_test = teaser.filter_X(X_test, decisions)
 
     testing.assert_array_equal(final_probas, teaser_unit_test_probas)
 
@@ -69,26 +59,16 @@ def test_teaser_with_different_decision_maker():
     )
     teaser.fit(X_train, y_train)
 
+    X_test = from_nested_to_3d_numpy(X_test)[indices]
     final_probas = np.zeros((10, 2))
-    final_decisions = np.zeros(10)
+    open_idx = np.arange(0, 10)
 
-    X_test = from_nested_to_3d_numpy(X_test)
-    X_test = X_test[indices, :, :]
-
-    ec_idx = np.arange(0, 10)
-    decisions = np.zeros(len(X_test), dtype=bool)
     for i in teaser.classification_points:
-        inv_dec = np.invert(decisions)
-        X_test = X_test[inv_dec, :, :]
-        ec_idx = ec_idx[inv_dec]
+        probas, decisions, states = teaser.update_predict_proba(X_test[:, :, :i])
+        open_idx, final_idx = teaser.split_indices(open_idx, decisions)
 
-        X = X_test[:, :, :i]
-        probas, decisions, states = teaser.update_predict_proba(X)
-
-        for n in range(len(X)):
-            if decisions[n] and final_decisions[ec_idx[n]] == 0:
-                final_probas[ec_idx[n]] = probas[n]
-                final_decisions[ec_idx[n]] = i
+        final_probas[final_idx] = probas[decisions]
+        X_test = teaser.filter_X(X_test, decisions)
 
     testing.assert_array_equal(final_probas, teaser_if_unit_test_probas)
 

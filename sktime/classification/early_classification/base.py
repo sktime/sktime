@@ -319,6 +319,24 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         """Reset the state information used in update()."""
         self._state_info = None
 
+    @staticmethod
+    def filter_X(X, decisions):
+        """Remove True cases from X given a boolean array decisions."""
+        inv_dec = np.invert(decisions)
+        return X[inv_dec]
+
+    @staticmethod
+    def filter_X_y(X, y, decisions):
+        """Remove True cases from X and y given a boolean array decisions."""
+        inv_dec = np.invert(decisions)
+        return X[inv_dec], y[inv_dec]
+
+    @staticmethod
+    def split_indices(indices, decisions):
+        """Split a list of indices given a boolean array decisions."""
+        inv_dec = np.invert(decisions)
+        return indices[inv_dec], indices[decisions]
+
     @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
