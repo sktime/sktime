@@ -1667,6 +1667,7 @@ def load_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     value_column_name="series_value",
+    return_type="default_tsf",
 ):
     """
     Convert the contents in a .tsf file into a dataframe.
@@ -1684,6 +1685,9 @@ def load_tsf_to_dataframe(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
+    return_type: str, by default "default_tsf".
+        The type of the returned dataframe. Supported types are "hierarchical" and
+        "default_tsf"
 
     Returns
     -------
@@ -1855,11 +1859,19 @@ def load_tsf_to_dataframe(
         )
 
         # convert to multiinidex mtype
-        loaded_data = _convert_tsf_to_multiindex(
-            loaded_data, metadata, value_column_name=value_column_name
-        )
-
-        return loaded_data, metadata
+        if return_type == "default_tsf":
+            return loaded_data, metadata
+        elif return_type == "hierarchical":
+            loaded_data = _convert_tsf_to_multiindex(
+                loaded_data, metadata, value_column_name=value_column_name
+            )
+            return loaded_data, metadata
+        else:
+            raise ValueError(
+                f"{return_type} is currently not supported by "
+                "load_tsf_to_dataframe. Supported types are:\n hierarchiucal and"
+                " default_tsf"
+            )
 
 
 def _convert_tsf_to_multiindex(
@@ -1900,18 +1912,26 @@ def _convert_tsf_to_multiindex(
         freq = freq_map[metadata["frequency"]]
 
     # create the time index
-    df["timestamp"] = df.apply(
-        lambda x: pd.date_range(
-            start=x["start_timestamp"], periods=len(x[value_column_name]), freq=freq
-        ),
-        axis=1,
-    )
+    if "start_timestamp" in df.columns:
+        df["timestamp"] = df.apply(
+            lambda x: pd.date_range(
+                start=x["start_timestamp"], periods=len(x[value_column_name]), freq=freq
+            ),
+            axis=1,
+        )
+        drop_columns = ["start_timestamp"]
+    else:
+        df["timestamp"] = df.apply(
+            lambda x: pd.RangeIndex(start=0, stop=len(x[value_column_name])), axis=1
+        )
+        drop_columns = []
 
     # pandas implementation of multiple column explode
+    # can be removed and replaced by explode if we move to pandas version 1.3.0
     columns = [value_column_name, "timestamp"]
     result = pd.DataFrame({c: df[c].explode() for c in columns})
     df = (
-        df.drop(columns=columns + ["start_timestamp"])
+        df.drop(columns=columns + drop_columns)
         .join(result)
         .set_index(["series_name", "timestamp"])
     )
