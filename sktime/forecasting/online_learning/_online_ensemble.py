@@ -8,7 +8,6 @@ __author__ = ["magittan, mloning"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 
 
@@ -101,9 +100,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if return_pred_int:
-            raise NotImplementedError()
+    def _predict(self, fh=None, X=None):
         if self.ensemble_algorithm is not None:
             self.weights = self.ensemble_algorithm.weights
         return (pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights).sum(
