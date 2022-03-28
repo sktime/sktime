@@ -15,6 +15,7 @@ __author__ = ["mloning", "kkoralturk", "khrapovs"]
 import inspect
 import numbers
 import warnings
+from collections.abc import Iterable
 from inspect import signature
 from typing import Generator, Optional, Tuple, Union
 
@@ -260,6 +261,39 @@ def _check_window_lengths(
                 raise TypeError(error_msg_for_incompatible_types)
 
 
+def _fh_and_window_length_types_are_supported(
+    fh: FORECASTING_HORIZON_TYPES, window_length: ACCEPTED_WINDOW_LENGTH_TYPES = None
+) -> bool:
+    """Check that combination of inputs is supported.
+
+    Currently, only two cases are allowed:
+    either all inputs are integers, or they are all timedelta/dateoffset
+
+    Parameters
+    ----------
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    window_length : int or timedelta or pd.DateOffset
+
+    Returns
+    -------
+    True if all inputs are compatible, False otherwise
+    """
+    fh_is_int = array_is_int(fh) if isinstance(fh, Iterable) else is_int(fh)
+    fh_is_timedelta_or_date_offset = (
+        array_is_timedelta_or_date_offset(fh)
+        if isinstance(fh, Iterable)
+        else is_timedelta_or_date_offset(fh)
+    )
+    all_int = fh_is_int and (is_int(window_length) or window_length is None)
+    all_dates = fh_is_timedelta_or_date_offset and (
+        is_timedelta_or_date_offset(window_length) or window_length is None
+    )
+    if all_int or all_dates:
+        return True
+    else:
+        return False
+
+
 def _cutoffs_fh_window_length_types_are_supported(
     cutoffs: VALID_CUTOFF_TYPES,
     fh: FORECASTING_HORIZON_TYPES,
@@ -291,6 +325,30 @@ def _cutoffs_fh_window_length_types_are_supported(
         return True
     else:
         return False
+
+
+def _check_fh_and_window_length(
+    fh: FORECASTING_HORIZON_TYPES, window_length: ACCEPTED_WINDOW_LENGTH_TYPES
+) -> None:
+    """Check that combination of inputs is supported.
+
+    Currently, only two cases are allowed:
+    either all inputs are integers, or they are timedelta/dateoffset
+
+    Parameters
+    ----------
+    fh : int, timedelta, list or np.array of ints or timedeltas
+    window_length : int or timedelta or pd.DateOffset
+
+    Raises
+    ------
+    TypeError
+        if combination of inputs is not supported
+    """
+    if not _fh_and_window_length_types_are_supported(
+        fh=fh, window_length=window_length
+    ):
+        raise TypeError("Unsupported combination of types")
 
 
 def _check_cutoffs_fh_window_length(
@@ -998,6 +1056,7 @@ class SingleWindowSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES,
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
+        _check_fh_and_window_length(fh=fh, window_length=window_length)
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:

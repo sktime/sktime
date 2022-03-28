@@ -29,6 +29,9 @@ from sktime.forecasting.tests._config import (
     TEST_OOS_FHS,
     TEST_STEP_LENGTHS,
     TEST_WINDOW_LENGTHS,
+    TEST_WINDOW_LENGTHS_DATEOFFSET,
+    TEST_WINDOW_LENGTHS_INT,
+    TEST_WINDOW_LENGTHS_TIMEDELTA,
     TEST_YS,
     VALID_INDEX_FH_COMBINATIONS,
 )
@@ -146,7 +149,7 @@ def _check_cv(cv, y, allow_empty_window=False):
 
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
     cv = SingleWindowSplitter(fh=fh, window_length=window_length)
@@ -161,6 +164,17 @@ def test_single_window_splitter(y, fh, window_length):
     assert test_window.shape[0] == len(check_fh(fh))
 
     np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+
+
+@pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize(
+    "window_length", [*TEST_WINDOW_LENGTHS_TIMEDELTA, *TEST_WINDOW_LENGTHS_DATEOFFSET]
+)
+def test_single_window_splitter_with_unsupported_argument_types(y, fh, window_length):
+    """Test SingleWindowSplitter."""
+    with pytest.raises(TypeError, match="Unsupported combination of types"):
+        SingleWindowSplitter(fh=fh, window_length=window_length)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
