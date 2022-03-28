@@ -262,7 +262,7 @@ class ForecastingHorizon:
     # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
     # computations, as these are the basic methods and often required internally when
     # calling different methods.
-    @lru_cache(typed=True)
+    @lru_cache(typed=True)  # noqa: B019
     def to_relative(self, cutoff=None):
         """Return forecasting horizon values relative to a cutoff.
 
@@ -319,7 +319,7 @@ class ForecastingHorizon:
 
             return self._new(relative, is_relative=True)
 
-    @lru_cache(typed=True)
+    @lru_cache(typed=True)  # noqa: B019
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
 
@@ -446,7 +446,11 @@ class ForecastingHorizon:
 
     def _is_in_sample(self, cutoff=None):
         """Get index location of in-sample values."""
-        return self.to_relative(cutoff).to_pandas() <= 0
+        relative = self.to_relative(cutoff).to_pandas()
+        if relative.dtype == np.integer:
+            return relative <= 0
+        else:
+            return relative <= pd.Timedelta(0)
 
     def is_all_in_sample(self, cutoff=None):
         """Whether the forecasting horizon is purely in-sample for given cutoff.
@@ -466,7 +470,11 @@ class ForecastingHorizon:
     def _is_out_of_sample(self, cutoff=None):
         """Get index location of out-of-sample values."""
         # return ~self._in_sample_idx(cutoff)
-        return self.to_relative(cutoff).to_pandas() > 0
+        relative = self.to_relative(cutoff).to_pandas()
+        if relative.dtype == np.integer:
+            return relative > 0
+        else:
+            return relative > pd.Timedelta(0)
 
     def is_all_out_of_sample(self, cutoff=None):
         """Whether the forecasting horizon is purely out-of-sample for given cutoff.
@@ -504,7 +512,10 @@ class ForecastingHorizon:
             Indexer.
         """
         if from_cutoff:
-            return self.to_relative(cutoff).to_pandas() - 1
+            try:
+                return self.to_relative(cutoff).to_pandas() - 1
+            except TypeError:
+                return None
         else:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]

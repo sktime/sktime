@@ -20,6 +20,7 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
     TEST_FHS,
+    TEST_FHS_TIMEDELTA,
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
@@ -44,9 +45,25 @@ def _assert_index_equal(a, b):
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
-@pytest.mark.parametrize("steps", TEST_FHS)
+@pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
+    if (
+        fh_type == "timedelta"
+        and (
+            isinstance(steps, (int, np.integer)) or np.array(steps).dtype == np.integer
+        )
+    ) or (
+        fh_type != "timedelta"
+        and (
+            isinstance(steps, pd.Timedelta)
+            or (
+                isinstance(steps, list)
+                and isinstance(pd.Index(steps), pd.TimedeltaIndex)
+            )
+        )
+    ):
+        pytest.skip("steps are expected to be timedelta")
     # generate data
     y = make_forecasting_problem(index_type=index_type)
     assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
@@ -64,12 +81,27 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # get expected outputs
     if isinstance(steps, int):
         steps = np.array([steps])
-    fh_relative = pd.Int64Index(steps).sort_values()
-    fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
-    fh_indexer = fh_relative - 1
-    fh_oos = fh.to_pandas()[fh_relative > 0]
+    elif isinstance(steps, pd.Timedelta):
+        steps = pd.Index([steps])
+    elif isinstance(steps, list) and isinstance(steps[0], pd.Timedelta):
+        steps = pd.Index(steps)
+
+    if steps.dtype == np.integer:
+        fh_relative = pd.Int64Index(steps).sort_values()
+        fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
+        fh_indexer = fh_relative - 1
+    else:
+        fh_relative = steps.sort_values()
+        fh_absolute = (cutoff + steps).sort_values()
+        fh_indexer = None
+
+    if steps.dtype == np.integer:
+        null = 0
+    else:
+        null = pd.Timedelta(0)
+    fh_oos = fh.to_pandas()[fh_relative > null]
     is_oos = len(fh_oos) == len(fh)
-    fh_ins = fh.to_pandas()[fh_relative <= 0]
+    fh_ins = fh.to_pandas()[fh_relative <= null]
     is_ins = len(fh_ins) == len(fh)
 
     # check outputs
@@ -81,8 +113,11 @@ def test_fh(index_type, fh_type, is_relative, steps):
     _assert_index_equal(fh_relative, fh.to_relative(cutoff).to_pandas())
     assert fh.to_relative(cutoff).is_relative
 
-    # check index-like representation
-    _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
+    if fh_indexer is not None:
+        # check index-like representation
+        _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
+    else:
+        assert fh.to_indexer(cutoff) is None
 
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
@@ -233,17 +268,22 @@ def test_coerce_duration_to_int_with_non_allowed_durations(duration):
 @pytest.mark.parametrize("index_type", INDEX_TYPE_LOOKUP.keys())
 def test_get_duration(n_timepoints, index_type):
     """Test getting of duration."""
-    index = _make_index(n_timepoints, index_type)
-    duration = _get_duration(index)
-    # check output type is duration type
-    assert isinstance(
-        duration, (pd.Timedelta, pd.tseries.offsets.BaseOffset, int, np.integer)
-    )
+    if index_type != "timedelta":
+        index = _make_index(n_timepoints, index_type)
+        duration = _get_duration(index)
+        # check output type is duration type
+        assert isinstance(
+            duration, (pd.Timedelta, pd.tseries.offsets.BaseOffset, int, np.integer)
+        )
 
-    # check integer output
-    duration = _get_duration(index, coerce_to_int=True)
-    assert isinstance(duration, (int, np.integer))
-    assert duration == n_timepoints - 1
+        # check integer output
+        duration = _get_duration(index, coerce_to_int=True)
+        assert isinstance(duration, (int, np.integer))
+        assert duration == n_timepoints - 1
+    else:
+        match = "index_class: timedelta is not supported"
+        with pytest.raises(ValueError, match=match):
+            _make_index(n_timepoints, index_type)
 
 
 FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]
