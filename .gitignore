@@ -156,3 +156,4 @@ build_doc_site/
 envs/
 *.html
 sktime/contrib/debug.py
+pyproject.toml
