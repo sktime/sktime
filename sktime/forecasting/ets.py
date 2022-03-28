@@ -490,7 +490,7 @@ class AutoETS(_StatsModelsAdapter):
         )
 
         pred_quantiles = pd.DataFrame()
-        for a, coverage in zip(alpha, coverage):
+        for a, coverage in zip(alpha, coverage):  # noqa To skip over B020 flake8
             pred_int = prediction_results.pred_int(1 - coverage)
             pred_int.columns = ["lower", "upper"]
             if a < 0.5:
