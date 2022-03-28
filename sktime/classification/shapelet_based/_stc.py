@@ -337,14 +337,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         """
         from sklearn.ensemble import RandomForestClassifier
 
-        if parameter_set == "default":
-            return {
-                "estimator": RotationForest(n_estimators=2),
-                "n_shapelet_samples": 10,
-                "max_shapelets": 3,
-                "batch_size": 5,
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {
                 "estimator": RandomForestClassifier(n_estimators=5),
                 "n_shapelet_samples": 50,
@@ -352,7 +345,9 @@ class ShapeletTransformClassifier(BaseClassifier):
                 "batch_size": 10,
             }
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "estimator": RotationForest(n_estimators=2),
+                "n_shapelet_samples": 10,
+                "max_shapelets": 3,
+                "batch_size": 5,
+            }

@@ -223,20 +223,15 @@ class TSFreshClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "default":
-            return {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "default_fc_parameters": "minimal",
-                "relevant_feature_extractor": False,
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {
                 "estimator": RandomForestClassifier(n_estimators=10),
                 "default_fc_parameters": "minimal",
                 "relevant_feature_extractor": False,
             }
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "default_fc_parameters": "minimal",
+                "relevant_feature_extractor": False,
+            }

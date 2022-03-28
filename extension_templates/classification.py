@@ -26,7 +26,7 @@ Optional implements:
     fitted parameter inspection           - get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
 
-Testing - implement if sktime forecaster (not needed locally):
+Testing - implement if sktime classifier (not needed locally):
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
@@ -184,8 +184,18 @@ class MyTimeSeriesClassifier(BaseClassifier):
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a string, will always return the
+            `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results.
 
         Returns
         -------
@@ -213,5 +223,14 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
+        #
+        # example 3: separate parameter sets through input
+        # note: recommended for sktime classifiers which compare to expected results
+        # where the fast set of test parmas may not produce suitable probabilities to
+        # compare against.
+        # if parameter_set == "results_comparison":
+        #     params = {"est": value1, "parama": value2}
+        # else:
+        #     params = {"est": value3, "parama": value4}
         #
         # return params

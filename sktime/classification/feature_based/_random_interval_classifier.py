@@ -204,15 +204,7 @@ class RandomIntervalClassifier(BaseClassifier):
 
         from sktime.transformations.series.summarize import SummaryTransformer
 
-        if parameter_set == "default":
-            return {
-                "n_intervals": 2,
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "interval_transformers": SummaryTransformer(
-                    summary_function=("mean", "min", "max"),
-                ),
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {
                 "n_intervals": 3,
                 "estimator": RandomForestClassifier(n_estimators=10),
@@ -222,7 +214,10 @@ class RandomIntervalClassifier(BaseClassifier):
                 ),
             }
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "n_intervals": 2,
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "min", "max"),
+                ),
+            }

@@ -310,16 +310,9 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
         from sktime.transformations.series.exponent import ExponentTransformer
 
-        if parameter_set == "default":
-            t1 = ExponentTransformer(power=2)
-            t2 = ExponentTransformer(power=0.5)
-            c = KNeighborsTimeSeriesClassifier()
+        t1 = ExponentTransformer(power=2)
+        t2 = ExponentTransformer(power=0.5)
+        c = KNeighborsTimeSeriesClassifier()
 
-            # construct without names
-            params = {"transformers": [t1, t2], "classifier": c}
-            return params
-        else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+        # construct without names
+        return {"transformers": [t1, t2], "classifier": c}

@@ -1548,15 +1548,10 @@ class ProximityForest(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "default":
-            return {"n_estimators": 2}
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {"n_estimators": 3}
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {"n_estimators": 2}
 
 
 # start of util functions

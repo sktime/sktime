@@ -296,14 +296,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             TimeSeriesForestClassifier as TSFC,
         )
 
-        if parameter_set == "default":
-            return {
-                "estimators": [
-                    ("tsf1", TSFC(n_estimators=2), 0),
-                    ("tsf2", TSFC(n_estimators=2), 0),
-                ]
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             cboss = ContractableBOSS(
                 n_parameter_samples=4, max_ensemble_size=2, random_state=0
             )
@@ -312,10 +305,12 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "estimators": [
+                    ("tsf1", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=2), 0),
+                ]
+            }
 
 
 def _get_column(X, key):

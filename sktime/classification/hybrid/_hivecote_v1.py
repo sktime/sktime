@@ -384,19 +384,7 @@ class HIVECOTEV1(BaseClassifier):
         """
         from sklearn.ensemble import RandomForestClassifier
 
-        if parameter_set == "default":
-            return {
-                "stc_params": {
-                    "estimator": RandomForestClassifier(n_estimators=1),
-                    "n_shapelet_samples": 5,
-                    "max_shapelets": 5,
-                    "batch_size": 5,
-                },
-                "tsf_params": {"n_estimators": 1},
-                "rise_params": {"n_estimators": 1},
-                "cboss_params": {"n_parameter_samples": 1, "max_ensemble_size": 1},
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {
                 "stc_params": {
                     "estimator": RandomForestClassifier(n_estimators=3),
@@ -409,7 +397,14 @@ class HIVECOTEV1(BaseClassifier):
                 "cboss_params": {"n_parameter_samples": 5, "max_ensemble_size": 3},
             }
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=1),
+                    "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "tsf_params": {"n_estimators": 1},
+                "rise_params": {"n_estimators": 1},
+                "cboss_params": {"n_parameter_samples": 1, "max_ensemble_size": 1},
+            }

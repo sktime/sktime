@@ -497,14 +497,7 @@ class ElasticEnsemble(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "default":
-            return {
-                "proportion_of_param_options": 0.01,
-                "proportion_train_for_test": 0.1,
-                "majority_vote": True,
-                "distance_measures": ["dtw"],
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {
                 "proportion_of_param_options": 0.1,
                 "proportion_train_for_test": 0.1,
@@ -512,7 +505,9 @@ class ElasticEnsemble(BaseClassifier):
                 "distance_measures": ["dtw", "ddtw", "wdtw"],
             }
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "proportion_of_param_options": 0.01,
+                "proportion_train_for_test": 0.1,
+                "majority_vote": True,
+                "distance_measures": ["dtw"],
+            }

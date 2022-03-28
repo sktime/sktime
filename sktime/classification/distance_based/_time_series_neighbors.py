@@ -461,13 +461,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "default":
-            return {"distance": "euclidean"}
-        else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+        return {"distance": "euclidean"}
 
 
 # overwrite sklearn internal checks, this is really hacky

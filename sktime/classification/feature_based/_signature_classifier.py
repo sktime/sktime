@@ -234,17 +234,12 @@ class SignatureClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "default":
+        if parameter_set == "results_comparison":
+            return {"estimator": RandomForestClassifier(n_estimators=10)}
+        else:
             return {
                 "estimator": RandomForestClassifier(n_estimators=2),
                 "augmentation_list": ("basepoint", "addtime"),
                 "depth": 3,
                 "window_name": "global",
             }
-        elif parameter_set == "results_comparison":
-            return {"estimator": RandomForestClassifier(n_estimators=10)}
-        else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )

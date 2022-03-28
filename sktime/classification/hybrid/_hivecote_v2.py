@@ -395,27 +395,7 @@ class HIVECOTEV2(BaseClassifier):
         """
         from sklearn.ensemble import RandomForestClassifier
 
-        if parameter_set == "default":
-            return {
-                "stc_params": {
-                    "estimator": RandomForestClassifier(n_estimators=1),
-                    "n_shapelet_samples": 5,
-                    "max_shapelets": 5,
-                    "batch_size": 5,
-                },
-                "drcif_params": {
-                    "n_estimators": 1,
-                    "n_intervals": 2,
-                    "att_subsample_size": 2,
-                },
-                "arsenal_params": {"num_kernels": 5, "n_estimators": 1},
-                "tde_params": {
-                    "n_parameter_samples": 1,
-                    "max_ensemble_size": 1,
-                    "randomly_selected_params": 1,
-                },
-            }
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {
                 "stc_params": {
                     "estimator": RandomForestClassifier(n_estimators=3),
@@ -436,7 +416,22 @@ class HIVECOTEV2(BaseClassifier):
                 },
             }
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=1),
+                    "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "drcif_params": {
+                    "n_estimators": 1,
+                    "n_intervals": 2,
+                    "att_subsample_size": 2,
+                },
+                "arsenal_params": {"num_kernels": 5, "n_estimators": 1},
+                "tde_params": {
+                    "n_parameter_samples": 1,
+                    "max_ensemble_size": 1,
+                    "randomly_selected_params": 1,
+                },
+            }

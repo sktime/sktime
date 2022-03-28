@@ -236,12 +236,7 @@ class RocketClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        if parameter_set == "default":
-            return {"num_kernels": 20}
-        elif parameter_set == "results_comparison":
+        if parameter_set == "results_comparison":
             return {"num_kernels": 100}
         else:
-            raise ValueError(
-                f"Estimator: {cls} does not have requested parameter set named: "
-                f"{parameter_set}."
-            )
+            return {"num_kernels": 20}
