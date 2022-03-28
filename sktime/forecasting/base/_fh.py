@@ -26,7 +26,7 @@ RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
+VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index, pd.Timedelta)
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -140,7 +140,7 @@ class ForecastingHorizon:
 
     Parameters
     ----------
-    values : pd.Index, np.array, list or int
+    values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
     is_relative : bool, optional (default=None)
         - If True, a relative ForecastingHorizon is created:
@@ -206,7 +206,7 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        values : pd.Index, np.array, list or int
+        values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
             Values of forecasting horizon.
         is_relative : bool, default=same as self.is_relative
         - If None, determined automatically: same as self.is_relative
@@ -517,6 +517,7 @@ class ForecastingHorizon:
             try:
                 return self.to_relative(cutoff).to_pandas() - 1
             except TypeError:
+                # What does indexer mean if fh is timedelta?
                 return None
         else:
             relative = self.to_relative(cutoff)
