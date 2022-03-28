@@ -120,7 +120,7 @@ class VAR(_StatsModelsAdapter):
             maxlags=self.maxlags,
             method=self.method,
             verbose=self.verbose,
-            ic=None,
+            ic=self.ic,
         )
         return self
 
