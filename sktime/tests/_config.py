@@ -40,7 +40,6 @@ from sktime.classification.interval_based import (
     SupervisedTimeSeriesForest,
 )
 from sktime.classification.interval_based import TimeSeriesForestClassifier as TSFC
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.forecasting.compose import (
     DirectTabularRegressionForecaster,
@@ -174,12 +173,6 @@ ESTIMATOR_TEST_PARAMS = {
     },
     ColumnTransformer: {
         "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
-    },
-    ShapeletTransformClassifier: {
-        "estimator": RotationForest(n_estimators=3),
-        "max_shapelets": 5,
-        "n_shapelet_samples": 50,
-        "batch_size": 20,
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,
