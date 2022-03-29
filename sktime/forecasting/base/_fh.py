@@ -183,18 +183,21 @@ class ForecastingHorizon:
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
+        values_in_relative_types = type(values) in RELATIVE_TYPES
+        values_in_absolute_types = type(values) in ABSOLUTE_TYPES
+        values_is_numeric_index = isinstance(values, pd.Index) and values.is_numeric()
         if is_relative is None:
-            if (type(values) in RELATIVE_TYPES) or values.is_numeric():
+            if values_in_relative_types or values_is_numeric_index:
                 is_relative = True
-            elif (type(values) in ABSOLUTE_TYPES) or values.is_numeric():
+            elif values_in_absolute_types or values_is_numeric_index:
                 is_relative = False
             else:
                 raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
-            if not ((type(values) in RELATIVE_TYPES) or values.is_numeric()):
+            if not (values_in_relative_types or values_is_numeric_index):
                 raise TypeError(error_msg)
         else:
-            if not ((type(values) in ABSOLUTE_TYPES) or values.is_numeric()):
+            if not (values_in_absolute_types or values_is_numeric_index):
                 raise TypeError(error_msg)
 
         self._values = values
