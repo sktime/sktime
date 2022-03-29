@@ -191,12 +191,10 @@ class MyTimeSeriesClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a string, will always return the
-            `"default"` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
+            special parameters are defined for a value, will return `"default"` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
         -------
@@ -209,14 +207,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
-        # The input parameter_set is used when there are multiple testing parameter sets
-        # for the estimator, and is not required for typical implementations.
         #
         # this can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
         #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for most automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        #   For classification, this is also used in tests for reference settings,
+        #       such as published in benchmarking studies, or for identity testing.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
@@ -227,15 +230,12 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
         #
-        # example 3: separate parameter sets through input
-        # note: recommended for sktime classifiers which compare to expected results
-        # where the fast set of test parmas may not produce suitable probabilities to
-        # compare against. i.e., n_estimators=2 for ensembles is fast for general
-        # testing, but may not produce good probabilities.
-        # If the default set it suitable, this does not need to be implemented.
-        # if parameter_set == "results_comparison":
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
         #     params = {"est": value1, "parama": value2}
-        # else:
-        #     params = {"est": value3, "parama": value4}
+        #     return params
         #
+        # # "default" params
+        # params = {"est": value3, "parama": value4}
         # return params
