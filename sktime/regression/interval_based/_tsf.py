@@ -67,6 +67,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     .. [3] Arxiv paper: https://arxiv.org/abs/1302.2277
     """
 
+    _tags = {"capability:multivariate": False}
+
     _base_estimator = DecisionTreeRegressor()
 
     def fit(self, X, y, **kwargs):

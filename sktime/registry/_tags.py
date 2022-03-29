@@ -60,13 +60,19 @@ ESTIMATOR_TAG_REGISTER = [
         "fit-in-transform",
         ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
     ),
     (
         "fit-in-predict",
         "estimator",
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
+    ),
+    (
+        "fit_is_empty",
+        "estimator",
+        "bool",
+        "fit contains no logic and can be skipped? Yes=True, No=False",
     ),
     (
         "transform-returns-same-time-index",
@@ -193,6 +199,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_interval or predict_quantiles?",
     ),
     (
+        "capability:pred_var",
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
+    ),
+    (
         "capability:multivariate",
         "classifier",
         "bool",
@@ -277,27 +289,33 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "requires-y-train",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "does metric require y-train data to be passed?",
     ),
     (
         "requires-y-pred-benchmark",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "does metric require a predictive benchmark?",
     ),
     (
         "univariate-metric",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "Does the metric only work on univariate y data?",
     ),
     (
         "scitype:y_pred",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "str",
         "What is the scitype of y_pred: quantiles, proba, interval?",
+    ),
+    (
+        "lower_is_better",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
 ]
 

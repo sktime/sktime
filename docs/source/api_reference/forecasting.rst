@@ -32,6 +32,7 @@ Naive
     :template: class.rst
 
     NaiveForecaster
+    NaiveVariance
 
 Trend
 -----
@@ -76,6 +77,17 @@ ARIMA
 
     AutoARIMA
     ARIMA
+
+StatsForecast
+-------------
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoARIMA
 
 Theta
 -----

@@ -949,7 +949,7 @@ class ProximityStump(BaseClassifier):
         self.entropy = self.get_gain(self.y, self.y_branches)
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -977,7 +977,7 @@ class ProximityStump(BaseClassifier):
 
         return y
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1165,7 +1165,7 @@ class ProximityTree(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -1193,7 +1193,7 @@ class ProximityTree(BaseClassifier):
 
         return y
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1467,7 +1467,7 @@ class ProximityForest(BaseClassifier):
         """
         return tree.predict_proba(X)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -1495,7 +1495,7 @@ class ProximityForest(BaseClassifier):
 
         return y
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -1525,6 +1525,21 @@ class ProximityForest(BaseClassifier):
         distributions = np.sum(distributions, axis=0)
         normalize(distributions, copy=False, norm="l1")
         return distributions
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {"n_estimators": 2}
+        return params
 
 
 # start of util functions
