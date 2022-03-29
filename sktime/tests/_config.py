@@ -27,7 +27,6 @@ from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
@@ -110,7 +109,6 @@ ESTIMATOR_TEST_PARAMS = {
     RandomIntervals: {
         "n_intervals": 3,
     },
-    TSInterpolator: {"length": 10},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
