@@ -98,7 +98,10 @@ def test_all_tags(estimator_scitype):
 
     # there should be at least one tag returned
     # exception: scitypes which we know don't have tags associated
-    if estimator_scitype not in SCITYPES_WITHOUT_TAGS or (
+    if (
+        not isinstance(estimator_scitype, list)
+        and estimator_scitype not in SCITYPES_WITHOUT_TAGS
+    ) or (
         isinstance(estimator_scitype, list)
         and any(i not in SCITYPES_WITHOUT_TAGS for i in estimator_scitype)
     ):
