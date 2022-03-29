@@ -18,13 +18,7 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (
-    pd.Int64Index,
-    pd.RangeIndex,
-    pd.PeriodIndex,
-    pd.DatetimeIndex,
-    pd.TimedeltaIndex,
-)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -185,7 +179,7 @@ def check_time_index(
 
     # We here check for type equality because isinstance does not
     # work reliably because index types inherit from each other.
-    if not type(index) in VALID_INDEX_TYPES:
+    if not ((type(index) in VALID_INDEX_TYPES) or index.is_numeric()):
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."
@@ -194,7 +188,7 @@ def check_time_index(
     if enforce_index_type and type(index) is not enforce_index_type:
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
-            f"type: {enforce_index_type} instead."
+            f"type: {enforce_index_type} or integer pd.Index instead."
         )
 
     # Check time index is ordered in time

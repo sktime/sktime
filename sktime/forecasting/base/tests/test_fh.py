@@ -152,7 +152,9 @@ GOOD_ABSOLUTE_INPUT_ARGS = (
 def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert type(output) in VALID_INDEX_TYPES
+    assert (type(output) in VALID_INDEX_TYPES) or (
+        isinstance(output, pd.Index) and output.is_numeric()
+    )
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
