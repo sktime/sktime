@@ -5,23 +5,11 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 from pyod.models.knn import KNN
-from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.forecasting.compose import (
-    DirectTabularRegressionForecaster,
-    DirectTimeSeriesRegressionForecaster,
-    DirRecTabularRegressionForecaster,
-    DirRecTimeSeriesRegressionForecaster,
-    MultioutputTabularRegressionForecaster,
-    MultioutputTimeSeriesRegressionForecaster,
-    RecursiveTabularRegressionForecaster,
-    RecursiveTimeSeriesRegressionForecaster,
-)
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.structural import UnobservedComponents
@@ -41,7 +29,6 @@ from sktime.transformations.panel.compose import (
 )
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
@@ -93,32 +80,13 @@ TRANSFORMERS = [
         ),
     ),
 ]
-REGRESSOR = LinearRegression()
 ANOMALY_DETECTOR = KNN()
-FORECASTER = NaiveForecaster()
-FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
 STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
     FeatureUnion: {"transformer_list": TRANSFORMERS},
-    DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
-    MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
-    RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
-    DirRecTabularRegressionForecaster: {"estimator": REGRESSOR},
-    DirectTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    RecursiveTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    MultioutputTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    DirRecTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
