@@ -372,8 +372,7 @@ class BaseTransformer(BaseEstimator):
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 
-        Fits transformer to X and y with optional parameters fit_params
-        and returns a transformed version of X.
+        Fits transformer to X and y with and returns a transformed version of X.
 
         State change:
             Changes state to "fitted".

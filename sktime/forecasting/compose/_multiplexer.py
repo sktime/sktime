@@ -94,27 +94,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
 
-    def _check_fit_params(self, fit_params):
-        forecaster_fit_params = {}
-
-        if self.selected_forecaster is None or fit_params == {}:
-            return forecaster_fit_params
-
-        for component in self.forecasters:
-            name, _ = component
-            if name not in fit_params.keys():
-                raise KeyError(
-                    "If you provide fit_params for models "
-                    "dictionary key of fit params need to "
-                    " match the associated component key."
-                )
-
-        if self.selected_forecaster in fit_params.keys():
-            forecaster_fit_params = fit_params[self.selected_forecaster]
-            return forecaster_fit_params
-        else:
-            return forecaster_fit_params
-
     def _check_selected_forecaster(self):
         component_names = [name for name, _ in self.forecasters]
         if self.selected_forecaster not in component_names:
@@ -141,11 +120,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
-        fit_params : dict
-            A dictionary composed of key-value pairs
-            of forecaster names and fit params to be
-            used for each forecaster.
-            Example: {"ARIMA": ..., "ETS": ...}
 
         Returns
         -------
@@ -153,8 +127,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         """
         self._check_forecasters()
         self._set_forecaster()
-        forecaster_fit_params = self._check_fit_params(fit_params=fit_params)
-        self.forecaster_.fit(y, X=X, fh=fh, **forecaster_fit_params)
+        self.forecaster_.fit(y, X=X, fh=fh)
         return self
 
     def _predict(self, fh, X=None):

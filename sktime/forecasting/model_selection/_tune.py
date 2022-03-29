@@ -212,7 +212,6 @@ class BaseGridSearch(BaseForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                fit_params=fit_params,
             )
 
             # Filter columns.
