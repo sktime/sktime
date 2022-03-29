@@ -55,9 +55,10 @@ def test_fh(index_type, fh_type, is_relative, steps):
     steps_is_timedelta = isinstance(steps, pd.Timedelta) or (
         isinstance(steps, list) and isinstance(pd.Index(steps), pd.TimedeltaIndex)
     )
-    if (fh_type == "timedelta" and steps_is_int) or (
+    steps_and_fh_incompatible = (fh_type == "timedelta" and steps_is_int) or (
         fh_type != "timedelta" and steps_is_timedelta
-    ):
+    )
+    if steps_and_fh_incompatible:
         pytest.skip("steps and fh_type are incompatible")
     # generate data
     y = make_forecasting_problem(index_type=index_type)
