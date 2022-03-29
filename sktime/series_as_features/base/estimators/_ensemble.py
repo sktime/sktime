@@ -46,7 +46,6 @@ def _parallel_build_trees(
 
     # name of step of final estimator in pipeline
     final_estimator = tree.steps[-1][1]
-    final_estimator_name = tree.steps[-1][0]
 
     if forest.bootstrap:
         n_samples = X.shape[0]
