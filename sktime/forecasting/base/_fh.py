@@ -98,18 +98,15 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     if type(values) in VALID_INDEX_TYPES:
         pass
 
-    # convert single integer to pandas index, no further checks needed
-    elif is_int(values):
-        return pd.Int64Index([values], dtype=int)
-
-    elif is_timedelta_or_date_offset(values):
+    # convert single integer or timedelta or dateoffset
+    # to pandas index, no further checks needed
+    elif is_int(values) or is_timedelta_or_date_offset(values):
         return pd.Index([values])
 
     # convert np.array or list to pandas index
-    elif is_array(values) and array_is_int(values):
-        values = pd.Int64Index(values, dtype=int)
-
-    elif is_array(values) and array_is_timedelta_or_date_offset(values):
+    elif is_array(values) and (
+        array_is_int(values) or array_is_timedelta_or_date_offset(values)
+    ):
         values = pd.Index(values)
 
     # otherwise, raise type error
@@ -262,7 +259,7 @@ class ForecastingHorizon:
     # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
     # computations, as these are the basic methods and often required internally when
     # calling different methods.
-    @lru_cache(typed=True)
+    @lru_cache(typed=True)  # noqa: B019
     def to_relative(self, cutoff=None):
         """Return forecasting horizon values relative to a cutoff.
 
@@ -319,7 +316,7 @@ class ForecastingHorizon:
 
             return self._new(relative, is_relative=True)
 
-    @lru_cache(typed=True)
+    @lru_cache(typed=True)  # noqa: B019
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
 

@@ -64,7 +64,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # get expected outputs
     if isinstance(steps, int):
         steps = np.array([steps])
-    fh_relative = pd.Int64Index(steps).sort_values()
+    fh_relative = pd.Index(steps).sort_values()
     fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
     fh_indexer = fh_relative - 1
     fh_oos = fh.to_pandas()[fh_relative > 0]
@@ -139,7 +139,7 @@ def test_check_fh_values_duplicate_input_values(arg):
 
 
 GOOD_ABSOLUTE_INPUT_ARGS = (
-    pd.Int64Index([1, 2, 3]),
+    pd.Index([1, 2, 3]),
     pd.period_range("2000-01-01", periods=3, freq="D"),
     pd.date_range("2000-01-01", periods=3, freq="M"),
     np.array([1, 2, 3]),
@@ -212,7 +212,7 @@ def test_coerce_duration_to_int(duration):
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
-    assert type(ret) in (pd.Int64Index, np.integer, int)
+    assert (type(ret) in (np.integer, int)) or ret.is_numeric()
 
     # check result
     if isinstance(duration, pd.Index):
