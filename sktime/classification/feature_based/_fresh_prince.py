@@ -68,7 +68,7 @@ class FreshPRINCE(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = FreshPRINCE(
     ...     default_fc_parameters="minimal",
-    ...     n_estimators=10,
+    ...     n_estimators=5,
     ... )
     >>> clf.fit(X_train, y_train)
     FreshPRINCE(...)

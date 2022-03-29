@@ -140,7 +140,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TemporalDictionaryEnsemble(
     ...     n_parameter_samples=10,
-    ...     max_ensemble_size=5,
+    ...     max_ensemble_size=3,
     ...     randomly_selected_params=5,
     ... )
     >>> clf.fit(X_train, y_train)
