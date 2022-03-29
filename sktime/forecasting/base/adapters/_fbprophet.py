@@ -24,7 +24,7 @@ class _ProphetAdapter(BaseForecaster):
         "handles-missing-data": False,
     }
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -67,10 +67,10 @@ class _ProphetAdapter(BaseForecaster):
                 self._forecaster.add_regressor(col)
 
         if self.verbose:
-            self._forecaster.fit(df=df, **fit_params)
+            self._forecaster.fit(df=df)
         else:
             with _suppress_stdout_stderr():
-                self._forecaster.fit(df=df, **fit_params)
+                self._forecaster.fit(df=df)
 
         return self
 
