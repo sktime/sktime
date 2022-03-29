@@ -269,9 +269,8 @@ class BaseObject(_BaseEstimator):
         Parameters
         ----------
         parameter_set : str, default="default"
-            Name of the set of test parameters to use, passed to get_test_params(). If
-            no special parameters are defined in get_test_params() for a string, will
-            always use the "default"` set.
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -301,7 +300,7 @@ class BaseObject(_BaseEstimator):
         return cls(**params)
 
     @classmethod
-    def create_test_instances_and_names(cls):
+    def create_test_instances_and_names(cls, parameter_set="default"):
         """Create list of all test instances and a list of names for them.
 
         Returns
@@ -312,9 +311,12 @@ class BaseObject(_BaseEstimator):
             i-th element is name of i-th instance of obj in tests
             convention is {cls.__name__}-{i} if more than one instance
             otherwise {cls.__name__}
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
         """
         objs = []
-        param_list = cls.get_test_params()
+        param_list = cls.get_test_params(parameter_set=parameter_set)
         if not isinstance(param_list, (dict, list)):
             raise RuntimeError(
                 f"Error in {cls.__name__}.get_test_params, "
