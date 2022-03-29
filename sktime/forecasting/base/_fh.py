@@ -447,7 +447,7 @@ class ForecastingHorizon:
     def _is_in_sample(self, cutoff=None):
         """Get index location of in-sample values."""
         relative = self.to_relative(cutoff).to_pandas()
-        if relative.dtype == np.integer:
+        if relative.dtype == "int64":
             null = 0
         else:
             null = pd.Timedelta(0)
@@ -472,7 +472,7 @@ class ForecastingHorizon:
         """Get index location of out-of-sample values."""
         # return ~self._in_sample_idx(cutoff)
         relative = self.to_relative(cutoff).to_pandas()
-        if relative.dtype == np.integer:
+        if relative.dtype == "int64":
             null = 0
         else:
             null = pd.Timedelta(0)
