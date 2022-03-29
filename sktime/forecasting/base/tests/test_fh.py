@@ -50,7 +50,10 @@ def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
     if (
         fh_type == "timedelta"
-        and (isinstance(steps, (int, np.integer)) or np.array(steps).dtype == "int64")
+        and (
+            isinstance(steps, (int, np.integer))
+            or np.array(steps).dtype in ["int64", "int32"]
+        )
     ) or (
         fh_type != "timedelta"
         and (
@@ -85,7 +88,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
         steps = pd.Index(steps)
 
     if steps.dtype == "int64":
-        fh_relative = pd.Int64Index(steps).sort_values()
+        fh_relative = pd.Index(steps, dtype="int64").sort_values()
         fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
         fh_indexer = fh_relative - 1
     else:
