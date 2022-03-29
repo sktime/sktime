@@ -98,7 +98,10 @@ def test_all_tags(estimator_scitype):
 
     # there should be at least one tag returned
     # exception: scitypes which we know don't have tags associated
-    if estimator_scitype not in SCITYPES_WITHOUT_TAGS:
+    if estimator_scitype not in SCITYPES_WITHOUT_TAGS or (
+        isinstance(estimator_scitype, list)
+        and all(i not in SCITYPES_WITHOUT_TAGS for i in estimator_scitype)
+    ):
         assert len(tags) > 0
 
     # checks return type specification (see docstring)
