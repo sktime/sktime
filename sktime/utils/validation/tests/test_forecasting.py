@@ -1,9 +1,9 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for Forecasting object."""
+"""Test forecasting module."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,6 @@ empty_input = (np.array([]), [], pd.Index([], dtype="int64"))
 
 @pytest.mark.parametrize("arg", empty_input)
 def test_check_fh_empty_input(arg):
-    """Test that check_fh() raises ValueError for empty input."""
-    with raises(ValueError):
+    """Test that fh validation throws an error with empty container."""
+    with raises(ValueError, match="`fh` must not be empty"):
         check_fh(arg)

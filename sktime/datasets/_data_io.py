@@ -68,8 +68,7 @@ def _download_and_extract(url, extract_path=None):
     -------
     extract_path : string or None
         if successful, string containing the path of the extracted file, None
-        if it wasn't succesful
-
+        if it wasn't successful
     """
     file_name = os.path.basename(url)
     dl_dir = tempfile.mkdtemp()
@@ -1303,14 +1302,7 @@ def write_results_to_uea_format(
         )
     # If the full directory path is not passed, make the standard structure
     if not full_path:
-        output_path = (
-            str(output_path)
-            + "/"
-            + str(estimator_name)
-            + "/Predictions/"
-            + str(dataset_name)
-            + "/"
-        )
+        output_path = f"{output_path}/{estimator_name}/Predictions/{dataset_name}/"
     try:
         os.makedirs(output_path)
     except os.error:
@@ -1322,20 +1314,10 @@ def write_results_to_uea_format(
         train_or_test = "test"
     else:
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
-    file = open(
-        str(output_path)
-        + "/"
-        + str(train_or_test)
-        + "Resample"
-        + str(resample_seed)
-        + ".csv",
-        "w",
-    )
+    file = open(f"{output_path}/{train_or_test}Resample{resample_seed}.csv", "w")
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    first_line = (
-        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test)
-    )
+    first_line = f"{dataset_name},{estimator_name},{train_or_test},{resample_seed}"
     if timing_type is not None:
         first_line += "," + timing_type
     if first_line_comment is not None:

@@ -11,7 +11,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* environments with python version 3.6, 3.7, or 3.8.
+* environments with python version 3.7, 3.8, or 3.9.
 * operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 * installation via ``PyPi`` or ``conda``
 
@@ -128,7 +128,7 @@ Time Series Clustering
 .. code-block:: python
 
     >>> from sklearn.model_selection import train_test_split
-    >>> from sktime.clustering import TimeSeriesKMeans
+    >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.clustering.evaluation._plot_clustering import plot_cluster_algorithm
     >>> from sktime.datasets import load_arrow_head
 

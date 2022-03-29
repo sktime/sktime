@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Clustering usage tests and examples"""
+"""Clustering usage tests and examples."""
 import numpy as np
 
-from sktime.clustering import (
-    TimeSeriesKMeans,
-    TimeSeriesKMedoids,
-)
+from sktime.clustering.k_means import TimeSeriesKMeans
+from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_arrow_head
 
 
 def form_cluster_list(clusters, n) -> np.array:
+    """Form a cluster list."""
     preds = np.zeros(n)
     for i in range(len(clusters)):
         for j in range(len(clusters[i])):

@@ -83,6 +83,7 @@ class RocketClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
+        "classifier_type": "kernel",
     }
 
     def __init__(
@@ -178,7 +179,7 @@ class RocketClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -193,7 +194,7 @@ class RocketClassifier(BaseClassifier):
         """
         return self._pipeline.predict(X)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -212,3 +213,18 @@ class RocketClassifier(BaseClassifier):
             dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {"num_kernels": 20}
+        return params
