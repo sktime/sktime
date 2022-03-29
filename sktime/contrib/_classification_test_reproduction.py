@@ -204,7 +204,9 @@ if __name__ == "__main__":
     _print_array(
         "ProximityForest - UnitTest",
         _reproduce_classification_unit_test(
-            ProximityForest(n_estimators=3, random_state=0)
+            ProximityForest(
+                n_estimators=3, max_depth=2, n_stump_evaluations=2, random_state=0
+            )
         ),
     )
     _print_array("ShapeDTW - UnitTest", _reproduce_classification_unit_test(ShapeDTW()))
