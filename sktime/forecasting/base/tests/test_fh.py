@@ -49,18 +49,14 @@ def _assert_index_equal(a, b):
 def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
     int_types = ["int64", "int32"]
-    if (
-        fh_type == "timedelta"
-        and (isinstance(steps, (int, np.integer)) or np.array(steps).dtype in int_types)
-    ) or (
-        fh_type != "timedelta"
-        and (
-            isinstance(steps, pd.Timedelta)
-            or (
-                isinstance(steps, list)
-                and isinstance(pd.Index(steps), pd.TimedeltaIndex)
-            )
-        )
+    steps_is_int = (
+        isinstance(steps, (int, np.integer)) or np.array(steps).dtype in int_types
+    )
+    steps_is_timedelta = isinstance(steps, pd.Timedelta) or (
+        isinstance(steps, list) and isinstance(pd.Index(steps), pd.TimedeltaIndex)
+    )
+    if (fh_type == "timedelta" and steps_is_int) or (
+        fh_type != "timedelta" and steps_is_timedelta
     ):
         pytest.skip("steps and fh_type are incompatible")
     # generate data
