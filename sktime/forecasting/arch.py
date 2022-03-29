@@ -3,7 +3,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 
-"""Implements Generalized Autoregressive Conditional Heteroskedasticity (GARCH) models and it's variants."""
+"""Implements Generalized Autoregressive Conditional Heteroskedasticity
+(GARCH) models and it's variants."""
 
 __author__ = ["Vasudeva-bit"]
 
@@ -12,16 +13,20 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("arch", severity="warning")
 
+
 class ARCH(BaseForecaster):
-    """Generalized Autoregressive Conditional Heteroskedasticity (GARCH) model for forecasting
-    votility in high frequency time series data.
+    """Generalized Autoregressive Conditional Heteroskedasticity (GARCH)
+    model for forecasting votility in high frequency time series data.
 
-    Implements Generalized Autoregressive Conditional Heteroskedasticity (GARCH) models introduced
-    and implemented in [1]_, [2]_, and [3]_ to forecast the volatility in high frequency time series data,
-    Implemented using python package for ARCH models called "arch".
+    Directly interfaces ARCH models from python package arch.
 
-    ARCH models are a popular class of volatility models that use observed values of returns or residuals
-    as volatility shocks.
+    ARCH models are a popular class of volatility models that use observed values
+    of returns as volatility shocks.
+
+    Implements Generalized Autoregressive Conditional Heteroskedasticity
+    (GARCH) models introduced and implemented in [1]_, [2]_, and [3]_ to
+    forecast the volatility in high frequency time series data, Implemented
+    using python package for ARCH models called "arch".
 
     A complete ARCH model is divided into three components:
         a mean model, e.g., a constant mean or an ARX;
@@ -29,7 +34,7 @@ class ARCH(BaseForecaster):
         a distribution for the standardized residuals.
 
     Parameters
-    ----------------
+    ----------
     y : {np.ndarray, Series, None}
         The dependent variable
     x : {np.ndarray, DataFrame}, optional
@@ -78,11 +83,14 @@ class ARCH(BaseForecaster):
 
     References
     ----------
-    .. [1] Jason Brownlee. How to Model Volatility with ARCH and GARCH for Time Series Forecasting.
-       https://machinelearningmastery.com/develop-arch-and-garch-models-for-time-series-forecasting-in-python/
+    .. [1] Jason Brownlee. How to Model Volatility with ARCH and GARCH for Time
+       Series Forecasting.
+       https://machinelearningmastery.com/develop-arch-and-garch-models-for-time
+       -series-forecasting-in-python/
     .. [2] GitHub repository of arch package (soft dependency).
        https://github.com/bashtage/arch
-    .. [3] Documentation of arch package (soft dependency). Forecasting Volatility with ARCH and it's variants.
+    .. [3] Documentation of arch package (soft dependency). Forecasting Volatility
+       with ARCH and it's variants.
        https://arch.readthedocs.io/en/latest/univariate/introduction.html
 
     Examples
@@ -115,6 +123,19 @@ class ARCH(BaseForecaster):
         "capability:pred_int": False,
     }
 
+    _fitted_param_names = (
+        "update_freq",
+        "disp",
+        "starting_values",
+        "cov_type",
+        "show_warning",
+        "first_obs",
+        "last_obs",
+        "tol",
+        "options",
+        "backcast",
+    )
+
     def __init__(
         self,
         mean="Constant",
@@ -127,6 +148,24 @@ class ARCH(BaseForecaster):
         dist="Normal",
         hold_back=None,
         rescale=None,
+        update_freq=None,
+        disp='off',
+        starting_values=None,
+        cov_type=None,
+        show_warning=None,
+        first_obs=None,
+        last_obs=None,
+        tol=None,
+        options=None,
+        backcast=None,
+        params=None,
+        start=None,
+        align=None,
+        method='analytic',
+        simulations=None,
+        rng=None,
+        random_state=None,
+        reindex=None,
     ):
 
         _check_soft_dependencies("arch", severity="error", object=self)
@@ -141,17 +180,36 @@ class ARCH(BaseForecaster):
         self.dist = dist
         self.hold_back = hold_back
         self.rescale = rescale
+        self.update_freq = update_freq
+        self.disp = disp
+        self.starting_values = starting_values
+        self.cov_type = cov_type
+        self.show_warning = show_warning
+        self.first_obs = first_obs
+        self.last_obs = last_obs
+        self.tol = tol
+        self.options = options
+        self.backcast = backcast
+        self.params = params
+        self.start = start
+        self.align = align
+        self.method = method
+        self.simulations = simulations
+        self.rng = rng
+        self.random_state = random_state
+        self.reindex = reindex
         self._forecaster = None
 
         super(ARCH, self).__init__()
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
-        """Fit the training data to the estimator
+    def _fit(self, y, X=None, fh=None):
+        r"""Fit the training data to the estimator.
 
         Parameters
         ----------
         y : guaranteed to be of a type in np.ndarray or pd.Series
-            Time series to which to fit the forecaster, guaranteed to have a single column/variable
+            Time series to which to fit the forecaster, guaranteed to have a
+            single column/variable
         X : optional (default=None)
             guaranteed to be of a type in np.ndarray or pd.DataFrame
             Exogeneous time series to fit to.
@@ -190,6 +248,7 @@ class ARCH(BaseForecaster):
         self : returns an instance of self
         """
         from arch import arch_model as _ARCH
+
         self.fh = fh
         self._forecaster = _ARCH(
             y=y,
@@ -206,10 +265,21 @@ class ARCH(BaseForecaster):
             rescale=self.rescale,
         )
 
-        self._forecaster.fit(**fit_params)
+        self._forecaster.fit(
+            update_freq=self.update_freq,
+            disp=self.disp,
+            starting_values=self.starting_values,
+            cov_type=self.cov_type,
+            show_warning=self.show_warning,
+            first_obs=self.first_obs,
+            last_obs=self.last_obs,
+            tol=self.tol,
+            options=self.options,
+            backcast=self.backcast,
+        )
         return self
 
-    def _predict(self, fh, X=None, **predict_params):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -218,37 +288,40 @@ class ARCH(BaseForecaster):
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
         params : {np.ndarray, Series}
-            Parameters required to forecast. Must be identical in shape to the parameters
-            computed by fitting the model.
-        horizon : int, optional
-            Number of steps to forecast
+            Parameters required to forecast. Must be identical in shape to the
+            parameters computed by fitting the model.
         start : {int, datetime, Timestamp, str}, optional
-            An integer, datetime or str indicating the first observation to produce the
-            forecast for. Datetimes can only be used with pandas inputs that have a datetime
-            index. Strings must be convertible to a date time, such as in '1945-01-01'.
+            An integer, datetime or str indicating the first observation to
+            produce the forecast for. Datetimes can only be used with pandas
+            inputs that have a datetime index. Strings must be convertible to
+            a date time, such as in '1945-01-01'.
         align : str, optional
-            Either 'origin' or 'target'. When set of 'origin', the t-th row of forecasts
-            contains the forecasts for t+1, t+2, ..., t+h. When set to 'target', the t-th
-            row contains the 1-step ahead forecast from time t-1, the 2 step from time t-2, ...,
-            and the h-step from time t-h. 'target' simplified computing forecast errors since
-            the realization and h-step forecast are aligned.
+            Either 'origin' or 'target'. When set of 'origin', the t-th row of
+            forecasts contains the forecasts for t+1, t+2, ..., t+h. When set to
+            'target', the t-th row contains the 1-step ahead forecast from time t-1,
+            the 2 step from time t-2, ..., and the h-step from time t-h. 'target'
+            simplified computing forecast errors since the realization and h-step
+            forecast are aligned.
         method : {'analytic', 'simulation', 'bootstrap'}
-            Method to use when producing the forecast. The default is analytic. The method only
-            affects the variance forecast generation. Not all volatility models support all methods.
-            In particular, volatility models that do not evolve in squares such as EGARCH or TARCH
-            do not support the 'analytic' method for horizons > 1.
+            Method to use when producing the forecast. The default is analytic. The
+            method only affects the variance forecast generation. Not all volatility
+            models support all methods. In particular, volatility models that do not
+            evolve in squares such as EGARCH or TARCH do not support the 'analytic'
+            method for horizons > 1.
         simulations : int
-            Number of simulations to run when computing the forecast using either simulation or
-            bootstrap.
+            Number of simulations to run when computing the forecast using either
+            simulation or bootstrap.
         rng : callable, optional
-            Custom random number generator to use in simulation-based forecasts. Must produce random
-            samples using the syntax rng(size) where size the 2-element tuple (simulations, horizon).
+            Custom random number generator to use in simulation-based forecasts. Must
+            produce random samples using the syntax rng(size) where size the 2-element
+            tuple (simulations, horizon).
         random_state : RandomState, optional
             NumPy RandomState instance to use when method is 'bootstrap'
         reindex : bool, optional
-            Whether to reindex the forecasts to have the same dimension as the series being forecast.
-            Prior to 4.18 this was the default. As of 4.19 this is now optional. If not provided, a
-            warning is raised about the future change in the default which will occur after September 2021.
+            Whether to reindex the forecasts to have the same dimension as the series
+            being forecast. Prior to 4.18 this was the default. As of 4.19 this is now
+            optional. If not provided, a warning is raised about the future change in
+            the default which will occur after September 2021.
 
         Returns
         -------
@@ -257,10 +330,20 @@ class ARCH(BaseForecaster):
         """
         if fh is not None:
             self.fh = fh
-        y_pred = self._forecaster.forecast(horizon=self.fh, **predict_params)
+        y_pred = self._forecaster.forecast(
+            horizon=self.fh,
+            params=self.params,
+            start=self.start,
+            align=self.align,
+            method=self.method,
+            simulations=self.simulations,
+            rng=self.rng,
+            random_state=self.random_state,
+            reindex=self.reindex,
+        )
         return y_pred
 
-    def _predict_var(self, fh=None, X=None, **predict_params):
+    def _predict_var(self, fh=None, X=None):
         """Forecasts values for Conditional Variance process.
 
         Parameters
@@ -276,7 +359,7 @@ class ARCH(BaseForecaster):
                 For nameless formats, column index will be a RangeIndex.
             Row index is fh. Entries are variance forecasts, for var in col index.
         """
-        pred_var = self._predict(fh, **predict_params).variance
+        pred_var = self._predict(fh=fh).variance
         return pred_var
 
     def get_fitted_params(self):
