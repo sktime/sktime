@@ -324,7 +324,7 @@ def check_alpha(alpha):
     for a in alpha:
         if not 0 < a < 1:
             raise ValueError(
-                f"`alpha` must lie in the open interval (0, 1), " f"but found: {a}."
+                f"`alpha` must lie in the open interval (0, 1), but found: {a}."
             )
 
     return alpha
