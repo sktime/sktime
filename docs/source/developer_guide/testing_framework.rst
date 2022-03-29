@@ -28,7 +28,7 @@ Module conventions are as follows:
 * generic utilities for tests are located in the module ``utils._testing``.
 * Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
 * Each test module corresponding to a learning task and estimator scitype should containmodule level tests in a test ``test_all_[name_of_scitype].py`` file that tests   interface compliance of all estimators adhering to the scitype.
-  For instance, ``forecasting/tests/test_all_forecasters.py``, or    ``distances/tests/test_all_dist_kernels.py``.    
+  For instance, ``forecasting/tests/test_all_forecasters.py``, or    ``distances/tests/test_all_dist_kernels.py``.
 * Learning task specific tests should not duplicate package level, generic estimator tests in ``test_all_estimators.py``
 
 Test code architecture
