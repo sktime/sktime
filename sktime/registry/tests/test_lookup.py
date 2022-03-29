@@ -100,7 +100,7 @@ def test_all_tags(estimator_scitype):
     # exception: scitypes which we know don't have tags associated
     if estimator_scitype not in SCITYPES_WITHOUT_TAGS or (
         isinstance(estimator_scitype, list)
-        and all(i not in SCITYPES_WITHOUT_TAGS for i in estimator_scitype)
+        and any(i not in SCITYPES_WITHOUT_TAGS for i in estimator_scitype)
     ):
         assert len(tags) > 0
 
