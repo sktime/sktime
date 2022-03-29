@@ -48,12 +48,10 @@ def _assert_index_equal(a, b):
 @pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
+    int_types = ["int64", "int32"]
     if (
         fh_type == "timedelta"
-        and (
-            isinstance(steps, (int, np.integer))
-            or np.array(steps).dtype in ["int64", "int32"]
-        )
+        and (isinstance(steps, (int, np.integer)) or np.array(steps).dtype in int_types)
     ) or (
         fh_type != "timedelta"
         and (
@@ -87,7 +85,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
     else:
         steps = pd.Index(steps)
 
-    if steps.dtype == "int64":
+    if steps.dtype in int_types:
         fh_relative = pd.Index(steps, dtype="int64").sort_values()
         fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
         fh_indexer = fh_relative - 1
@@ -96,7 +94,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
         fh_absolute = (cutoff + steps).sort_values()
         fh_indexer = None
 
-    if steps.dtype == "int64":
+    if steps.dtype in int_types:
         null = 0
     else:
         null = pd.Timedelta(0)
