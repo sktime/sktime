@@ -266,6 +266,13 @@ class BaseObject(_BaseEstimator):
     def create_test_instance(cls, parameter_set="default"):
         """Construct Estimator instance if possible.
 
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to use, passed to get_test_params(). If
+            no special parameters are defined in get_test_params() for a string, will
+            always use the "default"` set.
+
         Returns
         -------
         instance : instance of the class with default parameters

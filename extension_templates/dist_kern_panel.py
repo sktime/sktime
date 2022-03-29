@@ -139,6 +139,8 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # The input parameter_set is used when there are multiple testing parameter sets
+        # for the estimator, and is not required for typical implementations.
         #
         # this can, if required, use:
         #   class properties (e.g., inherited); parent class test case

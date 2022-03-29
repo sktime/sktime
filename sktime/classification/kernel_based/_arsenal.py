@@ -422,7 +422,8 @@ class Arsenal(BaseClassifier):
             `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
-            previously recorded results.
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------

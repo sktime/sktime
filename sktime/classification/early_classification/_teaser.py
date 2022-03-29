@@ -66,7 +66,7 @@ class TEASER(BaseClassifier):
         Seed for random number generation.
     return_safety_decisions : bool, default=True
         Whether to return decisions and decision state information alongside
-        predictions/predicted probabiltiies in predict and predict_proba.
+        predictions/predicted probabilities in predict and predict_proba.
 
     Attributes
     ----------

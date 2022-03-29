@@ -195,7 +195,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
             `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
-            previously recorded results.
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -208,6 +209,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # The input parameter_set is used when there are multiple testing parameter sets
+        # for the estimator, and is not required for typical implementations.
         #
         # this can, if required, use:
         #   class properties (e.g., inherited); parent class test case
@@ -227,7 +230,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # example 3: separate parameter sets through input
         # note: recommended for sktime classifiers which compare to expected results
         # where the fast set of test parmas may not produce suitable probabilities to
-        # compare against.
+        # compare against. i.e., n_estimators=2 for ensembles is fast for general
+        # testing, but may not produce good probabilities.
+        # If the default set it suitable, this does not need to be implemented.
         # if parameter_set == "results_comparison":
         #     params = {"est": value1, "parama": value2}
         # else:
