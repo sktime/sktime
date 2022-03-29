@@ -3,8 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 
-"""Implements Generalized Autoregressive Conditional Heteroskedasticity
-(GARCH) models and it's variants."""
+"""Implements Generalized Autoregressive Conditional Heteroskedasticity(GARCH)."""
 
 __author__ = ["Vasudeva-bit"]
 
@@ -15,10 +14,10 @@ _check_soft_dependencies("arch", severity="warning")
 
 
 class ARCH(BaseForecaster):
-    """Generalized Autoregressive Conditional Heteroskedasticity (GARCH)
+    """Directly interfaces ARCH models from python package arch.
+    
+    Generalized Autoregressive Conditional Heteroskedasticity (GARCH)
     model for forecasting votility in high frequency time series data.
-
-    Directly interfaces ARCH models from python package arch.
 
     ARCH models are a popular class of volatility models that use observed values
     of returns as volatility shocks.
@@ -149,7 +148,7 @@ class ARCH(BaseForecaster):
         hold_back=None,
         rescale=None,
         update_freq=None,
-        disp='off',
+        disp="off",
         starting_values=None,
         cov_type=None,
         show_warning=None,
@@ -161,7 +160,7 @@ class ARCH(BaseForecaster):
         params=None,
         start=None,
         align=None,
-        method='analytic',
+        method="analytic",
         simulations=None,
         rng=None,
         random_state=None,
