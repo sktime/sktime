@@ -48,6 +48,7 @@ from sktime.datatypes._series._check import check_pddataframe_series
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 VALID_MULTIINDEX_TYPES = (pd.RangeIndex,)
 
+
 def _ret(valid, msg, metadata, return_metadata):
     if return_metadata:
         return valid, msg, metadata
