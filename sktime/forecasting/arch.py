@@ -15,7 +15,7 @@ _check_soft_dependencies("arch", severity="warning")
 
 class ARCH(BaseForecaster):
     """Directly interfaces ARCH models from python package arch.
-    
+
     Generalized Autoregressive Conditional Heteroskedasticity (GARCH)
     model for forecasting votility in high frequency time series data.
 
