@@ -68,10 +68,10 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices)
         fit_params = {f"{final_estimator_name}__sample_weight": curr_sample_weight}
-        tree.fit(X, y, **fit_params)
+        tree.fit(X, y)
     else:
         fit_params = {f"{final_estimator_name}__sample_weight": sample_weight}
-        tree.fit(X, y, **fit_params)
+        tree.fit(X, y)
 
     return tree
 

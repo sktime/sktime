@@ -130,7 +130,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
                 if self.selected_forecaster == name:
                     self.forecaster_ = clone(forecaster)
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters

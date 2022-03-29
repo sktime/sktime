@@ -107,7 +107,7 @@ def evaluate(
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
             forecaster = clone(forecaster)
-            forecaster.fit(y_train, X_train, fh=fh, **fit_params)
+            forecaster.fit(y_train, X_train, fh=fh)
 
         else:  # if strategy == "update":
             forecaster.update(y_train, X_train)
