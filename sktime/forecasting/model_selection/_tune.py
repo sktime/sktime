@@ -172,7 +172,7 @@ class BaseGridSearch(BaseForecaster):
             else:
                 self.best_forecaster_.check_is_fitted()
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -212,7 +212,6 @@ class BaseGridSearch(BaseForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                fit_params=fit_params,
             )
 
             # Filter columns.
