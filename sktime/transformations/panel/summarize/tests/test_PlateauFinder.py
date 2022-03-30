@@ -8,6 +8,7 @@ from sktime.transformations.panel.summarize import PlateauFinder
 
 @pytest.mark.parametrize("value", [np.nan, -10, 10, -0.5, 0.5])
 def test_PlateauFinder(value):
+    """Check that PlateauFinder identifies plateaus using known series."""
     # generate test data
     value = np.nan
     X = pd.DataFrame(
@@ -56,6 +57,7 @@ def test_PlateauFinder(value):
 
 @pytest.mark.parametrize("value", [np.nan, -10, 10, -0.5, 0.5])
 def test_PlateauFinderMaxLength(value):
+    """Check that PlateauFinder truncates plateaus according to the max_length input."""
     # generate test data
     value = np.nan
     X = pd.DataFrame(
