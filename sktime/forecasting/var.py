@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.api import VAR as _VAR
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -99,7 +98,7 @@ class VAR(_StatsModelsAdapter):
         )
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """
         Wrap Statmodel's VAR forecast method.
 
@@ -111,8 +110,6 @@ class VAR(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
 
         Returns
         -------
