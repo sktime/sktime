@@ -20,6 +20,19 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
     metrics measure the error (loss) between forecasts and true values. Lower
     values are better.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+            (fh, n_outputs)  where fh is the forecasting horizon
+        Forecasted values.
+
+    multioutput : string "uniform_average" or "raw_values" determines how \
+        multioutput results will be treated.
     """
 
     _tags = {
@@ -70,6 +83,9 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
                 (fh, n_outputs)  where fh is the forecasting horizon
             Forecasted values.
 
+        multioutput : string "uniform_average" or "raw_values" determines how\
+            multioutput results will be treated.
+
         Returns
         -------
         loss : pd.DataFrame of shape (, n_outputs), calculated loss metric.
@@ -85,6 +101,25 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         return out_df
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
+        """Evaluate the desired metric on given inputs.
+
+        Parameters
+        ----------
+        y_true : pd.DataFrame or of shape (fh,) or \
+                (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pd.DataFrame of shape (fh,) or  \
+                (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how\
+            multioutput results will be treated.
+
+        Returns
+        -------
+        loss : pd.DataFrame of shape (, n_outputs), calculated loss metric.
+        """
         # Default implementation relies on implementation of evaluate_by_index
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, multioutput)
@@ -104,6 +139,9 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
                 (fh, n_outputs)  where fh is the forecasting horizon
             Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how\
+            multioutput results will be treated.
 
         Returns
         -------
@@ -127,6 +165,19 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
         By default this uses _evaluate to find jackknifed pseudosamples. This
         estimates the error at each of the time points.
+
+        Parameters
+        ----------
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+        Ground truth (correct) target values.
+
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+            (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how \
+            multioutput results will be treated.
         """
         n = y_true.shape[0]
         out_series = pd.Series(index=y_pred.index)
@@ -229,6 +280,15 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         return alpha
 
     def _handle_multioutput(self, loss, multioutput):
+        """Specificies how multivariate outputs should be handled.
+
+        Parameters
+        ----------
+        loss : float, np.ndarray the evaluated metric value.
+
+        multioutput : string "uniform_average" or "raw_values" determines how \
+            multioutput results will be treated.
+        """
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
                 return loss
@@ -254,8 +314,14 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : string "uniform_average" or "raw_values" determines how multioutput
-    results will be treated
+    multioutput : string "uniform_average" or "raw_values" determines how\
+        multioutput results will be treated.
+
+    score_average : bool specifies whether scores for each quantile should \
+        be averaged.
+
+    alpha (optional) : float, list or np.ndarray, specifies what quantiles to \
+        evaluate metric at.
     """
 
     _tags = {
@@ -310,6 +376,19 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        """Logic for finding the metric evaluated at each index.
+
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+            (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how \
+            multioutput results will be treated.
+        """
         alphas = self._get_alpha_from(y_pred)
 
         n = len(y_true)
