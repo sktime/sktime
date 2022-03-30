@@ -206,13 +206,24 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
     def _get_alpha_from(self, y_pred):
         """Fetch the alphas present in y_pred."""
-        # Only needed for quantile metrics, could put in a quantile mixin?
-
         alphas = np.unique(list(y_pred.columns.get_level_values(1)))
         if not all(((alphas > 0) & (alphas < 1))):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alphas
+
+    def _check_alpha(self, alpha):
+        """Check that alpha input is valid."""
+        if alpha is None:
+            return None
+
+        if isinstance(alpha, float):
+            alpha = [float]
+
+        if not all(((alpha > 0) & (alpha < 1))):
+            raise ValueError("Alpha must be between 0 and 1.")
+
+        return alpha
 
     def _handle_multioutput(self, loss, multioutput):
         if isinstance(multioutput, str):
@@ -257,7 +268,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     ):
         name = "PinballLoss"
         self.score_average = score_average
-        self.alpha = alpha
+        self.alpha = self._check_alpha(alpha)
         self.metric_args = {"alpha": alpha}
         super().__init__(name=name, multioutput=multioutput)
 
@@ -271,7 +282,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
             #   if not all alpha are observed, raise a ValueError
             if not np.isin(alpha, y_pred_alphas).all():
                 # todo: make error msg more informative
-                #   which ahplas are missing
+                #   which alphas are missing
                 msg = "not all quantile values in alpha are available in y_pred"
                 raise ValueError(msg)
             else:
