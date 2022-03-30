@@ -144,7 +144,7 @@ def test_check_fh_values_duplicate_input_values(arg):
         ForecastingHorizon(arg)
 
 
-GOOD_INPUT_ARGS = (
+GOOD_ABSOLUTE_INPUT_ARGS = (
     pd.Index([1, 2, 3], dtype="int64"),
     pd.period_range("2000-01-01", periods=3, freq="D"),
     pd.date_range("2000-01-01", periods=3, freq="M"),
