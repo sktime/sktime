@@ -471,8 +471,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a string, will always return the
-            `"default"` set.
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -613,8 +612,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a string, will always return the
-            `"default"` set.
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
