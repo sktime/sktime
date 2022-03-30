@@ -67,7 +67,9 @@ See below for more details, or the `pytest documentation on the topic <pytestgen
 
 The ``sktime`` plug-in for ``pytest`` generates the tuples of fixture values for this.
 In the above example, we loop over the following fixtures lists:
+
 * ``estimator_instance`` over estimator instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
+
 * ``scenario`` objects, which encodes data inputs and method call sequences to ``estimator_instance`` (explained in further detail below).
 
 The ``sktime`` plug-in ensures that only those ``scenarios`` are retrieved that are
@@ -160,13 +162,15 @@ Depending on the primary change that is tested, the changes to the testing modul
 be shallow or deep. In decreasing order of commonality:
 
 * When adding new estimators or utility functionality, write low level tests that check correctness of the estimator.
-These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
-New estimators are also automatically discovered and looped over by the existing module and package level tests.
-* Introducing or changing base class level interface points will typically require addition of module level tests,
-and addition of, or modification to scenarios with functionality specific to these interface points.
-Rarely, this may require changes package level tests.
-* Major interface changes or addition of modules may require writing of entire test suites,
-and changes or additions to package level tests.
+
+* These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
+
+* New estimators are also automatically discovered and looped over by the existing module and package level tests.
+
+* Introducing or changing base class level interface points will typically require addition of module level tests, and addition of, or modification to scenarios with functionality specific to these interface points.Rarely, this may require changes package level tests.
+
+* Major interface changes or addition of modules may require writing of entire test suites, and changes or additions to package level tests.
+
 
 Adding low level tests
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -178,8 +182,11 @@ Examples should be located in the docstring of the class or function added.
 For an added estimator of name ``estimator_name``, the test file should be called ``test_estimator_name.py``.
 
 Useful functionality to write tests:
+
 * example fixture generation, via ``datatypes.get_examples``
+
 * data format checkers in ``datatypes``: ``check_is_mtype``, ``check_is_scitype``, ``check_raise``
+
 * miscellaneous utilities in ``utils``, especially in ``_testing``
 
 Escaping tests
@@ -221,19 +228,26 @@ In contrast, fixtures used throughout module or package level tests should typic
 fixture generation process called by ``pytest_generate_tests``.
 
 This requires:
+
 * adding a function ``_generate_[variablename](test_name, **kwargs)``, as described below
+
 * assigning the function to ``generator_dict["variablename"]``
+
 * adding the new variable in the ``fixture_sequence`` list in ``pytest_generate_tests``
 
 The function ``_generate_[variable_name](test_name, **kwargs)`` should return two objects:
+
 * a list of fixture to loop over, to substitute for ``variable_name`` when appearing in a test signature
+
 * a list of names of equal length, i-th element used as a name for the i-th fixture in test logs
 
 The function has access to:
+
 * ``test_name``, the name of the test the variable is called in.
 This can be used to customize the list of fixtures for specific tests,
 although this is meant for generic behaviour mainly.
 One-off escapes and similar should be avoided here, and instead dealt with ``xfail`` and similar.
+
 * the value of the fixture variables that appear earlier in ``fixture_sequence``, in ``kwargs``.
 For instance, the value of ``estimator_instance``, if this is a variable used in the test.
 This can be used to make the list of fixtures for ``variable_name`` dependent on the value of other fixtures variables
