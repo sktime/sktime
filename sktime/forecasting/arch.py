@@ -248,7 +248,6 @@ class ARCH(BaseForecaster):
         """
         from arch import arch_model as _ARCH
 
-        self.fh = fh
         self._forecaster = _ARCH(
             y=y,
             x=X,
