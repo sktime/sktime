@@ -218,7 +218,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             return None
 
         if isinstance(alpha, float):
-            alpha = [float]
+            alpha = [alpha]
+
+        if not isinstance(alpha, np.ndarray):
+            alpha = np.asarray(alpha)
 
         if not all(((alpha > 0) & (alpha < 1))):
             raise ValueError("Alpha must be between 0 and 1.")
@@ -287,6 +290,8 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
                 raise ValueError(msg)
             else:
                 alphas = alpha
+
+        alphas = self._check_alpha(alphas)
 
         out = [None] * len(alphas)
         for i, alpha in enumerate(alphas):
