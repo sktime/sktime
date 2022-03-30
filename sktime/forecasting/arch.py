@@ -78,7 +78,9 @@ class ARCH(BaseForecaster):
 
     See Also
     --------
-    Autoregressive Integrated Moving Average (ARIMA) models
+    ARIMA
+    AutoARIMA
+    StatsForecastAutoARIMA
 
     References
     ----------
