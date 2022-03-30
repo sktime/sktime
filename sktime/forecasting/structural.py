@@ -168,9 +168,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         not be available (including smoothed results and in-sample
         prediction), although out-of-sample forecasting is possible.
         Default is False.
-    approximate_diffuse_variance : float, optional
-        If using approximate diffuse initialization, the initial variance is used.
-        Fefault is 1e6
 
     See Also
     --------
@@ -232,7 +229,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         optim_hessian=None,
         flags=None,
         low_memory=False,
-        approximate_diffuse_variance=None,
         **kwargs
     ):
         # Model params
@@ -270,9 +266,6 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.optim_hessian = optim_hessian
         self.flags = flags
         self.low_memory = low_memory
-
-        # initialize_default params
-        self.approximate_diffuse_variance = approximate_diffuse_variance
 
         super(UnobservedComponents, self).__init__()
 
