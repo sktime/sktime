@@ -309,7 +309,7 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
         Returns
@@ -328,12 +328,17 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
-        if alpha is None:
-            alpha = [0.05, 0.95]
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
 
-        alpha = check_alpha(alpha)
+        # default alpha
+        if alpha is None:
+            alpha = [0.05, 0.95]
+        # check alpha and coerce to list
+        alpha = check_alpha(alpha, name="alpha")
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -367,8 +372,8 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : float or list of float, optional (default=0.90)
-           nominal coverage(s) of predictive interval(s)
+        coverage : float or list of float of unique values, optional (default=0.90)
+            nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
@@ -391,9 +396,13 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-        coverage = check_alpha(coverage)
+        # check alpha and coerce to list
+        coverage = check_alpha(coverage, name="coverage")
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -428,14 +437,6 @@ class BaseForecaster(BaseEstimator):
         cov : bool, optional (default=False)
             if True, computes covariance matrix forecast.
             if False, computes marginal variance forecasts.
-
-
-        Returns
-        -------
-        pred_var : pd.DataFrame
-            Column names are exactly those of `y` passed in `fit`/`update`.
-                For nameless formats, column index will be a RangeIndex.
-            Row index is fh. Entries are variance forecasts, for var in col index.
 
         Returns
         -------
@@ -581,6 +582,10 @@ class BaseForecaster(BaseEstimator):
         """
         self.check_is_fitted()
 
+        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+            warn("empty y passed to update, no update was carried out")
+            return self
+
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
@@ -705,11 +710,9 @@ class BaseForecaster(BaseEstimator):
             Point forecasts at fh, with same index as fh
             y_pred has same type as y
         """
-        self.check_is_fitted()
-        fh = self._check_fh(fh)
-
-        if y is None:
-            raise ValueError("y must be of Series type and cannot be None")
+        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+            warn("empty y passed to update_predict, no update was carried out")
+            return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
@@ -1821,12 +1824,28 @@ class BaseForecaster(BaseEstimator):
                     y_pred = (y_pred, y_pred_int)
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
+
+                for i in range(len(y_preds)):
+                    if not return_pred_int:
+                        y_preds[i] = convert_to(
+                            y_preds[i],
+                            self._y_mtype_last_seen,
+                            store=self._converter_store_y,
+                            store_behaviour="freeze",
+                        )
+                    else:
+                        y_preds[i][0] = convert_to(
+                            y_preds[i][0],
+                            self._y_mtype_last_seen,
+                            store=self._converter_store_y,
+                            store_behaviour="freeze",
+                        )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     # TODO: remove in v0.11.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
         name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha)
+        alpha = check_alpha(alpha, name="alpha")
         alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
         pred_int_old_format = [
             pd.DataFrame(
@@ -1877,9 +1896,12 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
     ytype = type(y_preds[0])
     if isinstance(y_preds[0], pd.DataFrame):
         ycols = y_preds[0].columns
-    for y_pred in y_preds:
+    for i, y_pred in enumerate(y_preds):
         if not isinstance(y_pred, ytype):
-            raise ValueError("all elements of y_preds must be of the same type")
+            raise ValueError(
+                "all elements of y_preds must be of the same type, "
+                f"but y_pred[0] is {ytype} and y_pred[{i}] is {type(y_pred)}"
+            )
         if not len(y_pred) == ylen:
             raise ValueError("all elements of y_preds must be of the same length")
     if isinstance(y_preds[0], pd.DataFrame):
