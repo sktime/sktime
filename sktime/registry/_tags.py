@@ -199,6 +199,12 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_interval or predict_quantiles?",
     ),
     (
+        "capability:pred_var",
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
+    ),
+    (
         "capability:multivariate",
         "classifier",
         "bool",
