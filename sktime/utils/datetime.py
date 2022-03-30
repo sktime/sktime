@@ -100,7 +100,9 @@ def _shift(x, by=1):
         Shifted time point
     """
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
-    assert isinstance(by, (int, np.integer)) or by.is_numeric(), type(by)
+    assert isinstance(by, (int, np.integer)) or (
+        isinstance(by, pd.Index) and by.is_integer()
+    ), type(by)
     if isinstance(x, pd.Timestamp):
         if not hasattr(x, "freq") or x.freq is None:
             raise ValueError("No `freq` information available")

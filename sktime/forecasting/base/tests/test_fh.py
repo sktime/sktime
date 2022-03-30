@@ -125,10 +125,7 @@ def test_check_fh_values_bad_input_types(arg):
         ForecastingHorizon(arg)
 
 
-DUPLICATE_INPUT_ARGS = (
-    np.array([1, 2, 2]),
-    [3, 3, 1],
-)
+DUPLICATE_INPUT_ARGS = (np.array([1, 2, 2]), [3, 3, 1])
 
 
 @pytest.mark.parametrize("arg", DUPLICATE_INPUT_ARGS)
@@ -153,7 +150,7 @@ def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
     assert (type(output) in VALID_INDEX_TYPES) or (
-        isinstance(output, pd.Index) and output.is_numeric()
+        isinstance(output, pd.Index) and output.is_integer()
     )
 
 
@@ -214,7 +211,9 @@ def test_coerce_duration_to_int(duration):
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
-    assert (type(ret) in (np.integer, int)) or ret.is_numeric()
+    assert (type(ret) in (np.integer, int)) or (
+        isinstance(ret, pd.Index) and ret.is_integer()
+    )
 
     # check result
     if isinstance(duration, pd.Index):

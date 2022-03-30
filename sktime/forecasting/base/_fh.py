@@ -96,7 +96,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # other,
     # hence we check for type equality here
     if (type(values) in VALID_INDEX_TYPES) or (
-        isinstance(values, pd.Index) and values.is_numeric()
+        isinstance(values, pd.Index) and values.is_integer()
     ):
         pass
 
@@ -185,7 +185,7 @@ class ForecastingHorizon:
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         values_in_relative_types = type(values) in RELATIVE_TYPES
         values_in_absolute_types = type(values) in ABSOLUTE_TYPES
-        values_is_numeric_index = isinstance(values, pd.Index) and values.is_numeric()
+        values_is_numeric_index = isinstance(values, pd.Index) and values.is_integer()
         if is_relative is None:
             if values_in_relative_types or values_is_numeric_index:
                 is_relative = True

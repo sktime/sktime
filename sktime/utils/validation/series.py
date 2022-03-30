@@ -179,7 +179,7 @@ def check_time_index(
 
     # We here check for type equality because isinstance does not
     # work reliably because index types inherit from each other.
-    if not ((type(index) in VALID_INDEX_TYPES) or index.is_numeric()):
+    if not ((type(index) in VALID_INDEX_TYPES) or index.is_integer()):
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."

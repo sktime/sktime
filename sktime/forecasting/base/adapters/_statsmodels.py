@@ -47,7 +47,7 @@ class _StatsModelsAdapter(BaseForecaster):
         """
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and y.index.is_numeric():
+        if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
         self._fit_forecaster(y, X)
         return self
