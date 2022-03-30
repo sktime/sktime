@@ -484,7 +484,7 @@ def wdtw_distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wdtw_distance(x_2d, y_2d)
-    256.0
+    243.2106560107827
 
     References
     ----------
@@ -1083,20 +1083,18 @@ def pairwise_distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw')
-    array([[256., 576.],
-           [ 58., 256.]])
+    array([[512.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
     >>> pairwise_distance(x_3d, y_3d, metric='dtw')
     array([[256., 576.],
-           [ 58., 256.]])
+           [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
-    array([[256., 576.],
-           [ 58., 256.]])
+    array([[512.]])
     """
     _x = to_numba_pairwise_timeseries(x)
     if y is None:
