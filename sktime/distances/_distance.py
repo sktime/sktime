@@ -2,9 +2,9 @@
 """Compute the distance between two time series."""
 
 from typing import Any, Callable, Union
-from numba import njit
 
 import numpy as np
+from numba import njit
 
 from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
 from sktime.distances._dtw import _DtwDistance
@@ -15,6 +15,7 @@ from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
+    _numba_to_timeseries,
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
@@ -23,7 +24,6 @@ from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
-from sktime.distances._numba_utils import _numba_to_timeseries
 
 
 def erp_distance(

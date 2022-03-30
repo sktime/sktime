@@ -16,7 +16,6 @@ from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils.stats import (
@@ -202,15 +201,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Return the predicted reduction.
 
         Parameters
         ----------
         fh : int, list or np.array, optional, default=None
         X : pd.DataFrame
-        return_pred_int : boolean, optional, default=False
-        alpha : fh : float, default=DEFAULT_ALPHA
 
         Returns
         -------
@@ -330,15 +327,13 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Return the predicted reduction.
 
         Parameters
         ----------
         fh : int, list or np.array, optional, default=None
         X : pd.DataFrame
-        return_pred_int : boolean, optional, default=False
-        alpha : fh : float, default=DEFAULT_ALPHA
 
         Returns
         -------

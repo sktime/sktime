@@ -172,6 +172,7 @@ def test_lower_bounding() -> None:
         y=create_test_distance_numpy(10, 10, random_state=2),
     )
 
+
 def test_incorrect_parameters() -> None:
     """Test to check correct errors raised."""
     numpy_x = create_test_distance_numpy(10, 10)

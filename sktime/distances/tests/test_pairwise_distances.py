@@ -9,15 +9,13 @@ import numpy as np
 import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
+from sktime.distances._numba_utils import to_numba_pairwise_timeseries
 from sktime.distances.base import MetricInfo, NumbaDistance
 from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
     _test_metric_parameters,
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.distances._numba_utils import (
-    to_numba_pairwise_timeseries,
-)
 
 
 def _check_symmetric(x: np.ndarray, rtol: float = 1e-05, atol: float = 1e-08) -> bool:
@@ -69,9 +67,9 @@ def _validate_pairwise_result(
         Extra kwargs
     """
     # Msm doesn't support multivariate so skip
-    if len(x.shape) == 3 and x.shape[1] > 1 and metric_str is 'msm':
+    if len(x.shape) == 3 and x.shape[1] > 1 and metric_str == "msm":
         return
-    if len(x.shape) == 2 and x.shape[0] > 1 and metric_str is 'msm':
+    if len(x.shape) == 2 and x.shape[0] > 1 and metric_str == "msm":
         return
 
     if kwargs_dict is None:

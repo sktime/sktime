@@ -11,7 +11,7 @@ from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 
 
 class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator):
@@ -68,14 +68,9 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             for forecaster in forecasters
         )
 
-    def _predict_forecasters(
-        self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        return [
-            forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
-            for forecaster in self.forecasters_
-        ]
+        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.

@@ -30,8 +30,7 @@ def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
 
 
 def _compute_pairwise_distance(
-        x: np.ndarray, y: np.ndarray, symmetric: bool,
-        distance_callable: DistanceCallable
+    x: np.ndarray, y: np.ndarray, symmetric: bool, distance_callable: DistanceCallable
 ) -> np.ndarray:
     """Compute pairwise distance between two numpy arrays.
 
@@ -73,7 +72,7 @@ def _compute_pairwise_distance(
 
 
 def is_no_python_compiled_callable(
-        no_python_callable: Callable, raise_error: bool = False
+    no_python_callable: Callable, raise_error: bool = False
 ):
     """Check if a callable is no_python compiled.
 
