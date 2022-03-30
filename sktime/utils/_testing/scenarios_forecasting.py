@@ -24,8 +24,15 @@ from sktime.utils._testing.scenarios import TestScenario
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
 
+# number timepoints used for training in all scenarios
+NUM_T = 15
+
 
 class ForecasterTestScenario(TestScenario, BaseObject):
+
+    # default tags
+    _tags = {"has_nans": False}
+
     def is_applicable(self, obj):
         """Check whether scenario is applicable to obj.
 
@@ -62,6 +69,12 @@ class ForecasterTestScenario(TestScenario, BaseObject):
         fh_in_fit = self.get_tag("fh_passed_in_fit")
 
         if not fh_in_fit and get_tag(obj, "requires-fh-in-fit"):
+            return False
+
+        # if scenario contains NA, applicable only if forecaster can handle the
+        scenario_has_nans = self.get_tag("has_nans")
+
+        if scenario_has_nans and not get_tag(obj, "handles-missing-data"):
             return False
 
         return True
@@ -103,7 +116,7 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     _tags = {"univariate_y": True, "fh_passed_in_fit": True, "pre-refactor": True}
 
     args = {
-        "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1},
+        "fit": {"y": _make_series(n_timepoints=NUM_T, random_state=RAND_SEED), "fh": 1},
         "predict": {"fh": 1},
     }
     default_method_sequence = ["fit", "predict"]
@@ -115,7 +128,7 @@ class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
     args = {
-        "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1},
+        "fit": {"y": _make_series(n_timepoints=NUM_T, random_state=RAND_SEED), "fh": 1},
         "predict": {},
     }
     default_method_sequence = ["fit", "predict"]
@@ -127,7 +140,7 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
     _tags = {"univariate_y": True, "fh_passed_in_fit": False}
 
     args = {
-        "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED)},
+        "fit": {"y": _make_series(n_timepoints=NUM_T, random_state=RAND_SEED)},
         "predict": {"fh": 1},
     }
     default_method_sequence = ["fit", "predict"]
@@ -140,7 +153,7 @@ class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "y": _make_series(n_timepoints=NUM_T, random_state=RAND_SEED),
             "fh": [1, 2, 3],
         },
         "predict": {},
@@ -148,10 +161,10 @@ class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-LONG_X = _make_series(n_columns=2, n_timepoints=30, random_state=RAND_SEED)
-X = LONG_X.iloc[0:20]
-X_test = LONG_X.iloc[20:23]
-X_test_short = LONG_X.iloc[20:21]
+LONG_X = _make_series(n_columns=2, n_timepoints=2 * NUM_T, random_state=RAND_SEED)
+X = LONG_X.iloc[0:NUM_T]
+X_test = LONG_X.iloc[NUM_T : (NUM_T + 3)]
+X_test_short = LONG_X.iloc[NUM_T : (NUM_T + 1)]
 
 
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
@@ -161,7 +174,7 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "y": _make_series(n_timepoints=NUM_T, random_state=RAND_SEED),
             "X": X.copy(),
             "fh": 1,
         },
@@ -177,7 +190,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "y": _make_series(n_timepoints=NUM_T, random_state=RAND_SEED),
             "X": X.copy(),
             "fh": [1, 2, 3],
         },
@@ -193,7 +206,7 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
+            "y": _make_series(n_timepoints=NUM_T, n_columns=2, random_state=RAND_SEED),
             "fh": 1,
         },
         "predict": {},
@@ -208,10 +221,35 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
+            "y": _make_series(n_timepoints=NUM_T, n_columns=2, random_state=RAND_SEED),
             "X": X.copy(),
             "fh": [1, 2, 3],
         },
+        "predict": {"X": X_test.copy()},
+    }
+    default_method_sequence = ["fit", "predict"]
+
+
+y_nan = _make_series(n_timepoints=NUM_T, n_columns=1, random_state=RAND_SEED)
+y_nan.iloc[0] = None
+y_nan.iloc[NUM_T - 1] = None
+X_nan = X.copy()
+X_nan.iloc[0, 0] = None
+X_nan.iloc[NUM_T - 1, 0] = None
+
+
+class ForecasterFitPredictWithNan(ForecasterTestScenario):
+    """Fit/predict only, univariate y, with X, fh passed early."""
+
+    _tags = {
+        "univariate_y": True,
+        "has_nans": True,
+        "fh_passed_in_fit": True,
+        "pre-refactor": True,
+    }
+
+    args = {
+        "fit": {"y": y_nan, "X": X_nan, "fh": [1, 2]},
         "predict": {"X": X_test.copy()},
     }
     default_method_sequence = ["fit", "predict"]
@@ -230,6 +268,7 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictUnivariateWithXLongFh,
     ForecasterFitPredictMultivariateNoX,
     ForecasterFitPredictMultivariateWithX,
+    ForecasterFitPredictWithNan,
 ]
 
 scenarios_forecasting = forecasting_scenarios_extended
