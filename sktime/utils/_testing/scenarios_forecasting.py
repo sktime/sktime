@@ -20,8 +20,8 @@ from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
-from sktime.utils._testing.series import _make_series
 from sktime.utils._testing.scenarios import TestScenario
+from sktime.utils._testing.series import _make_series
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
