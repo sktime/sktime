@@ -281,7 +281,7 @@ class QuickTester:
         Parameters
         ----------
         estimator : estimator class or estimator instance
-        return_exception : bool, optional, default=True
+        return_exceptions : bool, optional, default=True
             whether to return exceptions/failures, or raise them
                 if True: returns exceptions in results
                 if False: raises exceptions as they occur
@@ -382,6 +382,8 @@ class QuickTester:
             fixture_vars = getfullargspec(test_fun)[0][1:]
             fixture_vars = [var for var in fixture_sequence if var in fixture_vars]
 
+            raise_exceptions = not return_exceptions
+
             # this call retrieves the conditional fixtures
             #  for the test test_name, and the estimator
             _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
@@ -389,6 +391,7 @@ class QuickTester:
                 fixture_vars=fixture_vars,
                 generator_dict=temp_generator_dict,
                 fixture_sequence=fixture_sequence,
+                raise_exceptions=raise_exceptions,
             )
 
             # if function is decorated with mark.parameterize, add variable settings
