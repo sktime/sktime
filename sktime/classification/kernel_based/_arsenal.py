@@ -421,8 +421,6 @@ class Arsenal(BaseClassifier):
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
-
         """
-        params = {"num_kernels": 50, "n_estimators": 3}
-
+        params = {"num_kernels": 10, "n_estimators": 2}
         return params

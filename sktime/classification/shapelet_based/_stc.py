@@ -312,3 +312,23 @@ class ShapeletTransformClassifier(BaseClassifier):
                 method="predict_proba",
                 n_jobs=self._threads_to_use,
             )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {
+            "estimator": RotationForest(n_estimators=2),
+            "max_shapelets": 3,
+            "n_shapelet_samples": 10,
+            "batch_size": 5,
+        }
+        return params

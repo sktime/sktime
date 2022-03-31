@@ -32,6 +32,7 @@ Naive
     :template: class.rst
 
     NaiveForecaster
+    NaiveVariance
 
 Trend
 -----
@@ -86,7 +87,7 @@ StatsForecast
     :toctree: auto_generated/
     :template: class.rst
 
-    AutoARIMA
+    StatsForecastAutoARIMA
 
 Theta
 -----
