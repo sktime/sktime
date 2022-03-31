@@ -11,7 +11,6 @@ from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -20,7 +19,6 @@ from sktime.registry import (
     TRANSFORMER_MIXIN_LIST,
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
-from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
     ColumnTransformer,
@@ -31,7 +29,6 @@ from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
@@ -81,12 +78,7 @@ TRANSFORMERS = [
     ),
 ]
 ANOMALY_DETECTOR = KNN()
-STEPS = [
-    ("transformer", TabularToSeriesAdaptor(StandardScaler())),
-    ("forecaster", NaiveForecaster()),
-]
 ESTIMATOR_TEST_PARAMS = {
-    FeatureUnion: {"transformer_list": TRANSFORMERS},
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
