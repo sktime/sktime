@@ -18,11 +18,7 @@ from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.forecasting.model_selection._split import (
-    _cutoffs_fh_window_length_types_are_supported,
-    _fh_and_window_length_types_are_supported,
-    _window_splitter_types_are_supported,
-)
+from sktime.forecasting.model_selection._split import _inputs_are_supported
 from sktime.forecasting.tests._config import (
     TEST_CUTOFFS,
     TEST_FHS,
@@ -150,7 +146,10 @@ def _check_cv(cv, y, allow_empty_window=False):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
-    if _fh_and_window_length_types_are_supported(fh=fh, window_length=window_length):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([fh_horizon, window_length]):
         cv = SingleWindowSplitter(fh=fh, window_length=window_length)
         train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
@@ -196,9 +195,10 @@ def test_single_window_splitter_default_window_length(y, fh):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
-    if _cutoffs_fh_window_length_types_are_supported(
-        cutoffs=cutoffs, fh=fh, window_length=window_length
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([cutoffs, fh_horizon, window_length]):
         cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
         train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
@@ -214,9 +214,10 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
     """Test SlidingWindowSplitter."""
-    if _window_splitter_types_are_supported(
-        fh=fh, initial_window=None, window_length=window_length, step_length=step_length
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([fh_horizon, window_length, step_length]):
         cv = SlidingWindowSplitter(
             fh=fh,
             window_length=window_length,
@@ -250,12 +251,10 @@ def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
 ):
     """Test SlidingWindowSplitter."""
-    if _window_splitter_types_are_supported(
-        fh=fh,
-        initial_window=initial_window,
-        window_length=window_length,
-        step_length=step_length,
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([fh_horizon, initial_window, window_length, step_length]):
         cv = SlidingWindowSplitter(
             fh=fh,
             window_length=window_length,
@@ -302,12 +301,10 @@ def test_sliding_window_splitter_start_with_empty_window(
     y, fh, window_length, step_length
 ):
     """Test SlidingWindowSplitter."""
-    if _window_splitter_types_are_supported(
-        fh=fh,
-        initial_window=None,
-        window_length=window_length,
-        step_length=step_length,
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([fh_horizon, window_length, step_length]):
         cv = SlidingWindowSplitter(
             fh=fh,
             window_length=window_length,
@@ -384,12 +381,10 @@ def test_expanding_window_splitter_start_with_empty_window(
     y, fh, initial_window, step_length
 ):
     """Test ExpandingWindowSplitter."""
-    if _window_splitter_types_are_supported(
-        fh=fh,
-        initial_window=initial_window,
-        window_length=None,
-        step_length=step_length,
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([fh_horizon, initial_window, step_length]):
         cv = ExpandingWindowSplitter(
             fh=fh,
             initial_window=initial_window,
@@ -419,12 +414,10 @@ def test_expanding_window_splitter_start_with_empty_window(
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):
     """Test ExpandingWindowSplitter."""
-    if _window_splitter_types_are_supported(
-        fh=fh,
-        initial_window=initial_window,
-        window_length=None,
-        step_length=step_length,
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if _inputs_are_supported([fh_horizon, initial_window, step_length]):
         cv = ExpandingWindowSplitter(
             fh=fh,
             initial_window=initial_window,

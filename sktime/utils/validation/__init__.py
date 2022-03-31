@@ -93,6 +93,26 @@ def is_iloc_like(x) -> bool:
         return array_is_int(x)
 
 
+def is_time_like(x) -> bool:
+    """Check if input is time-like (pd.Timedelta, pd.DateOffset, etc.)."""
+    try:
+        iter(x)
+    except TypeError:
+        return is_timedelta_or_date_offset(x)
+    else:
+        return array_is_timedelta_or_date_offset(x)
+
+
+def all_inputs_are_iloc_like(args: list) -> bool:
+    """Check if all inputs in the list are .iloc friendly."""
+    return all([is_iloc_like(x) if x is not None else True for x in args])
+
+
+def all_inputs_are_time_like(args: list) -> bool:
+    """Check if all inputs in teh list are time-like."""
+    return all([is_time_like(x) if x is not None else True for x in args])
+
+
 def check_n_jobs(n_jobs: int) -> int:
     """Check `n_jobs` parameter according to the scikit-learn convention.
 

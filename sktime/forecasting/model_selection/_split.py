@@ -29,12 +29,12 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
+    all_inputs_are_iloc_like,
+    all_inputs_are_time_like,
     array_is_datetime64,
     array_is_int,
-    array_is_timedelta_or_date_offset,
     check_window_length,
     is_datetime,
-    is_iloc_like,
     is_int,
     is_timedelta,
     is_timedelta_or_date_offset,
@@ -261,112 +261,21 @@ def _check_window_lengths(
                 raise TypeError(error_msg_for_incompatible_types)
 
 
-def _fh_and_window_length_types_are_supported(
-    fh: FORECASTING_HORIZON_TYPES, window_length: ACCEPTED_WINDOW_LENGTH_TYPES = None
-) -> bool:
+def _inputs_are_supported(args: list) -> bool:
     """Check that combination of inputs is supported.
 
     Currently, only two cases are allowed:
-    either all inputs are integers, or they are all timedelta/dateoffset
+    either all inputs are iloc-friendly, or they are all time-like
 
     Parameters
     ----------
-    fh : int, timedelta, list or np.array of ints or timedeltas
-    window_length : int or timedelta or pd.DateOffset
+    args : list of inputs to check
 
     Returns
     -------
     True if all inputs are compatible, False otherwise
     """
-    fh_horizon = (
-        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-    )
-    all_int = array_is_int(fh_horizon) and (
-        is_iloc_like(window_length) if window_length else True
-    )
-    all_dates = array_is_timedelta_or_date_offset(fh_horizon) and (
-        is_timedelta_or_date_offset(window_length) if window_length else True
-    )
-    if all_int or all_dates:
-        return True
-    else:
-        return False
-
-
-def _cutoffs_fh_window_length_types_are_supported(
-    cutoffs: VALID_CUTOFF_TYPES,
-    fh: FORECASTING_HORIZON_TYPES,
-    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-) -> bool:
-    """Check that combination of inputs is supported.
-
-    Currently, only two cases are allowed:
-    either all inputs are integers, or they are all datetime or timedelta
-
-    Parameters
-    ----------
-    cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like
-    fh : int, timedelta, list or np.array of ints or timedeltas
-    window_length : int or timedelta or pd.DateOffset
-
-    Returns
-    -------
-    True if all inputs are compatible, False otherwise
-    """
-    fh_horizon = (
-        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-    )
-    all_int = all([is_iloc_like(x) for x in [cutoffs, fh_horizon, window_length]])
-    all_dates = (
-        array_is_datetime64(cutoffs)
-        and array_is_timedelta_or_date_offset(fh_horizon)
-        and is_timedelta_or_date_offset(window_length)
-    )
-    if all_int or all_dates:
-        return True
-    else:
-        return False
-
-
-def _window_splitter_types_are_supported(
-    fh: FORECASTING_HORIZON_TYPES,
-    step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
-    initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = None,
-    window_length: ACCEPTED_WINDOW_LENGTH_TYPES = None,
-) -> bool:
-    """Check that combination of inputs is supported.
-
-    Currently, only two cases are allowed:
-    either all inputs are integers, or they are all datetime or timedelta
-
-    Parameters
-    ----------
-    fh : int, timedelta, list or np.array of ints or timedeltas
-    step_length : int or timedelta or pd.DateOffset
-    initial_window : int or timedelta or pd.DateOffset
-    window_length : int or timedelta or pd.DateOffset
-
-    Returns
-    -------
-    True if all inputs are compatible, False otherwise
-    """
-    fh_horizon = (
-        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-    )
-    all_int = (
-        is_iloc_like(fh_horizon)
-        and (is_iloc_like(initial_window) if initial_window else True)
-        and (is_iloc_like(window_length) if window_length else True)
-        and is_iloc_like(step_length)
-    )
-    all_dates = (
-        array_is_timedelta_or_date_offset(fh_horizon)
-        and (is_timedelta_or_date_offset(initial_window) if initial_window else True)
-        and (is_timedelta_or_date_offset(window_length) if window_length else True)
-        and is_timedelta_or_date_offset(step_length)
-    )
-    if all_int or all_dates:
+    if all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args):
         return True
     else:
         return False
@@ -390,9 +299,10 @@ def _check_fh_and_window_length(
     TypeError
         if combination of inputs is not supported
     """
-    if not _fh_and_window_length_types_are_supported(
-        fh=fh, window_length=window_length
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if not _inputs_are_supported([fh_horizon, window_length]):
         raise TypeError("Unsupported combination of types")
 
 
@@ -418,9 +328,10 @@ def _check_cutoffs_fh_window_length(
     TypeError
         if combination of inputs is not supported
     """
-    if not _cutoffs_fh_window_length_types_are_supported(
-        cutoffs=cutoffs, fh=fh, window_length=window_length
-    ):
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if not _inputs_are_supported([cutoffs, fh_horizon, window_length]):
         raise TypeError("Unsupported combination of types")
 
 
@@ -447,11 +358,11 @@ def _check_base_window_splitter_arguments(
     TypeError
         if combination of inputs is not supported
     """
-    if not _window_splitter_types_are_supported(
-        fh=fh,
-        initial_window=initial_window,
-        window_length=window_length,
-        step_length=step_length,
+    fh_horizon = (
+        ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
+    )
+    if not _inputs_are_supported(
+        [fh_horizon, initial_window, window_length, step_length]
     ):
         raise TypeError("Unsupported combination of types")
 
