@@ -62,27 +62,36 @@ class DWTTransformer(BaseTransformer):
         col_names = X.columns
 
         Xt = pd.DataFrame()
-        # for x in col_names:
-        # Convert one of the columns in the dataframe to numpy array
+        
+        # Convert the dataframe to numpy3D
         arr = convert(
-                pd.DataFrame(X),
-                from_type="nested_univ",
-                to_type="numpyflat",
-                # as_scitype="Panel",
+                X,
+                from_type="pd-multiindex",
+                to_type="numpy3D",
+                as_scitype="Panel",
             )
-
+        
+        # Convert numpy3D to numpyflat
+        arr = convert(
+                arr,
+                from_type="numpy3D",
+                to_type="numpyflat",
+                as_scitype="Panel",
+            )
+        
         transformedData = self._extract_wavelet_coefficients(arr)
 
          # Convert to a numpy array
         transformedData = np.asarray(transformedData)
 
-          # Add it to the dataframe
+        # Add it to the dataframe
         colToAdd = []
-        for i in range(len(transformedData)):
+        for x in col_names:
+            for i in range(len(transformedData)):
                 inst = transformedData[i]
                 colToAdd.append(pd.Series(inst))
-
-        Xt = colToAdd
+            
+            Xt[x] = colToAdd
 
         return Xt
 
