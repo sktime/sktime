@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.10.1"
+version = "0.11.0"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -85,7 +85,6 @@ binder = [
 ]
 
 docs = [
-    "jinja2<3.0.3",
     "jupyter",
     "myst-parser",
     "nbsphinx>=0.8.6",
