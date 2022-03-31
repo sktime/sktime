@@ -4,10 +4,8 @@ __author__ = ["mloning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
-from pyod.models.knn import KNN
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
-from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -80,7 +78,6 @@ TRANSFORMERS = [
         ),
     ),
 ]
-ANOMALY_DETECTOR = KNN()
 STEPS = [
     ("transformer", TabularToSeriesAdaptor(StandardScaler())),
     ("forecaster", NaiveForecaster()),
@@ -113,7 +110,6 @@ ESTIMATOR_TEST_PARAMS = {
     TSInterpolator: {"length": 10},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
-    PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
     ClaSPSegmentation: {"period_length": 5, "n_cps": 1},
 }
 
