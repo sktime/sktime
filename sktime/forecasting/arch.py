@@ -39,9 +39,6 @@ class ARCH(BaseForecaster):
     x : {np.ndarray, DataFrame}, optional
         Exogenous regressors.  Ignored if model does not permit exogenous
         regressors.
-
-    Hyper-parameters
-    ----------------
     mean : str, optional
         Name of the mean model.  Currently supported options are: 'Constant',
         'Zero', 'LS', 'AR', 'ARX', 'HAR' and  'HARX'
@@ -75,10 +72,74 @@ class ARCH(BaseForecaster):
         model parameters. If False, the model is estimated on the data without
         transformation.  If True, than y is rescaled and the new scale is
         reported in the estimation results.
+    update_freq : int, optional
+            Frequency of iteration updates.  Output is generated every
+            update_freq iterations. Set to 0 to disable iterative output.
+    disp : {bool, "off", "final"}
+        Either 'final' to print optimization result or 'off' to display
+        nothing. If using a boolean, False is "off" and True is "final"
+    starting_values : np.ndarray, optional
+        Array of starting values to use.  If not provided, starting values
+        are constructed by the model components.
+    cov_type : str, optional
+        Estimation method of parameter covariance.  Supported options are
+        'robust', which does not assume the Information Matrix Equality
+        holds and 'classic' which does.  In the ARCH literature, 'robust'
+        corresponds to Bollerslev-Wooldridge covariance estimator.
+    show_warning : bool, optional
+        Flag indicating whether convergence warnings should be shown
+    first_obs : {int, str, datetime, Timestamp}
+        First observation to use when estimating model
+    last_obs : {int, str, datetime, Timestamp}
+        Last observation to use when estimating model
+    tol : float, optional
+        Tolerance for termination.
+    options : dict, optional
+        Options to pass to 'scipy.optimize.minimize'.  Valid entries
+        include 'ftol', 'eps', 'disp', and 'maxiter'.
+    backcast : {float, np.ndarray}, optional
+        Value to use as backcast. Should be measure '\sigma^2_0'
+        since model-specific non-linear transformations are applied to
+        value before computing the variance recursions.
+    params : {np.ndarray, Series}
+        Parameters required to forecast. Must be identical in shape to the
+        parameters computed by fitting the model.
+    start : {int, datetime, Timestamp, str}, optional
+        An integer, datetime or str indicating the first observation to
+        produce the forecast for. Datetimes can only be used with pandas
+        inputs that have a datetime index. Strings must be convertible to
+        a date time, such as in '1945-01-01'.
+    align : str, optional
+        Either 'origin' or 'target'. When set of 'origin', the t-th row of
+        forecasts contains the forecasts for t+1, t+2, ..., t+h. When set to
+        'target', the t-th row contains the 1-step ahead forecast from time t-1,
+        the 2 step from time t-2, ..., and the h-step from time t-h. 'target'
+        simplified computing forecast errors since the realization and h-step
+        forecast are aligned.
+    method : {'analytic', 'simulation', 'bootstrap'}
+        Method to use when producing the forecast. The default is analytic. The
+        method only affects the variance forecast generation. Not all volatility
+        models support all methods. In particular, volatility models that do not
+        evolve in squares such as EGARCH or TARCH do not support the 'analytic'
+        method for horizons > 1.
+    simulations : int
+        Number of simulations to run when computing the forecast using either
+        simulation or bootstrap.
+    rng : callable, optional
+        Custom random number generator to use in simulation-based forecasts. Must
+        produce random samples using the syntax rng(size) where size the 2-element
+        tuple (simulations, horizon).
+    random_state : RandomState, optional
+        NumPy RandomState instance to use when method is 'bootstrap'
+    reindex : bool, optional
+        Whether to reindex the forecasts to have the same dimension as the series
+        being forecast.
 
     See Also
     --------
-    Autoregressive Integrated Moving Average (ARIMA) models
+    ARIMA
+    AutoARIMA
+    StatsForecastAutoARIMA
 
     References
     ----------
@@ -99,15 +160,10 @@ class ARCH(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = ARCH(
     ...    mean="Constant",
-    ...    lags=0,
     ...    vol="Garch",
     ...    p=1,
-    ...    o=0,
     ...    q=1,
-    ...    power=2.0,
     ...    dist="Normal",
-    ...    hold_back=None,
-    ...    rescale=None,
     ...):
     >>> forecaster.fit(y)
     ARCH(...)
@@ -212,35 +268,6 @@ class ARCH(BaseForecaster):
         X : optional (default=None)
             guaranteed to be of a type in np.ndarray or pd.DataFrame
             Exogeneous time series to fit to.
-        update_freq : int, optional
-            Frequency of iteration updates.  Output is generated every
-            update_freq iterations. Set to 0 to disable iterative output.
-        disp : {bool, "off", "final"}
-            Either 'final' to print optimization result or 'off' to display
-            nothing. If using a boolean, False is "off" and True is "final"
-        starting_values : np.ndarray, optional
-            Array of starting values to use.  If not provided, starting values
-            are constructed by the model components.
-        cov_type : str, optional
-            Estimation method of parameter covariance.  Supported options are
-            'robust', which does not assume the Information Matrix Equality
-            holds and 'classic' which does.  In the ARCH literature, 'robust'
-            corresponds to Bollerslev-Wooldridge covariance estimator.
-        show_warning : bool, optional
-            Flag indicating whether convergence warnings should be shown
-        first_obs : {int, str, datetime, Timestamp}
-            First observation to use when estimating model
-        last_obs : {int, str, datetime, Timestamp}
-            Last observation to use when estimating model
-        tol : float, optional
-            Tolerance for termination.
-        options : dict, optional
-            Options to pass to 'scipy.optimize.minimize'.  Valid entries
-            include 'ftol', 'eps', 'disp', and 'maxiter'.
-        backcast : {float, np.ndarray}, optional
-            Value to use as backcast. Should be measure '\sigma^2_0'
-            since model-specific non-linear transformations are applied to
-            value before computing the variance recursions.
 
         Returns
         -------
@@ -248,7 +275,6 @@ class ARCH(BaseForecaster):
         """
         from arch import arch_model as _ARCH
 
-        self.fh = fh
         self._forecaster = _ARCH(
             y=y,
             x=X,
@@ -284,53 +310,15 @@ class ARCH(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        params : {np.ndarray, Series}
-            Parameters required to forecast. Must be identical in shape to the
-            parameters computed by fitting the model.
-        start : {int, datetime, Timestamp, str}, optional
-            An integer, datetime or str indicating the first observation to
-            produce the forecast for. Datetimes can only be used with pandas
-            inputs that have a datetime index. Strings must be convertible to
-            a date time, such as in '1945-01-01'.
-        align : str, optional
-            Either 'origin' or 'target'. When set of 'origin', the t-th row of
-            forecasts contains the forecasts for t+1, t+2, ..., t+h. When set to
-            'target', the t-th row contains the 1-step ahead forecast from time t-1,
-            the 2 step from time t-2, ..., and the h-step from time t-h. 'target'
-            simplified computing forecast errors since the realization and h-step
-            forecast are aligned.
-        method : {'analytic', 'simulation', 'bootstrap'}
-            Method to use when producing the forecast. The default is analytic. The
-            method only affects the variance forecast generation. Not all volatility
-            models support all methods. In particular, volatility models that do not
-            evolve in squares such as EGARCH or TARCH do not support the 'analytic'
-            method for horizons > 1.
-        simulations : int
-            Number of simulations to run when computing the forecast using either
-            simulation or bootstrap.
-        rng : callable, optional
-            Custom random number generator to use in simulation-based forecasts. Must
-            produce random samples using the syntax rng(size) where size the 2-element
-            tuple (simulations, horizon).
-        random_state : RandomState, optional
-            NumPy RandomState instance to use when method is 'bootstrap'
-        reindex : bool, optional
-            Whether to reindex the forecasts to have the same dimension as the series
-            being forecast. Prior to 4.18 this was the default. As of 4.19 this is now
-            optional. If not provided, a warning is raised about the future change in
-            the default which will occur after September 2021.
+            The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
         """
-        if fh is not None:
-            self.fh = fh
         y_pred = self._forecaster.forecast(
-            horizon=self.fh,
+            horizon=fh,
             params=self.params,
             start=self.start,
             align=self.align,
@@ -348,8 +336,7 @@ class ARCH(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
+            The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
