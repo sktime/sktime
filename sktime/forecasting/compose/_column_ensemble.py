@@ -51,22 +51,29 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "capability:pred_int": True,
     }
 
     def __init__(self, forecasters):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
 
+        l_forecasters = [(x[0], x[1]) for x in forecasters]
+
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
-            self.clone_tags(forecasters, "requires-fh-in-fit")
+            tags_to_clone = [
+                "requires-fh-in-fit",
+                "capability:pred_int",
+                "ignores-exogeneous-X",
+                "handles-missing-data",
+            ]
+            self.clone_tags(forecasters, tags_to_clone)
         else:
-            forecaster_requires_fh_in_fit = (
-                forecaster.get_tag("requires-fh-in-fit")
-                for _, forecaster, _ in self.forecasters
-            )
-            at_least_one_requires_fh = any(forecaster_requires_fh_in_fit)
-            self.set_tags(tag_dict={"requires-fh-in-fit": at_least_one_requires_fh})
+            self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
+            self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
+            self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
+            self._anytagis_then_set("handles-missing-data", False, True, l_forecasters)
 
     @property
     def _forecasters(self):
