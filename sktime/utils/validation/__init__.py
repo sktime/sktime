@@ -83,24 +83,30 @@ def array_is_timedelta_or_date_offset(x) -> bool:
     return all([is_timedelta_or_date_offset(value) for value in x])
 
 
-def is_iloc_like(x) -> bool:
-    """Check if input is .iloc friendly."""
+def is_iterable(x) -> bool:
+    """Check if input is iterable."""
     try:
         iter(x)
     except TypeError:
-        return is_int(x)
+        return False
     else:
+        return True
+
+
+def is_iloc_like(x) -> bool:
+    """Check if input is .iloc friendly."""
+    if is_iterable(x):
         return array_is_int(x)
+    else:
+        return is_int(x)
 
 
 def is_time_like(x) -> bool:
     """Check if input is time-like (pd.Timedelta, pd.DateOffset, etc.)."""
-    try:
-        iter(x)
-    except TypeError:
-        return is_timedelta_or_date_offset(x)
-    else:
+    if is_iterable(x):
         return array_is_timedelta_or_date_offset(x)
+    else:
+        return is_timedelta_or_date_offset(x)
 
 
 def all_inputs_are_iloc_like(args: list) -> bool:
