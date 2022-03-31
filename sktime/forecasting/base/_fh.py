@@ -444,7 +444,7 @@ class ForecastingHorizon:
         out_of_sample = self.to_pandas()[is_out_of_sample]
         return self._new(out_of_sample)
 
-    def _is_in_sample(self, cutoff=None):
+    def _is_in_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of in-sample values."""
         relative = self.to_relative(cutoff).to_pandas()
         if relative.dtype == "int64":
@@ -453,7 +453,7 @@ class ForecastingHorizon:
             null = pd.Timedelta(0)
         return relative <= null
 
-    def is_all_in_sample(self, cutoff=None):
+    def is_all_in_sample(self, cutoff=None) -> bool:
         """Whether the forecasting horizon is purely in-sample for given cutoff.
 
         Parameters
@@ -468,17 +468,11 @@ class ForecastingHorizon:
         """
         return sum(self._is_in_sample(cutoff)) == len(self)
 
-    def _is_out_of_sample(self, cutoff=None):
+    def _is_out_of_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of out-of-sample values."""
-        # return ~self._in_sample_idx(cutoff)
-        relative = self.to_relative(cutoff).to_pandas()
-        if relative.dtype == "int64":
-            null = 0
-        else:
-            null = pd.Timedelta(0)
-        return relative > null
+        return np.logical_not(self._is_in_sample(cutoff))
 
-    def is_all_out_of_sample(self, cutoff=None):
+    def is_all_out_of_sample(self, cutoff=None) -> bool:
         """Whether the forecasting horizon is purely out-of-sample for given cutoff.
 
         Parameters
