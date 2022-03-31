@@ -77,7 +77,7 @@ class MyForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        # deprecated and likely to be removed in 0.12.0
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -128,6 +128,12 @@ class MyForecaster(BaseForecaster):
         #
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
+        #
+        # Note: when interfacing a model that has fit, with parameters
+        #   that are not data (y, X) or forecasting-horizon-like,
+        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        #   1. pass to constructor,  2. write to self in constructor,
+        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None):

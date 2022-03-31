@@ -3,12 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements simple forecasts based on naive assumptions."""
 
-__all__ = ["NaiveForecaster"]
-__author__ = ["mloning", "Piyush Gade", "Flix6x", "aiwalter"]
+__all__ = ["NaiveForecaster", "NaiveVariance"]
+__author__ = ["mloning", "Piyush Gade", "Flix6x", "aiwalter", "IlyasMoutawwakil"]
 
 from warnings import warn
 
 import numpy as np
+import pandas as pd
+from scipy.stats import norm
+from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -121,7 +124,7 @@ class _NaiveForecaster(_BaseWindowForecaster):
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
-        elif strategy == "last":
+        elif strategy == "last" or (strategy == "drift" and self.window_length_ == 1):
             if sp == 1:
                 last_valid_value = last_window[
                     (~np.isnan(last_window))[0::sp].cumsum().argmax()
@@ -387,5 +390,208 @@ class NaiveForecaster(BaseForecaster):
             {"strategy": "drift"},
             {"strategy": "mean", "window_length": 5},
         ]
+
+        return params_list
+
+
+class NaiveVariance(BaseForecaster):
+    r"""Compute the prediction variance based on a naive strategy.
+
+    NaiveVariance adds to a `forecaster` the ability to compute the
+    prediction variance based on naive assumptions about the time series.
+    The simple strategy is as follows:
+    - Let :math:`y_1,\dots,y_T` be the time series we fit the estimator :math:`f` to.
+    - Let :math:`\widehat{y}_{ij}` be the forecast for time point :math:`j`, obtained
+    from fitting the forecaster to the partial time series :math:`y_1,\dots,y_i`.
+    - We compute the residuals matrix :math:`R=(r_{ij})=(y_j-\widehat{y}_{ij})`.
+    - The variance prediction :math:`v_k` for :math:`y_{T+k}` is
+    :math:`\frac{1}{T-k}\sum_{i=1}^{T-k} a_{i,i+k}^2`
+    because we are averaging squared residuals of all forecasts that are :math:`k`
+    time points ahead.
+    - And for the covariance matrix prediction, the formula becomes
+    :math:`Cov(y_k, y_l)=\frac{\sum_{i=1}^N \hat{r}_{k,k+i}*\hat{r}_{l,l+i}}{N}`.
+
+    Parameters
+    ----------
+    forecaster : estimator
+        Estimators to apply to the input series.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> variance_forecaster = NaiveVariance(forecaster)
+    >>> variance_forecaster.fit(y)
+    NaiveVariance(...)
+    >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
+    """
+
+    _required_parameters = ["forecaster"]
+    _tags = {
+        "scitype:y": "univariate",
+        "requires-fh-in-fit": False,
+        "handles-missing-data": False,
+        "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
+        # deprecated and likely to be removed in 0.12.0
+        "capability:pred_var": True,
+        # deprecated and likely to be removed in 0.12.0
+    }
+
+    def __init__(self, forecaster):
+
+        self.forecaster = forecaster
+        super(NaiveVariance, self).__init__()
+
+        tags_to_clone = [
+            "requires-fh-in-fit",
+            "ignores-exogeneous-X",
+            "handles-missing-data",
+            "y_inner_mtype",
+            "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
+        ]
+        self.clone_tags(self.forecaster, tags_to_clone)
+
+    def _fit(self, y, X=None, fh=None):
+        self.forecaster_ = clone(self.forecaster)
+        self.forecaster_.fit(y=y, X=X, fh=fh)
+        return self
+
+    def _predict(self, fh, X=None):
+        return self.forecaster_.predict(fh=fh, X=X)
+
+    def _update(self, y, X=None, update_params=True):
+        self.forecaster_.update(y, X, update_params=update_params)
+        return self
+
+    def _predict_quantiles(self, fh, X=None, alpha=0.5):
+        """Compute/return prediction quantiles for a forecast.
+
+        Uses normal distribution as predictive distribution to compute the
+        quantiles.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : float or list of float, optional (default=0.5)
+            A probability or list of, at which quantile forecasts are computed.
+
+        Returns
+        -------
+        pred_quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the quantile forecasts for each alpha.
+                Quantile forecasts are calculated for each a in alpha.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+                at quantile probability in second-level col index, for each row index.
+        """
+        y_pred = self.predict(fh, X)
+        pred_var = self.predict_var(fh, X)
+
+        z_scores = norm.ppf(alpha)
+        errors = [pred_var ** 0.5 * z for z in z_scores]
+
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
+        for a, error in zip(alpha, errors):
+            pred_quantiles[("Quantiles", a)] = y_pred + error
+
+        return pred_quantiles
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Compute/return prediction variance for a forecast.
+
+        Must be run *after* the forecaster has been fitted.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            If True, return the covariance matrix.
+            If False, return the marginal variance.
+
+        Returns
+        -------
+        pred_var :
+            if cov=False, pd.Series with index fh.
+                a vector of same length as fh with predictive marginal variances;
+            if cov=True, pd.DataFrame with index fh and columns fh.
+                a square matrix of size len(fh) with predictive covariance matrix.
+        """
+        y_index = self._y.index
+        fh_relative = fh.to_relative(self.cutoff)
+        fh_absolute = fh.to_absolute(self.cutoff)
+
+        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+        for id in y_index:
+            forecaster = clone(self.forecaster)
+            subset = self._y[:id]  # subset on which we fit
+            try:
+                forecaster.fit(subset)
+            except ValueError:
+                warn(
+                    f"Couldn't fit the model on time series of length {len(subset)}.\n"
+                )
+                continue
+
+            y_true = self._y[id:]  # subset on which we predict
+            try:
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
+            except IndexError:
+                warn(
+                    f"Couldn't predict after fitting on time series of length \
+                     {len(subset)}.\n"
+                )
+
+        if cov:
+            fh_size = len(fh)
+            covariance = np.zeros(shape=(len(fh), fh_size))
+            for i in range(fh_size):
+                i_residuals = np.diagonal(residuals_matrix, offset=fh_relative[i])
+                for j in range(i, fh_size):  # since the matrix is symmetric
+                    j_residuals = np.diagonal(residuals_matrix, offset=fh_relative[j])
+                    max_residuals = min(len(j_residuals), len(i_residuals))
+                    covariance[i, j] = covariance[j, i] = np.nanmean(
+                        i_residuals[:max_residuals] * j_residuals[:max_residuals]
+                    )
+            pred_var = pd.DataFrame(
+                covariance,
+                index=fh_absolute,
+                columns=fh_absolute,
+            )
+        else:
+            variance = [
+                np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
+                for offset in fh_relative
+            ]
+            pred_var = pd.Series(
+                variance,
+                index=fh_absolute,
+            )
+
+        return pred_var
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params_list = {"forecaster": FORECASTER}
 
         return params_list
