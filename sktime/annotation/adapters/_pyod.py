@@ -3,14 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements outlier detection from pyOD."""
 
-import numpy as np
-from sktime.annotation.base._base import BaseSeriesAnnotator
-
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
-
+import numpy as np
 from sklearn import clone
+
+from sktime.annotation.base._base import BaseSeriesAnnotator
 
 
 class PyODAnnotator(BaseSeriesAnnotator):
