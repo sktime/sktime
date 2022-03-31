@@ -233,9 +233,7 @@ class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
-y_hierarchical = _make_hierarchical(
-    n_timepoints=10, n_columns=1, random_state=RAND_SEED
-)
+y_hierarchical = _make_hierarchical(n_columns=1, random_state=RAND_SEED)
 
 
 class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
