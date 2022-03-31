@@ -34,6 +34,7 @@ from sktime.utils.validation import (
     array_is_timedelta_or_date_offset,
     check_window_length,
     is_datetime,
+    is_iloc_like,
     is_int,
     is_timedelta,
     is_timedelta_or_date_offset,
@@ -281,7 +282,7 @@ def _fh_and_window_length_types_are_supported(
         ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
     )
     all_int = array_is_int(fh_horizon) and (
-        is_int(window_length) if window_length else True
+        is_iloc_like(window_length) if window_length else True
     )
     all_dates = array_is_timedelta_or_date_offset(fh_horizon) and (
         is_timedelta_or_date_offset(window_length) if window_length else True
@@ -316,9 +317,7 @@ def _cutoffs_fh_window_length_types_are_supported(
     fh_horizon = (
         ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
     )
-    all_int = (
-        array_is_int(cutoffs) and array_is_int(fh_horizon) and is_int(window_length)
-    )
+    all_int = all([is_iloc_like(x) for x in [cutoffs, fh_horizon, window_length]])
     all_dates = (
         array_is_datetime64(cutoffs)
         and array_is_timedelta_or_date_offset(fh_horizon)
@@ -356,10 +355,10 @@ def _window_splitter_types_are_supported(
         ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
     )
     all_int = (
-        array_is_int(fh_horizon)
-        and (is_int(initial_window) if initial_window else True)
-        and (is_int(window_length) if window_length else True)
-        and is_int(step_length)
+        is_iloc_like(fh_horizon)
+        and (is_iloc_like(initial_window) if initial_window else True)
+        and (is_iloc_like(window_length) if window_length else True)
+        and is_iloc_like(step_length)
     )
     all_dates = (
         array_is_timedelta_or_date_offset(fh_horizon)

@@ -83,6 +83,16 @@ def array_is_timedelta_or_date_offset(x) -> bool:
     return all([is_timedelta_or_date_offset(value) for value in x])
 
 
+def is_iloc_like(x) -> bool:
+    """Check if input is .iloc friendly."""
+    try:
+        iter(x)
+    except TypeError:
+        return is_int(x)
+    else:
+        return array_is_int(x)
+
+
 def check_n_jobs(n_jobs: int) -> int:
     """Check `n_jobs` parameter according to the scikit-learn convention.
 
