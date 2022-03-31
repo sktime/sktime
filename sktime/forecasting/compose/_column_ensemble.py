@@ -58,8 +58,6 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.forecasters = forecasters
         super(ColumnEnsembleForecaster, self).__init__(forecasters=forecasters)
 
-        l_forecasters = [(x[0], x[1]) for x in forecasters]
-
         # set requires-fh-in-fit depending on forecasters
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
@@ -70,6 +68,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
+            l_forecasters = [(x[0], x[1]) for x in forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("capability:pred_int", False, True, l_forecasters)
             self._anytagis_then_set("ignores-exogeneous-X", False, True, l_forecasters)
