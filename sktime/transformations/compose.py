@@ -287,8 +287,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         inverse transformed version of X
         """
         Xt = X
-        for _, transformer in self.steps_:
-            Xt = transformer.inverse_transform(X=Xt, y=y)
+        for _, transformer in reversed(self.steps_):
+            if not self.get_tag("fit_is_empty", False):
+                Xt = transformer.inverse_transform(X=Xt, y=y)
+            else:
+                Xt = transformer.fit(X=Xt, y=y).inverse_transform(X=Xt, y=y)
 
         return Xt
 
@@ -422,6 +425,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
+        "capability:inverse_transform": False,
+        # unclear what inverse transform should be, since multiple inverse_transform
+        #   would have to inverse transform to one
     }
 
     def __init__(
@@ -470,7 +476,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
-        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
 
@@ -587,7 +593,42 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
+            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
+            Xt.columns = flat_index
+
+        return Xt
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform X and return a transformed version.
+
+        private _inverse_transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        inverse transformed version of X
+        """
+        # retrieve fitted transformers, apply to the new data individually
+        transformers = self._get_estimator_list(self.transformer_list_)
+        if not self.get_tag("fit_is_empty", False):
+            Xt_list = [trafo.inverse_transform(X, y) for trafo in transformers]
+        else:
+            Xt_list = [trafo.fit(X, y).fit_transform(X, y) for trafo in transformers]
+
+        transformer_names = self._get_estimator_names(self.transformer_list_)
+
+        Xt = pd.concat(
+            Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
+        )
+
+        if self.flatten_transform_index:
+            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
             Xt.columns = flat_index
 
         return Xt
@@ -631,3 +672,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
+
+    @staticmethod
+    def _underscore_join(iterable):
+        """Create flattened column names from multiindex tuple."""
+        iterable_as_str = [str(x) for x in iterable]
+        return "__".join(iterable_as_str)

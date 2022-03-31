@@ -131,7 +131,10 @@ NON_STATE_CHANGING_METHODS = (
     "predict_proba",
     "decision_function",
     "transform",
-    "inverse_transform",
+    # todo: add this back
+    # escaping this, since for some estimators
+    #   the input format of inverse_transform assumes special col names
+    # "inverse_transform",
 )
 
 # The following gives a list of valid estimator base classes.
