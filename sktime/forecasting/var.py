@@ -18,14 +18,14 @@ class VAR(_StatsModelsAdapter):
 
     Parameters
     ----------
-    maxlags: int or None (default= None)
+    maxlags: int or None (default=None)
         Maximum number of lags to check for order selection,
         defaults to 12 * (nobs/100.)**(1./4)
-    method : str
+    method : str (default="ols")
         Estimation method to use
-    verbose : bool (default = False)
+    verbose : bool (default=False)
         Print order selection output to the screen
-    trend : str {"c", "ct", "ctt", "n"}
+    trend : str {"c", "ct", "ctt", "n"} (default="c")
         "c" - add constant
         "ct" - constant and trend
         "ctt" - constant, linear and quadratic trend
@@ -33,12 +33,12 @@ class VAR(_StatsModelsAdapter):
         Note that these are prepended to the columns of the dataset.
     missing: str, optional (default='none')
         A string specifying if data is missing
-    freq: str, tuple, datetime.timedelta, DateOffset or None, optional
-    dates: array_like
-        Must match number of rows of endog
+    freq: str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
         A frequency specification for either `dates` or the row labels from
         the endog / exog data.
-    ic: {'aic', 'fpe', 'hqic', 'bic', None}
+    dates: array_like, optional (default=None)
+        An array like object containing dates.
+    ic: One of {'aic', 'fpe', 'hqic', 'bic', None} (default=None)
         Information criterion to use for VAR order selection.
         aic : Akaike
         fpe : Final prediction error
