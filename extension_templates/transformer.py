@@ -31,6 +31,10 @@ Optional implements:
 Testing - implement if sktime transformer (not needed locally):
     get default parameters for test instance(s) - get_test_params()
 """
+# todo: write an informative docstring for the file or module, remove the above
+# todo: add an appropriate copyright notice for your estimator
+#       estimators contributed to sktime should have the copyright notice at the top
+#       estimators of your own do not need to have permissive or BSD-3 copyright
 
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
@@ -102,7 +106,7 @@ class MyTransformer(BaseTransformer):
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
     }
@@ -171,7 +175,7 @@ class MyTransformer(BaseTransformer):
         #
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
-        #   set "fit-in-transform" tag to True
+        #   set "fit_is_empty" tag to True
 
     # todo: implement this, mandatory
     def _transform(self, X, y=None):
