@@ -13,8 +13,13 @@ from numpy.linalg import inv
 
 from sktime.transformations.base import BaseTransformer
 
+# TODO: test predictions for each method to guarantee coherency for single example?
+# TODO: why should this run for single level index?
+# TODO: failing tests
+# TODO: rename with convention
 
-class reconciler(BaseTransformer):
+
+class Reconciler(BaseTransformer):
     """Hierarchical reconcilation transformer.
 
     Hierarchical reconciliation is a transfromation which is used to make the
@@ -43,7 +48,7 @@ class reconciler(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd_multiindex_hier",
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -54,12 +59,11 @@ class reconciler(BaseTransformer):
         "transform-returns-same-time-index": True,
     }
 
-    # test that method is recognised
     def __init__(self, method="bu"):
 
         self.method = method
 
-        super(reconciler, self).__init__()
+        super(Reconciler, self).__init__()
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -179,14 +183,18 @@ def _get_s_matrix(X):
         inds = list(s_matrix.index[s_matrix.index.get_level_values(level=-1).isin([j])])
 
         # generate new tuples for the aggregate levels
-        for i in range(len(inds[0])):
-            tmp = list(inds[i])
-            tmp[-(i + 1)] = "__total"
-            inds.append(tuple(tmp))
+        # if multiindex
+        if s_matrix.index.nlevels > 1:
+            for i in range(len(inds[0])):
+                tmp = list(inds[i])
+                tmp[-(i + 1)] = "__total"
+                inds.append(tuple(tmp))
 
-        # insrt indicator for aggregates
-        for i in inds:
-            s_matrix.loc[i, j] = 1.0
+            # insert indicator for aggregates
+            for i in inds:
+                s_matrix.loc[i, j] = 1.0
+        else:
+            s_matrix.loc["__total", j] = 1.0
 
     # drop new levels not present in orginal matrix
     s_matrix.dropna(inplace=True)
@@ -282,13 +290,11 @@ def _get_g_matrix_wls_str(X):
 # TODO: check for any missing timepoint indexes?
 def _check_index_good(X):
     """Check the index of X and return boolean."""
-    ind_names = list(X.index.names)
-
     # check the length of index
-    nmln_chk = len(ind_names) >= 2
+    nmln_chk = X.index.nlevels >= 2
 
     # check the first index elements for "__total"
-    tot_chk = np.any(X.index.get_level_values(level=1).isin(["__total"]))
+    tot_chk = np.any(X.index.get_level_values(level=0).isin(["__total"]))
 
     all_ok = np.logical_and.reduce([nmln_chk, tot_chk])
 
@@ -325,6 +331,3 @@ def _check_bl_good(X):
         )
     else:
         pass
-
-
-# TODO: test predictions for each method to guarantee coherency for single example?
