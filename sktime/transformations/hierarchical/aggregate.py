@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 # todo: add any necessary sktime internal imports here
 
 
-class aggregator(BaseTransformer):
+class Aggregator(BaseTransformer):
     """Prepare hierarchical data, including aggregate levels, from bottom level.
 
     This transformer adds aggregate levels via summation to a DataFrame with a
@@ -27,19 +27,18 @@ class aggregator(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Hierarchical",
-        "scitype:transform-output": "Hierarchical",
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         # todo instance wise?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd_multiindex_hier",
+        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
-        "enforce_index_type": True,  # index type that needs to be enforced in X/y
         "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
     }
@@ -48,7 +47,7 @@ class aggregator(BaseTransformer):
 
         self.flatten_single_levels = flatten_single_levels
 
-        super(aggregator, self).__init__()
+        super(Aggregator, self).__init__()
 
     # todo: test that "__total" is not named in index?
     # todo: test that the index is named
