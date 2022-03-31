@@ -25,6 +25,7 @@ repos:
     hooks:
       - id: black
         language_version: python3
+        additional_dependencies: [click==8.0.4]
         # args: [--line-length 79]
 
   - repo: https://github.com/pycqa/flake8
