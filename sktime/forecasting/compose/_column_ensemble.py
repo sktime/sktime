@@ -160,7 +160,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_preds = []
         keys = []
         for _, forecaster, index in self.forecasters_:
-            y_preds += [getattr(forecaster, methodname, **kwargs)]
+            y_preds += [getattr(forecaster, methodname)(**kwargs)]
             keys += [index]
         y_pred = pd.concat(y_preds, axis=1, keys=keys)
         return y_pred
