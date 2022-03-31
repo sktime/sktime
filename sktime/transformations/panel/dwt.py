@@ -23,7 +23,7 @@ class DWTTransformer(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Panel",
+        "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
@@ -62,10 +62,11 @@ class DWTTransformer(BaseTransformer):
         col_names = X.columns
 
         Xt = pd.DataFrame()
+        # Xt = Xt.sort_index(inplace=True)
         
         # Convert the dataframe to numpy3D
         arr = convert(
-                X,
+                pd.DataFrame(X),
                 from_type="pd-multiindex",
                 to_type="numpy3D",
                 as_scitype="Panel",
@@ -85,8 +86,8 @@ class DWTTransformer(BaseTransformer):
         transformedData = np.asarray(transformedData)
 
         # Add it to the dataframe
-        colToAdd = []
         for x in col_names:
+            colToAdd = []
             for i in range(len(transformedData)):
                 inst = transformedData[i]
                 colToAdd.append(pd.Series(inst))
