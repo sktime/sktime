@@ -309,7 +309,7 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
         Returns
@@ -328,12 +328,17 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
-        if alpha is None:
-            alpha = [0.05, 0.95]
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
 
-        alpha = check_alpha(alpha)
+        # default alpha
+        if alpha is None:
+            alpha = [0.05, 0.95]
+        # check alpha and coerce to list
+        alpha = check_alpha(alpha, name="alpha")
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -367,8 +372,8 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : float or list of float, optional (default=0.90)
-           nominal coverage(s) of predictive interval(s)
+        coverage : float or list of float of unique values, optional (default=0.90)
+            nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
@@ -391,9 +396,13 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-        coverage = check_alpha(coverage)
+        # check alpha and coerce to list
+        coverage = check_alpha(coverage, name="coverage")
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -1836,7 +1845,7 @@ class BaseForecaster(BaseEstimator):
     # TODO: remove in v0.11.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
         name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha)
+        alpha = check_alpha(alpha, name="alpha")
         alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
         pred_int_old_format = [
             pd.DataFrame(
