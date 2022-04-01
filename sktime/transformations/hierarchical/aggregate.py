@@ -49,8 +49,6 @@ class Aggregator(BaseTransformer):
 
         super(Aggregator, self).__init__()
 
-    # todo: test that "__total" is not named in index?
-    # todo: test that the index is named
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -80,18 +78,7 @@ class Aggregator(BaseTransformer):
         hier_names = list(X.index.names)
 
         # top level
-        # remove aggregations that only have one level from below
-        if self.flatten_single_levels:
-            single_df = X.groupby(level=-1).count()
-            mask1 = (
-                single_df[(single_df > 1).all(1)]
-                .index.get_level_values(level=-1)
-                .unique()
-            )
-            mask1 = X.index.get_level_values(level=-1).isin(mask1)
-            top = X.loc[mask1].groupby(level=-1).sum()
-        else:
-            top = X.groupby(level=-1).sum()
+        top = X.groupby(level=-1).sum()
 
         ind_names = hier_names[:-1]
         for i in ind_names:
@@ -110,28 +97,7 @@ class Aggregator(BaseTransformer):
                 # add in the final index (e.g. timepoints)
                 agg_levels.append(hier_names[-1])
 
-                # remove aggregations that only have one level from below
-                if self.flatten_single_levels:
-                    single_df = X.groupby(level=agg_levels).count()
-                    # get index masks
-                    masks = []
-                    for i in agg_levels:
-                        m1 = (
-                            single_df[(single_df > 1).all(1)]
-                            .index.get_level_values(i)
-                            .unique()
-                        )
-                        m1 = X.index.get_level_values(i).isin(m1)
-                        masks.append(m1)
-
-                    mid = (
-                        X.loc[np.logical_and.reduce(masks)]
-                        .groupby(level=agg_levels)
-                        .sum()
-                    )
-                else:
-                    mid = X.groupby(level=agg_levels).sum()
-
+                mid = X.groupby(level=agg_levels).sum()
                 # now fill in index
                 ind_names = list(set(hier_names).difference(agg_levels))
                 for j in ind_names:
@@ -139,6 +105,19 @@ class Aggregator(BaseTransformer):
                 # set back in index
                 mid = mid.set_index(ind_names, append=True).reorder_levels(hier_names)
                 df_out = pd.concat([df_out, mid])
+
+        # now remove duplicated aggregate indexes
+        if self.flatten_single_levels:
+            new_index = _flatten_single_indexes(X)
+            nm = X.index.names[-1]
+            # uncomment if contraints are relaxed on naming the time index
+            # if nm is None:
+            #     nm = "index"
+            df_out = (
+                df_out.reset_index(level=-1)
+                .loc[new_index]
+                .set_index(nm, append=True, verify_integrity=True)
+            )
 
         df_out.sort_index(inplace=True)
         return df_out
@@ -178,3 +157,59 @@ def _check_index_good(X):
     all_ok = np.logical_and.reduce([nm_chk, nmln_chk, tot_chk])
 
     return all_ok
+
+
+def _flatten_single_indexes(X):
+    """Check the index of X and return new unique index object."""
+    # get unique indexes outwith timepoints
+    inds = list(X.droplevel(-1).index.unique())
+    ind_df = pd.DataFrame(inds, columns=X.droplevel(-1).index.unique().names)
+
+    # add the new top aggregate level
+    if len(ind_df.columns) == 1:
+        out_list = ["__total"]
+    else:
+        out_list = [tuple(np.repeat("__total", len(ind_df.columns)))]
+
+        # for each level check there are child nodes of length >1
+        for i in range(1, len(ind_df.columns)):
+            # all levels from top
+            ind_aggs = ind_df.loc[:, ind_df.columns[0:-i:]]
+            # filter and check for child nodes with only 1 nunique name
+            if len(ind_aggs.columns) > 1:
+                filter_cols = list(ind_aggs.columns[0:-1])
+                filter_inds = ind_aggs.groupby(
+                    by=filter_cols, as_index=False
+                ).transform(lambda x: x.nunique())
+                filter_inds = filter_inds[(filter_inds > 1)].dropna().index
+                ind_aggs = ind_aggs.iloc[filter_inds, :]
+            else:
+                pass
+
+            tmp = ind_aggs.groupby(by=list(ind_aggs.columns)).size()
+
+            # get idex of these nodes
+            agg_ids = list(tmp[tmp > 1].dropna().index)
+
+            # add the aggregate label down the the length of the orginal index
+            # only id add if there are two elements in list
+            if len(agg_ids) > 1:
+
+                agg_ids = [tuple([x]) if type(x) is not tuple else x for x in agg_ids]
+                for _j in range(i):
+                    agg_ids = [x + ("__total",) for x in agg_ids]
+
+                out_list.extend(agg_ids)
+
+    # add to original index
+    inds.extend(out_list)
+
+    if len(ind_df.columns) == 1:
+        new_index = pd.Index(inds, name=ind_df.columns[0])
+    else:
+        new_index = pd.MultiIndex.from_tuples(
+            inds,
+            names=ind_df.columns,
+        )
+
+    return new_index
