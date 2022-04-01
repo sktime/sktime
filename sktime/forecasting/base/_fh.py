@@ -452,6 +452,9 @@ class ForecastingHorizon:
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
 
 
+# This function is a direct replacement of the `ForecastingHorizon.to_relative` method
+# to avoid B019 error from flake8-bugbear.
+# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
 # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
 # computations, as these are the basic methods and often required internally when
 # calling different methods.
@@ -514,6 +517,9 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
         return fh._new(relative, is_relative=True)
 
 
+# This function is a direct replacement of the `ForecastingHorizon.to_absolute` method
+# to avoid B019 error from flake8-bugbear.
+# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
 @lru_cache(typed=True)
 def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
