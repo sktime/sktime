@@ -1579,7 +1579,7 @@ class BaseForecaster(BaseEstimator):
             #    may have been converted
             mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
-            self.fit(self._y, self._X, self.fh)
+            self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
