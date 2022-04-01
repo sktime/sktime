@@ -20,7 +20,7 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES
+from sktime.utils.validation.series import VALID_INDEX_TYPES, is_integer_index
 
 RELATIVE_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
@@ -95,9 +95,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if (type(values) in VALID_INDEX_TYPES) or (
-        isinstance(values, pd.Index) and values.is_integer()
-    ):
+    if (type(values) in VALID_INDEX_TYPES) or is_integer_index(values):
         pass
 
     # convert single integer or timedelta or dateoffset
@@ -185,19 +183,19 @@ class ForecastingHorizon:
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         values_in_relative_types = type(values) in RELATIVE_TYPES
         values_in_absolute_types = type(values) in ABSOLUTE_TYPES
-        values_is_numeric_index = isinstance(values, pd.Index) and values.is_integer()
+        values_is_integer_index = is_integer_index(values)
         if is_relative is None:
-            if values_in_relative_types or values_is_numeric_index:
+            if values_in_relative_types or values_is_integer_index:
                 is_relative = True
-            elif values_in_absolute_types or values_is_numeric_index:
+            elif values_in_absolute_types or values_is_integer_index:
                 is_relative = False
             else:
                 raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
-            if not (values_in_relative_types or values_is_numeric_index):
+            if not (values_in_relative_types or values_is_integer_index):
                 raise TypeError(error_msg)
         else:
-            if not (values_in_absolute_types or values_is_numeric_index):
+            if not (values_in_absolute_types or values_is_integer_index):
                 raise TypeError(error_msg)
 
         self._values = values

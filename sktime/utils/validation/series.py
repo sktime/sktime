@@ -268,9 +268,9 @@ def check_equal_time_index(*ys, mode="equal"):
             raise ValueError(msg)
 
 
-def _is_int_index(index):
-    """Check if index type is one of pd.RangeIndex or pd.Int64Index."""
-    return type(index) in (pd.Int64Index, pd.RangeIndex)
+def is_integer_index(values) -> bool:
+    """Check that values passed to ForecastingHorizon are integer pd.Index."""
+    return isinstance(values, pd.Index) and values.is_integer()
 
 
 def check_consistent_index_type(a, b):
@@ -293,8 +293,8 @@ def check_consistent_index_type(a, b):
         "series have the same index type."
     )
 
-    if _is_int_index(a):
-        if not _is_int_index(b):
+    if is_integer_index(a):
+        if not is_integer_index(b):
             raise TypeError(msg)
 
     else:

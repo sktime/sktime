@@ -11,7 +11,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation.series import check_time_index
+from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
 def _coerce_duration_to_int(duration, freq=None):
@@ -100,9 +100,7 @@ def _shift(x, by=1):
         Shifted time point
     """
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
-    assert isinstance(by, (int, np.integer)) or (
-        isinstance(by, pd.Index) and by.is_integer()
-    ), type(by)
+    assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
     if isinstance(x, pd.Timestamp):
         if not hasattr(x, "freq") or x.freq is None:
             raise ValueError("No `freq` information available")

@@ -31,7 +31,7 @@ from sktime.utils.datetime import (
     _get_intervals_count_and_unit,
     _shift,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES
+from sktime.utils.validation.series import VALID_INDEX_TYPES, is_integer_index
 
 
 def _assert_index_equal(a, b):
@@ -102,7 +102,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
 
 def test_fh_method_delegation():
-    """Test ForecastinHorizon delegated methods."""
+    """Test ForecastingHorizon delegated methods."""
     fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)
@@ -149,9 +149,7 @@ GOOD_ABSOLUTE_INPUT_ARGS = (
 def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert (type(output) in VALID_INDEX_TYPES) or (
-        isinstance(output, pd.Index) and output.is_integer()
-    )
+    assert (type(output) in VALID_INDEX_TYPES) or is_integer_index(output)
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
@@ -211,9 +209,7 @@ def test_coerce_duration_to_int(duration):
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
-    assert (type(ret) in (np.integer, int)) or (
-        isinstance(ret, pd.Index) and ret.is_integer()
-    )
+    assert (type(ret) in (np.integer, int)) or is_integer_index(ret)
 
     # check result
     if isinstance(duration, pd.Index):
