@@ -164,7 +164,7 @@ class ARCH(BaseForecaster):
     ...    p=1,
     ...    q=1,
     ...    dist="Normal",
-    ...):
+    ...)
     >>> forecaster.fit(y)
     ARCH(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
@@ -203,7 +203,7 @@ class ARCH(BaseForecaster):
         dist="Normal",
         hold_back=None,
         rescale=None,
-        update_freq=None,
+        update_freq=0,
         disp="off",
         starting_values=None,
         cov_type=None,
