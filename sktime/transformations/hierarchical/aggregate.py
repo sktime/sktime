@@ -27,8 +27,8 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
+        "scitype:transform-input": "Hierarchical",
+        "scitype:transform-output": "Hierarchical",
         "scitype:transform-labels": "None",
         # todo instance wise?
         "scitype:instancewise": True,  # is this an instance-wise transform?
@@ -117,6 +117,14 @@ class Aggregator(BaseTransformer):
                 df_out.reset_index(level=-1)
                 .loc[new_index]
                 .set_index(nm, append=True, verify_integrity=True)
+            )
+
+        for i in range(df_out.index.nlevels - 1):
+            idx = df_out.index.get_level_values(level=i).map(str)
+            df_out = (
+                df_out.droplevel(i)
+                .set_index(idx, append=True)
+                .reorder_levels(hier_names)
             )
 
         df_out.sort_index(inplace=True)
