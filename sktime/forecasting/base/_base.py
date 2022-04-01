@@ -1617,7 +1617,7 @@ class BaseForecaster(BaseEstimator):
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
             Row index is fh, with additional (upper) levels equal to instance levels,
-                from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
             Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
@@ -1688,7 +1688,7 @@ class BaseForecaster(BaseEstimator):
             Column has multi-index: first level is variable name from y in fit,
                 second level being the values of alpha passed to the function.
             Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
@@ -1763,7 +1763,7 @@ class BaseForecaster(BaseEstimator):
                 Column names are exactly those of `y` passed in `fit`/`update`.
                     For nameless formats, column index will be a RangeIndex.
                 Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
                 Entries are variance forecasts, for var in col index.
                 A variance forecast for given variable and fh index is a predicted
                     variance for that variable and index, given observed data.
@@ -1771,7 +1771,7 @@ class BaseForecaster(BaseEstimator):
                 Column index is a multiindex: 1st level is variable names (as above)
                     2nd level is fh.
                 Row index is fh, with additional levels equal to instance levels,
-                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.

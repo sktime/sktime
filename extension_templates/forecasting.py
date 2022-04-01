@@ -282,12 +282,13 @@ class MyForecaster(BaseForecaster):
 
         Returns
         -------
-        pred_quantiles : pd.DataFrame
+        quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being the quantile forecasts for each alpha.
-                Quantile forecasts are calculated for each a in alpha.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second-level col index, for each row index.
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
         """
         # implement here
         # IMPORTANT: avoid side effects to y, X, fh, alpha
@@ -329,7 +330,9 @@ class MyForecaster(BaseForecaster):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
@@ -370,13 +373,19 @@ class MyForecaster(BaseForecaster):
             If cov=False:
                 Column names are exactly those of `y` passed in `fit`/`update`.
                     For nameless formats, column index will be a RangeIndex.
-                Row index is fh. Entries are variance forecasts, for var in col index.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
             If cov=True:
                 Column index is a multiindex: 1st level is variable names (as above)
                     2nd level is fh.
-                Row index is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
         """
         # implement here
         # implementing the cov=True case is optional and can be omitted
