@@ -1,8 +1,7 @@
 [project]
 name = "sktime"
-version = "0.10.1"
+version = "0.11.0"
 description = "A unified framework for machine learning with time series"
-license = "BSD-3-Clause"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
     {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
@@ -108,6 +107,9 @@ homepage = "https://www.sktime.org"
 repository = "https://github.com/alan-turing-institute/sktime"
 documentation = "https://www.sktime.org"
 download = "https://pypi.org/project/sktime/#files"
+
+[project.license]
+file = "LICENSE"
 
 [build-system]
 requires = ["setuptools", "wheel", "toml", "build"]

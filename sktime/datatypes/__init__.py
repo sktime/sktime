@@ -4,7 +4,6 @@
 __author__ = ["fkiraly"]
 
 from sktime.datatypes._check import (
-    check_is,
     check_is_mtype,
     check_is_scitype,
     check_raise,
@@ -28,7 +27,6 @@ from sktime.datatypes._utilities import get_cutoff
 from sktime.datatypes._vectorize import VectorizedDF
 
 __all__ = [
-    "check_is",
     "check_is_mtype",
     "check_is_scitype",
     "check_raise",
