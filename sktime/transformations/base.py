@@ -121,7 +121,7 @@ class BaseTransformer(BaseEstimator):
         "handles-missing-data": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
-        # is transform result always guaranteed to contain no missing avlues?
+        # is transform result always guaranteed to contain no missing values?
     }
 
     # allowed mtypes for transformers - Series and Panel

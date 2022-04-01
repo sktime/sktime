@@ -36,6 +36,8 @@ class SlopeTransformer(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:unequal_length:removes": True,
+        # is transform result always guaranteed to be equal length (and series)?
     }
 
     def __init__(self, num_intervals=8):
