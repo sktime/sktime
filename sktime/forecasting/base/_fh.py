@@ -492,8 +492,8 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq)
             cutoff = _coerce_to_period(cutoff, freq)
 
-        # TODO: Replace the following line if the bug in pandas is fixed
-        #  and its version is restricted in sktime dependencies
+        # TODO: Replace when we upgrade our lower pandas bound
+        #  to a version where this is fixed
         # Compute relative values
         # The following line circumvents the bug in pandas
         # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
