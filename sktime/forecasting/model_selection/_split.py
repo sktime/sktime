@@ -555,10 +555,7 @@ class CutoffSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
-        fh_horizon = (
-            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-        )
-        _check_inputs_for_compatibility([fh_horizon, cutoffs, window_length])
+        _check_inputs_for_compatibility([check_fh(fh), cutoffs, window_length])
         self.cutoffs = cutoffs
         super(CutoffSplitter, self).__init__(fh, window_length)
 
@@ -647,11 +644,8 @@ class BaseWindowSplitter(BaseSplitter):
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
     ) -> None:
-        fh_horizon = (
-            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-        )
         _check_inputs_for_compatibility(
-            [fh_horizon, initial_window, window_length, step_length]
+            [check_fh(fh), initial_window, window_length, step_length]
         )
         self.step_length = step_length
         self.start_with_window = start_with_window
@@ -984,10 +978,7 @@ class SingleWindowSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES,
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
-        fh_horizon = (
-            ForecastingHorizon(fh) if not isinstance(fh, ForecastingHorizon) else fh
-        )
-        _check_inputs_for_compatibility(args=[fh_horizon, window_length])
+        _check_inputs_for_compatibility(args=[check_fh(fh), window_length])
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
