@@ -117,7 +117,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     if method in ["predict_interval", "predict_quantiles"]:
         expected_mtype = method.replace("ict", "")
     elif method in ["predict_var"]:
-        expected_mtype = "pd.DataFrame"
+        expected_mtype = "pd-multiindex"
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
@@ -149,7 +149,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     if method in ["predict_interval", "predict_quantiles"]:
         expected_mtype = method.replace("ict", "")
     elif method in ["predict_var"]:
-        expected_mtype = "pd.DataFrame"
+        expected_mtype = "pd_multiindex_hier"
     else:
         RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
