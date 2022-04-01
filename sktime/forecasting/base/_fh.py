@@ -20,7 +20,11 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES, is_integer_index
+from sktime.utils.validation.series import (
+    VALID_INDEX_TYPES,
+    is_in_valid_index_types,
+    is_integer_index,
+)
 
 RELATIVE_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
@@ -95,7 +99,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if (type(values) in VALID_INDEX_TYPES) or is_integer_index(values):
+    if is_in_valid_index_types(values) or is_integer_index(values):
         pass
 
     # convert single integer or timedelta or dateoffset

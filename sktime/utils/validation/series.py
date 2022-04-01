@@ -21,6 +21,11 @@ VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
 
 
+def is_in_valid_index_types(x) -> bool:
+    """Check that the input type belongs to the valid index types."""
+    return isinstance(x, VALID_INDEX_TYPES)
+
+
 def _check_is_univariate(y, var_name="input"):
     """Check if series is univariate."""
     if isinstance(y, pd.DataFrame):
@@ -179,7 +184,7 @@ def check_time_index(
 
     # We here check for type equality because isinstance does not
     # work reliably because index types inherit from each other.
-    if not ((type(index) in VALID_INDEX_TYPES) or index.is_integer()):
+    if not (is_in_valid_index_types(index) or is_integer_index(index)):
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."

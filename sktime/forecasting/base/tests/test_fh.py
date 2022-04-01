@@ -31,7 +31,11 @@ from sktime.utils.datetime import (
     _get_intervals_count_and_unit,
     _shift,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES, is_integer_index
+from sktime.utils.validation.series import (
+    VALID_INDEX_TYPES,
+    is_in_valid_index_types,
+    is_integer_index,
+)
 
 
 def _assert_index_equal(a, b):
@@ -149,7 +153,7 @@ GOOD_ABSOLUTE_INPUT_ARGS = (
 def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert (type(output) in VALID_INDEX_TYPES) or is_integer_index(output)
+    assert is_in_valid_index_types(output) or is_integer_index(output)
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
