@@ -259,10 +259,6 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy(**kwargs)
 
-    # We cache the results from `to_relative()` and `to_absolute()` calls to speed up
-    # computations, as these are the basic methods and often required internally when
-    # calling different methods.
-    @lru_cache(typed=True)  # noqa: B019
     def to_relative(self, cutoff=None):
         """Return forecasting horizon values relative to a cutoff.
 
@@ -277,49 +273,8 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        if self.is_relative:
-            return self._new()
+        return _to_relative(fh=self, cutoff=cutoff)
 
-        else:
-            absolute = self.to_pandas()
-            _check_cutoff(cutoff, absolute)
-
-            # We cannot use the freq from the ForecastingHorizon itself (or its
-            # wrapped pd.DatetimeIndex) because it may be none for non-regular
-            # indices, so instead we use the freq of cutoff.
-            freq = _get_freq(cutoff)
-
-            if isinstance(absolute, pd.DatetimeIndex):
-                # coerce to pd.Period for reliable arithmetics and computations of
-                # time deltas
-                absolute = _coerce_to_period(absolute, freq)
-                cutoff = _coerce_to_period(cutoff, freq)
-
-            # TODO: Replace the following line if the bug in pandas is fixed
-            #  and its version is restricted in sktime dependencies
-            # Compute relative values
-            # The following line circumvents the bug in pandas
-            # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
-            # periods - periods[0]
-            # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
-            # [v - periods[0] for v in periods]
-            # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-            # TODO: v0.12.0: Check if this comment below can be removed,
-            # so check if pandas has released the fix to PyPI:
-            # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
-            # and fixed: https://github.com/pandas-dev/pandas/pull/46006
-            # Most likely it will be released with pandas 1.5
-            # Once the bug is fixed the line should simply be:
-            # relative = absolute - cutoff
-            relative = pd.Index([date - cutoff for date in absolute])
-
-            # Coerce durations (time deltas) into integer values for given frequency
-            if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-                relative = _coerce_duration_to_int(relative, freq=freq)
-
-            return self._new(relative, is_relative=True)
-
-    @lru_cache(typed=True)  # noqa: B019
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
 
@@ -334,26 +289,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        if not self.is_relative:
-            return self._new()
-
-        else:
-            relative = self.to_pandas()
-            _check_cutoff(cutoff, relative)
-            is_timestamp = isinstance(cutoff, pd.Timestamp)
-
-            if is_timestamp:
-                # coerce to pd.Period for reliable arithmetic operations and
-                # computations of time deltas
-                cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
-
-            absolute = cutoff + relative
-
-            if is_timestamp:
-                # coerce back to DatetimeIndex after operation
-                absolute = absolute.to_timestamp(cutoff.freqstr)
-
-            return self._new(absolute, is_relative=False)
+        return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
         """Return absolute values as zero-based integer index starting from `start`.
@@ -522,6 +458,114 @@ class ForecastingHorizon:
         class_name = self.__class__.__name__
         pandas_repr = repr(self.to_pandas()).split("(")[-1].strip(")")
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
+
+
+# This function needs to be outside ForecastingHorizon
+# since the lru_cache decorator has known, problematic interactions
+# with object methods, see B019 error of flake8-bugbear for a detail explanation.
+# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
+# We cache the results from `to_relative()` and `to_absolute()` calls to speed up
+# computations, as these are the basic methods and often required internally when
+# calling different methods.
+@lru_cache(typed=True)
+def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
+    """Return forecasting horizon values relative to a cutoff.
+
+    Parameters
+    ----------
+    fh : ForecastingHorizon
+    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        Cutoff value required to convert a relative forecasting
+        horizon to an absolute one (and vice versa).
+
+    Returns
+    -------
+    fh : ForecastingHorizon
+        Relative representation of forecasting horizon.
+    """
+    if fh.is_relative:
+        return fh._new()
+
+    else:
+        absolute = fh.to_pandas()
+        _check_cutoff(cutoff, absolute)
+
+        # We cannot use the freq from the ForecastingHorizon itself (or its
+        # wrapped pd.DatetimeIndex) because it may be none for non-regular
+        # indices, so instead we use the freq of cutoff.
+        freq = _get_freq(cutoff)
+
+        if isinstance(absolute, pd.DatetimeIndex):
+            # coerce to pd.Period for reliable arithmetics and computations of
+            # time deltas
+            absolute = _coerce_to_period(absolute, freq)
+            cutoff = _coerce_to_period(cutoff, freq)
+
+        # TODO: Replace when we upgrade our lower pandas bound
+        #  to a version where this is fixed
+        # Compute relative values
+        # The following line circumvents the bug in pandas
+        # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
+        # periods - periods[0]
+        # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
+        # [v - periods[0] for v in periods]
+        # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
+        # TODO: v0.12.0: Check if this comment below can be removed,
+        # so check if pandas has released the fix to PyPI:
+        # This bug was reported: https://github.com/pandas-dev/pandas/issues/45999
+        # and fixed: https://github.com/pandas-dev/pandas/pull/46006
+        # Most likely it will be released with pandas 1.5
+        # Once the bug is fixed the line should simply be:
+        # relative = absolute - cutoff
+        relative = pd.Index([date - cutoff for date in absolute])
+
+        # Coerce durations (time deltas) into integer values for given frequency
+        if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
+            relative = _coerce_duration_to_int(relative, freq=freq)
+
+        return fh._new(relative, is_relative=True)
+
+
+# This function needs to be outside ForecastingHorizon
+# since the lru_cache decorator has known, problematic interactions
+# with object methods, see B019 error of flake8-bugbear for a detail explanation.
+# See more here: https://github.com/alan-turing-institute/sktime/issues/2338
+@lru_cache(typed=True)
+def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
+    """Return absolute version of forecasting horizon values.
+
+    Parameters
+    ----------
+    fh : ForecastingHorizon
+    cutoff : pd.Period, pd.Timestamp, int
+        Cutoff value is required to convert a relative forecasting
+        horizon to an absolute one (and vice versa).
+
+    Returns
+    -------
+    fh : ForecastingHorizon
+        Absolute representation of forecasting horizon.
+    """
+    if not fh.is_relative:
+        return fh._new()
+
+    else:
+        relative = fh.to_pandas()
+        _check_cutoff(cutoff, relative)
+        is_timestamp = isinstance(cutoff, pd.Timestamp)
+
+        if is_timestamp:
+            # coerce to pd.Period for reliable arithmetic operations and
+            # computations of time deltas
+            cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
+
+        absolute = cutoff + relative
+
+        if is_timestamp:
+            # coerce back to DatetimeIndex after operation
+            absolute = absolute.to_timestamp(cutoff.freqstr)
+
+        return fh._new(absolute, is_relative=False)
 
 
 def _check_cutoff(cutoff, index):
