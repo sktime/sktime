@@ -58,7 +58,7 @@ def count_gt100(x):
 
 # Cannot be pickled in get_test_params, therefore here explicit
 kwargs_custom = {
-    "lag_config": {
+    "lag_feature": {
         count_gt100: [[3, 2]],
     }
 }
@@ -71,7 +71,6 @@ y_train_named.name = "y"
 Xtmvar = ["POP_lag_3", "POP_lag_6", "GNP_lag_3", "GNP_lag_6"]
 Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
 Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
-# Some tests are commented out until hierarchical PR works
 
 
 @pytest.mark.parametrize(

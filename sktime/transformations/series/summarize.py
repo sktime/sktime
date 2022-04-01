@@ -6,6 +6,8 @@
 __author__ = ["mloning", "RNKuhns", "danbartl"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
+import warnings
+
 import pandas as pd
 from joblib import Parallel, delayed
 
@@ -27,7 +29,7 @@ class WindowSummarizer(BaseTransformer):
     target_cols: list of str, optional (default = None)
         Specifies which columns in X to target for applying the window functions.
         ``None`` will target the first column
-    lag_config: dict of str and list, optional (default = dict containing first lag)
+    lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
         the argument `window`.
         For all keys other than `lag`, the argument `window` is a length 2 list
@@ -100,11 +102,11 @@ class WindowSummarizer(BaseTransformer):
             List containg lag and window_length parameters.
         truncate: str, optional (default = None)
             Defines how to deal with NAs that were created as a result of applying the
-            functions in the lag_config dict across windows that are longer than
+            functions in the lag_feature dict across windows that are longer than
             the remaining history of data.
             For example a lag config of [14, 7] cannot be fully applied for the first 20
             observations of the targeted column.
-            A lag_config of [[8, 14], [1, 28]] cannot be correctly applied for the
+            A lag_feature of [[8, 14], [1, 28]] cannot be correctly applied for the
             first 21 resp. 28 observations of the targeted column. Possible values
             to deal with those NAs:
                 * None
@@ -120,7 +122,7 @@ class WindowSummarizer(BaseTransformer):
         See section Parameters - truncate for a more detailed explanation of truncation
         as a result of applying windows of certain lengths across past observations.
         Truncate_start will give the maximum of observations that are filled with NAs
-        across all arguments of the lag_config when truncate is set to None.
+        across all arguments of the lag_feature when truncate is set to None.
 
     Returns
     -------
@@ -140,7 +142,7 @@ class WindowSummarizer(BaseTransformer):
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
     >>> kwargs = {
-    ...     "lag_config": {
+    ...     "lag_feature": {
     ...         "lag": [1],
     ...         "mean": [[1, 3], [3, 6]],
     ...         "std": [[1, 4]],
@@ -202,6 +204,7 @@ class WindowSummarizer(BaseTransformer):
     def __init__(
         self,
         lag_config=None,
+        lag_feature=None,
         n_jobs=-1,
         target_cols=None,
         truncate=None,
@@ -209,6 +212,7 @@ class WindowSummarizer(BaseTransformer):
 
         # self._converter_store_X = dict()
         self.lag_config = lag_config
+        self.lag_feature = lag_feature
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
@@ -227,7 +231,7 @@ class WindowSummarizer(BaseTransformer):
             detailed explanation of truncation as a result of applying windows of
             certain lengths across past observations.
             Truncate_start will give the maximum of observations that are filled
-            with NAs across all arguments of the lag_config when truncate is
+            with NAs across all arguments of the lag_feature when truncate is
             set to None.
 
         Returns
@@ -254,32 +258,47 @@ class WindowSummarizer(BaseTransformer):
             self._target_cols = self.target_cols
 
         # Convert lag config dictionary to pandas dataframe
-        if self.lag_config is None:
-            func_dict = pd.DataFrame(
-                {
-                    "lag": [1],
-                }
-            ).T.reset_index()
+        if self.lag_config is not None:
+            func_dict = pd.DataFrame(self.lag_config).T.reset_index()
+            func_dict.rename(
+                columns={"index": "name", 0: "summarizer", 1: "window"},
+                inplace=True,
+            )
+            func_dict = func_dict.explode("window")
+            func_dict["window"] = func_dict["window"].apply(lambda x: [x[1] + 1, x[0]])
+            func_dict.drop("name", inplace=True, axis=1)
+            warnings.warn(
+                "Specifying lag features via lag_config is deprecated since 0.12.0,"
+                + " and will be removed in 0.13.0. Please use the lag_feature notation"
+                + " (see the documentation for the new notation)."
+            )
         else:
-            func_dict = pd.DataFrame.from_dict(
-                self.lag_config, orient="index"
-            ).reset_index()
+            if self.lag_feature is None:
+                func_dict = pd.DataFrame(
+                    {
+                        "lag": [1],
+                    }
+                ).T.reset_index()
+            else:
+                func_dict = pd.DataFrame.from_dict(
+                    self.lag_feature, orient="index"
+                ).reset_index()
 
-        func_dict = pd.melt(
-            func_dict, id_vars="index", value_name="window", ignore_index=False
-        )
-        func_dict.sort_index(inplace=True)
-        func_dict.drop("variable", axis=1, inplace=True)
-        func_dict.rename(
-            columns={"index": "summarizer"},
-            inplace=True,
-        )
-        func_dict = func_dict.dropna(axis=0, how="any")
-        # Identify lags (since they can follow special notation)
-        lags = func_dict["summarizer"] == "lag"
-        # Convert lags to default list notation with window_length 1
-        boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
-        func_dict.loc[lags, "window"] = boost_lag
+            func_dict = pd.melt(
+                func_dict, id_vars="index", value_name="window", ignore_index=False
+            )
+            func_dict.sort_index(inplace=True)
+            func_dict.drop("variable", axis=1, inplace=True)
+            func_dict.rename(
+                columns={"index": "summarizer"},
+                inplace=True,
+            )
+            func_dict = func_dict.dropna(axis=0, how="any")
+            # Identify lags (since they can follow special notation)
+            lags = func_dict["summarizer"] == "lag"
+            # Convert lags to default list notation with window_length 1
+            boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [int(x), 1])
+            func_dict.loc[lags, "window"] = boost_lag
         self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
@@ -337,7 +356,7 @@ class WindowSummarizer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {
-            "lag_config": {
+            "lag_feature": {
                 "lag": [1],
                 "mean": [[1, 3], [1, 12]],
                 "std": [[1, 4]],
@@ -345,13 +364,13 @@ class WindowSummarizer(BaseTransformer):
         }
 
         params2 = {
-            "lag_config": {
+            "lag_feature": {
                 "lag": [3, 6],
             }
         }
 
         params3 = {
-            "lag_config": {
+            "lag_feature": {
                 "mean": [[1, 7], [8, 7]],
                 "cov": [[1, 28]],
             }
