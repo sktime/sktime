@@ -9,8 +9,10 @@ from operator import mul
 
 import pytest
 
-from sktime.datatypes import check_is_mtype, convert
+from sktime.datatypes import check_is_mtype, convert, get_examples
 from sktime.forecasting.arima import ARIMA
+from sktime.forecasting.base import BaseForecaster
+from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
 
@@ -93,3 +95,55 @@ def test_vectorization_series_to_hier(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+
+class MockPredInt(BaseForecaster):
+    """Mock class to override _predict_interval with an example return."""
+
+    def __init__(self, example_number):
+        self.example_number = example_number
+
+    def _predict_interval(self, fh, X=None, coverage=0.9):
+        ret = get_examples("pred_interval", "Proba")[self.example_number]
+        idx = ret.columns.get_level_values(1).isin(coverage)
+        return ret.iloc[:, idx]
+
+
+class MockPredQuantiles(BaseForecaster):
+    """Mock class to override _predict_quantiles with an example return."""
+
+    def __init__(self, example_number):
+        self.example_number = example_number
+
+    def _predict_quantiles(self, fh, X=None, alpha=0.9):
+        ret = get_examples("pred_quantiles", "Proba")[self.example_number]
+        idx = ret.columns.get_level_values(1).isin(alpha)
+        return ret.iloc[:, idx]
+
+
+# indices of examples which have lower/upper pairs of quantiles
+EXAMPLE_INDS = [2, 3]
+
+
+@pytest.mark.parametrize("example_number", EXAMPLE_INDS)
+def test_base_interval_to_quantiles(example_number):
+    """Test functionality to convert interval to quantile forecasts in base class."""
+    y_pred_expected = get_examples("pred_quantiles", "Proba")[example_number]
+    alpha = y_pred_expected.columns.get_level_values(1).unique()
+
+    est = MockPredInt(example_number)
+    y_pred = est._predict_quantiles(0, 0, alpha=alpha)
+
+    assert deep_equals(y_pred, y_pred_expected)
+
+
+@pytest.mark.parametrize("example_number", EXAMPLE_INDS)
+def test_base_quantiles_to_interval(example_number):
+    """Test functionality to convert quantile to intervalforecasts in base class."""
+    y_pred_expected = get_examples("pred_interval", "Proba")[example_number]
+    coverage = y_pred_expected.columns.get_level_values(1).unique()
+
+    est = MockPredQuantiles(example_number)
+    y_pred = est._predict_interval(0, 0, coverage=coverage)
+
+    assert deep_equals(y_pred, y_pred_expected)
