@@ -165,7 +165,7 @@ class BasePairwiseTransformer(BaseEstimator):
         Returns
         -------
         X: Panel data container of a supported format in X_inner_mtype
-            usually df-list, list of pd.DataFrame, unless overridden
+            usually a 2D np.ndarray or a pd.DataFrame, unless overridden
         """
         X_valid = check_is_scitype(X, "Table", return_metadata=False, var_name=var_name)
 
