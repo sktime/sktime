@@ -145,27 +145,3 @@ class DynamicFactor(_StatsModelsAdapter):
 
         self._fitted_forecaster = self._forecaster.fit(start_params=self.satrt_params,transformed=self.transformed,includes_fixed=self.includes_fixed,cov_type=self.cov_type,cov_kwds=self.cov_kwds,method = self.method,maxiter=self.maxiter,full_output = self.full_output,disp=self.disp,callback=self.callback,return_params=self.return_params,optim_score=self.optim_score,optim_complex_step=self.optim_complex_step,optim_hessian=self.optim_hessian,low_memory=self.low_memory)
 
-    # todo: implement this, mandatory
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-        private _predict containing the core logic, called from predict
-        State required:
-            Requires state to be "fitted".
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        Returns
-        -------
-        y_pred : pd.Series
-            Point predictions
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
