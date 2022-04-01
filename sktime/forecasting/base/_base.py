@@ -122,19 +122,33 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster.
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+                3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasting horizon encoding the time stamps to forecast at.
             if self.get_tag("requires-fh-in-fit"), must be passed, not optional
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series to fit to
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            there are no restrictions on number of columns (unlike for y)
 
         Returns
         -------
@@ -190,17 +204,21 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.ndarray or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
-            Exogeneous time series to predict from
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+            there are no restrictions on number of columns (unlike for y)
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y passed in fit (most recently)
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         # handle inputs
 
@@ -242,25 +260,40 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster.
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+                3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon (not optional)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series to fit to and to predict from
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"),
-            X.index must contain y.index and fh.index
+                X.index must contain fh.index and y.index both
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         # if fit is called, fitted state is re-set
         self._is_fitted = False
@@ -306,10 +339,13 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         alpha : float or list of float, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
@@ -364,10 +400,13 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         coverage : float or list of float, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
 
@@ -422,10 +461,14 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
         cov : bool, optional (default=False)
             if True, computes covariance matrix forecast.
             if False, computes marginal variance forecasts.
@@ -485,10 +528,13 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), must contain fh.index
         marginal : bool, optional (default=True)
             whether returned distribution is marginal by time index
 
@@ -555,16 +601,30 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : pd.DataFrame, or 2D np.ndarray optional (default=None)
-            Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+                3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -616,18 +676,32 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+                3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         cv : temporal cross-validation generator, optional (default=None)
-        X : pd.DataFrame, or 2D np.ndarray optional (default=None)
-            Exogeneous time series to fit to and predict from
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
-            X.index must contain y.index and fh.index
+                X.index must contain y.index and fh.index both
+            there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
 
         Returns
@@ -681,15 +755,28 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Target time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex
+                3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series to fit to and to predict from
             if self.get_tag("X-y-must-have-same-index"),
@@ -745,7 +832,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, np.ndarray (1D or 2D), or None
+        y : time series in sktime compatible data container format
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
             if None, the y seen so far (self._y) are used, in particular:
@@ -753,7 +840,8 @@ class BaseForecaster(BaseEstimator):
                 if fit requires fh, it must have pointed to index of y in fit
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogeneous time series to predict from
-            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
 
         Returns
         -------
