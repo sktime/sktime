@@ -90,25 +90,33 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # todo: what scitype is returned: Primitives, Series, Panel
+        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
-        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
+        # what scitype is returned: Primitives, Series, Panel
         "scitype:transform-labels": "None",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": True,  # does transformer have inverse transform
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        # this can be a Panel mtype even if transform-input is Series, vectorized
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "capability:unequal_length": True,
+        # can the transformer handle unequal length time series (if passed Panel)?
+        "capability:unequal_length:removes": False,
+        # is transform result always guaranteed to be equal length (and series)?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        # todo: rename to capability:missing_values
+        "capability:missing_values:removes": False,
+        # is transform result always guaranteed to contain no missing avlues?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__
