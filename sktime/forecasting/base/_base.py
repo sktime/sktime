@@ -126,7 +126,7 @@ class BaseForecaster(BaseEstimator):
                 Time series to which to fit the forecaster.
             y can be in one of the following formats:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                for vanilla forecasting
+                for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
                 3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
                 for global or panel forecasting
@@ -264,7 +264,7 @@ class BaseForecaster(BaseEstimator):
                 Time series to which to fit the forecaster.
             y can be in one of the following formats:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                for vanilla forecasting
+                for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
                 3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
                 for global or panel forecasting
@@ -614,7 +614,7 @@ class BaseForecaster(BaseEstimator):
                 Time series to which to fit the forecaster in the update.
             y can be in one of the following formats, must be same scitype as in fit:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                for vanilla forecasting
+                for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
                 3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
                 for global or panel forecasting
@@ -689,7 +689,7 @@ class BaseForecaster(BaseEstimator):
                 Time series to which to fit the forecaster in the update.
             y can be in one of the following formats, must be same scitype as in fit:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                for vanilla forecasting
+                for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
                 3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
                 for global or panel forecasting
@@ -769,7 +769,7 @@ class BaseForecaster(BaseEstimator):
                 Time series to which to fit the forecaster in the update.
             y can be in one of the following formats, must be same scitype as in fit:
             Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                for vanilla forecasting
+                for vanilla forecasting, one time series
             Panel scitype: pd.DataFrame with 2-level row MultiIndex
                 3D np.ndarray, list of Series pd.DataFrame, nested pd.DataFrame
                 for global or panel forecasting
