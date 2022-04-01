@@ -354,7 +354,9 @@ class BaseForecaster(BaseEstimator):
         quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level being the values of alpha passed to the function.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
         if not self.get_tag("capability:pred_int"):
@@ -417,7 +419,9 @@ class BaseForecaster(BaseEstimator):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
@@ -479,14 +483,17 @@ class BaseForecaster(BaseEstimator):
             If cov=False:
                 Column names are exactly those of `y` passed in `fit`/`update`.
                     For nameless formats, column index will be a RangeIndex.
-                Row index is fh. Entries are variance forecasts, for var in col index.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
                 A variance forecast for given variable and fh index is a predicted
                     variance for that variable and index, given observed data.
 
             If cov=True:
                 Column index is a multiindex: 1st level is variable names (as above)
                     2nd level is fh.
-                Row index is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
@@ -515,6 +522,8 @@ class BaseForecaster(BaseEstimator):
         X=None,
     ):
         """Compute/return fully probabilistic forecasts.
+
+        Note: currently only implemented for Series (non-panel, non-hierarchical) y.
 
         State required:
             Requires state to be "fitted".
@@ -697,7 +706,7 @@ class BaseForecaster(BaseEstimator):
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         cv : temporal cross-validation generator, optional (default=None)
         X : time series in sktime compatible format, optional (default=None)
-                Exogeneous time series to fit to
+                Exogeneous time series for updating and forecasting
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain y.index and fh.index both
@@ -706,9 +715,10 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         self.check_is_fitted()
 
@@ -777,17 +787,19 @@ class BaseForecaster(BaseEstimator):
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
             The forecasting horizon encoding the time stamps to forecast at.
             if has not been passed in fit, must be passed, not optional
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series to fit to and to predict from
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
-                X.index must contain y.index and fh.index
+                X.index must contain y.index and fh.index both
         update_params : bool, optional (default=False)
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
             warn("empty y passed to update_predict, no update was carried out")
@@ -845,9 +857,10 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        y_res : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_res : time series in sktime compatible data container format
             Forecast residuals at fh, with same index as fh
-            y_pred has same type as y passed in fit (most recently)
+            y_res has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         # if no y is passed, the so far observed y is used
         if y is None:
