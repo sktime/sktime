@@ -59,6 +59,14 @@ DELEGATED_METHODS = (
 )
 
 
+def is_relative_fh_type(values) -> bool:
+    return type(values) in RELATIVE_TYPES or is_integer_index(values)
+
+
+def is_absolute_fh_type(values) -> bool:
+    return type(values) in ABSOLUTE_TYPES or is_integer_index(values)
+
+
 def _delegator(method):
     """Automatically decorate ForecastingHorizon class with pandas.Index methods.
 
@@ -185,21 +193,18 @@ class ForecastingHorizon:
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
-        values_in_relative_types = type(values) in RELATIVE_TYPES
-        values_in_absolute_types = type(values) in ABSOLUTE_TYPES
-        values_is_integer_index = is_integer_index(values)
         if is_relative is None:
-            if values_in_relative_types or values_is_integer_index:
+            if is_relative_fh_type(values):
                 is_relative = True
-            elif values_in_absolute_types or values_is_integer_index:
+            elif is_absolute_fh_type(values):
                 is_relative = False
             else:
                 raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
-            if not (values_in_relative_types or values_is_integer_index):
+            if not is_relative_fh_type(values):
                 raise TypeError(error_msg)
         else:
-            if not (values_in_absolute_types or values_is_integer_index):
+            if not is_absolute_fh_type(values):
                 raise TypeError(error_msg)
 
         self._values = values
