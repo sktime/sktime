@@ -340,6 +340,88 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         if tag_val != "None":
             self.set_tags(**{tag_name: tag_val})
 
+    def _tagchain_is_linked(
+        self,
+        left_tag_name,
+        mid_tag_name,
+        estimators,
+        left_tag_val=True,
+        mid_tag_val=True,
+    ):
+        """Check whether all tags left of the first mid_tag/val are left_tag/val.
+
+        Useful to check, for instance, whether all instances of estimators
+            left of the first missing value imputer can deal with missing values.
+
+        Parameters
+        ----------
+        left_tag_name : str, name of the left tag
+        mid_tag_name : str, name of the middle tag
+        estimators : list of (str, estimator) pairs to query for the tag/value
+        left_tag_val : value of the left tag, optional, default=True
+        mid_tag_val : value of the middle tag, optional, default=True
+
+        Returns
+        -------
+        chain_is_linked : bool,
+            True iff all "left" tag instances `left_tag_name` have value `left_tag_val`
+            a "left" tag instance is an instance in estimators which is earlier
+            than the first occurrence of `mid_tag_name` with value `mid_tag_val`
+        chain_is_complete : bool,
+            True iff chain_is_linked is True, and
+                there is an occurrence of `mid_tag_name` with value `mid_tag_val`
+        """
+        for _, est in estimators:
+            if est.get_tag(mid_tag_name) == mid_tag_val:
+                return True, True
+            if not est.get_tag(left_tag_name) == left_tag_val:
+                return False, False
+        return True, False
+
+    def _tagchain_is_linked_set(
+        self,
+        left_tag_name,
+        mid_tag_name,
+        estimators,
+        left_tag_val=True,
+        mid_tag_val=True,
+        left_tag_val_not=False,
+        mid_tag_val_not=False,
+    ):
+        """Check if _tagchain_is_linked, then set self left_tag_name and mid_tag_name.
+
+        Writes to self:
+        tag with name left_tag_name, sets to left_tag_val if _tag_chain_is_linked[0]
+            otherwise sets to left_tag_val_not
+        tag with name mid_tag_name, sets to mid_tag_val if _tag_chain_is_linked[1]
+            otherwise sets to mid_tag_val_not
+
+        Parameters
+        ----------
+        left_tag_name : str, name of the left tag
+        mid_tag_name : str, name of the middle tag
+        estimators : list of (str, estimator) pairs to query for the tag/value
+        left_tag_val : value of the left tag, optional, default=True
+        mid_tag_val : value of the middle tag, optional, default=True
+        left_tag_val_not : value to set if not linked, optional, default=False
+        mid_tag_val_not : value to set if not linked, optional, default=False
+        """
+        linked, complete = self._tagchain_is_linked(
+            left_tag_name=left_tag_name,
+            mid_tag_name=mid_tag_name,
+            estimators=estimators,
+            left_tag_val=left_tag_val,
+            mid_tag_val=mid_tag_val
+        )
+        if linked:
+            self.set_tags(**{left_tag_name: left_tag_val})
+        else:
+            self.set_tags(**{left_tag_name: left_tag_val_not})
+        if complete:
+            self.set_tags(**{mid_tag_name: mid_tag_val})
+        else:
+            self.set_tags(**{mid_tag_name: mid_tag_val_not})
+
 
 def flatten(obj):
     """Flatten nested list/tuple structure.
