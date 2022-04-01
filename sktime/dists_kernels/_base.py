@@ -170,7 +170,12 @@ class BasePairwiseTransformer(BaseEstimator):
         X_valid = check_is_scitype(X, "Table", return_metadata=False, var_name=var_name)
 
         if not X_valid:
-            raise TypeError("X/X2 must be of Table scitype")
+            msg = (
+                "X and X2 must be in an sktime compatible format, of scitype Table, "
+                "for instance a pandas.DataFrame or a 2D numpy.ndarray. "
+                "See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            raise TypeError(msg)
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
         X_coerced = convert_to(X, to_type=X_inner_mtype, as_scitype="Table")
@@ -343,7 +348,14 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         X_scitype = metadata["scitype"]
 
         if not X_valid:
-            raise TypeError("X/X2 must be of Series or Panel scitype")
+            msg = (
+                "X and X2 must be in an sktime compatible format, "
+                "of scitype Series or Panel, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+            raise TypeError(msg)
 
         # if the input is a single series, convert it to a Panel
         if X_scitype == "Series":
