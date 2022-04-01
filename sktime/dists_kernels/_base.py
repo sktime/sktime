@@ -175,7 +175,7 @@ class BasePairwiseTransformer(BaseEstimator):
             raise TypeError("X/X2 must be of Table scitype")
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
-        X_coerced = convert_to(X, to_type=X_inner_mtype, as_scitype="Panel")
+        X_coerced = convert_to(X, to_type=X_inner_mtype, as_scitype="Table")
 
         return X_coerced
 
