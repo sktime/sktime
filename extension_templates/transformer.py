@@ -113,10 +113,11 @@ class MyTransformer(BaseTransformer):
         # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
+        #   not relevant for transformers that return Primitives in transform-output
         "handles-missing-data": False,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
-        # is transform result always guaranteed to contain no missing avlues?
+        # is transform result always guaranteed to contain no missing values?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__
