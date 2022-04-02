@@ -388,26 +388,31 @@ class BaseClassifier(BaseEstimator, ABC):
 
         self_name = type(self).__name__
 
+        # identify problems, mismatch of capability and inputs
+        problems = []
         if missing and not allow_missing:
-            warn(
-                f"Data seen by {self_name} instance has missing values, "
-                f"but this {self_name} instance cannot handle missing values. "
-                f"Calls with missing values may result in error or unreliable results."
-            )
+            problems += ["missing values"]
         if multivariate and not allow_multivariate:
-            # this error message could be more informative, but it is for backward
-            # compatibility with the testing functions
-            raise ValueError(
-                "X must be univariate, this classifier cannot deal with "
-                "multivariate input."
-            )
+            problems = ["multivariate series"]
         if unequal and not allow_unequal:
-            warn(
-                f"Data seen by {self_name} instance has unequal length series, "
-                f"but this {self_name} instance cannot handle unequal length series. "
-                f"Calls with unequal length series may result in error"
-                f" or unreliable results."
-            )
+            problems = ["unequal length series"]
+
+        # construct error message
+        problems_and = " and ".join(problems)
+        problems_or = " or ".join(problems)
+        msg = (
+            f"Data seen by {self_name} instance has {problems_and}, "
+            f"but this {self_name} instance cannot handle {problems_or}. "
+            f"Calls with {problems_or} may result in error or unreliable results."
+        )
+
+        # raise exception or warning with message
+        # if self is composite, raise a warning, since passing could be fine
+        #   see discussion in PR 2366 why
+        if self.is_composite():
+            warn(msg)
+        else:
+            raise ValueError(msg)
 
     def _convert_X(self, X):
         """Convert equal length series from DataFrame to numpy array or vice versa.
