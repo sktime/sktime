@@ -259,7 +259,7 @@ class _RowTransformer(BaseTransformer):
         self.clone_tags(transformer)
 
     def _fit(self, *args, **kwargs):
-        """Transform the data."""
+        """Fit to the data."""
         return self.transformer_._fit(*args, **kwargs)
 
     def _transform(self, *args, **kwargs):
@@ -267,12 +267,24 @@ class _RowTransformer(BaseTransformer):
         return self.transformer_._transform(*args, **kwargs)
 
     def _inverse_transform(self, *args, **kwargs):
-        """Transform the data."""
+        """Inverse transform the data."""
         return self.transformer_._inverse_transform(*args, **kwargs)
 
     def _update(self, *args, **kwargs):
-        """Transform the data."""
+        """Update with the data."""
         return self.transformer_._update(*args, **kwargs)
+
+    def get_params(self, deep=True):
+        """Get parameters."""
+        params = self.transformer_.get_params(self, deep=deep)
+        params.update({"check_transformer": self.check_transformer})
+        return params
+
+    def set_params(self, **kwargs):
+        """Set parameters."""
+        if "check_transformer" in kwargs.keys():
+            self.check_transformer = kwargs.pop("check_transformer")
+        return self.transformer_.set_params(self, **kwargs)
 
     def get_test_params(cls):
         """Return testing parameter settings for the estimator."""
