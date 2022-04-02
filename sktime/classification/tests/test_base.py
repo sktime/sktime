@@ -141,7 +141,7 @@ def test_check_capabilities(missing, multivariate, unequal):
     explicitly test;
     """
     handles_none = _DummyClassifier()
-    handles_none_composite = _DummyComposite(_DummyClassifier)
+    handles_none_composite = _DummyComposite(_DummyClassifier())
 
     # checks that errors are raised
     if missing:
