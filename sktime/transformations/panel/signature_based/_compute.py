@@ -55,7 +55,7 @@ class _WindowSignatureTransform(BaseTransformer):
         self.window_length = window_length
         self.window_step = window_step
         self.sig_tfm = sig_tfm
-        self.depth = sig_depth
+        self.sig_depth = sig_depth
         self.rescaling = rescaling
 
         self.window = _window_getter(
@@ -66,22 +66,23 @@ class _WindowSignatureTransform(BaseTransformer):
 
         import esig
 
+        depth = self.sig_depth
         data = np.swapaxes(X, 1, 2)
 
         # Path rescaling
         if self.rescaling == "pre":
-            data = _rescale_path(data, self.depth)
+            data = _rescale_path(data, depth)
 
         # Prepare for signature computation
         if self.sig_tfm == "signature":
 
             def transform(x):
-                return esig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
+                return esig.stream2sig(x, depth)[1:].reshape(-1, 1)
 
         else:
 
             def transform(x):
-                return esig.stream2logsig(x, self.depth).reshape(1, -1)
+                return esig.stream2logsig(x, depth).reshape(1, -1)
 
         length = data.shape[1]
 
@@ -96,7 +97,7 @@ class _WindowSignatureTransform(BaseTransformer):
                 ).reshape(data.shape[0], -1)
                 # Rescale if specified
                 if self.rescaling == "post":
-                    signature = _rescale_signature(signature, data.shape[2], self.depth)
+                    signature = _rescale_signature(signature, data.shape[2], depth)
 
                 signature_group.append(signature)
             signatures.append(signature_group)
