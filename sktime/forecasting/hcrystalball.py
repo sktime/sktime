@@ -7,7 +7,6 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("hcrystalball", severity="warning")
@@ -139,7 +138,7 @@ class HCrystalBallForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Make forecasts for the given forecast horizon.
 
         Parameters
@@ -148,16 +147,11 @@ class HCrystalBallForecaster(BaseForecaster):
             The forecast horizon with the steps ahead to predict
         X : pd.DataFrame, optional (default=None)
             Exogenous variables (ignored)
-        return_pred_int : bool, optional (default=False)
-            Return the prediction intervals for the forecast.
-        alpha : float or list, optional (default=0.95)
-            If alpha is iterable, multiple intervals will be calculated.
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions for the forecast
-        y_pred_int : pd.DataFrame
         """
         X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
         y_pred = self.model_.predict(X=X_pred)
@@ -171,8 +165,15 @@ class HCrystalBallForecaster(BaseForecaster):
         raise NotImplementedError()
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

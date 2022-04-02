@@ -4,15 +4,14 @@
 
 __author__ = ["fkiraly"]
 
-# from functools import reduce
-# from operator import mul
+from functools import reduce
+from operator import mul
 
 import pytest
 
-from sktime.datatypes import check_is_mtype, convert, get_examples
+from sktime.datatypes import check_is_mtype, convert
 from sktime.forecasting.arima import ARIMA
-
-# from sktime.utils._testing.hierarchical import _make_hierachical
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel_X
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -64,14 +63,11 @@ def test_vectorization_series_to_hier(mtype):
     This test passes Panel data to the ARIMA forecaster which internally has an
     implementation for Series only, so the BaseForecaster has to vectorize.
     """
-    # hierarchy_levels = (2, 4)
-    # n_instances = reduce(mul, hierarchy_levels)
+    hierarchy_levels = (2, 4)
+    n_instances = reduce(mul, hierarchy_levels)
 
-    # y = _make_hierachical(hierarchy_levels=hierarchy_levels, random_state=84)
-    # y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
-
-    y = get_examples(mtype, "Hierarchical")[1]
-    n_instances = 6
+    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
+    y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     y_pred = ARIMA().fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
