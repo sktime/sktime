@@ -107,7 +107,7 @@ class _InvisibilityReset(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
     }
