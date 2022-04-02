@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test the signature module augmentations."""
 import numpy as np
+
 from sktime.transformations.panel.signature_based._augmentations import (
     _AddTime,
     _BasePoint,
