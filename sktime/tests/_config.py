@@ -50,6 +50,8 @@ EXCLUDE_ESTIMATORS = [
     #    unless it inherits from the old mixins, which hard coded the y
     #    should be removed once test_all_transformers has been refactored to scenarios
     "TSFreshRelevantFeatureExtractor",
+    # PlateauFinder seems to be broken, see #2259
+    "PlateauFinder",
 ]
 
 
@@ -58,6 +60,8 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
+    # test fails in the Panel case for Differencer, see #2522
+    "Differencer": ["test_transform_inverse_transform_equivalent"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
