@@ -50,8 +50,8 @@ class MyForecaster(BaseForecaster):
 
     todo: describe your custom forecaster here
 
-    Hyper-parameters
-    ----------------
+    Parameters
+    ----------
     parama : int
         descriptive explanation of parama
     paramb : string, optional (default='default')
@@ -77,7 +77,7 @@ class MyForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        # deprecated and likely to be removed in 0.12.0
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -128,6 +128,12 @@ class MyForecaster(BaseForecaster):
         #
         # any model parameters should be written to attributes ending in "_"
         #  attributes set by the constructor must not be overwritten
+        #
+        # Note: when interfacing a model that has fit, with parameters
+        #   that are not data (y, X) or forecasting-horizon-like,
+        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        #   1. pass to constructor,  2. write to self in constructor,
+        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None):
@@ -163,8 +169,15 @@ class MyForecaster(BaseForecaster):
     #   or to run local automated unit and integration testing of estimator
     #   method should return default parameters, so that a test instance can be created
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
 
         Returns
         -------
@@ -176,9 +189,11 @@ class MyForecaster(BaseForecaster):
         """
 
         # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameters can be dictionary or list of dictionaries.
+        # Testing parameter choice should cover internal cases well.
+        #   for "simple" extension, ignore the parameter_set argument.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top

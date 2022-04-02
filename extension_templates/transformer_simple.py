@@ -147,6 +147,12 @@ class MyTransformer(BaseTransformer):
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
         #   set "fit-in-transform" tag to True
+        #
+        # Note: when interfacing a model that has fit, with parameters
+        #   that are not data (X, y) or data-like
+        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        #   1. pass to constructor,  2. write to self in constructor,
+        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
     def _transform(self, X, y=None):
@@ -188,8 +194,15 @@ class MyTransformer(BaseTransformer):
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
 
         Returns
         -------
@@ -201,13 +214,9 @@ class MyTransformer(BaseTransformer):
         """
 
         # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        #
-        # this can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
+        # Testing parameters can be dictionary or list of dictionaries.
+        # Testing parameter choice should cover internal cases well.
+        #   for "simple" extension, ignore the parameter_set argument.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
