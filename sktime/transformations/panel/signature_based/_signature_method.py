@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Signature transformer."""
 
-import numpy as np
 from sklearn.pipeline import Pipeline
 
 from sktime.transformations.base import BaseTransformer

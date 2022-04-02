@@ -2,7 +2,7 @@
 """Class for signature computation over windows."""
 import numpy as np
 
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_path,
     _rescale_signature,
@@ -11,10 +11,9 @@ from sktime.transformations.panel.signature_based._window import _window_getter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig", severity="warning")
-import esig  # noqa: E402
 
 
-class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
+class _WindowSignatureTransform(BaseTransformer):
     """Perform the signature transform over given windows.
 
     Given data of shape [N, L, C] and specification of a window method from the
@@ -26,6 +25,18 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
     ----------
     num_intervals: int, dimension of the transformed data (default 8)
     """
+
+    # default tag values for "Series-to-Primitives"
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+    }
 
     def __init__(
         self,
@@ -51,13 +62,11 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
             self.window_name, self.window_depth, self.window_length, self.window_step
         )
 
-    def fit(self, data, labels=None):
-        self._is_fitted = True
-        return self
+    def _transform(self, X, y=None):
 
-    def transform(self, data, y=None):
-        # Input checks
-        self.check_is_fitted()
+        import esig
+
+        data = np.swapaxes(X, 1, 2)
 
         # Path rescaling
         if self.rescaling == "pre":
