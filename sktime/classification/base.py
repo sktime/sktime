@@ -33,6 +33,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 
 
@@ -94,6 +95,7 @@ class BaseClassifier(BaseEstimator, ABC):
         from sktime.classification.compose import ClassifierPipeline
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
@@ -108,6 +110,8 @@ class BaseClassifier(BaseEstimator, ABC):
             # if neither self nor other are a pipeline, construct a ClassifierPipeline
             else:
                 return ClassifierPipeline(classifier=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
 

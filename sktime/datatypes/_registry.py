@@ -75,6 +75,8 @@ SCITYPE_REGISTER = [
     ("Proba", "probability distribution or distribution statistics, return types"),
 ]
 
+SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
+
 
 def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
     """Infer scitype belonging to mtype.

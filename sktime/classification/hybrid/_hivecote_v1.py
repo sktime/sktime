@@ -300,7 +300,7 @@ class HIVECOTEV1(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -321,7 +321,7 @@ class HIVECOTEV1(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -359,3 +359,30 @@ class HIVECOTEV1(BaseClassifier):
 
         # Make each instances probability array sum to 1 and return
         return dists / dists.sum(axis=1, keepdims=True)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+
+        params = {
+            "stc_params": {
+                "estimator": RotationForest(n_estimators=1),
+                "max_shapelets": 5,
+                "n_shapelet_samples": 5,
+                "batch_size": 5,
+            },
+            "tsf_params": {"n_estimators": 1},
+            "rise_params": {"n_estimators": 1},
+            "cboss_params": {"n_parameter_samples": 1, "max_ensemble_size": 1},
+        }
+        return params

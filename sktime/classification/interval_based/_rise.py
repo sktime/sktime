@@ -303,7 +303,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X.
 
         Built on top of `predict_proba`.
@@ -323,7 +323,7 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         proba = self._predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Find probability estimates for each class for all cases in X.
 
         Parameters
@@ -370,6 +370,25 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         )
 
         return np.sum(all_proba, axis=0) / self.n_estimators
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {
+            "n_estimators": 2,
+            "acf_lag": 10,
+            "min_interval": 5,
+        }
+        return params
 
 
 @jit(parallel=True, cache=True, nopython=True)
