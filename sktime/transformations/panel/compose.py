@@ -249,7 +249,7 @@ class _RowTransformer(BaseTransformer):
 
     _required_parameters = ["transformer"]
 
-    def __init__(self, transformer):
+    def __init__(self, transformer, check_transformer=None):
 
         warn(row_trafo_deprec_msg)
 
