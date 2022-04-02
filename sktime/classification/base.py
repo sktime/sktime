@@ -405,7 +405,8 @@ class BaseClassifier(BaseEstimator, ABC):
             warn(
                 f"Data seen by {self_name} instance unequal length series, "
                 f"but this {self_name} instance cannot handle unequal length series. "
-                f"Calls with missing values may result in error or unreliable results."
+                f"Calls with unequal length series may result in error"
+                f" or unreliable results."
             )
 
     def _convert_X(self, X):
