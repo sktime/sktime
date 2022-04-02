@@ -387,6 +387,23 @@ class BaseObject(_BaseEstimator):
 
         return False
 
+    def is_composite(self):
+        """Check if the object is composite.
+
+        A composite object is an object which contains objects, as parameters.
+        Called on an instance, since this may differ by instance.
+
+        Returns
+        -------
+        composite: bool, whether self contains a parameter which is BaseObject
+        """
+        # walk through method resolution order and inspect methods
+        #   of classes and direct parents, "adjacent" classes in mro
+        params = self.get_params(deep=False)
+        composite = any(isinstance(x, BaseObject) for x in params.values())
+
+        return composite
+
 
 class TagAliaserMixin:
     """Mixin class for tag aliasing and deprecation of old tags.

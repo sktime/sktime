@@ -16,6 +16,7 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by testing clustering/tests
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting            - _fit(self, X)
