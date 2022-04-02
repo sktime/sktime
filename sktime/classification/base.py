@@ -391,7 +391,7 @@ class BaseClassifier(BaseEstimator, ABC):
         if missing and not allow_missing:
             warn(
                 f"Data seen by {self_name} instance has missing values, "
-                f"but {self_name} intsance cannot handle missing values. "
+                f"but this {self_name} instance cannot handle missing values. "
                 f"Calls with missing values may result in error or unreliable results."
             )
         if multivariate and not allow_multivariate:
@@ -404,7 +404,7 @@ class BaseClassifier(BaseEstimator, ABC):
         if unequal and not allow_unequal:
             warn(
                 f"Data seen by {self_name} instance unequal length series, "
-                f"but {self_name} instance cannot handle unequal length series. "
+                f"but this {self_name} instance cannot handle unequal length series. "
                 f"Calls with missing values may result in error or unreliable results."
             )
 
