@@ -62,7 +62,8 @@ EXCLUDED_TESTS = {
     # test fails in the Panel case for Differencer, see #2522
     "Differencer": ["test_transform_inverse_transform_equivalent"],
     "SignatureClassifier": [
-        "test_classifier_on_unit_test_data", "test_classifier_on_basic_motions"
+        "test_classifier_on_unit_test_data",
+        "test_classifier_on_basic_motions",
     ]
 }
 
