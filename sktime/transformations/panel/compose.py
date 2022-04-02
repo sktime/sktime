@@ -18,11 +18,7 @@ from sktime.datatypes._panel._convert import (
     from_3d_numpy_to_2d_array,
     from_nested_to_2d_array,
 )
-from sktime.transformations.base import (
-    BaseTransformer,
-    _PanelToPanelTransformer,
-    _PanelToTabularTransformer,
-)
+from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
@@ -294,11 +290,11 @@ class _RowTransformer(BaseTransformer):
         return params
 
 
-class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransformer):
+class SeriesToPrimitivesRowTransformer(_RowTransformer, BaseTransformer):
     """Series-to-primitives row transformer."""
 
 
-class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
+class SeriesToSeriesRowTransformer(_RowTransformer, BaseTransformer):
     """Series-to-series row transformer."""
 
 
