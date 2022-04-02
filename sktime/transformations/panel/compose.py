@@ -4,10 +4,10 @@
 This module has meta-transformations that is build using the pre-existing
 transformations as building blocks.
 """
+from warnings import warn
+
 import numpy as np
 import pandas as pd
-
-from warnings import warn
 
 from deprecated.sphinx import deprecated
 from scipy import sparse
@@ -237,19 +237,22 @@ class ColumnConcatenator(_PanelToPanelTransformer):
         return from_2d_array_to_nested(Xt)
 
 
+row_trafo_deprec_msg = (
+    "All row transformers are deprecated since 0.12.0 and will be removed "
+    "in 0.13.0. Vectorization functionality from Series to Panel is natively "
+    "integrated to all transformers via the base class. Simply use fit "
+    "or transform on Panel data, no row transformer is necessary anymore."
+)
+
+
 class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer."""
 
     _required_parameters = ["transformer"]
 
     def __init__(self, transformer):
-        msg = (
-            "All row transformers are deprecated since 0.12.0 and will be removed "
-            "in 0.13.0. Vectorization functionality from Series to Panel is natively "
-            "integrated to all transformers via the base class. Simply use fit "
-            "or transform on Panel data, no row transformer is necessary anymore."
-        )
-        warn(msg)
+
+        warn(row_trafo_deprec_msg)
 
         self.transformer = transformer
         self.transformer_ = clone(transformer)
@@ -288,11 +291,10 @@ class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
     """Series-to-series row transformer."""
 
 
-@deprecated(
-    version="0.13.0",
-    reason="Vectorization is now natively integrated in BaseTransform,  ",
-    category=FutureWarning
-)
+msg = "Vectorization is now natively integrated in BaseTransform, simply "
+
+
+@deprecated(version="0.13.0", reason=row_trafo_deprec_msg, category=FutureWarning)
 def make_row_transformer(transformer, transformer_type=None, **kwargs):
     """Old vectorization utility for transformers for panel data.
 
