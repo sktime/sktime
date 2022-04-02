@@ -314,8 +314,18 @@ class ShapeletTransformClassifier(BaseClassifier):
             )
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -325,10 +335,19 @@ class ShapeletTransformClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {
-            "estimator": RotationForest(n_estimators=2),
-            "max_shapelets": 3,
-            "n_shapelet_samples": 10,
-            "batch_size": 5,
-        }
-        return params
+        from sklearn.ensemble import RandomForestClassifier
+
+        if parameter_set == "results_comparison":
+            return {
+                "estimator": RandomForestClassifier(n_estimators=5),
+                "n_shapelet_samples": 50,
+                "max_shapelets": 10,
+                "batch_size": 10,
+            }
+        else:
+            return {
+                "estimator": RotationForest(n_estimators=2),
+                "n_shapelet_samples": 10,
+                "max_shapelets": 3,
+                "batch_size": 5,
+            }
