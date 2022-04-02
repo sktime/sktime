@@ -158,7 +158,7 @@ def test_set_tags():
 
     Raises
     ------
-    AssertError if override logic in set_tags is incorrect
+    AssertionError if override logic in set_tags is incorrect
     """
     msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
@@ -179,7 +179,7 @@ def test_is_composite():
 
     Raises
     ------
-    AssertError if override logic in set_tags is incorrect
+    AssertionError if logic behind is_composite is incorrect
     """
     non_composite = CompositionDummy(foo=42)
     composite = CompositionDummy(foo=non_composite)
