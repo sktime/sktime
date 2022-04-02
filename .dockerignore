@@ -6,7 +6,6 @@
 .pytest_cache
 .vscode
 build
-build_tools
 dist
 docs/_build
 htmlcov
