@@ -169,8 +169,15 @@ class MyForecaster(BaseForecaster):
     #   or to run local automated unit and integration testing of estimator
     #   method should return default parameters, so that a test instance can be created
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for forecasters.
 
         Returns
         -------
@@ -182,9 +189,11 @@ class MyForecaster(BaseForecaster):
         """
 
         # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameters can be dictionary or list of dictionaries.
+        # Testing parameter choice should cover internal cases well.
+        #   for "simple" extension, ignore the parameter_set argument.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
