@@ -300,13 +300,21 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
     args = {
         "fit": {
             "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+                n_instances=7,
+                n_columns=1,
+                n_timepoints=10,
+                all_positive=True,
+                random_state=RAND_SEED,
             ),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
         "transform": {
             "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+                n_instances=7,
+                n_columns=1,
+                n_timepoints=10,
+                all_positive=True,
+                random_state=RAND_SEED,
             ),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
