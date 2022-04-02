@@ -22,9 +22,9 @@ __all__ = [
     "test_set_tags",
 ]
 
-import pytest
-
 from copy import deepcopy
+
+import pytest
 
 from sktime.base import BaseObject
 
@@ -158,9 +158,31 @@ def test_set_tags():
 
     Raises
     ------
-    AssertError if override logic in set_tags is incorrect
+    AssertionError if override logic in set_tags is incorrect
     """
     msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
     assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
     assert FIXTURE_OBJECT_SET.get_tags() == FIXTURE_OBJECT_SET_TAGS, msg
+
+
+class CompositionDummy(BaseObject):
+    """Potentially composite object, for testing."""
+
+    def __init__(self, foo, bar=84):
+        self.foo = foo
+        self.bar = bar
+
+
+def test_is_composite():
+    """Tests is_composite tag for correctness.
+
+    Raises
+    ------
+    AssertionError if logic behind is_composite is incorrect
+    """
+    non_composite = CompositionDummy(foo=42)
+    composite = CompositionDummy(foo=non_composite)
+
+    assert not non_composite.is_composite()
+    assert composite.is_composite()

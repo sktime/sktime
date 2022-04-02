@@ -309,7 +309,7 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
         Returns
@@ -328,12 +328,17 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
-        if alpha is None:
-            alpha = [0.05, 0.95]
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
 
-        alpha = check_alpha(alpha)
+        # default alpha
+        if alpha is None:
+            alpha = [0.05, 0.95]
+        # check alpha and coerce to list
+        alpha = check_alpha(alpha, name="alpha")
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -367,8 +372,8 @@ class BaseForecaster(BaseEstimator):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : float or list of float, optional (default=0.90)
-           nominal coverage(s) of predictive interval(s)
+        coverage : float or list of float of unique values, optional (default=0.90)
+            nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
@@ -391,9 +396,13 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-        coverage = check_alpha(coverage)
+        # check alpha and coerce to list
+        coverage = check_alpha(coverage, name="coverage")
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -1411,29 +1420,36 @@ class BaseForecaster(BaseEstimator):
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
         Writes to self:
-            If update_params=True,
-                updates fitted model attributes ending in "_".
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
 
         Parameters
         ----------
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
+            Time series with which to update the forecaster.
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
 
         Returns
         -------
-        y_pred : series of a type in self.get_tag("y_inner_mtype")
-            Point forecasts at fh, with same index as fh
+        self : reference to self
         """
         if update_params:
             # default to re-fitting if update is not implemented
@@ -1447,7 +1463,7 @@ class BaseForecaster(BaseEstimator):
             #    may have been converted
             mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
-            self.fit(self._y, self._X, self.fh)
+            self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
@@ -1836,7 +1852,7 @@ class BaseForecaster(BaseEstimator):
     # TODO: remove in v0.11.0
     def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
         name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha)
+        alpha = check_alpha(alpha, name="alpha")
         alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
         pred_int_old_format = [
             pd.DataFrame(
