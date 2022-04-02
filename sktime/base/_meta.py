@@ -411,7 +411,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
             mid_tag_name=mid_tag_name,
             estimators=estimators,
             left_tag_val=left_tag_val,
-            mid_tag_val=mid_tag_val
+            mid_tag_val=mid_tag_val,
         )
         if linked:
             self.set_tags(**{left_tag_name: left_tag_val})
