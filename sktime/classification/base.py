@@ -403,7 +403,7 @@ class BaseClassifier(BaseEstimator, ABC):
             )
         if unequal and not allow_unequal:
             warn(
-                f"Data seen by {self_name} instance unequal length series, "
+                f"Data seen by {self_name} instance has unequal length series, "
                 f"but this {self_name} instance cannot handle unequal length series. "
                 f"Calls with unequal length series may result in error"
                 f" or unreliable results."
