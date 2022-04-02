@@ -20,10 +20,8 @@ from sktime.registry import (
     TRANSFORMER_MIXIN_LIST,
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
-from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import ColumnTransformer
-from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
@@ -76,7 +74,6 @@ STEPS = [
     ("forecaster", NaiveForecaster()),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    FeatureUnion: {"transformer_list": TRANSFORMERS},
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
@@ -92,7 +89,6 @@ ESTIMATOR_TEST_PARAMS = {
     RandomIntervals: {
         "n_intervals": 3,
     },
-    TSInterpolator: {"length": 10},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
