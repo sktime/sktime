@@ -164,3 +164,25 @@ def test_set_tags():
 
     assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
     assert FIXTURE_OBJECT_SET.get_tags() == FIXTURE_OBJECT_SET_TAGS, msg
+
+
+class CompositionDummy(BaseObject):
+    """Potentially composite object, for testing."""
+
+    def __init__(self, foo, bar=84):
+        self.foo = foo
+        self.bar = bar
+
+
+def test_is_composite():
+    """Tests is_composite tag for correctness.
+
+    Raises
+    ------
+    AssertError if override logic in set_tags is incorrect
+    """
+    non_composite = CompositionDummy(foo=42)
+    composite = CompositionDummy(foo=non_composite)
+
+    assert not non_composite.is_composite()
+    assert composite.is_composite()
