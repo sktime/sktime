@@ -113,7 +113,7 @@ class _InvisibilityReset(BaseTransformer):
     }
 
     def _transform(self, X, y=None):
-        X = X.swapaxes(X, 1, 2)
+        X = np.swapaxes(X, 1, 2)
 
         # Batch, length, channels
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
