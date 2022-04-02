@@ -8,7 +8,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-
 from deprecated.sphinx import deprecated
 from scipy import sparse
 from sklearn.base import clone
