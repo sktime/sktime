@@ -103,17 +103,17 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
         missing = classifier.get_tag("capability:missing_values", False)
-        missing = missing and self.transformer_.get_tag("handles-missing-data", False)
-        missing = missing or self.transformer_.get_tag(
+        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
         # can handle unequal length iff: classifier can and transformers can,
         #   *or* transformer chain renders the series equal length
         unequal = classifier.get_tag("capability:unequal_length")
-        unequal = unequal and self.transformer_.get_tag(
+        unequal = unequal and self.transformers_.get_tag(
             "capability:unequal_length", False
         )
-        unequal = unequal or self.transformer_.get_tag(
+        unequal = unequal or self.transformers_.get_tag(
             "capability:unequal_length:removes", False
         )
         # last three tags are always False, since not supported by transformers
