@@ -73,8 +73,8 @@ class _DummyConvertPandas(BaseClassifier):
 
 
 multivariate_message = r"X must be univariate, this classifier cannot deal with"
-missing_message = r"has missing values"
-unequal_message = r"has unequal length series"
+missing_message = r"The data has missing values"
+unequal_message = r"The data has unequal length series"
 incorrect_X_data_structure = r"must be a np.array or a pd.Series"
 incorrect_y_data_structure = r"must be 1-dimensional"
 
@@ -130,25 +130,17 @@ def test_check_capabilities():
     handles_none = _DummyClassifier()
 
     handles_none._check_capabilities(False, False, False)
-
-    with pytest.warns(UserWarning, match=missing_message):
+    with pytest.raises(ValueError, match=missing_message):
+        handles_none._check_capabilities(True, True, True)
+        handles_none._check_capabilities(True, True, False)
         handles_none._check_capabilities(True, False, False)
-    with pytest.warns(UserWarning, match=missing_message):
         handles_none._check_capabilities(True, False, True)
-
     with pytest.raises(ValueError, match=multivariate_message):
         handles_none._check_capabilities(False, True, True)
-    with pytest.raises(ValueError, match=multivariate_message):
         handles_none._check_capabilities(False, True, False)
-    with pytest.raises(ValueError, match=multivariate_message):
-        handles_none._check_capabilities(True, True, False)
-    with pytest.raises(ValueError, match=multivariate_message):
-        handles_none._check_capabilities(True, True, True)
-
-    with pytest.warns(UserWarning, match=unequal_message):
         handles_none._check_capabilities(False, False, True)
-    with pytest.warns(UserWarning, match=unequal_message):
-        handles_none._check_capabilities(True, False, True)
+    with pytest.raises(ValueError, match=unequal_message):
+        handles_none._check_capabilities(False, False, True)
 
     handles_all = _DummyHandlesAllInput()
     handles_all._check_capabilities(False, False, False)
