@@ -145,6 +145,8 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer) and estimator.get_tag("requires_y"):
+        return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseTransformer):
         X = _make_series(**kwargs)
         return (X,)
