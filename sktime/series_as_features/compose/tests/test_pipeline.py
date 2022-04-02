@@ -8,16 +8,20 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 
 # load data
 X, y = make_classification_problem()
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-mean_transformer = Tabularizer(FunctionTransformer(func=np.mean, validate=False))
-std_transformer = Tabularizer(FunctionTransformer(func=np.mean, validate=False))
+mean_transformer = TabularToSeriesAdaptor(
+    FunctionTransformer(func=np.mean, validate=False)
+)
+std_transformer = TabularToSeriesAdaptor(
+    FunctionTransformer(func=np.mean, validate=False)
+)
 
 
 def test_FeatureUnion_pipeline():
