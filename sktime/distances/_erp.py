@@ -30,7 +30,7 @@ class _ErpDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled erp distance callable.
 
-        Similar to LCSS with a different penalty.
+        Similar to LCSS with a different penalty. Full comment to follow.
         Series should be shape (d, m), where d is the number of dimensions, m the series
         length. Series can be different lengths.
 
