@@ -433,10 +433,11 @@ class BaseClassifier(BaseEstimator, ABC):
         # raise exception or warning with message
         # if self is composite, raise a warning, since passing could be fine
         #   see discussion in PR 2366 why
-        if self.is_composite():
-            warn(msg)
-        else:
-            raise ValueError(msg)
+        if len(problems) > 0:
+            if self.is_composite():
+                warn(msg)
+            else:
+                raise ValueError(msg)
 
     def _convert_X(self, X):
         """Convert equal length series from DataFrame to numpy array or vice versa.
