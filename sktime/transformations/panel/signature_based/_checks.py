@@ -54,11 +54,6 @@ def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
             else:
                 data, labels = check_X_y(data, labels, coerce_to_pandas=True)
 
-            # Now convert it to a numpy array
-            # Note sktime uses [N, C, L] whereas signature code uses shape
-            # [N, L, C] (C being channels) so we must transpose.
-            data = np.transpose(from_nested_to_3d_numpy(data), [0, 2, 1])
-
             # Apply the function to the transposed array
             if labels is None:
                 output = func(self, data, **kwargs)
