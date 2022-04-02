@@ -337,7 +337,7 @@ class AlignerDTWfromDist(BaseAligner):
         return distmat
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Test parameters for AlignerDTWdist."""
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist

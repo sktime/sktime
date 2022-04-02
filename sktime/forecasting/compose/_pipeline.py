@@ -9,7 +9,7 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
@@ -133,8 +133,14 @@ class _Pipeline(
 
     # both children use the same step params for testing, so putting it here
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -247,7 +253,7 @@ class ForecastingPipeline(_Pipeline):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -256,16 +262,11 @@ class ForecastingPipeline(_Pipeline):
             Forecasting horizon
         X : pd.DataFrame, required
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=DEFAULT_ALPHA)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
         forecaster = self.steps_[-1][1]
 
@@ -273,11 +274,9 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None:
             # transform X before doing prediction
             for _, _, transformer in self._iter_transformers():
-                # todo: remove in 0.11.0
-                # add kwarg X= after removal of old trafo interface
-                X = transformer.transform(X)
+                X = transformer.transform(X=X)
 
-        return forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        return forecaster.predict(fh, X)
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -293,15 +292,14 @@ class ForecastingPipeline(_Pipeline):
         self : an instance of self
         """
         # If X is not given, just passthrough the data without transformation
-        if self._X is not None:
-            for step_idx, name, transformer in self._iter_transformers():
+        if X is not None:
+            for _, _, transformer in self._iter_transformers():
                 if hasattr(transformer, "update"):
-                    transformer.update(X, update_params=update_params)
-                    self.steps_[step_idx] = (name, transformer)
+                    transformer.update(X=X, y=y, update_params=update_params)
+                    X = transformer.transform(X=X, y=y)
 
-        name, forecaster = self.steps_[-1]
+        _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
         return self
 
 
@@ -387,17 +385,17 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         # transform
         for step_idx, name, transformer in self._iter_transformers():
             t = clone(transformer)
-            y = t.fit_transform(y, X)
+            y = t.fit_transform(X=y, y=X)
             self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
         f = clone(forecaster)
-        f.fit(y, X, fh)
+        f.fit(y=y, X=X, fh=fh)
         self.steps_[-1] = (name, f)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -406,35 +404,17 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=DEFAULT_ALPHA)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
         forecaster = self.steps_[-1][1]
-        if return_pred_int:
-            y_pred, pred_int = forecaster.predict(
-                fh, X, return_pred_int=return_pred_int, alpha=alpha
-            )
-            # inverse transform pred_int
-            pred_int["lower"] = self._get_inverse_transform(pred_int["lower"], X)
-            pred_int["upper"] = self._get_inverse_transform(pred_int["upper"], X)
-        else:
-            y_pred = forecaster.predict(
-                fh, X, return_pred_int=return_pred_int, alpha=alpha
-            )
+        y_pred = forecaster.predict(fh=fh, X=X)
         # inverse transform y_pred
         y_pred = self._get_inverse_transform(y_pred, X)
-        if return_pred_int:
-            return y_pred, pred_int
-        else:
-            return y_pred
+        return y_pred
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -449,14 +429,13 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-        for step_idx, name, transformer in self._iter_transformers():
+        for _, _, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
-                transformer.update(y, X, update_params=update_params)
-                self.steps_[step_idx] = (name, transformer)
+                transformer.update(X=y, y=X, update_params=update_params)
+                y = transformer.transform(X=y, y=X)
 
-        name, forecaster = self.steps_[-1]
+        _, forecaster = self.steps_[-1]
         forecaster.update(y=y, X=X, update_params=update_params)
-        self.steps_[-1] = (name, forecaster)
         return self
 
     def transform(self, Z, X=None):
