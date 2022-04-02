@@ -224,8 +224,14 @@ class BaseObject(_BaseEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -256,8 +262,14 @@ class BaseObject(_BaseEstimator):
         return params
 
     @classmethod
-    def create_test_instance(cls):
+    def create_test_instance(cls, parameter_set="default"):
         """Construct Estimator instance if possible.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -269,7 +281,11 @@ class BaseObject(_BaseEstimator):
         This function takes first or single dict that get_test_params returns, and
         constructs the object with that.
         """
-        params = cls.get_test_params()
+        if "parameter_set" in inspect.getfullargspec(cls.get_test_params).args:
+            params = cls.get_test_params(parameter_set=parameter_set)
+        else:
+            params = cls.get_test_params()
+
         if isinstance(params, list):
             if isinstance(params[0], dict):
                 params = params[0]
@@ -287,8 +303,14 @@ class BaseObject(_BaseEstimator):
         return cls(**params)
 
     @classmethod
-    def create_test_instances_and_names(cls):
+    def create_test_instances_and_names(cls, parameter_set="default"):
         """Create list of all test instances and a list of names for them.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -298,9 +320,16 @@ class BaseObject(_BaseEstimator):
             i-th element is name of i-th instance of obj in tests
             convention is {cls.__name__}-{i} if more than one instance
             otherwise {cls.__name__}
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
         """
+        if "parameter_set" in inspect.getfullargspec(cls.get_test_params).args:
+            param_list = cls.get_test_params(parameter_set=parameter_set)
+        else:
+            param_list = cls.get_test_params()
+
         objs = []
-        param_list = cls.get_test_params()
         if not isinstance(param_list, (dict, list)):
             raise RuntimeError(
                 f"Error in {cls.__name__}.get_test_params, "
