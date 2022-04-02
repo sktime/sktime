@@ -46,7 +46,7 @@ repos:
     hooks:
       - id: nbqa-black
         args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
-        additional_dependencies: [black==20.8b1]
+        additional_dependencies: [black==20.8b1, click==8.0.4]
       - id: nbqa-isort
         args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
         additional_dependencies: [isort==5.6.4]
