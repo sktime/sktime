@@ -27,7 +27,6 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -409,14 +408,10 @@ class BaseClassifier(BaseEstimator, ABC):
         allow_multivariate = self.get_tag("capability:multivariate")
         allow_missing = self.get_tag("capability:missing_values")
         allow_unequal = self.get_tag("capability:unequal_length")
-
-        self_name = type(self).__name__
-
         if missing and not allow_missing:
-            warn(
-                f"Data seen by {self_name} instance has missing values, "
-                f"but this {self_name} instance cannot handle missing values. "
-                f"Calls with missing values may result in error or unreliable results."
+            raise ValueError(
+                "The data has missing values, this classifier cannot handle missing "
+                "values"
             )
         if multivariate and not allow_multivariate:
             # this error message could be more informative, but it is for backward
@@ -426,11 +421,9 @@ class BaseClassifier(BaseEstimator, ABC):
                 "multivariate input."
             )
         if unequal and not allow_unequal:
-            warn(
-                f"Data seen by {self_name} instance has unequal length series, "
-                f"but this {self_name} instance cannot handle unequal length series. "
-                f"Calls with unequal length series may result in error"
-                f" or unreliable results."
+            raise ValueError(
+                "The data has unequal length series, this classifier cannot handle "
+                "unequal length series"
             )
 
     def _convert_X(self, X):
