@@ -74,8 +74,6 @@ Compose
 
     ColumnTransformer
     ColumnConcatenator
-    SeriesToSeriesRowTransformer
-    SeriesToPrimitivesRowTransformer
 
 .. autosummary::
     :toctree: auto_generated/
