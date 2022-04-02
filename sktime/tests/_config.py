@@ -22,11 +22,7 @@ from sktime.registry import (
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.panel.compose import (
-    ColumnTransformer,
-    SeriesToPrimitivesRowTransformer,
-    SeriesToSeriesRowTransformer,
-)
+from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
@@ -71,18 +67,8 @@ SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
     np.mean, kw_args={"axis": 0}, check_inverse=False
 )
 TRANSFORMERS = [
-    (
-        "transformer1",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-    (
-        "transformer2",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
+    ("transformer1", TabularToSeriesAdaptor(SERIES_TO_SERIES_TRANSFORMER)),
+    ("transformer2", TabularToSeriesAdaptor(SERIES_TO_SERIES_TRANSFORMER)),
 ]
 ANOMALY_DETECTOR = KNN()
 STEPS = [
@@ -94,14 +80,6 @@ ESTIMATOR_TEST_PARAMS = {
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
-    },
-    SeriesToPrimitivesRowTransformer: {
-        "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
-        "check_transformer": False,
-    },
-    SeriesToSeriesRowTransformer: {
-        "transformer": SERIES_TO_SERIES_TRANSFORMER,
-        "check_transformer": False,
     },
     ColumnTransformer: {
         "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
