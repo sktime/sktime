@@ -417,9 +417,9 @@ class BaseClassifier(BaseEstimator, ABC):
         if missing and not allow_missing:
             problems += ["missing values"]
         if multivariate and not allow_multivariate:
-            problems = ["multivariate series"]
+            problems += ["multivariate series"]
         if unequal and not allow_unequal:
-            problems = ["unequal length series"]
+            problems += ["unequal length series"]
 
         # construct error message
         problems_and = " and ".join(problems)
