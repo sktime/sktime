@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """HOG1D transform."""
-import numbers
 import math
+import numbers
 
 import numpy as np
 import pandas as pd

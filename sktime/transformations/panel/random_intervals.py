@@ -20,10 +20,7 @@ from sktime.utils.validation.panel import check_X
 class RandomIntervals(_PanelToTabularTransformer):
     """Random interval feature transformer.
 
-    Overview:
-
-    Extracts intervals with random length, position and dimension from the series in
-    fit.
+    Extracts intervals with random length, position and dimension from series in fit.
     Transforms each interval subseries using the given transformer(s) and concatenates
     them into a feature vector in transform.
 
