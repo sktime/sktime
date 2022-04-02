@@ -282,6 +282,7 @@ class _RowTransformer(BaseTransformer):
             self.check_transformer = kwargs.pop("check_transformer")
         return self.transformer_.set_params(self, **kwargs)
 
+    @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator."""
         from sktime.transformations.series.exponent import ExponentTransformer
