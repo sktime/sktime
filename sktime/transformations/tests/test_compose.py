@@ -10,6 +10,8 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.series.impute import Imputer
+from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
 
@@ -88,3 +90,19 @@ def test_mul_sklearn_autoadapt():
 
     _assert_array_almost_equal(t123.fit_transform(X), t123l.fit_transform(X))
     _assert_array_almost_equal(t123r.fit_transform(X), t123l.fit_transform(X))
+
+
+def test_missing_unequal_tag_inference():
+    """Test that TransformerPipeline infers missing/unequal tags correctly."""
+    t1 = ExponentTransformer() * PaddingTransformer() * ExponentTransformer()
+    t2 = ExponentTransformer() * ExponentTransformer()
+    t3 = Imputer() * ExponentTransformer()
+    t4 = ExponentTransformer() * Imputer()
+
+    assert t1.get_tag("capability:unequal_length")
+    assert t1.get_tag("capability:unequal_length:removes")
+    assert not t2.get_tag("capability:unequal_length:removes")
+    assert t3.get_tag("handles-missing-data")
+    assert t3.get_tag("capability:missing_values:removes")
+    assert not t4.get_tag("handles-missing-data")
+    assert not t4.get_tag("capability:missing_values:removes")
