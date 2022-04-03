@@ -27,19 +27,18 @@ class Imputer(BaseTransformer):
     Parameters
     ----------
     method : str, default="drift"
-        Method to fill the missing values values. All methods that actually fit
-        something are doing the fit only on the data given in fit().
+        Method to fill the missing values values.
 
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
         * "linear" : linear interpolation, by pd.Series.interpolate()
         * "nearest" : use nearest value, by pd.Series.interpolate()
         * "constant" : same constant value (given in arg value) for all NaN
-        * "mean" : pd.Series.mean()
-        * "median" : pd.Series.median()
+        * "mean" : pd.Series.mean() of fit data
+        * "median" : pd.Series.median() of fit data
         * "backfill" ot "bfill" : adapted from pd.Series.fillna()
         * "pad" or "ffill" : adapted from pd.Series.fillna()
-        * "random" : random values between pd.Series.min() and .max()
-        * "forecaster" : use an sktime Forecaster, given in arg forecaster
+        * "random" : random values between pd.Series.min() and .max() of fit data
+        * "forecaster" : use an sktime Forecaster, given in param forecaster
 
     missing_values : int/float/str, default=None
         The placeholder for the missing values. All occurrences of
