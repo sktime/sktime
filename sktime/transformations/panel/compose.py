@@ -251,6 +251,7 @@ class _RowTransformer(BaseTransformer):
 
         self.transformer = transformer
         self.transformer_ = clone(transformer)
+        self.check_transformer = check_transformer
         super(_RowTransformer, self).__init__()
         self.clone_tags(transformer)
 
