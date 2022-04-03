@@ -73,15 +73,14 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.catch22 import Catch22
-    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> c22 = Catch22(outlier_norm=True, replace_nans=True)
-    >>> tree = DecisionTreeClassifier()
-    >>> steps = [("transform", c22), ("clf", tree)]
-    >>> pipeline = ClassifierPipeline(steps)
+    >>> pipeline = ClassifierPipeline(
+    ...     TimeSeriesForestClassifier(n_estimators=5), [PCATransformer()]
+    ... )
     >>> pipeline.fit(X_train, y_train)
     ClassifierPipeline(...)
     >>> y_pred = pipeline.predict(X_test)
