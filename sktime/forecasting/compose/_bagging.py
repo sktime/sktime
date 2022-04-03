@@ -7,6 +7,9 @@ __author__ = ["ltsaprounis"]
 
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tensorflow-probability", severity="warning")
 
 
 class BaggingForecaster(BaseForecaster):
@@ -57,15 +60,14 @@ class BaggingForecaster(BaseForecaster):
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
+    def __init__(self, bootstrapping_transformer, forecaster, sp):
         # estimators should precede parameters
         #  if estimators have default values, set None and initalize below
 
         # todo: write any hyper-parameters and components to self
-        self.est = est
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
+        self.bootstrapping_transformer = bootstrapping_transformer
+        self.forecaster = forecaster
+        self.sp = sp
         # important: no checking or other logic should happen here
 
         # todo: default estimators should have None arg defaults
