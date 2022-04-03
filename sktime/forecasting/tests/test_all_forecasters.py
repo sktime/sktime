@@ -443,14 +443,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if not pred_int_works and f.get_class_tag("capability:pred_int", False):
             raise ValueError(
-                f"{f.__name__} does not implement probabilistic forecasting, "
+                f"{type(f).__name__} does not implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
         if pred_int_works and not f.get_class_tag("capability:pred_int", False):
             raise ValueError(
-                f"{f.__name__} does implement probabilistic forecasting, "
+                f"{type(f).__name__} does implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to False incorrectly. '
                 'The flag "capability:pred_int" should instead be set to True.'
             )
