@@ -10,7 +10,11 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
+from sktime.datatypes._panel._convert import (
+    from_2d_array_to_nested,
+    from_3d_numpy_to_2d_array,
+    from_nested_to_2d_array,
+)
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
@@ -20,7 +24,7 @@ from sktime.transformations.base import (
 )
 from sktime.utils.validation.panel import check_X
 
-__author__ = ["mloning", "sajaysurya", "fkiraly"]
+__author__ = ["mloning", "sajaysurya"]
 __all__ = [
     "ColumnTransformer",
     "SeriesToPrimitivesRowTransformer",
@@ -207,7 +211,7 @@ class ColumnConcatenator(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": "nested_univ",
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
@@ -231,24 +235,13 @@ class ColumnConcatenator(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
-        Xst = X.stack()
-        idx = Xst.index
-        idx = idx.to_flat_index()
-
-        def _merge_last(x):
-            x_list = list(x)
-            x = x_list.pop()
-            x_list[-1] = f"{x}__{x_list[-1]}"
-            return x_list
-
-        # stack, merge last two index levels, replace by integer/range index
-        new_idx = pd.MultiIndex.from_tuples([_merge_last(x) for x in idx])
-        t_vals = new_idx.get_level_values(-1).unique()
-        new_idx = new_idx.set_levels(range(len(t_vals)), level=-1)
-        Xst.index = new_idx
-        Xst = pd.DataFrame(Xst.sort_index())
-
-        return Xst
+        # We concatenate by tabularizing all columns and then detabularizing
+        # them into a single column
+        if isinstance(X, pd.DataFrame):
+            Xt = from_nested_to_2d_array(X)
+        else:
+            Xt = from_3d_numpy_to_2d_array(X)
+        return from_2d_array_to_nested(Xt)
 
 
 def _from_nested_to_series(x):
