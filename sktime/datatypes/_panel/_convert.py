@@ -454,7 +454,7 @@ def from_nested_to_long(
     if len(col_rename_dict) > 0:
         long_df = long_df.rename(columns=col_rename_dict)
 
-    return long_df
+    return long_df.convert_dtypes()
 
 
 def from_nested_to_long_adp(obj, store=None):
