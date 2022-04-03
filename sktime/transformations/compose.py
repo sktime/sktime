@@ -287,8 +287,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         inverse transformed version of X
         """
         Xt = X
-        for _, transformer in self.steps_:
-            Xt = transformer.inverse_transform(X=Xt, y=y)
+        for _, transformer in reversed(self.steps_):
+            if not self.get_tag("fit_is_empty", False):
+                Xt = transformer.inverse_transform(X=Xt, y=y)
+            else:
+                Xt = transformer.fit(X=Xt, y=y).inverse_transform(X=Xt, y=y)
 
         return Xt
 
@@ -429,6 +432,8 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
         "capability:inverse_transform": False,
+        # unclear what inverse transform should be, since multiple inverse_transform
+        #   would have to inverse transform to one
     }
 
     def __init__(
