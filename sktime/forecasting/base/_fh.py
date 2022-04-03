@@ -383,10 +383,7 @@ class ForecastingHorizon:
     def _is_in_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of in-sample values."""
         relative = self.to_relative(cutoff).to_pandas()
-        if relative.dtype == "int64":
-            null = 0
-        else:
-            null = pd.Timedelta(0)
+        null = 0 if is_integer_index(relative) else pd.Timedelta(0)
         return relative <= null
 
     def is_all_in_sample(self, cutoff=None) -> bool:
