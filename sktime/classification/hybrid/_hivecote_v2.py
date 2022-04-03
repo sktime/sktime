@@ -103,7 +103,7 @@ class HIVECOTEV2(BaseClassifier):
     ...         "max_shapelets": 10,
     ...         "batch_size": 20,
     ...     },
-    ...     drcif_params={"n_estimators": 2},
+    ...     drcif_params={"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2},
     ...     arsenal_params={"num_kernels": 50, "n_estimators": 3},
     ...     tde_params={
     ...         "n_parameter_samples": 10,
