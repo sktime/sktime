@@ -66,17 +66,15 @@ class DWTTransformer(BaseTransformer):
                 to_type="numpyflat",
                 as_scitype="Panel",
             )
-
-        # arr = arr.reshape(-1) 
+        
         transformedData = self._extract_wavelet_coefficients(arr)
 
-         # Convert to a numpy array
+        # Convert to a numpy array
         transformedData = np.asarray(transformedData)
-        
+       
         # Convert back to numpy3D
-        Xt = transformedData.reshape((transformedData.shape[0], transformedData.shape[1], 1))
-        
-        # Xt = pd.DataFrame(Xt) 
+        Xt = np.reshape(transformedData, (transformedData.shape[0],1,transformedData.shape[1]))
+
         return Xt
 
     def _extract_wavelet_coefficients(self, data):
