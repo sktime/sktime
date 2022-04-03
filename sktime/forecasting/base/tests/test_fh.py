@@ -53,7 +53,10 @@ def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
     # generate data
     y = make_forecasting_problem(index_type=index_type)
-    assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
+    if index_type == "int":
+        assert is_integer_index(y.index)
+    else:
+        assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
 
     # split data
     y_train, y_test = temporal_train_test_split(y, test_size=10)
@@ -63,7 +66,10 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # generate fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-    assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
+    if fh_type == "int":
+        assert is_integer_index(fh.to_pandas())
+    else:
+        assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
 
     # get expected outputs
     if isinstance(steps, int):
