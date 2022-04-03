@@ -237,7 +237,6 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "contract time setting, does the estimator support limiting max fit time?",
     ),
-    # todo, deprecate. We have base class for this now.
     (
         "capability:early_prediction",
         "classifier",

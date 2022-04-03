@@ -135,7 +135,7 @@ def _make_fit_args(estimator, **kwargs):
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(**kwargs)
         return (X,)
-    elif isinstance(estimator, (BaseClassifier, BaseEarlyClassifier)):
+    elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
     elif isinstance(estimator, BaseRegressor):
         return make_regression_problem(**kwargs)
