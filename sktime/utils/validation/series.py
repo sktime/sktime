@@ -29,7 +29,7 @@ VALID_INDEX_TYPES = (
 
 def is_in_valid_index_types(x) -> bool:
     """Check that the input type belongs to the valid index types."""
-    return isinstance(x, VALID_INDEX_TYPES)
+    return isinstance(x, VALID_INDEX_TYPES) or is_integer_index(x)
 
 
 def _check_is_univariate(y, var_name="input"):
@@ -279,9 +279,9 @@ def check_equal_time_index(*ys, mode="equal"):
             raise ValueError(msg)
 
 
-def is_integer_index(values) -> bool:
-    """Check that values passed to ForecastingHorizon are integer pd.Index."""
-    return isinstance(values, pd.Index) and values.is_integer()
+def is_integer_index(x) -> bool:
+    """Check that the input is an integer pd.Index."""
+    return isinstance(x, pd.Index) and x.is_integer()
 
 
 def check_consistent_index_type(a, b):
