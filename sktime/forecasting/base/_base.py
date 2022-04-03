@@ -1700,7 +1700,7 @@ class BaseForecaster(BaseEstimator):
                 # dividing by IQR of normal gives std of normal with same IQR
                 std_i = iqr_i / (2 * norm.ppf(0.75))
                 # and squaring gives variance (pd.Series)
-                var_i = std_i ** 2
+                var_i = std_i**2
                 vars_dict[i] = var_i
 
             # put together to pd.DataFrame
