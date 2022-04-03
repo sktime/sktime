@@ -14,7 +14,6 @@ from sklearn.base import clone
 from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 
@@ -281,16 +280,7 @@ class Imputer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         return [
-            {"method": "drift"},
-            {"method": "linear"},
-            {"method": "nearest"},
             {"method": "constant", "value": 1},
-            {"method": "mean"},
-            {"method": "median"},
-            {"method": "backfill"},
-            {"method": "pad"},
-            {"method": "random"},
-            {"method": "forecaster", "forecaster": NaiveForecaster()},
         ]
 
 
