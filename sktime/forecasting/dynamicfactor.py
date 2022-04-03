@@ -153,7 +153,6 @@ class DynamicFactor(_StatsModelsAdapter):
         optim_complex_step,
         optim_hessian,
         low_memory,
-        **kwargs
     ):
 
         self.k_factors = k_factors
