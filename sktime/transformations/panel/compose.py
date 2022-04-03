@@ -272,7 +272,7 @@ class _RowTransformer(BaseTransformer):
 
     def get_params(self, deep=True):
         """Get parameters."""
-        params = self.transformer_.get_params(self, deep=deep)
+        params = self.transformer_.get_params(deep=deep)
         params.update({"check_transformer": self.check_transformer})
         return params
 
@@ -280,7 +280,7 @@ class _RowTransformer(BaseTransformer):
         """Set parameters."""
         if "check_transformer" in kwargs.keys():
             self.check_transformer = kwargs.pop("check_transformer")
-        return self.transformer_.set_params(self, **kwargs)
+        return self.transformer_.set_params(**kwargs)
 
     @classmethod
     def get_test_params(cls):
