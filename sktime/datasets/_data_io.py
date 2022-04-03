@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._convert import convert
+from sktime.datatypes._hierarchical import MTYPE_LIST_HIERARCHICAL
 from sktime.datatypes._panel._convert import (
     _make_column_names,
     from_long_to_nested,
@@ -1668,7 +1669,7 @@ def load_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     value_column_name="series_value",
-    return_type="default_tsf",
+    return_type="pd_multiindex_hier",
 ):
     """
     Convert the contents in a .tsf file into a dataframe.
@@ -1686,10 +1687,18 @@ def load_tsf_to_dataframe(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
-    return_type : str - "tsf_default" (default), or valid sktime mtype for `Panel`
-        scitype the in-memory format to return the loaded data container as valid
-        mtype strings, with explanation, are in datatypes.MTYPE_REGISTER for tutorial
-        and full specifications, see examples/AA_datatypes_and_datasets.ipynb
+    return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
+        mtype string for in-memory data container format specification of the
+        return type:
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "tsf_default" = container that faithfully mirrors tsf format from the original
+            implementation in: https://github.com/rakshitha123/TSForecasting/
+            blob/master/utils/data_loader.py.
+        - other valid mtype strings are Panel or Hierarchical mtypes in
+            datatypes.MTYPE_REGISTER. If Panel or Hierarchical mtype str is given, a
+            conversion to that mtype will be attempted
+        For tutorials and detailed specifications, see
+        examples/AA_datatypes_and_datasets.ipynb
 
     Returns
     -------
@@ -1861,16 +1870,24 @@ def load_tsf_to_dataframe(
         )
 
         # convert to multiinidex mtype
-        if return_type == "default_tsf":
-            return loaded_data, metadata
-        else:
+        if return_type != "default_tsf":
             loaded_data = _convert_tsf_to_hierarchical(
                 loaded_data, metadata, value_column_name=value_column_name
             )
-            loaded_data = convert(
-                loaded_data, from_type="pd_multiindex_hier", to_type=return_type
-            )
-            return loaded_data, metadata
+            if (
+                loaded_data.index.nlevels == 2
+                and return_type not in MTYPE_LIST_HIERARCHICAL
+            ):
+                loaded_data.index.rename(["instances", "timepoints"], inplace=True)
+                loaded_data = convert(
+                    loaded_data, from_type="pd-multiindex", to_type=return_type
+                )
+            else:
+                loaded_data = convert(
+                    loaded_data, from_type="pd_multiindex_hier", to_type=return_type
+                )
+
+        return loaded_data, metadata
 
 
 def _convert_tsf_to_hierarchical(
