@@ -255,7 +255,7 @@ class _RowTransformer(BaseTransformer):
         super(_RowTransformer, self).__init__()
         self.clone_tags(transformer)
         # fit needs to be run, or the internal fit may not be updated
-        self.set_tags("fit_is_empty", False)
+        self.set_tags(fit_is_empty=False)
 
     def _fit(self, *args, **kwargs):
         """Fit to the data."""
