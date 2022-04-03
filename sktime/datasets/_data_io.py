@@ -35,6 +35,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._convert import convert
 from sktime.datatypes._panel._convert import (
     _make_column_names,
     from_long_to_nested,
@@ -1685,9 +1686,10 @@ def load_tsf_to_dataframe(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
-    return_type: str, by default "default_tsf".
-        The type of the returned dataframe. Supported types are "hierarchical" and
-        "default_tsf"
+    return_type : str - "tsf_default" (default), or valid sktime mtype for `Panel`
+        scitype the in-memory format to return the loaded data container as valid
+        mtype strings, with explanation, are in datatypes.MTYPE_REGISTER for tutorial
+        and full specifications, see examples/AA_datatypes_and_datasets.ipynb
 
     Returns
     -------
@@ -1861,26 +1863,23 @@ def load_tsf_to_dataframe(
         # convert to multiinidex mtype
         if return_type == "default_tsf":
             return loaded_data, metadata
-        elif return_type == "hierarchical":
-            loaded_data = _convert_tsf_to_multiindex(
+        else:
+            loaded_data = _convert_tsf_to_hierarchical(
                 loaded_data, metadata, value_column_name=value_column_name
             )
-            return loaded_data, metadata
-        else:
-            raise ValueError(
-                f"{return_type} is currently not supported by "
-                "load_tsf_to_dataframe. Supported types are:\n hierarchiucal and"
-                " default_tsf"
+            loaded_data = convert(
+                loaded_data, from_type="pd_multiindex_hier", to_type=return_type
             )
+            return loaded_data, metadata
 
 
-def _convert_tsf_to_multiindex(
+def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
     metadata: Dict,
     freq: str = None,
     value_column_name: str = "series_value",
 ) -> pd.DataFrame:
-    """Convert the nested arrays format froom the load_tsf_to_dataframe to multiindex.
+    """Convert the data from default_tsf to pd_multiindex_hier.
 
     Parameters
     ----------
@@ -1898,7 +1897,7 @@ def _convert_tsf_to_multiindex(
     Returns
     -------
     pd.DataFrame
-        sktime multiindex mtype
+        sktime pd_multiindex_hier mtype
     """
     df = data.copy()
 

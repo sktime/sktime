@@ -28,7 +28,7 @@ from sktime.datasets import (
     load_uschange,
     write_dataframe_to_tsfile,
 )
-from sktime.datasets._data_io import MODULE, _convert_tsf_to_multiindex
+from sktime.datasets._data_io import MODULE, _convert_tsf_to_hierarchical
 
 
 def test_load_from_tsfile():
@@ -1115,7 +1115,7 @@ def test_write_dataframe_to_ts_fail(tmp_path):
         ),
         (
             "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
-            "hierarchical",
+            "pd_multiindex_hier",
             pd.DataFrame(
                 data=[
                     25092.2284,
@@ -1181,7 +1181,7 @@ def test_write_dataframe_to_ts_fail(tmp_path):
         ),
         (
             "datasets/data/UnitTest/UnitTest_Tsf_Loader_no_start_timestamp.tsf",
-            "hierarchical",
+            "pd_multiindex_hier",
             pd.DataFrame(
                 data=[
                     25092.2284,
@@ -1321,6 +1321,6 @@ def test_convert_tsf_to_multiindex(freq):
 
     assert_frame_equal(
         output_df,
-        _convert_tsf_to_multiindex(input_df, metadata, freq=freq),
+        _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
         check_dtype=False,
     )
