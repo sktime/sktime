@@ -22,6 +22,7 @@ def _make_panel_X(
     n_columns=1,
     n_timepoints=20,
     y=None,
+    all_positive=False,
     return_numpy=False,
     random_state=None,
 ):
@@ -38,6 +39,9 @@ def _make_panel_X(
     # Generate association between data and target variable
     if y is not None:
         X = X + (y * 100).reshape(-1, 1, 1)
+
+    if all_positive:
+        X = X ** 2
 
     if return_numpy:
         return X

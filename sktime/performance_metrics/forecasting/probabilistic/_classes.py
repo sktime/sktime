@@ -411,7 +411,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         return out_df
 
     @classmethod
-    def get_test_params(self):
+    def get_test_params(cls, parameter_set="default"):
         """Retrieve test parameters."""
         params1 = {}
         params2 = {"alpha": [0.1, 0.5, 0.9]}
