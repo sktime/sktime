@@ -22,14 +22,11 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
+    is_in_valid_absolute_index_types,
     is_in_valid_index_types,
-    is_integer_index,
+    is_in_valid_relative_index_types,
 )
 
-RELATIVE_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
-ABSOLUTE_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
-assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
-assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
 DELEGATED_METHODS = (
@@ -57,14 +54,6 @@ DELEGATED_METHODS = (
     "max",
     "min",
 )
-
-
-def is_relative_fh_type(values) -> bool:
-    return type(values) in RELATIVE_TYPES or is_integer_index(values)
-
-
-def is_absolute_fh_type(values) -> bool:
-    return type(values) in ABSOLUTE_TYPES or is_integer_index(values)
 
 
 def _delegator(method):
@@ -194,17 +183,17 @@ class ForecastingHorizon:
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
-            if is_relative_fh_type(values):
+            if is_in_valid_relative_index_types(values):
                 is_relative = True
-            elif is_absolute_fh_type(values):
+            elif is_in_valid_absolute_index_types(values):
                 is_relative = False
             else:
                 raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
-            if not is_relative_fh_type(values):
+            if not is_in_valid_relative_index_types(values):
                 raise TypeError(error_msg)
         else:
-            if not is_absolute_fh_type(values):
+            if not is_in_valid_absolute_index_types(values):
                 raise TypeError(error_msg)
 
         self._values = values
