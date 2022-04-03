@@ -296,19 +296,28 @@ def check_fh(fh, enforce_relative=False):
     return fh
 
 
-def check_alpha(alpha):
-    """Check that a confidence level alpha (or list of alphas) is valid.
+def check_alpha(alpha, name="alpha"):
+    """Check that quantile or confidence level value, or list of values, is valid.
 
-    All alpha values must lie in the open interval (0, 1).
+    Checks:
+    alpha must be a float, or list of float, all in the open interval (0, 1).
+    values in alpha must be unique.
 
     Parameters
     ----------
     alpha : float, list of float
+    name : str, optional, default="alpha"
+        the name reference to alpha displayed in the error message
+
+    Returns
+    -------
+    alpha coerced to a list, i.e.: [alpha], if alpha was a float; alpha otherwise
 
     Raises
     ------
     ValueError
-        If alpha is outside the range (0, 1).
+        If alpha (float) or any value in alpha (list) is outside the range (0, 1).
+        If values in alpha (list) are non-unique.
     """
     # check type
     if isinstance(alpha, list):
@@ -324,8 +333,13 @@ def check_alpha(alpha):
     for a in alpha:
         if not 0 < a < 1:
             raise ValueError(
-                f"`alpha` must lie in the open interval (0, 1), " f"but found: {a}."
+                f"values in {name} must lie in the open interval (0, 1), "
+                f"but found value: {a}."
             )
+
+    # check uniqueness
+    if len(set(alpha)) < len(alpha):
+        raise ValueError(f"values in {name} must be unique, but found duplicates")
 
     return alpha
 
