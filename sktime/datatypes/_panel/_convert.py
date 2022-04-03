@@ -519,53 +519,6 @@ def from_long_to_nested(
     else:
         X_nested.columns = column_names
 
-    # # get distinct dimension ids
-    # unique_dim_ids = long_dataframe.iloc[:, 1].unique()
-    # num_dims = len(unique_dim_ids)
-
-    # data_by_dim = []
-    # indices = []
-
-    # # get number of distinct cases (note: a case may have 1 or many dimensions)
-    # unique_case_ids = long_dataframe.iloc[:, 0].unique()
-    # # assume series are indexed from 0 to m-1 (can map to non-linear indices
-    # # later if needed)
-
-    # # init a list of size m for each d - to store the series data for m
-    # # cases over d dimensions
-    # # also, data may not be in order in long format so store index data for
-    # # aligning output later
-    # # (i.e. two stores required: one for reading id/timestamp and one for
-    # # value)
-    # for d in range(0, num_dims):
-    #     data_by_dim.append([])
-    #     indices.append([])
-    #     for _c in range(0, len(unique_case_ids)):
-    #         data_by_dim[d].append([])
-    #         indices[d].append([])
-
-    # # go through every row in the dataframe
-    # for i in range(0, len(long_dataframe)):
-    #     # extract the relevant data, catch cases where the dim id is not an
-    #     # int as it must be the class
-
-    #     row = long_dataframe.iloc[i]
-    #     case_id = int(row[0])
-    #     dim_id = int(row[1])
-    #     reading_id = int(row[2])
-    #     value = row[3]
-    #     data_by_dim[dim_id][case_id].append(value)
-    #     indices[dim_id][case_id].append(reading_id)
-
-    # x_data = {}
-    # for d in range(0, num_dims):
-    #     key = "dim_" + str(d)
-    #     dim_list = []
-    #     for i in range(0, len(unique_case_ids)):
-    #         temp = pd.Series(data_by_dim[d][i], indices[d][i])
-    #         dim_list.append(temp)
-    #     x_data[key] = pd.Series(dim_list)
-
     return X_nested
 
 
