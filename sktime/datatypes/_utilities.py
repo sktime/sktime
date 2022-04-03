@@ -32,20 +32,13 @@ def get_time_index(X):
     """
     # assumes that all samples share the same the time index, only looks at
     # first row
-    if isinstance(X, pd.DataFrame):
+    if isinstance(X, (pd.DataFrame, pd.Series)):
         if isinstance(X.index, pd.MultiIndex):
-            return X.xs(
-                X.index.get_level_values("instances")[0], level="instances"
-            ).index
-        else:
+            first_inst = X.index.to_flat_index()[0][:-1]
+            return X.loc[first_inst].index
+        elif isinstance(X, pd.DataFrame):
             return _get_index(X.iloc[0, 0])
-
-    elif isinstance(X, pd.Series):
-        if isinstance(X.index, pd.MultiIndex):
-            return X.xs(
-                X.index.get_level_values("instances")[0], level="instances"
-            ).index
-        else:
+        elif isinstance(X, pd.Series):
             return _get_index(X.iloc[0])
 
     elif isinstance(X, np.ndarray):
