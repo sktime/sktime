@@ -343,7 +343,15 @@ class BaseForecaster(BaseEstimator):
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
-        quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+        # we call the ordinary _predict_quantiles if no looping/vectorization needed
+        if not self._is_vectorized:
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+        else:
+            # otherwise we call the vectorized version of predict_quantiles
+            quantiles = self._vectorize(
+                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+            )
+
         return quantiles
 
     def predict_interval(
@@ -407,11 +415,14 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
-
-        # todo: remove if changing pred_interval format
-        # if pred_int.columns.nlevels == 3:
-        #     pred_int = _convert_pred_interval_to_quantiles(pred_int)
+        # we call the ordinary _predict_interval if no looping/vectorization needed
+        if not self._is_vectorized:
+            pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+        else:
+            # otherwise we call the vectorized version of predict_interval
+            pred_int = self._vectorize(
+                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+            )
 
         return pred_int
 
@@ -470,7 +481,12 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_var = self._predict_var(fh=fh, X=X_inner)
+        # we call the ordinary _predict_interval if no looping/vectorization needed
+        if not self._is_vectorized:
+            pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
+        else:
+            # otherwise we call the vectorized version of predict_interval
+            pred_var = self._vectorize("predict_var", fh=fh, X=X_inner, cov=cov)
 
         return pred_var
 
@@ -1326,7 +1342,12 @@ class BaseForecaster(BaseEstimator):
 
         Uses forecasters_ attribute to store one forecaster per loop index.
         """
-        PREDICT_METHODS = ["predict", "predict_quantiles"]
+        PREDICT_METHODS = [
+            "predict",
+            "predict_quantiles",
+            "predict_interval",
+            "predict_var",
+        ]
 
         if methodname == "fit":
             # create container for clones
