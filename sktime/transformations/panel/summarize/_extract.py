@@ -30,6 +30,10 @@ class PlateauFinder(BaseTransformer):
         Minimum lengths of segments with same value to include.
         If min_length is set to 1, the transformer can be used as a value
         finder.
+    max_length : int
+        Maximum lengths of segments with same value to include.
+        If max_length is set to None, a maximum segment length filter 
+        is not applied to segments
     """
 
     _tags = {

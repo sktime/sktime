@@ -1536,7 +1536,26 @@
       "profile": "https://github.com/FedericoGarza",
       "contributions": [
         "code",
-	"example"
+	      "example"
+      ]
+    },
+    {
+      "login": "srggrs",
+      "name": "Serg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/34258464?v=4",
+      "profile": "https://github.com/srggrs",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "mantmic",
+      "name": "Michael M",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23163449?v=4",
+      "profile": "https://github.com/mantmic",
+      "contributions": [
+        "doc"
       ]
     }
   ],

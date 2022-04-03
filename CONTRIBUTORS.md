@@ -184,7 +184,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/vincent-nich12"><img src="https://avatars3.githubusercontent.com/u/36476633?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vincent-nich12</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vincent-nich12" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/vollmersj"><img src="https://avatars2.githubusercontent.com/u/12613127?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vollmersj</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vollmersj" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt=""/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/srggrs"><img src="https://avatars.githubusercontent.com/u/34258464?v=4" width="100px;" alt=""/><br /><sub><b>serg</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=srggrs" title="Code">💻</a></td>
   </tr>
 </table>
 
