@@ -257,19 +257,19 @@ class _RowTransformer(BaseTransformer):
 
     def _fit(self, *args, **kwargs):
         """Fit to the data."""
-        return self.transformer_._fit(*args, **kwargs)
+        return self.transformer_.fit(*args, **kwargs)
 
     def _transform(self, *args, **kwargs):
         """Transform the data."""
-        return self.transformer_._transform(*args, **kwargs)
+        return self.transformer_.transform(*args, **kwargs)
 
     def _inverse_transform(self, *args, **kwargs):
         """Inverse transform the data."""
-        return self.transformer_._inverse_transform(*args, **kwargs)
+        return self.transformer_.inverse_transform(*args, **kwargs)
 
     def _update(self, *args, **kwargs):
         """Update with the data."""
-        return self.transformer_._update(*args, **kwargs)
+        return self.transformer_.update(*args, **kwargs)
 
     @classmethod
     def get_test_params(cls):
