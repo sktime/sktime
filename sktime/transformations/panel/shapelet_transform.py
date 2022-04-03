@@ -20,13 +20,12 @@ from numba import NumbaPendingDeprecationWarning, njit
 from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.numba.general import z_normalise_series
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
-class RandomShapeletTransform(_PanelToTabularTransformer):
+class RandomShapeletTransform(BaseTransformer):
     """Random Shapelet Transform.
 
     Implementation of the binary shapelet transform along the lines of [1]_[2]_, with
@@ -134,6 +133,19 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     >>> X_t = t.transform(X_train)
     """
 
+    _tags = {
+        "fit_is_empty": False,
+        "univariate-only": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "numpy1D",  # and for y?
+        "requires_y": True,
+    }
+
     def __init__(
         self,
         n_shapelet_samples=10000,
@@ -179,7 +191,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         super(RandomShapeletTransform, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.
 
         Parameters
@@ -194,8 +206,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         self : RandomShapeletTransform
             This estimator.
         """
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
-
         # this is a few versions away currently, and heaps dont support the replacement
         warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
@@ -320,11 +330,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
             self._sorted_indicies.append(
                 sorted(range(s[1]), reverse=True, key=lambda i: sabs[i])
             )
-
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X according to the extracted shapelets.
 
         Parameters
@@ -337,9 +345,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         output : pandas DataFrame
             The transformed dataframe in tabular format.
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
-
         # this is a few versions away currently, and heaps dont support the replacement
         warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 

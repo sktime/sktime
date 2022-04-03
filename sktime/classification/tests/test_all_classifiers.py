@@ -53,13 +53,18 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:multivariate"):
             return None
 
-        error_msg = "X must be univariate"
+        error_msg = "multivariate series"
 
         scenario = ClassifierFitPredictMultivariate()
 
         # check if estimator raises appropriate error message
-        with pytest.raises(ValueError, match=error_msg):
-            scenario.run(estimator_instance, method_sequence=["fit"])
+        #   composites will raise a warning, non-composites an exception
+        if estimator_instance.is_composite():
+            with pytest.warns(UserWarning, match=error_msg):
+                scenario.run(estimator_instance, method_sequence=["fit"])
+        else:
+            with pytest.raises(ValueError, match=error_msg):
+                scenario.run(estimator_instance, method_sequence=["fit"])
 
     def test_classifier_output(self, estimator_instance, scenario):
         """Test classifier outputs the correct data types and values.
@@ -83,7 +88,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert y_proba.shape == (X_new.shape[0], n_classes)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
 
-    @pytest.mark.skip(reason="these tests have not been fully migrated, see #2257")
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
         # we only use the first estimator instance for testing
@@ -97,9 +101,11 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(estimator_class.create_test_instance())
+        estimator_instance = clone(
+            estimator_class.create_test_instance(parameter_set="results_comparison")
+        )
         # set random seed if possible
-        if "random_seed" in estimator_instance.get_params().keys():
+        if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
@@ -114,7 +120,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
-    @pytest.mark.skip(reason="these tests have not been fully migrated, see #2257")
     def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
         # we only use the first estimator instance for testing
@@ -128,9 +133,11 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(estimator_class.create_test_instance())
+        estimator_instance = clone(
+            estimator_class.create_test_instance(parameter_set="results_comparison")
+        )
         # set random seed if possible
-        if "random_seed" in estimator_instance.get_params().keys():
+        if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
@@ -139,7 +146,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
         # train classifier and predict probas
-        estimator_instance.fit(X_train, y_train)
+        estimator_instance.fit(X_train.iloc[indices], y_train[indices])
         y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
 
         # assert probabilities are the same
