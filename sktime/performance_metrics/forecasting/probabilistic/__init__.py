@@ -11,9 +11,16 @@ the lower the better.
 
 __author__ = ["euanenticott-shell"]
 
-__all__ = ["_BaseProbaForecastingErrorMetric", "PinballLoss"]
+__all__ = [
+    "_BaseProbaForecastingErrorMetric",
+    "PinballLoss",
+    "EmpiricalCoverage",
+    "ConstraintViolation",
+]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
     PinballLoss,
     _BaseProbaForecastingErrorMetric,
+    ConstraintViolation,
+    EmpiricalCoverage
 )

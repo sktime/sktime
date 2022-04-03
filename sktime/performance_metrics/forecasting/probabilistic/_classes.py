@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+from pickle import FALSE, TRUE
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array, check_consistent_length
@@ -45,9 +46,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         func=None,
         name=None,
         multioutput="uniform_average",
-        score_average=False,
+        score_average=True,
     ):
         self.multioutput = multioutput
+        self.score_average = score_average
         super().__init__(func, name=name)
 
     def __call__(self, y_true, y_pred, **kwargs):
@@ -95,10 +97,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             y_true, y_pred, multioutput
         )
         # pass to inner function
-        out_df = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
+        out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
         if self.score_average:
-            out_df = out_df.mean(axis=1)
-        return out_df
+            out = float(out.mean(axis=1))
+        return out
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
         """Evaluate the desired metric on given inputs.
@@ -123,7 +125,9 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         # Default implementation relies on implementation of evaluate_by_index
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, multioutput)
-            return index_df.mean(axis=0)
+            out_df = pd.DataFrame(index_df.mean(axis=0)).T
+            out_df.columns = index_df.columns
+            return out_df
         except RecursionError:
             RecursionError("Must implement one of _evaluate or _evaluate_by_index")
 
@@ -185,8 +189,8 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
-                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
+                    np.vstack((y_true[:i, :], y_true[i + 1:, :])),  # noqa
+                    np.vstack((y_pred[:i, :], y_pred[i + 1:, :])),  # noqa
                     multioutput,
                 )
             return out_series
@@ -317,8 +321,8 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     multioutput : string "uniform_average" or "raw_values" determines how\
         multioutput results will be treated.
 
-    score_average : bool specifies whether scores for each quantile should \
-        be averaged.
+    score_average : bool, optional, default = True
+        specifies whether scores for each quantile should be averaged. 
 
     alpha (optional) : float, list or np.ndarray, specifies what quantiles to \
         evaluate metric at.
@@ -332,14 +336,14 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     def __init__(
         self,
         multioutput="uniform_average",
-        score_average=False,
+        score_average=True,
         alpha=None,
     ):
         name = "PinballLoss"
         self.score_average = score_average
         self.alpha = self._check_alpha(alpha)
         self.metric_args = {"alpha": alpha}
-        super().__init__(name=name, multioutput=multioutput)
+        super().__init__(name=name, multioutput=multioutput, score_average=score_average)
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
         alpha = self.alpha
@@ -412,3 +416,121 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         params1 = {}
         params2 = {"alpha": [0.1, 0.5, 0.9]}
         return [params1, params2]
+
+
+class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
+    """Evaluate the pinball loss at all quantiles given in data.
+
+    Parameters
+    ----------
+    multioutput : string "uniform_average" or "raw_values" determines how\
+        multioutput results will be treated.
+    """
+
+    _tags = {
+        "scitype:y_pred": "pred_interval",
+        "lower_is_better": FALSE,
+    }
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+    ):
+        name = "EmpiricalCoverage"
+        super().__init__(name=name, multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        """Logic for finding the metric evaluated at each index.
+
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+            (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how \
+            multioutput results will be treated.
+        """
+        lower = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "lower"].to_numpy()
+        upper = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "upper"].to_numpy()
+
+        if not isinstance(y_true, np.ndarray):
+            y_true = y_true.to_numpy()
+
+        y_true_np = y_true.reshape(-1, 1)
+        
+        truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
+
+        out_df = pd.DataFrame(truth_array)
+
+        out_df.columns = y_pred.columns.get_level_values(1).unique()
+
+        return out_df
+
+    @classmethod
+    def get_test_params(self):
+        """Retrieve test parameters."""
+        params1 = {}
+        return [params1]
+
+
+class ConstraintViolation(_BaseProbaForecastingErrorMetric):
+    """Evaluate the pinball loss at all quantiles given in data.
+
+    Parameters
+    ----------
+    multioutput : string "uniform_average" or "raw_values" determines how\
+        multioutput results will be treated.
+    """
+
+    _tags = {
+        "scitype:y_pred": "pred_interval",
+        "lower_is_better": TRUE,
+    }
+
+    def __init__(
+        self,
+        multioutput="uniform_average",
+    ):
+        name = "ConstraintViolation"
+        super().__init__(name=name, multioutput=multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
+        """Logic for finding the metric evaluated at each index.
+
+        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
+            (fh, n_outputs) where fh is the forecasting horizon
+            Ground truth (correct) target values.
+
+        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
+            (fh, n_outputs)  where fh is the forecasting horizon
+            Forecasted values.
+
+        multioutput : string "uniform_average" or "raw_values" determines how \
+            multioutput results will be treated.
+        """
+        lower = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "lower"].to_numpy()
+        upper = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "upper"].to_numpy()
+
+        if not isinstance(y_true, np.ndarray):
+            y_true = y_true.to_numpy()
+
+        y_true_np = y_true.reshape(-1, 1)
+
+        int_distance = ((y_true_np < lower).astype(int) * abs(lower - y_true_np)) + ((y_true_np > upper).astype(int) * abs(y_true_np - upper))
+
+        out_df = pd.DataFrame(int_distance)
+
+        out_df.columns = y_pred.columns.get_level_values(1).unique()
+
+        return out_df
+
+    @classmethod
+    def get_test_params(self):
+        """Retrieve test parameters."""
+        params1 = {}
+        return [params1]
+
+
