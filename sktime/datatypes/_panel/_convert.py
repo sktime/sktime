@@ -713,8 +713,8 @@ def from_multi_index_to_nested(
     multi_ind_dataframe : pd.DataFrame
         Input multi-indexed pandas DataFrame
 
-    instance_index_name : str
-        The name of multi-index level corresponding to the DataFrame's instances
+    instance_index_name : int or str
+        Index or name of multi-index level corresponding to the DataFrame's instances
 
     cells_as_numpy : bool, default = False
         If True, then nested cells contain NumPy array
@@ -763,9 +763,7 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(obj, store=None):
 
-    return from_multi_index_to_nested(
-        multi_ind_dataframe=obj, instance_index="instances"
-    )
+    return from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=0)
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
