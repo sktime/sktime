@@ -193,7 +193,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         return Xt
 
 
-class ColumnConcatenator(_PanelToPanelTransformer):
+class ColumnConcatenator(BaseTransformer):
     """Concatenate multivariate series to a long univariate series.
 
     Transformer that concatenates multivariate time series/panel data
