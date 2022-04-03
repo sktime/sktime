@@ -1714,10 +1714,10 @@ def _stdp(X):
             for value in instance:
                 num_values += 1
                 sum += value
-                sum_sq += value ** 2  # todo missing values NaN messes
+                sum_sq += value**2  # todo missing values NaN messes
                 # this up!
     mean = sum / num_values
-    stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
+    stdp = np.math.sqrt(sum_sq / num_values - mean**2)
     return stdp
 
 
