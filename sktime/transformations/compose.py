@@ -604,41 +604,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         return Xt
 
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform X and return a transformed version.
-
-        private _inverse_transform containing core logic, called from transform
-
-        Parameters
-        ----------
-        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        # retrieve fitted transformers, apply to the new data individually
-        transformers = self._get_estimator_list(self.transformer_list_)
-        if not self.get_tag("fit_is_empty", False):
-            Xt_list = [trafo.inverse_transform(X, y) for trafo in transformers]
-        else:
-            Xt_list = [trafo.fit(X, y).fit_transform(X, y) for trafo in transformers]
-
-        transformer_names = self._get_estimator_names(self.transformer_list_)
-
-        Xt = pd.concat(
-            Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
-        )
-
-        if self.flatten_transform_index:
-            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
-            Xt.columns = flat_index
-
-        return Xt
-
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.
 
