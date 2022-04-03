@@ -25,6 +25,28 @@ VALID_INDEX_TYPES = (
     pd.DatetimeIndex,
     pd.TimedeltaIndex,
 )
+RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
+ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
+assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
+assert set(ABSOLUTE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
+
+
+def is_integer_index(x) -> bool:
+    """Check that the input is an integer pd.Index."""
+    return isinstance(x, pd.Index) and x.is_integer()
+
+
+def is_in_valid_index_types(x) -> bool:
+    """Check that the input type belongs to the valid index types."""
+    return isinstance(x, VALID_INDEX_TYPES) or is_integer_index(x)
+
+
+def is_in_valid_relative_index_types(x) -> bool:
+    return isinstance(x, RELATIVE_INDEX_TYPES) or is_integer_index(x)
+
+
+def is_in_valid_absolute_index_types(x) -> bool:
+    return isinstance(x, ABSOLUTE_INDEX_TYPES) or is_integer_index(x)
 
 
 def _check_is_univariate(y, var_name="input"):

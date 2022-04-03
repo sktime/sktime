@@ -109,11 +109,12 @@ def test_fh(index_type, fh_type, is_relative, steps):
     _assert_index_equal(fh_relative, fh.to_relative(cutoff).to_pandas())
     assert fh.to_relative(cutoff).is_relative
 
-    if fh_indexer is not None:
+    if steps.dtype in int_types:
         # check index-like representation
         _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
     else:
-        assert fh.to_indexer(cutoff) is None
+        with pytest.raises(NotImplementedError):
+            fh.to_indexer(cutoff)
 
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
@@ -133,7 +134,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
 
 def test_fh_method_delegation():
-    """Test ForecastinHorizon delegated methods."""
+    """Test ForecastingHorizon delegated methods."""
     fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)

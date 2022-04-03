@@ -20,7 +20,7 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES
+from sktime.utils.validation.series import VALID_INDEX_TYPES, is_integer_index
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
@@ -444,11 +444,16 @@ class ForecastingHorizon:
             Indexer.
         """
         if from_cutoff:
-            try:
-                return self.to_relative(cutoff).to_pandas() - 1
-            except TypeError:
+            relative_index = self.to_relative(cutoff).to_pandas()
+            if is_integer_index(relative_index):
+                return relative_index - 1
+            else:
                 # What does indexer mean if fh is timedelta?
-                return None
+                msg = (
+                    "The indexer for timedelta-like forecasting horizon "
+                    "is not yet implemented"
+                )
+                raise NotImplementedError(msg)
         else:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]
