@@ -271,18 +271,6 @@ class _RowTransformer(BaseTransformer):
         """Update with the data."""
         return self.transformer_._update(*args, **kwargs)
 
-    def get_params(self, deep=True):
-        """Get parameters."""
-        params = self.transformer_.get_params(deep=deep)
-        params.update({"check_transformer": self.check_transformer})
-        return params
-
-    def set_params(self, **kwargs):
-        """Set parameters."""
-        if "check_transformer" in kwargs.keys():
-            self.check_transformer = kwargs.pop("check_transformer")
-        return self.transformer_.set_params(**kwargs)
-
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator."""
