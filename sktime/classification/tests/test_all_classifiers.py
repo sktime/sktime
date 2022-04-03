@@ -53,13 +53,18 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:multivariate"):
             return None
 
-        error_msg = "X must be univariate"
+        error_msg = "multivariate series"
 
         scenario = ClassifierFitPredictMultivariate()
 
         # check if estimator raises appropriate error message
-        with pytest.raises(ValueError, match=error_msg):
-            scenario.run(estimator_instance, method_sequence=["fit"])
+        #   composites will raise a warning, non-composites an exception
+        if estimator_instance.is_composite():
+            with pytest.warns(UserWarning, match=error_msg):
+                scenario.run(estimator_instance, method_sequence=["fit"])
+        else:
+            with pytest.raises(ValueError, match=error_msg):
+                scenario.run(estimator_instance, method_sequence=["fit"])
 
     def test_classifier_output(self, estimator_instance, scenario):
         """Test classifier outputs the correct data types and values.
