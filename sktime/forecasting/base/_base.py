@@ -1681,7 +1681,7 @@ class BaseForecaster(BaseEstimator):
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
             # if was univariate & unnamed variable, replace default
-            if var_names == ["Quantiles"]:
+            if len(var_names) == 1 and var_names == ["Quantiles"]:
                 var_names = ["Coverage"]
             # idx returned by _predict_interval should be
             #   3-level MultiIndex with variable names, coverage, lower/upper
@@ -1757,7 +1757,7 @@ class BaseForecaster(BaseEstimator):
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
             # if was univariate & unnamed variable, replace default
-            if var_names == ["Coverage"]:
+            if len(var_names) == 1 and var_names == ["Coverage"]:
                 var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
