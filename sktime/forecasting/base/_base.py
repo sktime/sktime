@@ -91,6 +91,7 @@ class BaseForecaster(BaseEstimator):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     def __init__(self):
@@ -540,11 +541,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    def predict_proba(
-        self,
-        fh=None,
-        X=None,
-    ):
+    def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         Note: currently only implemented for Series (non-panel, non-hierarchical) y.
@@ -605,7 +602,7 @@ class BaseForecaster(BaseEstimator):
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_dist = self._predict_proba(fh=fh, X=X_inner)
+        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
 
         return pred_dist
 
@@ -1684,7 +1681,7 @@ class BaseForecaster(BaseEstimator):
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
             # if was univariate & unnamed variable, replace default
-            if var_names == ["Quantiles"]:
+            if len(var_names) == 1 and var_names == ["Quantiles"]:
                 var_names = ["Coverage"]
             # idx returned by _predict_interval should be
             #   3-level MultiIndex with variable names, coverage, lower/upper
@@ -1760,7 +1757,7 @@ class BaseForecaster(BaseEstimator):
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
             # if was univariate & unnamed variable, replace default
-            if var_names == ["Coverage"]:
+            if len(var_names) == 1 and var_names == ["Coverage"]:
                 var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
@@ -1865,7 +1862,7 @@ class BaseForecaster(BaseEstimator):
 
     # todo: does not work properly for multivariate or hierarchical
     #   still need to implement this - once interface is consolidated
-    def _predict_proba(self, fh, X):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba
