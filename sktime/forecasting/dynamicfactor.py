@@ -117,6 +117,12 @@ class DynamicFactor(_StatsModelsAdapter):
         If used, some features of the results object will not be available
         (including smoothed results and in-sample prediction),
         although out-of-sample forecasting is possible.
+
+    References
+    ----------
+    [1] Lütkepohl, Helmut. 2007. New Introduction to Multiple Time Series Analysis.
+    Berlin: Springer.
+
     """
 
     _tags = {
