@@ -11,7 +11,6 @@ from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.datatypes._panel._convert import from_2d_array_to_nested
-
 from sktime.transformations.base import (
     BaseTransformer,
     _PanelToPanelTransformer,
