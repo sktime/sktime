@@ -5,11 +5,11 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 
-from sktime.datatypes import MTYPE_REGISTER, SCITYPE_LIST
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_dict, check_is_mtype
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._registry import SCITYPE_LIST, scitype_to_mtype
 
 SCITYPES = SCITYPE_LIST
 
@@ -17,28 +17,6 @@ SCITYPES = SCITYPE_LIST
 # alignment is excluded since mtypes can be ambiguous
 #   (indices could be both loc or iloc when integers)
 SCITYPES_AMBIGUOUS_MTYPE = ["Alignment"]
-
-
-def _get_all_mtypes_for_scitype(scitype):
-    """Return list of all mtypes for scitype.
-
-    Parameters
-    ----------
-    scitype : str - scitype
-
-    Returns
-    -------
-    mtypes : list of str - list of mtypes for scitype
-    """
-    if scitype not in SCITYPE_LIST:
-        raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
-    mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
-
-    if len(mtypes) == 0:
-        # if there are no mtypes, this must have been reached by mistake/bug
-        raise RuntimeError("no mtypes defined for scitype " + scitype)
-
-    return mtypes
 
 
 def _generate_scitype_mtype_combinations():
@@ -55,7 +33,7 @@ def _generate_scitype_mtype_combinations():
 
     for scitype in SCITYPES:
 
-        mtypes = _get_all_mtypes_for_scitype(scitype)
+        mtypes = scitype_to_mtype(scitype)
 
         for mtype in mtypes:
             sci_mtype_tuples += [(scitype, mtype)]
@@ -219,7 +197,7 @@ def test_check_negative(scitype, mtype):
     if scitype in SCITYPES_AMBIGUOUS_MTYPE:
         return None
 
-    mtypes = _get_all_mtypes_for_scitype(scitype)
+    mtypes = scitype_to_mtype(scitype)
     fixtures = dict()
 
     for other_mtype in mtypes:
