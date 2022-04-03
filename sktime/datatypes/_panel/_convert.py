@@ -798,7 +798,8 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         raise ValueError("Input DataFrame is not a nested DataFrame")
 
     # this contains the right values, but does not have the right index
-    X_mi = X.explode(list(X.columns))
+    #   need convert_dtypes or dtypes will always be object
+    X_mi = X.explode(list(X.columns)).convert_dtypes()
 
     # create the right MultiIndex and assign to X_mi
     idx_df = X.applymap(lambda x: x.index).explode(list(X.columns))
