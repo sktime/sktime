@@ -10,7 +10,6 @@ __all__ = ["Imputer"]
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
@@ -28,7 +27,8 @@ class Imputer(BaseTransformer):
     Parameters
     ----------
     method : str, default="drift"
-        Method to fill the missing values values.
+        Method to fill the missing values values. All methods that actually fit
+        something are doing the fit only on the data given in fit().
 
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
         * "linear" : linear interpolation, by pd.Series.interpolate()
@@ -125,6 +125,9 @@ class Imputer(BaseTransformer):
             self._mean = X.mean()
         elif self.method == "median":
             self._median = X.median()
+        elif self.method == "random":
+            # save train data to get min() and max() in transform() for each column
+            self._X = X.copy()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -153,13 +156,10 @@ class Imputer(BaseTransformer):
             return X
 
         if self.method == "random":
-            if isinstance(X, pd.DataFrame):
-                for col in X:
-                    X[col] = X[col].apply(
-                        lambda i: self._get_random(X[col]) if np.isnan(i) else i
-                    )
-            else:
-                X = X.apply(lambda i: self._get_random(X) if np.isnan(i) else i)
+            for col in X.columns:
+                X[col] = X[col].apply(
+                    lambda i: self._get_random(col) if np.isnan(i) else i
+                )
         elif self.method == "constant":
             X = X.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
@@ -213,20 +213,25 @@ class Imputer(BaseTransformer):
         else:
             pass
 
-    def _get_random(self, X):
+    def _get_random(self, col):
         """Create a random int or float value.
 
-        :param X: Series
-        :type X: pd.DataFrame
-        :return: Random int or float between min and max of X
-        :rtype: int/float
+        Parameters
+        ----------
+        col : str
+            Column name
+
+        Returns
+        -------
+        int/float
+            Random int or float between min and max of X
         """
         rng = check_random_state(self.random_state)
         # check if series contains only int or int-like values (e.g. 3.0)
-        if (X.dropna() % 1 == 0).all():
-            return rng.randint(X.min(), X.max())
+        if (self._X[col].dropna() % 1 == 0).all():
+            return rng.randint(self._X[col].min(), self._X[col].max())
         else:
-            return rng.uniform(X.min(), X.max())
+            return rng.uniform(self._X[col].min(), self._X[col].max())
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
