@@ -7,6 +7,8 @@ __author__ = ["aiwalter"]
 __all__ = ["Imputer"]
 
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -66,10 +68,10 @@ class Imputer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": ["pd.DataFrame"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "handles-missing-data": True,
         "skip-inverse-transform": True,
         "univariate-only": False,
@@ -91,6 +93,39 @@ class Imputer(BaseTransformer):
         self.random_state = random_state
         super(Imputer, self).__init__()
 
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self._check_method()
+        # all methods of Imputer that are actually doing a fit are
+        # implemented here. Some methods dont need fit, so they are just
+        # impleented in _transform
+        if self.method in ["drift", "forecaster"]:
+            # save train data as needed for multivariate fitting int _fit()
+            self._X = X.copy()
+            if self.method == "drift":
+                self._forecaster = PolynomialTrendForecaster(degree=1)
+            elif self.method == "forecaster":
+                self._forecaster = clone(self.forecaster)
+        elif self.method == "mean":
+            self._mean = X.mean()
+        elif self.method == "median":
+            self._median = X.median()
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -105,49 +140,54 @@ class Imputer(BaseTransformer):
 
         Returns
         -------
-        Z : pd.Series or pd.DataFrame, same type as X
+        X : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
-        self._check_method()
-        Z = X.copy()
+        X = X.copy()
 
         # replace missing_values with np.nan
         if self.missing_values:
-            Z = Z.replace(to_replace=self.missing_values, value=np.nan)
+            X = X.replace(to_replace=self.missing_values, value=np.nan)
 
-        if not _has_missing_values(Z):
-            return Z
+        if not _has_missing_values(X):
+            return X
 
         if self.method == "random":
-            if isinstance(Z, pd.DataFrame):
-                for col in Z:
-                    Z[col] = Z[col].apply(
-                        lambda i: self._get_random(Z[col]) if np.isnan(i) else i
+            if isinstance(X, pd.DataFrame):
+                for col in X:
+                    X[col] = X[col].apply(
+                        lambda i: self._get_random(X[col]) if np.isnan(i) else i
                     )
             else:
-                Z = Z.apply(lambda i: self._get_random(Z) if np.isnan(i) else i)
+                X = X.apply(lambda i: self._get_random(X) if np.isnan(i) else i)
         elif self.method == "constant":
-            Z = Z.fillna(value=self.value)
+            X = X.fillna(value=self.value)
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
-            Z = Z.fillna(method=self.method)
+            X = X.fillna(method=self.method)
         elif self.method == "drift":
-            forecaster = PolynomialTrendForecaster(degree=1)
-            Z = _impute_with_forecaster(forecaster, Z)
+            X = self._impute_with_forecaster(X)
         elif self.method == "forecaster":
-            forecaster = clone(self.forecaster)
-            Z = _impute_with_forecaster(forecaster, Z)
+            X = self._impute_with_forecaster(X)
         elif self.method == "mean":
-            Z = Z.fillna(value=Z.mean())
+            X = X.fillna(value=self._mean)
         elif self.method == "median":
-            Z = Z.fillna(value=Z.median())
+            X = X.fillna(value=self._median)
         elif self.method in ["nearest", "linear"]:
-            Z = Z.interpolate(method=self.method)
+            if self.method == "linear":
+                # TODO v0.13.0: Remove method "linear"
+                warn(
+                    """Imputer method \"linear\" is deprecated and will be removed in release
+                    v.0.13.0. Please use method \"drift\" instead for linear imputation.
+                    """,
+                    FutureWarning,
+                )
+            X = X.interpolate(method=self.method)
         else:
             raise ValueError(f"`method`: {self.method} not available.")
         # fill first/last elements of series,
         # as some methods (e.g. "linear") cant impute those
-        Z = Z.fillna(method="ffill").fillna(method="backfill")
-        return Z
+        X = X.fillna(method="ffill").fillna(method="backfill")
+        return X
 
     def _check_method(self):
         if (
@@ -173,20 +213,20 @@ class Imputer(BaseTransformer):
         else:
             pass
 
-    def _get_random(self, Z):
+    def _get_random(self, X):
         """Create a random int or float value.
 
-        :param Z: Series
-        :type Z: pd.Series
-        :return: Random int or float between min and max of Z
+        :param X: Series
+        :type X: pd.DataFrame
+        :return: Random int or float between min and max of X
         :rtype: int/float
         """
         rng = check_random_state(self.random_state)
         # check if series contains only int or int-like values (e.g. 3.0)
-        if (Z.dropna() % 1 == 0).all():
-            return rng.randint(Z.min(), Z.max())
+        if (X.dropna() % 1 == 0).all():
+            return rng.randint(X.min(), X.max())
         else:
-            return rng.uniform(Z.min(), Z.max())
+            return rng.uniform(X.min(), X.max())
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -209,40 +249,34 @@ class Imputer(BaseTransformer):
         """
         return {"method": "mean"}
 
+    def _impute_with_forecaster(self, X):
+        """Use a given forecaster for imputation by in-sample predictions.
 
-def _impute_with_forecaster(forecaster, Z):
-    """Use a given forecaster for imputation by in-sample predictions.
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Series to impute.
 
-    Parameters
-    ----------
-    forecaster: Forecaster
-        Forecaster to use for imputation
-    Z : pd.Series or pd.DataFrame
-        Series to impute.
+        Returns
+        -------
+        Xt : pd.DataFrame
+            Series with imputed values.
+        """
+        for col in X.columns:
+            if _has_missing_values(X[col]):
+                # define fh based on index of missing values
+                na_index = X[col].index[X[col].isna()]
+                fh = ForecastingHorizon(values=na_index, is_relative=False)
 
-    Returns
-    -------
-    zt : pd.Series or pd.DataFrame
-        Series with imputed values.
-    """
-    if isinstance(Z, pd.Series):
-        series = [Z]
-    elif isinstance(Z, pd.DataFrame):
-        series = [Z[column] for column in Z]
+                # fill NaN before fitting with ffill and backfill (heuristic)
+                self._forecaster.fit(
+                    y=self._X[col].fillna(method="ffill").fillna(method="backfill")
+                )
 
-    for z in series:
-        if _has_missing_values(z):
-            # define fh based on index of missing values
-            na_index = z.index[z.isna()]
-            fh = ForecastingHorizon(values=na_index, is_relative=False)
-
-            # fill NaN before fitting with ffill and backfill (heuristic)
-            forecaster.fit(y=z.fillna(method="ffill").fillna(method="backfill"), fh=fh)
-
-            # replace missing values with predicted values
-            z[na_index] = forecaster.predict()
-    return Z
+                # replace missing values with predicted values
+                X[col][na_index] = self._forecaster.predict(fh=fh)
+        return X
 
 
-def _has_missing_values(Z):
-    return Z.isnull().to_numpy().any()
+def _has_missing_values(X):
+    return X.isnull().to_numpy().any()
