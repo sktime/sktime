@@ -27,6 +27,19 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         """Set estimator parameters."""
         raise NotImplementedError("abstract method")
 
+    def is_composite(self):
+        """Check if the object is composite.
+
+        A composite object is an object which contains objects, as parameters.
+        Called on an instance, since this may differ by instance.
+
+        Returns
+        -------
+        composite: bool, whether self contains a parameter which is BaseObject
+        """
+        # children of this class are always composite
+        return True
+
     def _get_params(self, attr, deep=True):
         out = super().get_params(deep=deep)
         if not deep:

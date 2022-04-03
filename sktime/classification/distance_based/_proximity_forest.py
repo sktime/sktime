@@ -1232,6 +1232,30 @@ class ProximityTree(BaseClassifier):
         normalize(distribution, copy=False, norm="l1")
         return distribution
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {"max_depth": 2, "n_stump_evaluations": 1}
+
 
 class ProximityForest(BaseClassifier):
     """Proximity Forest class.
@@ -1534,11 +1558,11 @@ class ProximityForest(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a string, will always return the
-            `"default"` set.
+            special parameters are defined for a value, will return `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
-            previously recorded results.
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -1549,9 +1573,9 @@ class ProximityForest(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            return {"n_estimators": 3}
+            return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
-            return {"n_estimators": 2}
+            return {"n_estimators": 2, "max_depth": 2, "n_stump_evaluations": 1}
 
 
 # start of util functions
@@ -1693,10 +1717,10 @@ def _stdp(X):
             for value in instance:
                 num_values += 1
                 sum += value
-                sum_sq += value ** 2  # todo missing values NaN messes
+                sum_sq += value**2  # todo missing values NaN messes
                 # this up!
     mean = sum / num_values
-    stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
+    stdp = np.math.sqrt(sum_sq / num_values - mean**2)
     return stdp
 
 

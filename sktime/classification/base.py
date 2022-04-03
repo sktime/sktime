@@ -27,6 +27,7 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
 from abc import ABC, abstractmethod
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -264,11 +265,11 @@ class BaseClassifier(BaseEstimator, ABC):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a string, will always return the
-            `"default"` set.
+            special parameters are defined for a value, will return `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
-            previously recorded results.
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -408,23 +409,35 @@ class BaseClassifier(BaseEstimator, ABC):
         allow_multivariate = self.get_tag("capability:multivariate")
         allow_missing = self.get_tag("capability:missing_values")
         allow_unequal = self.get_tag("capability:unequal_length")
+
+        self_name = type(self).__name__
+
+        # identify problems, mismatch of capability and inputs
+        problems = []
         if missing and not allow_missing:
-            raise ValueError(
-                "The data has missing values, this classifier cannot handle missing "
-                "values"
-            )
+            problems += ["missing values"]
         if multivariate and not allow_multivariate:
-            # this error message could be more informative, but it is for backward
-            # compatibility with the testing functions
-            raise ValueError(
-                "X must be univariate, this classifier cannot deal with "
-                "multivariate input."
-            )
+            problems += ["multivariate series"]
         if unequal and not allow_unequal:
-            raise ValueError(
-                "The data has unequal length series, this classifier cannot handle "
-                "unequal length series"
-            )
+            problems += ["unequal length series"]
+
+        # construct error message
+        problems_and = " and ".join(problems)
+        problems_or = " or ".join(problems)
+        msg = (
+            f"Data seen by {self_name} instance has {problems_and}, "
+            f"but this {self_name} instance cannot handle {problems_or}. "
+            f"Calls with {problems_or} may result in error or unreliable results."
+        )
+
+        # raise exception or warning with message
+        # if self is composite, raise a warning, since passing could be fine
+        #   see discussion in PR 2366 why
+        if len(problems) > 0:
+            if self.is_composite():
+                warn(msg)
+            else:
+                raise ValueError(msg)
 
     def _convert_X(self, X):
         """Convert equal length series from DataFrame to numpy array or vice versa.

@@ -419,11 +419,11 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a string, will always return the
-            `"default"` set.
+            special parameters are defined for a value, will return `"default"` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
-            previously recorded results.
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -452,6 +452,6 @@ def _fisher_score(X, y, classes, class_counts):
         xy_std = np.std(X_cls)
 
         a += class_counts[i] * (xy_mean - x_mean) ** 2
-        b += class_counts[i] * xy_std ** 2
+        b += class_counts[i] * xy_std**2
 
     return 0 if b == 0 else a / b
