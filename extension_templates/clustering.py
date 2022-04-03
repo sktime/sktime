@@ -16,6 +16,7 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by testing clustering/tests
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting            - _fit(self, X)
@@ -145,8 +146,15 @@ class MyClusterer(BaseClusterer):
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for clusterers.
 
         Returns
         -------
@@ -159,12 +167,18 @@ class MyClusterer(BaseClusterer):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameter choice should cover internal cases well.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
         #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
@@ -174,5 +188,14 @@ class MyClusterer(BaseClusterer):
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
+        # return params
         #
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
+        #     params = {"est": value1, "parama": value2}
+        #     return params
+        #
+        # # "default" params - always returned except for "special_param_set" value
+        # params = {"est": value3, "parama": value4}
         # return params
