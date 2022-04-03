@@ -152,8 +152,9 @@ GOOD_ABSOLUTE_INPUT_ARGS = (
 @pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
 def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
-    output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert is_in_valid_index_types(output) or is_integer_index(output)
+    assert is_in_valid_index_types(
+        ForecastingHorizon(arg, is_relative=False).to_pandas()
+    )
 
 
 GOOD_RELATIVE_INPUT_ARGS = [

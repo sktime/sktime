@@ -107,7 +107,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if is_in_valid_index_types(values) or is_integer_index(values):
+    if is_in_valid_index_types(values):
         pass
 
     # convert single integer or timedelta or dateoffset
