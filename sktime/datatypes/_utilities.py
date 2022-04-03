@@ -23,7 +23,7 @@ def get_time_index(X):
     in one of the following sktime mtype specifications for Series, Panel, Hierarchical:
     pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, nested_univ, pd_multiindex_hier
     assumes all time series have equal length and equal index set
-    will *not* work for numpy3D, list-of-df, pd-wide, pd-long
+    will *not* work for list-of-df, pd-wide, pd-long
 
     Returns
     -------
@@ -33,20 +33,19 @@ def get_time_index(X):
     # assumes that all samples share the same the time index, only looks at
     # first row
     if isinstance(X, (pd.DataFrame, pd.Series)):
+        # pd-multiindex or pd_multiindex_hier
         if isinstance(X.index, pd.MultiIndex):
             first_inst = X.index.to_flat_index()[0][:-1]
             return X.loc[first_inst].index
-        elif isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, 0], pd.DataFrame):
-                return _get_index(X.iloc[0, 0])
-            else:
-                return X.index
-        elif isinstance(X, pd.Series):
+        # nested_univ
+        elif isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0], pd.DataFrame):
+            return _get_index(X.iloc[0, 0])
+        # pd.Series or pd.DataFrame
+        else:
             return X.index
-
+    # numpy3D and np.ndarray
     elif isinstance(X, np.ndarray):
         return _get_index(X)
-
     else:
         raise ValueError(
             f"X must be a pandas DataFrame or Series, but found: {type(X)}"
