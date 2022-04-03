@@ -37,9 +37,12 @@ def get_time_index(X):
             first_inst = X.index.to_flat_index()[0][:-1]
             return X.loc[first_inst].index
         elif isinstance(X, pd.DataFrame):
-            return _get_index(X.iloc[0, 0])
+            if isinstance(X.iloc[0, 0], pd.DataFrame):
+                return _get_index(X.iloc[0, 0])
+            else:
+                return X.index
         elif isinstance(X, pd.Series):
-            return _get_index(X.iloc[0])
+            return X.index
 
     elif isinstance(X, np.ndarray):
         return _get_index(X)
