@@ -1869,7 +1869,6 @@ def load_tsf_to_dataframe(
             )
         )
 
-        # convert to multiinidex mtype
         if return_type != "default_tsf":
             loaded_data = _convert_tsf_to_hierarchical(
                 loaded_data, metadata, value_column_name=value_column_name
