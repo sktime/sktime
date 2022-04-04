@@ -170,7 +170,7 @@ class SlopeTransformer(BaseTransformer):
             m = 0
         else:
             # Gradient is defined as (w+sqrt(w^2+r^2))/r
-            m = (w + math.sqrt(w ** 2 + r ** 2)) / r
+            m = (w + math.sqrt(w**2 + r**2)) / r
 
         return m
 
