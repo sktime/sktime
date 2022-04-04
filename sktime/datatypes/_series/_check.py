@@ -42,7 +42,7 @@ import pandas as pd
 
 from sktime.utils.validation.series import is_in_valid_index_types
 
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 # whether the checks insist on freq attribute is set
 FREQ_SET_CHECK = False
@@ -74,7 +74,7 @@ def check_pddataframe_series(obj, return_metadata=False, var_name="obj"):
     if not is_in_valid_index_types(index):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
-            f"one of {VALID_INDEX_TYPES} instead."
+            f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
         return ret(False, msg, None, return_metadata)
 
@@ -136,7 +136,7 @@ def check_pdseries_series(obj, return_metadata=False, var_name="obj"):
     if not is_in_valid_index_types(index):
         msg = (
             f"{type(index)} is not supported for {var_name}, use "
-            f"one of {VALID_INDEX_TYPES} instead."
+            f"one of {VALID_INDEX_TYPES} or integer index instead."
         )
         return ret(False, msg, None, return_metadata)
 
@@ -217,7 +217,7 @@ def _index_equally_spaced(index):
     equally_spaced: bool - whether index is equally spaced
     """
     if not is_in_valid_index_types(index):
-        raise TypeError(f"index must be one of {VALID_INDEX_TYPES}")
+        raise TypeError(f"index must be one of {VALID_INDEX_TYPES} or integer index")
 
     # empty and single element indices are equally spaced
     if len(index) < 2:
