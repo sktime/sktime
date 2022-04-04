@@ -207,7 +207,7 @@ def check_time_index(
 
     # We here check for type equality because isinstance does not
     # work reliably because index types inherit from each other.
-    if not type(index) in VALID_INDEX_TYPES:
+    if not is_in_valid_index_types(index):
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
             f"one of {VALID_INDEX_TYPES} instead."
@@ -216,7 +216,7 @@ def check_time_index(
     if enforce_index_type and type(index) is not enforce_index_type:
         raise NotImplementedError(
             f"{type(index)} is not supported for {var_name}, use "
-            f"type: {enforce_index_type} instead."
+            f"type: {enforce_index_type} or integer pd.Index instead."
         )
 
     # Check time index is ordered in time
@@ -296,11 +296,6 @@ def check_equal_time_index(*ys, mode="equal"):
             raise ValueError(msg)
 
 
-def _is_int_index(index):
-    """Check if index type is one of pd.RangeIndex or pd.Int64Index."""
-    return type(index) in (pd.Int64Index, pd.RangeIndex)
-
-
 def check_consistent_index_type(a, b):
     """Check that two indices have consistent types.
 
@@ -321,8 +316,8 @@ def check_consistent_index_type(a, b):
         "series have the same index type."
     )
 
-    if _is_int_index(a):
-        if not _is_int_index(b):
+    if is_integer_index(a):
+        if not is_integer_index(b):
             raise TypeError(msg)
 
     else:

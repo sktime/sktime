@@ -20,13 +20,15 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES, is_integer_index
+from sktime.utils.validation.series import (
+    VALID_INDEX_TYPES,
+    is_in_valid_absolute_index_types,
+    is_in_valid_index_types,
+    is_in_valid_relative_index_types,
+    is_integer_index,
+)
 
-RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
-ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
-assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
-assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
-VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index, pd.Timedelta)
+VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -95,19 +97,20 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if type(values) in VALID_INDEX_TYPES:
+    if is_in_valid_index_types(values):
         pass
 
-    # convert single integer to pandas index, no further checks needed
+    # convert single integer or timedelta or dateoffset
+    # to pandas index, no further checks needed
     elif is_int(values):
-        return pd.Int64Index([values], dtype=int)
+        values = pd.Index([values], dtype=int)
 
     elif is_timedelta_or_date_offset(values):
-        return pd.Index([values])
+        values = pd.Index([values])
 
     # convert np.array or list to pandas index
     elif is_array(values) and array_is_int(values):
-        values = pd.Int64Index(values, dtype=int)
+        values = pd.Index(values, dtype=int)
 
     elif is_array(values) and array_is_timedelta_or_date_offset(values):
         values = pd.Index(values)
@@ -181,17 +184,17 @@ class ForecastingHorizon:
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
-            if type(values) in RELATIVE_TYPES:
+            if is_in_valid_relative_index_types(values):
                 is_relative = True
-            elif type(values) in ABSOLUTE_TYPES:
+            elif is_in_valid_absolute_index_types(values):
                 is_relative = False
             else:
                 raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
-            if not type(values) in RELATIVE_TYPES:
+            if not is_in_valid_relative_index_types(values):
                 raise TypeError(error_msg)
         else:
-            if not type(values) in ABSOLUTE_TYPES:
+            if not is_in_valid_absolute_index_types(values):
                 raise TypeError(error_msg)
 
         self._values = values
