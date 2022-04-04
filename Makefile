@@ -63,18 +63,16 @@ nb: clean
 	python3 -m venv .venv
 	. .venv/bin/activate && python -m pip install .[all_extras,binder] && ./build_tools/run_examples.sh
 
-dockerbuild:
-	DOCKER_BUILDKIT=1 docker build -t sktime -f build_tools/docker/Dockerfile .
-
 dockertest:
 
 ifeq ($(pyversion),3.7)
 	docker build -t sktime -f build_tools/docker/py37.dockerfile .
-else ifeq ($(pyversion),3.8)
-	docker build -t sktime -f build_tools/docker/py38.dockerfile .
 else ifeq ($(pyversion),3.9)
 	docker build -t sktime -f build_tools/docker/py39.dockerfile .
-else
+else ifeq ($(pyversion),3.10)
 	docker build -t sktime -f build_tools/docker/py310.dockerfile .
+else
+	docker build -t sktime -f build_tools/docker/py38.dockerfile .
 endif
+
 	docker run -it --name sktime sktime bash -c "make test"
