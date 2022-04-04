@@ -141,24 +141,27 @@ class DynamicFactor(_StatsModelsAdapter):
         self,
         k_factors,
         factor_order,
-        error_cov_type,
-        error_order,
-        error_var,
-        enforce_stationarity,
-        start_params,
-        transformed,
-        includes_fixed,
-        cov_type,
-        cov_kwds,
-        maxiter,
-        full_output,
-        disp,
-        callback,
-        return_params,
-        optim_score,
-        optim_complex_step,
-        optim_hessian,
-        low_memory,
+        exog=None,
+        error_cov_type="diagonal",
+        error_order=0,
+        error_var=False,
+        enforce_stationarity=True,
+        start_params=None,
+        transformed=True,
+        includes_fixed=False,
+        cov_type=None,
+        cov_kwds=None,
+        method="ibfgs",
+        maxiter=50,
+        full_output=1,
+        disp=5,
+        callback=None,
+        return_params=False,
+        optim_score=None,
+        optim_complex_step=None,
+        optim_hessian=None,
+        flags=None,
+        low_memory=False,
     ):
 
         self.k_factors = k_factors
@@ -172,6 +175,7 @@ class DynamicFactor(_StatsModelsAdapter):
         self.includes_fixed = includes_fixed
         self.cov_type = cov_type
         self.cov_kwds = cov_kwds
+        self.method = method
         self.maxiter = maxiter
         self.full_output = full_output
         self.disp = disp
@@ -180,6 +184,7 @@ class DynamicFactor(_StatsModelsAdapter):
         self.optim_score = optim_score
         self.optim_complex_step = optim_complex_step
         self.optim_hessian = optim_hessian
+        self.flags = flags
         self.low_memory = low_memory
 
         super(DynamicFactor, self).__init__()
@@ -211,5 +216,6 @@ class DynamicFactor(_StatsModelsAdapter):
             optim_score=self.optim_score,
             optim_complex_step=self.optim_complex_step,
             optim_hessian=self.optim_hessian,
+            flags=self.flags,
             low_memory=self.low_memory,
         )
