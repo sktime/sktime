@@ -31,7 +31,11 @@ from sktime.utils.datetime import (
     _get_intervals_count_and_unit,
     _shift,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES
+from sktime.utils.validation.series import (
+    VALID_INDEX_TYPES,
+    is_in_valid_index_types,
+    is_integer_index,
+)
 
 
 def _assert_index_equal(a, b):
@@ -49,7 +53,10 @@ def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
     # generate data
     y = make_forecasting_problem(index_type=index_type)
-    assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
+    if index_type == "int":
+        assert is_integer_index(y.index)
+    else:
+        assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
 
     # split data
     y_train, y_test = temporal_train_test_split(y, test_size=10)
@@ -59,12 +66,15 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # generate fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-    assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
+    if fh_type == "int":
+        assert is_integer_index(fh.to_pandas())
+    else:
+        assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
 
     # get expected outputs
     if isinstance(steps, int):
         steps = np.array([steps])
-    fh_relative = pd.Int64Index(steps).sort_values()
+    fh_relative = pd.Index(steps).sort_values()
     fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
     fh_indexer = fh_relative - 1
     fh_oos = fh.to_pandas()[fh_relative > 0]
@@ -102,7 +112,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
 
 def test_fh_method_delegation():
-    """Test ForecastinHorizon delegated methods."""
+    """Test ForecastingHorizon delegated methods."""
     fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)
@@ -125,10 +135,7 @@ def test_check_fh_values_bad_input_types(arg):
         ForecastingHorizon(arg)
 
 
-DUPLICATE_INPUT_ARGS = (
-    np.array([1, 2, 2]),
-    [3, 3, 1],
-)
+DUPLICATE_INPUT_ARGS = (np.array([1, 2, 2]), [3, 3, 1])
 
 
 @pytest.mark.parametrize("arg", DUPLICATE_INPUT_ARGS)
@@ -139,7 +146,7 @@ def test_check_fh_values_duplicate_input_values(arg):
 
 
 GOOD_ABSOLUTE_INPUT_ARGS = (
-    pd.Int64Index([1, 2, 3]),
+    pd.Index([1, 2, 3]),
     pd.period_range("2000-01-01", periods=3, freq="D"),
     pd.date_range("2000-01-01", periods=3, freq="M"),
     np.array([1, 2, 3]),
@@ -151,8 +158,9 @@ GOOD_ABSOLUTE_INPUT_ARGS = (
 @pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
 def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
-    output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert type(output) in VALID_INDEX_TYPES
+    assert is_in_valid_index_types(
+        ForecastingHorizon(arg, is_relative=False).to_pandas()
+    )
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
@@ -212,7 +220,7 @@ def test_coerce_duration_to_int(duration):
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
-    assert type(ret) in (pd.Int64Index, np.integer, int)
+    assert (type(ret) in (np.integer, int)) or is_integer_index(ret)
 
     # check result
     if isinstance(duration, pd.Index):
