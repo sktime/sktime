@@ -93,7 +93,7 @@ class _WindowSignatureTransform(BaseTransformer):
             for window in window_group:
                 # Signature computation step
                 signature = np.stack(
-                    [transform(x.T[window.start : window.end]) for x in data]
+                    [transform(x.T[window.start:window.end]) for x in data]
                 ).reshape(data.shape[0], -1)
                 # Rescale if specified
                 if self.rescaling == "post":
