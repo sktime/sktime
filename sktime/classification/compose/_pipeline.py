@@ -84,6 +84,9 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     >>> pipeline.fit(X_train, y_train)
     ClassifierPipeline(...)
     >>> y_pred = pipeline.predict(X_test)
+
+    Alternative construction via dunder method:
+    >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
     _tags = {
