@@ -1878,7 +1878,6 @@ def load_tsf_to_dataframe(
                 loaded_data.index.nlevels == 2
                 and return_type not in MTYPE_LIST_HIERARCHICAL
             ):
-                loaded_data.index.rename(["instances", "timepoints"], inplace=True)
                 loaded_data = convert(
                     loaded_data, from_type="pd-multiindex", to_type=return_type
                 )
@@ -1945,11 +1944,12 @@ def _convert_tsf_to_hierarchical(
     # pandas implementation of multiple column explode
     # can be removed and replaced by explode if we move to pandas version 1.3.0
     columns = [value_column_name, "timestamp"]
+    index_columns = [c for c in list(df.columns) if c not in drop_columns + columns]
     result = pd.DataFrame({c: df[c].explode() for c in columns})
     df = (
         df.drop(columns=columns + drop_columns)
         .join(result)
-        .set_index(["series_name", "timestamp"])
+        .set_index(index_columns + ["timestamp"])
     )
 
     return df
