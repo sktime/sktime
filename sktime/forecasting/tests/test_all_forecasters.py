@@ -21,7 +21,7 @@ from sktime.forecasting.tests._config import (
     TEST_FHS,
     TEST_OOS_FHS,
     TEST_STEP_LENGTHS_INT,
-    TEST_WINDOW_LENGTHS,
+    TEST_WINDOW_LENGTHS_INT,
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
@@ -47,6 +47,11 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 # names for index/fh combinations to display in tests
 index_fh_comb_names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
+
+pytest_skip_msg = (
+    "ForecastingHorizon with timedelta values "
+    "is currently experimental and not supported everywhere"
+)
 
 
 class ForecasterFixtureGenerator(BaseFixtureGenerator):
@@ -202,6 +207,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
+
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -224,6 +232,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that predict_residuals method works as expected."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
 
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
@@ -250,14 +260,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
     def test_predict_time_index_with_X(
-        self,
-        estimator_instance,
-        n_columns,
-        index_fh_comb,
-        fh_int_oos,
+        self, estimator_instance, n_columns, index_fh_comb, fh_int_oos
     ):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
 
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
@@ -284,6 +292,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that predicted time index equals fh for full in-sample predictions."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
+
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
@@ -455,7 +466,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict()
 
         fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
-        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         expected = mean_absolute_percentage_error(
             y_pred, y_test.iloc[fh_idx], symmetric=True
         )
@@ -482,7 +492,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
     def test_update_predict_predicted_index(
         self,
         estimator_instance,
