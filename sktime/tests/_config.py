@@ -27,7 +27,6 @@ from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
@@ -114,7 +113,6 @@ ESTIMATOR_TEST_PARAMS = {
     RandomIntervals: {
         "n_intervals": 3,
     },
-    TSInterpolator: {"length": 10},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
@@ -135,7 +133,10 @@ NON_STATE_CHANGING_METHODS = (
     "predict_proba",
     "decision_function",
     "transform",
-    "inverse_transform",
+    # todo: add this back
+    # escaping this, since for some estimators
+    #   the input format of inverse_transform assumes special col names
+    # "inverse_transform",
 )
 
 # The following gives a list of valid estimator base classes.

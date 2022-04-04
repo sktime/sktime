@@ -86,3 +86,18 @@ class TSInterpolator(BaseTransformer):
             follows nested_univ format
         """
         return X.applymap(self._resize_cell)
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        params = {"length": 10}
+        return params

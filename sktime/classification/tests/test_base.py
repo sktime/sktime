@@ -30,6 +30,13 @@ class _DummyClassifier(BaseClassifier):
         return self
 
 
+class _DummyComposite(_DummyClassifier):
+    """Dummy classifier for testing base class fit/predict/predict_proba."""
+
+    def __init__(self, foo):
+        self.foo = foo
+
+
 class _DummyHandlesAllInput(BaseClassifier):
     """Dummy classifier for testing base class fit/predict/predict_proba."""
 
@@ -72,9 +79,9 @@ class _DummyConvertPandas(BaseClassifier):
         return self
 
 
-multivariate_message = r"X must be univariate, this classifier cannot deal with"
-missing_message = r"The data has missing values"
-unequal_message = r"The data has unequal length series"
+multivariate_message = r"multivariate series"
+missing_message = r"missing values"
+unequal_message = r"unequal length series"
 incorrect_X_data_structure = r"must be a np.array or a pd.Series"
 incorrect_y_data_structure = r"must be 1-dimensional"
 
@@ -120,7 +127,13 @@ def test_base_classifier_fit():
         result = dummy.fit(test_X1, test_X3)
 
 
-def test_check_capabilities():
+TF = [True, False]
+
+
+@pytest.mark.parametrize("missing", TF)
+@pytest.mark.parametrize("multivariate", TF)
+@pytest.mark.parametrize("unequal", TF)
+def test_check_capabilities(missing, multivariate, unequal):
     """Test the checking of capabilities.
 
     There are eight different combinations to be tested with a classifier that can
@@ -128,31 +141,35 @@ def test_check_capabilities():
     explicitly test;
     """
     handles_none = _DummyClassifier()
+    handles_none_composite = _DummyComposite(_DummyClassifier())
 
-    handles_none._check_capabilities(False, False, False)
-    with pytest.raises(ValueError, match=missing_message):
-        handles_none._check_capabilities(True, True, True)
-        handles_none._check_capabilities(True, True, False)
-        handles_none._check_capabilities(True, False, False)
-        handles_none._check_capabilities(True, False, True)
-    with pytest.raises(ValueError, match=multivariate_message):
-        handles_none._check_capabilities(False, True, True)
-        handles_none._check_capabilities(False, True, False)
-        handles_none._check_capabilities(False, False, True)
-    with pytest.raises(ValueError, match=unequal_message):
-        handles_none._check_capabilities(False, False, True)
+    # checks that errors are raised
+    if missing:
+        with pytest.raises(ValueError, match=missing_message):
+            handles_none._check_capabilities(missing, multivariate, unequal)
+    if multivariate:
+        with pytest.raises(ValueError, match=multivariate_message):
+            handles_none._check_capabilities(missing, multivariate, unequal)
+    if unequal:
+        with pytest.raises(ValueError, match=unequal_message):
+            handles_none._check_capabilities(missing, multivariate, unequal)
+    if not missing and not multivariate and not unequal:
+        handles_none._check_capabilities(missing, multivariate, unequal)
+
+    if missing:
+        with pytest.warns(UserWarning, match=missing_message):
+            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+    if multivariate:
+        with pytest.warns(UserWarning, match=multivariate_message):
+            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+    if unequal:
+        with pytest.warns(UserWarning, match=unequal_message):
+            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+    if not missing and not multivariate and not unequal:
+        handles_none_composite._check_capabilities(missing, multivariate, unequal)
 
     handles_all = _DummyHandlesAllInput()
-    handles_all._check_capabilities(False, False, False)
-    handles_all._check_capabilities(False, False, False)
-    handles_all._check_capabilities(True, True, True)
-    handles_all._check_capabilities(True, True, False)
-    handles_all._check_capabilities(True, False, True)
-    handles_all._check_capabilities(False, True, True)
-    handles_all._check_capabilities(True, False, False)
-    handles_all._check_capabilities(False, True, False)
-    handles_all._check_capabilities(False, False, True)
-    handles_all._check_capabilities(False, False, False)
+    handles_all._check_capabilities(missing, multivariate, unequal)
 
 
 def test_convert_input():
