@@ -170,7 +170,7 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
     if not is_in_valid_multiindex_types(instind):
         msg = (
             f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
-            f"but found {type(instind)}"
+            f"integer index, but found {type(instind)}"
         )
         return _ret(False, msg, None, return_metadata)
 
