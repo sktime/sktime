@@ -31,11 +31,7 @@ from sktime.utils.datetime import (
     _get_intervals_count_and_unit,
     _shift,
 )
-from sktime.utils.validation.series import (
-    VALID_INDEX_TYPES,
-    is_in_valid_index_types,
-    is_integer_index,
-)
+from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
 def _assert_index_equal(a, b):
@@ -172,7 +168,7 @@ GOOD_RELATIVE_INPUT_ARGS = [
 def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
     """Test conversion of relative horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=True).to_pandas()
-    assert type(output) in VALID_INDEX_TYPES
+    assert is_in_valid_index_types(output)
 
 
 TIMEPOINTS = [
