@@ -25,6 +25,7 @@ from sktime.utils.validation.series import (
     is_in_valid_absolute_index_types,
     is_in_valid_index_types,
     is_in_valid_relative_index_types,
+    is_integer_index,
 )
 
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
@@ -142,7 +143,7 @@ class ForecastingHorizon:
 
     Parameters
     ----------
-    values : pd.Index, np.array, list or int
+    values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
     is_relative : bool, optional (default=None)
         - If True, a relative ForecastingHorizon is created:
@@ -208,7 +209,7 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        values : pd.Index, np.array, list or int
+        values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
             Values of forecasting horizon.
         is_relative : bool, default=same as self.is_relative
         - If None, determined automatically: same as self.is_relative
@@ -382,11 +383,13 @@ class ForecastingHorizon:
         out_of_sample = self.to_pandas()[is_out_of_sample]
         return self._new(out_of_sample)
 
-    def _is_in_sample(self, cutoff=None):
+    def _is_in_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of in-sample values."""
-        return self.to_relative(cutoff).to_pandas() <= 0
+        relative = self.to_relative(cutoff).to_pandas()
+        null = 0 if is_integer_index(relative) else pd.Timedelta(0)
+        return relative <= null
 
-    def is_all_in_sample(self, cutoff=None):
+    def is_all_in_sample(self, cutoff=None) -> bool:
         """Whether the forecasting horizon is purely in-sample for given cutoff.
 
         Parameters
@@ -401,12 +404,11 @@ class ForecastingHorizon:
         """
         return sum(self._is_in_sample(cutoff)) == len(self)
 
-    def _is_out_of_sample(self, cutoff=None):
+    def _is_out_of_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of out-of-sample values."""
-        # return ~self._in_sample_idx(cutoff)
-        return self.to_relative(cutoff).to_pandas() > 0
+        return np.logical_not(self._is_in_sample(cutoff))
 
-    def is_all_out_of_sample(self, cutoff=None):
+    def is_all_out_of_sample(self, cutoff=None) -> bool:
         """Whether the forecasting horizon is purely out-of-sample for given cutoff.
 
         Parameters
@@ -442,7 +444,16 @@ class ForecastingHorizon:
             Indexer.
         """
         if from_cutoff:
-            return self.to_relative(cutoff).to_pandas() - 1
+            relative_index = self.to_relative(cutoff).to_pandas()
+            if is_integer_index(relative_index):
+                return relative_index - 1
+            else:
+                # What does indexer mean if fh is timedelta?
+                msg = (
+                    "The indexer for timedelta-like forecasting horizon "
+                    "is not yet implemented"
+                )
+                raise NotImplementedError(msg)
         else:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]
