@@ -763,9 +763,7 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(obj, store=None):
 
-    return from_multi_index_to_nested(
-        multi_ind_dataframe=obj, instance_index="instances"
-    )
+    return from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
 
 
 convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
