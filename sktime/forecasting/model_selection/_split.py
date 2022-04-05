@@ -1054,10 +1054,11 @@ class SingleWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         fh = _check_fh(self.fh)
+        end = _get_end(y, fh) - 1
         if array_is_int(fh):
-            cutoff = _get_end(y, fh) - 1
+            cutoff = end
         else:
-            cutoff = y[y.index < y.index[_get_end(y, fh)]].index[-1].to_datetime64()
+            cutoff = y.index[end].to_datetime64()
         return np.array([cutoff])
 
 
