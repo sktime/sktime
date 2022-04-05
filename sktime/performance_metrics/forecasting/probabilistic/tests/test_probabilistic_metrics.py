@@ -51,3 +51,20 @@ def test_evaluate_by_index_to_zero(Metric):
     y_true = QUANTILE_PRED["Quantiles"][0.5]
     index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
     assert all([np.isclose(0, a) for a in index_loss.values[:, 0]])
+
+
+@pytest.mark.parametrize("Metric", list_of_metrics)
+def test_evaluate_alpha_postive(Metric):
+    """Tests whether metric returns 0 when y_true=y_pred by index."""
+    Loss = Metric.create_test_instance().set_params(alpha=0.5)
+    res = Loss(y_true=y_test, y_pred=QUANTILE_PRED)
+    res
+
+
+@pytest.mark.parametrize("Metric", list_of_metrics)
+def test_evaluate_alpha_negative(Metric):
+    """Tests whether metric returns 0 when y_true=y_pred by index."""
+    with pytest.raises(ValueError):
+        Loss = Metric.create_test_instance().set_params(alpha=0.05)
+        res = Loss(y_true=y_test, y_pred=QUANTILE_PRED)
+        res
