@@ -187,7 +187,7 @@ def test_plot_series_uniform_treatment_of_int64_range_index_types():
 
     y1 = pd.Series(np.arange(10))
     y2 = pd.Series(np.random.normal(size=10))
-    y1.index = pd.Int64Index(y1.index)
+    y1.index = pd.Index(y1.index, dtype=int)
     y2.index = pd.RangeIndex(y2.index)
     plot_series(y1, y2)
     plt.gcf().canvas.draw_idle()
