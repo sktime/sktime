@@ -520,6 +520,17 @@ class BaseSplitter:
     def __repr__(self) -> str:
         return _repr(self)
 
+    @staticmethod
+    def _get_train_window(
+        y: ACCEPTED_Y_TYPES, train_start: int, split_point: int
+    ) -> np.ndarray:
+        if (split_point <= len(y)) & (split_point > 0):
+            return np.argwhere(
+                (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
+            ).flatten()
+        else:
+            return np.array([], dtype=np.int)
+
 
 class CutoffSplitter(BaseSplitter):
     r"""Cutoff window splitter.
@@ -583,10 +594,10 @@ class CutoffSplitter(BaseSplitter):
                     f"`cutoff`: {type(cutoff)}"
                 )
 
-            if is_int(x=cutoff):
-                training_window = np.arange(train_start, cutoff) + 1
-            else:
-                training_window = np.arange(train_start, y.get_loc(cutoff)) + 1
+            cutoff_datetime = y[cutoff] if is_int(x=cutoff) else cutoff
+            training_window = np.argwhere(
+                (y >= y[max(0, train_start)]) & (y <= cutoff_datetime)
+            ).flatten()
 
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
@@ -688,7 +699,9 @@ class BaseWindowSplitter(BaseSplitter):
                 initial_end = y.get_loc(y[initial_start] + initial_window)
             else:
                 initial_end = initial_start + initial_window
-            train = np.arange(initial_start, initial_end)
+            train = np.argwhere(
+                (y >= y[initial_start]) & (y < y[initial_end])
+            ).flatten()
             test = initial_end + fh.to_numpy() - 1
             yield train, test
 
@@ -886,7 +899,9 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
             )
-            train = np.arange(train_start, split_point)
+            train = self._get_train_window(
+                y=y, train_start=train_start, split_point=split_point
+            )
             test = split_point + fh - 1
             yield train, test
 
@@ -954,7 +969,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
             )
-            train = np.arange(train_start, split_point)
+            train = self._get_train_window(
+                y=y, train_start=train_start, split_point=split_point
+            )
             test = split_point + fh - 1
             yield train, test
 
@@ -993,7 +1010,8 @@ class SingleWindowSplitter(BaseSplitter):
             start = y.get_loc(y[end - 1] - window_length) + 1
         else:
             start = end - window_length
-        train = np.arange(start, end)
+        # train = np.argwhere((y >= y[max(0, start)]) & (y <= y[end - 1])).flatten()
+        train = self._get_train_window(y=y, train_start=start, split_point=end)
         test = end + fh.to_numpy() - 1
         yield train, test
 
