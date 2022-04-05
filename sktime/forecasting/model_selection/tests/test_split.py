@@ -183,7 +183,8 @@ def test_single_window_splitter_default_window_length(y, fh):
     test_window = test_windows[0]
 
     assert n_splits == 1
-    assert test_window.shape[0] == len(check_fh(fh))
+    checked_fh = check_fh(fh)
+    assert test_window.shape[0] == len(checked_fh)
 
     fh = cv.get_fh()
     if fh.is_all_in_sample():
@@ -191,7 +192,8 @@ def test_single_window_splitter_default_window_length(y, fh):
     else:
         assert train_window.shape[0] == len(y) - fh.max()
 
-    np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+    test_window_expected = train_window[-1] + checked_fh
+    np.testing.assert_array_equal(test_window, test_window_expected)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
