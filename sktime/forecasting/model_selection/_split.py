@@ -186,7 +186,7 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
     # training data.
     if fh.is_all_in_sample():
         if array_is_int(fh):
-            end = n_timepoints + 1
+            end = n_timepoints
         else:
             if isinstance(y, pd.Index):
                 end = y.get_loc(y[-1])
@@ -197,7 +197,7 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
     else:
         fh_max = fh[-1]
         if is_int(fh_max):
-            end = n_timepoints - fh_max + 1
+            end = n_timepoints - fh_max
         else:
             if isinstance(y, pd.Index):
                 end = y.get_loc(y[-1] - fh_max)
@@ -997,19 +997,17 @@ class SingleWindowSplitter(BaseSplitter):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
+        end = _get_end(y, fh)
 
         if window_length is None:
-            end = _get_end(y, fh) - 1
             start = 0
             test = end + fh.to_numpy() - 1
         elif is_int(window_length):
-            end = _get_end(y, fh) - 1
             start = end - window_length
             test = end + fh.to_numpy() - 1
         else:
-            end = _get_end(y, fh)
             start = y.get_loc(y[end] - window_length)
-            test = np.array([y.get_loc(y[end] + x) - 1 for x in fh.to_pandas()])
+            test = np.array([y.get_loc(y[y < y[end] + x][-1]) for x in fh.to_pandas()])
         train = np.arange(start, end)
         yield train, test
 
@@ -1054,7 +1052,7 @@ class SingleWindowSplitter(BaseSplitter):
             )
         fh = _check_fh(self.fh)
         if array_is_int(fh):
-            cutoff = _get_end(y, fh) - 2
+            cutoff = _get_end(y, fh) - 1
         else:
             cutoff = y[y.index < y.index[_get_end(y, fh)]].index[-1].to_datetime64()
         return np.array([cutoff])
