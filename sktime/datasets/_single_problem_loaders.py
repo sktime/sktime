@@ -94,7 +94,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     Examples
     --------
     >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> X, y = load_UCR_UEA_dataset()
+    >>> X, y = load_UCR_UEA_dataset(name="Yoga")
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
@@ -500,7 +500,7 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
 
     Examples
     --------
-    >>> from sktime.datasets load_basic_motions
+    >>> from sktime.datasets import load_basic_motions
     >>> X, y = load_basic_motions()
 
     Notes
@@ -538,7 +538,7 @@ def load_shampoo_sales():
 
     Examples
     --------
-    >>> from sktime.datasets load_shampoo_sales
+    >>> from sktime.datasets import load_shampoo_sales
     >>> y = load_shampoo_sales()
 
     Notes
@@ -584,8 +584,8 @@ def load_longley(y_name="TOTEMP"):
 
     Examples
     --------
-    >>> from sktime.datasets load_shampoo_sales
-    >>> y, X = load_shampoo_sales()
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
 
     Notes
     -----
@@ -636,7 +636,7 @@ def load_lynx():
 
     Examples
     --------
-    >>> from sktime.datasets load_lynx
+    >>> from sktime.datasets import load_lynx
     >>> y = load_lynx()
 
     Notes
