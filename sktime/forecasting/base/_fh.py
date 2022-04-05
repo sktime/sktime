@@ -20,12 +20,14 @@ from sktime.utils.validation import (
     is_int,
     is_timedelta_or_date_offset,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES
+from sktime.utils.validation.series import (
+    VALID_INDEX_TYPES,
+    is_in_valid_absolute_index_types,
+    is_in_valid_index_types,
+    is_in_valid_relative_index_types,
+    is_integer_index,
+)
 
-RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.TimedeltaIndex)
-ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
-assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
-assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
 VALID_FORECASTING_HORIZON_TYPES = (int, list, np.ndarray, pd.Index)
 
 DELEGATED_METHODS = (
@@ -95,19 +97,20 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if type(values) in VALID_INDEX_TYPES:
+    if is_in_valid_index_types(values):
         pass
 
-    # convert single integer to pandas index, no further checks needed
+    # convert single integer or timedelta or dateoffset
+    # to pandas index, no further checks needed
     elif is_int(values):
-        return pd.Int64Index([values], dtype=int)
+        values = pd.Index([values], dtype=int)
 
     elif is_timedelta_or_date_offset(values):
-        return pd.Index([values])
+        values = pd.Index([values])
 
     # convert np.array or list to pandas index
     elif is_array(values) and array_is_int(values):
-        values = pd.Int64Index(values, dtype=int)
+        values = pd.Index(values, dtype=int)
 
     elif is_array(values) and array_is_timedelta_or_date_offset(values):
         values = pd.Index(values)
@@ -140,7 +143,7 @@ class ForecastingHorizon:
 
     Parameters
     ----------
-    values : pd.Index, np.array, list or int
+    values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
     is_relative : bool, optional (default=None)
         - If True, a relative ForecastingHorizon is created:
@@ -181,17 +184,17 @@ class ForecastingHorizon:
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
-            if type(values) in RELATIVE_TYPES:
+            if is_in_valid_relative_index_types(values):
                 is_relative = True
-            elif type(values) in ABSOLUTE_TYPES:
+            elif is_in_valid_absolute_index_types(values):
                 is_relative = False
             else:
                 raise TypeError(f"{type(values)} is not a supported fh index type")
         if is_relative:
-            if not type(values) in RELATIVE_TYPES:
+            if not is_in_valid_relative_index_types(values):
                 raise TypeError(error_msg)
         else:
-            if not type(values) in ABSOLUTE_TYPES:
+            if not is_in_valid_absolute_index_types(values):
                 raise TypeError(error_msg)
 
         self._values = values
@@ -206,7 +209,7 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        values : pd.Index, np.array, list or int
+        values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
             Values of forecasting horizon.
         is_relative : bool, default=same as self.is_relative
         - If None, determined automatically: same as self.is_relative
@@ -380,11 +383,13 @@ class ForecastingHorizon:
         out_of_sample = self.to_pandas()[is_out_of_sample]
         return self._new(out_of_sample)
 
-    def _is_in_sample(self, cutoff=None):
+    def _is_in_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of in-sample values."""
-        return self.to_relative(cutoff).to_pandas() <= 0
+        relative = self.to_relative(cutoff).to_pandas()
+        null = 0 if is_integer_index(relative) else pd.Timedelta(0)
+        return relative <= null
 
-    def is_all_in_sample(self, cutoff=None):
+    def is_all_in_sample(self, cutoff=None) -> bool:
         """Whether the forecasting horizon is purely in-sample for given cutoff.
 
         Parameters
@@ -399,12 +404,11 @@ class ForecastingHorizon:
         """
         return sum(self._is_in_sample(cutoff)) == len(self)
 
-    def _is_out_of_sample(self, cutoff=None):
+    def _is_out_of_sample(self, cutoff=None) -> np.ndarray:
         """Get index location of out-of-sample values."""
-        # return ~self._in_sample_idx(cutoff)
-        return self.to_relative(cutoff).to_pandas() > 0
+        return np.logical_not(self._is_in_sample(cutoff))
 
-    def is_all_out_of_sample(self, cutoff=None):
+    def is_all_out_of_sample(self, cutoff=None) -> bool:
         """Whether the forecasting horizon is purely out-of-sample for given cutoff.
 
         Parameters
@@ -440,7 +444,16 @@ class ForecastingHorizon:
             Indexer.
         """
         if from_cutoff:
-            return self.to_relative(cutoff).to_pandas() - 1
+            relative_index = self.to_relative(cutoff).to_pandas()
+            if is_integer_index(relative_index):
+                return relative_index - 1
+            else:
+                # What does indexer mean if fh is timedelta?
+                msg = (
+                    "The indexer for timedelta-like forecasting horizon "
+                    "is not yet implemented"
+                )
+                raise NotImplementedError(msg)
         else:
             relative = self.to_relative(cutoff)
             return relative - relative.to_pandas()[0]

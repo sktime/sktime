@@ -1038,7 +1038,7 @@ class ProximityTree(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityTree()
+    >>> clf = ProximityTree(max_depth=2, n_stump_evaluations=1)
     >>> clf.fit(X_train, y_train)
     ProximityTree(...)
     >>> y_pred = clf.predict(X_test)
@@ -1315,7 +1315,7 @@ class ProximityForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityForest(n_estimators=5)
+    >>> clf = ProximityForest(n_estimators=2, max_depth=2, n_stump_evaluations=1)
     >>> clf.fit(X_train, y_train)
     ProximityForest(...)
     >>> y_pred = clf.predict(X_test)
@@ -1717,10 +1717,10 @@ def _stdp(X):
             for value in instance:
                 num_values += 1
                 sum += value
-                sum_sq += value ** 2  # todo missing values NaN messes
+                sum_sq += value**2  # todo missing values NaN messes
                 # this up!
     mean = sum / num_values
-    stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
+    stdp = np.math.sqrt(sum_sq / num_values - mean**2)
     return stdp
 
 
