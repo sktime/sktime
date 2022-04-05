@@ -157,20 +157,16 @@ def test_single_window_splitter(y, fh, window_length):
         assert train_window.shape[0] == _coerce_duration_to_int(
             duration=window_length, freq="D"
         )
-        assert test_window.shape[0] == len(check_fh(fh))
+        checked_fh = check_fh(fh)
+        assert test_window.shape[0] == len(checked_fh)
 
-        if array_is_int(check_fh(fh)):
-            np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+        if array_is_int(checked_fh):
+            test_window_expected = train_window[-1] + checked_fh
         else:
-            np.testing.assert_array_equal(
-                test_window,
-                np.array(
-                    [
-                        y.index.get_loc(y.index[train_window[-1]] + x)
-                        for x in check_fh(fh).to_pandas()
-                    ]
-                ),
+            test_window_expected = np.array(
+                [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
             )
+        np.testing.assert_array_equal(test_window, test_window_expected)
     else:
         with pytest.raises(TypeError, match="Unsupported combination of types"):
             SingleWindowSplitter(fh=fh, window_length=window_length)
