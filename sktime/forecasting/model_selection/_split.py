@@ -57,7 +57,8 @@ FORECASTING_HORIZON_TYPES = Union[
 SPLIT_TYPE = Union[
     Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
 ]
-SPLIT_GENERATOR_TYPE = Generator[Tuple[np.ndarray, np.ndarray], None, None]
+SPLIT_ARRAY_TYPE = Tuple[np.ndarray, np.ndarray]
+SPLIT_GENERATOR_TYPE = Generator[SPLIT_ARRAY_TYPE, None, None]
 
 
 def _repr(self) -> str:
@@ -674,34 +675,7 @@ class BaseWindowSplitter(BaseSplitter):
         _check_window_lengths(y, fh, window_length, initial_window)
 
         if self.initial_window is not None:
-            if not self.start_with_window:
-                raise ValueError(
-                    "`start_with_window` must be True if `initial_window` is given"
-                )
-
-            if self.initial_window <= self.window_length:
-                raise ValueError("`initial_window` must greater than `window_length`")
-
-            if is_timedelta_or_date_offset(x=self.initial_window):
-                initial_window_threshold = y.get_loc(y[0] + self.initial_window)
-            else:
-                initial_window_threshold = self.initial_window
-            # For in-sample forecasting horizons, the first split must ensure that
-            # in-sample test set is still within the data.
-            if not fh.is_all_out_of_sample() and abs(fh[0]) >= initial_window_threshold:
-                initial_start = abs(fh[0]) - self.initial_window + 1
-            else:
-                initial_start = 0
-
-            if is_timedelta_or_date_offset(x=initial_window):
-                initial_end = y.get_loc(y[initial_start] + initial_window)
-            else:
-                initial_end = initial_start + initial_window
-            train = self._get_train_window(
-                y=y, train_start=initial_start, split_point=initial_end
-            )
-            test = initial_end + fh.to_numpy() - 1
-            yield train, test
+            yield self._split_for_initial_window(y)
 
         start = self._get_start(y=y, fh=fh)
         end = _get_end(y=y, fh=fh)
@@ -711,6 +685,36 @@ class BaseWindowSplitter(BaseSplitter):
             start, end, step_length, window_length, y, fh.to_numpy()
         ):
             yield train, test
+
+    def _split_for_initial_window(
+        self, y: Optional[ACCEPTED_Y_TYPES]
+    ) -> SPLIT_ARRAY_TYPE:
+        fh = _check_fh(self.fh)
+        if not self.start_with_window:
+            raise ValueError(
+                "`start_with_window` must be True if `initial_window` is given"
+            )
+        if self.initial_window <= self.window_length:
+            raise ValueError("`initial_window` must greater than `window_length`")
+        if is_timedelta_or_date_offset(x=self.initial_window):
+            initial_window_threshold = y.get_loc(y[0] + self.initial_window)
+        else:
+            initial_window_threshold = self.initial_window
+        # For in-sample forecasting horizons, the first split must ensure that
+        # in-sample test set is still within the data.
+        if not fh.is_all_out_of_sample() and abs(fh[0]) >= initial_window_threshold:
+            initial_start = abs(fh[0]) - self.initial_window + 1
+        else:
+            initial_start = 0
+        if is_timedelta_or_date_offset(x=self.initial_window):
+            initial_end = y.get_loc(y[initial_start] + self.initial_window)
+        else:
+            initial_end = initial_start + self.initial_window
+        train = self._get_train_window(
+            y=y, train_start=initial_start, split_point=initial_end
+        )
+        test = initial_end + fh.to_numpy() - 1
+        return train, test
 
     def _split_windows(
         self,
