@@ -212,9 +212,9 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:unequal_length",
-        ["classifier", "early_classifier"],
+        ["classifier", "early_classifier", "transformer"],
         "bool",
-        "can the classifier handle unequal length time series?",
+        "can the estimator handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
@@ -224,6 +224,18 @@ ESTIMATOR_TAG_REGISTER = [
         ["classifier", "early_classifier"],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "capability:unequal_length:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to be equal length series (and series)?",
+    ),
+    (
+        "capability:missing_values:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to have no missing values?",
     ),
     (
         "capability:train_estimate",
