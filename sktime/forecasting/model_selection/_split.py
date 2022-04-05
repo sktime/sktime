@@ -1004,16 +1004,16 @@ class SingleWindowSplitter(BaseSplitter):
             start = 0
             test = end + fh.to_numpy() - 1
             train = np.arange(start, end)
-        elif is_timedelta_or_date_offset(x=window_length):
-            end = _get_end(y, fh)
-            start = end - window_length
-            test = np.array([y.get_loc(end + x) - 1 for x in fh.to_pandas()])
-            train = np.arange(y.get_loc(start), y.get_loc(end))
-        else:
+        elif is_int(window_length):
             end = _get_end(y, fh) - 1
             start = end - window_length
             test = end + fh.to_numpy() - 1
             train = np.arange(start, end)
+        else:
+            end = _get_end(y, fh)
+            start = end - window_length
+            test = np.array([y.get_loc(end + x) - 1 for x in fh.to_pandas()])
+            train = np.arange(y.get_loc(start), y.get_loc(end))
         yield train, test
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
