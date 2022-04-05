@@ -119,8 +119,22 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
         self._anytagis_then_set("capability:inverse_transform", False, True, ests)
-        self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
+
+        # can handle missing data iff all estimators can handle missing data
+        #   up to a potential estimator when missing data is removed
+        # removes missing data iff can handle missing data,
+        #   and there is an estimator in the chain that removes it
+        self._tagchain_is_linked_set(
+            "handles-missing-data", "capability:missing_values:removes", ests
+        )
+        # can handle unequal length iff all estimators can handle unequal length
+        #   up to a potential estimator which turns the series equal length
+        # removes unequal length iff can handle unequal length,
+        #   and there is an estimator in the chain that renders series equal length
+        self._tagchain_is_linked_set(
+            "capability:unequal_length", "capability:unequal_length:removes", ests
+        )
 
     @property
     def _steps(self):
