@@ -84,7 +84,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> classifier = KNeighborsTimeSeriesClassifier()
+    >>> classifier = KNeighborsTimeSeriesClassifier(distance="euclidean")
     >>> classifier.fit(X_train, y_train)
     KNeighborsTimeSeriesClassifier(...)
     >>> y_pred = classifier.predict(X_test)
