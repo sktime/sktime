@@ -101,7 +101,8 @@ def _check_cutoffs_against_train_windows(cutoffs, windows, y):
         actual = np.array([window[-1] for window in windows[1:]])
     elif array_is_datetime64(cutoffs):
         actual = np.array(
-            [y.index[window[-1]].to_datetime64() for window in windows[1:]]
+            [y.index[window[-1]].to_datetime64() for window in windows[1:]],
+            dtype="datetime64",
         )
     else:
         raise ValueError(
@@ -142,7 +143,7 @@ def _check_cv(cv, y, allow_empty_window=False):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
@@ -158,7 +159,18 @@ def test_single_window_splitter(y, fh, window_length):
         )
         assert test_window.shape[0] == len(check_fh(fh))
 
-        np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+        if array_is_int(check_fh(fh)):
+            np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+        else:
+            np.testing.assert_array_equal(
+                test_window,
+                np.array(
+                    [
+                        y.index.get_loc(y.index[train_window[-1]] + x)
+                        for x in check_fh(fh).to_pandas()
+                    ]
+                ),
+            )
     else:
         with pytest.raises(TypeError, match="Unsupported combination of types"):
             SingleWindowSplitter(fh=fh, window_length=window_length)

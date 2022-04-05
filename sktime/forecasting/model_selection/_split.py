@@ -186,12 +186,24 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
     if fh.is_all_in_sample():
-        end = n_timepoints + 1
+        if array_is_int(fh):
+            end = n_timepoints + 1
+        else:
+            if isinstance(y, pd.Index):
+                end = y[-1]
+            else:
+                end = y.index[-1]
 
     # Otherwise, the last point must ensure that the last horizon is within the data.
     else:
         fh_max = fh[-1]
-        end = n_timepoints - fh_max + 1
+        if is_int(fh_max):
+            end = n_timepoints - fh_max + 1
+        else:
+            if isinstance(y, pd.Index):
+                end = y[-1] - fh_max
+            else:
+                end = y.index[-1] - fh_max
 
     return end
 
@@ -987,15 +999,21 @@ class SingleWindowSplitter(BaseSplitter):
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
 
-        end = _get_end(y, fh) - 1
         if window_length is None:
+            end = _get_end(y, fh) - 1
             start = 0
+            test = end + fh.to_numpy() - 1
+            train = np.arange(start, end)
         elif is_timedelta_or_date_offset(x=window_length):
-            start = y.get_loc(y[end - 1] - window_length) + 1
-        else:
+            end = _get_end(y, fh)
             start = end - window_length
-        train = np.arange(start, end)
-        test = end + fh.to_numpy() - 1
+            test = np.array([y.get_loc(end + x) - 1 for x in fh.to_pandas()])
+            train = np.arange(y.get_loc(start), y.get_loc(end))
+        else:
+            end = _get_end(y, fh) - 1
+            start = end - window_length
+            test = end + fh.to_numpy() - 1
+            train = np.arange(start, end)
         yield train, test
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
@@ -1038,7 +1056,10 @@ class SingleWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         fh = _check_fh(self.fh)
-        cutoff = _get_end(y, fh) - 2
+        if array_is_int(fh):
+            cutoff = _get_end(y, fh) - 2
+        else:
+            cutoff = y[y.index < _get_end(y, fh)].index[-1].to_datetime64()
         return np.array([cutoff])
 
 
