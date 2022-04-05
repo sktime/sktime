@@ -50,7 +50,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
     fit_time_           : integer, time (in milliseconds) for fit to run.
     _class_dictionary   : dictionary mapping classes_ onto integers 0...n_classes_-1.
     _threads_to_use     : number of threads to use in fit as determined by n_jobs.
-    _state_info         : An array containing the state info for each decision in X.
+    state_info          : An array containing the state info for each decision in X.
     """
 
     _tags = {
@@ -68,7 +68,8 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
-        self._state_info = None
+
+        self.state_info = None
 
         super(BaseEarlyClassifier, self).__init__()
 
@@ -101,7 +102,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         fit = BaseClassifier.fit
         return fit(self, X, y)
 
-    def predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Early classifiers can predict at series lengths shorter than the train data
@@ -130,11 +131,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         self.check_is_fitted()
 
@@ -143,7 +139,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._predict(X)
 
-    def update_predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
         Uses information stored in the classifiers state from previous predictions and
@@ -176,23 +172,18 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        if self._state_info is None:
+        if self.state_info is None:
             return self._predict(X)
         else:
             return self._update_predict(X)
 
-    def predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
 
         Early classifiers can predict at series lengths shorter than the train data
@@ -223,11 +214,6 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         self.check_is_fitted()
 
@@ -236,7 +222,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._predict_proba(X)
 
-    def update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
 
         Uses information stored in the classifiers state from previous predictions and
@@ -271,18 +257,13 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
-        if self._state_info is None:
+        if self.state_info is None:
             return self._predict_proba(X)
         else:
             return self._update_predict_proba(X)
@@ -315,9 +296,21 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         return self._score(X, y)
 
-    def reset_update_state_info(self):
-        """Reset the state information used in update()."""
-        self._state_info = None
+    def get_state_info(self):
+        """Return the state information generated from the last predict/update call.
+
+        Returns
+        -------
+        An array containing the state info for each decision in X, contains information
+        for future decisions on the data and information on when a cases decision has
+        been made. Each row contains information for a case from the latest decision on
+        its safety. Successive updates are likely to remove rows from the state_info.
+        """
+        return self.state_info
+
+    def reset_state_info(self):
+        """Reset the state information used in update methods."""
+        self.state_info = None
 
     @staticmethod
     def filter_X(X, decisions):
@@ -368,7 +361,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         ...
 
     @abstractmethod
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
         Abstract method, must be implemented.
@@ -390,16 +383,11 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         ...
 
     @abstractmethod
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label prediction for sequences in X at a larger series length.
 
         Abstract method, must be implemented.
@@ -421,15 +409,10 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         ...
 
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
 
         Default behaviour is to call _predict and set the predicted class probability
@@ -455,23 +438,18 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
-        preds, decisions, state_info = self._predict(X)
+        preds, decisions = self._predict(X)
         for i in range(0, X.shape[0]):
             if decisions[i]:
                 dists[i, self._class_dictionary[preds[i]]] = 1
             else:
                 dists[i, :] = -1
 
-        return dists, decisions, state_info
+        return dists, decisions
 
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
 
         Default behaviour is to call _update_predict and set the predicted class
@@ -497,21 +475,16 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
-        new_state_info : 2D array
-            An array containing the state info for each decision in X, contains
-            information for future decisions on the data and information on when a
-            cases decision has been made. Each row contains information for a case from
-            the latest decision on its safety.
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
-        preds, decisions, state_info = self._update_predict(X)
+        preds, decisions = self._update_predict(X)
         for i in range(0, X.shape[0]):
             if decisions[i]:
                 dists[i, self._class_dictionary[preds[i]]] = 1
             else:
                 dists[i, :] = -1
 
-        return dists, decisions, state_info
+        return dists, decisions
 
     @abstractmethod
     def _score(self, X, y) -> Tuple[float, float, float]:

@@ -58,8 +58,9 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         assert isinstance(decisions, np.ndarray)
         assert decisions.shape == (X_new.shape[0],)
         assert decisions.dtype == bool
-        assert isinstance(state_info, np.ndarray)
-        assert state_info.shape[0] == X_new.shape[0]
+
+        # predict and update methods should update the state info as an array
+        assert isinstance(estimator_instance.get_state_info(), np.ndarray)
 
         # check predict proba (all classifiers have predict_proba by default)
         y_proba, decisions, state_info = scenario.run(
@@ -71,5 +72,3 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         assert isinstance(decisions, np.ndarray)
         assert decisions.shape == (X_new.shape[0],)
         assert decisions.dtype == bool
-        assert isinstance(state_info, np.ndarray)
-        assert state_info.shape[0] == X_new.shape[0]

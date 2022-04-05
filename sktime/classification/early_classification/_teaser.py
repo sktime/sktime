@@ -94,11 +94,11 @@ class TEASER(BaseEarlyClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = TEASER(
     ...     classification_points=[6, 16, 24],
-    ...     estimator=TimeSeriesForestClassifier(n_estimators=10),
+    ...     estimator=TimeSeriesForestClassifier(n_estimators=5),
     ... )
     >>> clf.fit(X_train, y_train)
     TEASER(...)
-    >>> y_pred, decisions, state_info = clf.predict(X_test)
+    >>> y_pred, decisions = clf.predict(X_test)
     """
 
     _tags = {
@@ -202,15 +202,15 @@ class TEASER(BaseEarlyClassifier):
 
         return self
 
-    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         out = self._predict_proba(X)
         return self._proba_output_to_preds(out)
 
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         out = self._update_predict_proba(X)
         return self._proba_output_to_preds(out)
 
-    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
@@ -254,18 +254,23 @@ class TEASER(BaseEarlyClassifier):
             ]
         )
 
-        self._state_info = new_state_info[np.invert(accept_decision)]
+        self.state_info = new_state_info
 
-        return probas, accept_decision, new_state_info
+        return probas, accept_decision
 
-    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         n_instances, _, series_length = X.shape
 
         # maybe use the largest index that is smaller than the series length
         next_idx = self._get_next_idx(series_length) + 1
 
+        # remove cases where a positive decision has been made
+        state_info = self.state_info[
+            self.state_info[:, 1] < self._consecutive_predictions
+        ]
+
         # determine last index used
-        last_idx = np.max(self._state_info[0][0]) + 1
+        last_idx = np.max(state_info[0][0]) + 1
 
         # if the input series length is invalid
         if next_idx == 0:
@@ -275,10 +280,10 @@ class TEASER(BaseEarlyClassifier):
                 f"Current classification points: {self._classification_points}"
             )
         # check state info and X have the same length
-        if len(X) > len(self._state_info):
+        if len(X) > len(state_info):
             raise ValueError(
                 f"Input number of instances does not match the length of recorded "
-                f"state_info: {len(self._state_info)}. Cases with positive decisions "
+                f"state_info: {len(state_info)}. Cases with positive decisions "
                 f"returned should be removed from the array with the row ordering "
                 f"preserved, or the state information should be reset if new data is "
                 f"used."
@@ -311,7 +316,7 @@ class TEASER(BaseEarlyClassifier):
             self._consecutive_predictions,
             last_idx,
             next_idx,
-            state_info=self._state_info,
+            state_info=state_info,
         )
 
         probas = np.array(
@@ -323,14 +328,13 @@ class TEASER(BaseEarlyClassifier):
             ]
         )
 
-        self._state_info = new_state_info[np.invert(accept_decision)]
+        self.state_info = new_state_info
 
-        return probas, accept_decision, new_state_info
+        return probas, accept_decision
 
     def _score(self, X, y) -> Tuple[float, float, float]:
-        state_info = self._predict(X)[2]
-
-        hm, acc, earl = self._compute_harmonic_mean(state_info, y)
+        self._predict(X)
+        hm, acc, earl = self._compute_harmonic_mean(self.state_info, y)
 
         return hm, acc, earl
 
@@ -568,7 +572,7 @@ class TEASER(BaseEarlyClassifier):
                 for i in range(len(out[0]))
             ]
         )
-        return preds, out[1], out[2]
+        return preds, out[1]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

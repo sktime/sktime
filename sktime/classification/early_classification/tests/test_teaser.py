@@ -36,7 +36,7 @@ def test_teaser_on_unit_test_data():
     open_idx = np.arange(0, 10)
 
     for i in teaser.classification_points:
-        probas, decisions, states = teaser.update_predict_proba(X_test[:, :, :i])
+        probas, decisions = teaser.update_predict_proba(X_test[:, :, :i])
         open_idx, final_idx = teaser.split_indices(open_idx, decisions)
 
         final_probas[final_idx] = probas[decisions]
@@ -64,7 +64,7 @@ def test_teaser_with_different_decision_maker():
     open_idx = np.arange(0, 10)
 
     for i in teaser.classification_points:
-        probas, decisions, states = teaser.update_predict_proba(X_test[:, :, :i])
+        probas, decisions = teaser.update_predict_proba(X_test[:, :, :i])
         open_idx, final_idx = teaser.split_indices(open_idx, decisions)
 
         final_probas[final_idx] = probas[decisions]
@@ -100,7 +100,7 @@ def test_teaser_near_classification_points():
             with pytest.raises(ValueError):
                 teaser.update_predict_proba(X)
         else:
-            _, decisions, _ = teaser.update_predict_proba(X)
+            _, decisions = teaser.update_predict_proba(X)
 
 
 def test_teaser_full_length():
