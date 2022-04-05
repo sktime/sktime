@@ -1010,7 +1010,8 @@ class SingleWindowSplitter(BaseSplitter):
             test = end + fh.to_numpy() - 1
         else:
             test = np.array([y.get_loc(y[y < y[end] + x][-1]) for x in fh.to_pandas()])
-        train = np.arange(start, end)
+        # train = np.arange(start, end)
+        train = np.argwhere((y >= y[max(0, start)]) & (y <= y[end - 1])).flatten()
         yield train, test
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
