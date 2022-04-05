@@ -697,9 +697,9 @@ class BaseWindowSplitter(BaseSplitter):
                 initial_end = y.get_loc(y[initial_start] + initial_window)
             else:
                 initial_end = initial_start + initial_window
-            train = np.argwhere(
-                (y >= y[initial_start]) & (y < y[initial_end])
-            ).flatten()
+            train = self._get_train_window(
+                y=y, train_start=initial_start, split_point=initial_end
+            )
             test = initial_end + fh.to_numpy() - 1
             yield train, test
 
