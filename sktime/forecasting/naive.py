@@ -510,7 +510,7 @@ class NaiveVariance(BaseForecaster):
         pred_var = self.predict_var(fh, X)
 
         z_scores = norm.ppf(alpha)
-        errors = [pred_var ** 0.5 * z for z in z_scores]
+        errors = [pred_var**0.5 * z for z in z_scores]
 
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
