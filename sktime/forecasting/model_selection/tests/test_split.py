@@ -189,10 +189,18 @@ def test_single_window_splitter_default_window_length(y, fh):
     fh = cv.get_fh()
     if fh.is_all_in_sample():
         assert train_window.shape[0] == len(y)
+        test_window_expected = train_window[-1] + checked_fh
     else:
-        assert train_window.shape[0] == len(y) - fh.max()
-
-    test_window_expected = train_window[-1] + checked_fh
+        if array_is_int(checked_fh):
+            assert train_window.shape[0] == len(y) - checked_fh.max()
+            test_window_expected = train_window[-1] + checked_fh
+        else:
+            assert train_window.shape[0] == y.index.get_loc(
+                y.index.max() - checked_fh.max()
+            )
+            test_window_expected = np.array(
+                [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
+            )
     np.testing.assert_array_equal(test_window, test_window_expected)
 
 
