@@ -25,12 +25,14 @@ __all__ = [
 ]
 
 import numpy as np
+import pandas as pd
 from sklearn.base import RegressorMixin, clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
+from sktime.utils.datetime import _shift
 from sktime.utils.validation import check_window_length
 
 
@@ -142,8 +144,10 @@ class _Reducer(_BaseWindowForecaster):
 
     _required_parameters = ["estimator"]
 
-    def __init__(self, estimator, window_length=10):
+    def __init__(self, estimator, window_length=10, transformers=None):
         super(_Reducer, self).__init__(window_length=window_length)
+        self.transformers = transformers
+        self.transformers_ = None
         self.estimator = estimator
         self._cv = None
 
@@ -389,8 +393,47 @@ class _RecursiveReducer(_Reducer):
         # used during prediction.
         fh = ForecastingHorizon([1])
         return _sliding_window_transform(
-            y, self.window_length_, fh, X, scitype=self._estimator_scitype
+            y,
+            self.window_length_,
+            self.transformers_,
+            fh,
+            X,
+            scitype=self._estimator_scitype,
         )
+
+    def _get_last_window(self):
+        """Select last window."""
+        # Get the start and end points of the last window.
+        cutoff = self.cutoff
+        start = _shift(cutoff, by=-self.window_length_ + 1)
+
+        if isinstance(self._y.index, pd.MultiIndex):
+
+            # Get the last window of the endogenous variable.
+            y = self._y.query("timepoints >= @start & timepoints <= @cutoff")
+
+            # If X is given, also get the last window of the exogenous variables.
+            X = (
+                self._X.query("timepoints >= @start & timepoints <= @cutoff")
+                if self._X is not None
+                else None
+            )
+
+            X_from_y = self.transformers[0].fit_transform(y)
+
+            X_from_y_cut = X_from_y.groupby(level=0).tail(1)
+            X_cut = X.groupby(level=0).tail(1)
+
+            X = pd.concat([X_from_y_cut, X_cut], axis=1)
+            y = y.groupby(level=0).tail(1)
+        else:
+            # Get the last window of the endogenous variable.
+            y = self._y.loc[start:cutoff].to_numpy()
+
+            # If X is given, also get the last window of the exogenous variables.
+            X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+
+        return y, X
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -753,6 +796,7 @@ def make_reduction(
     strategy="recursive",
     window_length=10,
     scitype="infer",
+    transformers=None,
 ):
     """Make forecaster based on reduction to tabular or time-series regression.
 
@@ -794,7 +838,9 @@ def make_reduction(
         scitype = _infer_scitype(estimator)
 
     Forecaster = _get_forecaster(scitype, strategy)
-    return Forecaster(estimator=estimator, window_length=window_length)
+    return Forecaster(
+        estimator=estimator, window_length=window_length, transformers=transformers
+    )
 
 
 def _check_scitype(scitype):
