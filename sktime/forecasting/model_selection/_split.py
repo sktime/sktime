@@ -1003,17 +1003,15 @@ class SingleWindowSplitter(BaseSplitter):
             end = _get_end(y, fh) - 1
             start = 0
             test = end + fh.to_numpy() - 1
-            train = np.arange(start, end)
         elif is_int(window_length):
             end = _get_end(y, fh) - 1
             start = end - window_length
             test = end + fh.to_numpy() - 1
-            train = np.arange(start, end)
         else:
-            end = _get_end(y, fh)
-            start = end - window_length
-            test = np.array([y.get_loc(end + x) - 1 for x in fh.to_pandas()])
-            train = np.arange(y.get_loc(start), y.get_loc(end))
+            end = y.get_loc(_get_end(y, fh))
+            start = y.get_loc(y[end] - window_length)
+            test = np.array([y.get_loc(y[end] + x) - 1 for x in fh.to_pandas()])
+        train = np.arange(start, end)
         yield train, test
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
