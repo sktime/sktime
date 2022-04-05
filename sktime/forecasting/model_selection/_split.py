@@ -189,9 +189,9 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
             end = n_timepoints + 1
         else:
             if isinstance(y, pd.Index):
-                end = y[-1]
+                end = y.get_loc(y[-1])
             else:
-                end = y.index[-1]
+                end = y.index.get_loc(y.index[-1])
 
     # Otherwise, the last point must ensure that the last horizon is within the data.
     else:
@@ -200,9 +200,9 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
             end = n_timepoints - fh_max + 1
         else:
             if isinstance(y, pd.Index):
-                end = y[-1] - fh_max
+                end = y.get_loc(y[-1] - fh_max)
             else:
-                end = y.index[-1] - fh_max
+                end = y.index.get_loc(y.index[-1] - fh_max)
 
     return end
 
@@ -1007,7 +1007,7 @@ class SingleWindowSplitter(BaseSplitter):
             start = end - window_length
             test = end + fh.to_numpy() - 1
         else:
-            end = y.get_loc(_get_end(y, fh))
+            end = _get_end(y, fh)
             start = y.get_loc(y[end] - window_length)
             test = np.array([y.get_loc(y[end] + x) - 1 for x in fh.to_pandas()])
         train = np.arange(start, end)
@@ -1056,7 +1056,7 @@ class SingleWindowSplitter(BaseSplitter):
         if array_is_int(fh):
             cutoff = _get_end(y, fh) - 2
         else:
-            cutoff = y[y.index < _get_end(y, fh)].index[-1].to_datetime64()
+            cutoff = y[y.index < y.index[_get_end(y, fh)]].index[-1].to_datetime64()
         return np.array([cutoff])
 
 
