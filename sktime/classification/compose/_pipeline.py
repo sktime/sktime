@@ -70,6 +70,23 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         is always in (str, transformer) format, even if transformers is just a list
         strings not passed in transformers are unique generated strings
         i-th transformer in `transformers_` is clone of i-th in `transformers`
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> pipeline = ClassifierPipeline(
+    ...     TimeSeriesForestClassifier(n_estimators=5), [PCATransformer()]
+    ... )
+    >>> pipeline.fit(X_train, y_train)
+    ClassifierPipeline(...)
+    >>> y_pred = pipeline.predict(X_test)
+
+    Alternative construction via dunder method:
+    >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
     _tags = {
