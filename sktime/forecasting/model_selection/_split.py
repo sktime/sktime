@@ -1014,7 +1014,7 @@ class SingleWindowSplitter(BaseSplitter):
         if array_is_int(fh):
             test = end + fh.to_numpy()
         else:
-            test = np.array([y.get_loc(y[y <= y[end] + x][-1]) for x in fh.to_pandas()])
+            test = np.array([y.get_loc(y[end] + x) for x in fh.to_pandas()])
 
         train = np.argwhere((y >= y[max(0, start)]) & (y <= y[end])).flatten()
         yield train, test
