@@ -118,6 +118,11 @@ class DynamicFactor(_StatsModelsAdapter):
         (including smoothed results and in-sample prediction),
         although out-of-sample forecasting is possible.
 
+    See Also
+    --------
+    statsmodels.tsa.statespace.dynamic_factor.DynamicFactor
+    statsmodels.tsa.statespace.dynamic_factor.DynamicFactorResults
+
     References
     ----------
     [1] Lütkepohl, Helmut. 2007. New Introduction to Multiple Time Series Analysis.
@@ -141,7 +146,6 @@ class DynamicFactor(_StatsModelsAdapter):
         self,
         k_factors,
         factor_order,
-        exog=None,
         error_cov_type="diagonal",
         error_order=0,
         error_var=False,
@@ -163,13 +167,15 @@ class DynamicFactor(_StatsModelsAdapter):
         flags=None,
         low_memory=False,
     ):
-
+        # Model Params
         self.k_factors = k_factors
         self.factor_order = factor_order
         self.error_cov_type = error_cov_type
         self.error_order = error_order
         self.error_var = error_var
         self.enforce_stationarity = enforce_stationarity
+
+        # Fit Params
         self.satrt_params = start_params
         self.transformed = transformed
         self.includes_fixed = includes_fixed
@@ -189,12 +195,21 @@ class DynamicFactor(_StatsModelsAdapter):
 
         super(DynamicFactor, self).__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit_forcaster(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y:pd.Series
+          Target time series to which forcaster is fit.
+        X:pd.DataFrame , optional (default=None)
+          Exogenous variables
+        """
         self._forecaster = _DynamicFactor(
-            y,
+            endog=y,
+            exog=X,
             k_factors=self.k_factors,
             factor_order=self.factor_order,
-            exog=self.exog,
             error_order=self.error_order,
             error_var=self.error_var,
             error_cov_type=self.error_cov_type,
@@ -218,4 +233,157 @@ class DynamicFactor(_StatsModelsAdapter):
             optim_hessian=self.optim_hessian,
             flags=self.flags,
             low_memory=self.low_memory,
+        )
+
+    def summary(self):
+        """Get a summary of the fitted forecaster."""
+        return self._fitted_forecaster.summary()
+
+    def simulate(
+        self,
+        nsimulations,
+        measurement_shocks=None,
+        state_shocks=None,
+        initial_state=None,
+        anchor=None,
+        repetitions=None,
+        X=None,
+        extend_model=None,
+        extend_kwargs=None,
+        transformed=True,
+        includes_fixed=False,
+        **kwargs
+    ):
+        r"""Simulate a new time series following the state space model.
+
+        Taken from original statsmodels implementation.
+
+        Parameters
+        ----------
+        nsimulations : int
+            The number of observations to simulate. If the model is time-invariant
+            this can be any number. If the model is time-varying, then this number
+            must be less than or equal to the number.
+        measurement_shocks : array_like , optional
+            If specified, these are the shocks to the measurement equation,.
+            If unspecified, these are automatically generated using a
+            pseudo-random number generator. If specified, must be shaped
+            nsimulations x k_endog, where k_endog is the same as in
+            the state space model.
+        state_shocks : array_like , optional
+            If specified, these are the shocks to the state equation, .
+            If unspecified, these are automatically generated using a
+            pseudo-random number generator. If specified, must be shaped
+            nsimulations x k_posdef where k_posdef is the same as in the
+            state space model.
+        initial_state : array_like , optional
+            If specified, this is the initial state vector to use in
+            simulation,which should be shaped (k_states x 1), where
+            k_states is the same as in the state space model.
+            If unspecified, but the model has been initialized,
+            then that initialization is used.
+            This must be specified if anchor is anything
+            other than “start” or 0.
+        anchor : int,str,or datetime , optional
+            Starting point from which to begin the simulations; type depends
+            on the index of the given endog model.
+            Two special cases are the strings ‘start’ and ‘end’,
+            which refer to starting at the beginning and end of the sample,
+            respectively. If a date/time index was provided to the model,
+            then this argument can be a date string to parse or a datetime type.
+            Otherwise, an integer index should be given. Default is ‘start’.
+        repetitions : int , optional
+            Number of simulated paths to generate. Default is 1 simulated path
+
+        Returns
+        -------
+        simulated_obs : ndarray
+            An array of simulated observations. If repetitions=None, then it will
+            be shaped (nsimulations x k_endog) or (nsimulations,) if k_endog=1.
+            Otherwise it will be shaped (nsimulations x k_endog x repetitions).
+            If the model was given Pandas input then the output will be a Pandas object.
+            If k_endog > 1 and repetitions is not None, then the output will be a Pandas
+            DataFrame that has a MultiIndex for the columns, with the first level
+            containing the names of the endog variables and the second level
+            containing the repetition number.
+        """
+        return self._fitted_forecaster.simulate(
+            nsimulations=nsimulations,
+            measurement_shocks=measurement_shocks,
+            state_shocks=state_shocks,
+            initial_state=initial_state,
+            anchor=anchor,
+            repetitions=repetitions,
+            exog=X,
+            extend_model=extend_model,
+            extend_kwargs=extend_kwargs,
+            transformed=transformed,
+            includes_fixed=includes_fixed,
+            **kwargs
+        )
+
+    def plot_diagnostics(
+        self,
+        variable=0,
+        lags=10,
+        fig=None,
+        figsize=None,
+        truncate_endog_names=24,
+        auto_ylims=False,
+        bartlett_confint=False,
+        acf_kwargs=None,
+    ):
+        """Diagnostic plots for standardized residuals of one endogenous variable.
+
+        Parameters
+        ----------
+        variable : int , optional
+            Index of the endogenous variable for which the diagnostic
+            plots should be created. Default is 0.
+        lags : int , optional
+            Number of lags to include in the correlogram. Default is 10.
+        fig : Figure , optional
+            If given, subplots are created in this figure instead of in
+            a new figure. Note that the 2x2 grid will be created in the
+            provided figure using fig.add_subplot().
+        figsize : tuple , optional
+            If a figure is created, this argument allows specifying a size.
+            The tuple is (width, height).
+        auto_ylims : bool , optional
+            If True, adjusts automatically the y-axis limits to ACF values.
+        bartlett_confint : bool , default = True
+            Confidence intervals for ACF values are generally placed at 2
+            standard errors around r_k. The formula used for standard error
+            depends upon the situation. If the autocorrelations are being
+            used to test for randomness of residuals as part of the ARIMA routine,
+            the standard errors are determined assuming the residuals are white noise.
+            The approximate formula for any lag is that standard error
+            of each r_k = 1/sqrt(N).For the ACF of raw data, the standard error at
+            a lag k is found as if the right model was an MA(k-1).
+            This allows the possible interpretation that if all autocorrelations
+            past a certain lag are within the limits,
+            the model might be an MA of order defined by
+            the last significant autocorrelation.
+            In this case, a moving average model is assumed for the data
+            and the standard errors for the confidence intervals should be generated
+             using Bartlett’s formula.
+        acf_kwargs : dict , optional
+            Optional dictionary of keyword arguments that are directly
+            passed on to the correlogram Matplotlib plot produced by plot_acf().
+
+
+        Returns
+        -------
+        Figure
+            Figure instance with diagonistic plots.
+        """
+        self._fitted_forecaster.plot_diagonistics(
+            variable=variable,
+            lags=lags,
+            fig=fig,
+            figsize=figsize,
+            truncate_endog_names=truncate_endog_names,
+            auto_ylims=auto_ylims,
+            bartlett_confint=bartlett_confint,
+            acf_kwargs=acf_kwargs,
         )
