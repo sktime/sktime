@@ -1001,12 +1001,14 @@ class SingleWindowSplitter(BaseSplitter):
 
         if window_length is None:
             start = 0
-            test = end + fh.to_numpy() - 1
         elif is_int(window_length):
             start = end - window_length
-            test = end + fh.to_numpy() - 1
         else:
             start = y.get_loc(y[end] - window_length)
+
+        if array_is_int(fh):
+            test = end + fh.to_numpy() - 1
+        else:
             test = np.array([y.get_loc(y[y < y[end] + x][-1]) for x in fh.to_pandas()])
         train = np.arange(start, end)
         yield train, test
