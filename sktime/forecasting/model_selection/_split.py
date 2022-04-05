@@ -595,9 +595,13 @@ class CutoffSplitter(BaseSplitter):
                     f"`cutoff`: {type(cutoff)}"
                 )
 
+            split_point = (
+                cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
+            ) + 1
             training_window = self._get_train_window(
-                y=y, train_start=train_start, split_point=cutoff + 1
+                y=y, train_start=train_start + 1, split_point=split_point
             )
+
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
                 test_window = test_window[test_window >= y.min()]
