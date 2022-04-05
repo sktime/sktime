@@ -5,7 +5,6 @@
 
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 __author__ = ["kkoralturk", "aiwalter"]
@@ -63,15 +62,15 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
     ...     NaiveForecaster,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter,
-    ...     load_airline)
-    >>> y = load_airline()
+    ...     load_shampoo_sales)
+    >>> y = load_shampoo_sales()
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
     ...     ("arima", AutoARIMA(suppress_warnings=True, seasonal=False)),
     ...     ("naive", NaiveForecaster())])
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
-    ...     step_length=24)
+    ...     step_length=12)
     >>> gscv = ForecastingGridSearchCV(
     ...     cv=cv,
     ...     param_grid={"selected_forecaster":["ets", "arima", "naive"]},
@@ -95,27 +94,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
 
-    def _check_fit_params(self, fit_params):
-        forecaster_fit_params = {}
-
-        if self.selected_forecaster is None or fit_params == {}:
-            return forecaster_fit_params
-
-        for component in self.forecasters:
-            name, _ = component
-            if name not in fit_params.keys():
-                raise KeyError(
-                    "If you provide fit_params for models "
-                    "dictionary key of fit params need to "
-                    " match the associated component key."
-                )
-
-        if self.selected_forecaster in fit_params.keys():
-            forecaster_fit_params = fit_params[self.selected_forecaster]
-            return forecaster_fit_params
-        else:
-            return forecaster_fit_params
-
     def _check_selected_forecaster(self):
         component_names = [name for name, _ in self.forecasters]
         if self.selected_forecaster not in component_names:
@@ -131,7 +109,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
                 if self.selected_forecaster == name:
                     self.forecaster_ = clone(forecaster)
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -142,11 +120,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             The forecasters horizon with the steps ahead to to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
-        fit_params : dict
-            A dictionary composed of key-value pairs
-            of forecaster names and fit params to be
-            used for each forecaster.
-            Example: {"ARIMA": ..., "ETS": ...}
 
         Returns
         -------
@@ -154,11 +127,10 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         """
         self._check_forecasters()
         self._set_forecaster()
-        forecaster_fit_params = self._check_fit_params(fit_params=fit_params)
-        self.forecaster_.fit(y, X=X, fh=fh, **forecaster_fit_params)
+        self.forecaster_.fit(y, X=X, fh=fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -167,20 +139,13 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=DEFAULT_ALPHA)
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
-        return self.forecaster_.predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
         """Call predict on the forecaster with the best found parameters.
@@ -199,8 +164,14 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------

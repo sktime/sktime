@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_mtype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
@@ -20,7 +21,7 @@ from sktime.forecasting.tests._config import (
     TEST_FHS,
     TEST_OOS_FHS,
     TEST_STEP_LENGTHS_INT,
-    TEST_WINDOW_LENGTHS,
+    TEST_WINDOW_LENGTHS_INT,
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
@@ -37,8 +38,8 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FH0 = 1
-INVALID_X_INPUT_TYPES = [list(), tuple()]
-INVALID_y_INPUT_TYPES = [list(), tuple()]
+INVALID_X_INPUT_TYPES = [list("foo"), tuple()]
+INVALID_y_INPUT_TYPES = [list("bar"), tuple()]
 
 # testing data
 y = make_forecasting_problem()
@@ -46,6 +47,11 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 # names for index/fh combinations to display in tests
 index_fh_comb_names = [f"{x[0]}-{x[1]}-{x[2]}" for x in VALID_INDEX_FH_COMBINATIONS]
+
+pytest_skip_msg = (
+    "ForecastingHorizon with timedelta values "
+    "is currently experimental and not supported everywhere"
+)
 
 
 class ForecasterFixtureGenerator(BaseFixtureGenerator):
@@ -166,7 +172,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if estimator_instance.get_tag("scitype:y") == "multivariate":
             y = _make_series(n_columns=1)
-            with pytest.raises(ValueError, match=r"2 or more variables"):
+            with pytest.raises(ValueError, match=r"two or more variables"):
                 estimator_instance.fit(y, fh=FH0)
 
         if estimator_instance.get_tag("scitype:y") == "both":
@@ -201,6 +207,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
+
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -223,6 +232,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that predict_residuals method works as expected."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
 
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
@@ -249,14 +260,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
     def test_predict_time_index_with_X(
-        self,
-        estimator_instance,
-        n_columns,
-        index_fh_comb,
-        fh_int_oos,
+        self, estimator_instance, n_columns, index_fh_comb, fh_int_oos
     ):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
 
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
@@ -283,6 +292,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check that predicted time index equals fh for full in-sample predictions."""
         index_type, fh_type, is_relative = index_fh_comb
+        if fh_type == "timedelta":
+            pytest.skip(pytest_skip_msg)
+
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
@@ -343,24 +355,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
-            if estimator_instance._has_predict_quantiles_been_refactored():
-                y_pred = estimator_instance.predict()
-                pred_ints = estimator_instance.predict_interval(
-                    fh_int_oos, coverage=alpha
-                )
 
-                pred_ints = estimator_instance._convert_new_to_old_pred_int(
-                    pred_ints, alpha
-                )
-            else:
-                y_pred, pred_ints = estimator_instance.predict(
-                    return_pred_int=True, alpha=alpha
-                )
-            self._check_pred_ints(pred_ints, y_train, y_pred, fh_int_oos)
+            pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
+            assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                estimator_instance.predict(return_pred_int=True, alpha=alpha)
+                estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
 
     def _check_predict_quantiles(
         self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
@@ -442,14 +443,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         if not pred_int_works and f.get_class_tag("capability:pred_int", False):
             raise ValueError(
-                f"{f.__name__} does not implement probabilistic forecasting, "
+                f"{type(f).__name__} does not implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to True incorrectly. '
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
         if pred_int_works and not f.get_class_tag("capability:pred_int", False):
             raise ValueError(
-                f"{f.__name__} does implement probabilistic forecasting, "
+                f"{type(f).__name__} does implement probabilistic forecasting, "
                 'but "capability:pred_int" flag has been set to False incorrectly. '
                 'The flag "capability:pred_int" should instead be set to True.'
             )
@@ -465,7 +466,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.predict()
 
         fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
-        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         expected = mean_absolute_percentage_error(
             y_pred, y_test.iloc[fh_idx], symmetric=True
         )
@@ -492,7 +492,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
     def test_update_predict_predicted_index(
         self,
         estimator_instance,
@@ -522,6 +522,37 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
 
+    def test__y_and_cutoff(self, estimator_instance, n_columns):
+        """Check cutoff and _y."""
+        # check _y and cutoff is None after construction
+        f = estimator_instance
+
+        y = _make_series(n_columns=n_columns)
+        y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+
+        # check that _y and cutoff are empty when estimator is constructed
+        assert f._y is None
+        assert f.cutoff is None
+
+        # check that _y and cutoff is updated during fit
+        f.fit(y_train, fh=FH0)
+        # assert isinstance(f._y, pd.Series)
+        # action:uncomments the line above
+        # why: fails for multivariates cause they are DataFrames
+        # solution: look for a general solution for Series and DataFrames
+        assert len(f._y) > 0
+        assert f.cutoff == y_train.index[-1]
+
+        # check data pointers
+        np.testing.assert_array_equal(f._y.index, y_train.index)
+
+        # check that _y and cutoff is updated during update
+        f.update(y_test, update_params=False)
+        np.testing.assert_array_equal(
+            f._y.index, np.append(y_train.index, y_test.index)
+        )
+        assert f.cutoff == y_test.index[-1]
+
     def test__y_when_refitting(self, estimator_instance, n_columns):
         """Test that _y is updated when forecaster is refitted."""
         y_train = _make_series(n_columns=n_columns)
@@ -530,3 +561,51 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # using np.squeeze to make the test flexible to shape differeces like
         # (50,) and (50, 1)
         assert np.all(np.squeeze(estimator_instance._y) == np.squeeze(y_train[3:]))
+
+    def test_fh_attribute(self, estimator_instance, n_columns):
+        """Check fh attribute and error handling if two different fh are passed."""
+        f = estimator_instance
+        y_train = _make_series(n_columns=n_columns)
+
+        f.fit(y_train, fh=FH0)
+        np.testing.assert_array_equal(f.fh, FH0)
+        f.predict()
+        np.testing.assert_array_equal(f.fh, FH0)
+        f.predict(FH0)
+        np.testing.assert_array_equal(f.fh, FH0)
+
+        # if fh is not required in fit, test this again with fh passed late
+        if not f.get_tag("requires-fh-in-fit"):
+            f.fit(y_train)
+            f.predict(FH0)
+            np.testing.assert_array_equal(f.fh, FH0)
+
+    def test_fh_not_passed_error_handling(self, estimator_instance, n_columns):
+        """Check that not passing fh in fit/predict raises correct error."""
+        f = estimator_instance
+        y_train = _make_series(n_columns=n_columns)
+
+        if f.get_tag("requires-fh-in-fit"):
+            # if fh required in fit, should raise error if not passed in fit
+            with pytest.raises(ValueError):
+                f.fit(y_train)
+        else:
+            # if fh not required in fit, should raise error if not passed until predict
+            f.fit(y_train)
+            with pytest.raises(ValueError):
+                f.predict()
+
+    def test_different_fh_in_fit_and_predict_error_handling(
+        self, estimator_instance, n_columns
+    ):
+        """Check that fh different in fit and predict raises correct error."""
+        f = estimator_instance
+        # if fh is not required in fit, can be overwritten, should not raise error
+        if not f.get_tag("requires-fh-in-fit"):
+            return None
+        y_train = _make_series(n_columns=n_columns)
+        f.fit(y_train, fh=FH0)
+        np.testing.assert_array_equal(f.fh, FH0)
+        # changing fh during predict should raise error
+        with pytest.raises(ValueError):
+            f.predict(fh=FH0 + 1)

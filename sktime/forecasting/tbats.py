@@ -15,7 +15,7 @@ __all__ = ["TBATS"]
 from sktime.forecasting.base.adapters import _TbatsAdapter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tbats")
+_check_soft_dependencies("tbats", severity="warning")
 
 
 class TBATS(_TbatsAdapter):
@@ -115,15 +115,24 @@ class TBATS(_TbatsAdapter):
 
     _fitted_param_names = "aic"
 
-    # both bats and tbats inherit the same interface from the base class and only
-    # instantiate a different model class internally
-    from tbats import TBATS as _TBATS
+    def _create_model_class(self):
+        """Create model class."""
+        # both bats and tbats inherit the same interface from the base class and only
+        # instantiate a different model class internally
+        from tbats import TBATS as _TBATS
 
-    _ModelClass = _TBATS
+        self._ModelClass = _TBATS
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

@@ -12,7 +12,7 @@ from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tsfresh")
+_check_soft_dependencies("tsfresh", severity="warning")
 
 
 class _TSFreshFeatureExtractor(BaseTransformer):
@@ -26,7 +26,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
     }
 
     def __init__(
@@ -43,6 +43,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         profiling_sorting=None,
         distributor=None,
     ):
+        _check_soft_dependencies("tsfresh", severity="error", object=self)
+
         self.default_fc_parameters = default_fc_parameters
         self.kind_to_fc_parameters = kind_to_fc_parameters
         self.n_jobs = n_jobs
@@ -136,7 +138,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
 
     _tags = {
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
     }
 
     def _transform(self, X, y=None):
@@ -188,8 +190,15 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         return Xt.reindex(X.index)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
@@ -215,7 +224,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
     }
 
     def __init__(
@@ -355,8 +364,15 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         return Xt.reindex(X.index)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

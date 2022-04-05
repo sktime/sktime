@@ -138,6 +138,8 @@ def _sliding_window_transform(
 class _Reducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to regression."""
 
+    _tags = {"ignores-exogeneous-X": False}  # reduction uses X in non-trivial way
+
     _required_parameters = ["estimator"]
 
     def __init__(self, estimator, window_length=10):
@@ -161,6 +163,41 @@ class _Reducer(_BaseWindowForecaster):
             f"Generating in-sample predictions is not yet "
             f"implemented for {self.__class__.__name__}."
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        # naming convention is as follows:
+        #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
+        #   reducers with TimeSeries take an sktime supervised estimator
+        #       e.g., pipeline of Tabularizer and Linear Regression
+        # which of these is the case, we check by checking substring in the class name
+        est = LinearRegression()
+        if "TimeSeries" in cls.__name__:
+            est = make_pipeline(Tabularizer(), est)
+
+        params = {"estimator": est, "window_length": 3}
+        return params
 
 
 class _DirectReducer(_Reducer):

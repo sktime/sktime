@@ -115,7 +115,7 @@ class Differencer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-in-transform": False,
+        "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "univariate-only": False,
         "capability:inverse_transform": True,
@@ -276,3 +276,20 @@ class Differencer(BaseTransformer):
         Xt = Z_inv
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # we're testing that inverse_transform is inverse to transform
+        #   and that is only correct if the first observation is not dropped
+        params = {"drop_na": False}
+        return params

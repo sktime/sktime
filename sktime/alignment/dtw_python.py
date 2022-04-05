@@ -13,7 +13,7 @@ from sklearn import clone
 from sktime.alignment.base import BaseAligner
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("dtw")
+_check_soft_dependencies("dtw", severity="warning")
 
 
 class AlignerDTW(BaseAligner):
@@ -66,6 +66,8 @@ class AlignerDTW(BaseAligner):
         variable_to_align=None,
     ):
         """Construct instance."""
+        _check_soft_dependencies("dtw", severity="error", object=self)
+
         super(AlignerDTW, self).__init__()
 
         self.dist_method = dist_method
@@ -335,7 +337,7 @@ class AlignerDTWfromDist(BaseAligner):
         return distmat
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Test parameters for AlignerDTWdist."""
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist

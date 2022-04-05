@@ -8,8 +8,7 @@ from numpy.random import RandomState
 from sktime.clustering.base import BaseClusterer, TimeSeriesInstances
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tslearn")
-from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans  # noqa: E402
+_check_soft_dependencies("tslearn", severity="warning")
 
 
 class TimeSeriesKernelKMeans(BaseClusterer):
@@ -84,6 +83,8 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         n_jobs: Union[int, None] = None,
         random_state: Union[int, RandomState] = None,
     ):
+        _check_soft_dependencies("tslearn", severity="error", object=self)
+
         self.kernel = kernel
         self.n_init = n_init
         self.max_iter = max_iter
@@ -117,6 +118,8 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         self:
             Fitted estimator.
         """
+        from tslearn.clustering import KernelKMeans as TsLearnKernelKMeans
+
         verbose = 0
         if self.verbose is True:
             verbose = 1
@@ -156,8 +159,15 @@ class TimeSeriesKernelKMeans(BaseClusterer):
         return self._tslearn_kernel_k_means.predict(X)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

@@ -52,6 +52,8 @@ Core Developers
      - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
+   * - Daniel Bartling
+     - :user:`danbartl`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Freddy A Boulton
@@ -62,6 +64,8 @@ Core Developers
      - :user:`GuzalBulatova`
    * - James Large
      - :user:`james-large`
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
    * - Łukasz Mentel
