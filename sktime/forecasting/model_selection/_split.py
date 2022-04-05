@@ -594,11 +594,9 @@ class CutoffSplitter(BaseSplitter):
                     f"`cutoff`: {type(cutoff)}"
                 )
 
-            cutoff_datetime = y[cutoff] if is_int(x=cutoff) else cutoff
-            training_window = np.argwhere(
-                (y >= y[max(0, train_start)]) & (y <= cutoff_datetime)
-            ).flatten()
-
+            training_window = self._get_train_window(
+                y=y, train_start=train_start, split_point=cutoff + 1
+            )
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
                 test_window = test_window[test_window >= y.min()]
@@ -1010,7 +1008,6 @@ class SingleWindowSplitter(BaseSplitter):
             start = y.get_loc(y[end - 1] - window_length) + 1
         else:
             start = end - window_length
-        # train = np.argwhere((y >= y[max(0, start)]) & (y <= y[end - 1])).flatten()
         train = self._get_train_window(y=y, train_start=start, split_point=end)
         test = end + fh.to_numpy() - 1
         yield train, test
