@@ -173,7 +173,7 @@ def test_single_window_splitter(y, fh, window_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_single_window_splitter_default_window_length(y, fh):
     """Test SingleWindowSplitter."""
     cv = SingleWindowSplitter(fh=fh)
@@ -189,14 +189,20 @@ def test_single_window_splitter_default_window_length(y, fh):
     fh = cv.get_fh()
     if fh.is_all_in_sample():
         assert train_window.shape[0] == len(y)
-        test_window_expected = train_window[-1] + checked_fh
+        if array_is_int(checked_fh):
+            test_window_expected = train_window[-1] + checked_fh
+        else:
+            test_window_expected = np.array(
+                [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
+            )
     else:
         if array_is_int(checked_fh):
             assert train_window.shape[0] == len(y) - checked_fh.max()
             test_window_expected = train_window[-1] + checked_fh
         else:
-            assert train_window.shape[0] == y.index.get_loc(
-                y.index.max() - checked_fh.max()
+            assert (
+                train_window.shape[0]
+                == (y.index <= y.index.max() - checked_fh.max()).sum()
             )
             test_window_expected = np.array(
                 [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
