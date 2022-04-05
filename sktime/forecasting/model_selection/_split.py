@@ -595,11 +595,9 @@ class CutoffSplitter(BaseSplitter):
                     f"`cutoff`: {type(cutoff)}"
                 )
 
-            split_point = (
-                cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
-            ) + 1
+            split_point = cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
             training_window = self._get_train_window(
-                y=y, train_start=train_start + 1, split_point=split_point
+                y=y, train_start=train_start + 1, split_point=split_point + 1
             )
 
             test_window = cutoff + fh.to_numpy()
