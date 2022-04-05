@@ -167,6 +167,10 @@ def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
 def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
     """Compute the end of the last training window for a forecasting horizon.
 
+    For a time series `y`, `y.iloc[end]` will give
+    the last value of the training window,
+    while `y.index[end]` will provide the last index of the training window.
+
     Parameters
     ----------
     y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
@@ -705,7 +709,7 @@ class BaseWindowSplitter(BaseSplitter):
             yield train, test
 
         start = self._get_start(y=y, fh=fh)
-        end = _get_end(y=y, fh=fh)
+        end = _get_end(y=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
         for train, test in self._split_windows(
@@ -829,7 +833,7 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             start = self._get_start(y=y, fh=fh)
 
-        end = _get_end(y, fh)
+        end = _get_end(y, fh) + 2
         step_length = self._get_step_length(x=step_length)
 
         return np.arange(start, end, step_length) - 1
