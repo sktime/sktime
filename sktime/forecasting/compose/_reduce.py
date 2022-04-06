@@ -55,7 +55,7 @@ def _check_fh(fh):
 
 
 def _sliding_window_transform(
-    y, window_length, fh, transformers=None, X=None, scitype="tabular-regressor"
+    y, window_length, fh, X=None, transformers=None, scitype="tabular-regressor"
 ):
     """Transform time series data using sliding window.
 
@@ -233,9 +233,9 @@ class _DirectReducer(_Reducer):
         return _sliding_window_transform(
             y,
             window_length=self.window_length,
-            transformers=self.transformers_,
             fh=fh,
             X=X,
+            transformers=self.transformers_,
             scitype=self._estimator_scitype,
         )
 
@@ -417,8 +417,8 @@ class _RecursiveReducer(_Reducer):
             y,
             self.window_length_,
             fh,
-            transformers=self.transformers_,
             X=X,
+            transformers=self.transformers_,
             scitype=self._estimator_scitype,
         )
 
