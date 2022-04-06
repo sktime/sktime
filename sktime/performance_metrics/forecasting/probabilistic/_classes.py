@@ -45,7 +45,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         func=None,
         name=None,
         multioutput="uniform_average",
-        score_average=True,
+        score_average=False,
     ):
         self.multioutput = multioutput
         self.score_average = score_average
@@ -65,16 +65,17 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
         Returns
         -------
-        loss : float or pd.DataFrame with calculated metric value(s)
-            if multioutput = "raw_values" 
+        loss : float or 1-column pd.DataFrame with calculated metric value(s)
+            metric is always averaged (arithmetic) over fh values
+            if multioutput = "raw_values",
+            if multioutput = "raw_values",
                 will have a column level corresponding to variables in y_true
             if multioutput = multioutput = "uniform_average" or or array-like
-                entries will be averaged over output variables
+                entries will be averaged over output variable column
             if score_average = False,
                 will have column levels corresponding to quantiles/intervals
-            if score_average = True and 
-                entries will be averaged over quantiles/intervals
-            if both averages are computed, output will be float
+            if score_average = True,
+                entries will be averaged over quantiles/interval column
         """
         return self.evaluate(y_true, y_pred, multioutput=self.multioutput, **kwargs)
 
