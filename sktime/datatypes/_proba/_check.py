@@ -40,8 +40,6 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
-
 check_dict = dict()
 
 
