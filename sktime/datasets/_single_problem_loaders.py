@@ -82,7 +82,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
 
     Returns
     -------
-    X: pandas DataFrame
+    X: pd.DataFrame
         The time series data for the problem with n_cases rows and either
         n_dimensions or n_dimensions+1 columns. Columns 1 to n_dimensions are the
         series associated with each case. If return_X_y is False, column
@@ -90,13 +90,17 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     y: numpy array, optional
         The class labels for each case in X, returned separately if return_X_y is
         True, or appended to X if False
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> X, y = load_UCR_UEA_dataset(name="Yoga")
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
 
 def load_plaid(split=None, return_X_y=True):
-    """
-    Load the PLAID time series classification problem and returns X and y.
+    """Load the PLAID time series classification problem and returns X and y.
 
     Example of a univariate problem with unequal length series.
 
@@ -111,18 +115,21 @@ def load_plaid(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array The class labels for each case in X
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_plaid
+    >>> X, y = load_plaid()
     """
     name = "PLAID"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_gunpoint(split=None, return_X_y=True):
-    """
-    Load the GunPoint time series classification problem and returns X and y.
+    """Load the GunPoint time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -135,10 +142,15 @@ def load_gunpoint(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_gunpoint
+    >>> X, y = load_gunpoint()
 
     Notes
     -----
@@ -173,8 +185,7 @@ def load_gunpoint(split=None, return_X_y=True):
 
 
 def load_osuleaf(split=None, return_X_y=True):
-    """
-    Load the OSULeaf time series classification problem and returns X and y.
+    """Load the OSULeaf time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -188,10 +199,15 @@ def load_osuleaf(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_osuleaf
+    >>> X, y = load_osuleaf()
 
     Notes
     -----
@@ -216,8 +232,7 @@ def load_osuleaf(split=None, return_X_y=True):
 
 
 def load_italy_power_demand(split=None, return_X_y=True):
-    """
-    Load ItalyPowerDemand time series classification problem.
+    """Load ItalyPowerDemand time series classification problem.
 
     Parameters
     ----------
@@ -231,10 +246,15 @@ def load_italy_power_demand(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_italy_power_demand
+    >>> X, y = load_italy_power_demand()
 
     Notes
     -----
@@ -286,6 +306,11 @@ def load_unit_test(split=None, return_X_y=True, return_type=None):
     y: (optional) numpy array shape (n,1). The class labels for each case in X.
         If return_X_y is False, y is appended to X.
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> X, y = load_unit_test()
+
     Details
     -------
     This is the Chinatown problem with a smaller test set, useful for rapid tests.
@@ -304,8 +329,7 @@ def load_unit_test(split=None, return_X_y=True, return_type=None):
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
-    """
-    Load the JapaneseVowels time series classification problem.
+    """Load the JapaneseVowels time series classification problem.
 
     Example of a multivariate problem with unequal length series.
 
@@ -320,10 +344,15 @@ def load_japanese_vowels(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_japanese_vowels
+    >>> X, y = load_japanese_vowels()
 
     Notes
     -----
@@ -371,10 +400,15 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_arrow_head
+    >>> X, y = load_arrow_head()
 
     Notes
     -----
@@ -406,8 +440,7 @@ def load_arrow_head(split=None, return_X_y=True, return_type="nested_univ"):
 
 
 def load_acsf1(split=None, return_X_y=True):
-    """
-    Load dataset on power consumption of typical appliances.
+    """Load dataset on power consumption of typical appliances.
 
     Parameters
     ----------
@@ -421,10 +454,15 @@ def load_acsf1(split=None, return_X_y=True):
 
     Returns
     -------
-    X: pandas DataFrame with m rows and c columns
+    X: pd.DataFrame with m rows and c columns
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_acsf1
+    >>> X, y = load_acsf1()
 
     Notes
     -----
@@ -514,13 +552,17 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
 
 # forecasting data sets
 def load_shampoo_sales():
-    """
-    Load the shampoo sales univariate time series dataset for forecasting.
+    """Load the shampoo sales univariate time series dataset for forecasting.
 
     Returns
     -------
-    y : pandas Series/DataFrame
+    y : pd.Series/DataFrame
         Shampoo sales dataset
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> y = load_shampoo_sales()
 
     Notes
     -----
@@ -532,7 +574,6 @@ def load_shampoo_sales():
     Series length:      36
     Frequency:          Monthly
     Number of cases:    1
-
 
     References
     ----------
@@ -550,8 +591,7 @@ def load_shampoo_sales():
 
 
 def load_longley(y_name="TOTEMP"):
-    """
-    Load the Longley dataset for forecasting with exogenous variables.
+    """Load the Longley dataset for forecasting with exogenous variables.
 
     Parameters
     ----------
@@ -560,10 +600,15 @@ def load_longley(y_name="TOTEMP"):
 
     Returns
     -------
-    y: pandas.Series
+    y: pd.Series
         The target series to be predicted.
-    X: pandas.DataFrame
+    X: pd.DataFrame
         The exogenous time series data for the problem.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
 
     Notes
     -----
@@ -605,13 +650,17 @@ def load_longley(y_name="TOTEMP"):
 
 
 def load_lynx():
-    """
-    Load the lynx univariate time series dataset for forecasting.
+    """Load the lynx univariate time series dataset for forecasting.
 
     Returns
     -------
-    y : pandas Series/DataFrame
+    y : pd.Series/DataFrame
         Lynx sales dataset
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_lynx
+    >>> y = load_lynx()
 
     Notes
     -----
@@ -651,13 +700,17 @@ def load_lynx():
 
 
 def load_airline():
-    """
-    Load the airline univariate time series dataset [1].
+    """Load the airline univariate time series dataset [1].
 
     Returns
     -------
     y : pd.Series
-     Time series
+        Time series
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
 
     Notes
     -----
@@ -674,7 +727,7 @@ def load_airline():
 
     References
     ----------
-    ..[1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
+    .. [1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
           Analysis, Forecasting and Control. Third Edition. Holden-Day.
           Series G.
     """
@@ -690,15 +743,19 @@ def load_airline():
 
 
 def load_uschange(y_name="Consumption"):
-    """
-    Load MTS dataset for forecasting Growth rates of personal consumption and income.
+    """Load MTS dataset for forecasting Growth rates of personal consumption and income.
 
     Returns
     -------
-    y : pandas Series
+    y : pd.Series
         selected column, default consumption
-    X : pandas Dataframe
+    X : pd.DataFrame
         columns with explanatory variables
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_uschange
+    >>> y, X = load_uschange()
 
     Notes
     -----
@@ -719,7 +776,7 @@ def load_uschange(y_name="Consumption"):
 
     References
     ----------
-    ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
+    .. [1] Data for "Forecasting: Principles and Practice" (2nd Edition)
     """
     name = "Uschange"
     fname = name + ".csv"
@@ -753,8 +810,6 @@ def load_gun_point_segmentation():
     temporal patterns but are approximate and limited to the values
     [10,20,50,100] to avoid over-fitting.
 
-    -----------
-
     Returns
     -------
         X : pd.Series
@@ -763,7 +818,11 @@ def load_gun_point_segmentation():
             The annotated period length by a human expert
         change_points : numpy array
             The change points annotated within the dataset
-    -----------
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_gun_point_segmentation
+    >>> X, period_length, change_points = load_gun_point_segmentation()
     """
     dir = "segmentation"
     name = "GunPoint"
@@ -791,8 +850,6 @@ def load_electric_devices_segmentation():
     temporal patterns but are approximate and limited to the values
     [10,20,50,100] to avoid over-fitting.
 
-    -----------
-
     Returns
     -------
         X : pd.Series
@@ -801,7 +858,11 @@ def load_electric_devices_segmentation():
             The annotated period length by a human expert
         change_points : numpy array
             The change points annotated within the dataset
-    -----------
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_electric_devices_segmentation
+    >>> X, period_length, change_points = load_electric_devices_segmentation()
     """
     dir = "segmentation"
     name = "ElectricDevices"
@@ -817,12 +878,17 @@ def load_electric_devices_segmentation():
 
 
 def load_PBS_dataset():
-    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1].
+    """Load the Pharmaceutical Benefit Scheme univariate time series dataset [1]_.
 
     Returns
     -------
     y : pd.Series
      Time series
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_PBS_dataset
+    >>> y = load_PBS_dataset()
 
     Notes
     -----
@@ -843,7 +909,7 @@ def load_PBS_dataset():
 
     References
     ----------
-    ..fpp3: Data for "Forecasting: Principles and Practice" (3rd Edition)
+    .. [1] Data for "Forecasting: Principles and Practice" (3rd Edition)
     """
     name = "PBS_dataset"
     fname = name + ".csv"
@@ -858,12 +924,17 @@ def load_PBS_dataset():
 
 def load_macroeconomic():
     """
-    Load the US Macroeconomic Data [1].
+    Load the US Macroeconomic Data [1]_.
 
     Returns
     -------
     y : pd.DataFrame
      Time series
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_macroeconomic
+    >>> y = load_macroeconomic()
 
     Notes
     -----
