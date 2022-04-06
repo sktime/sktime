@@ -107,9 +107,9 @@ class ShapeletTransformClassifier(BaseClassifier):
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ShapeletTransformClassifier(
     ...     estimator=RotationForest(n_estimators=3),
-    ...     n_shapelet_samples=500,
-    ...     max_shapelets=20,
-    ...     batch_size=100,
+    ...     n_shapelet_samples=100,
+    ...     max_shapelets=10,
+    ...     batch_size=20,
     ... )
     >>> clf.fit(X_train, y_train)
     ShapeletTransformClassifier(...)
