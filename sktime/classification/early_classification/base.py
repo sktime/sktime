@@ -131,6 +131,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         self.check_is_fitted()
 
@@ -172,6 +173,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         self.check_is_fitted()
 
@@ -214,6 +216,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         self.check_is_fitted()
 
@@ -257,6 +260,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         self.check_is_fitted()
 
@@ -301,10 +305,11 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        An array containing the state info for each decision in X, contains information
-        for future decisions on the data and information on when a cases decision has
-        been made. Each row contains information for a case from the latest decision on
-        its safety. Successive updates are likely to remove rows from the state_info.
+        An array containing the state info for each decision in X, contains classifier
+        depndant information for future decisions on the data and information on when a
+        cases decision has been made. Each row contains information for a case from the
+        latest decision on its safety. Successive updates are likely to remove rows from
+        the state_info.
         """
         return self.state_info
 
@@ -383,6 +388,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         ...
 
@@ -409,6 +415,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         ...
 
@@ -438,6 +445,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds, decisions = self._predict(X)
@@ -475,6 +483,7 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         decisions : 1D bool array
             An array of booleans, containing the decision of whether a prediction is
             safe to use or not.
+            i-th entry is the classifier decision that i-th instance safe to use
         """
         dists = np.zeros((X.shape[0], self.n_classes_))
         preds, decisions = self._update_predict(X)
