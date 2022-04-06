@@ -38,14 +38,28 @@ regressor = make_pipeline(
     RandomForestRegressor(),
 )
 
-forecaster = make_reduction(
+# forecaster1 = make_reduction(
+#     regressor,
+#     scitype="tabular-regressor",
+#     transformers=[WindowSummarizer(**kwargs)],
+#     window_length=None,
+#     #strategy="direct",
+#     strategy="recursive"
+# )
+
+# forecaster1.fit(y_grouped, fh=[1, 2])
+
+# y_pred = forecaster1.predict(fh=[1, 2])
+
+forecaster2 = make_reduction(
     regressor,
     scitype="tabular-regressor",
     transformers=[WindowSummarizer(**kwargs)],
-    window_length=10,
+    window_length=None,
+    # strategy="direct",
+    strategy="recursive",
 )
 
-forecaster.fit(y_grouped, fh=1)
+forecaster2.fit(y_train, fh=[1, 2])
 
-y_pred = forecaster.predict(fh=1)
-a = 0
+y_pred = forecaster2.predict(fh=[1, 2])
