@@ -48,3 +48,4 @@ forecaster = make_reduction(
 forecaster.fit(y_grouped, fh=1)
 
 y_pred = forecaster.predict(fh=1)
+a = 0
