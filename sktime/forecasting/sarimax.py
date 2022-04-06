@@ -104,7 +104,7 @@ class SARIMAX(_StatsModelsAdapter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.exp_smoothing import SARIMAX
+    >>> from sktime.forecasting.sarimax import SARIMAX
     >>> y = load_airline()
     >>> forecaster = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     >>> forecaster.fit(y)
