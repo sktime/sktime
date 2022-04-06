@@ -8,22 +8,22 @@ from sktime.distances.base import DistanceCallable
 
 
 @njit(cache=True)
-def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
-    """Check a potential series being passed into pairwise.
+def _make_3d_series(x: np.ndarray) -> np.ndarray:
+    """Check a series being passed into pairwise is 3d.
 
+    "Pairwise assumes it has been passed two sets of series, if passed a single
+    series this function reshapes.
     Parameters
     ----------
-    x: np.ndarray
-        A timeseries
+    x: np.ndarray, 2d or 3d
 
     Returns
     -------
-    np.ndarray
-        Validated and reshaped (where appropriate) timeseries.
+    np.ndarray, 3d
     """
     if x.ndim == 2:
         shape = x.shape
-        _x = np.reshape(x, (shape[0], shape[1], 1))
+        _x = np.reshape(x, (1, shape[0], shape[1]))
     else:
         _x = x
     return _x
@@ -52,9 +52,12 @@ def _compute_pairwise_distance(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
         Pairwise distance matrix between the two timeseries.
     """
-    _x = _check_numba_pairwise_series(x)
-    _y = _check_numba_pairwise_series(y)
-
+    print(" Shape x = ",x.shape)
+    print(" Shape y = ",y.shape)
+    _x = _make_3d_series(x)
+    _y = _make_3d_series(y)
+    print(" Shape _x = ",_x.shape)
+    print(" Shape _y = ",_y.shape)
     x_size = _x.shape[0]
     y_size = _y.shape[0]
 

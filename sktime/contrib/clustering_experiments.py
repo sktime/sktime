@@ -125,10 +125,10 @@ if __name__ == "__main__":
         print(" Local Run")
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "./temp"
-        dataset = "GunPoint"
+        dataset = "Chinatown"
         resample = 0
         tf = True
-        distance = "wdtw"
+        distance = "erp"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -137,6 +137,7 @@ if __name__ == "__main__":
     )
     normalize(train_X, norm="l1", copy=False)
     normalize(test_X, norm="l1", copy=False)
+    print(" shape X = ",train_X.shape)
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"

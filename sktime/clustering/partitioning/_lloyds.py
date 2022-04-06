@@ -61,14 +61,15 @@ def _random_center_initializer(
     np.ndarray (3d array of shape (n_clusters, n_dimensions, series_length))
         Indexes of the cluster centers.
     """
-    new_centers = np.zeros((n_clusters, X.shape[1], X.shape[2]))
+    new_centres = np.zeros((n_clusters, X.shape[1], X.shape[2]))
     selected = random_state.choice(n_clusters, X.shape[0], replace=True)
     for i in range(n_clusters):
         curr_indexes = np.where(selected == i)[0]
         result = mean_average(X[curr_indexes])
         if result.shape[0] > 0:
-            new_centers[i, :] = result
-    return new_centers
+            new_centres[i, :] = result
+
+    return new_centres
 
 
 def _kmeans_plus_plus(
@@ -316,7 +317,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             self._distance_metric = distance_factory(
                 X[0], X[1], metric=self.metric, **self._distance_params
             )
-
         best_centers = None
         best_inertia = np.inf
         best_labels = None
@@ -350,6 +350,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
+
         if self.metric == "ddtw" or self.metric == "wddtw":
             X = average_of_slope_transform(X)
         return self._assign_clusters(X, self.cluster_centers_)[0]
@@ -457,6 +458,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         pairwise = pairwise_distance(
             X, cluster_centers, metric=self.metric, **self._distance_params
         )
+        print("Pairwise shape = ",pairwise.shape)
         return pairwise.argmin(axis=1), pairwise.min(axis=1).sum()
 
     def _score(self, X, y=None):

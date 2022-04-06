@@ -1101,7 +1101,6 @@ def pairwise_distance(
         y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
-
     _metric_callable = _resolve_metric(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 

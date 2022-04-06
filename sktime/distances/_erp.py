@@ -73,7 +73,6 @@ class _ErpDistance(NumbaDistance):
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
-
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
