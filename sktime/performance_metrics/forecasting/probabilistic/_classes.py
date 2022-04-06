@@ -61,7 +61,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             Ground truth (correct) target values.
 
         y_pred : return object of probabilistic predictition method scitype:y_pred
-            must be at fh and for variable equal to those in y_true
+            must be at fh and for variables equal to those in y_true
 
         Returns
         -------
@@ -89,7 +89,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             Ground truth (correct) target values.
 
         y_pred : return object of probabilistic predictition method scitype:y_pred
-            must be at fh and for variable equal to those in y_true
+            must be at fh and for variables equal to those in y_true
 
         Returns
         -------
@@ -132,7 +132,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             Ground truth (correct) target values.
 
         y_pred : return object of probabilistic predictition method scitype:y_pred
-            must be at fh and for variable equal to those in y_true
+            must be at fh and for variables equal to those in y_true
 
         Returns
         -------
