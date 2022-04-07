@@ -116,10 +116,10 @@ def _edr_cost_matrix(
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
-        First timeseries.
-    y: np.ndarray (2d array)
-        Second timeseries.
+    x: np.ndarray, 2d shape (d (n_dimensions),m (series_length))
+        First time series.
+    y: np.ndarray, 2d array shape (d, m)
+        Second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the values in bound are marked by finite values and
         outside bound points are infinite values.
