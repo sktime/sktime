@@ -595,17 +595,35 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     @property
     def forecaster_(self):
-        """Return reference to the forecaster in the pipeline. Valid after _fit."""
+        """Return reference to the forecaster in the pipeline.
+
+        Returns
+        -------
+        sktime forecaster
+            reference to unique forecaster in steps_ (without the name)
+        """
         return self.steps_[self._get_forecaster_index()][1]
 
     @property
     def transformers_pre_(self):
-        """Return reference to the list of pre-forecast trafos. Valid after _fit."""
+        """Return reference to the list of pre-forecast trafos.
+
+        Returns
+        -------
+        list of tuples (str, estimator) of sktime transformers
+            reference to tuples that come before the unique (str, forecaster) in steps_
+        """
         return self.steps_[: self._get_forecaster_index()]
 
     @property
     def transformers_post_(self):
-        """Return reference to the list of pre-forecast trafos. Valid after _fit."""
+        """Return reference to the list of pre-forecast trafos.
+
+        Returns
+        -------
+        list of tuples (str, estimator) of sktime transformers
+            reference to tuples that come after the unique (str, forecaster) in steps_
+        """
         return self.steps_[(1 + self._get_forecaster_index()) :]
 
     def _fit(self, y, X=None, fh=None):
