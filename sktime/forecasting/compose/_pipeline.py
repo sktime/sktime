@@ -69,7 +69,7 @@ class _Pipeline(
                 f"but found {scitypes.count('forecaster')}"
             )
 
-        forecaster_ind = self._get_forecaster_index()
+        forecaster_ind = self._get_forecaster_index(estimator_tuples)
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
             TypeError(
@@ -580,7 +580,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         super(TransformedTargetForecaster, self).__init__()
 
         # set the tags based on forecaster
-        _, forecaster = self.steps[self._get_forecaster_index()]
+        _, forecaster = self.steps[self._get_forecaster_index(self.steps_)]
         tags_to_clone = [
             "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
@@ -602,7 +602,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         sktime forecaster
             reference to unique forecaster in steps_ (without the name)
         """
-        return self.steps_[self._get_forecaster_index()][1]
+        return self.steps_[self._get_forecaster_index(self.steps_)][1]
 
     @property
     def transformers_pre_(self):
@@ -613,7 +613,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         list of tuples (str, estimator) of sktime transformers
             reference to tuples that come before the unique (str, forecaster) in steps_
         """
-        return self.steps_[: self._get_forecaster_index()]
+        return self.steps_[: self._get_forecaster_index(self.steps_)]
 
     @property
     def transformers_post_(self):
@@ -624,7 +624,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         list of tuples (str, estimator) of sktime transformers
             reference to tuples that come after the unique (str, forecaster) in steps_
         """
-        return self.steps_[(1 + self._get_forecaster_index()) :]
+        return self.steps_[(1 + self._get_forecaster_index(self.steps_)) :]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
