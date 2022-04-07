@@ -10,7 +10,8 @@ from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
+from sktime.registry import scitype
+from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -18,42 +19,50 @@ class _Pipeline(
     BaseForecaster,
     _HeterogenousMetaEstimator,
 ):
-    def _check_steps(self):
+
+    def _get_pipeline_scitypes(self, estimators):
+        """Get list of scityes (str) if names/estimator list."""
+        return [scitype(x[1]) for x in estimators]
+
+    def _get_forecaster_index(self, estimators):
+        """Get the index of the first forecaster in the list."""
+        return self._get_pipeline_scitypes(estimators).index("forecaster")
+
+    def _check_steps(self, estimators, allow_postproc=False):
         """Check Steps.
 
         Parameters
         ----------
-        self : an instance of self
+        estimators : list of (name, estimator) pairs
+        allow_postproc : bool, optional, default=False
+            whether transformers after the forecaster are allowed
 
         Returns
         -------
-        step : Returns step.
+        step : Returns step
+
+        Raises
+        ------
+        TypeError if names in `estimators` are not unique
+        TypeError if estimators in `estimators` are not all forecaster or transformer
+        TypeError if there is not exactly one forecaster in `estimators`
+        TypeError if not allow_postproc and forecaster is not last estimator
         """
-        names, estimators = zip(*self.steps)
+        names, estimators = zip(*estimators)
 
         # validate names
         self._check_names(names)
 
-        # validate estimators
-        transformers = estimators[:-1]
-        forecaster = estimators[-1]
+        scitypes = self._get_pipeline_scitypes()
+        if set(scitypes).issubset(["forecaster", "transformer"]):
+            raise TypeError("estimators must be either transformer or forecaster")
+        if scitypes.count("forecaster") != 1:
+            raise TypeError("exactly one forecaster must be contained in the chain")
 
-        valid_transformer_type = BaseTransformer
-        for transformer in transformers:
-            if not isinstance(transformer, valid_transformer_type):
-                raise TypeError(
-                    f"All intermediate steps should be "
-                    f"instances of {valid_transformer_type}, "
-                    f"but transformer: {transformer} is not."
-                )
+        forecaster_ind = self._get_forecaster_index()
 
-        valid_forecaster_type = BaseForecaster
-        if not isinstance(forecaster, valid_forecaster_type):
-            raise TypeError(
-                f"Last step of {self.__class__.__name__} must be of type: "
-                f"{valid_forecaster_type}, "
-                f"but forecaster: {forecaster} is not."
-            )
+        if not allow_postproc and forecaster_ind != len(estimators) - 1:
+            TypeError("transformers after forecaster are not allowed")
 
         # Shallow copy
         return list(self.steps)
@@ -225,7 +234,7 @@ class ForecastingPipeline(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps()
+        self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
         _, forecaster = self.steps[-1]
         tags_to_clone = [
@@ -525,9 +534,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps()
+        self.steps_ = self._check_steps(steps, allow_postproc=True)
         super(TransformedTargetForecaster, self).__init__()
-        _, forecaster = self.steps[-1]
+        _, forecaster = self.steps[self._get_forecaster_index()]
         tags_to_clone = [
             "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
@@ -543,7 +552,17 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     @property
     def forecaster_(self):
         """Return reference to the forecaster in the pipeline. Valid after _fit."""
-        return self.steps_[-1][1]
+        return self.steps_[self._get_forecaster_index()][1]
+
+    @property
+    def transformers_pre_(self):
+        """Return reference to the list of pre-forecast trafos. Valid after _fit."""
+        return self.steps_[:self._get_forecaster_index()]
+
+    @property
+    def transformers_post_(self):
+        """Return reference to the list of pre-forecast trafos. Valid after _fit."""
+        return self.steps_[(1 + self._get_forecaster_index()):]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -561,17 +580,20 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : returns an instance of self.
         """
-        # transform
-        for step_idx, name, transformer in self._iter_transformers():
-            t = clone(transformer)
+        self.steps_ = [(x[0], clone(x[1])) for x in self.steps]
+
+        # transform pre
+        for _, t in self.transformers_pre_:
             y = t.fit_transform(X=y, y=X)
-            self.steps_[step_idx] = (name, t)
 
         # fit forecaster
-        name, forecaster = self.steps[-1]
-        f = clone(forecaster)
+        f = self.forecaster_
         f.fit(y=y, X=X, fh=fh)
-        self.steps_[-1] = (name, f)
+
+        # transform post
+        for _, t in self.transformers_post_:
+            y = t.fit_transform(X=y, y=X)
+
         return self
 
     def _predict(self, fh=None, X=None):
@@ -592,6 +614,11 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         y_pred = self.forecaster_.predict(fh=fh, X=X)
         # inverse transform y_pred
         y_pred = self._get_inverse_transform(y_pred, X)
+
+        # transform post
+        for _, t in self.transformers_post_:
+            y_pred = t.transform(X=y_pred, y=X)
+
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -607,12 +634,19 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : an instance of self
         """
-        for _, _, transformer in self._iter_transformers():
-            if hasattr(transformer, "update"):
-                transformer.update(X=y, y=X, update_params=update_params)
-                y = transformer.transform(X=y, y=X)
+        # transform pre
+        for _, t in self.transformers_pre_:
+            if hasattr(t, "update"):
+                t.update(X=y, y=X, update_params=update_params)
+                y = t.transform(X=y, y=X)
 
         self.forecaster_.update(y=y, X=X, update_params=update_params)
+
+        # transform post
+        for _, t in self.transformers_post_:
+            t.update(X=y, y=X, update_params=update_params)
+            y = t.transform(X=y, y=X)
+
         return self
 
     def transform(self, Z, X=None):
