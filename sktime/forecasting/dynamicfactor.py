@@ -176,7 +176,7 @@ class DynamicFactor(_StatsModelsAdapter):
         self.enforce_stationarity = enforce_stationarity
 
         # Fit Params
-        self.satrt_params = start_params
+        self.start_params = start_params
         self.transformed = transformed
         self.includes_fixed = includes_fixed
         self.cov_type = cov_type
@@ -217,7 +217,7 @@ class DynamicFactor(_StatsModelsAdapter):
         )
 
         self._fitted_forecaster = self._forecaster.fit(
-            start_params=self.satrt_params,
+            start_params=self.start_params,
             transformed=self.transformed,
             includes_fixed=self.includes_fixed,
             cov_type=self.cov_type,
