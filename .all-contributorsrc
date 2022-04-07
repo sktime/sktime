@@ -53,7 +53,7 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/61966277?v=4",
       "profile": "https://www.linkedin.com/in/ireoluwatomiwa-sanusi/",
       "contributions": [
-        "doc",
+        "doc"
       ]
     },
     {
@@ -1019,6 +1019,16 @@
       "name": "Guzal Bulatova",
       "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
       "profile": "https://github.com/GuzalBulatova",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "ryali1",
+      "name": "Partha Ryali",
+      "avatar_url": "https://avatars.githubusercontent.com/ryali1",
+      "profile": "https://github.com/ryali1",
       "contributions": [
         "code",
         "test"
