@@ -141,10 +141,13 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
             " of estimators, or a list of (string, estimator) tuples. "
         )
         if cls_type is None:
-            msg += f"All estimators in {attr_name} must be of type BaseEstimator."
+            msg += f"All estimators in '{attr_name}' must be of type BaseEstimator."
             cls_type = BaseEstimator
         elif isclass(cls_type) or isinstance(cls_type, tuple):
-            msg += f"All estimators in {attr_name} must be of type {cls_type}."
+            msg += (
+                f"All estimators in '{attr_name}' must be of type "
+                f"{cls_type.__name__}."
+            )
         else:
             raise TypeError("cls_type must be a class or tuple of classes")
 
@@ -164,7 +167,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
 
             return is_est, is_tuple
 
-        if not all(all(is_est_is_tuple(x)) for x in estimators):
+        if not all(any(is_est_is_tuple(x)) for x in estimators):
             raise TypeError(msg)
 
         msg_no_mix = (
