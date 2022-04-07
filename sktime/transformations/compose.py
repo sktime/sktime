@@ -119,8 +119,22 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
         self._anytagis_then_set("capability:inverse_transform", False, True, ests)
-        self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
+
+        # can handle missing data iff all estimators can handle missing data
+        #   up to a potential estimator when missing data is removed
+        # removes missing data iff can handle missing data,
+        #   and there is an estimator in the chain that removes it
+        self._tagchain_is_linked_set(
+            "handles-missing-data", "capability:missing_values:removes", ests
+        )
+        # can handle unequal length iff all estimators can handle unequal length
+        #   up to a potential estimator which turns the series equal length
+        # removes unequal length iff can handle unequal length,
+        #   and there is an estimator in the chain that renders series equal length
+        self._tagchain_is_linked_set(
+            "capability:unequal_length", "capability:unequal_length:removes", ests
+        )
 
     @property
     def _steps(self):
@@ -348,8 +362,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -598,41 +618,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         return Xt
 
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform X and return a transformed version.
-
-        private _inverse_transform containing core logic, called from transform
-
-        Parameters
-        ----------
-        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        # retrieve fitted transformers, apply to the new data individually
-        transformers = self._get_estimator_list(self.transformer_list_)
-        if not self.get_tag("fit_is_empty", False):
-            Xt_list = [trafo.inverse_transform(X, y) for trafo in transformers]
-        else:
-            Xt_list = [trafo.fit(X, y).fit_transform(X, y) for trafo in transformers]
-
-        transformer_names = self._get_estimator_names(self.transformer_list_)
-
-        Xt = pd.concat(
-            Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
-        )
-
-        if self.flatten_transform_index:
-            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
-            Xt.columns = flat_index
-
-        return Xt
-
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.
 
@@ -662,7 +647,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Test parameters for FeatureUnion."""
         from sktime.transformations.series.exponent import ExponentTransformer
 

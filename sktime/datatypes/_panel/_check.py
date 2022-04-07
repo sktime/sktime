@@ -44,9 +44,14 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._series._check import check_pddataframe_series
+from sktime.utils.validation.series import is_integer_index
 
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
-VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.Index)
+VALID_MULTIINDEX_TYPES = (pd.RangeIndex, pd.Index)
+
+
+def is_in_valid_multiindex_types(x) -> bool:
+    """Check that the input type belongs to the valid multiindex types."""
+    return isinstance(x, VALID_MULTIINDEX_TYPES) or is_integer_index(x)
 
 
 def _ret(valid, msg, metadata, return_metadata):
@@ -162,10 +167,10 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 
     # check instance index being integer or range index
     instind = obj.index.get_level_values(0)
-    if not isinstance(instind, VALID_MULTIINDEX_TYPES):
+    if not is_in_valid_multiindex_types(instind):
         msg = (
             f"instance index (first/highest index) must be {VALID_MULTIINDEX_TYPES}, "
-            f"but found {type(instind)}"
+            f"integer index, but found {type(instind)}"
         )
         return _ret(False, msg, None, return_metadata)
 
@@ -200,12 +205,12 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
 check_dict[("pd-multiindex", "Panel")] = check_pdmultiindex_panel
 
 
-def _cell_is_series_or_array(cell):
-    return isinstance(cell, (pd.Series, np.ndarray))
+def _cell_is_series(cell):
+    return isinstance(cell, pd.Series)
 
 
 def _nested_cell_mask(X):
-    return X.applymap(_cell_is_series_or_array)
+    return X.applymap(_cell_is_series)
 
 
 def are_columns_nested(X):
