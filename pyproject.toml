@@ -69,7 +69,8 @@ all_extras = [
     "tensorflow",
     "tensorflow-probability",
     "tsfresh>=0.17.0",
-    "tslearn>=0.5.2"
+    "tslearn>=0.5.2",
+    "arch>=5.1.0"
 ]
 
 dev = [
