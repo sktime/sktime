@@ -63,12 +63,12 @@ TEST_STEP_LENGTHS = [
     *TEST_STEP_LENGTHS_DATEOFFSET,
 ]
 
-TEST_OOS_FHS = [1, np.array([2, 5])]  # out-of-sample
+TEST_OOS_FHS = [1, np.array([2, 5], dtype="int64")]  # out-of-sample
 TEST_INS_FHS = [
     -3,  # single in-sample
-    np.array([-2, -5]),  # multiple in-sample
+    np.array([-2, -5], dtype="int64"),  # multiple in-sample
     0,  # last training point
-    np.array([-3, 2]),  # mixed in-sample and out-of-sample
+    np.array([-3, 2], dtype="int64"),  # mixed in-sample and out-of-sample
 ]
 TEST_FHS = [*TEST_OOS_FHS, *TEST_INS_FHS]
 
@@ -104,11 +104,13 @@ VALID_INDEX_FH_COMBINATIONS = [
     ("period", "period", False),
     ("datetime", "int", True),
     ("datetime", "datetime", False),
+    ("datetime", "timedelta", True),
 ]
 
 INDEX_TYPE_LOOKUP = {
-    "int": pd.Int64Index,
+    "int": pd.Index,
     "range": pd.RangeIndex,
     "datetime": pd.DatetimeIndex,
     "period": pd.PeriodIndex,
+    "timedelta": pd.TimedeltaIndex,
 }
