@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3 -u
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """AutoRegressive Model"""
 __all__ = ["AutoReg"]
 __author__ = ["ryali1"]
@@ -45,9 +47,8 @@ class AutoReg(_StatsModelsAdapter):
 
     References
     ----------
-    [1] Athanasopoulos, G., Poskitt, D. S., & Vahid, F. (2012).
-    Two canonical VARMA forms: Scalar component models vis-à-vis the echelon form.
-    Econometric Reviews, 31(1), 60–83, 2012.
+    [1]Poskitt, D. S. (1994). A Note on Autoregressive Modeling. 
+    Econometric Theory, 10(5), 884–899. http://www.jstor.org/stable/3532858
 
     Examples
     --------
