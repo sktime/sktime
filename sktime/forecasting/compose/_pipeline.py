@@ -40,7 +40,7 @@ class _Pipeline(
 
         Returns
         -------
-        step : Returns step
+        step : list of estimators, or list of (name, estimator) pairs
 
         Raises
         ------
@@ -76,7 +76,7 @@ class _Pipeline(
             )
 
         # Shallow copy
-        return list(self.steps)
+        return estimator_tuples
 
     def _iter_transformers(self, reverse=False):
 
