@@ -123,21 +123,25 @@ if __name__ == "__main__":
         distance = "ddtw"
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        dataset = "UnitTest"
+        data_dir = f"../datasets/data/"
         results_dir = "./temp"
-        dataset = "Chinatown"
         resample = 0
         tf = True
-        distance = "erp"
+        distance = "edr"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    normalize(train_X, norm="l1", copy=False)
-    normalize(test_X, norm="l1", copy=False)
-    print(" shape X = ",train_X.shape)
+    from sklearn.preprocessing import StandardScaler
+
+    s = StandardScaler()
+    train_X = s.fit_transform(train_X.T)
+    train_X = train_X.T
+    test_X = s.fit_transform(test_X.T)
+    test_X = test_X.T
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
@@ -146,7 +150,7 @@ if __name__ == "__main__":
     if distance == "wdtw" or distance == "dwdtw":
         parameters = {"window": 1.0, "epsilon": 0.01, "g": 0.05, "c": 1}
     else:
-        parameters = {"window": 0.2, "epsilon": 0.01, "g": 0.05, "c": 1}
+        parameters = {"window": 1.0, "epsilon": 0.01, "g": 0.05, "c": 1}
 
     clst = config_clusterer(
         averaging_method="mean",

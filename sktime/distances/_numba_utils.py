@@ -13,6 +13,7 @@ def _make_3d_series(x: np.ndarray) -> np.ndarray:
 
     "Pairwise assumes it has been passed two sets of series, if passed a single
     series this function reshapes.
+
     Parameters
     ----------
     x: np.ndarray, 2d or 3d
@@ -37,12 +38,12 @@ def _compute_pairwise_distance(
     Parameters
     ----------
     x: np.ndarray (2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d or 3d array)
-        Second timeseries.
+        Second time series.
     symmetric: bool
-        Boolean that is true when x == y and false when x != y. Used in some instances
-        to speed up pairwise computation.
+        Boolean that is true when distance_callable(x,y) == distance_callable(y,x).
+        Used in some to speed up pairwise computation for symmetric distance functions.
     distance_callable: Callable[[np.ndarray, np.ndarray], float]
         No_python distance callable to measure the distance between two 2d numpy
         arrays.
@@ -52,12 +53,8 @@ def _compute_pairwise_distance(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
         Pairwise distance matrix between the two timeseries.
     """
-    print(" Shape x = ",x.shape)
-    print(" Shape y = ",y.shape)
     _x = _make_3d_series(x)
     _y = _make_3d_series(y)
-    print(" Shape _x = ",_x.shape)
-    print(" Shape _y = ",_y.shape)
     x_size = _x.shape[0]
     y_size = _y.shape[0]
 
@@ -70,7 +67,6 @@ def _compute_pairwise_distance(
                 pairwise_matrix[i, j] = pairwise_matrix[j, i]
             else:
                 pairwise_matrix[i, j] = distance_callable(curr_x, _y[j])
-
     return pairwise_matrix
 
 

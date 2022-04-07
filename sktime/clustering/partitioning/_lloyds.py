@@ -350,7 +350,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         np.ndarray (1d array of shape (n_instances,))
             Index of the cluster each time series in X belongs to.
         """
-
         if self.metric == "ddtw" or self.metric == "wddtw":
             X = average_of_slope_transform(X)
         return self._assign_clusters(X, self.cluster_centers_)[0]
@@ -375,25 +374,24 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             Labels that is the index each time series belongs to.
         np.ndarray (3d array of shape (n_clusters, n_dimensions,
             series_length))
-            Time series that represent each of the cluster centers. If the algorithm
+            Time series that represent each of the cluster centres. If the algorithm
             stops before fully converging these will not be consistent with labels.
         float
             Sum of squared distances of samples to their closest cluster center,
             weighted by the sample weights if provided.
         """
-        cluster_centers = self._init_algorithm(
+        cluster_centres = self._init_algorithm(
             X,
             self.n_clusters,
             self._random_state,
             distance_metric=self._distance_metric,
         )
-
         old_inertia = np.inf
         old_labels = None
         for i in range(self.max_iter):
             labels, inertia = self._assign_clusters(
                 X,
-                cluster_centers,
+                cluster_centres,
             )
 
             if np.abs(old_inertia - inertia) < self.tol:
@@ -420,18 +418,18 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
                     break
             old_labels = labels
 
-            cluster_centers = self._compute_new_cluster_centers(X, labels)
+            cluster_centres = self._compute_new_cluster_centers(X, labels)
 
             if self.verbose is True:
                 print(f"Iteration {i}, inertia {inertia}.")  # noqa: T001
 
-        labels, inertia = self._assign_clusters(X, cluster_centers)
-        centers = cluster_centers
+        labels, inertia = self._assign_clusters(X, cluster_centres)
+        centres = cluster_centres
 
-        return labels, centers, inertia, i + 1
+        return labels, centres, inertia, i + 1
 
     def _assign_clusters(
-        self, X: np.ndarray, cluster_centers: np.ndarray
+        self, X: np.ndarray, cluster_centres: np.ndarray
     ) -> Tuple[np.ndarray, float]:
         """Assign each instance to a cluster.
 
@@ -443,7 +441,7 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         ----------
         X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
             Time series instances to predict their cluster indexes.
-        cluster_centers: np.ndarray (3d array of shape
+        cluster_centres: np.ndarray (3d array of shape
                                         (n_clusters, n_dimensions, series_length))
             Cluster centers to assign to.
 
@@ -456,9 +454,8 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
             the assigned clusters.
         """
         pairwise = pairwise_distance(
-            X, cluster_centers, metric=self.metric, **self._distance_params
+            X, cluster_centres, metric=self.metric, **self._distance_params
         )
-        print("Pairwise shape = ",pairwise.shape)
         return pairwise.argmin(axis=1), pairwise.min(axis=1).sum()
 
     def _score(self, X, y=None):

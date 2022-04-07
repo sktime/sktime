@@ -78,7 +78,7 @@ class _ErpDistance(NumbaDistance):
 
         @njit(cache=True)
         def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
-            cost_matrix = _erp_cost_matrix(x, y, _bounding_matrix, g)
+            cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
 
             return cost_matrix[-1, -1]
 

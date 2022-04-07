@@ -99,14 +99,96 @@ def debug_clusterers():
         # print(" Rand score on with 2D unit test = ",train_rand)
 
 
+from sklearn.preprocessing import StandardScaler, normalize
+
+
 def generate_test_results_clusterers():
     """Generate test results."""
+    X_train, y_train = load_unit_test(split="train", return_type="numpy2d")
+    print(" Shape = ", X_train[0].shape)
+    s = StandardScaler()
+    X_train = s.fit_transform(X_train.T)
+    X_train = X_train.T
+    d1 = X_train[0]
+    d2 = X_train[1]
+    print(" Shape = ", d1.shape)
+    d3 = np.zeros(d1.shape)
+    print(d1)
+    print(d2)
+    print(d3)
+    # d1, c1 and c2= distance =  0.9166666666666666
+
+    c1 = np.array(
+        [
+            -0.70310574,
+            -0.87214184,
+            -1.00698691,
+            -1.06674154,
+            -1.12436733,
+            -1.15538656,
+            -1.15125921,
+            -1.03439438,
+            -0.85569435,
+            -0.76934041,
+            -0.47880807,
+            0.13013539,
+            1.24150173,
+            1.47580796,
+            1.21524191,
+            1.03776906,
+            0.9338891,
+            1.11147877,
+            1.35705589,
+            1.29823615,
+            0.81583304,
+            0.30507612,
+            -0.14019819,
+            -0.5636006,
+        ]
+    )
+    c2 = np.array(
+        [
+            -0.56887401,
+            -0.78355128,
+            -0.97270354,
+            -1.05610923,
+            -1.16663863,
+            -1.21763814,
+            -1.21428503,
+            -1.14248176,
+            -0.9842895,
+            -0.91458795,
+            -0.55085488,
+            0.03584731,
+            1.08807594,
+            1.32503268,
+            1.08481383,
+            0.90703813,
+            0.87781706,
+            1.03376858,
+            1.33278512,
+            1.38938799,
+            0.99061415,
+            0.59018919,
+            0.1635356,
+            -0.24689165,
+        ]
+    )
     x = create_test_distance_numpy(10)
     y = create_test_distance_numpy(10, random_state=2)
-    print(x)
-    print(y)
-    d = euclidean_distance(x, y)
-    print(d)
+    curr_X = X_train[19]
+
+    curr_X = curr_X.reshape((1, c1.shape[0]))
+
+    c1 = c1.reshape((1, c1.shape[0]))
+    print(f"instance 19  = {curr_X} shape X = {curr_X.shape}")
+    print("Centroid 0 =", c1)
+    d = edr_distance(curr_X, c1, epsilon=0.01, window=1.0)
+    print(" DISTANCE = ", d)
+    print("Shape centroid = ", c1.shape)
+    d = edr_distance(curr_X, c2, epsilon=0.01, window=1.0)
+    print(" DISTANCE = ", d)
+    print("Shape centroid = ", c2.shape)
 
 
 def difference_test():
@@ -159,4 +241,5 @@ def difference_test():
 if __name__ == "__main__":
     #    debug_clusterers()
     # difference_test()
-    time_clusterers()
+    # time_clusterers()
+    generate_test_results_clusterers()

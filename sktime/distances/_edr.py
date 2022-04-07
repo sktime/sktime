@@ -96,11 +96,11 @@ class _EdrDistance(NumbaDistance):
             if np.array_equal(_x, _y):
                 return 0.0
             if epsilon is None:
-                _epsilon = max(np.std(x), np.std(y)) / 4
+                _epsilon = max(np.std(_x), np.std(_y)) / 4
             else:
                 _epsilon = epsilon
-            cost_matrix = _edr_cost_matrix(x, y, _bounding_matrix, _epsilon)
-            return float(cost_matrix[-1, -1] / max(x.shape[1], y.shape[1]))
+            cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
+            return float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
 
         return numba_edr_distance
 
@@ -136,7 +136,6 @@ def _edr_cost_matrix(
     x_size = x.shape[1]
     y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
-
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
