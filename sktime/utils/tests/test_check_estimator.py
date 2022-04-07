@@ -15,7 +15,7 @@ EXAMPLE_CLASSES = [Catch22Classifier, NaiveForecaster, ExponentTransformer]
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
 def test_check_estimator_passed(estimator_class):
-    """Test that check_estimator returns only passed tests for examples."""
+    """Test that check_estimator returns only passed tests for examples we know pass."""
     estimator_instance = estimator_class.create_test_instance()
 
     result_class = check_estimator(estimator_class, verbose=False)
@@ -27,7 +27,7 @@ def test_check_estimator_passed(estimator_class):
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
 def test_check_estimator_does_not_raise(estimator_class):
-    """Test that check_estimator does not raise when asked to raise exceptions."""
+    """Test that check_estimator does not raise exceptions on examples we know pass."""
     estimator_instance = estimator_class.create_test_instance()
 
     check_estimator(estimator_class, return_exceptions=False, verbose=False)
