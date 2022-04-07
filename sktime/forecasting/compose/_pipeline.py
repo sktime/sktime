@@ -57,7 +57,7 @@ class _Pipeline(
         # validate names
         self._check_names(names)
 
-        scitypes = self._get_pipeline_scitypes(estimators)
+        scitypes = self._get_pipeline_scitypes(estimator_tuples)
         if not set(scitypes).issubset(["forecaster", "transformer"]):
             raise TypeError(
                 f"estimators passed to {type(self).__name__} "
