@@ -29,9 +29,10 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
+    all_inputs_are_iloc_like,
+    all_inputs_are_time_like,
     array_is_datetime64,
     array_is_int,
-    array_is_timedelta_or_date_offset,
     check_window_length,
     is_datetime,
     is_int,
@@ -260,64 +261,42 @@ def _check_window_lengths(
                 raise TypeError(error_msg_for_incompatible_types)
 
 
-def _cutoffs_fh_window_length_types_are_supported(
-    cutoffs: VALID_CUTOFF_TYPES,
-    fh: FORECASTING_HORIZON_TYPES,
-    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-) -> bool:
+def _inputs_are_supported(args: list) -> bool:
     """Check that combination of inputs is supported.
 
     Currently, only two cases are allowed:
-    either all inputs are integers, or they are all datetime or timedelta
+    either all inputs are iloc-friendly, or they are all time-like
 
     Parameters
     ----------
-    cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like
-    fh : int, timedelta, list or np.array of ints or timedeltas
-    window_length : int or timedelta or pd.DateOffset
+    args : list of inputs to check
 
     Returns
     -------
     True if all inputs are compatible, False otherwise
     """
-    all_int = array_is_int(cutoffs) and array_is_int(fh) and is_int(window_length)
-    all_dates = (
-        array_is_datetime64(cutoffs)
-        and array_is_timedelta_or_date_offset(fh)
-        and is_timedelta_or_date_offset(window_length)
-    )
-    if all_int or all_dates:
+    if all_inputs_are_iloc_like(args) or all_inputs_are_time_like(args):
         return True
     else:
         return False
 
 
-def _check_cutoffs_fh_window_length(
-    cutoffs: VALID_CUTOFF_TYPES,
-    fh: FORECASTING_HORIZON_TYPES,
-    window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-) -> None:
+def _check_inputs_for_compatibility(args: list) -> None:
     """Check that combination of inputs is supported.
 
     Currently, only two cases are allowed:
-    either all inputs are integers, or they are all datetime or timedelta
+    either all inputs are iloc-friendly, or they are time-like
 
     Parameters
     ----------
-    cutoffs : np.array or pd.Index
-        cutoff points, positive and integer- or datetime-index like
-    fh : int, timedelta, list or np.array of ints or timedeltas
-    window_length : int or timedelta or pd.DateOffset
+    args : list of inputs
 
     Raises
     ------
     TypeError
         if combination of inputs is not supported
     """
-    if not _cutoffs_fh_window_length_types_are_supported(
-        cutoffs=cutoffs, fh=fh, window_length=window_length
-    ):
+    if not _inputs_are_supported(args):
         raise TypeError("Unsupported combination of types")
 
 
@@ -576,6 +555,7 @@ class CutoffSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
+        _check_inputs_for_compatibility([fh, cutoffs, window_length])
         self.cutoffs = cutoffs
         super(CutoffSplitter, self).__init__(fh, window_length)
 
@@ -585,9 +565,6 @@ class CutoffSplitter(BaseSplitter):
         fh = _check_fh(fh=self.fh)
         window_length = check_window_length(
             window_length=self.window_length, n_timepoints=n_timepoints
-        )
-        _check_cutoffs_fh_window_length(
-            cutoffs=cutoffs, fh=fh, window_length=window_length
         )
         _check_cutoffs_and_y(cutoffs=cutoffs, y=y)
         _check_cutoffs_fh_y(cutoffs=cutoffs, fh=fh, y=y)
@@ -667,6 +644,9 @@ class BaseWindowSplitter(BaseSplitter):
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
     ) -> None:
+        _check_inputs_for_compatibility(
+            [fh, initial_window, window_length, step_length]
+        )
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
@@ -998,6 +978,7 @@ class SingleWindowSplitter(BaseSplitter):
         fh: FORECASTING_HORIZON_TYPES,
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
     ) -> None:
+        _check_inputs_for_compatibility(args=[fh, window_length])
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:

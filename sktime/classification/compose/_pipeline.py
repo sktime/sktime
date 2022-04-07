@@ -70,6 +70,23 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         is always in (str, transformer) format, even if transformers is just a list
         strings not passed in transformers are unique generated strings
         i-th transformer in `transformers_` is clone of i-th in `transformers`
+
+    Examples
+    --------
+    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> pipeline = ClassifierPipeline(
+    ...     TimeSeriesForestClassifier(n_estimators=5), [PCATransformer()]
+    ... )
+    >>> pipeline.fit(X_train, y_train)
+    ClassifierPipeline(...)
+    >>> y_pred = pipeline.predict(X_test)
+
+    Alternative construction via dunder method:
+    >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
     """
 
     _tags = {
@@ -95,17 +112,27 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
         super(ClassifierPipeline, self).__init__()
 
-        # can handle multivariate of both classifier and all transformers can
+        # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
         multivariate = multivariate and not self.transformers_.get_tag(
             "univariate-only", True
         )
-        # can handle missing values if both classifier and all transformers can
+        # can handle missing values iff: both classifier and all transformers can,
+        #   *or* transformer chain removes missing data
         missing = classifier.get_tag("capability:missing_values", False)
-        missing = missing and self.transformer_.get_tag("handles-missing-data", False)
-        # can handle unequal length if classifier can
-        #   transformers should always be able to, due to vectorization
+        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing or self.transformers_.get_tag(
+            "capability:missing_values:removes", False
+        )
+        # can handle unequal length iff: classifier can and transformers can,
+        #   *or* transformer chain renders the series equal length
         unequal = classifier.get_tag("capability:unequal_length")
+        unequal = unequal and self.transformers_.get_tag(
+            "capability:unequal_length", False
+        )
+        unequal = unequal or self.transformers_.get_tag(
+            "capability:unequal_length:removes", False
+        )
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -285,8 +312,18 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -305,6 +342,4 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
         c = KNeighborsTimeSeriesClassifier()
 
         # construct without names
-        params = {"transformers": [t1, t2], "classifier": c}
-
-        return params
+        return {"transformers": [t1, t2], "classifier": c}

@@ -781,7 +781,7 @@ def load_uschange(y_name="Consumption"):
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.sort_values("Quarter")
     data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
+    data.index = pd.Index(data.index, dtype=int)
     data.name = name
     y = data[y_name]
     if y_name != "Quarter":
