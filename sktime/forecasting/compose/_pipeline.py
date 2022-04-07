@@ -34,13 +34,15 @@ class _Pipeline(
 
         Parameters
         ----------
-        estimators : list of (name, estimator) pairs
+        estimators : list of estimators, or list of (name, estimator) pairs
         allow_postproc : bool, optional, default=False
             whether transformers after the forecaster are allowed
 
         Returns
         -------
-        step : list of estimators, or list of (name, estimator) pairs
+        step : list of (name, estimator) pairs
+            if estimators was a list of (str, estimator) tuples, then identical/cloned
+            if was a list of estimators, then str are generated via _get_estimator_names
 
         Raises
         ------
