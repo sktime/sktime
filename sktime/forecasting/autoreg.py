@@ -55,7 +55,7 @@ class AutoReg(_StatsModelsAdapter):
     >>> from sktime.forecasting.autoreg import AutoReg
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = AutoReg
+    >>> forecaster = AutoReg()
     >>> forecaster.fit(y)
     AutoReg(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
