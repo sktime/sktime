@@ -19,6 +19,7 @@ class _Pipeline(
     BaseForecaster,
     _HeterogenousMetaEstimator,
 ):
+    """Abstract class for forecasting pipelines."""
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) if names/estimator list."""
@@ -566,12 +567,12 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     @property
     def transformers_pre_(self):
         """Return reference to the list of pre-forecast trafos. Valid after _fit."""
-        return self.steps_[:self._get_forecaster_index()]
+        return self.steps_[: self._get_forecaster_index()]
 
     @property
     def transformers_post_(self):
         """Return reference to the list of pre-forecast trafos. Valid after _fit."""
-        return self.steps_[(1 + self._get_forecaster_index()):]
+        return self.steps_[(1 + self._get_forecaster_index()) :]
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
