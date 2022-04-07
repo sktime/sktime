@@ -15,9 +15,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from sktime.utils.validation.forecasting import check_alpha
 
 
 class AutoETS(_StatsModelsAdapter):
@@ -406,43 +404,42 @@ class AutoETS(_StatsModelsAdapter):
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
         return y_pred.loc[valid_indices]
 
-    def _predict_quantiles(self, fh, X=None, alpha=DEFAULT_ALPHA):
-        """
-        Compute/return prediction quantiles for a forecast.
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
 
-        Must be run *after* the forecaster has been fitted.
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
 
-        If alpha is iterable, multiple quantiles will be calculated.
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
-            A probability or list of, at which quantile forecasts are computed.
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
-        quantiles : pd.DataFrame
+        pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        self.check_is_fitted()
-        alpha = check_alpha(alpha)
-        # convert alpha to the one needed for predict intervals
-        coverage = []
-        for a in alpha:
-            if a < 0.5:
-                coverage.append((0.5 - a) * 2)
-            elif a > 0.5:
-                coverage.append((a - 0.5) * 2)
-            else:
-                coverage.append(0)
-
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         start, end = valid_indices[[0, -1]]
@@ -450,17 +447,15 @@ class AutoETS(_StatsModelsAdapter):
             start=start, end=end
         )
 
-        pred_quantiles = pd.DataFrame()
-        for a, coverage in zip(alpha, coverage):
-            pred_int = prediction_results.pred_int(1 - coverage)
-            pred_int.columns = ["lower", "upper"]
-            if a < 0.5:
-                pred_quantiles[a] = pred_int["lower"].loc[valid_indices]
-            else:
-                pred_quantiles[a] = pred_int["upper"].loc[valid_indices]
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
-        pred_quantiles.columns = index
-        return pred_quantiles
+        pred_int = pd.DataFrame()
+        for c in coverage:
+            pred_statsmodels = prediction_results.pred_int(1 - c)
+            pred_statsmodels.columns = ["lower", "upper"]
+            pred_int[(c, "lower")] = pred_statsmodels["lower"].loc[valid_indices]
+            pred_int[(c, "upper")] = pred_statsmodels["upper"].loc[valid_indices]
+        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int.columns = index
+        return pred_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.

@@ -18,9 +18,7 @@ from sktime.forecasting.model_selection import (
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
-from sktime.forecasting.model_selection._split import (
-    _cutoffs_fh_window_length_types_are_supported,
-)
+from sktime.forecasting.model_selection._split import _inputs_are_supported
 from sktime.forecasting.tests._config import (
     TEST_CUTOFFS,
     TEST_FHS,
@@ -40,7 +38,6 @@ from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
     is_int,
-    is_timedelta_or_date_offset,
 )
 from sktime.utils.validation.forecasting import check_fh
 
@@ -149,18 +146,22 @@ def _check_cv(cv, y, allow_empty_window=False):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
-    cv = SingleWindowSplitter(fh=fh, window_length=window_length)
-    train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
+    if _inputs_are_supported([fh, window_length]):
+        cv = SingleWindowSplitter(fh=fh, window_length=window_length)
+        train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
-    train_window = train_windows[0]
-    test_window = test_windows[0]
-    assert n_splits == 1
-    assert train_window.shape[0] == _coerce_duration_to_int(
-        duration=window_length, freq="D"
-    )
-    assert test_window.shape[0] == len(check_fh(fh))
+        train_window = train_windows[0]
+        test_window = test_windows[0]
+        assert n_splits == 1
+        assert train_window.shape[0] == _coerce_duration_to_int(
+            duration=window_length, freq="D"
+        )
+        assert test_window.shape[0] == len(check_fh(fh))
 
-    np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+        np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+    else:
+        with pytest.raises(TypeError, match="Unsupported combination of types"):
+            SingleWindowSplitter(fh=fh, window_length=window_length)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -191,16 +192,14 @@ def test_single_window_splitter_default_window_length(y, fh):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
-    cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
-    if _cutoffs_fh_window_length_types_are_supported(
-        cutoffs=cutoffs, fh=ForecastingHorizon(fh), window_length=window_length
-    ):
+    if _inputs_are_supported([cutoffs, fh, window_length]):
+        cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
         train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
     else:
         match = "Unsupported combination of types"
         with pytest.raises(TypeError, match=match):
-            _check_cv(cv, y)
+            CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -209,33 +208,29 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
     """Test SlidingWindowSplitter."""
-    cv = SlidingWindowSplitter(
-        fh=fh,
-        window_length=window_length,
-        step_length=step_length,
-        start_with_window=True,
-    )
-    train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+    if _inputs_are_supported([fh, window_length, step_length]):
+        cv = SlidingWindowSplitter(
+            fh=fh,
+            window_length=window_length,
+            step_length=step_length,
+            start_with_window=True,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert np.vstack(train_windows).shape == (
-        n_splits,
-        _coerce_duration_to_int(duration=window_length, freq="D"),
-    )
-    assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-
-
-def _args_are_all_of_the_same_type(*args) -> bool:
-    return all([type(args[0]) == type(arg) for arg in args])
-
-
-def _windows_are_incompatible(initial_window, window_length) -> bool:
-    return (
-        is_timedelta_or_date_offset(x=initial_window)
-        and not is_timedelta_or_date_offset(x=window_length)
-    ) or (
-        is_timedelta_or_date_offset(x=window_length)
-        and not is_timedelta_or_date_offset(x=initial_window)
-    )
+        assert np.vstack(train_windows).shape == (
+            n_splits,
+            _coerce_duration_to_int(duration=window_length, freq="D"),
+        )
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            SlidingWindowSplitter(
+                fh=fh,
+                window_length=window_length,
+                step_length=step_length,
+                start_with_window=True,
+            )
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -247,50 +242,34 @@ def test_sliding_window_splitter_with_initial_window(
     y, fh, window_length, step_length, initial_window
 ):
     """Test SlidingWindowSplitter."""
-    if _windows_are_incompatible(initial_window, window_length):
-        pytest.skip(
-            "Incompatible initial_window and window_length are tested elsewhere."
+    if _inputs_are_supported([fh, initial_window, window_length, step_length]):
+        cv = SlidingWindowSplitter(
+            fh=fh,
+            window_length=window_length,
+            step_length=step_length,
+            initial_window=initial_window,
+            start_with_window=True,
         )
-    cv = SlidingWindowSplitter(
-        fh=fh,
-        window_length=window_length,
-        step_length=step_length,
-        initial_window=initial_window,
-        start_with_window=True,
-    )
-    train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
 
-    assert train_windows[0].shape[0] == _coerce_duration_to_int(
-        duration=initial_window, freq="D"
-    )
-    assert np.vstack(train_windows[1:]).shape == (
-        n_splits - 1,
-        _coerce_duration_to_int(duration=window_length, freq="D"),
-    )
-    assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-
-
-@pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-@pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
-def test_sliding_window_splitter_with_incompatible_initial_window_and_window_length(
-    y, fh, window_length, step_length, initial_window
-):
-    """Test SlidingWindowSplitter with incompatible initial_window and window_length."""
-    if not _windows_are_incompatible(initial_window, window_length):
-        pytest.skip("Compatible initial_window and window_length are tested elsewhere.")
-    cv = SlidingWindowSplitter(
-        fh=fh,
-        window_length=window_length,
-        step_length=step_length,
-        initial_window=initial_window,
-        start_with_window=True,
-    )
-    match = "The `initial_window` and `window_length` types are incompatible"
-    with pytest.raises(TypeError, match=match):
-        _check_cv(cv, y)
+        assert train_windows[0].shape[0] == _coerce_duration_to_int(
+            duration=initial_window, freq="D"
+        )
+        assert np.vstack(train_windows[1:]).shape == (
+            n_splits - 1,
+            _coerce_duration_to_int(duration=window_length, freq="D"),
+        )
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            SlidingWindowSplitter(
+                fh=fh,
+                initial_window=initial_window,
+                window_length=window_length,
+                step_length=step_length,
+                start_with_window=True,
+            )
 
 
 def _get_n_incomplete_windows(window_length, step_length) -> int:
@@ -310,23 +289,36 @@ def test_sliding_window_splitter_start_with_empty_window(
     y, fh, window_length, step_length
 ):
     """Test SlidingWindowSplitter."""
-    cv = SlidingWindowSplitter(
-        fh=fh,
-        window_length=window_length,
-        step_length=step_length,
-        start_with_window=False,
-    )
-    train_windows, test_windows, _, n_splits = _check_cv(cv, y, allow_empty_window=True)
+    if _inputs_are_supported([fh, window_length, step_length]):
+        cv = SlidingWindowSplitter(
+            fh=fh,
+            window_length=window_length,
+            step_length=step_length,
+            start_with_window=False,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv, y, allow_empty_window=True
+        )
 
-    assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
-    n_incomplete = _get_n_incomplete_windows(window_length, step_length)
-    train_windows = train_windows[n_incomplete:]
+        n_incomplete = _get_n_incomplete_windows(window_length, step_length)
+        train_windows = train_windows[n_incomplete:]
 
-    assert np.vstack(train_windows).shape == (
-        n_splits - n_incomplete,
-        _coerce_duration_to_int(duration=window_length, freq="D"),
-    )
+        assert np.vstack(train_windows).shape == (
+            n_splits - n_incomplete,
+            _coerce_duration_to_int(duration=window_length, freq="D"),
+        )
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            SlidingWindowSplitter(
+                fh=fh,
+                initial_window=None,
+                window_length=window_length,
+                step_length=step_length,
+                start_with_window=False,
+            )
 
 
 def test_sliding_window_splitter_initial_window_start_with_empty_window_raises_error():
@@ -374,18 +366,28 @@ def test_expanding_window_splitter_start_with_empty_window(
     y, fh, initial_window, step_length
 ):
     """Test ExpandingWindowSplitter."""
-    cv = ExpandingWindowSplitter(
-        fh=fh,
-        initial_window=initial_window,
-        step_length=step_length,
-        start_with_window=True,
-    )
-    train_windows, test_windows, _, n_splits = _check_cv(cv, y)
-    assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+    if _inputs_are_supported([fh, initial_window, step_length]):
+        cv = ExpandingWindowSplitter(
+            fh=fh,
+            initial_window=initial_window,
+            step_length=step_length,
+            start_with_window=True,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
-    n_incomplete = _get_n_incomplete_windows(initial_window, step_length)
-    train_windows = train_windows[n_incomplete:]
-    _check_expanding_windows(train_windows)
+        n_incomplete = _get_n_incomplete_windows(initial_window, step_length)
+        train_windows = train_windows[n_incomplete:]
+        _check_expanding_windows(train_windows)
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            ExpandingWindowSplitter(
+                fh=fh,
+                initial_window=initial_window,
+                step_length=step_length,
+                start_with_window=True,
+            )
 
 
 @pytest.mark.parametrize("y", TEST_YS)
@@ -394,18 +396,28 @@ def test_expanding_window_splitter_start_with_empty_window(
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):
     """Test ExpandingWindowSplitter."""
-    cv = ExpandingWindowSplitter(
-        fh=fh,
-        initial_window=initial_window,
-        step_length=step_length,
-        start_with_window=True,
-    )
-    train_windows, test_windows, _, n_splits = _check_cv(cv, y)
-    assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
-    assert train_windows[0].shape[0] == _coerce_duration_to_int(
-        duration=initial_window, freq="D"
-    )
-    _check_expanding_windows(train_windows)
+    if _inputs_are_supported([fh, initial_window, step_length]):
+        cv = ExpandingWindowSplitter(
+            fh=fh,
+            initial_window=initial_window,
+            step_length=step_length,
+            start_with_window=True,
+        )
+        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
+        assert train_windows[0].shape[0] == _coerce_duration_to_int(
+            duration=initial_window, freq="D"
+        )
+        _check_expanding_windows(train_windows)
+    else:
+        match = "Unsupported combination of types"
+        with pytest.raises(TypeError, match=match):
+            ExpandingWindowSplitter(
+                fh=fh,
+                initial_window=initial_window,
+                step_length=step_length,
+                start_with_window=True,
+            )
 
 
 @pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
@@ -438,6 +450,11 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
 @pytest.mark.parametrize("values", TEST_OOS_FHS)
 def test_split_by_fh(index_type, fh_type, is_relative, values):
     """Test temporal_train_test_split."""
+    if fh_type == "timedelta":
+        pytest.skip(
+            "ForecastingHorizon with timedelta values "
+            "is currently experimental and not supported everywhere"
+        )
     y = _make_series(20, index_type=index_type)
     cutoff = y.index[10]
     fh = _make_fh(cutoff, values, fh_type, is_relative)
