@@ -34,7 +34,7 @@ scenarios["transformer-pairwise"] = scenarios_transformers_pairwise
 scenarios["transformer-pairwise-panel"] = scenarios_transformers_pairwise_panel
 
 
-def retrieve_scenarios(obj):
+def retrieve_scenarios(obj, filter_tags=None):
     """Retrieve test scenarios for obj, or by estimator scitype string.
 
     Exactly one of the arguments obj, estimator_type must be provided.
@@ -46,6 +46,12 @@ def retrieve_scenarios(obj):
         If object, must be a class or object inheriting from BaseObject.
         If string, must be in registry.BASE_CLASS_REGISTER (first col)
             for instance 'classifier', 'regressor', 'transformer', 'forecaster'
+    filter_tags: dict of (str or list of str), default=None
+        subsets the returned objectss as follows:
+            each key/value pair is statement in "and"/conjunction
+                key is tag name to sub-set on
+                value str or list of string are tag values
+                condition is "key must be equal to value, or in set(value)"
 
     Returns
     -------
@@ -80,6 +86,11 @@ def retrieve_scenarios(obj):
     if not isinstance(obj, str):
         scenarios_for_type = [x for x in scenarios_for_type if x.is_applicable(obj)]
 
+    if filter_tags is not None:
+        scenarios_for_type = [
+            scen for scen in scenarios_for_type if _check_tag_cond(scen, filter_tags)
+        ]
+
     return scenarios_for_type
 
 
@@ -95,3 +106,33 @@ def _scitype_from_class(obj):
     for i in range(len(BASE_CLASS_SCITYPE_LIST)):
         if isinstance(obj, BASE_CLASS_LIST[i]):
             return BASE_CLASS_SCITYPE_LIST[i]
+
+
+def _check_tag_cond(obj, filter_tags=None):
+    """Check whether object satisfies filter_tags condition.
+
+    Parameters
+    ----------
+    obj: object inheriting from sktime BaseObject
+    filter_tags: dict of (str or list of str), default=None
+        subsets the returned objectss as follows:
+            each key/value pair is statement in "and"/conjunction
+                key is tag name to sub-set on
+                value str or list of string are tag values
+                condition is "key must be equal to value, or in set(value)"
+
+    Returns
+    -------
+    cond_sat: bool, whether estimator satisfies condition in filter_tags
+    """
+    if not isinstance(filter_tags, dict):
+        raise TypeError("filter_tags must be a dict")
+
+    cond_sat = True
+
+    for (key, value) in filter_tags.items():
+        if not isinstance(value, list):
+            value = [value]
+        cond_sat = cond_sat and obj.get_class_tag(key) in set(value)
+
+    return cond_sat

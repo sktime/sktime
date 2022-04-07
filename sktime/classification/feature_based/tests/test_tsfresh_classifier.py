@@ -16,20 +16,17 @@ def test_tsfresh_classifier_on_unit_test_data():
 
     # train TSFresh classifier
     tsfc = TSFreshClassifier(
-        random_state=0,
+        estimator=RandomForestClassifier(n_estimators=10),
         default_fc_parameters="minimal",
         relevant_feature_extractor=False,
-        estimator=RandomForestClassifier(n_estimators=10),
+        random_state=0,
     )
     tsfc.fit(X_train, y_train)
+
+    # TSfresh produces different outputs on different OS. Can't compare probabilities
+    # exactly until this is fixed.
     score = tsfc.score(X_test.iloc[indices], y_test[indices])
     assert score >= 0.8
-
-    # assert probabilities are the same
-    # probas = tsfc.predict_proba(X_test.iloc[indices])
-    # testing.assert_array_almost_equal(
-    #    probas, tsfresh_classifier_unit_test_probas, decimal=2
-    # )
 
 
 def test_tsfresh_classifier_on_basic_motions():
@@ -41,47 +38,14 @@ def test_tsfresh_classifier_on_basic_motions():
 
     # train TSFresh classifier
     tsfc = TSFreshClassifier(
-        random_state=0,
+        estimator=RandomForestClassifier(n_estimators=10),
         default_fc_parameters="minimal",
         relevant_feature_extractor=False,
-        estimator=RandomForestClassifier(n_estimators=10),
+        random_state=0,
     )
     tsfc.fit(X_train.iloc[indices], y_train[indices])
+
+    # TSfresh produces different outputs on different OS. Can't compare probabilities
+    # exactly until this is fixed.
     score = tsfc.score(X_test.iloc[indices], y_test[indices])
     assert score >= 0.9
-
-    # assert probabilities are the same
-    # probas = tsfc.predict_proba(X_test.iloc[indices])
-    # testing.assert_array_almost_equal(probas,
-    # tsfresh_classifier_basic_motions_probas, decimal=2)
-
-
-tsfresh_classifier_unit_test_probas = np.array(
-    [
-        [0.00000, 1.00000],
-        [0.90000, 0.10000],
-        [0.00000, 1.00000],
-        [0.90000, 0.10000],
-        [0.70000, 0.30000],
-        [1.00000, 0.00000],
-        [0.80000, 0.20000],
-        [0.90000, 0.10000],
-        [1.00000, 0.00000],
-        [1.00000, 0.00000],
-    ]
-)
-
-tsfresh_classifier_basic_motions_probas = np.array(
-    [
-        [0.00000, 0.00000, 0.20000, 0.80000],
-        [0.40000, 0.20000, 0.10000, 0.30000],
-        [0.00000, 0.00000, 0.90000, 0.10000],
-        [0.00000, 0.90000, 0.00000, 0.10000],
-        [0.00000, 0.00000, 0.20000, 0.80000],
-        [0.00000, 0.00000, 0.30000, 0.70000],
-        [0.30000, 0.30000, 0.00000, 0.40000],
-        [0.00000, 0.00000, 0.90000, 0.10000],
-        [0.00000, 0.90000, 0.00000, 0.10000],
-        [0.10000, 0.90000, 0.00000, 0.00000],
-    ]
-)

@@ -110,7 +110,9 @@ class CanonicalIntervalForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = CanonicalIntervalForest(n_estimators=10)
+    >>> clf = CanonicalIntervalForest(
+    ...     n_estimators=3, n_intervals=2, att_subsample_size=2
+    ... )
     >>> clf.fit(X_train, y_train)
     CanonicalIntervalForest(...)
     >>> y_pred = clf.predict(X_test)
@@ -361,8 +363,18 @@ class CanonicalIntervalForest(BaseClassifier):
         return curves
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -372,5 +384,7 @@ class CanonicalIntervalForest(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
-        return params
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
+        else:
+            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}

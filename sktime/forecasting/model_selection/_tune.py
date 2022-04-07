@@ -172,7 +172,7 @@ class BaseGridSearch(BaseForecaster):
             else:
                 self.best_forecaster_.check_is_fitted()
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -212,7 +212,6 @@ class BaseGridSearch(BaseForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                fit_params=fit_params,
             )
 
             # Filter columns.
@@ -465,8 +464,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -600,8 +605,14 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         )
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
