@@ -148,9 +148,9 @@ if __name__ == "__main__":
     else:
         name = clusterer + "-" + distance
     if distance == "wdtw" or distance == "dwdtw":
-        parameters = {"window": 1.0, "epsilon": 0.01, "g": 0.05, "c": 1}
+        parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
     else:
-        parameters = {"window": 1.0, "epsilon": 0.01, "g": 0.05, "c": 1}
+        parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
 
     clst = config_clusterer(
         averaging_method="mean",

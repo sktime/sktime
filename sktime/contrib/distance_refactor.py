@@ -183,10 +183,10 @@ def generate_test_results_clusterers():
     c1 = c1.reshape((1, c1.shape[0]))
     print(f"instance 19  = {curr_X} shape X = {curr_X.shape}")
     print("Centroid 0 =", c1)
-    d = edr_distance(curr_X, c1, epsilon=0.01, window=1.0)
+    d = lcss_distance(curr_X, c1, epsilon=0.01)
     print(" DISTANCE = ", d)
     print("Shape centroid = ", c1.shape)
-    d = edr_distance(curr_X, c2, epsilon=0.01, window=1.0)
+    d = lcss_distance(curr_X, c2, epsilon=0.01)
     print(" DISTANCE = ", d)
     print("Shape centroid = ", c2.shape)
 
@@ -206,7 +206,7 @@ def difference_test():
     #    d1=np.transpose(d1)
     #    d2=np.transpose(d2)
     print("Shape  = ", d1.shape)
-    name = "ERP"
+    name = "LCSS"
     no_window = np.zeros((d1.shape[1], d2.shape[1]))
     # "wi [0.0, 0.1, 1.0],  # window
     dist1 = dist(d1, d2, window=0.0)
