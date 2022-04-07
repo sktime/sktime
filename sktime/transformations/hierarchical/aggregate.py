@@ -4,6 +4,8 @@
 
 __author__ = ["ciaran-g"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 
@@ -27,12 +29,17 @@ class Aggregator(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Hierarchical",
-        "scitype:transform-output": "Hierarchical",
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         # todo instance wise?
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,  # does transformer have inverse
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -64,71 +71,82 @@ class Aggregator(BaseTransformer):
         -------
         df_out : multi-indexed pd.DataFrame of Panel mtype pd_multiindex
         """
-        # check the tests are ok
-        if not _check_index_good(X):
-            raise ValueError(
-                """Please check the index of X
-                    1) Does not contain any elements named "__total".
-                    2) Has all named levels.
-                    2) Has more than one level.
+        if X.index.nlevels == 1:
+            warn(
+                "Aggregator is intended for use with X.index.nlevels > 1. "
+                "Returning X unchanged."
+            )
+            return X
+        else:
+            # check the tests are ok
+            if not _check_index_good(X):
+                raise ValueError(
+                    """Please check the index of X
+                        1) Does not contain any elements named "__total".
+                        2) Has all named levels.
                     """
-            )
+                )
+            else:
+                pass
 
-        # names from index
-        hier_names = list(X.index.names)
+            # names from index
+            hier_names = list(X.index.names)
 
-        # top level
-        top = X.groupby(level=-1).sum()
+            # top level
+            top = X.groupby(level=-1).sum()
 
-        ind_names = hier_names[:-1]
-        for i in ind_names:
-            top[i] = "__total"
+            ind_names = hier_names[:-1]
+            for i in ind_names:
+                top[i] = "__total"
 
-        top = top.set_index(ind_names, append=True).reorder_levels(hier_names)
+            top = top.set_index(ind_names, append=True).reorder_levels(hier_names)
 
-        df_out = pd.concat([top, X])
+            df_out = pd.concat([top, X])
 
-        # if we have a hierarchy with mid levels
-        if len(hier_names) > 2:
-            for i in range(len(hier_names) - 2):
-                # list of levels to aggregate
-                # aggregate from left index inward
-                agg_levels = hier_names[0 : (i + 1)]
-                # add in the final index (e.g. timepoints)
-                agg_levels.append(hier_names[-1])
+            # if we have a hierarchy with mid levels
+            if len(hier_names) > 2:
+                for i in range(len(hier_names) - 2):
+                    # list of levels to aggregate
+                    # aggregate from left index inward
+                    agg_levels = hier_names[0 : (i + 1)]
+                    # add in the final index (e.g. timepoints)
+                    agg_levels.append(hier_names[-1])
 
-                mid = X.groupby(level=agg_levels).sum()
-                # now fill in index
-                ind_names = list(set(hier_names).difference(agg_levels))
-                for j in ind_names:
-                    mid[j] = "__total"
-                # set back in index
-                mid = mid.set_index(ind_names, append=True).reorder_levels(hier_names)
-                df_out = pd.concat([df_out, mid])
+                    mid = X.groupby(level=agg_levels).sum()
+                    # now fill in index
+                    ind_names = list(set(hier_names).difference(agg_levels))
+                    for j in ind_names:
+                        mid[j] = "__total"
+                    # set back in index
+                    mid = mid.set_index(ind_names, append=True).reorder_levels(
+                        hier_names
+                    )
+                    df_out = pd.concat([df_out, mid])
 
-        # now remove duplicated aggregate indexes
-        if self.flatten_single_levels:
-            new_index = _flatten_single_indexes(X)
-            nm = X.index.names[-1]
-            # uncomment if contraints are relaxed on naming the time index
-            # if nm is None:
-            #     nm = "index"
-            df_out = (
-                df_out.reset_index(level=-1)
-                .loc[new_index]
-                .set_index(nm, append=True, verify_integrity=True)
-            )
+            # now remove duplicated aggregate indexes
+            if self.flatten_single_levels:
+                new_index = _flatten_single_indexes(X)
+                nm = X.index.names[-1]
+                # uncomment if contraints are relaxed on naming the time index
+                # if nm is None:
+                #     nm = "index"
+                df_out = (
+                    df_out.reset_index(level=-1)
+                    .loc[new_index]
+                    .set_index(nm, append=True, verify_integrity=True)
+                )
 
-        for i in range(df_out.index.nlevels - 1):
-            idx = df_out.index.get_level_values(level=i).map(str)
-            df_out = (
-                df_out.droplevel(i)
-                .set_index(idx, append=True)
-                .reorder_levels(hier_names)
-            )
+            for i in range(df_out.index.nlevels - 1):
 
-        df_out.sort_index(inplace=True)
-        return df_out
+                idx = df_out.index.get_level_values(level=i)
+                df_out = (
+                    df_out.droplevel(i)
+                    .set_index(idx, append=True)
+                    .reorder_levels(hier_names)
+                )
+
+            df_out.sort_index(inplace=True)
+            return df_out
 
     @classmethod
     def get_test_params(cls):
@@ -153,16 +171,13 @@ def _check_index_good(X):
     ind_names = list(X.index.names)
     nm_chk = sum([y is not None for y in ind_names]) == len(ind_names)
 
-    # check the length of index
-    nmln_chk = len(ind_names) >= 2
-
     # check the elements of the index for "__total"
     chk_list = []
     for i in list(X.index.names)[:-1]:
         chk_list.append(X.index.get_level_values(level=i).isin(["__total"]).sum())
     tot_chk = sum(chk_list) == 0
 
-    all_ok = np.logical_and.reduce([nm_chk, nmln_chk, tot_chk])
+    all_ok = np.logical_and.reduce([nm_chk, tot_chk])
 
     return all_ok
 
@@ -208,6 +223,8 @@ def _flatten_single_indexes(X):
                     agg_ids = [x + ("__total",) for x in agg_ids]
 
                 out_list.extend(agg_ids)
+            else:
+                pass
 
     # add to original index
     inds.extend(out_list)
