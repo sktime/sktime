@@ -55,14 +55,23 @@ class _Pipeline(
 
         scitypes = self._get_pipeline_scitypes()
         if set(scitypes).issubset(["forecaster", "transformer"]):
-            raise TypeError("estimators must be either transformer or forecaster")
+            raise TypeError(
+                f"estimators passed to {type(self).__name__} "
+                f"must be either transformer or forecaster"
+            )
         if scitypes.count("forecaster") != 1:
-            raise TypeError("exactly one forecaster must be contained in the chain")
+            raise TypeError(
+                f"exactly one forecaster must be contained in the chain, "
+                f"but found {scitypes.count('forecaster')}"
+            )
 
         forecaster_ind = self._get_forecaster_index()
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
-            TypeError("transformers after forecaster are not allowed")
+            TypeError(
+                f"in {type(self).__name__}, last estimator must be a forecaster, "
+                f"but found a transformer"
+            )
 
         # Shallow copy
         return list(self.steps)
