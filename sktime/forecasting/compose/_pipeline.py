@@ -538,13 +538,27 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> y = load_airline()
+
+    >>> Example 1: string/estimator pairs
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Deseasonalizer()),
-    ...     ("forecaster", NaiveForecaster(strategy="drift"))])
+    ...     ("forecaster", NaiveForecaster(strategy="drift")),
+    ... ])
     >>> pipe.fit(y)
     TransformedTargetForecaster(...)
     >>> y_pred = pipe.predict(fh=[1,2,3])
+
+    >>> Example 2: without strings
+    >>> pipe = TransformedTargetForecaster([
+    ...     Imputer(method="mean"),
+    ...     Deseasonalizer(),
+    ...     NaiveForecaster(strategy="drift"),
+    ... ])
+
+    >>> Example 3: using the dunder method
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> pipe = Imputer(method="mean") * Deseasonalizer() * forecaster
     """
 
     _required_parameters = ["steps"]
