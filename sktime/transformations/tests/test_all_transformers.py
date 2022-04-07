@@ -113,6 +113,12 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         # assign this variable for better readability
         Xt_scitype = Xt_expected_scitype
 
+        # skip the "number of instances" test below for Aggregator
+        #   reason: this adds "pseudo-instances" for the __total and increases the count
+        #   todo: we probably want to mirror this into a "hierarchical" tag later on
+        if type(estimator_instance).__name__ == "Aggregator":
+            return None
+
         # if we vectorize, number of instances before/after transform should be same
         if trafo_input == "Series" and trafo_output == "Series":
             if X_scitype == "Series" and Xt_scitype == "Series":
