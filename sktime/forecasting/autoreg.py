@@ -5,7 +5,6 @@
 __all__ = ["AutoReg"]
 __author__ = ["ryali1"]
 
-from marshmallow import missing
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.api import AutoReg as _AutoReg
