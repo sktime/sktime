@@ -106,7 +106,6 @@ class AutoReg(_StatsModelsAdapter):
             lags = self.lags, 
             missing=self.missing, 
             trend=self.trend,
-            missing=self.missing,
             seasonal=self.seasonal
         )
         self._fitted_forecaster = self._forecaster.fit()
