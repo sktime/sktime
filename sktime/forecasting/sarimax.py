@@ -18,10 +18,6 @@ class SARIMAX(_StatsModelsAdapter):
 
     Parameters
     ----------
-    endog : array_like
-        The observed time-series process :math:`y`
-    exog : array_like, optional, defaul=None
-        Array of exogenous regressors, shaped nobs x k.
     order : iterable or iterable of iterables, optional, default=(1,0,0)
         The (p,d,q) order of the model for the number of AR parameters,
         differences, and MA parameters. `d` must be an integer
@@ -85,26 +81,21 @@ class SARIMAX(_StatsModelsAdapter):
     trend_offset : int, optional, default=1
         The offset at which to start time trend values. Default is 1, so that
         if `trend='t'` the trend is equal to 1, 2, ..., nobs. Typically is only
-        set when the model created by extending a previous
-        dataset.
+        set when the model created by extending a previous dataset.
     use_exact_diffuse : bool, optional, default=False
         Whether or not to use exact diffuse initialization for non-stationary
         states. Default is False (in which case approximate diffuse
         initialization is used).
-    **kwargs
-        Keyword arguments may be used to provide default values for state space
-        matrices or for Kalman filtering options. See `Representation`, and
-        `KalmanFilter` for more details.
 
     References
     ----------
-    .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
+        [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
         and practice. OTexts, 2014.
 
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sarimax import SARIMAX
+    >>> from sktime.forecasting.exp_smoothing import SARIMAX
     >>> y = load_airline()
     >>> forecaster = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     >>> forecaster.fit(y)
@@ -178,3 +169,11 @@ class SARIMAX(_StatsModelsAdapter):
             validate_specification=self.validate_specification,
         )
         self._fitted_forecaster = self._forecaster.fit()
+
+    def summary(self):
+        """Get a summary of the fitted forecaster.
+
+        This is the same as the implementation in statsmodels:
+        https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
+        """
+        return self._fitted_forecaster.summary()
