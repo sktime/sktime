@@ -102,7 +102,8 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         return subsetted_dict
 
     def _check_estimators(
-        self, estimators,
+        self,
+        estimators,
         attr_name="steps",
         cls_type=None,
         allow_mix=True,
