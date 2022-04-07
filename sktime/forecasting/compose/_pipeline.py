@@ -559,8 +559,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     ... ])
 
     Example 3: using the dunder method
-    >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> pipe = Imputer(method="mean") * Deseasonalizer() * forecaster
+    >>> # forecaster = NaiveForecaster(strategy="drift")
+    >>> # pipe = Imputer(method="mean") * Deseasonalizer() * forecaster
     """
 
     _required_parameters = ["steps"]
