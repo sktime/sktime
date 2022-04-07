@@ -22,7 +22,7 @@ class _Pipeline(
     """Abstract class for forecasting pipelines."""
 
     def _get_pipeline_scitypes(self, estimators):
-        """Get list of scityes (str) if names/estimator list."""
+        """Get list of scityes (str) from names/estimator list."""
         return [scitype(x[1]) for x in estimators]
 
     def _get_forecaster_index(self, estimators):
@@ -49,7 +49,8 @@ class _Pipeline(
         TypeError if there is not exactly one forecaster in `estimators`
         TypeError if not allow_postproc and forecaster is not last estimator
         """
-        names, estimators = zip(*estimators)
+        estimator_tuples = self._get_estimator_tuples(estimators)
+        names, estimators = zip(*estimator_tuples)
 
         # validate names
         self._check_names(names)
@@ -511,8 +512,23 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     Parameters
     ----------
-    steps : list
-        List of tuples like ("name", forecaster/transformer)
+    steps : list of sktime transformers and forecasters, or
+        list of tuples (str, estimator) of sktime transformers or forecasters
+            must contain exactly one transformer
+        these are "blueprint" transformers, states do not change when `fit` is called
+
+    Attributes
+    ----------
+    steps_ : list of tuples (str, estimator) of sktime transformers or forecasters
+        clones of estimators in `steps` which are fitted in the pipeline
+        is always in (str, estimator) format, even if `steps` is just a list
+        strings not passed in `steps` are replaced by unique generated strings
+        i-th transformer in `steps_` is clone of i-th in `steps`
+    forecaster_ : estimator, reference to the unique forecaster in steps_
+    transformers_pre_ : list of tuples (str, transformer) of sktime transformers
+        reference to pairs in steps_ that precede forecaster_
+    transformers_ost_ : list of tuples (str, transformer) of sktime transformers
+        reference to pairs in steps_ that succeed forecaster_
 
     Examples
     --------
@@ -544,8 +560,11 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=True)
+        steps_ = self._get_estimator_tuples(steps, clone_ests=True)
+        self.steps_ = self._check_steps(steps_, allow_postproc=True)
         super(TransformedTargetForecaster, self).__init__()
+
+        # set the tags based on forecaster
         _, forecaster = self.steps[self._get_forecaster_index()]
         tags_to_clone = [
             "scitype:y",  # which y are fine? univariate/multivariate/both
@@ -590,7 +609,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         -------
         self : returns an instance of self.
         """
-        self.steps_ = [(x[0], clone(x[1])) for x in self.steps]
+        self.steps_ = self._get_estimator_tuples(self.steps, clone_ests=True)
 
         # transform pre
         for _, t in self.transformers_pre_:
