@@ -20,6 +20,7 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import (
     INDEX_TYPE_LOOKUP,
     TEST_FHS,
+    TEST_FHS_TIMEDELTA,
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.utils._testing.forecasting import _make_fh, make_forecasting_problem
@@ -31,7 +32,7 @@ from sktime.utils.datetime import (
     _get_intervals_count_and_unit,
     _shift,
 )
-from sktime.utils.validation.series import VALID_INDEX_TYPES
+from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
 def _assert_index_equal(a, b):
@@ -44,12 +45,27 @@ def _assert_index_equal(a, b):
 @pytest.mark.parametrize(
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
-@pytest.mark.parametrize("steps", TEST_FHS)
+@pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_fh(index_type, fh_type, is_relative, steps):
     """Testing ForecastingHorizon conversions."""
+    int_types = ["int64", "int32"]
+    steps_is_int = (
+        isinstance(steps, (int, np.integer)) or np.array(steps).dtype in int_types
+    )
+    steps_is_timedelta = isinstance(steps, pd.Timedelta) or (
+        isinstance(steps, list) and isinstance(pd.Index(steps), pd.TimedeltaIndex)
+    )
+    steps_and_fh_incompatible = (fh_type == "timedelta" and steps_is_int) or (
+        fh_type != "timedelta" and steps_is_timedelta
+    )
+    if steps_and_fh_incompatible:
+        pytest.skip("steps and fh_type are incompatible")
     # generate data
     y = make_forecasting_problem(index_type=index_type)
-    assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
+    if index_type == "int":
+        assert is_integer_index(y.index)
+    else:
+        assert isinstance(y.index, INDEX_TYPE_LOOKUP.get(index_type))
 
     # split data
     y_train, y_test = temporal_train_test_split(y, test_size=10)
@@ -59,17 +75,35 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # generate fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-    assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
+    if fh_type == "int":
+        assert is_integer_index(fh.to_pandas())
+    else:
+        assert isinstance(fh.to_pandas(), INDEX_TYPE_LOOKUP.get(fh_type))
 
     # get expected outputs
     if isinstance(steps, int):
         steps = np.array([steps])
-    fh_relative = pd.Int64Index(steps).sort_values()
-    fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
-    fh_indexer = fh_relative - 1
-    fh_oos = fh.to_pandas()[fh_relative > 0]
+    elif isinstance(steps, pd.Timedelta):
+        steps = pd.Index([steps])
+    else:
+        steps = pd.Index(steps)
+
+    if steps.dtype in int_types:
+        fh_relative = pd.Index(steps, dtype="int64").sort_values()
+        fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
+        fh_indexer = fh_relative - 1
+    else:
+        fh_relative = steps.sort_values()
+        fh_absolute = (cutoff + steps).sort_values()
+        fh_indexer = None
+
+    if steps.dtype in int_types:
+        null = 0
+    else:
+        null = pd.Timedelta(0)
+    fh_oos = fh.to_pandas()[fh_relative > null]
     is_oos = len(fh_oos) == len(fh)
-    fh_ins = fh.to_pandas()[fh_relative <= 0]
+    fh_ins = fh.to_pandas()[fh_relative <= null]
     is_ins = len(fh_ins) == len(fh)
 
     # check outputs
@@ -81,8 +115,12 @@ def test_fh(index_type, fh_type, is_relative, steps):
     _assert_index_equal(fh_relative, fh.to_relative(cutoff).to_pandas())
     assert fh.to_relative(cutoff).is_relative
 
-    # check index-like representation
-    _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
+    if steps.dtype in int_types:
+        # check index-like representation
+        _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
+    else:
+        with pytest.raises(NotImplementedError):
+            fh.to_indexer(cutoff)
 
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
@@ -102,7 +140,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
 
 def test_fh_method_delegation():
-    """Test ForecastinHorizon delegated methods."""
+    """Test ForecastingHorizon delegated methods."""
     fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)
@@ -125,10 +163,7 @@ def test_check_fh_values_bad_input_types(arg):
         ForecastingHorizon(arg)
 
 
-DUPLICATE_INPUT_ARGS = (
-    np.array([1, 2, 2]),
-    [3, 3, 1],
-)
+DUPLICATE_INPUT_ARGS = (np.array([1, 2, 2]), [3, 3, 1])
 
 
 @pytest.mark.parametrize("arg", DUPLICATE_INPUT_ARGS)
@@ -139,7 +174,7 @@ def test_check_fh_values_duplicate_input_values(arg):
 
 
 GOOD_ABSOLUTE_INPUT_ARGS = (
-    pd.Int64Index([1, 2, 3]),
+    pd.Index([1, 2, 3]),
     pd.period_range("2000-01-01", periods=3, freq="D"),
     pd.date_range("2000-01-01", periods=3, freq="M"),
     np.array([1, 2, 3]),
@@ -151,8 +186,9 @@ GOOD_ABSOLUTE_INPUT_ARGS = (
 @pytest.mark.parametrize("arg", GOOD_ABSOLUTE_INPUT_ARGS)
 def test_check_fh_absolute_values_input_conversion_to_pandas_index(arg):
     """Test conversion of absolute horizons to pandas index."""
-    output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert type(output) in VALID_INDEX_TYPES
+    assert is_in_valid_index_types(
+        ForecastingHorizon(arg, is_relative=False).to_pandas()
+    )
 
 
 GOOD_RELATIVE_INPUT_ARGS = [
@@ -164,7 +200,7 @@ GOOD_RELATIVE_INPUT_ARGS = [
 def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
     """Test conversion of relative horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=True).to_pandas()
-    assert type(output) in VALID_INDEX_TYPES
+    assert is_in_valid_index_types(output)
 
 
 TIMEPOINTS = [
@@ -212,7 +248,7 @@ def test_coerce_duration_to_int(duration):
     ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
-    assert type(ret) in (pd.Int64Index, np.integer, int)
+    assert (type(ret) in (np.integer, int)) or is_integer_index(ret)
 
     # check result
     if isinstance(duration, pd.Index):
@@ -233,17 +269,22 @@ def test_coerce_duration_to_int_with_non_allowed_durations(duration):
 @pytest.mark.parametrize("index_type", INDEX_TYPE_LOOKUP.keys())
 def test_get_duration(n_timepoints, index_type):
     """Test getting of duration."""
-    index = _make_index(n_timepoints, index_type)
-    duration = _get_duration(index)
-    # check output type is duration type
-    assert isinstance(
-        duration, (pd.Timedelta, pd.tseries.offsets.BaseOffset, int, np.integer)
-    )
+    if index_type != "timedelta":
+        index = _make_index(n_timepoints, index_type)
+        duration = _get_duration(index)
+        # check output type is duration type
+        assert isinstance(
+            duration, (pd.Timedelta, pd.tseries.offsets.BaseOffset, int, np.integer)
+        )
 
-    # check integer output
-    duration = _get_duration(index, coerce_to_int=True)
-    assert isinstance(duration, (int, np.integer))
-    assert duration == n_timepoints - 1
+        # check integer output
+        duration = _get_duration(index, coerce_to_int=True)
+        assert isinstance(duration, (int, np.integer))
+        assert duration == n_timepoints - 1
+    else:
+        match = "index_class: timedelta is not supported"
+        with pytest.raises(ValueError, match=match):
+            _make_index(n_timepoints, index_type)
 
 
 FIXED_FREQUENCY_STRINGS = ["10T", "H", "D", "2D"]

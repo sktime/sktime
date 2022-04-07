@@ -3,13 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import numpy as np
-
-# TODO: add formal tests
 import pandas as pd
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
+
+# TODO: add formal tests
+# TODO: Adapt score_average to ensure doesn't interfere with multioutput
+#        treatment (both average across columns)
 
 
 class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
@@ -25,7 +27,13 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(self, func=None, name=None, multioutput="uniform_average"):
+    def __init__(
+        self,
+        func=None,
+        name=None,
+        multioutput="uniform_average",
+        score_average=False,
+    ):
         self.multioutput = multioutput
         super().__init__(func, name=name)
 
@@ -71,7 +79,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             y_true, y_pred, multioutput
         )
         # pass to inner function
-        return self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
+        out_df = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
+        if self.score_average:
+            out_df = out_df.mean(axis=1)
+        return out_df
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
         # Default implementation relies on implementation of evaluate_by_index
@@ -103,7 +114,13 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             y_true, y_pred, multioutput
         )
         # pass to inner function
-        return self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput)
+        out_df = self._evaluate_by_index(
+            y_true_inner, y_pred_inner, multioutput, **kwargs
+        )
+
+        if self.score_average:
+            out_df = out_df.mean(axis=1)
+        return out_df
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -117,7 +134,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),
+                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
                     np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
                     multioutput,
                 )
@@ -189,13 +206,27 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
     def _get_alpha_from(self, y_pred):
         """Fetch the alphas present in y_pred."""
-        # Only needed for quantile metrics, could put in a quantile mixin?
-
         alphas = np.unique(list(y_pred.columns.get_level_values(1)))
         if not all(((alphas > 0) & (alphas < 1))):
             raise ValueError("Alpha must be between 0 and 1.")
 
         return alphas
+
+    def _check_alpha(self, alpha):
+        """Check that alpha input is valid."""
+        if alpha is None:
+            return None
+
+        if isinstance(alpha, float):
+            alpha = [alpha]
+
+        if not isinstance(alpha, np.ndarray):
+            alpha = np.asarray(alpha)
+
+        if not all(((alpha > 0) & (alpha < 1))):
+            raise ValueError("Alpha must be between 0 and 1.")
+
+        return alpha
 
     def _handle_multioutput(self, loss, multioutput):
         if isinstance(multioutput, str):
@@ -232,12 +263,35 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         "lower_is_better": True,
     }
 
-    def __init__(self, multioutput="uniform_average"):
+    def __init__(
+        self,
+        multioutput="uniform_average",
+        score_average=False,
+        alpha=None,
+    ):
         name = "PinballLoss"
+        self.score_average = score_average
+        self.alpha = self._check_alpha(alpha)
+        self.metric_args = {"alpha": alpha}
         super().__init__(name=name, multioutput=multioutput)
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
-        alphas = self._get_alpha_from(y_pred)
+        alpha = self.alpha
+        y_pred_alphas = self._get_alpha_from(y_pred)
+        if alpha is None:
+            alphas = y_pred_alphas
+        else:
+            # if alpha was provided, check whether  they are predicted
+            #   if not all alpha are observed, raise a ValueError
+            if not np.isin(alpha, y_pred_alphas).all():
+                # todo: make error msg more informative
+                #   which alphas are missing
+                msg = "not all quantile values in alpha are available in y_pred"
+                raise ValueError(msg)
+            else:
+                alphas = alpha
+
+        alphas = self._check_alpha(alphas)
 
         out = [None] * len(alphas)
         for i, alpha in enumerate(alphas):
@@ -274,6 +328,8 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         return out_df
 
     @classmethod
-    def get_test_params(self):
+    def get_test_params(cls, parameter_set="default"):
         """Retrieve test parameters."""
-        return {}
+        params1 = {}
+        params2 = {"alpha": [0.1, 0.5, 0.9]}
+        return [params1, params2]
