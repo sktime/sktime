@@ -16,5 +16,5 @@ def test_AutoReg_against_statsmodels():
   y_pred = sktimeAutoReg.predict(fh = np.arange(1,10))
 
   statsmodelAutoReg = _AutoReg(y, lags = 10 ).fit()
-  statsmodel_pred = statsmodelAutoReg.predict(start =len(y), end=len(y)+8)
+  statsmodel_pred = statsmodelAutoReg.predict(start=len(y), end=len(y)+8)
   assert_allclose(y_pred.tolist(), statsmodel_pred.tolist())
