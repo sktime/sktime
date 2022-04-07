@@ -10,7 +10,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import check_estimator
 
-
 EXAMPLE_CLASSES = [Catch22Classifier, NaiveForecaster, ExponentTransformer]
 
 
