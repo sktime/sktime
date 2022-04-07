@@ -448,16 +448,16 @@ class _RecursiveReducer(_Reducer):
             self.window_length, n_timepoints=len(y)
         )
 
-        self.transformers_ = self.transformers
+        self.transformers_ = clone(self.transformers)
+        self.transformers = clone(self.transformers)
+
         if self.window_length is None:
-            if isinstance(self.transformers, list):
-                truncate_start = self.transformers[0].fit(y).truncate_start
+            if isinstance(self.transformers_, list):
+                truncate_start = self.transformers_[0].fit(y).truncate_start
                 self.window_length_ = truncate_start
-                self.window_length = truncate_start
             else:
-                truncate_start = self.transformers.fit(y).truncate_start
+                truncate_start = self.transformers_.fit(y).truncate_start
                 self.window_length_ = truncate_start
-                self.window_length = truncate_start
 
         yt, Xt = self._transform(y, X)
 
@@ -550,11 +550,13 @@ class _RecursiveReducer(_Reducer):
         cutoff = _shift(self.cutoff, by=shift)
         start = _shift(cutoff, by=-self.window_length_ + 1)
 
-        if self.transformers is not None:
+        if self.transformers_ is not None:
             # Get the last window of the endogenous variable.
             # If X is given, also get the last window of the exogenous variables.
             if isinstance(cutoff, pd._libs.tslibs.period.Period):
                 dateline = pd.period_range(start=start, end=cutoff)
+            elif isinstance(self.cutoff, np.int64) or isinstance(self.cutoff, int):
+                dateline = list(range(start, cutoff + 1))
             else:
                 dateline = pd.date_range(start=start, end=cutoff)
 
@@ -595,7 +597,7 @@ class _RecursiveReducer(_Reducer):
 
         # If we cannot generate a prediction from the available data, return nan.
         # danbartl: check for window_length fails since transformed data is returned.
-        if self.transformers is None:
+        if self.transformers_ is None:
             if not self._is_predictable(y_last):
                 return self._predict_nan(fh)
         else:
@@ -603,12 +605,16 @@ class _RecursiveReducer(_Reducer):
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
                 return self._predict_nan(fh)
 
-        if self.transformers is not None:
+        if self.transformers_ is not None:
             fh_max = fh.to_relative(self.cutoff)[-1]
 
             if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
                 dateline = pd.period_range(
                     end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
+                )
+            elif isinstance(self.cutoff, np.int64) or isinstance(self.cutoff, int):
+                dateline = list(
+                    range(self.cutoff + 1, fh.to_absolute(self.cutoff)[-1] + 1)
                 )
             else:
                 dateline = pd.date_range(
@@ -619,20 +625,24 @@ class _RecursiveReducer(_Reducer):
             for i in range(fh_max):
                 # Slice prediction window.
                 # Collect inputs for predictions
-                if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
-                    date_curr = pd.period_range(end=dateline[i], periods=1)
-                else:
-                    date_curr = pd.date_range(end=dateline[i], periods=1)
-
+                # if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
+                #     date_curr = pd.period_range(end=dateline[i], periods=1)
+                # elif isinstance(self.cutoff, np.int64):
+                #     date_curr = list(range(self.cutoff,self.cutoff+fh_max))
+                # else:
+                #     date_curr = pd.date_range(end=dateline[i], periods=1)
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
-                y_pred_curr = _create_multiindex(date_curr, self._y, fill=y_pred_vector)
+                y_pred_curr = _create_multiindex(
+                    [dateline[i]], self._y, fill=y_pred_vector
+                )
                 y_pred.update(y_pred_curr)
 
                 # # Update last window with previous prediction.
-                y_last, X_last = self._get_shifted_window(
-                    y_update=y_pred, X_update=X, shift=i + 1
-                )
+                if i + 1 != fh_max:
+                    y_last, X_last = self._get_shifted_window(
+                        y_update=y_pred, X_update=X, shift=i + 1
+                    )
 
         else:
             # Pre-allocate arrays.
@@ -673,7 +683,12 @@ class _RecursiveReducer(_Reducer):
         fh_idx = fh.to_indexer(self.cutoff)
 
         if isinstance(self._y.index, pd.MultiIndex):
-            y_return = y_pred
+            y_return = y_pred.groupby(level=0, as_index=False).nth(fh_idx.to_list())
+        elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
+            y_return = y_pred.iloc[fh_idx]
+            if hasattr(y_return.index, "freq"):
+                if y_return.index.freq != y_pred.index.freq:
+                    y_return.index.freq = None
         else:
             y_return = y_pred[fh_idx]
 

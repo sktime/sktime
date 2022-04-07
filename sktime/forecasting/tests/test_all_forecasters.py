@@ -233,7 +233,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predict_residuals method works as expected."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
+            return None
 
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
