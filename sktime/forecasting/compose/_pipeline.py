@@ -606,7 +606,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     @property
     def transformers_pre_(self):
-        """Return reference to the list of pre-forecast trafos.
+        """Return reference to the list of pre-forecast transformers.
 
         Returns
         -------
@@ -617,7 +617,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     @property
     def transformers_post_(self):
-        """Return reference to the list of pre-forecast trafos.
+        """Return reference to the list of post-forecast transformers.
 
         Returns
         -------
