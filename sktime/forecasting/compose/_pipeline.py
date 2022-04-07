@@ -539,6 +539,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
 
     Example 1: string/estimator pairs
@@ -556,6 +557,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     ...     Imputer(method="mean"),
     ...     Deseasonalizer(),
     ...     NaiveForecaster(strategy="drift"),
+    ...     ExponentTransformer(),
     ... ])
 
     Example 3: using the dunder method
