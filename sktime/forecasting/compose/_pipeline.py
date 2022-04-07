@@ -541,7 +541,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     >>> from sktime.transformations.series.detrend import Deseasonalizer
     >>> y = load_airline()
 
-    >>> Example 1: string/estimator pairs
+    Example 1: string/estimator pairs
     >>> pipe = TransformedTargetForecaster(steps=[
     ...     ("imputer", Imputer(method="mean")),
     ...     ("detrender", Deseasonalizer()),
@@ -551,14 +551,14 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     TransformedTargetForecaster(...)
     >>> y_pred = pipe.predict(fh=[1,2,3])
 
-    >>> Example 2: without strings
+    Example 2: without strings
     >>> pipe = TransformedTargetForecaster([
     ...     Imputer(method="mean"),
     ...     Deseasonalizer(),
     ...     NaiveForecaster(strategy="drift"),
     ... ])
 
-    >>> Example 3: using the dunder method
+    Example 3: using the dunder method
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> pipe = Imputer(method="mean") * Deseasonalizer() * forecaster
     """
