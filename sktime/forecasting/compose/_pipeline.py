@@ -40,8 +40,8 @@ class _Pipeline(
 
         Returns
         -------
-        step : list of (name, estimator) pairs
-            if estimators was a list of (str, estimator) tuples, then identical/cloned
+        step : list of (name, estimator) pairs, estimators are cloned (not references)
+            if estimators was a list of (str, estimator) tuples, then just cloned
             if was a list of estimators, then str are generated via _get_estimator_names
 
         Raises
@@ -51,7 +51,7 @@ class _Pipeline(
         TypeError if there is not exactly one forecaster in `estimators`
         TypeError if not allow_postproc and forecaster is not last estimator
         """
-        estimator_tuples = self._get_estimator_tuples(estimators)
+        estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
         names, estimators = zip(*estimator_tuples)
 
         # validate names
@@ -576,8 +576,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
 
     def __init__(self, steps):
         self.steps = steps
-        steps_ = self._get_estimator_tuples(steps, clone_ests=True)
-        self.steps_ = self._check_steps(steps_, allow_postproc=True)
+        self.steps_ = self._check_steps(steps, allow_postproc=True)
         super(TransformedTargetForecaster, self).__init__()
 
         # set the tags based on forecaster
