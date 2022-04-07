@@ -144,8 +144,8 @@ class DynamicFactor(_StatsModelsAdapter):
 
     def __init__(
         self,
-        k_factors,
-        factor_order,
+        k_factors=1,
+        factor_order=1,
         error_cov_type="diagonal",
         error_order=0,
         error_var=False,
