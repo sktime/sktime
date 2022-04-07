@@ -408,4 +408,4 @@ class DynamicFactor(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params
         """
-        return super().get_test_params()
+        return {"k_factors": 1, "factor_order": 1}
