@@ -182,7 +182,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         def is_est_is_tuple(obj):
             """Check whether obj is estimator of right type, or (str, est) tuple."""
             is_est = isinstance(obj, cls_type)
-            is_tuple = self.is_name_and_est(obj, cls_type)
+            is_tuple = self._is_name_and_est(obj, cls_type)
 
             return is_est, is_tuple
 
