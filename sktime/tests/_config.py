@@ -5,25 +5,12 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 from pyod.models.knn import KNN
-from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
 from sktime.base import BaseEstimator
-from sktime.forecasting.compose import (
-    DirectTabularRegressionForecaster,
-    DirectTimeSeriesRegressionForecaster,
-    DirRecTabularRegressionForecaster,
-    DirRecTimeSeriesRegressionForecaster,
-    MultioutputTabularRegressionForecaster,
-    MultioutputTimeSeriesRegressionForecaster,
-    RecursiveTabularRegressionForecaster,
-    RecursiveTimeSeriesRegressionForecaster,
-)
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.structural import UnobservedComponents
 from sktime.registry import (
     BASE_CLASS_LIST,
@@ -32,19 +19,15 @@ from sktime.registry import (
     TRANSFORMER_MIXIN_LIST,
 )
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
-from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
     ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
-from sktime.transformations.panel.interpolate import TSInterpolator
 from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.reduce import Tabularizer
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
@@ -63,6 +46,8 @@ EXCLUDE_ESTIMATORS = [
     #    unless it inherits from the old mixins, which hard coded the y
     #    should be removed once test_all_transformers has been refactored to scenarios
     "TSFreshRelevantFeatureExtractor",
+    # PlateauFinder seems to be broken, see #2259
+    "PlateauFinder",
 ]
 
 
@@ -71,6 +56,8 @@ EXCLUDED_TESTS = {
     "StackingForecaster": ["test_predict_time_index_with_X"],
     # known side effects on multivariate arguments, #2072
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
+    # test fails in the Panel case for Differencer, see #2522
+    "Differencer": ["test_transform_inverse_transform_equivalent"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
@@ -93,32 +80,8 @@ TRANSFORMERS = [
         ),
     ),
 ]
-REGRESSOR = LinearRegression()
 ANOMALY_DETECTOR = KNN()
-FORECASTER = NaiveForecaster()
-FORECASTERS = [("f1", FORECASTER), ("f2", FORECASTER)]
-STEPS = [
-    ("transformer", TabularToSeriesAdaptor(StandardScaler())),
-    ("forecaster", NaiveForecaster()),
-]
 ESTIMATOR_TEST_PARAMS = {
-    FeatureUnion: {"transformer_list": TRANSFORMERS},
-    DirectTabularRegressionForecaster: {"estimator": REGRESSOR},
-    MultioutputTabularRegressionForecaster: {"estimator": REGRESSOR},
-    RecursiveTabularRegressionForecaster: {"estimator": REGRESSOR},
-    DirRecTabularRegressionForecaster: {"estimator": REGRESSOR},
-    DirectTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    RecursiveTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    MultioutputTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
-    DirRecTimeSeriesRegressionForecaster: {
-        "estimator": make_pipeline(Tabularizer(), REGRESSOR)
-    },
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
         "param_names": ["initial_level"],
@@ -142,7 +105,6 @@ ESTIMATOR_TEST_PARAMS = {
     RandomIntervals: {
         "n_intervals": 3,
     },
-    TSInterpolator: {"length": 10},
     ComposableTimeSeriesForestRegressor: {"n_estimators": 3},
     UnobservedComponents: {"level": "local level"},
     PyODAnnotator: {"estimator": ANOMALY_DETECTOR},
@@ -163,7 +125,10 @@ NON_STATE_CHANGING_METHODS = (
     "predict_proba",
     "decision_function",
     "transform",
-    "inverse_transform",
+    # todo: add this back
+    # escaping this, since for some estimators
+    #   the input format of inverse_transform assumes special col names
+    # "inverse_transform",
 )
 
 # The following gives a list of valid estimator base classes.

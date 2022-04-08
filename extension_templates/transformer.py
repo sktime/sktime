@@ -15,9 +15,9 @@ How to use this implementation template to implement a new estimator:
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-- ensure interface compatibility by testing transformations/tests/test_all_transformers
-        and tests/test_all_estimators
+- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting         - _fit(self, X, y=None)
@@ -90,25 +90,34 @@ class MyTransformer(BaseTransformer):
     #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
     #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        # todo: what is the scitype of X: Series, or Panel
         "scitype:transform-input": "Series",
-        # todo: what scitype is returned: Primitives, Series, Panel
+        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
-        # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
+        # what scitype is returned: Primitives, Series, Panel
         "scitype:transform-labels": "None",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "capability:inverse_transform": True,  # does transformer have inverse transform
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        # this can be a Panel mtype even if transform-input is Series, vectorized
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
+        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "capability:unequal_length": True,
+        # can the transformer handle unequal length time series (if passed Panel)?
+        "capability:unequal_length:removes": False,
+        # is transform result always guaranteed to be equal length (and series)?
+        #   not relevant for transformers that return Primitives in transform-output
+        "handles-missing-data": False,  # can estimator handle missing data?
+        # todo: rename to capability:missing_values
+        "capability:missing_values:removes": False,
+        # is transform result always guaranteed to contain no missing values?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__
@@ -176,6 +185,12 @@ class MyTransformer(BaseTransformer):
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
         #   set "fit_is_empty" tag to True
+        #
+        # Note: when interfacing a model that has fit, with parameters
+        #   that are not data (X, y) or data-like,
+        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        #   1. pass to constructor,  2. write to self in constructor,
+        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
     def _transform(self, X, y=None):
@@ -294,8 +309,15 @@ class MyTransformer(BaseTransformer):
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
 
         Returns
         -------
@@ -308,12 +330,18 @@ class MyTransformer(BaseTransformer):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameter choice should cover internal cases well.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
         #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
@@ -323,5 +351,14 @@ class MyTransformer(BaseTransformer):
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
+        # return params
         #
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
+        #     params = {"est": value1, "parama": value2}
+        #     return params
+        #
+        # # "default" params - always returned except for "special_param_set" value
+        # params = {"est": value3, "parama": value4}
         # return params
