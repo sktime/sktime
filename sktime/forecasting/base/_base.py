@@ -38,7 +38,6 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
 __all__ = ["BaseForecaster"]
 
 from contextlib import contextmanager
-from turtle import up
 from warnings import warn
 
 import numpy as np

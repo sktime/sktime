@@ -205,10 +205,10 @@ def update_data(X, X_new=None):
     if isinstance(X, np.ndarray):
         # if 1D or 2D, axis 0 is "time"
         if X_new.ndim in [1, 2]:
-            self.X = np.concatenate(X, X_new, axis=0)
+            X = np.concatenate(X, X_new, axis=0)
         # if 3D, axis 2 is "time"
         elif X_new.ndim == 3:
-            self.X = np.concatenate(X, X_new, axis=2)
+            X = np.concatenate(X, X_new, axis=2)
     #  if y is pandas, we use combine_first to update
     elif isinstance(X_new, (pd.Series, pd.DataFrame)) and len(X_new) > 0:
-        self.X = X_new.combine_first(X)
+        X = X_new.combine_first(X)
