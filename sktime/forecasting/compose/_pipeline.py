@@ -249,7 +249,6 @@ class ForecastingPipeline(_Pipeline):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
-        _, forecaster = self.steps[-1]
         tags_to_clone = [
             "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
@@ -259,8 +258,8 @@ class ForecastingPipeline(_Pipeline):
             "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
-        self.clone_tags(forecaster, tags_to_clone)
-        self._anytagis_then_set("fit_is_empty", False, True, steps)
+        self.clone_tags(self.forecaster_, tags_to_clone)
+        self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
     @property
     def forecaster_(self):
@@ -583,7 +582,6 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         super(TransformedTargetForecaster, self).__init__()
 
         # set the tags based on forecaster
-        forecaster = self.forecaster_
         tags_to_clone = [
             "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
@@ -593,8 +591,8 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
             "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
-        self.clone_tags(forecaster, tags_to_clone)
-        self._anytagis_then_set("fit_is_empty", False, True, steps)
+        self.clone_tags(self.forecaster_, tags_to_clone)
+        self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
     @property
     def forecaster_(self):
