@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
+"""Tests for signature method."""
+
+import esig
 import numpy as np
 import pytest
+
 from sktime.transformations.panel.signature_based import SignatureTransformer
 
 
-import esig
-
-
 def test_generalised_signature_method():
+    """Check that dimension and dim of output are correct."""
     # Build an array X, note that this is [n_sample, n_channels, length] shape.
     n_channels = 3
     depth = 4
@@ -34,6 +36,7 @@ def test_generalised_signature_method():
 
 
 def test_window_error():
+    """Test that wrong window parameters raise error."""
     X = np.random.randn(5, 2, 3)
 
     # Check dyadic gives a value error
