@@ -58,9 +58,9 @@ def test_vectorization_series_to_panel(mtype):
 
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
 def test_vectorization_series_to_hier(mtype):
-    """Test that forecaster vectorization works for Panel data.
+    """Test that forecaster vectorization works for Hierarchical data.
 
-    This test passes Panel data to the ARIMA forecaster which internally has an
+    This test passes Hierarchical data to the ARIMA forecaster which internally has an
     implementation for Series only, so the BaseForecaster has to vectorize.
     """
     hierarchy_levels = (2, 4)
@@ -93,3 +93,71 @@ def test_vectorization_series_to_hier(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+
+PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
+
+
+@pytest.mark.parametrize("method", PROBA_DF_METHODS)
+@pytest.mark.parametrize("mtype", PANEL_MTYPES)
+def test_vectorization_series_to_panel_proba(method, mtype):
+    """Test that forecaster vectorization works for Panel data, predict_proba.
+
+    This test passes Panel data to the ARIMA forecaster which internally has an
+    implementation for Series only, so the BaseForecaster has to vectorize.
+    """
+    n_instances = 10
+
+    y = _make_panel_X(n_instances=n_instances, random_state=42)
+    y = convert(y, from_type="nested_univ", to_type=mtype)
+
+    est = ARIMA().fit(y)
+    y_pred = getattr(est, method)([1, 2, 3])
+
+    if method in ["predict_interval", "predict_quantiles"]:
+        expected_mtype = method.replace("ict", "")
+    elif method in ["predict_var"]:
+        expected_mtype = "pd-multiindex"
+    else:
+        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+
+    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+
+    msg = (
+        f"vectorization of forecaster method {method} does not work for test example "
+        f"of mtype {mtype}, using the ARIMA forecaster"
+    )
+
+    assert valid, msg
+
+
+@pytest.mark.parametrize("method", PROBA_DF_METHODS)
+@pytest.mark.parametrize("mtype", HIER_MTYPES)
+def test_vectorization_series_to_hier_proba(method, mtype):
+    """Test that forecaster vectorization works for Hierarchical data, predict_proba.
+
+    This test passes Hierarchical data to the ARIMA forecaster which internally has an
+    implementation for Series only, so the BaseForecaster has to vectorize.
+    """
+    hierarchy_levels = (2, 4)
+    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
+    y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
+
+    est = ARIMA().fit(y)
+    y_pred = getattr(est, method)([1, 2, 3])
+
+    if method in ["predict_interval", "predict_quantiles"]:
+        expected_mtype = method.replace("ict", "")
+    elif method in ["predict_var"]:
+        expected_mtype = "pd_multiindex_hier"
+    else:
+        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+
+    valid, _, _ = check_is_mtype(y_pred, expected_mtype, return_metadata=True)
+
+    msg = (
+        f"vectorization of forecaster method {method} does not work for test example "
+        f"of mtype {mtype}, using the ARIMA forecaster"
+    )
+
+    assert valid, msg
