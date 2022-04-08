@@ -221,28 +221,36 @@ def all_estimators(
         columns = ["name", "estimator"]
 
     # add new tuple entries to all_estimators for each tag in return_tags:
-    if return_tags is not None:
-        #check that return_tags has the right type:
+    if return_tags:
+        # check that return_tags has the right type:
         if isinstance(return_tags, str):
             return_tags = [return_tags]
-        if not isinstance(return_tags, list) or not all(isinstance(tag, str) for tag in return_tags):
+        if not isinstance(return_tags, list) or not all(
+            isinstance(tag, str) for tag in return_tags
+        ):
             raise TypeError(
                 "Error in all_estimators parameter return_tags must be either a str or list of str"
-                )
-        #enrich all_estimators by adding the values for all return_tags tags:
-        if len(all_estimators) > 0:
+            )
+        # enrich all_estimators by adding the values for all return_tags tags:
+        if all_estimators:
             if isinstance(all_estimators[0], tuple):
-                all_estimators = [est + _get_return_tags(est[-1], return_tags) for est in all_estimators]
+                all_estimators = [
+                    (name, est) + _get_return_tags(est, return_tags)
+                    for (name, est) in all_estimators
+                ]
             else:
-                all_estimators = [tuple([est]) + _get_return_tags(est, return_tags) for est in all_estimators]
+                all_estimators = [
+                    tuple([est]) + _get_return_tags(est, return_tags)
+                    for est in all_estimators
+                ]
         columns = columns + return_tags
-
 
     # convert to pd.DataFrame if as_dataframe=True
     if as_dataframe:
         all_estimators = pd.DataFrame(all_estimators, columns=columns)
 
     return all_estimators
+
 
 def _get_return_tags(estimator, return_tags):
     """Fetch a list of all tags for every_entry of all_estimators
