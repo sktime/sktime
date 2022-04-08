@@ -275,7 +275,7 @@ class WindowSummarizer(BaseTransformer):
         transformed version of X
         """
         idx = X.index
-        X = pd.concat([self._X_memory, X])
+        X = X.combine_first(self._X_memory)
 
         func_dict = self._func_dict
         target_cols = self._target_cols
@@ -319,7 +319,7 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
-        self._X_memory = pd.concat([self._X_memory, X])
+        self._X_memory = X.combine_first(self._X_memory)
 
     @classmethod
     def get_test_params(cls):
