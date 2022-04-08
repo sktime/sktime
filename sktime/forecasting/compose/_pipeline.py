@@ -629,6 +629,94 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         return self.steps_[(1 + self._get_forecaster_index(self.steps_)) :]
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformedTargetForecaster.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+
+        # we don't use names but _get_estimator_names to get the *original* names
+        #   to avoid multiple "make unique" calls which may grow strings too much
+        _, ests = zip(*self.steps_)
+        names = tuple(self._get_estimator_names(self.steps))
+        if isinstance(other, TransformerPipeline):
+            _, trafos_o = zip(*other.steps_)
+            names_o = tuple(other._get_estimator_names(other.steps))
+            new_names = names + names_o
+            new_ests = ests + trafos_o
+        elif isinstance(other, BaseTransformer):
+            new_names = names + (type(other).__name__,)
+            new_ests = ests + (other,)
+        elif self._is_name_and_est(other, BaseTransformer):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = names + (other_name,)
+            new_ests = ests + (other_trafo,)
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
+            return TransformedTargetForecaster(steps=list(new_ests))
+        else:
+            return TransformedTargetForecaster(steps=list(zip(new_names, new_ests)))
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+
+        _, ests = zip(*self.steps_)
+        names = tuple(self._get_estimator_names(self.steps))
+        if isinstance(other, TransformerPipeline):
+            _, trafos_o = zip(*other.steps_)
+            names_o = tuple(other._get_estimator_names(other.steps))
+            new_names = names_o + names
+            new_ests = trafos_o + ests
+        elif isinstance(other, BaseTransformer):
+            new_names = (type(other).__name__,) + names
+            new_ests = (other,) + ests
+        elif self._is_name_and_est(other, BaseTransformer):
+            other_name = other[0]
+            other_trafo = other[1]
+            new_names = (other_name,) + names
+            new_ests = (other_trafo,) + ests
+        else:
+            return NotImplemented
+
+        # if all the names are equal to class names, we eat them away
+        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_ests)):
+            return TransformedTargetForecaster(steps=list(new_ests))
+        else:
+            return TransformedTargetForecaster(steps=list(zip(new_names, new_ests)))
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
