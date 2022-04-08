@@ -240,6 +240,6 @@ class SignatureClassifier(BaseClassifier):
             return {
                 "estimator": RandomForestClassifier(n_estimators=2),
                 "augmentation_list": ("basepoint", "addtime"),
-                "depth": 3,
+                "depth": 1,
                 "window_name": "global",
             }
