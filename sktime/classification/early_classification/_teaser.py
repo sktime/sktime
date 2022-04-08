@@ -29,9 +29,6 @@ class TEASER(BaseEarlyClassifier):
     An early classifier which uses one class SVM's trained on prediction probabilities
     to determine whether an early prediction is safe or not.
 
-    state_info records in order: the time stamp index, the number of consecutive
-    decisions made, the predicted class and the series length.
-
     Overview:
         Build n classifiers, where n is the number of classification_points.
         For each classifier, train a one class svm used to determine prediction safety
@@ -79,6 +76,12 @@ class TEASER(BaseEarlyClassifier):
         The full length of each series.
     classes_ : list
         The unique class labels.
+    state_info : 2d np.ndarray (4 columns)
+        Information stored about input instances after the decision-making process in
+        update/predict methods. Used in update methods to make decisions based on
+        the resutls of previous method calls.
+        Records in order: the time stamp index, the number of consecutive decisions
+        made, the predicted class and the series length.
 
     References
     ----------

@@ -10,7 +10,7 @@ Defining methods:
     predicting              - predict(self, X)
                             - predict_proba(self, X)
     updating predictions    - update_predict(self, X)
-                            - update_predict_proba(self, X)
+      (streaming)           - update_predict_proba(self, X)
 
 Inherited inspection methods:
     hyper-parameter inspection  - get_params()
@@ -20,6 +20,7 @@ State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
+    streaming decision info - state_info attribute
 """
 
 __all__ = [
