@@ -404,8 +404,8 @@ class _RecursiveReducer(_Reducer):
     strategy = "recursive"
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd.Series", "pd-multiindex"],
-        "X_inner_mtype": ["pd.Series", "pd-multiindex"],
+        # "y_inner_mtype": ["pd.Series", "pd-multiindex"],
+        # "X_inner_mtype": ["pd.Series", "pd-multiindex"],
     }
 
     def _transform(self, y, X=None):
@@ -447,9 +447,9 @@ class _RecursiveReducer(_Reducer):
         self.window_length_ = check_window_length(
             self.window_length, n_timepoints=len(y)
         )
-
-        self.transformers_ = clone(self.transformers)
-        self.transformers = clone(self.transformers)
+        if self.transformers is not None:
+            self.transformers_ = clone(self.transformers)
+            self.transformers = clone(self.transformers)
 
         if self.window_length is None:
             if isinstance(self.transformers_, list):
@@ -1078,12 +1078,26 @@ def _get_forecaster(scitype, strategy):
 def _create_multiindex(target_date, origin_df, fill=None):
     """Create an empty multiindex dataframe from origin dataframe."""
     # Collect predictions
-    if not isinstance(origin_df.index, pd.MultiIndex):
-        if fill is None:
-            template = pd.Series(np.zeros(len(target_date)), index=target_date)
+    oi = origin_df.index
+    if not isinstance(oi, pd.MultiIndex):
+        if isinstance(origin_df, pd.Series):
+            if fill is None:
+                template = pd.Series(np.zeros(len(target_date)), index=target_date)
+            else:
+                template = pd.Series(fill, index=target_date)
+            return template
         else:
-            template = pd.Series(fill, index=target_date)
-        return template
+            if fill is None:
+                template = pd.DataFrame(
+                    np.zeros((len(target_date), len(origin_df.columns))),
+                    index=target_date,
+                    columns=origin_df.columns.to_list(),
+                )
+            else:
+                template = pd.DataFrame(
+                    fill, index=target_date, columns=origin_df.columns.to_list()
+                )
+            return template
 
     tsids = origin_df.index.get_level_values("instances").unique()
     mi = pd.MultiIndex.from_product(

@@ -208,7 +208,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
+            return None
 
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
@@ -265,7 +265,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
+            return None
 
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
@@ -293,7 +293,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index equals fh for full in-sample predictions."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
+            return None
 
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]

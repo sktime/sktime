@@ -64,20 +64,19 @@ regressor = make_pipeline(
 
 # forecaster1.fit(y=y_train_grp, X=y_train_grp)
 
-# y_pred = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
+# y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
 
 forecaster2 = make_reduction(
     regressor,
     scitype="tabular-regressor",
-    transformers=[WindowSummarizer(**kwargs)],
+    transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
     window_length=None,
     strategy="recursive",
 )
 
 # forecaster2.fit(y_train, fh=[1, 2])
-
-# y_pred = forecaster2.predict(fh=[1, 2, 12])
-
+# y_pred2 = forecaster2.predict(fh=[1, 2, 12])
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^a=0
 check_estimator(forecaster2, return_exceptions=False)
 
 # forecaster2a = make_reduction(
