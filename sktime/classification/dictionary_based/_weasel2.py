@@ -5,7 +5,7 @@ Dictionary based classifier based on SFA transform, BOSS and linear regression.
 """
 
 __author__ = ["patrickzib", "Arik Ermshaus"]
-__all__ = ["WEASEL"]
+__all__ = ["WEASEL2"]
 
 import math
 
@@ -22,7 +22,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.dictionary_based import SFA
 
 
-class WEASEL(BaseClassifier):
+class WEASEL2(BaseClassifier):
     """Word Extraction for Time Series Classification (WEASEL).
 
     Overview: Input n series length m
@@ -98,13 +98,13 @@ class WEASEL(BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.dictionary_based import WEASEL
+    >>> from sktime.classification.dictionary_based import WEASEL2
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = WEASEL(window_inc=4)
+    >>> clf = WEASEL2(window_inc=4)
     >>> clf.fit(X_train, y_train)
-    WEASEL(...)
+    WEASEL2(...)
     >>> y_pred = clf.predict(X_test)
     """
 
@@ -133,14 +133,19 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]
+        self.word_lengths = [6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
+        self.binning_strategies = ["equi-width", "equi-depth", "information-gain"]
         self.random_state = random_state
 
-        self.min_window = 6
-        self.max_window = 100
+        self.min_window = 8  # 9???
+        self.max_window = 16
+        self.num = 100
+
+        self.min_dilation = 1
+        self.max_dilation = 32  # 2er Potenzen??
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -150,10 +155,24 @@ class WEASEL(BaseClassifier):
         self.n_instances = 0
 
         self.SFA_transformers = []
+        self.dilation_factors = []
+        self.differences = []
         self.clf = None
         self.n_jobs = n_jobs
 
-        super(WEASEL, self).__init__()
+        super(WEASEL2, self).__init__()
+
+    @staticmethod
+    def _dilation(X, d, differences):
+        if differences:
+            X = np.diff(X, axis=2)
+            # X = np.concatenate((X, X2), axis=2)
+
+        first = X[:, :, 0::d]
+        for i in range(1, d):
+            second = X[:, :, i::d]
+            first = np.concatenate((first, second), axis=2)
+        return first
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -186,14 +205,15 @@ class WEASEL(BaseClassifier):
                 f"the constructor, but the classifier may not work at "
                 f"all with very short series"
             )
-        self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
+        self.window_sizes = list(range(self.min_window, self.max_window + 1, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
         def _parallel_fit(
-            window_size,
+            i,
         ):
-            rng = check_random_state(window_size)
-            all_words = [dict() for x in range(len(X))]
+            rng = check_random_state(i)
+            window_size = rng.choice(self.window_sizes)
+            all_words = [[] for _ in range(len(X))]
             relevant_features_count = 0
 
             # for window_size in self.window_sizes:
@@ -203,15 +223,30 @@ class WEASEL(BaseClassifier):
                 window_size=window_size,
                 norm=rng.choice(self.norm_options),
                 anova=self.anova,
-                # levels=rng.choice([1, 2, 3]),
                 binning_method=self.binning_strategy,
+                # binning_method=rng.choice(self.binning_strategies),
                 bigrams=self.bigrams,
                 remove_repeat_words=False,
                 lower_bounding=False,
                 save_words=False,
             )
 
-            sfa_words = transformer.fit_transform(X, y)
+            ds = np.int32(
+                [
+                    2**j
+                    for j in np.arange(
+                        np.log2(self.min_dilation), np.log2(self.max_dilation) + 1
+                    )
+                ]
+            )
+            # ds = range(self.min_dilation,
+            #           max(self.min_dilation+1,
+            #               min(self.max_dilation+1, np.shape(X)[2] // window_size)))
+            dilation = rng.choice(ds)
+            differences = rng.choice([False])
+            X2 = self._dilation(X, dilation, differences)
+
+            sfa_words = transformer.fit_transform(X2, y)
 
             # self.SFA_transformers.append(transformer)
             bag = sfa_words[0]
@@ -238,30 +273,38 @@ class WEASEL(BaseClassifier):
                     if (not apply_chi_squared) or (key in relevant_features):
                         # append the prefixes to the words to
                         # distinguish between window-sizes
-                        word = WEASEL._shift_left(key, self.highest_bit, window_size)
-                        all_words[j][word] = value
+                        word = WEASEL2._shift_left(key, self.highest_bit, window_size)
+                        all_words[j].append((word, value))
 
-            return all_words, transformer, relevant_features_count
+            return (
+                all_words,
+                transformer,
+                relevant_features_count,
+                dilation,
+                differences,
+            )
 
         parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_fit)(window_size) for window_size in self.window_sizes
+            delayed(_parallel_fit)(i) for i in range(self.num)
         )  # , verbose=self.verbose
 
         relevant_features_count = 0
         all_words = [dict() for x in range(len(X))]
 
-        for sfa_words, transformer, rel_features_count in parallel_res:
+        for sfa_words, transformer, rel_features_count, dilation, diffs in parallel_res:
             transformer.n_jobs = self._threads_to_use
             self.SFA_transformers.append(transformer)
+            self.dilation_factors.append(dilation)
+            self.differences.append(diffs)
             relevant_features_count += rel_features_count
 
             for idx, bag in enumerate(sfa_words):
-                for word, count in bag.items():
-                    all_words[idx][word] = count
+                all_words[idx].update(bag)
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=True, sort=False),
             # StandardScaler(copy=False),
+            # RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
             LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",
@@ -311,9 +354,9 @@ class WEASEL(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        def _parallel_transform_words(X, transformer, dilation):
-            bag_all_words = [dict() for x in range(len(X))]
-            X2 = self._dilation(X, dilation)
+        def _parallel_transform_words(X, transformer, dilation, diffs):
+            bag_all_words = [[] for x in range(len(X))]
+            X2 = self._dilation(X, dilation, diffs)
 
             # SFA transform
             sfa_words = transformer.transform(X2)
@@ -324,26 +367,25 @@ class WEASEL(BaseClassifier):
             # the used window-length
             for j in range(len(bag)):
                 for (key, value) in bag[j].items():
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    word = WEASEL._shift_left(
-                        key, self.highest_bit, transformer.window_size
-                    )
-                    bag_all_words[j][word] = value
-
+                    if value > 1:
+                        # append the prefices to the words to distinguish
+                        # between window-sizes
+                        word = WEASEL2._shift_left(
+                            key, self.highest_bit, transformer.window_size
+                        )
+                        bag_all_words[j].append((word, value))
             return bag_all_words
 
         parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_transform_words)(X, transformer, dilation)
-            for transformer, dilation in zip(
-                self.SFA_transformers, self.dilation_factors
+            delayed(_parallel_transform_words)(X, transformer, dilation, diffs)
+            for transformer, dilation, diffs in zip(
+                self.SFA_transformers, self.dilation_factors, self.differences
             )
         )
         all_words = [dict() for x in range(len(X))]
         for sfa_words in parallel_res:
             for idx, bag in enumerate(sfa_words):
-                for word, count in bag.items():
-                    all_words[idx][word] = count
+                all_words[idx].update(bag)
         return all_words
 
     def _compute_window_inc(self):
