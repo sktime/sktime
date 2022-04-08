@@ -561,9 +561,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     ... ])
 
     Example 3: using the dunder method
-    >>> # forecaster = NaiveForecaster(strategy="drift")
-    >>> # imputer = Imputer(method="mean")
-    >>> # pipe = imputer * Deseasonalizer() * forecaster * ExponentTransformer()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> imputer = Imputer(method="mean")
+    >>> pipe = imputer * Deseasonalizer() * forecaster * ExponentTransformer()
     """
 
     _required_parameters = ["steps"]
@@ -583,7 +583,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         super(TransformedTargetForecaster, self).__init__()
 
         # set the tags based on forecaster
-        _, forecaster = self.steps[self._get_forecaster_index(self.steps_)]
+        forecaster = self.forecaster_
         tags_to_clone = [
             "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
