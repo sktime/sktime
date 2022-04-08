@@ -103,13 +103,13 @@ class HIVECOTEV1(BaseClassifier):
     >>> clf = HIVECOTEV1(
     ...     stc_params={
     ...         "estimator": RotationForest(n_estimators=3),
-    ...         "n_shapelet_samples": 500,
-    ...         "max_shapelets": 20,
-    ...         "batch_size": 100,
+    ...         "n_shapelet_samples": 100,
+    ...         "max_shapelets": 10,
+    ...         "batch_size": 20,
     ...     },
-    ...     tsf_params={"n_estimators": 10},
-    ...     rise_params={"n_estimators": 10},
-    ...     cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
+    ...     tsf_params={"n_estimators": 3},
+    ...     rise_params={"n_estimators": 3},
+    ...     cboss_params={"n_parameter_samples": 10, "max_ensemble_size": 3},
     ... )
     >>> clf.fit(X_train, y_train)
     HIVECOTEV1(...)

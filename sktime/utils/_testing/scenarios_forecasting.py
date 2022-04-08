@@ -18,8 +18,10 @@ from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
+from sktime.utils._testing.series import _make_series
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
@@ -217,6 +219,32 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+y_panel = _make_panel_X(
+    n_instances=3, n_timepoints=10, n_columns=1, random_state=RAND_SEED
+)
+
+
+class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
+    """Fit/predict only, univariate Panel y, no X, and longer fh."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+
+    args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+    default_method_sequence = ["fit", "predict"]
+
+
+y_hierarchical = _make_hierarchical(n_columns=1, random_state=RAND_SEED)
+
+
+class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
+    """Fit/predict only, univariate Hierarchical y, no X, and longer fh."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+
+    args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+    default_method_sequence = ["fit", "predict"]
+
+
 forecasting_scenarios_simple = [
     ForecasterFitPredictUnivariateNoX,
     ForecasterFitPredictMultivariateWithX,
@@ -230,6 +258,8 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictUnivariateWithXLongFh,
     ForecasterFitPredictMultivariateNoX,
     ForecasterFitPredictMultivariateWithX,
+    ForecasterFitPredictPanelSimple,
+    ForecasterFitPredictHierarchicalSimple,
 ]
 
 scenarios_forecasting = forecasting_scenarios_extended

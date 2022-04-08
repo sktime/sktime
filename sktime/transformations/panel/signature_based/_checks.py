@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
-"""
+"""Input conversions for the SignatureClassifier.
+
 _checks.py
 ====================
 Contains a reusable decorator function to handle the sklearn signature checks.
 """
 import functools
+
 import numpy as np
 import pandas as pd
+
 from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
 
 
 def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
-    """Simple function for handling the sktime checks in signature modules.
+    """Handle the sktime checks in signature modules, decorator.
 
     This decorator assumes that the input arguments to the function are either
     of the form:
@@ -25,18 +27,18 @@ def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
     converts to numpy, and then converts back to the original format of the
     data.
 
-    Args:
-        check_fitted (bool): Set this to True to invoke sktimes `check_fitted`
-            function. (For example when in a transform method).
-        force_numpy (bool): Set True to force the output to be numpy. This is
-            needed in prediction steps where we wish to output y as a numpy
-            array.
+    Parameters
+    ----------
+    check_fitted : bool, optional, default=False
+        Whether to invoke sktimes `check_fitted` function at the start.
+        (For example when in a transform method).
+    force_numpy : bool, optional, default=False
+        Whether to force the output to be numpy.
+        This is needed in prediction steps where we wish to output y as a numpy array.
     """
 
     def real_decorator(func):
-        """Reusable decorator to handle the sktime checks and convert the data
-        to numpy.
-        """
+        """Handle the sktime checks and convert the data to numpy, decorator."""
 
         @functools.wraps(func)
         def wrapper(self, data, labels=None, **kwargs):
@@ -53,11 +55,6 @@ def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
                 data = check_X(data, coerce_to_pandas=True)
             else:
                 data, labels = check_X_y(data, labels, coerce_to_pandas=True)
-
-            # Now convert it to a numpy array
-            # Note sktime uses [N, C, L] whereas signature code uses shape
-            # [N, L, C] (C being channels) so we must transpose.
-            data = np.transpose(from_nested_to_3d_numpy(data), [0, 2, 1])
 
             # Apply the function to the transposed array
             if labels is None:
