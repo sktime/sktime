@@ -1950,5 +1950,6 @@ def _convert_tsf_to_hierarchical(
         .join(result)
         .set_index(index_columns + ["timestamp"])
     )
+    df = df.astype({value_column_name: "float"}, errors="ignore")
 
     return df
