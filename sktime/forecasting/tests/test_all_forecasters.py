@@ -208,6 +208,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
+            # workaround to ensure check_estimator without breaking e.g. debugging
             return None
 
         y_train = _make_series(
@@ -233,6 +234,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predict_residuals method works as expected."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
+            # workaround to ensure check_estimator without breaking e.g. debugging
             return None
 
         y_train = _make_series(
@@ -265,6 +267,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
+            # workaround to ensure check_estimator without breaking e.g. debugging
             return None
 
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
@@ -293,6 +296,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index equals fh for full in-sample predictions."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
+            # workaround to ensure check_estimator without breaking e.g. debugging
             return None
 
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
