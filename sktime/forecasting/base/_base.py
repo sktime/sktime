@@ -125,8 +125,8 @@ class BaseForecaster(BaseEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -156,8 +156,8 @@ class BaseForecaster(BaseEstimator):
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
