@@ -2,10 +2,9 @@
 import numpy as np
 import pytest
 from sktime.transformations.panel.signature_based import SignatureTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("esig")
-import esig  # noqa: E402
+
+import esig
 
 
 def test_generalised_signature_method():
