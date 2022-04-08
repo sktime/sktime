@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""AutoRegressive Model"""
+"""AutoRegressive Model."""
 __all__ = ["AutoReg"]
 __author__ = ["ryali1"]
 
@@ -12,13 +12,14 @@ from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class AutoReg(_StatsModelsAdapter):
-    """
-    This is a direct interface for statsmodels.tsa.ar_model (AutoReg)
+    """AutoReg Forecaster.
+
+    Direct interface for statsmodels.tsa.ar_model (AutoReg).
 
     Parameters
     ----------
     endog: array_like
-        A 1-d endogenous response variable. The dependent varaiablee.
+        A 1-d endogenous response variable. The dependent variable.
     lags: {None, int, list[int]}
         The number of lags to include in the model if an integer or the list of lag
         indices to include. For example, [1,4] will only include lags 1 and 4 while lags=4
@@ -111,6 +112,7 @@ class AutoReg(_StatsModelsAdapter):
 
     def summary(self):
         """Get a summary of the fitted forecaster.
+
         This is the same as the implementation in statsmodels:
         https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
         """
