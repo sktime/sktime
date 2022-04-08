@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+"""HOG1D transform."""
+import math
+import numbers
+
 import numpy as np
 import pandas as pd
-import numbers
-import math
+
 from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
-from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 
 """
 The HOG1D Transformer proposed by:
@@ -23,9 +25,9 @@ The HOG1D Transformer proposed by:
 """
 
 
-class HOG1DTransformer(_PanelToPanelTransformer):
+class HOG1DTransformer(BaseTransformer):
+    """HOG1D transform.
 
-    """
     This class is to calculate the HOG1D transform of a
     dataframe of time series data. Works by splitting
     the time series num_intervals times, and calculate
@@ -39,30 +41,42 @@ class HOG1DTransformer(_PanelToPanelTransformer):
                           to modify the distribution.
     """
 
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,
+    }
+
     def __init__(self, num_intervals=2, num_bins=8, scaling_factor=0.1):
         self.num_intervals = num_intervals
         self.num_bins = num_bins
         self.scaling_factor = scaling_factor
         super(HOG1DTransformer, self).__init__()
 
-    def transform(self, X, y=None):
-        """
-        Function to transform a data frame of time series data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
 
         Parameters
         ----------
-        X : a pandas dataframe of shape = [n_samples, num_dims]
-            The training input samples.
+        X : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of X must contain pandas.Series
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        dims: a pandas data frame of shape = [n_samples, num_dims]
+        Xt : nested pandas DataFrame of shape [n_instances, n_features]
+            each cell of Xt contains pandas.Series
+            transformed version of X
         """
-
-        # Check the data
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
-
         # Get information about the dataframe
         num_insts = X.shape[0]
         col_names = X.columns
@@ -97,8 +111,7 @@ class HOG1DTransformer(_PanelToPanelTransformer):
         return df
 
     def _calculate_hog1ds(self, X):
-        """
-        Function to calculate the HOG1Ds given a time series.
+        """Calculate the HOG1Ds given a time series.
 
         Parameters
         ----------
@@ -121,8 +134,7 @@ class HOG1DTransformer(_PanelToPanelTransformer):
         return HOG1Ds
 
     def _get_hog1d(self, X):
-        """
-        Function to get the HOG1D given a portion of a time series.
+        """Get the HOG1D given a portion of a time series.
 
         X : a numpy array of shape = [interval_size]
 
@@ -159,8 +171,7 @@ class HOG1DTransformer(_PanelToPanelTransformer):
         return histogram
 
     def _split_time_series(self, X):
-        """
-        Function to split a time series into approximately equal intervals.
+        """Split a time series into approximately equal intervals.
 
         Adopted from = https://stackoverflow.com/questions/2130016/splitting
                        -a-list-into-n-parts-of-approximately-equal-length
@@ -182,8 +193,7 @@ class HOG1DTransformer(_PanelToPanelTransformer):
         return output
 
     def _check_parameters(self, num_atts):
-        """
-        Function for checking the values of parameters inserted into HOG1D.
+        """Check the values of parameters inserted into HOG1D.
 
         Throws
         ------
