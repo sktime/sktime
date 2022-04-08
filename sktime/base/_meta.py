@@ -305,8 +305,8 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         """Set self's `tag_name` tag to `value` if any estimator on the list has it.
 
         Writes to self:
-        tag with name tag_name, sets to value if _anytagis(tag_name, value) is True
-            otherwise sets the tag to `value_if_not`
+        sets the tag `tag_name` to `value` if `_anytagis(tag_name, value)` is True
+            otherwise sets the tag `tag_name` to `value_if_not`
 
         Parameters
         ----------
