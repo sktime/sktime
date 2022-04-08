@@ -174,7 +174,8 @@ def check_pdmultiindex_panel(obj, return_metadata=False, var_name="obj"):
         )
         return _ret(False, msg, None, return_metadata)
 
-    inst_inds = np.unique(obj.index.get_level_values(0))
+    inst_inds = obj.index.get_level_values(0).unique()
+    # inst_inds = np.unique(obj.index.get_level_values(0))
 
     check_res = [
         check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
