@@ -101,6 +101,27 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         subsetted_dict = dict((k, dict_to_subset[k]) for k in keys_in_both)
         return subsetted_dict
 
+    @staticmethod
+    def _is_name_and_est(obj, cls_type=None):
+        """Check whether obj is a tuple of type (str, cls_type).
+
+        Parameters
+        ----------
+        cls_type : class or tuple of class, optional. Default = BaseEstimator.
+            class(es) that all estimators are checked to be an instance of
+
+        Returns
+        -------
+        bool : True if obj is (str, cls_type) tuple, False otherise
+        """
+        if cls_type is None:
+            cls_type = BaseEstimator
+        if not isinstance(obj, tuple) or len(obj) != 2:
+            return False
+        if not isinstance(obj[0], str) or not isinstance(obj[1], cls_type):
+            return False
+        return True
+
     def _check_estimators(
         self,
         estimators,
@@ -161,9 +182,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         def is_est_is_tuple(obj):
             """Check whether obj is estimator of right type, or (str, est) tuple."""
             is_est = isinstance(obj, cls_type)
-            is_tuple = isinstance(obj, tuple) and len(obj) == 2
-            is_tuple = is_tuple and isinstance(obj[0], str)
-            is_tuple = is_tuple and isinstance(obj[1], cls_type)
+            is_tuple = self.is_name_and_est(obj, cls_type)
 
             return is_est, is_tuple
 
