@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for signature method."""
 
-import esig
 import numpy as np
 import pytest
 
@@ -11,6 +10,8 @@ from sktime.transformations.panel.signature_based import SignatureTransformer
 def test_generalised_signature_method():
     """Check that dimension and dim of output are correct."""
     # Build an array X, note that this is [n_sample, n_channels, length] shape.
+    import esig
+
     n_channels = 3
     depth = 4
     X = np.random.randn(5, n_channels, 10)
