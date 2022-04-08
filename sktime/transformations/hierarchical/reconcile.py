@@ -48,7 +48,7 @@ class Reconciler(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -59,11 +59,19 @@ class Reconciler(BaseTransformer):
         "transform-returns-same-time-index": True,
     }
 
+    METHOD_LIST = ["bu", "ols", "wls_str"]
+
     def __init__(self, method="bu"):
 
         self.method = method
 
         super(Reconciler, self).__init__()
+
+    def _add_totals(self, X):
+        """Add total levels to X, using Aggregate."""
+        from sktime.transformations.hierarchical.aggregate import Aggregate
+
+        return Aggregate().fit_transform(X)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -82,16 +90,25 @@ class Reconciler(BaseTransformer):
         """
         self._check_method()
 
+        # check the length of index
+        if X.index.nlevels < 2:
+            return self
+
         # check index and bottom level of hierarchy are named correctly
-        _check_index_good(X)
+        #   if not, add totals to X
+        if not _check_index_good(X):
+            X = self._add_totals(X)
+
         _check_bl_good(X)
 
         if self.method == "bu":
             self.g_matrix = _get_g_matrix_bu(X)
         elif self.method == "ols":
             self.g_matrix = _get_g_matrix_ols(X)
-        else:
+        elif self.method == "wls_str":
             self.g_matrix = _get_g_matrix_wls_str(X)
+        else:
+            raise RuntimeError("unreachable condition, error in _check_method")
 
         self.s_matrix = _get_s_matrix(X)
 
@@ -112,6 +129,15 @@ class Reconciler(BaseTransformer):
         -------
         recon_preds : multi-indexed pd.DataFrame of Panel mtype pd_multiindex
         """
+        # check the length of index
+        if X.index.nlevels < 2:
+            return X
+
+        # check index and bottom level of hierarchy are named correctly
+        #   if not, add totals to X
+        if not _check_index_good(X):
+            X = self._add_totals(X)
+
         # include index between matrices here as in df.dot()?
         X = X.groupby(level=-1)
         recon_preds = X.transform(
@@ -122,9 +148,8 @@ class Reconciler(BaseTransformer):
 
     def _check_method(self):
         """Raise warning if method is not defined correctly."""
-        default_list = ["bu", "ols", "wls_str"]
-        if not np.isin(self.method, default_list):
-            raise ValueError(f"""method must be one of {default_list}.""")
+        if not np.isin(self.method, self.METHOD_LIST):
+            raise ValueError(f"""method must be one of {self.METHOD_LIST}.""")
         else:
             pass
 
@@ -140,9 +165,7 @@ class Reconciler(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"method": "bu"}
-
-        return params
+        return [{"method": x} for x in cls.METHOD_LIST]
 
 
 def _get_s_matrix(X):
@@ -290,28 +313,14 @@ def _get_g_matrix_wls_str(X):
 # TODO: check for any missing timepoint indexes?
 def _check_index_good(X):
     """Check the index of X and return boolean."""
-    # check the length of index
-    nmln_chk = X.index.nlevels >= 2
-
     # check the first index elements for "__total"
     tot_chk = np.any(X.index.get_level_values(level=0).isin(["__total"]))
 
-    all_ok = np.logical_and.reduce([nmln_chk, tot_chk])
-
-    if not all_ok:
-        raise ValueError(
-            """Please check the index of X
-                    1) Contains an aggregated node named "__total".
-                    2) Has more than one level.
-            """
-        )
-    else:
-        pass
+    return tot_chk
 
 
 def _check_bl_good(X):
-
-    # check botom level indexes are unique
+    """Check bottom level indexes are unique."""
     bl_inds = list(
         X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
         .index.droplevel(level=-1)
