@@ -5,8 +5,7 @@
 __all__ = ["AutoReg"]
 __author__ = ["ryali1"]
 
-import numpy as np
-import pandas as pd
+
 from statsmodels.tsa.api import AutoReg as _AutoReg
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter

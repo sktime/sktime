@@ -18,3 +18,4 @@ def test_AutoReg_against_statsmodels():
   statsmodelAutoReg = _AutoReg(y, lags = 10 ).fit()
   statsmodel_pred = statsmodelAutoReg.predict(start=len(y), end=len(y)+8)
   assert_allclose(y_pred.tolist(), statsmodel_pred.tolist())
+  
