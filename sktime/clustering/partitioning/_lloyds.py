@@ -213,8 +213,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
         "kmeans++": _kmeans_plus_plus,
     }
 
-    #    _derivative_transformer = DerivativeTransformer()
-
     def __init__(
         self,
         n_clusters: int = 8,
