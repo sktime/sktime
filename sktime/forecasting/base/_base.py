@@ -1194,7 +1194,7 @@ class BaseForecaster(BaseEstimator):
                 self._y = y
             else:
                 self._y = update_data(self._y, y)
-    
+
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
@@ -1204,7 +1204,7 @@ class BaseForecaster(BaseEstimator):
                 self._X = X
             else:
                 self._X = update_data(self._X, X)
-    
+
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
 
