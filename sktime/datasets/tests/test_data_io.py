@@ -29,8 +29,7 @@ from sktime.datasets import (
     write_dataframe_to_tsfile,
 )
 from sktime.datasets._data_io import MODULE, _convert_tsf_to_hierarchical
-
-# from sktime.datatypes import check_is_mtype
+from sktime.datatypes import check_is_mtype
 
 
 def test_load_from_tsfile():
@@ -1289,8 +1288,8 @@ def test_load_tsf_to_dataframe(input_path, return_type, output_df):
 
     assert_frame_equal(df, output_df, check_dtype=False)
     assert metadata == expected_metadata
-    # if return_type != "default_tsf":
-    #     assert check_is_mtype(obj=df, mtype=return_type)
+    if return_type != "default_tsf":
+        assert check_is_mtype(obj=df, mtype=return_type)
 
 
 @pytest.mark.parametrize("freq", [None, "YS"])
