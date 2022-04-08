@@ -45,6 +45,7 @@ def all_estimators(
     exclude_estimators=None,
     return_names=True,
     as_dataframe=False,
+    return_tags=None,
 ):
     """Get a list of all estimators from sktime.
 
@@ -77,6 +78,12 @@ def all_estimators(
     as_dataframe: bool, optional (default=False)
                 if False, return is as described below;
                 if True, return is converted into a DataFrame for pretty display
+    return_tags: str or list of str, optional (default=None)
+        Names of tags
+        if None, no tags are returned
+        if str or list of str, additional columns with the values of named tags
+                are also returned.  If an estimator does not have the tag the
+                tag value returned would be None.
 
     Returns
     -------
@@ -90,6 +97,11 @@ def all_estimators(
             in alphabetical order of class name, where
             ``name`` is the estimator class name as string
             ``class`` is the actual class
+        if return_tags are passed:
+            in addition to the above, the passed tag value for all estimators is also
+            returned - with a seperate column for each tag name in return_tags.
+            Columns of tag values will be returned in the order they are listed
+            in return_tags.
 
     References
     ----------
@@ -208,11 +220,46 @@ def all_estimators(
     else:
         columns = ["name", "estimator"]
 
+    # add new tuple entries to all_estimators for each tag in return_tags:
+    if return_tags is not None:
+        #check that return_tags has the right type:
+        if isinstance(return_tags, str):
+            return_tags = [return_tags]
+        if not isinstance(return_tags, list) or not all(isinstance(tag, str) for tag in return_tags):
+            raise TypeError(
+                "Error in all_estimators parameter return_tags must be either a str or list of str"
+                )
+        #enrich all_estimators by adding the values for all return_tags tags:
+        if len(all_estimators) > 0:
+            if isinstance(all_estimators[0], tuple):
+                all_estimators = [est + _get_return_tags(est[-1], return_tags) for est in all_estimators]
+            else:
+                all_estimators = [tuple([est]) + _get_return_tags(est, return_tags) for est in all_estimators]
+        columns = columns + return_tags
+
+
     # convert to pd.DataFrame if as_dataframe=True
     if as_dataframe:
         all_estimators = pd.DataFrame(all_estimators, columns=columns)
 
     return all_estimators
+
+def _get_return_tags(estimator, return_tags):
+    """Fetch a list of all tags for every_entry of all_estimators
+
+    Parameters
+    ----------
+    estimator:  BaseEstimator, an sktime estimator
+    return_tags: list of str,
+        names of tags to get values for the estimator
+
+    Returns
+    -------
+    tags: a tuple with all the estimators values for all tags in return tags.
+        a value is None if it is not a valid tag for the estimator provided.
+    """
+    tags = tuple(estimator.get_class_tag(tag) for tag in return_tags)
+    return tags
 
 
 def _check_tag_cond(estimator, filter_tags=None, as_dataframe=True):

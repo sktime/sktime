@@ -31,6 +31,16 @@ double_estimator_scitypes = [[b[i], b[(i + 3) % n]] for i in range(n)]
 # fixtures search by individual scitypes, "None", and some pairs
 estimator_scitype_fixture = [None] + BASE_CLASS_SCITYPE_LIST + double_estimator_scitypes
 
+# get all tag_names to test performance of all_estimators return_tags argument
+all_tag_names = [tag[0] for tag in all_tags()]
+
+# make a list of 3 tags to test passing a list to return_tags
+list_of_tags = [[all_tag_names[i],
+                 all_tag_names[(i + 4)%(len(all_tag_names))],
+                all_tag_names[(i + 2)%(len(all_tag_names))]]
+                for i in range(len(all_tag_names))]
+
+tag_fixture = all_tag_names + list_of_tags
 
 def _to_list(obj):
     """Put obj in list if it is not a list."""
@@ -155,6 +165,34 @@ def test_all_estimators_exclude_estimators(exclude_estimators):
         exclude_estimators = [exclude_estimators]
     for estimator in exclude_estimators:
         assert estimator not in names
+
+@pytest.mark.parametrize("return_tags", tag_fixture)
+@pytest.mark.parametrize("return_names", [True, False])
+def test_all_estimators_return_tags(return_tags, return_names):
+    """Test ability to return estimator value of passed tags"""
+    estimators = all_estimators(
+        return_tags=return_tags,
+        return_names=return_names,
+    )
+    est_ind = 0
+    if return_names:
+        est_ind = 1
+
+    assert isinstance(estimators[0], tuple)
+    # each list entry should have estimator and value for all tags in return_tags and (optionally) name
+    if isinstance(return_tags, str):
+        assert len(estimators[0]) == est_ind + 2 # if str only 1 return tag
+    else:
+        assert len(estimators[0]) == len(return_tags) + est_ind + 1
+
+    # check that for each estimator the value for that tag is correct:
+    for est_tuple in estimators:
+        est = est_tuple[est_ind]
+        if isinstance(return_tags, str):
+            assert est.get_class_tag(return_tags) == est_tuple[est_ind + 1]
+        else:
+            for tag_index, tag in enumerate(return_tags):
+                assert est.get_class_tag(tag) == est_tuple[est_ind + 1 + tag_index]
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
