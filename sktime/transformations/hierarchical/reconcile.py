@@ -69,9 +69,9 @@ class Reconciler(BaseTransformer):
 
     def _add_totals(self, X):
         """Add total levels to X, using Aggregate."""
-        from sktime.transformations.hierarchical.aggregate import Aggregate
+        from sktime.transformations.hierarchical.aggregate import Aggregator
 
-        return Aggregate().fit_transform(X)
+        return Aggregator().fit_transform(X)
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
