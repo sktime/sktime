@@ -107,7 +107,6 @@ class SARIMAX(_StatsModelsAdapter):
     >>> forecaster.fit(y)
     SARIMAX(...)
     >>> y_pred = forecaster.predict(y.index)
-    >>> y_pred = forecaster.summary()
     """
 
     _tags = {
