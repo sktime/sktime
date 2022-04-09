@@ -29,15 +29,16 @@ def test_output(Metric, score_average):
     """Test output is correct class."""
     y_true = y_test
     loss = Metric.create_test_instance()
-    loss.set_params("score_average", score_average)
+    loss.set_params(score_average=score_average)
     eval_loss = loss.evaluate(y_true, y_pred=QUANTILE_PRED)
     index_loss = loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
 
     if score_average:
         assert isinstance(eval_loss, float)
+        assert isinstance(index_loss, pd.Series)
     else:
         assert isinstance(eval_loss, pd.DataFrame)
-    assert isinstance(index_loss, pd.DataFrame)
+        assert isinstance(index_loss, pd.DataFrame)
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
