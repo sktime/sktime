@@ -45,7 +45,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         func=None,
         name=None,
         multioutput="uniform_average",
-        score_average=False,
+        score_average=True,
     ):
         self.multioutput = multioutput
         self.score_average = score_average
@@ -304,14 +304,16 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     def __init__(
         self,
         multioutput="uniform_average",
-        score_average=False,
+        score_average=True,
         alpha=None,
     ):
         name = "PinballLoss"
         self.score_average = score_average
         self.alpha = self._check_alpha(alpha)
         self.metric_args = {"alpha": alpha}
-        super().__init__(name=name, multioutput=multioutput)
+        super().__init__(
+            name=name, multioutput=multioutput, score_average=score_average
+        )
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
         alpha = self.alpha
