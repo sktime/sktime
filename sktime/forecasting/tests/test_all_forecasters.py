@@ -209,8 +209,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -235,7 +239,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
             return None
-
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
@@ -266,8 +274,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index matches forecasting horizon."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         z, X = make_forecasting_problem(index_type=index_type, make_X=True)
 
         # Some estimators may not support all time index types and fh types, hence we
@@ -294,8 +306,12 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predicted time index equals fh for full in-sample predictions."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
-            pytest.skip(pytest_skip_msg)
-
+            return None
+            # todo: ensure check_estimator works with pytest.skip like below
+            # pytest.skip(
+            #    "ForecastingHorizon with timedelta values "
+            #     "is currently experimental and not supported everywhere"
+            # )
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
