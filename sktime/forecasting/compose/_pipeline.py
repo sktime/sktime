@@ -134,7 +134,15 @@ class _Pipeline(
                     for ix in idx_low:
                         levels = list(range(1, n))
                         yt[ix] = y.xs(ix, level=levels, axis=1)
+                        # deal with the "Coverage" case, we need to get rid of this
+                        #   i.d., special 1st level name of prediction objet
+                        #   in the case where there is only one variable
+                        if len(yt[ix].columns) == 1:
+                            temp = yt[ix].columns
+                            yt[ix].columns = self._y.columns
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
+                        if len(yt[ix].columns) == 1:
+                            yt[ix].columns = temp
                     yt = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
                     yt.columns = yt.columns.reorder_levels(flipcols)
@@ -219,7 +227,7 @@ class _Pipeline(
 
 
 # we ensure that internally we convert to pd.DataFrame for now
-SUPPORTED_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
+SUPPORTED_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
 
 class ForecastingPipeline(_Pipeline):
