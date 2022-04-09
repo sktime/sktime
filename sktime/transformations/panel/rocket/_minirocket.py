@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 from numba import get_num_threads, njit, prange, set_num_threads, vectorize
 
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
 
 
-class MiniRocket(_PanelToTabularTransformer):
+class MiniRocket(BaseTransformer):
     """MINIROCKET.
 
     MINImally RandOm Convolutional KErnel Transform

@@ -58,6 +58,10 @@ EXCLUDED_TESTS = {
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
     # test fails in the Panel case for Differencer, see #2522
     "Differencer": ["test_transform_inverse_transform_equivalent"],
+    "SignatureClassifier": [
+        "test_classifier_on_unit_test_data",
+        "test_classifier_on_basic_motions",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of
