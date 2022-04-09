@@ -89,9 +89,9 @@ class SARIMAX(_StatsModelsAdapter):
 
     See Also
     --------
-    sktime.forecasting.arima.ARIMA
-    sktime.forecasting.arima.AutoARIMA
-    sktime.forecasting.statsforcast.StatsForecastAutoARIMA
+    ARIMA
+    AutoARIMA
+    StatsForecastAutoARIMA
 
     References
     ----------
