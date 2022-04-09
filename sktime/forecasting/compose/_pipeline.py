@@ -511,6 +511,45 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     X data is not transformed. If you want to transform X, please use the
     ForecastingPipeline.
 
+    For a list `t1`, `t2`, ..., `tN`, `f`, `tp1`, `tp2`, ..., `tpM`
+        where `t[i]` and `tp[i]` are transformers (`t` to pre-, `tp` to post-process),
+        and `f` is an sktime forecaster,
+        the pipeline behaves as follows:
+    `fit(y, X, fh)` - changes state by running `t1.fit_transform` with `X=y`, `y=X`
+        then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, `y=X`, etc
+        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
+        then running `f.fit` with `y` being the output of `t[N]`, and `X=X`,
+        then running `tp1.fit_transform` with `X=` the output of `trafo[N]`, `y=X`,
+        then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
+        sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
+    `predict(X, fh)` - result is of executing `f.predict`, with `X=X`, `fh=fh`,
+        then running `tp1.inverse_transform` with `X=` the output of `f`, `y=X`,
+        then `t2.inverse_transform` on `X=` the output of `t1.inverse_transform`, etc
+        sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
+        then running `tp1.fit_transform` with `X=` the output of `trafo[N]`, `y=X`,
+        then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
+        sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
+    `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
+        with `predict_interval` or `predict_quantiles` substituted for `predict`
+    `predict_var`, `predict_proba` - uses base class default to obtain
+        crude estimates from `predict_quantiles`.
+        Recommended to replace with better custom implementations if needed.
+
+    `get_params`, `set_params` uses `sklearn` compatible nesting interface
+        if list is unnamed, names are generated as names of classes
+        if names are non-unique, `f"_{str(i)}"` is appended to each name string
+            where `i` is the total count of occurrence of a non-unique string
+            inside the list of names leading up to it (inclusive)
+
+    `TransformedTargetForecaster` can also be created by using the magic multiplication
+        on any forecaster, i.e., if `my_forecaster` inherits from `BaseForecaster`,
+            and `my_t1`, `my_t2`, `my_tp` inherit from `BaseTransformer`,
+            then, for instance, `my_t1 * my_t2 * my_forecaster * my_tp`
+            will result in the same object as  obtained from the constructor
+            `TransformedTargetForecaster([my_t1, my_t2, my_forecaster, my_tp])`
+        magic multiplication can also be used with (str, transformer) pairs,
+            as long as one element in the chain is a transformer
+
     Parameters
     ----------
     steps : list of sktime transformers and forecasters, or
