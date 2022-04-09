@@ -67,7 +67,7 @@ def all_estimators(
     return_names: bool, optional (default=True)
         if True, estimator class name is included in the all_estimators()
             return in the order: name, estimator class, optional tags, either as
-            a tuple or as pandas dataframe columns
+            a tuple or as pandas.DataFrame columns
         if False, estimator class name is removed from the all_estimators()
             return.
     filter_tags: dict of (str or list of str), optional (default=None)
@@ -79,7 +79,7 @@ def all_estimators(
     exclude_estimators: str, list of str, optional (default=None)
         Names of estimators to exclude.
     as_dataframe: bool, optional (default=False)
-        if True, all_estimators will return a pandas dataframe with named
+        if True, all_estimators will return a pandas.DataFrame with named
             columns for all of the attributes being returned.
         if False, all_estimators will return a list (either a list of
             estimators or a list of tuples, see Returns)
@@ -95,7 +95,7 @@ def all_estimators(
         1. list of estimators, if return_names=False, and return_tags is None
         2. list of tuples (optional estimator name, class, ~optional estimator
                 tags), if return_names=True or return_tags is not None.
-        3. pandas dataframe if as_dataframe = True
+        3. pandas.DataFrame if as_dataframe = True
         if list of estimators:
             entries are estimators matching the query,
             in alphabetical order of estimator name
@@ -109,7 +109,7 @@ def all_estimators(
             ``tags`` are the estimator's values for each tag in return_tags
                 and is an optional return.
         if dataframe:
-            all_estimators will return a pandas dataframe object.
+            all_estimators will return a pandas.DataFrame.
             column names represent the attributes contained in each column.
             "estimators" will be the name of the column of estimators, "names"
             will be the name of the column of estimator class names and the string(s)
@@ -250,7 +250,7 @@ def all_estimators(
                 ]
         columns = columns + return_tags
 
-    # convert to pd.DataFrame if as_dataframe=True
+    # convert to pandas.DataFrame if as_dataframe=True
     if as_dataframe:
         all_estimators = pd.DataFrame(all_estimators, columns=columns)
 
@@ -322,7 +322,8 @@ def _check_tag_cond(estimator, filter_tags=None, as_dataframe=True):
                 condition is "key must be equal to value, or in set(value)"
     as_dataframe: bool, default=False
                 if False, return is as described below;
-                if True, return is converted into a DataFrame for pretty display
+                if True, return is converted into a pandas.DataFrame for pretty
+                display
 
     Returns
     -------
@@ -359,7 +360,8 @@ def all_tags(
         these to get the estimators that fit at least one of the types.
     as_dataframe: bool, optional (default=False)
                 if False, return is as described below;
-                if True, return is converted into a DataFrame for pretty display
+                if True, return is converted into a pandas.DataFrame for pretty
+                display
 
     Returns
     -------
