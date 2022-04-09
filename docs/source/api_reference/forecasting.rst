@@ -241,7 +241,7 @@ VAR (Vector Autoregression)
     VAR
 
 SARIMAX
------
+----------
 
 .. currentmodule:: sktime.forecasting.sarimax
 
