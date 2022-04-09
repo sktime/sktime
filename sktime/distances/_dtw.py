@@ -133,9 +133,9 @@ def _cost_matrix(
 
     Parameters
     ----------
-    x: np.ndarray (2d array of shape dxm1).
+    x: np.ndarray (2d array of shape (d,m1)).
         First time series.
-    y: np.ndarray (2d array of shape dxm1).
+    y: np.ndarray (2d array of shape (d,m1)).
         Second time series.
     bounding_matrix: np.ndarray (2d array of shape m1xm2)
         Bounding matrix where the index in bound finite values (0.) and indexes

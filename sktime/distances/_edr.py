@@ -112,17 +112,19 @@ def _edr_cost_matrix(
     bounding_matrix: np.ndarray,
     epsilon: float,
 ):
-    """Compute the edr cost matrix between two timeseries.
+    """Compute the edr cost matrix between two time series.
 
     Parameters
     ----------
-    x: np.ndarray, 2d shape (d (n_dimensions),m (series_length))
+    x: np.ndarray, 2d shape (d (number of dimensions),m (series length))
         First time series.
     y: np.ndarray, 2d array shape (d, m)
         Second time series.
-    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
-        Bounding matrix where the values in bound are marked by finite values and
-        outside bound points are infinite values.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
     epsilon : float
         Matching threshold to determine if distance between two subsequences are
         considered similar (similar if distance less than the threshold).
