@@ -83,6 +83,6 @@ def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     distance = 0.0
     for i in range(x.shape[0]):
         for j in range(x.shape[1]):
-            difference = x[i] - y[i]
+            difference = x[i][j] - y[i][j]
             distance += difference * difference
     return np.sqrt(distance)

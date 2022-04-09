@@ -802,8 +802,8 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Euclidean distance is supported for 1d, 2d and 3d arrays.
 
-    The Euclidean distance between two time series of length m is the square root of the squared
-    distance and is defined as:
+    The Euclidean distance between two time series of length m is the square root of
+    the squared distance and is defined as:
 
     .. math::
         ed(x, y) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
