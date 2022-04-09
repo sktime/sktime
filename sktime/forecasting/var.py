@@ -178,6 +178,61 @@ class VAR(_StatsModelsAdapter):
         )
         return y_pred
 
+    def _predict_var(self, fh, X=None, cov=False):
+        """Compute/return variance forecasts.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Not supported by this estimator, always returns the above
+        """
+        # fh in stats
+        # fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
+        fh_int = fh.to_relative(self.cutoff)
+
+        # out-sample predictions
+        if fh_int.max() > 0:
+            cov_mat = self._fitted_forecaster.forecast_cov(steps=fh_int[-1])
+
+        # in-sample prediction by means of residuals
+        if fh_int.min() <= 0:
+            raise ValueError("VAR cannot make in-sample variance forecasts")
+
+        # sub-set to fh
+        idx = fh.to_indexer(self.cutoff)
+        cov_mat = cov_mat.diagonal(axis1=1, axis2=2)[idx]
+
+        index = fh.to_absolute(self.cutoff)
+        index.name = self._y.index.name
+        y_pred = pd.DataFrame(
+            cov_mat,
+            index=fh.to_absolute(self.cutoff),
+            columns=self._y.columns,
+        )
+        return y_pred
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
