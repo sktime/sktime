@@ -1093,7 +1093,8 @@ def temporal_train_test_split(
             )
         return _split_by_fh(y, fh, X=X)
     else:
-        if isinstance(y.index, pd.MultiIndex):
+        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        if pd_format is True and isinstance(y.index, pd.MultiIndex):
             ys = get_time_index(y)
             ys_index = list(range(len(y.index.names)))
             series = (ys,)
