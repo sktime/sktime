@@ -174,7 +174,8 @@ def _get_tag_fixture():
     # Note - I don't include None explicitly as a test case - tested elsewhere
     return test_str_as_arg + test_list_as_arg
 
-#test that all_estimators returns as expected if given correct return_tags:
+
+# test that all_estimators returns as expected if given correct return_tags:
 @pytest.mark.parametrize("return_tags", _get_tag_fixture())
 @pytest.mark.parametrize("return_names", [True, False])
 def test_all_estimators_return_tags(return_tags, return_names):
@@ -203,6 +204,7 @@ def test_all_estimators_return_tags(return_tags, return_names):
             for tag_index, tag in enumerate(return_tags):
                 assert est.get_class_tag(tag) == est_tuple[TAG_START_INDEX + tag_index]
 
+
 def _get_bad_return_tags():
     """
     Gets a list of return_tags arguments that should throw an exception
@@ -211,11 +213,12 @@ def _get_bad_return_tags():
     # case not a str or a list:
     is_int = [12]
     # case is a list, but not all elements are str:
-    is_not_all_str = [['this', 'is', 'a', 'test', 12, '!']]
+    is_not_all_str = [["this", "is", "a", "test", 12, "!"]]
 
     return is_int + is_not_all_str
 
-#test that all_estimators breaks as expected if given bad return_tags:
+
+# test that all_estimators breaks as expected if given bad return_tags:
 @pytest.mark.parametrize("return_tags", _get_bad_return_tags())
 def test_all_estimators_return_tags_bad_arg(return_tags):
     with pytest.raises(Exception) as e_info:

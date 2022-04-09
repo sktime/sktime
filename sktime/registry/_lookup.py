@@ -207,8 +207,9 @@ def all_estimators(
 
     # Filter based on given exclude list
     if exclude_estimators:
-        exclude_estimators = _check_list_of_str_or_error(exclude_estimators,
-                                'exclude_estimators')
+        exclude_estimators = _check_list_of_str_or_error(
+            exclude_estimators, "exclude_estimators"
+        )
         all_estimators = [
             (name, estimator)
             for name, estimator in all_estimators
@@ -234,8 +235,7 @@ def all_estimators(
 
     # add new tuple entries to all_estimators for each tag in return_tags:
     if return_tags:
-        return_tags = _check_list_of_str_or_error(return_tags,
-                                'return_tags')
+        return_tags = _check_list_of_str_or_error(return_tags, "return_tags")
         # enrich all_estimators by adding the values for all return_tags tags:
         if all_estimators:
             if isinstance(all_estimators[0], tuple):
@@ -256,6 +256,7 @@ def all_estimators(
 
     return all_estimators
 
+
 def _check_list_of_str_or_error(arg_to_check, arg_name):
     """
     Checks that certain arguments are str or list of str.  If str, converts
@@ -266,7 +267,8 @@ def _check_list_of_str_or_error(arg_to_check, arg_name):
     if isinstance(arg_to_check, str):
         arg_to_check = [arg_to_check]
     if not isinstance(arg_to_check, list) or not all(
-        isinstance(value, str) for value in arg_to_check):
+        isinstance(value, str) for value in arg_to_check
+    ):
         raise TypeError(
             f"Error in all_estimators!  Argument {arg_name} must be either\
              a str or list of str"
@@ -364,7 +366,7 @@ def all_tags(
 
     def is_tag_for_type(tag, estimator_types):
         tag_types = tag[1]
-        tag_types = _check_list_of_str_or_error(tag_types, 'tag_types')
+        tag_types = _check_list_of_str_or_error(tag_types, "tag_types")
 
         if isinstance(estimator_types, str):
             estimator_types = [estimator_types]
