@@ -22,7 +22,7 @@ Highlights
 
 
 Maintenance
-~~~~~~~~~~~ 
+~~~~~~~~~~~
 
 * [MNT] Remove jinja2 version (:pr:`2330`) :user:`aiwalter`
 * [BUG] pinning click due to incompatibility with newest black (:pr:`2353`) :user:`fkiraly`
@@ -35,7 +35,7 @@ Maintenance
 * [ENH] tests for `check_estimator` tests passing (:pr:`2408`) :user:`fkiraly`
 
 Refactored
-~~~~~~~~~~ 
+~~~~~~~~~~
 
 * [ENH] remove `fit_params` kwargs throughout the code base (:pr:`2343`) :user:`fkiraly`
 * Classification expected output test updates (:pr:`2295`) :user:`MatthewMiddlehurst`
@@ -47,7 +47,7 @@ Refactored
 * [ENH] extend `_HeterogeneousMetaEstimator` estimator to allow mixed tuple/estimator list (:pr:`2406`) :user:`fkiraly`
 
 Fixes
-~~~~~ 
+~~~~~
 
 * [BUG] fix `_update` default for late `fh` pass case (:pr:`2362`) :user:`fkiraly`
 * [ENH] Extract cached `ForecastingHorizon` methods to functions and avoid B019 error (:pr:`2364`) :user:`khrapovs`
@@ -61,7 +61,7 @@ Fixes
 * [BUG] fixed `get_time_index` for most mtypes (:pr:`2380`) :user:`fkiraly`
 
 Enhancements
-~~~~~~~~~~~~ 
+~~~~~~~~~~~~
 
 * [ENH] require uniqueness from multiple alpha/coverage in interval/quantile forecasts (:pr:`2326`) :user:`fkiraly`
 * [ENH] Adding "fit" parameters to VAR constructor #1850 (:pr:`2304`) :user:`TNTran92`
@@ -80,7 +80,7 @@ Enhancements
 * [ENH] post-processing in `TransformedTargetForecaster`, dunder method for (transformed `y`) forecasting pipelines (:pr:`2404`) :user:`fkiraly`
 
 Documentation
-~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~
 
 * [DOC] fix 0.11.0 release note highlights formatting (:pr:`2310`) :user:`fkiraly`
 * [DOC] typo fix contsructor -> constructor in extension templates (:pr:`2348`) :user:`fkiraly`
@@ -94,7 +94,7 @@ Documentation
 * [ENH] `NaiveVariance`: verbose arg and extended docstring (:pr:`2395`) :user:`fkiraly`
 
 Other
-~~~~~ 
+~~~~~
 
 * Release 0.11.0 (:pr:`2276`) :user:`lmmentel`
 * [MNT] test parameter refactor: forecasting reducers and ColumnEnsembleClassifier (:pr:`2223`) :user:`fkiraly`
@@ -103,6 +103,23 @@ Other
 * [ENH] Proba metric grid search integration (:pr:`2234`) :user:`eenticott-shell`
 * [ENH] wrapper for stream forecasting (update_predict use) to trigger regular refit (:pr:`2305`) :user:`fkiraly`
 
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`0saurabh0`,
+:user:`aiwalter`,
+:user:`ciaran-g`,
+:user:`danbartl`,
+:user:`eenticott-shell`,
+:user:`fkiraly`,
+:user:`khrapovs`,
+:user:`lmmentel`,
+:user:`ltsaprounis`,
+:user:`MatthewMiddlehurst`,
+:user:`NoaBenAmi`,
+:user:`RISHIKESHAVAN`,
+:user:`TNTran92`
 
 
 Version 0.11.0 - 2022-03-26
