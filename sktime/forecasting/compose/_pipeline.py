@@ -7,7 +7,6 @@ __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 
 import pandas as pd
-
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
