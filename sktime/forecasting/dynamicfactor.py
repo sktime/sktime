@@ -132,7 +132,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
     _tags = {
         "scitype:y": "multivariate",
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "handles-missing-data": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

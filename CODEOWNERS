@@ -44,6 +44,7 @@ sktime/forecasting/tbats.py @aiwalter
 sktime/forecasting/arima.py @HYang1996
 sktime/forecasting/statsforecast.py @FedericoGarza
 sktime/forecasting/structural.py @juanitorduz
+sktime/forecastring/dynamicfactor.py @Ris-Bali
 sktime/forecasting/model_selection/_split @koralturkk
 sktime/forecasting/compose/_column_ensemble.py @GuzalBulatova
 sktime/forecasting/compose/_multiplexer.py @koralturkk @aiwalter
