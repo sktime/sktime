@@ -258,10 +258,24 @@ def all_estimators(
 
 
 def _check_list_of_str_or_error(arg_to_check, arg_name):
-    """
-    Checks that certain arguments are str or list of str.  If str, converts
-    into list of str to make it iterable.  If not str or list of str
-    produces an error.
+    """Check that certain arguments are str or list of str.
+
+    Parameters
+    ----------
+    arg_to_check: argument we are testing the type of
+    arg_name: str,
+        name of the argument we are testing, will be added to the error if
+        ``arg_to_check`` is not a str or a list of str
+
+    Returns
+    -------
+    arg_to_check: list of str,
+        if arg_to_check was originally a str it converts it into a list of str
+        so that it can be iterated over.
+
+    Raises
+    ------
+    TypeError if arg_to_check is not a str or list of str
     """
     # check that return_tags has the right type:
     if isinstance(arg_to_check, str):
@@ -277,7 +291,7 @@ def _check_list_of_str_or_error(arg_to_check, arg_name):
 
 
 def _get_return_tags(estimator, return_tags):
-    """Fetch a list of all tags for every_entry of all_estimators
+    """Fetch a list of all tags for every_entry of all_estimators.
 
     Parameters
     ----------

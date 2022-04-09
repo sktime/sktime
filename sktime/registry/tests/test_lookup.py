@@ -221,8 +221,8 @@ def _get_bad_return_tags():
 # test that all_estimators breaks as expected if given bad return_tags:
 @pytest.mark.parametrize("return_tags", _get_bad_return_tags())
 def test_all_estimators_return_tags_bad_arg(return_tags):
-    with pytest.raises(Exception) as e_info:
-        estimators = all_estimators(return_tags=return_tags)
+    with pytest.raises(TypeError):
+        _ = all_estimators(return_tags=return_tags)
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
