@@ -21,6 +21,88 @@ Highlights
 ~~~~~~~~~~
 
 
+Maintenacne
+~~~~~~~~~~~ 
+
+* [MNT] Remove jinja2 version (:pr:`2330`) :user:`aiwalter`
+* [BUG] pinning click due to incompatibility with newest black (:pr:`2353`) :user:`fkiraly`
+* [ENH] test generation error to raise and not return (:pr:`2298`) :user:`fkiraly`
+* [BUG] fixing click/black incompatibility in CI (:pr:`2372`) :user:`fkiraly`
+* [ENH] Partially replace `pd.Int64Index` with `pd.Index` (:pr:`2339`) :user:`khrapovs`
+* [ENH] Get rid of `pd.Int64Index` (:pr:`2390`) :user:`khrapovs`
+* [MNT] removing unused imports from `tests._config` (:pr:`2358`) :user:`fkiraly`
+* [ENH] scenarios for hierarchical forecasting and tests for probabilistic forecast methods (:pr:`2359`) :user:`fkiraly`
+* [ENH] tests for `check_estimator` tests passing (:pr:`2408`) :user:`fkiraly`
+
+Refactored
+~~~~~~~~~~ 
+
+* [ENH] remove `fit_params` kwargs throughout the code base (:pr:`2343`) :user:`fkiraly`
+* Classification expected output test updates (:pr:`2295`) :user:`MatthewMiddlehurst`
+* [ENH] Transformers module full refactor - part III, `panel` module (2nd batch) (:pr:`2253`) :user:`fkiraly`
+* [ENH] test parameter refactor: `TSInterpolator` (:pr:`2342`) :user:`NoaBenAmi`
+* [ENH] move "sktime forecaster tests" into `TestAllForecasters` class (:pr:`2311`) :user:`fkiraly`
+* [ENH] upgrade `BasePairwiseTransformer` to use `datatypes` input conversions and checks (:pr:`2363`) :user:`fkiraly`
+* [ENH] Transformers module full refactor - part IV, `panel` module (3rd batch) (:pr:`2369`) :user:`fkiraly`
+* [ENH] extend `_HeterogeneousMetaEstimator` estimator to allow mixed tuple/estimator list (:pr:`2406`) :user:`fkiraly`
+
+Fixes
+~~~~~ 
+
+* [BUG] fix `_update` default for late `fh` pass case (:pr:`2362`) :user:`fkiraly`
+* [ENH] Extract cached `ForecastingHorizon` methods to functions and avoid B019 error (:pr:`2364`) :user:`khrapovs`
+* [BUG] `TSInterpolator` and `nested_univ` check fix (:pr:`2259`) :user:`fkiraly`
+* [BUG] fixing click/black incompatibility in CI (:pr:`2372`) :user:`fkiraly`
+* [BUG][ENH] WindowSummarizer offset fix, easier lag specification (:pr:`2316`) :user:`danbartl`
+* [BUG] FeatureUnion output column names fixed (:pr:`2324`) :user:`fkiraly`
+* [ENH][BUG] fixes and implementations of missing `inverse_transform` in compositions (:pr:`2322`) :user:`fkiraly`
+* [ENH] `AutoETS` prediction intervals simplification (:pr:`2320`) :user:`fkiraly`
+* [ENH] Fix tests to prevent guaranteed `check_estimator` failure (:pr:`2405`) :user:`danbartl`
+* [BUG] fixed `get_time_index` for most mtypes (:pr:`2380`) :user:`fkiraly`
+
+Enhancements
+~~~~~~~~~~~~ 
+
+* [ENH] require uniqueness from multiple alpha/coverage in interval/quantile forecasts (:pr:`2326`) :user:`fkiraly`
+* [ENH] Adding "fit" parameters to VAR constructor #1850 (:pr:`2304`) :user:`TNTran92`
+* [ENH] `BaseObject.is_composite` utility, relax errors in `BaseClassifier` input checks to warnings for composites (:pr:`2366`) :user:`fkiraly`
+* [ENH] vectorization for probabilistic forecasting methods that return `pd.DataFrame` (:pr:`2355`) :user:`fkiraly`
+* [ENH] adding compatibility with probabilistic and hierarchical forecasts to `ForecastingPipeline` and `TransformedTargetForecaster`  (:pr:`2318`) :user:`fkiraly`
+* [BUG] relax name rules for multiindex - fixed omission in `from_multi_index_to_nested` (:pr:`2384`) :user:`ltsaprounis`
+* [ENH] Allow `pd.Timedelta` values in `ForecastingHorizon` (:pr:`2333`) :user:`khrapovs`
+* [ENH] Faster classifier example parameters (:pr:`2378`) :user:`MatthewMiddlehurst`
+* [ENH] Capability inference for transformer and classifier pipelines (:pr:`2367`) :user:`fkiraly`
+* [ENH] Aggregator as a transformer (:pr:`2292`) :user:`ciaran-g`
+* [ENH] probabilistic methods for `ColumnEnsembleForecaster` (except `predict_proba`) (:pr:`2356`) :user:`fkiraly`
+* [ENH] memory for `WindowSummarizer` to enable `transform` windows to reach into the `fit` time period (:pr:`2325`) :user:`fkiraly`
+* [ENH] Implement reconcilers for hierarchical predictions - transformers (:pr:`2287`) :user:`ciaran-g`
+* [ENH] `NaiveVariance`: verbose arg and extended docstring (:pr:`2395`) :user:`fkiraly`
+* [ENH] post-processing in `TransformedTargetForecaster`, dunder method for (transformed `y`) forecasting pipelines (:pr:`2404`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~ 
+
+* [DOC] fix 0.11.0 release note highlights formatting (:pr:`2310`) :user:`fkiraly`
+* [DOC] typo fix contsructor -> constructor in extension templates (:pr:`2348`) :user:`fkiraly`
+* fixed the issue with 'docs/source/developer_guide/testing_framework.rst' (:pr:`2335`) :user:`0saurabh0`
+* [DOC] Updated conda installation instructions (:pr:`2365`) :user:`RISHIKESHAVAN`
+* [DOC] updated extension templates: link to docs and reference to `check_estimator` (:pr:`2303`) :user:`fkiraly`
+* [ENH] Improved docstrings in forecasters, improved error message in forecasters when receiving an incompatible input (:pr:`2314`) :user:`fkiraly`
+* [DOC] Added docstring examples to load data functions (:pr:`2393`) :user:`aiwalter`
+* [DOC] Added platform badge to README (:pr:`2398`) :user:`aiwalter`
+* Add GSoC 2022 landing page and announcement (:pr:`2373`) :user:`lmmentel`
+* [ENH] `NaiveVariance`: verbose arg and extended docstring (:pr:`2395`) :user:`fkiraly`
+
+Other
+~~~~~ 
+
+* Release 0.11.0 (:pr:`2276`) :user:`lmmentel`
+* [MNT] test parameter refactor: forecasting reducers and ColumnEnsembleClassifier (:pr:`2223`) :user:`fkiraly`
+* [ENH] refactoring `test_all_transformers` to test class architecture (:pr:`2252`) :user:`fkiraly`
+* [ENH] Prohibit incompatible splitter parameters (:pr:`2328`) :user:`khrapovs`
+* [ENH] Proba metric grid search integration (:pr:`2234`) :user:`eenticott-shell`
+* [ENH] wrapper for stream forecasting (update_predict use) to trigger regular refit (:pr:`2305`) :user:`fkiraly`
+
 
 
 Version 0.11.0 - 2022-03-26
