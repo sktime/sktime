@@ -26,6 +26,7 @@ class BaseGridSearch(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
     }
 
     def __init__(
