@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implement transformers for summarizing a time series."""
 
-__author__ = ["mloning", "RNKuhns", "danbartl"]
+__author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
 import warnings
@@ -151,6 +151,19 @@ class WindowSummarizer(BaseTransformer):
     >>> transformer = WindowSummarizer(**kwargs)
     >>> y_transformed = transformer.fit_transform(y)
 
+        Example where we transform on a different, later test set:
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> kwargs = {
+    ...     "lag_config": {
+    ...         "lag": ["lag", [[1, 0]]],
+    ...         "mean": ["mean", [[3, 0], [12, 0]]],
+    ...         "std": ["std", [[4, 0]]],
+    ...     }
+    ... }
+    >>> transformer = WindowSummarizer(**kwargs)
+    >>> y_test_transformed = transformer.fit(y_train).transform(y_test)
+
         Example with transforming multiple columns of exogeneous features
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
@@ -241,6 +254,8 @@ class WindowSummarizer(BaseTransformer):
             The raw inputs to transformed columns will be dropped.
         self: reference to self
         """
+        self._X_memory = X
+
         X_name = get_name_list(X)
 
         if self.target_cols is not None:
@@ -314,6 +329,9 @@ class WindowSummarizer(BaseTransformer):
         -------
         transformed version of X
         """
+        idx = X.index
+        X = X.combine_first(self._X_memory)
+
         func_dict = self._func_dict
         target_cols = self._target_cols
 
@@ -341,7 +359,22 @@ class WindowSummarizer(BaseTransformer):
         Xt_out_df = pd.concat(Xt_out, axis=1)
         Xt_return = pd.concat([Xt_out_df, X.drop(target_cols, axis=1)], axis=1)
 
+        Xt_return = Xt_return.loc[idx]
         return Xt_return
+
+    def _update(self, X, y=None):
+        """Update X and return a transformed version.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+        y : None
+
+        Returns
+        -------
+        transformed version of X
+        """
+        self._X_memory = X.combine_first(self._X_memory)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

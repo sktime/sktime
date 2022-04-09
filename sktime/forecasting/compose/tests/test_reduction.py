@@ -11,12 +11,11 @@ from sktime.datatypes import get_examples
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
-from sktime.utils.estimator_checks import check_estimator
+
+# from sktime.utils.estimator_checks import check_estimator
 
 # Load data that will be the basis of tests
 y = load_airline()
-y_pd = get_examples(mtype="pd.DataFrame", as_scitype="Series")[0]
-y_series = get_examples(mtype="pd.Series", as_scitype="Series")[0]
 y_multi = get_examples(mtype="pd-multiindex", as_scitype="Panel")[0]
 # y Train will be univariate data set
 y_train, y_test = temporal_train_test_split(y)
@@ -77,7 +76,7 @@ forecaster2 = make_reduction(
 # forecaster2.fit(y_train, fh=[1, 2])
 # y_pred2 = forecaster2.predict(fh=[1, 2, 12])
 #       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^a=0
-check_estimator(forecaster2, return_exceptions=False)
+# check_estimator(forecaster2, return_exceptions=False)
 
 # forecaster2a = make_reduction(
 #     regressor,

@@ -72,6 +72,12 @@ def _sliding_window_transform(
         Forecasting horizon for transformed target variable
     X : pd.DataFrame, optional (default=None)
         Exogenous series.
+    transformers: *experimental*
+        A suitable transformer that allows for using an en-bloc approach with
+        make_reduction. This means that instead of using the raw past observations of
+        y across the window length, suitable features will be generated directly from
+        the past raw observations. Currently only supports WindowSummarizer to generate
+        e.g. the mean of the past 7 observations.
     scitype : str {"tabular-regressor", "time-series-regressor"}, optional
         Scitype of estimator to use with transformed data.
         - If "tabular-regressor", returns X as tabular 2d array
@@ -404,7 +410,8 @@ class _RecursiveReducer(_Reducer):
     strategy = "recursive"
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        # "y_inner_mtype": ["pd.Series", "pd-multiindex"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # "X_inner_mtype": ["pd.Series", "pd-multiindex"],
     }
 
@@ -462,87 +469,14 @@ class _RecursiveReducer(_Reducer):
         yt, Xt = self._transform(y, X)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
-        if isinstance(y.index, pd.MultiIndex):
-            yt = yt["y"].ravel()
+        if self.transformers is not None:
+            yt = yt.to_numpy().ravel()
         else:
             yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(Xt, yt)
         return self
-
-    # def _get_last_window(self):
-    #     """Select last window."""
-    #     # Get the start and end points of the last window.
-    #     cutoff = self.cutoff
-    #     start = _shift(cutoff, by=-self.window_length_ + 1)
-
-    #     if isinstance(self._y.index, pd.MultiIndex):
-
-    #         # Get the last window of the endogenous variable.
-    #         y = self._y.query("timepoints >= @start & timepoints <= @cutoff")
-
-    #         # If X is given, also get the last window of the exogenous variables.
-    #         X = (
-    #             self._X.query("timepoints >= @start & timepoints <= @cutoff")
-    #             if self._X is not None
-    #             else None
-    #         )
-
-    #         X_from_y = self.transformers[0].fit_transform(y)
-
-    #         X_from_y_cut = X_from_y.groupby(level=0).tail(1)
-    #         y = y.groupby(level=0).tail(1)
-    #         if X is not None:
-    #             X_cut = X.groupby(level=0).tail(1)
-    #             X = pd.concat([X_from_y_cut, X_cut], axis=1)
-    #         else:
-    #             X = X_from_y_cut
-    #     else:
-    #         # Get the last window of the endogenous variable.
-    #         y = self._y.loc[start:cutoff].to_numpy()
-
-    #         # If X is given, also get the last window of the exogenous variables.
-    #         X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
-
-    #     return y, X
-
-    # def _get_shifted_window(self, y_update, X_update, shift):
-    #     """Select shifted window."""
-    #     # Get the start and end points of the last window.
-    #     cutoff = _shift(self.cutoff, by=shift)
-    #     start = _shift(cutoff, by=-self.window_length_ + 1)
-
-    #     if isinstance(self._y.index, pd.MultiIndex):
-    #         # Get the last window of the endogenous variable.
-    #         # If X is given, also get the last window of the exogenous variables.
-    #         if isinstance(cutoff, pd._libs.tslibs.period.Period):
-    #             dateline = pd.period_range(start=start, end=cutoff)
-    #         else:
-    #             dateline = pd.date_range(start=start, end=cutoff)
-    #         y = _create_multiindex(dateline, self._y)
-    #         y.update(self._y)
-    #         if y_update is not None:
-    #             y.update(y_update)
-    #         # Create new X with old values and new features derived from forecasts
-    #         X_from_y = self.transformers[0].fit_transform(y)
-    #         X_from_y_cut = X_from_y.groupby(level=0).tail(1)
-    #         if self._X is not None:
-    #             X = _create_multiindex(dateline, self._X)
-    #             X.update(self._X)
-    #             if X_update is not None:
-    #                 X.update(X_update)
-    #             X_cut = X.groupby(level=0).tail(1)
-    #             X = pd.concat([X_from_y_cut, X_cut], axis=1)
-    #         else:
-    #             X = X_from_y_cut
-    #             y = y.groupby(level=0).tail(1)
-    #     else:
-    #         # Get the last window of the endogenous variable.
-    #         y = self._y.loc[start:cutoff].to_numpy()
-    #         # If X is given, also get the last window of the exogenous variables.
-    #         X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
-    #     return X
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
         """Select shifted window."""
@@ -683,7 +617,10 @@ class _RecursiveReducer(_Reducer):
         fh_idx = fh.to_indexer(self.cutoff)
 
         if isinstance(self._y.index, pd.MultiIndex):
-            y_return = y_pred.groupby(level=0, as_index=False).nth(fh_idx.to_list())
+            yi_name = self._y.index.names
+            yi_grp = yi_name[0:-1]
+            y_return = self._y.reset_index().groupby(yi_grp).nth(fh_idx.to_list())
+            y_return.set_index(yi_name, inplace=True)
         elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             y_return = y_pred.iloc[fh_idx]
             if hasattr(y_return.index, "freq"):
@@ -1120,7 +1057,10 @@ def _create_multiindex(target_date, origin_df, fill=None):
 def _cut_tail(X, n_tail=1):
     """Cut input at tail, supports grouping."""
     if isinstance(X.index, pd.MultiIndex):
-        X = X.groupby(level=0).tail(n_tail)
+        Xi_name = X.index.names
+        Xi_grp = Xi_name[0:-1]
+        X = X.reset_index().groupby(Xi_grp).tail(n_tail)
+        X.set_index(Xi_name, inplace=True)
     else:
         X = X.tail(n_tail)
     return X

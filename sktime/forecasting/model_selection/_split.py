@@ -23,6 +23,7 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
+from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.datetime import _coerce_duration_to_int
@@ -1092,14 +1093,52 @@ def temporal_train_test_split(
             )
         return _split_by_fh(y, fh, X=X)
     else:
-        series = (y,) if X is None else (y, X)
-        return _train_test_split(
-            *series,
-            shuffle=False,
-            stratify=None,
-            test_size=test_size,
-            train_size=train_size,
-        )
+        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        if pd_format is True and isinstance(y.index, pd.MultiIndex):
+            ys = get_time_index(y)
+            # Get index to group across (only indices other than timepoints index)
+            yi_name = y.index.names
+            yi_grp = yi_name[0:-1]
+
+            # Get split into test and train data for timeindex only
+            series = (ys,)
+            yret = _train_test_split(
+                *series,
+                shuffle=False,
+                stratify=None,
+                test_size=test_size,
+                train_size=train_size,
+            )
+
+            # Convert into list indices
+            ysl = ys.to_list()
+            yrl1 = yret[0].to_list()
+            yrl2 = yret[1].to_list()
+            p1 = [index for (index, item) in enumerate(ysl) if item in yrl1]
+            p2 = [index for (index, item) in enumerate(ysl) if item in yrl2]
+
+            # Subset by group based on identified indices
+            y_train = y.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p1])
+            y_train.set_index(yi_name, inplace=True)
+            y_test = y.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p2])
+            y_test.set_index(yi_name, inplace=True)
+            if X is not None:
+                X_train = X.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p1])
+                X_train.set_index(yi_name, inplace=True)
+                X_test = X.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p2])
+                X_test.set_index(yi_name, inplace=True)
+                return y_train, y_test, X_train, X_test
+            else:
+                return y_train, y_test
+        else:
+            series = (y,) if X is None else (y, X)
+            return _train_test_split(
+                *series,
+                shuffle=False,
+                stratify=None,
+                test_size=test_size,
+                train_size=train_size,
+            )
 
 
 def _split_by_fh(
