@@ -195,7 +195,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         super(DynamicFactor, self).__init__()
 
-    def _fit_forcaster(self, y, X=None, fh=None):
+    def _fit_forcaster(self, y, X=None):
         """Fit to training data.
 
         Parameters
