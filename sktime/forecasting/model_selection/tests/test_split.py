@@ -451,10 +451,12 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
 def test_split_by_fh(index_type, fh_type, is_relative, values):
     """Test temporal_train_test_split."""
     if fh_type == "timedelta":
-        pytest.skip(
-            "ForecastingHorizon with timedelta values "
-            "is currently experimental and not supported everywhere"
-        )
+        return None
+        # todo: ensure check_estimator works with pytest.skip like below
+        # pytest.skip(
+        #    "ForecastingHorizon with timedelta values "
+        #     "is currently experimental and not supported everywhere"
+        # )
     y = _make_series(20, index_type=index_type)
     cutoff = y.index[10]
     fh = _make_fh(cutoff, values, fh_type, is_relative)
