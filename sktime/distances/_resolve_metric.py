@@ -22,7 +22,7 @@ def _resolve_metric(
     metric: str or Callable or NumbaDistance
         The distance metric to use.
     x: np.ndarray (2d array)
-        First time eries.
+        First time series.
     y: np.ndarray (2d array)
         Second time series.
     known_metric_dict: List[MetricInfo]
