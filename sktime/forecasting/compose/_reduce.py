@@ -617,10 +617,8 @@ class _RecursiveReducer(_Reducer):
         fh_idx = fh.to_indexer(self.cutoff)
 
         if isinstance(self._y.index, pd.MultiIndex):
-            yi_name = self._y.index.names
-            yi_grp = yi_name[0:-1]
-            y_return = self._y.reset_index().groupby(yi_grp).nth(fh_idx.to_list())
-            y_return.set_index(yi_name, inplace=True)
+            yi_grp = self._y.index.names[0:-1]
+            y_return = self._y.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
         elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             y_return = y_pred.iloc[fh_idx]
             if hasattr(y_return.index, "freq"):
@@ -1057,10 +1055,8 @@ def _create_multiindex(target_date, origin_df, fill=None):
 def _cut_tail(X, n_tail=1):
     """Cut input at tail, supports grouping."""
     if isinstance(X.index, pd.MultiIndex):
-        Xi_name = X.index.names
-        Xi_grp = Xi_name[0:-1]
-        X = X.reset_index().groupby(Xi_grp).tail(n_tail)
-        X.set_index(Xi_name, inplace=True)
+        Xi_grp = X.index.names[0:-1]
+        X = X.groupby(Xi_grp, as_index=False).tail(n_tail)
     else:
         X = X.tail(n_tail)
     return X

@@ -1118,15 +1118,11 @@ def temporal_train_test_split(
             p2 = [index for (index, item) in enumerate(ysl) if item in yrl2]
 
             # Subset by group based on identified indices
-            y_train = y.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p1])
-            y_train.set_index(yi_name, inplace=True)
-            y_test = y.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p2])
-            y_test.set_index(yi_name, inplace=True)
+            y_train = y.groupby(yi_grp, as_index=False).nth(p1)
+            y_test = y.groupby(yi_grp, as_index=False).nth(p2)
             if X is not None:
-                X_train = X.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p1])
-                X_train.set_index(yi_name, inplace=True)
-                X_test = X.reset_index().groupby(yi_grp).apply(lambda x: x.iloc[p2])
-                X_test.set_index(yi_name, inplace=True)
+                X_train = X.groupby(yi_grp, as_index=False).nth(p1)
+                X_test = X.groupby(yi_grp, as_index=False).nth(p2)
                 return y_train, y_test, X_train, X_test
             else:
                 return y_train, y_test
