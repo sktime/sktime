@@ -6,9 +6,10 @@ import sys
 import warnings
 from importlib import import_module
 
+
 def _check_soft_dependencies(
     *packages, severity="error", object=None, suppress_import_stdout=False
-    ):
+):
     """Check if required soft dependencies are installed and raise error or warning.
 
     Parameters
