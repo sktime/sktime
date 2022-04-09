@@ -53,8 +53,42 @@ Xlist = [
         [["b", 2, 0, 1, 42], ["b", 2, 1, 2, 5], ["b", 2, 2, 3, 6]], columns=cols
     ),
 ]
+
+# Xlist = [
+#     pd.DataFrame(
+#         [["__total", "__total", 0, 6, 100], ["__total", 0, 1, 12, 130],
+#           ["__total", 0, 2, 18, 36]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["a", 0, 0, 1, 4], ["a", 0, 1, 2, 5], ["a", 0, 2, 3, 6]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["a", 1, 0, 1, 4], ["a", 1, 1, 2, 55], ["a", 1, 2, 3, 6]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["a", 2, 0, 1, 42], ["a", 2, 1, 2, 5], ["a", 2, 2, 3, 6]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["a", "__total", 0, 3, 50], ["a", "__total", 1, 6, 65],
+#           ["a", "__total", 2, 9, 18]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["b", 3, 0, 1, 4], ["b", 3, 1, 2, 5], ["b", 3, 2, 3, 6]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["b", 4, 0, 1, 4], ["b", 4, 1, 2, 55], ["b", 4, 2, 3, 6]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["b", 5, 0, 1, 42], ["b", 5, 1, 2, 5], ["b", 5, 2, 3, 6]], columns=cols
+#     ),
+#     pd.DataFrame(
+#         [["b", "__total", 0, 3, 50], ["b", "__total", 1, 6, 65],
+#           ["b", "__total", 2, 9, 18]], columns=cols
+#     ),
+# ]
 X = pd.concat(Xlist)
 X = X.set_index(["foo", "bar", "timepoints"])
+# X = X[["var_0"]]
 
 example_dict[("pd_multiindex_hier", "Hierarchical", 0)] = X
 example_dict_lossy[("pd_multiindex_hier", "Hierarchical", 0)] = False

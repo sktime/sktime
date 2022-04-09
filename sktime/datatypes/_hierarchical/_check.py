@@ -101,7 +101,7 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     if len(bad_inds) > 0:
         msg = (
             f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
-            " not at i={bad_inds}"
+            f" not at i={bad_inds}"
         )
         return _ret(False, msg, None, return_metadata)
 

@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._utilities import get_cutoff
+from sktime.datatypes._utilities import get_cutoff, get_window
 
 SCITYPE_MTYPE_PAIRS = [
     ("Series", "pd.Series"),
@@ -61,3 +62,59 @@ def test_get_cutoff(scitype, mtype, return_index):
 
         if return_index:
             assert len(cutoff) == 1
+
+
+@pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_window_output_type(scitype, mtype, window_length, lag):
+    """Tests that get_window runs for all mtypes, and returns output of same mtype.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+    window_length : int, passed to get_window
+    lag : int, passed to get_window
+
+    Raises
+    ------
+    Exception if get_window raises one
+    """
+    # retrieve example fixture
+    fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
+    X = get_window(fixture, window_length=window_length, lag=lag)
+    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+
+    msg = (
+        f"get_window should return an output of mtype {mtype} for that type of input, "
+        f"but it returns an output not conformant with that mtype."
+        f"Error from mtype check: {err}"
+    )
+
+    assert valid, msg
+
+
+def test_get_window_expected_result():
+    """Tests that get_window produces return of the right length.
+
+    Raises
+    ------
+    Exception if get_window raises one
+    """
+    X_df = get_examples(mtype="pd.DataFrame")[0]
+    assert len(get_window(X_df, 2, 1)) == 2
+    assert len(get_window(X_df, 3, 1)) == 3
+    assert len(get_window(X_df, 1, 2)) == 1
+    assert len(get_window(X_df, 3, 4)) == 0
+
+    X_mi = get_examples(mtype="pd-multiindex")[0]
+    assert len(get_window(X_mi, 3, 1)) == 6
+    assert len(get_window(X_mi, 2, 0)) == 6
+    assert len(get_window(X_mi, 2, 4)) == 0
+    assert len(get_window(X_mi, 1, 2)) == 3
+
+    X_hi = get_examples(mtype="pd_multiindex_hier")[0]
+    assert len(get_window(X_hi, 3, 1)) == 12
+    assert len(get_window(X_hi, 2, 0)) == 12
+    assert len(get_window(X_hi, 2, 4)) == 0
+    assert len(get_window(X_hi, 1, 2)) == 6
