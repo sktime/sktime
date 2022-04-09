@@ -1202,7 +1202,7 @@ def distance_path(
             NumbaDistance,
         ],
         **kwargs: Any,
-) -> float:
+) -> Union[list, float]:
     """Compute the path and distance between two time series.
 
     First the distance metric is 'resolved'. This means the metric that is passed
@@ -1272,7 +1272,7 @@ def distance_path_factory(
             NumbaDistance,
         ],
         **kwargs: Any,
-) -> Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]:
+) -> Callable[[np.ndarray, np.ndarray], Union[list, float]]:
     """Produce a distance factory numba callable.
 
     First the distance metric is 'resolved'. This means the metric that is passed
