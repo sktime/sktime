@@ -87,6 +87,12 @@ class SARIMAX(_StatsModelsAdapter):
         states. Default is False (in which case approximate diffuse
         initialization is used).
 
+    See Also
+    --------
+    sktime.forecasting.arima.ARIMA
+    sktime.forecasting.arima.AutoARIMA
+    sktime.forecasting.statsforcast.StatsForecastAutoARIMA
+
     References
     ----------
         [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
