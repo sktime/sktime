@@ -773,12 +773,13 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.steps_ = self._get_estimator_tuples(self.steps, clone_ests=True)
 
         # transform pre
+        yt = y
         for _, t in self.transformers_pre_:
-            y = t.fit_transform(X=y, y=X)
+            yt = t.fit_transform(X=yt, y=X)
 
         # fit forecaster
         f = self.forecaster_
-        f.fit(y=y, X=X, fh=fh)
+        f.fit(y=yt, X=X, fh=fh)
 
         # transform post
         for _, t in self.transformers_post_:
