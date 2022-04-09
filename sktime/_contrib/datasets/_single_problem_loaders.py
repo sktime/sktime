@@ -43,7 +43,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-from sktime.contrib.datasets._data_io import (
+from sktime._contrib.datasets._data_io import (
     _load_dataset,
     _load_provided_dataset,
     load_tsf_to_dataframe,
