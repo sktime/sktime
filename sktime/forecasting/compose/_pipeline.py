@@ -121,7 +121,7 @@ class _Pipeline(
             skip_trafo = transformer.get_tag("skip-inverse-transform", False)
             if not skip_trafo:
                 if mode is None:
-                    yt = transformer.inverse_transform(y, X)
+                    y = transformer.inverse_transform(y, X)
                 # if proba, we slice by quantile/coverage combination
                 #   and collect the same quantile/coverage by variable
                 #   then inverse transform, then concatenate
@@ -132,6 +132,8 @@ class _Pipeline(
                     yt = dict()
                     for ix in idx_low:
                         levels = list(range(1, n))
+                        if len(levels) == 1:
+                            levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
                         # deal with the "Coverage" case, we need to get rid of this
                         #   i.d., special 1st level name of prediction objet
@@ -142,12 +144,12 @@ class _Pipeline(
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
                         if len(yt[ix].columns) == 1:
                             yt[ix].columns = temp
-                    yt = pd.concat(yt, axis=1)
+                    y = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
-                    yt.columns = yt.columns.reorder_levels(flipcols)
+                    y.columns = y.columns.reorder_levels(flipcols)
                 else:
                     raise ValueError('mode arg must be None or "proba"')
-        return yt
+        return y
 
     @property
     def named_steps(self):
