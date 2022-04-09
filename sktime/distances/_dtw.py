@@ -9,6 +9,7 @@ from numba import njit
 from numba.core.errors import NumbaWarning
 
 from sktime.distances.base import DistanceCallable, NumbaDistance
+from sktime.distances.base._types import DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -57,6 +58,68 @@ class _DtwDistance(NumbaDistance):
     recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
     1):67–72, 1975
     """
+
+    def _distance_path_factory(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            window: float = None,
+            itakura_max_slope: float = None,
+            bounding_matrix: np.ndarray = None,
+            **kwargs: Any
+    ) -> DistancePathCallable:
+        """Create a no_python compiled dtw path distance callable.
+
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
+        Parameters
+        ----------
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
+        window: Float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding). Must be between 0 and 1.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
+        kwargs: any
+            extra kwargs.
+
+        Returns
+        -------
+        Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]
+            No_python compiled Dtw distance path callable.
+
+        Raises
+        ------
+        ValueError
+            If the input time series are not numpy array.
+            If the input time series do not have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
+        """
+        _bounding_matrix = resolve_bounding_matrix(
+            x, y, window, itakura_max_slope, bounding_matrix
+        )
+
+        @njit(cache=True)
+        def numba_dtw_distance_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+        ) -> float:
+            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+            path = _compute_dtw_path(cost_matrix)
+            return path, cost_matrix[-1, -1]
+
+        return numba_dtw_distance_path
 
     def _distance_factory(
         self,
@@ -164,3 +227,43 @@ def _cost_matrix(
                 )
 
     return cost_matrix[1:, 1:]
+
+@njit(cache=True)
+def _compute_dtw_path(cost_matrix: np.ndarray) -> np.ndarray:
+    """Compute the path from dtw cost matrix.
+
+    Series should be shape (d, m), where d is the number of dimensions, m the series
+    length. Series can be different lengths.
+
+    Parameters
+    ----------
+    cost_matrix: np.ndarray
+        Dtw cost matrix to find dtw path through.
+
+    Returns
+    -------
+    np.ndarray
+        Array containing tuple for each path location.
+    """
+    i, j = cost_matrix.shape
+    alignment = []
+    alignment.append((i - 1, j - 1))
+    while alignment[-1] != (0, 0):
+        i, j = alignment[-1]
+        if i == 0:
+            alignment.append((0, j - 1))
+        elif j == 0:
+            alignment.append((i - 1, 0))
+        else:
+            arr = np.array([cost_matrix[i - 1][j - 1],
+                            cost_matrix[i - 1][j],
+                            cost_matrix[i][j - 1]])
+
+            score = np.argmin(arr)
+            if score == 0:
+                alignment.append((i - 1, j - 1))
+            elif score == 1:
+                alignment.append((i - 1, j))
+            else:
+                alignment.append((i, j - 1))
+    return np.array(alignment[::-1])

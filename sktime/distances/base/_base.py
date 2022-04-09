@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import Callable, NamedTuple, Set
+from typing import Callable, NamedTuple, Set, Union
 
 import numpy as np
 
-from sktime.distances.base._types import DistanceCallable
+from sktime.distances.base._types import DistanceCallable, DistancePathCallable
 
 
 class NumbaDistance(ABC):
@@ -28,6 +28,28 @@ class NumbaDistance(ABC):
             Distance between x and y.
         """
         dist_callable = self.distance_factory(x, y, **kwargs)
+        return dist_callable(x, y)
+
+    def distance_path(self, x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
+        """Compute the distance path between two timeseries.
+
+        Parameters
+        ----------
+        x: np.ndarray (2d array)
+            First timeseries.
+        y: np.ndarray (2d array)
+            Second timeseries.
+        kwargs: dict
+            kwargs for the distance computation.
+
+        Returns
+        -------
+        np.ndarray (of shape (len(x))
+            Array of tuples that is the path through the matrix
+        float
+            Distance between x and y.
+        """
+        dist_callable = self.distance_path_factory(x, y, **kwargs)
         return dist_callable(x, y)
 
     def distance_factory(
@@ -74,6 +96,46 @@ class NumbaDistance(ABC):
         no_python_callable = self._distance_factory(x, y, **kwargs)
 
         return no_python_callable
+
+    def distance_path_factory(
+            self, x: np.ndarray, y: np.ndarray, **kwargs: dict
+    ) -> DistanceCallable:
+        """Create a no_python distance path.
+
+        It should validate kwargs and then compile a no_python callable
+        that takes (x, y) as parameters and returns a float that represents the distance
+        between the two timeseries.
+
+        ----------
+        x: np.ndarray (2d array)
+            First timeseries
+        y: np.ndarray (2d array)
+            Second timeseries
+        kwargs: kwargs
+            kwargs for the given distance metric
+
+        Returns
+        -------
+        Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]
+            Callable where two, numpy 2d arrays are taken as parameters (x and y),
+            a float is then returned that represents the distance between x and y.
+            This callable will be no_python compiled.
+
+        Raises
+        ------
+        ValueError
+            If x or y is not a numpy array.
+            If x or y has less than or greater than 2 dimensions.
+        RuntimeError
+            If the distance metric could not be compiled to no_python.
+        """
+        NumbaDistance._validate_factory_timeseries(x)
+        NumbaDistance._validate_factory_timeseries(y)
+
+        no_python_callable = self._distance_path_factory(x, y, **kwargs)
+
+        return no_python_callable
+
 
     @staticmethod
     def _validate_factory_timeseries(x: np.ndarray) -> None:
@@ -131,6 +193,34 @@ class NumbaDistance(ABC):
         """
         ...
 
+    def _distance_path_factory(
+            self, x: np.ndarray, y: np.ndarray, **kwargs: dict
+    ) -> DistancePathCallable:
+        """Abstract method to create a no_python compiled distance path computation.
+
+        _distance_factory should validate kwargs and then compile a no_python callable
+        that takes (x, y) as parameters and returns a float that represents the distance
+        between the two timeseries.
+
+        Parameters
+        ----------
+        x: np.ndarray (2d array)
+            First timeseries
+        y: np.ndarray (2d array)
+            Second timeseries
+        kwargs: kwargs
+            kwargs for the given distance metric
+
+        Returns
+        -------
+        Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]
+            Callable where two, numpy 2d arrays are taken as parameters (x and y),
+            a np.ndarray of tuples containing the optimal path and a float is also
+             returned that represents the distance between x and y.
+            This callable will be no_python compiled.
+        """
+        raise NotImplementedError("This distance does not support a path.")
+
 
 # Metric
 class MetricInfo(NamedTuple):
@@ -144,3 +234,5 @@ class MetricInfo(NamedTuple):
     dist_func: Callable[[np.ndarray, np.ndarray], float]
     # NumbaDistance class
     dist_instance: NumbaDistance
+    # Distance path callable
+    dist_path_func: Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]] = None

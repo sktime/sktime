@@ -7,9 +7,6 @@ import numpy as np
 
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tslearn")
-
-
 def mean_average(X: np.ndarray) -> np.ndarray:
     """Compute the mean average of time series.
 
@@ -41,9 +38,8 @@ def dba(X: np.ndarray) -> np.ndarray:
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the computed average series.
     """
-    from tslearn.barycenters import dtw_barycenter_averaging
+    pass
 
-    return dtw_barycenter_averaging(X)
 
 
 _AVERAGE_DICT = {"mean": mean_average, "dba": dba}

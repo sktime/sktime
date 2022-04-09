@@ -2,6 +2,7 @@
 __author__ = ["chrisholder"]
 __all__ = [
     "DistanceCallable",
+    "DistancePathCallable",
     "DistanceFactoryCallable",
     "DistancePairwiseCallable",
     "ValidCallableTypes",
@@ -13,6 +14,7 @@ import numpy as np
 
 # Callable types
 DistanceCallable = (Callable[[np.ndarray, np.ndarray], float],)
+DistancePathCallable = (Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]])
 DistanceFactoryCallable = Callable[
     [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
 ]

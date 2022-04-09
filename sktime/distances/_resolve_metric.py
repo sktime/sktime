@@ -7,8 +7,49 @@ import numpy as np
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
+def _resolve_dist_instance(
+        metric: Union[str, Callable, NumbaDistance],
+        x: np.ndarray,
+        y: np.ndarray,
+        known_metric_dict: List[MetricInfo],
+        **kwargs: dict,
+):
 
-def _resolve_metric(
+    numba_dist_instance: Union[NumbaDistance, None] = None
+
+    if isinstance(metric, NumbaDistance):
+        numba_dist_instance = metric
+    elif isinstance(metric, str):
+        numba_dist_instance = _resolve_str_metric(metric, known_metric_dict)
+    elif callable(metric):
+        if _is_distance_factory_callable(metric):
+            metric = metric(x, y, **kwargs)
+        elif _is_no_python_distance_callable(metric):
+            metric = metric
+        else:
+            # found = False
+            for val in known_metric_dict:
+                if val.dist_func is metric:
+                    numba_dist_instance = val.dist_instance
+                    # found = True
+                    break
+            # if found is False:
+            #     raise ValueError(
+            #         "The callable provided must be no_python (using njit()) for"
+            #         "this operation. Please compile the function and try again."
+            #     )
+    else:
+        raise ValueError(
+            "Unable to resolve the metric with the parameters provided."
+            "The metric must be a valid string, NumbaDistance or a"
+            "distance factory callable or no_python distance."
+        )
+
+    return numba_dist_instance
+
+
+
+def _resolve_metric_to_factory(
     metric: Union[str, Callable, NumbaDistance],
     x: np.ndarray,
     y: np.ndarray,
@@ -57,17 +98,10 @@ def _resolve_metric(
         elif _is_no_python_distance_callable(metric):
             metric = metric
         else:
-            # found = False
             for val in known_metric_dict:
                 if val.dist_func is metric:
                     numba_dist_instance = val.dist_instance
-                    # found = True
                     break
-            # if found is False:
-            #     raise ValueError(
-            #         "The callable provided must be no_python (using njit()) for"
-            #         "this operation. Please compile the function and try again."
-            #     )
     else:
         raise ValueError(
             "Unable to resolve the metric with the parameters provided."

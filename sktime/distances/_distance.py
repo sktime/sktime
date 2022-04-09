@@ -19,11 +19,18 @@ from sktime.distances._numba_utils import (
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
-from sktime.distances._resolve_metric import _resolve_metric
+from sktime.distances._resolve_metric import (
+    _resolve_metric_to_factory,
+    _resolve_dist_instance
+)
 from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
-from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
+from sktime.distances.base import (
+    DistanceCallable,
+    MetricInfo,
+    NumbaDistance
+)
 
 
 def erp_distance(
@@ -849,6 +856,83 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     """
     return distance(x, y, metric="euclidean", **kwargs)
 
+def dtw_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        **kwargs: Any
+):
+    r"""Compute the dynamic time warping (DTW) path between two time series.
+
+    Originally proposed in [1]_ DTW computes the distance between two time series by
+    considering their alignments during the calculation. This is done by measuring
+    the pointwise distance (normally using Euclidean) between all elements of the two
+    time series and then using dynamic programming to find the warping path
+    that minimises the total pointwise distance between realigned series.
+
+    Mathematically dtw can be defined as:
+
+    .. math::
+        dtw(x, y) = \sqrt{\sum_{(i, j) \in \pi} \|x_{i} - y_{j}\|^2}
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Dtw path.
+    float
+        Dtw distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    .. [1] H. Sakoe, S. Chiba, "Dynamic programming algorithm optimization for
+           spoken word recognition," IEEE Transactions on Acoustics, Speech and
+           Signal Processing, vol. 26(1), pp. 43--49, 1978.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="dtw", **format_kwargs)
 
 def distance(
     x: np.ndarray,
@@ -932,7 +1016,7 @@ def distance(
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    _metric_callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    _metric_callable = _resolve_metric_to_factory(metric, _x, _y, _METRIC_INFOS, **kwargs)
 
     return _metric_callable(_x, _y)
 
@@ -1000,7 +1084,7 @@ def distance_factory(
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    callable = _resolve_metric_to_factory(metric, _x, _y, _METRIC_INFOS, **kwargs)
 
     @njit(cache=True)
     def dist_callable(x: np.ndarray, y: np.ndarray):
@@ -1101,8 +1185,159 @@ def pairwise_distance(
         y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
-    _metric_callable = _resolve_metric(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
+    _metric_callable = _resolve_metric_to_factory(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
+
+
+
+def distance_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        metric: Union[
+            str,
+            Callable[
+                [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+            ],
+            Callable[[np.ndarray, np.ndarray], float],
+            NumbaDistance,
+        ],
+        **kwargs: Any,
+) -> float:
+    """Compute the path and distance between two time series.
+
+    First the distance metric is 'resolved'. This means the metric that is passed
+    is resolved to a callable. The callable is then called with x and y and the
+    value is then returned.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    metric: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
+        'msm'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance using the kwargs before distance
+        computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[[np.ndarray, np.ndarray], float]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    kwargs: Any
+        Arguments for metric. Refer to each metrics documentation for a list of
+        possible arguments.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+    float
+        Distance between the x and y.
+    """
+    _x = to_numba_timeseries(x)
+    _y = to_numba_timeseries(y)
+
+    _dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
+
+    return _dist_instance.distance_path(_x, _y, **kwargs)
+
+
+def distance_path_factory(
+        x: np.ndarray,
+        y: np.ndarray,
+        metric: Union[
+            str,
+            Callable[
+                [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+            ],
+            Callable[[np.ndarray, np.ndarray], float],
+            NumbaDistance,
+        ],
+        **kwargs: Any,
+) -> Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]:
+    """Produce a distance factory numba callable.
+
+    First the distance metric is 'resolved'. This means the metric that is passed
+    is resolved to a callable. The callable is then called with x and y and the
+    value is then returned.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    metric: str or Callable
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
+        'msm'
+
+        If callable then it has to be a distance factory or numba distance callable.
+        If you want to pass custom kwargs to the distance at runtime, use a distance
+        factory as it constructs the distance using the kwargs before distance
+        computation.
+        A distance callable takes the form (must be no_python compiled):
+        Callable[[np.ndarray, np.ndarray], float]
+
+        A distance factory takes the form (must return a no_python callable):
+        Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
+        np.ndarray], float]].
+    kwargs: Any
+        Arguments for metric. Refer to each metrics documentation for a list of
+        possible arguments.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
+
+    Returns
+    -------
+    Callable[[np.ndarray, np.ndarray], Union[np.ndarray, np.ndarray]]
+        Callable for the distance path.
+    """
+    if x is None:
+        x = np.zeros((1, 10))
+    if y is None:
+        y = np.zeros((1, 10))
+    _x = to_numba_timeseries(x)
+    _y = to_numba_timeseries(y)
+
+    dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    callable = dist_instance.distance_path_factory(metric, _x, _y, _METRIC_INFOS, **kwargs)
+
+    @njit(cache=True)
+    def dist_callable(x: np.ndarray, y: np.ndarray):
+        _x = _numba_to_timeseries(x)
+        _y = _numba_to_timeseries(y)
+        return callable(_x, _y)
+
+    return dist_callable
 
 
 _METRIC_INFOS = [
@@ -1141,6 +1376,7 @@ _METRIC_INFOS = [
         aka={"dtw", "dynamic time warping"},
         dist_func=dtw_distance,
         dist_instance=_DtwDistance(),
+        dist_path_func=dtw_path
     ),
     MetricInfo(
         canonical_name="ddtw",
