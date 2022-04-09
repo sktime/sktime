@@ -57,7 +57,7 @@ def all_estimators(
 
     Parameters
     ----------
-    estimator_types: string, list of string, optional (default=None)
+    estimator_types: str, list of str, optional (default=None)
         Which kind of estimators should be returned.
         if None, no filter is applied and all estimators are returned.
         if str or list of str, strings define scitypes specified in search
@@ -65,8 +65,11 @@ def all_estimators(
             possible str values are entries of registry.BASE_CLASS_REGISTER (first col)
                 for instance 'classifier', 'regressor', 'transformer', 'forecaster'
     return_names: bool, optional (default=True)
-        If True, return estimators as list of (name, estimator class) tuples.
-        If False, return list of estimators classes.
+        if True, estimator class name is included in the all_estimators()
+            return in the order: name, estimator class, optional tags, either as
+            a tuple or as pandas dataframe columns
+        if False, estimator class name is removed from the all_estimators()
+            return.
     filter_tags: dict of (str or list of str), optional (default=None)
         subsets the returned estimators as follows:
             each key/value pair is statement in "and"/conjunction
@@ -76,32 +79,42 @@ def all_estimators(
     exclude_estimators: str, list of str, optional (default=None)
         Names of estimators to exclude.
     as_dataframe: bool, optional (default=False)
-                if False, return is as described below;
-                if True, return is converted into a DataFrame for pretty display
+        if True, all_estimators will return a pandas dataframe with named
+            columns for all of the attributes being returned.
+        if False, all_estimators will return a list (either a list of
+            estimators or a list of tuples, see Returns)
     return_tags: str or list of str, optional (default=None)
-        Names of tags
-        if None, no tags are returned
-        if str or list of str, additional columns with the values of named tags
-                are also returned.  If an estimator does not have the tag the
-                tag value returned would be None.
+        Names of tags to fetch and return each estimator's value of
+        if str or list of str,
+            the tag values named in return_tags will be fetched for each
+            estimator and will be appended as either columns or tuple entries.
 
     Returns
     -------
-    estimators: list of class, if return_names=False,
-            or list of tuples (str, class), if return_names=True
+    all_estimators will return one of the following:
+        1. list of estimators, if return_names=False, and return_tags is None
+        2. list of tuples (optional estimator name, class, ~optional estimator
+                tags), if return_names=True or return_tags is not None.
+        3. pandas dataframe if as_dataframe = True
         if list of estimators:
-            entries are estimator classes matching the query,
-            in alphabetical order of class name
+            entries are estimators matching the query,
+            in alphabetical order of estimator name
         if list of tuples:
-            list of (name, class) matching the query,
-            in alphabetical order of class name, where
-            ``name`` is the estimator class name as string
-            ``class`` is the actual class
-        if return_tags are passed:
-            in addition to the above, the passed tag value for all estimators is also
-            returned - with a seperate column for each tag name in return_tags.
-            Columns of tag values will be returned in the order they are listed
-            in return_tags.
+            list of (optional estimator name, estimator, optional estimator
+            tags) matching the query, in alphabetical order of estimator name,
+            where
+            ``name`` is the estimator name as string, and is an
+                optional return
+            ``estimator`` is the actual estimator
+            ``tags`` are the estimator's values for each tag in return_tags
+                and is an optional return.
+        if dataframe:
+            all_estimators will return a pandas dataframe object.
+            column names represent the attributes contained in each column.
+            "estimators" will be the name of the column of estimators, "names"
+            will be the name of the column of estimator class names and the string(s)
+            passed in return_tags will serve as column names for all columns of
+            tags that were optionally requested.
 
     References
     ----------
@@ -181,7 +194,7 @@ def all_estimators(
             ]
         )
 
-    if estimator_types is not None:
+    if estimator_types:
         estimator_types = _check_estimator_types(estimator_types)
         all_estimators = [
             (name, estimator)
@@ -190,13 +203,9 @@ def all_estimators(
         ]
 
     # Filter based on given exclude list
-    if exclude_estimators is not None:
-        if not isinstance(exclude_estimators, list):
-            exclude_estimators = [exclude_estimators]  # make iterable
-        if not all([isinstance(estimator, str) for estimator in exclude_estimators]):
-            raise ValueError(
-                "Please specify `exclude_estimators` as a list of strings."
-            )
+    if exclude_estimators:
+        exclude_estimators = _check_list_of_str_or_error(exclude_estimators,
+                                'exclude_estimators')
         all_estimators = [
             (name, estimator)
             for name, estimator in all_estimators
@@ -208,7 +217,7 @@ def all_estimators(
     # the tuple
     all_estimators = sorted(all_estimators, key=itemgetter(0))
 
-    if filter_tags is not None:
+    if filter_tags:
         all_estimators = [
             (n, est) for (n, est) in all_estimators if _check_tag_cond(est, filter_tags)
         ]
@@ -222,15 +231,8 @@ def all_estimators(
 
     # add new tuple entries to all_estimators for each tag in return_tags:
     if return_tags:
-        # check that return_tags has the right type:
-        if isinstance(return_tags, str):
-            return_tags = [return_tags]
-        if not isinstance(return_tags, list) or not all(
-            isinstance(tag, str) for tag in return_tags
-        ):
-            raise TypeError(
-                "Error in all_estimators parameter return_tags must be either a str or list of str"
-            )
+        return_tags = _check_list_of_str_or_error(return_tags,
+                                'return_tags')
         # enrich all_estimators by adding the values for all return_tags tags:
         if all_estimators:
             if isinstance(all_estimators[0], tuple):
@@ -250,6 +252,23 @@ def all_estimators(
         all_estimators = pd.DataFrame(all_estimators, columns=columns)
 
     return all_estimators
+
+def _check_list_of_str_or_error(arg_to_check, arg_name):
+    """
+    Checks that certain arguments are str or list of str.  If str, converts
+    into list of str to make it iterable.  If not str or list of str
+    produces an error.
+    """
+    # check that return_tags has the right type:
+    if isinstance(arg_to_check, str):
+        arg_to_check = [arg_to_check]
+    if not isinstance(arg_to_check, list) or not all(
+        isinstance(value, str) for value in arg_to_check):
+        raise TypeError(
+            f"Error in all_estimators!  Argument {arg_name} must be either\
+             a str or list of str"
+        )
+    return arg_to_check
 
 
 def _get_return_tags(estimator, return_tags):
@@ -342,13 +361,8 @@ def all_tags(
 
     def is_tag_for_type(tag, estimator_types):
         tag_types = tag[1]
-        if isinstance(tag_types, str):
-            tag_types = [tag_types]
-        elif not isinstance(tag_types, list):
-            raise ValueError(
-                "Error in ESTIMATOR_TAG_REGISTER, "
-                "2nd entries of register tuples must be list or list of str"
-            )
+        tag_types = _check_list_of_str_or_error(tag_types, 'tag_types')
+
         if isinstance(estimator_types, str):
             estimator_types = [estimator_types]
 
@@ -360,7 +374,7 @@ def all_tags(
 
     all_tags = ESTIMATOR_TAG_REGISTER
 
-    if estimator_types is not None:
+    if estimator_types:
         # checking, but not using the return since that is classes, not strings
         _check_estimator_types(estimator_types)
         all_tags = [tag for tag in all_tags if is_tag_for_type(tag, estimator_types)]
