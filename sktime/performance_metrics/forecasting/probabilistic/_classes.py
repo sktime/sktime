@@ -112,6 +112,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         out_df = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
         if self.score_average:
             out_df = out_df.mean(axis=1)
+
+        # unwrap the case where resulting data frame has one entry
+        if self.score_average and multioutput in "uniform_average":
+            out_df = out_df.iloc[0]
         return out_df
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
