@@ -21,7 +21,7 @@ Highlights
 ~~~~~~~~~~
 
 
-Maintenacne
+Maintenance
 ~~~~~~~~~~~ 
 
 * [MNT] Remove jinja2 version (:pr:`2330`) :user:`aiwalter`
