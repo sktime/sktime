@@ -408,12 +408,6 @@ class _MultioutputReducer(_Reducer):
 
 class _RecursiveReducer(_Reducer):
     strategy = "recursive"
-    _tags = {
-        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        # "X_inner_mtype": ["pd.Series", "pd-multiindex"],
-    }
 
     def _transform(self, y, X=None):
         # For the recursive strategy, the forecasting horizon for the sliding-window
@@ -499,7 +493,7 @@ class _RecursiveReducer(_Reducer):
             if y_update is not None:
                 y.update(y_update)
             # Create new X with old values and new features derived from forecasts
-            X_from_y = self.transformers[0].fit_transform(y)
+            X_from_y = self.transformers_[0].fit_transform(y)
             X_from_y_cut = _cut_tail(X_from_y)
             if self._X is not None:
                 X = _create_multiindex(dateline, self._X)
@@ -527,7 +521,10 @@ class _RecursiveReducer(_Reducer):
             )
 
         # Get last window of available data.
-        y_last, X_last = self._get_shifted_window()
+        if self.transformers_ is not None:
+            y_last, X_last = self._get_shifted_window()
+        else:
+            y_last, X_last = self._get_last_window()
 
         # If we cannot generate a prediction from the available data, return nan.
         # danbartl: check for window_length fails since transformed data is returned.
@@ -803,6 +800,15 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix.
     """
+
+    _tags = {
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
+        # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        # "X_inner_mtype": ["pd.Series", "pd-multiindex"],
+    }
 
     _estimator_scitype = "tabular-regressor"
 

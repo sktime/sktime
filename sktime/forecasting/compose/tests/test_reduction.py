@@ -11,7 +11,8 @@ from sktime.datatypes import get_examples
 from sktime.forecasting.compose import make_reduction
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformations.series.summarize import WindowSummarizer
-from sktime.utils.estimator_checks import check_estimator
+
+# from sktime.utils.estimator_checks import check_estimator
 
 # Load data that will be the basis of tests
 y = load_airline()
@@ -52,17 +53,18 @@ regressor = make_pipeline(
     RandomForestRegressor(random_state=1),
 )
 
-# forecaster1 = make_reduction(
-#     regressor,
-#     scitype="tabular-regressor",
-#     transformers=[WindowSummarizer(**kwargs)],
-#     window_length=None,
-#     strategy="recursive",
-# )
+forecaster1 = make_reduction(
+    regressor,
+    scitype="tabular-regressor",
+    transformers=[WindowSummarizer(**kwargs)],
+    window_length=None,
+    strategy="recursive",
+)
 
-# forecaster1.fit(y=y_train_grp, X=y_train_grp)
+forecaster1.fit(y=y_train_grp, X=y_train_grp)
 
-# y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
+# check_estimator(forecaster1, return_exceptions=False)
+y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
 
 forecaster2 = make_reduction(
     regressor,
@@ -75,7 +77,7 @@ forecaster2 = make_reduction(
 # forecaster2.fit(y_train, fh=[1, 2])
 # y_pred2 = forecaster2.predict(fh=[1, 2, 12])
 #       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^a=0
-check_estimator(forecaster2, return_exceptions=False)
+# check_estimator(forecaster1, return_exceptions=False)
 
 # forecaster2a = make_reduction(
 #     regressor,
