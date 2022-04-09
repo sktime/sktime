@@ -3,9 +3,10 @@
 
 import warnings
 from importlib import import_module
+import io
+import sys
 
-
-def _check_soft_dependencies(*packages, severity="error", object=None):
+def _check_soft_dependencies(*packages, severity="error", object=None, suppress_import_stdout=False):
     """Check if required soft dependencies are installed and raise error or warning.
 
     Parameters
@@ -25,7 +26,13 @@ def _check_soft_dependencies(*packages, severity="error", object=None):
     """
     for package in packages:
         try:
-            import_module(package)
+            if suppress_import_stdout:
+                #setup text trap, import, then restore
+                sys.stdout = io.StringIO()
+                import_module(package)
+                sys.stdout = sys.__stdout__
+            else:
+                import_module(package)
         except ModuleNotFoundError as e:
             if object is None:
                 msg = (
