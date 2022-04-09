@@ -1329,7 +1329,7 @@ def distance_path_factory(
     _y = to_numba_timeseries(y)
 
     dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
-    callable = dist_instance.distance_path_factory(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    callable = dist_instance.distance_path_factory(_x, _y, **kwargs)
 
     @njit(cache=True)
     def dist_callable(x: np.ndarray, y: np.ndarray):
