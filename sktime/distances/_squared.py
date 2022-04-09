@@ -10,7 +10,7 @@ from sktime.distances.base import DistanceCallable, NumbaDistance
 
 
 class _SquaredDistance(NumbaDistance):
-    """Squared distance between two timeseries."""
+    """Squared distance between two time series."""
 
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: Any
