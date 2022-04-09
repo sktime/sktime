@@ -104,7 +104,9 @@ class SARIMAX(_StatsModelsAdapter):
     >>> y_pred = forecaster.summary()
     """
 
-    _fitted_param_names = ()
+    _tags = {
+        "ignores-exogeneous-X": False,
+    }
 
     def __init__(
         self,
