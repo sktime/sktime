@@ -106,7 +106,7 @@ class SARIMAX(_StatsModelsAdapter):
     >>> forecaster = SARIMAX(order=(1, 0, 0), trend="t", seasonal_order=(1, 0, 0, 6))
     >>> forecaster.fit(y)
     SARIMAX(...)
-    >>> y_pred = forecaster.predict(y.index)
+    >>> y_pred = forecaster.predict(fh=y.index)
     >>> y_pred = forecaster.summary()
     """
 
