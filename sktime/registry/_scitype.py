@@ -36,4 +36,3 @@ def scitype(obj):
 
     if len(scitypes) == 0:
         raise TypeError("Error, no scitype could be determined for obj")
-    return scitypes
