@@ -95,8 +95,8 @@ class SARIMAX(_StatsModelsAdapter):
 
     References
     ----------
-        [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
-        and practice. OTexts, 2014.
+    .. [1] Hyndman, Rob J., and George Athanasopoulos. Forecasting: principles
+    and practice. OTexts, 2014.
 
     Examples
     --------
