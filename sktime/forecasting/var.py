@@ -70,6 +70,7 @@ class VAR(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "univariate-only": False,
         "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
     }
 
     def __init__(
