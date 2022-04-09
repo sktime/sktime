@@ -134,7 +134,7 @@ class DynamicFactor(_StatsModelsAdapter):
         "scitype:y": "multivariate",
         "ignores-exogeneous-X": True,
         "handles-missing-data": True,
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
