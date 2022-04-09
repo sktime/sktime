@@ -1538,7 +1538,16 @@
         "code",
 	"example"
       ]
-    }
+    },
+    {
+      "login": "GrzegorzRut",
+      "name": "Grzegorz Rut",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39675431?v=4",
+      "profile": "https://github.com/GrzegorzRut/",
+      "contributions": [
+        "ideas"
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
