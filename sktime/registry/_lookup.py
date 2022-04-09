@@ -134,6 +134,9 @@ def all_estimators(
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
         warnings.simplefilter("module", category=ImportWarning)
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, message=".*has been moved to.*"
+        )
         for _, module_name, _ in pkgutil.walk_packages(path=[ROOT], prefix="sktime."):
 
             # Filter modules

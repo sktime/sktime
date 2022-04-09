@@ -23,34 +23,40 @@ QUANTILE_PRED = f.predict_quantiles(fh=fh, alpha=[0.5])
 INTERVAL_PRED = f.predict_interval(fh=fh, coverage=0.9)
 
 
+@pytest.mark.parametrize("score_average", [True, False])
 @pytest.mark.parametrize("Metric", list_of_metrics)
-def test_output(Metric):
+def test_output(Metric, score_average):
     """Test output is correct class."""
     y_true = y_test
-    Loss = Metric.create_test_instance()
-    eval_loss = Loss.evaluate(y_true, y_pred=QUANTILE_PRED)
-    index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
+    loss = Metric.create_test_instance()
+    loss.set_params(score_average=score_average)
+    eval_loss = loss.evaluate(y_true, y_pred=QUANTILE_PRED)
+    index_loss = loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
 
-    assert isinstance(eval_loss, pd.DataFrame)
-    assert isinstance(index_loss, pd.DataFrame)
+    if score_average:
+        assert isinstance(eval_loss, float)
+        assert isinstance(index_loss, pd.Series)
+    else:
+        assert isinstance(eval_loss, pd.DataFrame)
+        assert isinstance(index_loss, pd.DataFrame)
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
 def test_evaluate_to_zero(Metric):
     """Tests whether metric returns 0 when y_true=y_pred."""
-    Loss = Metric.create_test_instance()
+    loss = Metric.create_test_instance()
     y_true = QUANTILE_PRED["Quantiles"][0.5]
-    eval_loss = Loss.evaluate(y_true, y_pred=QUANTILE_PRED)
+    eval_loss = loss.evaluate(y_true, y_pred=QUANTILE_PRED)
     assert np.isclose(0, eval_loss).all()
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
 def test_evaluate_by_index_to_zero(Metric):
     """Tests whether metric returns 0 when y_true=y_pred by index."""
-    Loss = Metric.create_test_instance()
+    loss = Metric.create_test_instance()
     y_true = QUANTILE_PRED["Quantiles"][0.5]
-    index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
-    assert all([np.isclose(0, a) for a in index_loss.values[:, 0]])
+    index_loss = loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
+    assert all(np.isclose(0, a) for a in index_loss)
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
