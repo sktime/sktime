@@ -75,6 +75,7 @@ Metrics
     :template: function.rst
 
     mean_average
+    dba
 
 .. currentmodule:: sktime.clustering.metrics.medoids
 
