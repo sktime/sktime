@@ -23,10 +23,9 @@ Highlights
 * GSoC 2022 application instructions - apply by Apr 19 for GSoC with sktime! (:pr:`2373`) :user:`lmmentel` :user:`Lovkush-A` :user:`fkiraly`
 * enhancements and bugfixes for probabilistic and hierarchical forecasting features introduced in 0.11.0
 * reconciliation transformers for hierarchical predictions (:pr:`2287`, :pr:`2292`) :user:`ciaran-g`
-* tuning and evaluation for probabilistic forecasting (:pr:`2234`) :user:`eenticott-shell`
-* pipeline compatibility for probabilistic forecasting (:pr:`2318`) :user:`fkiraly`
+* pipeline, tuning and evaluation compabitility for probabilistic forecasting (:pr:`2234`, :pr:`2318`) :user:`eenticott-shell` :user:`fkiraly`
 * interface to ``statsmodels`` ``SARIMAX`` (:pr:`2400`) :user:`TNTran92`
-
+* reduction with transform-on-y predictors (e.g., lags, window summaries), and for hierarchical data (:pr:`2396`) :user:`danbartl`
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -69,6 +68,7 @@ Forecasting
 * [ENH] ``NaiveVariance``: verbose arg and extended docstring (:pr:`2395`) :user:`fkiraly`
 * [ENH] Prohibit incompatible splitter parameters (:pr:`2328`) :user:`khrapovs`
 * [ENH] added interface to ``statsmodels`` ``SARIMAX`` (:pr:`2400`) :user:`TNTran92`
+* [ENH] extending reducers to hierarchical data, adding transformation (:pr:`2396`) :user:`danbartl`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
