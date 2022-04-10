@@ -224,6 +224,8 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
 
+    _tags = {"handles-missing-data": True}
+
     def __init__(
         self,
         start_p=2,
@@ -358,8 +360,14 @@ class AutoARIMA(_PmdArimaAdapter):
         )
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -558,6 +566,8 @@ class ARIMA(_PmdArimaAdapter):
     ARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
+
+    _tags = {"handles-missing-data": True}
 
     def __init__(
         self,

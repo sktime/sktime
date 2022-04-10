@@ -96,7 +96,7 @@ class SignatureClassifier(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = SignatureClassifier(estimator=RandomForestClassifier(n_estimators=10))
+    >>> clf = SignatureClassifier(estimator=RandomForestClassifier(n_estimators=5))
     >>> clf.fit(X_train, y_train)
     SignatureClassifier(...)
     >>> y_pred = clf.predict(X_test)
@@ -213,8 +213,18 @@ class SignatureClassifier(BaseClassifier):
         return self.pipeline.predict_proba(X)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -224,10 +234,12 @@ class SignatureClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {
-            "estimator": RandomForestClassifier(n_estimators=2),
-            "augmentation_list": ("basepoint", "addtime"),
-            "depth": 3,
-            "window_name": "global",
-        }
-        return params
+        if parameter_set == "results_comparison":
+            return {"estimator": RandomForestClassifier(n_estimators=10)}
+        else:
+            return {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "augmentation_list": ("basepoint", "addtime"),
+                "depth": 1,
+                "window_name": "global",
+            }

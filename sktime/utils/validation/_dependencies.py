@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
+import io
+import sys
 import warnings
 from importlib import import_module
 
 
-def _check_soft_dependencies(*packages, severity="error", object=None):
+def _check_soft_dependencies(
+    *packages, severity="error", object=None, suppress_import_stdout=False
+):
     """Check if required soft dependencies are installed and raise error or warning.
 
     Parameters
@@ -17,6 +21,8 @@ def _check_soft_dependencies(*packages, severity="error", object=None):
     object : python object or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__
         the error message is more informative and will refer to the class
+    suppress_import_stdout : bool, optional. Default=False
+        whether to suppress stdout printout upon import.
 
     Raises
     ------
@@ -25,7 +31,13 @@ def _check_soft_dependencies(*packages, severity="error", object=None):
     """
     for package in packages:
         try:
-            import_module(package)
+            if suppress_import_stdout:
+                # setup text trap, import, then restore
+                sys.stdout = io.StringIO()
+                import_module(package)
+                sys.stdout = sys.__stdout__
+            else:
+                import_module(package)
         except ModuleNotFoundError as e:
             if object is None:
                 msg = (

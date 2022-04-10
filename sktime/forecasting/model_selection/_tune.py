@@ -26,6 +26,7 @@ class BaseGridSearch(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -68,16 +69,40 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
-        """Call predict on the forecaster with the best found parameters."""
+        """Call _update on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
         self.best_forecaster_._update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _predict(self, fh=None, X=None):
-        """Call predict on the forecaster with the best found parameters."""
+        """Call _predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
         return self.best_forecaster_._predict(fh=fh, X=X)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_interval(self, fh=None, X=None, coverage=None):
+        """Call _predict_interval on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_interval(fh=fh, X=X, coverage=coverage)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_quantiles(self, fh=None, X=None, alpha=None):
+        """Call _predict_quantiles on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Call _predict_var on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_var(fh=fh, X=X, cov=cov)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_proba(self, fh=None, X=None, marginal=True):
+        """Call _predict_proba on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_proba(fh=fh, X=X, marginal=marginal)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -464,8 +489,14 @@ class ForecastingGridSearchCV(BaseGridSearch):
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -599,8 +630,14 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         )
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------

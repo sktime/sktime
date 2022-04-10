@@ -19,7 +19,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
     }
 
     def __init__(self):
