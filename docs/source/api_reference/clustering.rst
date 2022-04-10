@@ -1,8 +1,8 @@
 
 .. _clustering_ref:
 
-Clustering
-==========
+Time series clustering
+======================
 
 The :mod:`sktime.clustering` module contains algorithms for time series clustering.
 
@@ -30,8 +30,8 @@ Base
 
     TimeSeriesLloyds
 
-Algorithms
-----------
+Clustering models
+-----------------
 
 .. currentmodule:: sktime.clustering.k_means
 
