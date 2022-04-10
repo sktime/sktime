@@ -6,11 +6,6 @@ Time series clustering
 
 The :mod:`sktime.clustering` module contains algorithms for time series clustering.
 
-.. automodule:: sktime.clustering
-    :no-members:
-    :no-inherited-members:
-
-
 Base
 ----
 
