@@ -19,7 +19,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
     }
 
     def __init__(self):
@@ -29,7 +29,7 @@ class _PmdArimaAdapter(BaseForecaster):
     def _instantiate_model(self):
         raise NotImplementedError("abstract method")
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -46,7 +46,7 @@ class _PmdArimaAdapter(BaseForecaster):
         self : returns an instance of self.
         """
         self._forecaster = self._instantiate_model()
-        self._forecaster.fit(y, X=X, **fit_params)
+        self._forecaster.fit(y, X=X)
         return self
 
     def _predict(self, fh, X=None):

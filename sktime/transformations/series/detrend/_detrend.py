@@ -158,7 +158,7 @@ class Detrender(BaseTransformer):
             if len(difference) != 0:
                 raise ValueError(
                     "X contains columns that have not been "
-                    "seen in fit: " + difference
+                    "seen in fit: " + str(difference)
                 )
             for colname in Xt.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
@@ -199,7 +199,7 @@ class Detrender(BaseTransformer):
             if len(difference) != 0:
                 raise ValueError(
                     "X contains columns that have not been "
-                    "seen in fit: " + difference
+                    "seen in fit: " + str(difference)
                 )
             for colname in X.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
@@ -246,8 +246,15 @@ class Detrender(BaseTransformer):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
