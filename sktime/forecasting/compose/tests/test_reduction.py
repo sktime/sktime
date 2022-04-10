@@ -3,6 +3,7 @@
 __author__ = ["danbartl"]
 
 import pandas as pd
+import pytest
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline
 
@@ -61,10 +62,10 @@ forecaster1 = make_reduction(
     strategy="recursive",
 )
 
-forecaster1.fit(y=y_train_grp, X=y_train_grp)
+# forecaster1.fit(y=y_train_grp, X=y_train_grp)
 
-# check_estimator(forecaster1, return_exceptions=False)
-y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
+# # check_estimator(forecaster1, return_exceptions=False)
+# y_pred1 = forecaster1.predict(X=y_test_grp, fh=[1, 2, 12])
 
 forecaster2 = make_reduction(
     regressor,
@@ -76,18 +77,36 @@ forecaster2 = make_reduction(
 
 # forecaster2.fit(y_train, fh=[1, 2])
 # y_pred2 = forecaster2.predict(fh=[1, 2, 12])
-#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^a=0
-# check_estimator(forecaster1, return_exceptions=False)
 
-# forecaster2a = make_reduction(
-#     regressor,
-#     scitype="tabular-regressor",
-#     transformers=[WindowSummarizer(**kwargs)],
-#     window_length=None,
-#     strategy="recursive",
-# )
 
-# forecaster2a.fit(y_train_int, fh=[1, 2])
+def check_eval(test_input, expected):
+    """Test which columns are returned for different arguments.
 
-# y_pred = forecaster2a.predict(fh=[1, 2, 12])
-# a=0
+    For a detailed description what these arguments do,
+    and how theyinteract see docstring of DateTimeFeatures.
+    """
+    if test_input is not None:
+        assert len(test_input) == len(expected)
+        assert all([a == b for a, b in zip(test_input, expected)])
+    else:
+        assert expected is None
+
+
+@pytest.mark.parametrize(
+    "y, index_names",
+    [
+        (
+            y_train_grp,
+            ["instances", "timepoints"],
+        ),
+        (
+            y_train,
+            [None],
+        ),
+    ],
+)
+def test_reduction(y, index_names):
+    """Test index columns match input."""
+    forecaster2.fit(y, fh=[1, 2])
+    y_pred = forecaster2.predict(fh=[1, 2, 12])
+    check_eval(y_pred.index.names, index_names)
