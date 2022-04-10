@@ -804,10 +804,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "y_inner_mtype": ["pd.Series", "pd-multiindex", "pd_multiindex_hier"],
-        # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        # "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        # "X_inner_mtype": ["pd.Series", "pd-multiindex"],
     }
 
     _estimator_scitype = "tabular-regressor"
@@ -884,6 +881,10 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix.
     """
+
+    _tags = {
+        "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+    }
 
     _estimator_scitype = "time-series-regressor"
 
