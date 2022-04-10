@@ -83,8 +83,10 @@ class _Pipeline(
 
     def _iter_transformers(self, reverse=False):
 
+        fc_idx = self._get_forecaster_index()
+
         # exclude final forecaster
-        steps = self.steps_[:-1]
+        steps = self.steps_[:fc_idx]
 
         if reverse:
             steps = reversed(steps)
