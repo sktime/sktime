@@ -238,6 +238,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check that predict_residuals method works as expected."""
         index_type, fh_type, is_relative = index_fh_comb
         if fh_type == "timedelta":
+            # workaround to ensure check_estimator without breaking e.g. debugging
             return None
             # todo: ensure check_estimator works with pytest.skip like below
             # pytest.skip(
