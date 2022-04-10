@@ -158,7 +158,7 @@ def test_all_estimators_exclude_estimators(exclude_estimators):
 
 
 def _get_tag_fixture():
-    """Generate a simple list of test cases for optional return_tags"""
+    """Generate a simple list of test cases for optional return_tags."""
     # just picked a few valid tags to try out as valid str return_tags args:
     test_str_as_arg = [
         "X-y-must-have-same-index",
@@ -176,7 +176,7 @@ def _get_tag_fixture():
 @pytest.mark.parametrize("return_tags", _get_tag_fixture())
 @pytest.mark.parametrize("return_names", [True, False])
 def test_all_estimators_return_tags(return_tags, return_names):
-    """Test ability to return estimator value of passed tags"""
+    """Test ability to return estimator value of passed tags."""
     estimators = all_estimators(
         return_tags=return_tags,
         return_names=return_names,
@@ -215,7 +215,7 @@ def _get_bad_return_tags():
 # test that all_estimators breaks as expected if given bad return_tags:
 @pytest.mark.parametrize("return_tags", _get_bad_return_tags())
 def test_all_estimators_return_tags_bad_arg(return_tags):
-    """Test ability to catch bad arguments of return_tags"""
+    """Test ability to catch bad arguments of return_tags."""
     with pytest.raises(TypeError):
         _ = all_estimators(return_tags=return_tags)
 
