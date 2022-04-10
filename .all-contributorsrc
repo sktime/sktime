@@ -1538,6 +1538,15 @@
         "code",
 	"example"
       ]
+    },
+    {
+      "login": "TNTran92",
+      "name": "TNTran92",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55965636?v=4",
+      "profile": "https://github.com/TNTran92",
+      "contributions": [
+        "code",
+      ]
     }
   ],
   "projectName": "sktime",
