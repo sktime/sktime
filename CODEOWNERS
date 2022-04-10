@@ -49,8 +49,8 @@ sktime/forecasting/compose/_column_ensemble.py @GuzalBulatova
 sktime/forecasting/compose/_multiplexer.py @koralturkk @aiwalter
 sktime/forecasting/compose/_pipeline.py @aiwalter
 sktime/forecasting/compose/_ensemble.py @aiwalter
-
 sktime/forecasting/online_learning/ @magittan
+sktime/forecasting/sarimax.py @TNTran92
 
 sktime/performance_metrics/forecasting/_functions.py @aiwalter @rnkuhns
 sktime/performance_metrics/forecasting/_classes.py @rnkuhns

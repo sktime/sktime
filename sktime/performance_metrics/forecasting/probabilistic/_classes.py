@@ -20,6 +20,19 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     Extends sktime's BaseMetric to the forecasting interface. Forecasting error
     metrics measure the error (loss) between forecasts and true values. Lower
     values are better.
+
+    Parameters
+    ----------
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of errors in case of multioutput input.
+        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    score_average : bool, optional, default=True
+        for interval and quantile losses only
+            if True, metric/loss is averaged by upper/lower and/or quantile
+            if False, metric/loss is not averaged by upper/lower and/or quantile
     """
 
     _tags = {
@@ -32,9 +45,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         func=None,
         name=None,
         multioutput="uniform_average",
-        score_average=False,
+        score_average=True,
     ):
         self.multioutput = multioutput
+        self.score_average = score_average
         super().__init__(func, name=name)
 
     def __call__(self, y_true, y_pred, **kwargs):
@@ -46,14 +60,22 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
+        y_pred : return object of probabilistic predictition method scitype:y_pred
+            must be at fh and for variables equal to those in y_true
 
         Returns
         -------
-        loss : float
-            Calculated loss metric.
+        loss : float or 1-column pd.DataFrame with calculated metric value(s)
+            metric is always averaged (arithmetic) over fh values
+            if multioutput = "raw_values",
+            if multioutput = "raw_values",
+                will have a column level corresponding to variables in y_true
+            if multioutput = multioutput = "uniform_average" or or array-like
+                entries will be averaged over output variable column
+            if score_average = False,
+                will have column levels corresponding to quantiles/intervals
+            if score_average = True,
+                entries will be averaged over quantiles/interval column
         """
         return self.evaluate(y_true, y_pred, multioutput=self.multioutput, **kwargs)
 
@@ -66,13 +88,21 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
+        y_pred : return object of probabilistic predictition method scitype:y_pred
+            must be at fh and for variables equal to those in y_true
 
         Returns
         -------
-        loss : pd.DataFrame of shape (, n_outputs), calculated loss metric.
+        loss : float or 1-column pd.DataFrame with calculated metric value(s)
+            metric is always averaged (arithmetic) over fh values
+            if multioutput = "raw_values",
+                will have a column level corresponding to variables in y_true
+            if multioutput = multioutput = "uniform_average" or or array-like
+                entries will be averaged over output variable column
+            if score_average = False,
+                will have column levels corresponding to quantiles/intervals
+            if score_average = True,
+                entries will be averaged over quantiles/interval column
         """
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
@@ -82,6 +112,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         out_df = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
         if self.score_average:
             out_df = out_df.mean(axis=1)
+
+        # unwrap the case where resulting data frame has one entry
+        if self.score_average and multioutput in "uniform_average":
+            out_df = out_df.iloc[0]
         return out_df
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
@@ -101,13 +135,21 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
                 (fh, n_outputs) where fh is the forecasting horizon
             Ground truth (correct) target values.
 
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
+        y_pred : return object of probabilistic predictition method scitype:y_pred
+            must be at fh and for variables equal to those in y_true
 
         Returns
         -------
-        loss : pd.DataFrame of shape (fh, n_outputs), calculated loss metric.
+        loss : pd.DataFrame of length len(fh), with calculated metric value(s)
+            i-th column contains metric value(s) for prediction at i-th fh element
+            if multioutput = "raw_values",
+                will have a column level corresponding to variables in y_true
+            if multioutput = multioutput = "uniform_average" or or array-like
+                entries will be averaged over output variable column
+            if score_average = False,
+                will have column levels corresponding to quantiles/intervals
+            if score_average = True,
+                entries will be averaged over quantiles/interval column
         """
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
@@ -266,14 +308,16 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     def __init__(
         self,
         multioutput="uniform_average",
-        score_average=False,
+        score_average=True,
         alpha=None,
     ):
         name = "PinballLoss"
         self.score_average = score_average
         self.alpha = self._check_alpha(alpha)
         self.metric_args = {"alpha": alpha}
-        super().__init__(name=name, multioutput=multioutput)
+        super().__init__(
+            name=name, multioutput=multioutput, score_average=score_average
+        )
 
     def _evaluate(self, y_true, y_pred, multioutput, **kwargs):
         alpha = self.alpha
