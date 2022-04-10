@@ -116,7 +116,7 @@ class _Pipeline(
         y : pd.Series, pd.DataFrame
             Inverse transformed y
         """
-        for _, transformer in transformers:
+        for _, transformer in reversed(transformers):
             # skip sktime transformers where inverse transform
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             skip_trafo = transformer.get_tag("skip-inverse-transform", False)
