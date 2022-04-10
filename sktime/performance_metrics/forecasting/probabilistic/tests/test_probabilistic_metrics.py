@@ -71,8 +71,12 @@ def test_output_no_avg(metric, y_pred):
     eval_loss = loss.evaluate(y_true, y_pred=y_pred)
     index_loss = loss.evaluate_by_index(y_true, y_pred=y_pred)
 
-    assert isinstance(eval_loss, pd.DataFrame)
-    assert isinstance(index_loss, pd.DataFrame)
+    if score_average:
+        assert isinstance(eval_loss, float)
+        assert isinstance(index_loss, pd.Series)
+    else:
+        assert isinstance(eval_loss, pd.DataFrame)
+        assert isinstance(index_loss, pd.DataFrame)
 
     expected_index = y_pred.index.get_level_values([0 ,1]).unique()
     ncol = len(expected_index)
@@ -128,16 +132,16 @@ def test_output_multivariate_no_avg(metric, y_pred):
 @pytest.mark.parametrize("Metric", list_of_metrics)
 def test_evaluate_to_zero(Metric):
     """Tests whether metric returns 0 when y_true=y_pred."""
-    Loss = Metric.create_test_instance()
+    loss = Metric.create_test_instance()
     y_true = QUANTILE_PRED["Quantiles"][0.5]
-    eval_loss = Loss.evaluate(y_true, y_pred=QUANTILE_PRED)
+    eval_loss = loss.evaluate(y_true, y_pred=QUANTILE_PRED)
     assert np.isclose(0, eval_loss).all()
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
 def test_evaluate_by_index_to_zero(Metric):
     """Tests whether metric returns 0 when y_true=y_pred by index."""
-    Loss = Metric.create_test_instance()
+    loss = Metric.create_test_instance()
     y_true = QUANTILE_PRED["Quantiles"][0.5]
     index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
     assert all([np.isclose(0, a) for a in index_loss.values[:, 0]])
