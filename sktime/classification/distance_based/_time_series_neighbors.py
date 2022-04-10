@@ -132,7 +132,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
-        Input number of cases (n), with series of dimension (d), each series length (d)
+        Input number of cases (n), with series of dimension (d), each series length (d).
+
         Parameters
         ----------
         X : sktime-format pandas dataframe with shape(n,d),
