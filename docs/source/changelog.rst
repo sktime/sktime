@@ -25,6 +25,8 @@ Highlights
 * reconciliation transformers for hierarchical predictions (:pr:`2287`, :pr:`2292`) :user:`ciaran-g`
 * tuning and evaluation for probabilistic forecasting (:pr:`2234`) :user:`eenticott-shell`
 * pipeline compatibility for probabilistic forecasting (:pr:`2318`) :user:`fkiraly`
+* interface to ``statsmodels`` ``SARIMAX`` (:pr:`2400`) :user:`TNTran92`
+
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -66,7 +68,7 @@ Forecasting
 * [ENH] improved error message in forecasters when receiving an incompatible input (:pr:`2314`) :user:`fkiraly`
 * [ENH] ``NaiveVariance``: verbose arg and extended docstring (:pr:`2395`) :user:`fkiraly`
 * [ENH] Prohibit incompatible splitter parameters (:pr:`2328`) :user:`khrapovs`
-
+* [ENH] added interface to ``statsmodels`` ``SARIMAX`` (:pr:`2400`) :user:`TNTran92`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
