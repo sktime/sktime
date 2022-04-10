@@ -36,12 +36,10 @@ Multivariate and multiscore
 For each of the data types we need to test with score average = T/F \
     and multioutput with "raw_values" and "uniform_average"
 """
-
-
 QUANTILE_PRED_UNI_S = f.predict_quantiles(fh=fh, alpha=[0.5])
 INTERVAL_PRED_UNI_S = f.predict_interval(fh=fh, coverage=0.9)
 
-QUANTILE_PRED_UNI_M = f.predict_quantiles(fh-fh, alpha = [0.05, 0.5, 0.95])
+QUANTILE_PRED_UNI_M = f.predict_quantiles(fh-fh, alpha=[0.05, 0.5, 0.95])
 INTERVAL_PRED_UNI_M = f.predict_interval(fh=fh, coverage=[0.7, 0.8, 0.9, 0.99])
 
 
