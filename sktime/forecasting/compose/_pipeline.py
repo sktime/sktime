@@ -550,7 +550,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         then `t2.fit_transform` on `X=` the output of `t1.fit_transform`, `y=X`, etc
         sequentially, with `t[i]` receiving the output of `t[i-1]` as `X`,
         then running `f.fit` with `y` being the output of `t[N]`, and `X=X`,
-        then running `tp1.fit_transform` with `X=` the output of `t[N]`, `y=X`,
+        then running `tp1.fit_transform`  with `X=y`, `y=X`,
         then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
         sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
     `predict(X, fh)` - result is of executing `f.predict`, with `X=X`, `fh=fh`,
@@ -804,12 +804,13 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         self.steps_ = self._get_estimator_tuples(self.steps, clone_ests=True)
 
         # transform pre
+        yt = y
         for _, t in self.transformers_pre_:
-            y = t.fit_transform(X=y, y=X)
+            yt = t.fit_transform(X=yt, y=X)
 
         # fit forecaster
         f = self.forecaster_
-        f.fit(y=y, X=X, fh=fh)
+        f.fit(y=yt, X=X, fh=fh)
 
         # transform post
         for _, t in self.transformers_post_:
