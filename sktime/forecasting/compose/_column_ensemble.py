@@ -196,7 +196,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        return self._by_column("_predict", fh=fh, X=X)
+        return self._by_column("predict", fh=fh, X=X)
 
     def _predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
@@ -230,7 +230,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        return self._by_column("_predict_quantiles", fh=fh, X=X, alpha=alpha)
+        return self._by_column("predict_quantiles", fh=fh, X=X, alpha=alpha)
 
     def _predict_interval(self, fh=None, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
@@ -268,7 +268,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        return self._by_column("_predict_interval", fh=fh, X=X, coverage=coverage)
+        return self._by_column("predict_interval", fh=fh, X=X, coverage=coverage)
 
     def _predict_var(self, fh, X=None, cov=False):
         """Forecast variance at future horizon.
@@ -300,7 +300,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 Entries are (co-)variance forecasts, for var in col index, and
                     covariance between time index in row and col.
         """
-        return self._by_column("_predict_var", fh=fh, X=X, cov=cov)
+        return self._by_column("predict_var", fh=fh, X=X, cov=cov)
 
     def get_params(self, deep=True):
         """Get parameters of estimator in `_forecasters`.
