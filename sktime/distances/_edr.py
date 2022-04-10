@@ -21,8 +21,8 @@ class _EdrDistance(NumbaDistance):
     ERP was adapted in [1] specifically for distances between trajectories. Like LCSS,
     EDR uses a distance threshold to define when two elements of a series match.
     However, rather than simply count matches and look for the longest sequence,
-    ERP applies a (constant) penalty for non-matching elements
-    where gaps are inserted to create an optimal alignment.
+    ERP applies a (constant) penalty for non-matching elements where gaps are
+    inserted to create an optimal alignment.
 
     References
     ----------
