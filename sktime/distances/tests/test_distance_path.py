@@ -18,7 +18,7 @@ def test_distance_path():
 
     x= create_test_distance_numpy(10, 10)
     y= create_test_distance_numpy(10, 10, random_state=2)
-    metric = 'dtw'
+    metric = 'wdtw'
 
     path = distance_path(x, y, metric)
     path_2 = dtw_path(x, y)

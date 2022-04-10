@@ -934,6 +934,105 @@ def dtw_path(
 
     return distance_path(x, y, metric="dtw", **format_kwargs)
 
+
+def wdtw_path(
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    g: float = 0.05,
+    **kwargs: Any,
+) -> float:
+    """Compute the weighted dynamic time warping (wdtw) path between two time series.
+
+    First proposed in [1]_, WDTW adds a  adds a multiplicative weight penalty based on
+    the warping distance. This means that time series with lower phase difference have
+    a smaller weight imposed (i.e less penalty imposed) and time series with larger
+    phase difference have a larger weight imposed (i.e. larger penalty imposed).
+
+    Formally this can be described as:
+
+    .. math::
+        d_{w}(x_{i}, y_{j}) = ||w_{|i-j|}(x_{i} - y_{j})||
+
+    Where d_w is the distance with a the weight applied to it for points i, j, where
+    w(|i-j|) is a positive weight between the two points x_i and y_j.
+
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    g: float, defaults = 0.
+        Constant that controls the curvature (slope) of the function; that is, g
+        controls the level of penalisation for the points with larger phase
+        difference.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Dtw path.
+    float
+        Dtw distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+        If both window and itakura_max_slope are set
+
+    Examples
+    --------
+    >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
+    >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
+    >>> wdtw_distance(x_1d, y_1d)
+    27.975712863958133
+
+    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
+    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
+    >>> wdtw_distance(x_2d, y_2d)
+    243.2106560107827
+
+    References
+    ----------
+    .. [1] Young-Seon Jeong, Myong K. Jeong, Olufemi A. Omitaomu, Weighted dynamic time
+    warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
+    2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "g": g,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="wdtw", **format_kwargs)
+
 def distance(
     x: np.ndarray,
     y: np.ndarray,
@@ -1389,6 +1488,7 @@ _METRIC_INFOS = [
         aka={"wdtw", "weighted dynamic time warping"},
         dist_func=wdtw_distance,
         dist_instance=_WdtwDistance(),
+        dist_path_func=wdtw_path
     ),
     MetricInfo(
         canonical_name="wddtw",
