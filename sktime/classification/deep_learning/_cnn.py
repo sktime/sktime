@@ -4,36 +4,38 @@
 __author__ = ["JamesLarge", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
 
-from sktime.classification.deep_learning import BaseDeepClassifier
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks import CNNNetwork
 
 
-from sktime_dl.utils import check_and_clean_data, \
-    check_and_clean_validation_data
+#from sktime_dl.utils import check_and_clean_data, \
+#    check_and_clean_validation_data
 from sklearn.utils import check_random_state
 from tensorflow import keras
 
 
 class CNNClassifier(BaseDeepClassifier, CNNNetwork):
-    """Time Convolutional Neural Network (CNN).
+    """Time Convolutional Neural Network (CNN), as described in [1].
 
     Parameters
     ----------
-    nb_epochs: int, the number of epochs to train the model
-    batch_size: int, the number of samples per gradient update.
-    kernel_size: int, specifying the length of the 1D convolution
-     window
-    avg_pool_size: int, size of the average pooling windows
-    n_conv_layers: int, the number of convolutional plus average
-     pooling layers
-    filter_sizes: int, array of shape = (nb_conv_layers)
-    callbacks: list of tf.keras.callbacks.Callback objects
-    random_state: int, or sklearn Random.state
-    verbose: boolean, whether to output extra information
-    model_name: string, the name of this model for printing and
-    file writing purposes
-    model_save_directory: string, if not None; location to save
-    the trained keras model in hdf5 format
+    should inherited fields be listed here?
+    n_epochs       : int, default = 2000
+        the number of epochs to train the model
+    batch_size      : int, default = 16
+        the number of samples per gradient update.
+    kernel_size     : int, default = 7
+        the length of the 1D convolution window
+    avg_pool_size   : int, default = 3
+        size of the average pooling windows
+    n_conv_layers   : int, default = 2
+        the number of convolutional plus average pooling layers
+    filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
+    callbacks       : list of tf.keras.callbacks.Callback objects, default = None
+    random_state    : int, or sklearn Random.state
+            loss="mean_squared_error",
+    verbose         : boolean, default = False
+        whether to output extra information
 
     Notes
     -----
@@ -47,7 +49,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
 
     def __init__(
             self,
-            nb_epochs=2000,
+            n_epochs=2000,
             batch_size=16,
             kernel_size=7,
             avg_pool_size=3,
@@ -56,23 +58,23 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
             callbacks=None,
             random_state=0,
             verbose=False,
-            model_name="cnn",
-            model_save_directory=None,
+            loss="mean_squared_error",
+            optimizer=keras.optimizers.Adam(),
+            metrics=["accuracy"],
     ):
-        super(CNNClassifier, self).__init__(
-            model_save_directory=model_save_directory,
-            model_name=model_name)
+        super(CNNClassifier, self).__init__()
         self.filter_sizes = filter_sizes
         self.nb_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.random_state = random_state
         self.kernel_size = kernel_size
-        self.verbose = verbose
         self.callbacks = callbacks
-        self.nb_epochs = nb_epochs
+        self.n_epochs = n_epochs
         self.batch_size = batch_size
-
-        self._is_fitted = False
+        self.verbose = verbose
+        self.loss = loss
+        self.optimizer = optimizer
+        self.metrics = metrics
 
     def build_model(self, input_shape, nb_classes, **kwargs):
         """
@@ -99,14 +101,14 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
-            loss="mean_squared_error",
-            optimizer=keras.optimizers.Adam(),
-            metrics=["accuracy"],
+            loss=self.loss,
+            optimizer=self.optimizer,
+            metrics=self.metrics,
         )
 
         return model
 
-    def fit(self, X, y, input_checks=True, validation_X=None,
+    def _fit(self, X, y, input_checks=True, validation_X=None,
             validation_y=None, **kwargs):
         """
         Fit the classifier on the training set (X, y)
@@ -140,8 +142,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
 
         if self.callbacks is None:
             self.callbacks = []
-
-        X = check_and_clean_data(X, y, input_checks=input_checks)
+# NEEDS SORTING
         y_onehot = self.convert_y(y)
 
         validation_data = \
@@ -153,7 +154,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         # just want the shape of each instance
         self.input_shape = X.shape[1:]
 
-        self.model = self.build_model(self.input_shape, self.nb_classes)
+        self.model = self.build_model(self.input_shape, self.n_classes)
 
         if self.verbose:
             self.model.summary()
@@ -162,13 +163,9 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
             X,
             y_onehot,
             batch_size=self.batch_size,
-            epochs=self.nb_epochs,
+            epochs=self.n_epochs,
             verbose=self.verbose,
             callbacks=self.callbacks,
             validation_data=validation_data,
         )
-
-        self._is_fitted = True
-        self.save_trained_model()
-
         return self
