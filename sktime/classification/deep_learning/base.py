@@ -8,14 +8,16 @@ because we can generalise tags, _predict and _predict_proba
 __author__ = ["James-Large", "ABostrom", "TonyBagnall"]
 __all__ = ["BaseDeepClassifier"]
 
+from abc import ABC, abstractmethod
+
 import numpy as np
-from abc import abstractmethod
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.utils import check_random_state
+
 from sktime.classification.base import BaseClassifier
 
 
-class BaseDeepClassifier(BaseClassifier):
+class BaseDeepClassifier(BaseClassifier, ABC):
     """Abstract base class for deep learning time series classifiers.
 
     The base classifier provides a deep learning default method for
@@ -26,22 +28,24 @@ class BaseDeepClassifier(BaseClassifier):
     ----------
     batch_size : int, default = 40
         training batch size for the model
+
     Arguments
     ---------
     self.model = None
 
     """
-    _tags = {"X_inner_mtype": "numpy3D"}
 
-    def __init__(self, batch_size=40):
+    _tags = {"X_inner_mtype": "numpy3D"}
+    # can probably handle multivariate??
+
+    def __init__(self, batch_size=40, random_state=None):
         self.batch_size = batch_size
+        self.random_state = random_state
         self.model_ = None
 
     @abstractmethod
     def build_model(self, input_shape, n_classes, **kwargs):
-        """
-        Construct a compiled, un-trained, keras model that is ready for
-        training
+        """Construct a compiled, un-trained, keras model that is ready for training.
 
         Parameters
         ----------
@@ -57,31 +61,31 @@ class BaseDeepClassifier(BaseClassifier):
         """
         ...
 
-    @abstractmethod
-    def _fit(self, X, y):
-        """Pass through abstract method from BaseClassifier."""
-        ...
-
     def _predict(self, X, **kwargs):
-        probs = _predict_proba(self, X,**kwargs)
-        return probs # Max
+        probs = self._predict_proba(self, X, **kwargs)
+        rng = check_random_state(self.random_state)
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in probs
+            ]
+        )
 
-    def _predict_proba(self, **kwargs):
-        """
-        Find probability estimates for each class for all cases in X.
+    def _predict_proba(self, X, **kwargs):
+        """Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
-        X : a nested pd.Dataframe, or (if input_checks=False) array-like of
-        shape = (n_instances, series_length, n_dimensions)
-            The training input samples. If a 2D array-like is passed,
-            n_dimensions is assumed to be 1.
-        input_checks: boolean
+        X : an np.ndarray of shape = (n_instances, n_dimensions, series_length)
+            The training input samples.         input_checks: boolean
             whether to check the X parameter
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
-
+        # Transpose to work correctly with keras
+        X = X.transpose((0, 2, 1))
         probs = self.model_.predict(X, self.batch_size, **kwargs)
 
         # check if binary classification
@@ -92,11 +96,11 @@ class BaseDeepClassifier(BaseClassifier):
         return probs
 
     def convert_y(self, y, label_encoder=None, onehot_encoder=None):
+        """Convert y to required Keras format."""
         if (label_encoder is None) and (onehot_encoder is None):
             # make the encoders and store in self
             self.label_encoder = LabelEncoder()
-            self.onehot_encoder = OneHotEncoder(sparse=False,
-                                                categories="auto")
+            self.onehot_encoder = OneHotEncoder(sparse=False, categories="auto")
             # categories='auto' to get rid of FutureWarning
 
             y = self.label_encoder.fit_transform(y)
