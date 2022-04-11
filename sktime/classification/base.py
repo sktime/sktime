@@ -41,12 +41,12 @@ class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
-    classifiers have to implement. Attributes with a underscore suffix are set in the
+    classifiers have to implement. Attributes with an underscore suffix are set in the
     method fit.
 
     Parameters
     ----------
-    classes_            : ndarray of class labels, possibly strings
+    classes_            : array of class labels, possibly strings
     n_classes_          : integer, number of classes (length of classes_)
     fit_time_           : integer, time (in milliseconds) for fit to run.
     _class_dictionary   : dictionary mapping classes_ onto integers 0...n_classes_-1.
@@ -298,6 +298,7 @@ class BaseClassifier(BaseEstimator, ABC):
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : 1D np.array of int, of shape [n_instances] - class labels for fitting
             indices correspond to instance indices in X
+
         Returns
         -------
         self :
