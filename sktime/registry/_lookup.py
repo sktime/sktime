@@ -115,7 +115,6 @@ def all_estimators(
             will be the name of the column of estimator class names and the string(s)
             passed in return_tags will serve as column names for all columns of
             tags that were optionally requested.
-            testing precommit!
 
     References
     ----------
