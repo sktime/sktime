@@ -14,6 +14,17 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.11.2 - 2022-04-11
+---------------------------
+
+Fixes
+~~~~~
+
+* [BUG] temp workaround for unnamed levels in hierarchical X passed to aggregator (:pr:`2432`)  :user:`fkiraly`
+* [BUG] forecasting pipeline dunder fix by (:pr:`2431`)  :user:`fkiraly`
+* [BUG] fix erroneous direct passthrough in `ColumnEnsembleForecaster` (:pr:`2436`) :user:`fkiraly`
+* [BUG] Incorrect indices returned by make_reduction on hierarchical data fixed by (:pr:`2438`) :user:`danbartl`
+
 Version 0.11.1 - 2022-04-10
 ---------------------------
 
