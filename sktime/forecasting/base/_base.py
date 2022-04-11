@@ -108,6 +108,68 @@ class BaseForecaster(BaseEstimator):
 
         super(BaseForecaster, self).__init__()
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformedTargetForecaster.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return self_as_pipeline * other
+        elif is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return other * self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 

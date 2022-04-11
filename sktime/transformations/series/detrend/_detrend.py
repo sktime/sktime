@@ -158,7 +158,7 @@ class Detrender(BaseTransformer):
             if len(difference) != 0:
                 raise ValueError(
                     "X contains columns that have not been "
-                    "seen in fit: " + difference
+                    "seen in fit: " + str(difference)
                 )
             for colname in Xt.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
@@ -199,7 +199,7 @@ class Detrender(BaseTransformer):
             if len(difference) != 0:
                 raise ValueError(
                     "X contains columns that have not been "
-                    "seen in fit: " + difference
+                    "seen in fit: " + str(difference)
                 )
             for colname in X.columns:
                 X_pred = self.forecaster_[colname].predict(fh=fh, X=y)
