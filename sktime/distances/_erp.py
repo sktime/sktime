@@ -8,8 +8,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances.base import DistanceCallable, NumbaDistance
+from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+from sktime.distances._dtw import _compute_dtw_path
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -17,6 +18,75 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 class _ErpDistance(NumbaDistance):
     """Edit distance with real penalty (erp) between two time series."""
+
+    def _distance_path_factory(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            window: float = None,
+            itakura_max_slope: float = None,
+            bounding_matrix: np.ndarray = None,
+            g: float = 0.0,
+            **kwargs: Any
+    ) -> DistancePathCallable:
+        """Create a no_python compiled erp distance path callable.
+
+        Similar to LCSS with a different penalty.
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
+        Parameters
+        ----------
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
+        window: float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding). Must be between 0 and 1.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
+        g: float, defaults = 0.
+            The reference value to penalise gaps.
+        kwargs: Any
+            Extra kwargs.
+
+        Returns
+        -------
+        Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
+            No_python compiled wdtw distance path callable.
+
+        Raises
+        ------
+        ValueError
+            If the input timeseries is not a numpy array.
+            If the input timeseries doesn't have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
+            If g is not a float.
+        """
+        _bounding_matrix = resolve_bounding_matrix(
+            x, y, window, itakura_max_slope, bounding_matrix
+        )
+        if not isinstance(g, float):
+            raise ValueError("The value of g must be a float.")
+
+        @njit(cache=True)
+        def numba_erp_distance(
+                _x: np.ndarray,
+                _y: np.ndarray
+        ) -> tuple[list, float]:
+            cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
+            path = _compute_dtw_path(cost_matrix)
+            return path, cost_matrix[-1, -1]
+
+        return numba_erp_distance
 
     def _distance_factory(
         self,

@@ -2,7 +2,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import warnings
-from typing import Any, Union, List
+from typing import Any
 
 import numpy as np
 from numba import njit
@@ -95,7 +95,7 @@ class _DtwDistance(NumbaDistance):
 
         Returns
         -------
-        Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]
+        Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
             No_python compiled Dtw distance path callable.
 
         Raises
@@ -114,7 +114,7 @@ class _DtwDistance(NumbaDistance):
         def numba_dtw_distance_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-        ) -> Union[List, float]:
+        ) -> tuple[list, float]:
             cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
             path = _compute_dtw_path(cost_matrix)
             return path, cost_matrix[-1, -1]
@@ -229,7 +229,7 @@ def _cost_matrix(
     return cost_matrix[1:, 1:]
 
 @njit(cache=True)
-def _compute_dtw_path(cost_matrix: np.ndarray) -> List:
+def _compute_dtw_path(cost_matrix: np.ndarray) -> list:
     """Compute the path from dtw cost matrix.
 
     Series should be shape (d, m), where d is the number of dimensions, m the series

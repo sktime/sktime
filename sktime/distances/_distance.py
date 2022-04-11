@@ -35,13 +35,13 @@ from sktime.distances.base import (
 
 
 def erp_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
-    g: float = 0.0,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        g: float = 0.0,
+        **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real penalty (ERP) distance between two series.
 
@@ -123,13 +123,13 @@ def erp_distance(
 
 
 def edr_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
-    epsilon: float = None,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        epsilon: float = None,
+        **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real sequences (EDR) between two series.
 
@@ -217,13 +217,13 @@ def edr_distance(
 
 
 def lcss_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
-    epsilon: float = 1.0,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        epsilon: float = 1.0,
+        **kwargs: Any,
 ) -> float:
     """Compute the longest common subsequence (LCSS) score between two time series.
 
@@ -310,14 +310,14 @@ def lcss_distance(
 
 
 def wddtw_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
-    g: float = 0.0,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        compute_derivative: DerivativeCallable = average_of_slope,
+        g: float = 0.0,
+        **kwargs: Any,
 ) -> float:
     r"""Compute the weighted derivative dynamic time warping (WDDTW) distance.
 
@@ -415,13 +415,13 @@ def wddtw_distance(
 
 
 def wdtw_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: np.ndarray = None,
-    g: float = 0.05,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        g: float = 0.05,
+        **kwargs: Any,
 ) -> float:
     """Compute the weighted dynamic time warping (WDTW) distance between time series.
 
@@ -512,13 +512,13 @@ def wdtw_distance(
 
 
 def ddtw_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        compute_derivative: DerivativeCallable = average_of_slope,
+        **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
 
@@ -611,12 +611,12 @@ def ddtw_distance(
 
 
 def dtw_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: np.ndarray = None,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        **kwargs: Any,
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
@@ -701,10 +701,10 @@ def dtw_distance(
 
 
 def msm_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    c: float = 0.0,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        c: float = 0.0,
+        **kwargs: Any,
 ) -> float:
     """Compute the move-split-merge distance.
 
@@ -857,6 +857,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     """
     return distance(x, y, metric="euclidean", **kwargs)
 
+
 def dtw_path(
         x: np.ndarray,
         y: np.ndarray,
@@ -937,13 +938,13 @@ def dtw_path(
 
 
 def wdtw_path(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: np.ndarray = None,
-    g: float = 0.05,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        g: float = 0.05,
+        **kwargs: Any,
 ) -> DistancePathCallable:
     """Compute the weighted dynamic time warping (wdtw) path between two time series.
 
@@ -1024,13 +1025,13 @@ def wdtw_path(
 
 
 def ddtw_path(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        compute_derivative: DerivativeCallable = average_of_slope,
+        **kwargs: Any,
 ) -> DistancePathCallable:
     r"""Compute the derivative dynamic time warping (DDTW) path between time series.
 
@@ -1110,6 +1111,7 @@ def ddtw_path(
 
     return distance_path(x, y, metric="ddtw", **format_kwargs)
 
+
 def wddtw_path(
         x: np.ndarray,
         y: np.ndarray,
@@ -1119,7 +1121,7 @@ def wddtw_path(
         compute_derivative: DerivativeCallable = average_of_slope,
         g: float = 0.0,
         **kwargs: Any,
-) -> float:
+) -> DistancePathCallable:
     r"""Compute the weighted derivative dynamic time warping (WDDTW) path.
 
     WDDTW was first proposed in [1]_ as an extension of DDTW. By adding a weight
@@ -1168,9 +1170,9 @@ def wddtw_path(
     Returns
     -------
     np.ndarray (1d array of tuples)
-        Ddtw path.
+        Wddtw path.
     float
-        Ddtw distance between x and y.
+        Wddtw distance between x and y.
 
     Raises
     ------
@@ -1204,18 +1206,260 @@ def wddtw_path(
 
     return distance_path(x, y, metric="wddtw", **format_kwargs)
 
+def edr_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        epsilon: float = None,
+        **kwargs: Any,
+) -> DistancePathCallable:
+    """Compute the Edit distance for real sequences (EDR) path between two series.
+
+    EDR computes the minimum number of elements (as a percentage) that must be removed
+    from x and y so that the sum of the distance between the remaining signal elements
+    lies within the tolerance (epsilon). EDR was originally proposed in [1]_.
+
+    The value returned will be between 0 and 1 per time series. The value will
+    represent as a percentage of elements that must be removed for the time series to
+    be an exact match.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d array), defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    epsilon : float, defaults = None
+        Matching threshold to determine if two subsequences are considered close
+        enough to be considered 'common'. If not specified as per the original paper
+        epsilon is set to a quarter of the maximum standard deviation.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Edr path.
+    float
+        Edr distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    .. [1] Lei Chen, M. Tamer Özsu, and Vincent Oria. 2005. Robust and fast similarity
+    search for moving object trajectories. In Proceedings of the 2005 ACM SIGMOD
+    international conference on Management of data (SIGMOD '05). Association for
+    Computing Machinery, New York, NY, USA, 491–502.
+    DOI:https://doi.org/10.1145/1066157.1066213
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "epsilon": epsilon,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="edr", **format_kwargs)
+
+def erp_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        g: float = 0.0,
+        **kwargs: Any,
+) -> DistancePathCallable:
+    """Compute the Edit distance for real penalty (ERP) path between two series.
+
+    ERP, first proposed in [1]_, attempts align time series
+    by better considering how indexes are carried forward through the cost matrix.
+    Usually in the dtw cost matrix, if an alignment can't be found the previous value
+    is carried forward. Erp instead proposes the idea of gaps or sequences of points
+    that have no matches. These gaps are then punished based on their distance from 'g'.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    g: float, defaults = 0.
+        The reference value to penalise gaps.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Erp path.
+    float
+        Erp distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 3 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+        If g is not a float.
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    .. [1] Lei Chen and Raymond Ng. 2004. On the marriage of Lp-norms and edit distance.
+    In Proceedings of the Thirtieth international conference on Very large data bases
+     - Volume 30 (VLDB '04). VLDB Endowment, 792–803.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "g": g,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="erp", **format_kwargs)
+
+def lcss_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        epsilon: float = 1.0,
+        **kwargs: Any,
+) -> DistancePathCallable:
+    """Compute the longest common subsequence (LCSS) path between two time series.
+
+    LCSS attempts to find the longest common sequence between two time series and
+    returns a value that is the percentage that longest common sequence assumes.
+    Originally present in [1]_, LCSS is computed by matching indexes that are
+    similar up until a defined threshold (epsilon).
+
+    The value returned will be between 0.0 and 1.0, where 0.0 means the two time series
+    are exactly the same and 1.0 means they are complete opposites.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    epsilon : float, defaults = 1.
+        Matching threshold to determine if two subsequences are considered close
+        enough to be considered 'common'.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Ddtw path.
+    float
+        Lcss distance between x and y. The value returned will be between 0.0 and 1.0,
+        where 0.0 means the two time series are exactly the same and 1.0 means they
+        are complete opposites.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    .. [1] M. Vlachos, D. Gunopoulos, and G. Kollios. 2002. "Discovering
+        Similar Multidimensional Trajectories", In Proceedings of the
+        18th International Conference on Data Engineering (ICDE '02).
+        IEEE Computer Society, USA, 673.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "epsilon": epsilon,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="lcss", **format_kwargs)
+
+
 def distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+        x: np.ndarray,
+        y: np.ndarray,
+        metric: Union[
+            str,
+            Callable[
+                [np.ndarray, np.ndarray, dict], Callable[
+                    [np.ndarray, np.ndarray], float]
+            ],
+            Callable[[np.ndarray, np.ndarray], float],
+            NumbaDistance,
         ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ],
-    **kwargs: Any,
+        **kwargs: Any,
 ) -> float:
     """Compute the distance between two time series.
 
@@ -1286,23 +1530,25 @@ def distance(
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    _metric_callable = _resolve_metric_to_factory(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    _metric_callable = _resolve_metric_to_factory(metric, _x, _y, _METRIC_INFOS,
+                                                  **kwargs)
 
     return _metric_callable(_x, _y)
 
 
 def distance_factory(
-    x: np.ndarray = None,
-    y: np.ndarray = None,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ] = "euclidean",
-    **kwargs: Any,
+        x: np.ndarray = None,
+        y: np.ndarray = None,
+        metric: Union[
+            str,
+            Callable[
+                [np.ndarray, np.ndarray, dict], Callable[
+                    [np.ndarray, np.ndarray], float]
+            ],
+            Callable[[np.ndarray, np.ndarray], float],
+            NumbaDistance,
+        ] = "euclidean",
+        **kwargs: Any,
 ) -> DistanceCallable:
     """Create a no_python distance callable.
 
@@ -1366,17 +1612,18 @@ def distance_factory(
 
 
 def pairwise_distance(
-    x: np.ndarray,
-    y: np.ndarray = None,
-    metric: Union[
-        str,
-        Callable[
-            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
-        ],
-        Callable[[np.ndarray, np.ndarray], float],
-        NumbaDistance,
-    ] = "euclidean",
-    **kwargs: Any,
+        x: np.ndarray,
+        y: np.ndarray = None,
+        metric: Union[
+            str,
+            Callable[
+                [np.ndarray, np.ndarray, dict], Callable[
+                    [np.ndarray, np.ndarray], float]
+            ],
+            Callable[[np.ndarray, np.ndarray], float],
+            NumbaDistance,
+        ] = "euclidean",
+        **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two time series.
 
@@ -1455,7 +1702,8 @@ def pairwise_distance(
         y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
-    _metric_callable = _resolve_metric_to_factory(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
+    _metric_callable = _resolve_metric_to_factory(metric, _x[0], _y[0], _METRIC_INFOS,
+                                                  **kwargs)
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
 
@@ -1465,7 +1713,8 @@ def distance_path(
         metric: Union[
             str,
             Callable[
-                [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+                [np.ndarray, np.ndarray, dict], Callable[
+                    [np.ndarray, np.ndarray], float]
             ],
             Callable[[np.ndarray, np.ndarray], float],
             NumbaDistance,
@@ -1535,7 +1784,8 @@ def distance_path_factory(
         metric: Union[
             str,
             Callable[
-                [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+                [np.ndarray, np.ndarray, dict], Callable[
+                    [np.ndarray, np.ndarray], float]
             ],
             Callable[[np.ndarray, np.ndarray], float],
             NumbaDistance,
@@ -1622,18 +1872,21 @@ _METRIC_INFOS = [
         aka={"erp", "edit distance with real penalty"},
         dist_func=erp_distance,
         dist_instance=_ErpDistance(),
+        dist_path_func=erp_path
     ),
     MetricInfo(
         canonical_name="edr",
         aka={"edr", "edit distance for real sequences"},
         dist_func=edr_distance,
         dist_instance=_EdrDistance(),
+        dist_path_func=edr_path
     ),
     MetricInfo(
         canonical_name="lcss",
         aka={"lcss", "longest common subsequence"},
         dist_func=lcss_distance,
         dist_instance=_LcssDistance(),
+        dist_path_func=lcss_path
     ),
     MetricInfo(
         canonical_name="squared",
@@ -1683,7 +1936,6 @@ _METRIC_CALLABLES = dict(
     (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
 )
 _METRICS_NAMES = list(_METRICS.keys())
-
 
 ALL_DISTANCES = (
     ddtw_distance,

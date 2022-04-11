@@ -2,7 +2,7 @@
 __author__ = ["chrisholder"]
 
 import warnings
-from typing import Any, Callable, Union
+from typing import Any, Callable
 
 import numpy as np
 from numba import njit
@@ -121,7 +121,7 @@ class _DdtwDistance(NumbaDistance):
 
         Returns
         -------
-        Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]
+        Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
             No_python compiled wdtw distance path callable.
 
         Raises
@@ -148,7 +148,7 @@ class _DdtwDistance(NumbaDistance):
         def numba_ddtw_distance_path(
             _x: np.ndarray,
             _y: np.ndarray,
-        ) -> Union[list, float]:
+        ) -> tuple[list, float]:
             _x = compute_derivative(_x)
             _y = compute_derivative(_y)
             cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)

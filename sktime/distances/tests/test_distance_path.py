@@ -16,13 +16,13 @@ from tslearn.metrics import dtw_path as tslearn_path
 from tslearn.metrics.dtw_variants import _return_path
 
 def test_distance_path():
-    from sktime.distances._distance import ddtw_path
+    from sktime.distances._distance import lcss_path
 
     x= create_test_distance_numpy(10, 10)
     y= create_test_distance_numpy(10, 10, random_state=2)
-    callable_path = ddtw_path
-    metric = 'dtw'
+    callable_path = lcss_path
+    metric = 'lcss'
 
     path, dist = distance_path(x, y, metric)
+    path2, dist2 = callable_path(x, y)
     joe = ''
-
