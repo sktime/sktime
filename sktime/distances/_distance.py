@@ -1110,19 +1110,17 @@ def ddtw_path(
 
     return distance_path(x, y, metric="ddtw", **format_kwargs)
 
-
-
-def wddtw_distance(
-    x: np.ndarray,
-    y: np.ndarray,
-    window: Union[float, None] = None,
-    itakura_max_slope: Union[float, None] = None,
-    bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = average_of_slope,
-    g: float = 0.0,
-    **kwargs: Any,
+def wddtw_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: Union[np.ndarray, None] = None,
+        compute_derivative: DerivativeCallable = average_of_slope,
+        g: float = 0.0,
+        **kwargs: Any,
 ) -> float:
-    r"""Compute the weighted derivative dynamic time warping (WDDTW) distance.
+    r"""Compute the weighted derivative dynamic time warping (WDDTW) path.
 
     WDDTW was first proposed in [1]_ as an extension of DDTW. By adding a weight
     to the derivative it means the alignment isn't only considering the shape of the
@@ -1169,8 +1167,10 @@ def wddtw_distance(
 
     Returns
     -------
+    np.ndarray (1d array of tuples)
+        Ddtw path.
     float
-        Wddtw distance between x and y.
+        Ddtw distance between x and y.
 
     Raises
     ------
@@ -1203,7 +1203,6 @@ def wddtw_distance(
     format_kwargs = {**format_kwargs, **kwargs}
 
     return distance_path(x, y, metric="wddtw", **format_kwargs)
-
 
 def distance(
     x: np.ndarray,

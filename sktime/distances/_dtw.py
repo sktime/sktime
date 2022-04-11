@@ -245,9 +245,8 @@ def _compute_dtw_path(cost_matrix: np.ndarray) -> List:
     np.ndarray
         Array containing tuple for each path location.
     """
-    i, j = cost_matrix.shape
-    alignment = []
-    alignment.append((i - 1, j - 1))
+    x_size, y_size = cost_matrix.shape
+    alignment = [(x_size - 1, y_size - 1)]
     while alignment[-1] != (0, 0):
         i, j = alignment[-1]
         if i == 0:

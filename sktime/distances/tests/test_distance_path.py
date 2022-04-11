@@ -12,6 +12,8 @@ from sktime.distances.tests._shared_tests import (
 )
 from sktime.distances.tests._utils import create_test_distance_numpy
 from sktime.distances._distance import distance_path, dtw_path, distance, _METRIC_INFOS
+from tslearn.metrics import dtw_path as tslearn_path
+from tslearn.metrics.dtw_variants import _return_path
 
 def test_distance_path():
     from sktime.distances._distance import ddtw_path
@@ -19,10 +21,8 @@ def test_distance_path():
     x= create_test_distance_numpy(10, 10)
     y= create_test_distance_numpy(10, 10, random_state=2)
     callable_path = ddtw_path
-    metric = 'wddtw'
+    metric = 'dtw'
 
-    dist = distance(x, y, metric)
-    path = distance_path(x, y, metric)
-    callable_path = callable_path(x, y)
+    path, dist = distance_path(x, y, metric)
     joe = ''
 
