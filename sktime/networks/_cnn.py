@@ -15,14 +15,16 @@ class CNNNetwork(BaseDeepNetwork):
 
     Parameters
     ----------
-    kernel_size: int, default = 7
+    kernel_size     : int, default = 7
         specifying the length of the 1D convolution window
-    avg_pool_size: int, default = 3
+    avg_pool_size   : int, default = 3
         size of the average pooling windows
-    n_conv_layers: int, default = 2
+    n_conv_layers   : int, default = 2
         the number of convolutional plus average pooling layers
-    filter_sizes: array of int, shape = (nb_conv_layers)
-    random_state: int, default = 0 todo: change to NONE
+    filter_sizes    : array of int, shape = (nb_conv_layers)
+    activation      : string, default = sigmoid
+        keras activation function
+    random_state    : int, default = 0
         seed to any needed random actions
 
     Notes
@@ -42,6 +44,7 @@ class CNNNetwork(BaseDeepNetwork):
             avg_pool_size=3,
             n_conv_layers=2,
             filter_sizes=[6, 12],
+            activation="sigmoid",
             random_state=0,
     ):
         self.random_state = random_state
@@ -49,6 +52,7 @@ class CNNNetwork(BaseDeepNetwork):
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
         self.filter_sizes = filter_sizes
+        self.activation = activation
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -63,35 +67,36 @@ class CNNNetwork(BaseDeepNetwork):
         input_layer : a keras layer
         output_layer : a keras layer
         """
+        # not sure of the whole padding thing
         padding = "valid"
         input_layer = keras.layers.Input(input_shape)
-
+        # sort this out, why hard coded to 60?
         if input_shape[0] < 60:
             padding = "same"
 
-        if len(self.filter_sizes) > self.nb_conv_layers:
-            self.filter_sizes = self.filter_sizes[: self.nb_conv_layers]
-        elif len(self.filter_sizes) < self.nb_conv_layers:
+        # this does what?
+        if len(self.filter_sizes) > self.n_conv_layers:
+            self.filter_sizes = self.filter_sizes[: self.n_conv_layers]
+        elif len(self.filter_sizes) < self.n_conv_layers:
             self.filter_sizes = self.filter_sizes + [self.filter_sizes[-1]] * (
-                    self.nb_conv_layers - len(self.filter_sizes)
+                    self.n_conv_layers - len(self.filter_sizes)
             )
-
         conv = keras.layers.Conv1D(
             filters=self.filter_sizes[0],
             kernel_size=self.kernel_size,
             padding=padding,
-            activation="sigmoid",
+            activation=self.activation,
         )(input_layer)
         conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(
             conv
         )
 
-        for i in range(1, self.nb_conv_layers):
+        for i in range(1, self.n_conv_layers):
             conv = keras.layers.Conv1D(
                 filters=self.filter_sizes[i],
                 kernel_size=self.kernel_size,
                 padding=padding,
-                activation="sigmoid",
+                activation=self.activation,
             )(conv)
             conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(
                 conv
