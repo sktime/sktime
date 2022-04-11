@@ -22,9 +22,9 @@ class AutoReg(_StatsModelsAdapter):
         A 1-d endogenous response variable. The dependent variable.
     lags: {None, int, list[int]}
         The number of lags to include in the model if an integer or the list of lag
-        indices to include. For example, [1,4] will only include lags 1 and 4 while lags=4
-        will include lags 1, 2, 3, and 4. None excludes all AR lags, and behave identically
-        to 0
+        indices to include. For example, [1,4] will only include lags 1 and 4
+        while lags=4 will include lags 1, 2, 3, and 4. None excludes all AR lags,
+        and behave identically to 0
     trend : str {"c", "ct", "n", "t"} (default="c")
         The trend to include in the modle
         "c" - add constant
@@ -34,19 +34,22 @@ class AutoReg(_StatsModelsAdapter):
         Note that these are prepended to the columns of the dataset.
     seasonal: bool {True, False}
         Flag indicating whether to include seasonal dummies in the model. If seasonal
-        is True and trend includdes 'c', then the first period is excluded from the 
+        is True and trend includdes 'c', then the first period is excluded from the
         seasonal terms
     exog: array_like, optional
-        Exogenous variables to include in the model. Must have the same number of observations
-        as endogenous and should be aligned so that endog[i] is regressed on exog[i]
+        Exogenous variables to include in the model. Must have the same number
+        of observations as endogenous and should be aligned so that
+        endog[i] is regressed on exog[i]
     missing: str
-        Available options are 'none', 'drop', and 'raise'. If 'none', no nan checking is done. 
-        If 'drop', any observations with nans are dropped. If 'raise', an ereror is raised. 
+        Available options are 'none', 'drop', and 'raise'.
+        If 'none', no nan checking is done.
+        If 'drop', any observations with nans are dropped.
+        If 'raise', an ereror is raised.
         Default is 'none'.
 
     References
     ----------
-    [1]Poskitt, D. S. (1994). A Note on Autoregressive Modeling. 
+    [1]Poskitt, D. S. (1994). A Note on Autoregressive Modeling.
     Econometric Theory, 10(5), 884–899. http://www.jstor.org/stable/3532858
 
     Examples
@@ -77,8 +80,8 @@ class AutoReg(_StatsModelsAdapter):
         self.trend = trend
         self.lags = lags
         self.missing = missing
-        self.seasonal=seasonal
-        self.exog=None
+        self.seasonal = seasonal
+        self.exog = None
 
         super(AutoReg, self).__init__()
 
@@ -100,12 +103,12 @@ class AutoReg(_StatsModelsAdapter):
         self : returns an instance of self.
         """
         self._forecaster = _AutoReg(
-            endog=y, 
-            exog=self.exog, 
-            lags = self.lags, 
-            missing=self.missing, 
+            endog=y,
+            exog=self.exog,
+            lags=self.lags,
+            missing=self.missing,
             trend=self.trend,
-            seasonal=self.seasonal
+            seasonal=self.seasonal,
         )
         self._fitted_forecaster = self._forecaster.fit()
         return self
@@ -114,6 +117,7 @@ class AutoReg(_StatsModelsAdapter):
         """Get a summary of the fitted forecaster.
 
         This is the same as the implementation in statsmodels:
-        https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_structural_harvey_jaeger.html
+        https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_
+        structural_harvey_jaeger.html
         """
         return self._fitted_forecaster.summary()
