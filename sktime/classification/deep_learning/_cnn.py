@@ -36,6 +36,10 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
             loss="mean_squared_error",
     verbose         : boolean, default = False
         whether to output extra information
+    loss            : string, default="mean_squared_error"
+        fit parameter for the keras model
+    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics         : list of strings, default=["accuracy"],
 
     Notes
     -----
@@ -105,10 +109,9 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
             optimizer=self.optimizer,
             metrics=self.metrics,
         )
-
         return model
 
-    def _fit(self, X, y, input_checks=True, validation_X=None,
+    def _fit(self, X, y, validation_X=None,
             validation_y=None, **kwargs):
         """
         Fit the classifier on the training set (X, y)
