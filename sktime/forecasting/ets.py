@@ -444,7 +444,7 @@ class AutoETS(_StatsModelsAdapter):
 
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end
+            start=start, end=end, random_state=self.random_state
         )
 
         pred_int = pd.DataFrame()
