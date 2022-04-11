@@ -45,6 +45,7 @@ def all_estimators(
     exclude_estimators=None,
     return_names=True,
     as_dataframe=False,
+    suppress_import_stdout=False
 ):
     """Get a list of all estimators from sktime.
 
@@ -77,6 +78,8 @@ def all_estimators(
     as_dataframe: bool, optional (default=False)
                 if False, return is as described below;
                 if True, return is converted into a DataFrame for pretty display
+    suppress_import_stdout : bool, optional. Default=False
+        whether to suppress stdout printout upon import.
 
     Returns
     -------
@@ -95,6 +98,8 @@ def all_estimators(
     ----------
     Modified version from scikit-learn's `all_estimators()`.
     """
+    import io
+    import sys
     import warnings
 
     MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking")
@@ -144,7 +149,13 @@ def all_estimators(
                 continue
 
             try:
-                module = import_module(module_name)
+                if suppress_import_stdout:
+                    # setup text trap, import, then restore
+                    sys.stdout = io.StringIO()
+                    module = import_module(module_name)
+                    sys.stdout = sys.__stdout__
+                else:
+                    module = import_module(module_name)
                 classes = inspect.getmembers(module, inspect.isclass)
 
                 # Filter classes
