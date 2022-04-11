@@ -78,7 +78,7 @@ class _ErpDistance(NumbaDistance):
             raise ValueError("The value of g must be a float.")
 
         @njit(cache=True)
-        def numba_erp_distance(
+        def numba_erp_path(
                 _x: np.ndarray,
                 _y: np.ndarray
         ) -> tuple[list, float]:
@@ -86,7 +86,7 @@ class _ErpDistance(NumbaDistance):
             path = _compute_dtw_path(cost_matrix)
             return path, cost_matrix[-1, -1]
 
-        return numba_erp_distance
+        return numba_erp_path
 
     def _distance_factory(
         self,

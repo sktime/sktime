@@ -1447,6 +1447,62 @@ def lcss_path(
     return distance_path(x, y, metric="lcss", **format_kwargs)
 
 
+def msm_path(
+        x: np.ndarray,
+        y: np.ndarray,
+        c: float = 0.0,
+        **kwargs: Any,
+) -> float:
+    """Compute the move-split-merge path between time series.
+
+    This metric uses as building blocks three fundamental operations: Move, Split,
+    and Merge. A Move operation changes the value of a single element, a Split
+    operation converts a single element into two consecutive elements, and a Merge
+    operation merges two consecutive elements into one. Each operation has an
+    associated cost, and the MSM distance between two time series is defined to be
+    the cost of the cheapest sequence of operations that transforms the first time
+    series into the second one.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Ddtw path.
+    float
+        Msm distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
+    for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
+    25(6):1425–1438, 2013.
+    """
+    format_kwargs = {
+        "c": c,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="msm", **format_kwargs)
+
 def distance(
         x: np.ndarray,
         y: np.ndarray,
@@ -1927,6 +1983,7 @@ _METRIC_INFOS = [
         aka={"msm", "move-split-merge"},
         dist_func=msm_distance,
         dist_instance=_MsmDistance(),
+        dist_path_func=msm_path
     ),
 ]
 
