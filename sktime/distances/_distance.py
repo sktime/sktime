@@ -29,7 +29,8 @@ from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import (
     DistanceCallable,
     MetricInfo,
-    NumbaDistance
+    NumbaDistance,
+    DistancePathCallable
 )
 
 
@@ -863,7 +864,7 @@ def dtw_path(
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: np.ndarray = None,
         **kwargs: Any
-):
+) -> DistancePathCallable:
     r"""Compute the dynamic time warping (DTW) path between two time series.
 
     Originally proposed in [1]_ DTW computes the distance between two time series by
@@ -943,7 +944,7 @@ def wdtw_path(
     bounding_matrix: np.ndarray = None,
     g: float = 0.05,
     **kwargs: Any,
-) -> float:
+) -> DistancePathCallable:
     """Compute the weighted dynamic time warping (wdtw) path between two time series.
 
     First proposed in [1]_, WDTW adds a  adds a multiplicative weight penalty based on
@@ -988,9 +989,9 @@ def wdtw_path(
     Returns
     -------
     np.ndarray (1d array of tuples)
-        Dtw path.
+        Wdtw path.
     float
-        Dtw distance between x and y.
+        Wdtw distance between x and y.
 
     Raises
     ------
@@ -1004,18 +1005,6 @@ def wdtw_path(
         NumbaDistance.
         If the metric type cannot be determined
         If both window and itakura_max_slope are set
-
-    Examples
-    --------
-    >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
-    >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> wdtw_distance(x_1d, y_1d)
-    27.975712863958133
-
-    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
-    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> wdtw_distance(x_2d, y_2d)
-    243.2106560107827
 
     References
     ----------
@@ -1032,6 +1021,189 @@ def wdtw_path(
     format_kwargs = {**format_kwargs, **kwargs}
 
     return distance_path(x, y, metric="wdtw", **format_kwargs)
+
+
+def ddtw_path(
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    compute_derivative: DerivativeCallable = average_of_slope,
+    **kwargs: Any,
+) -> DistancePathCallable:
+    r"""Compute the derivative dynamic time warping (DDTW) path between time series.
+
+    DDTW is an adaptation of DTW originally proposed in [1]_. DDTW attempts to
+    improve on dtw by better account for the 'shape' of the time series.
+    This is done by considering y axis data points as higher level features of 'shape'.
+    To do this the first derivative of the sequence is taken, and then using this
+    derived sequence a dtw computation is done.
+
+    The default derivative used is:
+
+    .. math::
+        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+
+    Where q is the original time series and d_q is the derived time series.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    compute_derivative: Callable[[np.ndarray], np.ndarray],
+                            defaults = average slope difference
+        Callable that computes the derivative. If none is provided the average of the
+        slope between two points used.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    np.ndarray (1d array of tuples)
+        Ddtw path.
+    float
+        Ddtw distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric or compute derivative callable is not no_python compiled.
+        If the metric type cannot be determined
+        If the compute derivative callable is not no_python compiled.
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    .. [1] Keogh, Eamonn & Pazzani, Michael. (2002). Derivative Dynamic Time Warping.
+        First SIAM International Conference on Data Mining.
+        1. 10.1137/1.9781611972719.1.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "compute_derivative": compute_derivative,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="ddtw", **format_kwargs)
+
+
+
+def wddtw_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    compute_derivative: DerivativeCallable = average_of_slope,
+    g: float = 0.0,
+    **kwargs: Any,
+) -> float:
+    r"""Compute the weighted derivative dynamic time warping (WDDTW) distance.
+
+    WDDTW was first proposed in [1]_ as an extension of DDTW. By adding a weight
+    to the derivative it means the alignment isn't only considering the shape of the
+    time series, but also the phase.
+
+    Formally the derivative is calculated as:
+
+    .. math::
+        D_{x}[q] = \frac{{}(q_{i} - q_{i-1} + ((q_{i+1} - q_{i-1}/2)}{2}
+
+    Therefore a weighted derivative can be calculated using D (the derivative) as:
+
+    .. math::
+        d_{w}(x_{i}, y_{j}) = ||w_{|i-j|}(D_{x_{i}} - D_{y_{j}})||
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    compute_derivative: Callable[[np.ndarray], np.ndarray],
+                            defaults = average slope difference
+        Callable that computes the derivative. If none is provided the average of the
+        slope between two points used.
+    g: float, defaults = 0.
+        Constant that controls the curvature (slope) of the function; that is, g
+        controls the level of penalisation for the points with larger phase
+        difference.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    float
+        Wddtw distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If the metric type cannot be determined
+        If the compute derivative callable is not no_python compiled.
+        If the value of g is not a float
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    .. [1] Young-Seon Jeong, Myong K. Jeong, Olufemi A. Omitaomu, Weighted dynamic time
+    warping for time series classification, Pattern Recognition, Volume 44, Issue 9,
+    2011, Pages 2231-2240, ISSN 0031-3203, https://doi.org/10.1016/j.patcog.2010.09.022.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "compute_derivative": compute_derivative,
+        "g": g,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_path(x, y, metric="wddtw", **format_kwargs)
+
 
 def distance(
     x: np.ndarray,
@@ -1288,7 +1460,6 @@ def pairwise_distance(
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
 
-
 def distance_path(
         x: np.ndarray,
         y: np.ndarray,
@@ -1428,6 +1599,7 @@ def distance_path_factory(
     _y = to_numba_timeseries(y)
 
     dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    # TODO: add a check to see if distance_path_factory is implemented
     callable = dist_instance.distance_path_factory(_x, _y, **kwargs)
 
     @njit(cache=True)
@@ -1482,6 +1654,7 @@ _METRIC_INFOS = [
         aka={"ddtw", "derivative dynamic time warping"},
         dist_func=ddtw_distance,
         dist_instance=_DdtwDistance(),
+        dist_path_func=ddtw_path
     ),
     MetricInfo(
         canonical_name="wdtw",
@@ -1495,6 +1668,7 @@ _METRIC_INFOS = [
         aka={"wddtw", "weighted derivative dynamic time warping"},
         dist_func=wddtw_distance,
         dist_instance=_WddtwDistance(),
+        dist_path_func=wddtw_path
     ),
     MetricInfo(
         canonical_name="msm",

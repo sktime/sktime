@@ -108,7 +108,7 @@ class _WdtwDistance(NumbaDistance):
         )
 
         @njit(cache=True)
-        def numba_dtw_distance_path(
+        def numba_wdtw_distance_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
         ) -> Union[list, float]:
@@ -116,7 +116,7 @@ class _WdtwDistance(NumbaDistance):
             path = _compute_dtw_path(cost_matrix)
             return path, cost_matrix[-1, -1]
 
-        return numba_dtw_distance_path
+        return numba_wdtw_distance_path
 
     def _distance_factory(
         self,
