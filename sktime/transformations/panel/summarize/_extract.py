@@ -2,7 +2,7 @@
 """Sequence feature extraction transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "srggrs", "mantmic"]
 
 import numpy as np
 import pandas as pd
@@ -26,11 +26,15 @@ class PlateauFinder(BaseTransformer):
     value : {int, float, np.nan, np.inf}
         Value for which to find segments
     min_length : int
-        Minimum lengths of segments with same value to include, where the length is number of consecutive samples within a segment.
+        Minimum lengths of segments with same value to include, where the
+        length is number of consecutive samples within a segment.
         If min_length is set to 1, the transformer can be used as a value
         finder.
     max_length : int
-        Maximum lengths of segments with same value to include, where the length is number of consecutive samples within a segment. If max_length is set to None, a maximum segment length filter is not applied to segments
+        Maximum lengths of segments with same value to include, where the
+        length is number of consecutive samples within a segment. If max_length
+        is set to None, a maximum segment length filter is not applied to
+        segments
     """
 
     _tags = {
