@@ -81,10 +81,10 @@ class _Pipeline(
         # Shallow copy
         return estimator_tuples
 
-    def _iter_transformers(self, reverse=False):
+    def _iter_transformers(self, reverse=False, fc_idx=-1):
 
         # exclude final forecaster
-        steps = self.steps_[:-1]
+        steps = self.steps_[:fc_idx]
 
         if reverse:
             steps = reversed(steps)
@@ -96,13 +96,14 @@ class _Pipeline(
         """Return the length of the Pipeline."""
         return len(self.steps)
 
-    def _get_inverse_transform(self, y, X=None, mode=None):
+    def _get_inverse_transform(self, transformers, y, X=None, mode=None):
         """Iterate over transformers.
 
         Inverse transform y (used for y_pred and pred_int)
 
         Parameters
         ----------
+        transformers : list of (str, transformer) to apply
         y : pd.Series, pd.DataFrame
             Target series
         X : pd.Series, pd.DataFrame
@@ -115,7 +116,7 @@ class _Pipeline(
         y : pd.Series, pd.DataFrame
             Inverse transformed y
         """
-        for _, _, transformer in self._iter_transformers(reverse=True):
+        for _, transformer in reversed(transformers):
             # skip sktime transformers where inverse transform
             # is not wanted ur meaningful (e.g. Imputer, HampelFilter)
             skip_trafo = transformer.get_tag("skip-inverse-transform", False)
@@ -835,7 +836,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         y_pred = self.forecaster_.predict(fh=fh, X=X)
         # inverse transform y_pred
-        y_pred = self._get_inverse_transform(y_pred, X)
+        y_pred = self._get_inverse_transform(self.transformers_pre_, y_pred, X)
 
         # transform post
         for _, t in self.transformers_post_:
@@ -888,7 +889,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         zt = check_series(Z)
-        for _, _, transformer in self._iter_transformers():
+        for _, transformer in self.transformers_pre_:
             zt = transformer.transform(zt, X)
         return zt
 
@@ -909,7 +910,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
         """
         self.check_is_fitted()
         Z = check_series(Z)
-        return self._get_inverse_transform(Z, X)
+        return self._get_inverse_transform(self.transformers_pre_, Z, X)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
@@ -944,7 +945,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
                 at quantile probability in second-level col index, for each row index.
         """
         pred_int = self.forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
-        pred_int_transformed = self._get_inverse_transform(pred_int, mode="proba")
+        pred_int_transformed = self._get_inverse_transform(
+            self.transformers_pre_, pred_int, mode="proba"
+        )
         return pred_int_transformed
 
     def _predict_interval(self, fh, X=None, coverage=None):
@@ -984,5 +987,7 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         pred_int = self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
-        pred_int_transformed = self._get_inverse_transform(pred_int, mode="proba")
+        pred_int_transformed = self._get_inverse_transform(
+            self.transformers_pre_, pred_int, mode="proba"
+        )
         return pred_int_transformed
