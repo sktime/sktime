@@ -45,7 +45,7 @@ def all_estimators(
     exclude_estimators=None,
     return_names=True,
     as_dataframe=False,
-    suppress_import_stdout=False
+    suppress_import_stdout=False,
 ):
     """Get a list of all estimators from sktime.
 
