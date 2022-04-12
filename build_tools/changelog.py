@@ -16,7 +16,7 @@ OWNER = "alan-turing-institute"
 REPO = "sktime"
 
 
-def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:
+def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:  # noqa
     "Fetch a page of pull requests"
     params = {"state": "closed", "page": page, "per_page": 50}
     r = httpx.get(f"https://api.github.com/repos/{OWNER}/{REPO}/pulls",
@@ -24,7 +24,7 @@ def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:
     return [pr for pr in r.json() if pr["merged_at"]]
 
 
-def fetch_pull_requests_since_last_release() -> List[Dict]:
+def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
 
     release = httpx.get(
         f"https://api.github.com/repos/{OWNER}/{REPO}/releases/latest",
@@ -43,7 +43,7 @@ def fetch_pull_requests_since_last_release() -> List[Dict]:
     return all_pulls
 
 
-def render_contributors(prs: List, fmt: str = "rst"):
+def render_contributors(prs: List, fmt: str = "rst"):  # noqa
     "Find unique authors and print a list in  given format"
     authors = sorted(set(pr["user"]["login"] for pr in prs), key=lambda x: x.lower())
 
@@ -57,7 +57,7 @@ def render_contributors(prs: List, fmt: str = "rst"):
         print(",\n".join(f":user:`{user}`" for user in authors))
 
 
-def assign_prs(prs, categs):
+def assign_prs(prs, categs):  # noqa
 
     assigned = defaultdict(list)
 
@@ -74,12 +74,12 @@ def assign_prs(prs, categs):
     return assigned
 
 
-def render_row(pr):
+def render_row(pr):  # noqa
     "Render a single row with PR in restructuredText format"
     print("*", pr["title"], f"(:pr:`{pr['number']}`)", f":user:`{pr['user']['login']}`")
 
     
-def render_changelog(prs, assigned):
+def render_changelog(prs, assigned):  # noqa
     "Render changelog"
     for title, _ in assigned.items():
         pr_group = [prs[i] for i in assigned[title]]
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         {"title": "Fixes", "labels": ["bug", "fix", "bugfix"]},
         {"title": "Maintenance", "labels": ["maintenance", "chore"]},
         {"title": "Refactored", "labels": ["refactor"]},
-        {"title": "Documentation", "labels": ["documentation"]}
+        {"title": "Documentation", "labels": ["documentation"]},
     ]
 
     pulls = fetch_pull_requests_since_last_release()
