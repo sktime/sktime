@@ -140,6 +140,11 @@ class AutoETS(_StatsModelsAdapter):
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
+    random_state : random_state (int, RandomState instance or None, optional
+        (default=None)) – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     References
     ----------
@@ -198,6 +203,7 @@ class AutoETS(_StatsModelsAdapter):
         additive_only=False,
         ignore_inf_ic=True,
         n_jobs=None,
+        random_state=None,
         **kwargs
     ):
         # Model params
@@ -214,6 +220,7 @@ class AutoETS(_StatsModelsAdapter):
         self.dates = dates
         self.freq = freq
         self.missing = missing
+        self.random_state = random_state
 
         # Fit params
         self.start_params = start_params
