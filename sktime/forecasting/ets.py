@@ -220,7 +220,6 @@ class AutoETS(_StatsModelsAdapter):
         self.dates = dates
         self.freq = freq
         self.missing = missing
-        self.random_state = random_state
 
         # Fit params
         self.start_params = start_params
@@ -237,7 +236,7 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__()
+        super(AutoETS, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
 
