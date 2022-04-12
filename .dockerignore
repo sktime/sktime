@@ -11,3 +11,5 @@ docs/_build
 htmlcov
 sktime.egg-info
 testdir
+**/*.pyc
+**/__pycache__
