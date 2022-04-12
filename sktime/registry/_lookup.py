@@ -45,7 +45,7 @@ def all_estimators(
     exclude_estimators=None,
     return_names=True,
     as_dataframe=False,
-    suppress_import_stdout=False,
+    suppress_import_stdout=True,
 ):
     """Get a list of all estimators from sktime.
 
@@ -78,7 +78,7 @@ def all_estimators(
     as_dataframe: bool, optional (default=False)
                 if False, return is as described below;
                 if True, return is converted into a DataFrame for pretty display
-    suppress_import_stdout : bool, optional. Default=False
+    suppress_import_stdout : bool, optional. Default=True
         whether to suppress stdout printout upon import.
 
     Returns
