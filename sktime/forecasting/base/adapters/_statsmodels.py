@@ -26,7 +26,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
     def __init__(self, random_state=None):
         self._forecaster = None
-        self.random_state = None
+        self.random_state = random_state
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
