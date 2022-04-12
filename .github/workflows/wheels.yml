@@ -122,7 +122,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime --pyargs sktime
+          python -m pytest --showlocals --durations=10 --pyargs sktime
 
   upload_wheels:
     name: Upload wheels to PyPI
