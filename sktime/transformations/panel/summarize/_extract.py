@@ -59,13 +59,13 @@ class PlateauFinder(BaseTransformer):
     >>> from sktime.transformations.panel.summarize import PlateauFinder
     >>> # generate some data
     >>> X = pd.DataFrame(
-            pd.Series([
-                pd.Series([-1, -1, 3, 3, -1, 2, 2, 3]),
-                pd.Series([0, -1, -1, -1, -1, -1, 2, -1]),
-                pd.Series([2, -1, -1, -1, 2, -1, 3, 1]),
-                pd.Series([1, -1, -1, 3, -1, -1, 2, 0]),
-            ])
-        )
+    ...     pd.Series([
+    ...         pd.Series([-1, -1, 3, 3, -1, 2, 2, 3]),
+    ...         pd.Series([0, -1, -1, -1, -1, -1, 2, -1]),
+    ...         pd.Series([2, -1, -1, -1, 2, -1, 3, 1]),
+    ...         pd.Series([1, -1, -1, 3, -1, -1, 2, 0]),
+    ...     ])
+    ... )
     >>> #  find plateaus around the value of -1
     >>> t = PlateauFinder(value=-1)
     >>> Xt = t.fit_transform(X)
