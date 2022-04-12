@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Sequence feature extraction transformers."""
+"""Sequence feature extraction transformers.
+
+These transformers expect a dataframe of series, usually univariate and
+perform transformations on this dataframe returning another dataframe.
+Depending on the transformer the returned dataframe has nested series or not.
+"""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "srggrs", "mantmic"]
@@ -17,24 +22,53 @@ from sktime.transformations.panel.segment import RandomIntervalSegmenter
 class PlateauFinder(BaseTransformer):
     """Plateau finder transformer.
 
-    Transformer that finds segments of the same given value, plateau in
-    the time series, and
-    returns the starting indices and lengths.
+    Transformer that finds segments of the same given value, aka plateau(s) in
+    the time series, and returns the starting indices and lengths. It expects a
+    dataframe with one column of nested Series and it extracts the plateau for
+    each series. The output is a dataframe with two columns of nested lists,
+    where the first column has the lists with the starting indices of the
+    plateau(s), and the second column has the lists of the length of the
+    plateau(s). If no flate segements are found, the output is a dataframe of
+    nested empty lists.
+
+    In this context the `value` parameter tells the transformer to look for flat
+    segments with a specific value, the `min_lenght` tells to filter
+    plateau(s) with a minimum length, and the `max_length` parameter, which is
+    optional, tells the transformer to filter for segments with a specific
+    maximum length.
 
     Parameters
     ----------
     value : {int, float, np.nan, np.inf}
         Value for which to find segments
     min_length : int
-        Minimum lengths of segments with same value to include, where the
+        Minimum length of segments with same value to include, where the
         length is number of consecutive samples within a segment.
         If min_length is set to 1, the transformer can be used as a value
         finder.
     max_length : int
-        Maximum lengths of segments with same value to include, where the
+        Maximum length of segments with same value to include, where the
         length is number of consecutive samples within a segment. If max_length
         is set to None, a maximum segment length filter is not applied to
         segments
+
+    Examples
+    --------
+    >>> # check out https://github.com/alan-turing-institute/sktime/blob/main/examples/plateau_finder.ipynb # noqa: E501
+    >>> import pandas as pd
+    >>> from sktime.transformations.panel.summarize import PlateauFinder
+    >>> # generate some data
+    >>> X = pd.DataFrame(
+            pd.Series([
+                pd.Series([-1, -1, 3, 3, -1, 2, 2, 3]),
+                pd.Series([0, -1, -1, -1, -1, -1, 2, -1]),
+                pd.Series([2, -1, -1, -1, 2, -1, 3, 1]),
+                pd.Series([1, -1, -1, 3, -1, -1, 2, 0]),
+            ])
+        )
+    >>> #  find plateaus around the value of -1
+    >>> t = PlateauFinder(value=-1)
+    >>> Xt = t.fit_transform(X)
     """
 
     _tags = {
@@ -81,6 +115,7 @@ class PlateauFinder(BaseTransformer):
         self._lengths = []
 
         # find plateaus (segments of the same value)
+        # TODO: use itertouple or iterrow to speed iteration on dataframe rows
         for x in X.iloc[:, 0]:
             x = np.asarray(x)
 
