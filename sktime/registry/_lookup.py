@@ -46,6 +46,7 @@ def all_estimators(
     return_names=True,
     as_dataframe=False,
     return_tags=None,
+    suppress_import_stdout=True,
 ):
     """Get a list of all estimators from sktime.
 
@@ -71,6 +72,7 @@ def all_estimators(
         if False, estimator class name is removed from the all_estimators()
             return.
     filter_tags: dict of (str or list of str), optional (default=None)
+        For a list of valid tag strings, use the registry.all_tags utility.
         subsets the returned estimators as follows:
             each key/value pair is statement in "and"/conjunction
                 key is tag name to sub-set on
@@ -84,10 +86,13 @@ def all_estimators(
         if False, all_estimators will return a list (either a list of
             estimators or a list of tuples, see Returns)
     return_tags: str or list of str, optional (default=None)
-        Names of tags to fetch and return each estimator's value of
+        Names of tags to fetch and return each estimator's value of.
+        For a list of valid tag strings, use the registry.all_tags utility.
         if str or list of str,
             the tag values named in return_tags will be fetched for each
             estimator and will be appended as either columns or tuple entries.
+    suppress_import_stdout : bool, optional. Default=True
+        whether to suppress stdout printout upon import.
 
     Returns
     -------
@@ -120,6 +125,8 @@ def all_estimators(
     ----------
     Modified version from scikit-learn's `all_estimators()`.
     """
+    import io
+    import sys
     import warnings
 
     MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking")
@@ -169,7 +176,13 @@ def all_estimators(
                 continue
 
             try:
-                module = import_module(module_name)
+                if suppress_import_stdout:
+                    # setup text trap, import, then restore
+                    sys.stdout = io.StringIO()
+                    module = import_module(module_name)
+                    sys.stdout = sys.__stdout__
+                else:
+                    module = import_module(module_name)
                 classes = inspect.getmembers(module, inspect.isclass)
 
                 # Filter classes
