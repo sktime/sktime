@@ -39,19 +39,18 @@ class CNNNetwork(BaseDeepNetwork):
     """
 
     def __init__(
-            self,
-            kernel_size=7,
-            avg_pool_size=3,
-            n_conv_layers=2,
-            filter_sizes=[6, 12],
-            activation="sigmoid",
-            random_state=0,
+        self,
+        kernel_size=7,
+        avg_pool_size=3,
+        n_conv_layers=2,
+        activation="sigmoid",
+        random_state=0,
     ):
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
         self.n_conv_layers = n_conv_layers
-        self.filter_sizes = filter_sizes
+        self.filter_sizes = [6, 12]
         self.activation = activation
 
     def build_network(self, input_shape, **kwargs):
@@ -79,7 +78,7 @@ class CNNNetwork(BaseDeepNetwork):
             self.filter_sizes = self.filter_sizes[: self.n_conv_layers]
         elif len(self.filter_sizes) < self.n_conv_layers:
             self.filter_sizes = self.filter_sizes + [self.filter_sizes[-1]] * (
-                    self.n_conv_layers - len(self.filter_sizes)
+                self.n_conv_layers - len(self.filter_sizes)
             )
         conv = keras.layers.Conv1D(
             filters=self.filter_sizes[0],
@@ -87,9 +86,7 @@ class CNNNetwork(BaseDeepNetwork):
             padding=padding,
             activation=self.activation,
         )(input_layer)
-        conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(
-            conv
-        )
+        conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
 
         for i in range(1, self.n_conv_layers):
             conv = keras.layers.Conv1D(
@@ -98,9 +95,7 @@ class CNNNetwork(BaseDeepNetwork):
                 padding=padding,
                 activation=self.activation,
             )(conv)
-            conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(
-                conv
-            )
+            conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
 
         flatten_layer = keras.layers.Flatten()(conv)
 
