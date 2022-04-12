@@ -55,6 +55,7 @@ class _LcssDistance(NumbaDistance):
             self,
             x: np.ndarray,
             y: np.ndarray,
+            return_cost_matrix: bool = False,
             epsilon: float = 1.0,
             window: float = None,
             itakura_max_slope: float = None,
@@ -72,6 +73,8 @@ class _LcssDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         epsilon : float, default = 1.
             Matching threshold to determine if two subsequences are considered close
             enough to be considered 'common'.
@@ -108,17 +111,30 @@ class _LcssDistance(NumbaDistance):
         if not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-        @njit(cache=True)
-        def numba_lcss_distance(
-                _x: np.ndarray,
-                _y: np.ndarray,
-        ) -> tuple[list, float]:
-            x_size = _x.shape[1]
-            y_size = _y.shape[1]
-            cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
-            distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
-            path = _compute_dtw_path(cost_matrix)
-            return path, distance
+        if return_cost_matrix is True:
+            @njit(cache=True)
+            def numba_lcss_distance(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> tuple[list, float]:
+                x_size = _x.shape[1]
+                y_size = _y.shape[1]
+                cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
+                distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
+                path = _compute_dtw_path(cost_matrix)
+                return path, distance, cost_matrix
+        else:
+            @njit(cache=True)
+            def numba_lcss_distance(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> tuple[list, float]:
+                x_size = _x.shape[1]
+                y_size = _y.shape[1]
+                cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
+                distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
+                path = _compute_dtw_path(cost_matrix)
+                return path, distance
 
         return numba_lcss_distance
 

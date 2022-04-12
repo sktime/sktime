@@ -43,6 +43,7 @@ class _MsmDistance(NumbaDistance):
             self,
             x: np.ndarray,
             y: np.ndarray,
+            return_cost_matrix: bool = False,
             c: float = 0.0,
             window: float = None,
             itakura_max_slope: float = None,
@@ -61,6 +62,8 @@ class _MsmDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (1,m2)).
             Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         c: float
             parameter used in MSM (update later!)
 
@@ -89,14 +92,25 @@ class _MsmDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
-        def numba_msm_path(
-                _x: np.ndarray,
-                _y: np.ndarray,
-        ) -> tuple[list, float]:
-            cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
-            path = _compute_dtw_path(cost_matrix)
-            return path, cost_matrix[-1, -1]
+
+        if return_cost_matrix is True:
+            @njit(cache=True)
+            def numba_msm_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> tuple[list, float]:
+                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                path = _compute_dtw_path(cost_matrix)
+                return path, cost_matrix[-1, -1], cost_matrix
+        else:
+            @njit(cache=True)
+            def numba_msm_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> tuple[list, float]:
+                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                path = _compute_dtw_path(cost_matrix)
+                return path, cost_matrix[-1, -1]
 
         return numba_msm_path
 

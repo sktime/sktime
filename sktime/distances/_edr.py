@@ -36,6 +36,7 @@ class _EdrDistance(NumbaDistance):
             self,
             x: np.ndarray,
             y: np.ndarray,
+            return_cost_matrix: bool = False,
             window: float = None,
             itakura_max_slope: float = None,
             bounding_matrix: np.ndarray = None,
@@ -53,6 +54,8 @@ class _EdrDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
@@ -92,19 +95,35 @@ class _EdrDistance(NumbaDistance):
         if epsilon is not None and not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-        @njit(cache=True)
-        def numba_edr_distance_path(
-                _x: np.ndarray,
-                _y: np.ndarray
-        ) -> tuple[list, float]:
-            if epsilon is None:
-                _epsilon = max(np.std(_x), np.std(_y)) / 4
-            else:
-                _epsilon = epsilon
-            cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
-            path = _compute_dtw_path(cost_matrix)
-            distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
-            return path, distance
+
+        if return_cost_matrix is True:
+            @njit(cache=True)
+            def numba_edr_distance_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray
+            ) -> tuple[list, float]:
+                if epsilon is None:
+                    _epsilon = max(np.std(_x), np.std(_y)) / 4
+                else:
+                    _epsilon = epsilon
+                cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
+                path = _compute_dtw_path(cost_matrix)
+                distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
+                return path, distance, cost_matrix
+        else:
+            @njit(cache=True)
+            def numba_edr_distance_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray
+            ) -> tuple[list, float]:
+                if epsilon is None:
+                    _epsilon = max(np.std(_x), np.std(_y)) / 4
+                else:
+                    _epsilon = epsilon
+                cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
+                path = _compute_dtw_path(cost_matrix)
+                distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
+                return path, distance
 
         return numba_edr_distance_path
 

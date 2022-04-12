@@ -16,10 +16,18 @@ __all__ = [
     "msm_distance",
     "lcss_distance",
     "LowerBounding",
+    "dtw_path",
+    "ddtw_path",
+    "wdtw_path",
+    "wddtw_path",
+    "lcss_path",
+    "msm_path",
+    "erp_path",
+    "edr_path"
 ]
 
 from sktime.distances._distance import distance, distance_factory, pairwise_distance
-from sktime.distances._distance_pairwise import (
+from sktime.distances._distance import (
     ddtw_distance,
     dtw_distance,
     edr_distance,
@@ -30,5 +38,14 @@ from sktime.distances._distance_pairwise import (
     squared_distance,
     wddtw_distance,
     wdtw_distance,
+    distance_path,
+    dtw_path,
+    ddtw_path,
+    wdtw_path,
+    wddtw_path,
+    lcss_path,
+    msm_path,
+    erp_path,
+    edr_path
 )
 from sktime.distances.lower_bounding import LowerBounding

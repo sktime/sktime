@@ -81,14 +81,15 @@ class _DdtwDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-        self,
-        x: np.ndarray,
-        y: np.ndarray,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
-        **kwargs: Any,
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            return_cost_matrix: bool = False,
+            window: float = None,
+            itakura_max_slope: float = None,
+            bounding_matrix: np.ndarray = None,
+            compute_derivative: DerivativeCallable = average_of_slope,
+            **kwargs: Any,
     ) -> DistancePathCallable:
         """Create a no_python compiled ddtw distance path callable.
 
@@ -101,6 +102,8 @@ class _DdtwDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         window: float, defaults = None
             Float that is the radius of the Sakoe-Chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
@@ -144,16 +147,28 @@ class _DdtwDistance(NumbaDistance):
                 f"{compute_derivative.__name__}"
             )
 
-        @njit(cache=True)
-        def numba_ddtw_distance_path(
-            _x: np.ndarray,
-            _y: np.ndarray,
-        ) -> tuple[list, float]:
-            _x = compute_derivative(_x)
-            _y = compute_derivative(_y)
-            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-            path = _compute_dtw_path(cost_matrix)
-            return path, cost_matrix[-1, -1]
+        if return_cost_matrix is True:
+            @njit(cache=True)
+            def numba_ddtw_distance_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> tuple[list, float]:
+                _x = compute_derivative(_x)
+                _y = compute_derivative(_y)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+                path = _compute_dtw_path(cost_matrix)
+                return path, cost_matrix[-1, -1], cost_matrix
+        else:
+            @njit(cache=True)
+            def numba_ddtw_distance_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+            ) -> tuple[list, float]:
+                _x = compute_derivative(_x)
+                _y = compute_derivative(_y)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+                path = _compute_dtw_path(cost_matrix)
+                return path, cost_matrix[-1, -1]
 
         return numba_ddtw_distance_path
 

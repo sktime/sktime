@@ -23,6 +23,7 @@ class _ErpDistance(NumbaDistance):
             self,
             x: np.ndarray,
             y: np.ndarray,
+            return_cost_matrix: bool = False,
             window: float = None,
             itakura_max_slope: float = None,
             bounding_matrix: np.ndarray = None,
@@ -41,6 +42,8 @@ class _ErpDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
@@ -77,14 +80,25 @@ class _ErpDistance(NumbaDistance):
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
-        @njit(cache=True)
-        def numba_erp_path(
-                _x: np.ndarray,
-                _y: np.ndarray
-        ) -> tuple[list, float]:
-            cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
-            path = _compute_dtw_path(cost_matrix)
-            return path, cost_matrix[-1, -1]
+        if return_cost_matrix is True:
+            @njit(cache=True)
+            def numba_erp_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray
+            ) -> tuple[list, float]:
+                cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
+                path = _compute_dtw_path(cost_matrix)
+                return path, cost_matrix[-1, -1], cost_matrix
+        else:
+            @njit(cache=True)
+            def numba_erp_path(
+                    _x: np.ndarray,
+                    _y: np.ndarray
+            ) -> tuple[list, float]:
+                cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
+                path = _compute_dtw_path(cost_matrix)
+                return path, cost_matrix[-1, -1]
+
 
         return numba_erp_path
 

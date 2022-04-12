@@ -17,12 +17,12 @@ from tslearn.metrics.dtw_variants import _return_path
 
 def test_distance_path():
     from sktime.distances._distance import msm_path
-
-    x= create_test_distance_numpy(10, 1)
-    y= create_test_distance_numpy(10, 1, random_state=2)
     callable_path = msm_path
+
+    x = create_test_distance_numpy(10, 1)
+    y = create_test_distance_numpy(10, 1, random_state=2)
     metric = 'msm'
 
-    path, dist = distance_path(x, y, metric)
-    path2, dist2 = callable_path(x, y)
+    path, dist, cm = distance_path(x, y, metric, return_cost_matrix=True)
+    path2, dist2, cm2 = callable_path(x, y, return_cost_matrix=True)
     joe = ''

@@ -861,6 +861,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 def dtw_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: np.ndarray = None,
@@ -885,6 +886,8 @@ def dtw_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -934,12 +937,15 @@ def dtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="dtw", **format_kwargs)
+    return distance_path(
+        x, y, metric="dtw", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 
 def wdtw_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: np.ndarray = None,
@@ -968,6 +974,8 @@ def wdtw_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -1021,12 +1029,15 @@ def wdtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="wdtw", **format_kwargs)
+    return distance_path(
+        x, y, metric="wdtw", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 
 def ddtw_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: np.ndarray = None,
@@ -1054,6 +1065,8 @@ def ddtw_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -1109,12 +1122,15 @@ def ddtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="ddtw", **format_kwargs)
+    return distance_path(
+        x, y, metric="ddtw", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 
 def wddtw_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: Union[np.ndarray, None] = None,
@@ -1144,6 +1160,8 @@ def wddtw_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -1204,11 +1222,14 @@ def wddtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="wddtw", **format_kwargs)
+    return distance_path(
+        x, y, metric="wddtw", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 def edr_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: Union[np.ndarray, None] = None,
@@ -1231,6 +1252,8 @@ def edr_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -1285,11 +1308,14 @@ def edr_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="edr", **format_kwargs)
+    return distance_path(
+        x, y, metric="edr", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 def erp_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: Union[np.ndarray, None] = None,
@@ -1310,6 +1336,8 @@ def erp_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -1362,11 +1390,14 @@ def erp_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="erp", **format_kwargs)
+    return distance_path(
+        x, y, metric="erp", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 def lcss_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         window: Union[float, None] = None,
         itakura_max_slope: Union[float, None] = None,
         bounding_matrix: Union[np.ndarray, None] = None,
@@ -1389,6 +1420,8 @@ def lcss_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     window: float, defaults = None
         Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Value must be between 0. and 1.
@@ -1444,12 +1477,15 @@ def lcss_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="lcss", **format_kwargs)
+    return distance_path(
+        x, y, metric="lcss", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 
 def msm_path(
         x: np.ndarray,
         y: np.ndarray,
+        return_cost_matrix: bool = False,
         c: float = 0.0,
         **kwargs: Any,
 ) -> float:
@@ -1469,6 +1505,8 @@ def msm_path(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     kwargs: Any
         Extra kwargs.
 
@@ -1501,7 +1539,9 @@ def msm_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(x, y, metric="msm", **format_kwargs)
+    return distance_path(
+        x, y, metric="msm", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
 
 def distance(
         x: np.ndarray,
@@ -1775,6 +1815,7 @@ def distance_path(
             Callable[[np.ndarray, np.ndarray], float],
             NumbaDistance,
         ],
+        return_cost_matrix: bool = False,
         **kwargs: Any,
 ) -> Union[list, float]:
     """Compute the path and distance between two time series.
@@ -1805,6 +1846,8 @@ def distance_path(
         A distance factory takes the form (must return a no_python callable):
         Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
         np.ndarray], float]].
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     kwargs: Any
         Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
@@ -1831,7 +1874,9 @@ def distance_path(
 
     _dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
 
-    return _dist_instance.distance_path(_x, _y, **kwargs)
+    return _dist_instance.distance_path(
+        _x, _y, return_cost_matrix=return_cost_matrix, **kwargs
+    )
 
 
 def distance_path_factory(
@@ -1846,6 +1891,7 @@ def distance_path_factory(
             Callable[[np.ndarray, np.ndarray], float],
             NumbaDistance,
         ],
+        return_cost_matrix: bool = False,
         **kwargs: Any,
 ) -> Callable[[np.ndarray, np.ndarray], Union[list, float]]:
     """Produce a distance factory numba callable.
@@ -1876,6 +1922,8 @@ def distance_path_factory(
         A distance factory takes the form (must return a no_python callable):
         Callable[[np.ndarray, np.ndarray, bool, dict], Callable[[np.ndarray,
         np.ndarray], float]].
+    return_cost_matrix: bool, defaults = False
+        Boolean that when true will also return the cost matrix.
     kwargs: Any
         Arguments for metric. Refer to each metrics documentation for a list of
         possible arguments.
@@ -1904,8 +1952,7 @@ def distance_path_factory(
     _y = to_numba_timeseries(y)
 
     dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
-    # TODO: add a check to see if distance_path_factory is implemented
-    callable = dist_instance.distance_path_factory(_x, _y, **kwargs)
+    callable = dist_instance.distance_path_factory(_x, _y, return_cost_matrix, **kwargs)
 
     @njit(cache=True)
     def dist_callable(x: np.ndarray, y: np.ndarray):
