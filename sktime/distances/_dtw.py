@@ -267,6 +267,9 @@ def _compute_dtw_path(cost_matrix: np.ndarray) -> list:
         elif j == 0:
             alignment.append((i - 1, 0))
         else:
+            test1 = cost_matrix[i - 1][j - 1]
+            test2 = cost_matrix[i - 1][j]
+            test3 = cost_matrix[i][j - 1]
             arr = np.array([cost_matrix[i - 1][j - 1],
                             cost_matrix[i - 1][j],
                             cost_matrix[i][j - 1]])
