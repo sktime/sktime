@@ -59,8 +59,8 @@ class RandomIntervalClassifier(BaseClassifier):
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = RandomIntervalClassifier(
-    ...     n_intervals=5,
-    ...     estimator=RotationForest(n_estimators=10),
+    ...     n_intervals=3,
+    ...     estimator=RotationForest(n_estimators=5),
     ... )
     >>> clf.fit(X_train, y_train)
     RandomIntervalClassifier(...)
@@ -179,8 +179,18 @@ class RandomIntervalClassifier(BaseClassifier):
             return dists
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -194,11 +204,20 @@ class RandomIntervalClassifier(BaseClassifier):
 
         from sktime.transformations.series.summarize import SummaryTransformer
 
-        params = {
-            "n_intervals": 2,
-            "estimator": RandomForestClassifier(n_estimators=2),
-            "interval_transformers": SummaryTransformer(
-                summary_function=("mean", "min", "max"),
-            ),
-        }
-        return params
+        if parameter_set == "results_comparison":
+            return {
+                "n_intervals": 3,
+                "estimator": RandomForestClassifier(n_estimators=10),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "std", "min", "max"),
+                    quantiles=(0.25, 0.5, 0.75),
+                ),
+            }
+        else:
+            return {
+                "n_intervals": 2,
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("mean", "min", "max"),
+                ),
+            }

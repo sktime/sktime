@@ -222,12 +222,18 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.interval_based import DrCIF
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(split="train")
     >>> X_test, y_test = load_basic_motions(split="test")
-    >>> clf = DrCIF(n_estimators=3)
-    >>> estimators = [("DrCIF", clf, [0, 1])]
+    >>> cboss = ContractableBOSS(
+    ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
+    ... )
+    >>> cif = CanonicalIntervalForest(
+    ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+    ... )
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
     >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
     >>> col_ens.fit(X_train, y_train)
     ColumnEnsembleClassifier(...)
@@ -269,8 +275,18 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -280,17 +296,27 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from sktime.classification.dictionary_based import ContractableBOSS
+        from sktime.classification.interval_based import CanonicalIntervalForest
         from sktime.classification.interval_based import (
             TimeSeriesForestClassifier as TSFC,
         )
 
-        params = {
-            "estimators": [
-                ("tsf1", TSFC(n_estimators=2), 0),
-                ("tsf2", TSFC(n_estimators=2), 0),
-            ]
-        }
-        return params
+        if parameter_set == "results_comparison":
+            cboss = ContractableBOSS(
+                n_parameter_samples=4, max_ensemble_size=2, random_state=0
+            )
+            cif = CanonicalIntervalForest(
+                n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+            )
+            return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
+        else:
+            return {
+                "estimators": [
+                    ("tsf1", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=2), 0),
+                ]
+            }
 
 
 def _get_column(X, key):

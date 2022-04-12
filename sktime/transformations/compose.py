@@ -119,8 +119,22 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
         self._anytagis_then_set("capability:inverse_transform", False, True, ests)
-        self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
+
+        # can handle missing data iff all estimators can handle missing data
+        #   up to a potential estimator when missing data is removed
+        # removes missing data iff can handle missing data,
+        #   and there is an estimator in the chain that removes it
+        self._tagchain_is_linked_set(
+            "handles-missing-data", "capability:missing_values:removes", ests
+        )
+        # can handle unequal length iff all estimators can handle unequal length
+        #   up to a potential estimator which turns the series equal length
+        # removes unequal length iff can handle unequal length,
+        #   and there is an estimator in the chain that renders series equal length
+        self._tagchain_is_linked_set(
+            "capability:unequal_length", "capability:unequal_length:removes", ests
+        )
 
     @property
     def _steps(self):
@@ -145,6 +159,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
+        # need to escape if other is BaseForecaster
+        #   this is because forecsting Pipelines are *also* transformers
+        #   but they need to take precedence in parsing the expression
+        from sktime.forecasting.base import BaseForecaster
+
+        if isinstance(other, BaseForecaster):
+            return NotImplemented
+
         # we don't use names but _get_estimator_names to get the *original* names
         #   to avoid multiple "make unique" calls which may grow strings too much
         _, trafos = zip(*self.steps_)
@@ -157,7 +179,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         elif isinstance(other, BaseTransformer):
             new_names = names + (type(other).__name__,)
             new_trafos = trafos + (other,)
-        elif self._is_name_and_trafo(other):
+        elif self._is_name_and_est(other, BaseTransformer):
             other_name = other[0]
             other_trafo = other[1]
             new_names = names + (other_name,)
@@ -186,6 +208,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
+        # need to escape if other is BaseForecaster
+        #   this is because forecsting Pipelines are *also* transformers
+        #   but they need to take precedence in parsing the expression
+        from sktime.forecasting.base import BaseForecaster
+
+        if isinstance(other, BaseForecaster):
+            return NotImplemented
+
         _, trafos = zip(*self.steps_)
         names = tuple(self._get_estimator_names(self.steps))
         if isinstance(other, TransformerPipeline):
@@ -196,7 +226,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         elif isinstance(other, BaseTransformer):
             new_names = (type(other).__name__,) + names
             new_trafos = (other,) + trafos
-        elif self._is_name_and_trafo(other):
+        elif self._is_name_and_est(other, BaseTransformer):
             other_name = other[0]
             other_trafo = other[1]
             new_names = (other_name,) + names
@@ -209,14 +239,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return TransformerPipeline(steps=list(new_trafos))
         else:
             return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
-
-    @staticmethod
-    def _is_name_and_trafo(obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
-            return False
-        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
-            return False
-        return True
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -287,8 +309,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         inverse transformed version of X
         """
         Xt = X
-        for _, transformer in self.steps_:
-            Xt = transformer.inverse_transform(X=Xt, y=y)
+        for _, transformer in reversed(self.steps_):
+            if not self.get_tag("fit_is_empty", False):
+                Xt = transformer.inverse_transform(X=Xt, y=y)
+            else:
+                Xt = transformer.fit(X=Xt, y=y).inverse_transform(X=Xt, y=y)
 
         return Xt
 
@@ -345,8 +370,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -422,6 +453,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "skip-inverse-transform": False,
+        "capability:inverse_transform": False,
+        # unclear what inverse transform should be, since multiple inverse_transform
+        #   would have to inverse transform to one
     }
 
     def __init__(
@@ -470,7 +504,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("fit_is_empty", False, True, ests)
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
-        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
         self._anytagis_then_set("handles-missing-data", False, True, ests)
         self._anytagis_then_set("univariate-only", True, False, ests)
 
@@ -510,7 +544,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         elif isinstance(other, BaseTransformer):
             new_names = names + (type(other).__name__,)
             new_trafos = trafos + (other,)
-        elif self._is_name_and_trafo(other):
+        elif self._is_name_and_est(other, BaseTransformer):
             other_name = other[0]
             other_trafo = other[1]
             new_names = names + (other_name,)
@@ -523,14 +557,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
             return FeatureUnion(transformer_list=list(new_trafos))
         else:
             return FeatureUnion(transformer_list=list(zip(new_names, new_trafos)))
-
-    @staticmethod
-    def _is_name_and_trafo(obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
-            return False
-        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
-            return False
-        return True
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -587,7 +613,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index("__".join(str(x)) for x in Xt.columns)
+            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
             Xt.columns = flat_index
 
         return Xt
@@ -621,7 +647,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Test parameters for FeatureUnion."""
         from sktime.transformations.series.exponent import ExponentTransformer
 
@@ -631,3 +657,9 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
+
+    @staticmethod
+    def _underscore_join(iterable):
+        """Create flattened column names from multiindex tuple."""
+        iterable_as_str = [str(x) for x in iterable]
+        return "__".join(iterable_as_str)

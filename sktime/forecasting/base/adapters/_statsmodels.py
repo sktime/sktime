@@ -47,7 +47,7 @@ class _StatsModelsAdapter(BaseForecaster):
         """
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
+        if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
         self._fit_forecaster(y, X)
         return self
@@ -113,7 +113,7 @@ def _coerce_int_to_range_index(y, X=None):
         np.testing.assert_array_equal(y.index, new_index)
     except AssertionError:
         raise ValueError(
-            "Coercion of pd.Int64Index to pd.RangeIndex "
+            "Coercion of integer pd.Index to pd.RangeIndex "
             "failed. Please provide `y_train` with a "
             "pd.RangeIndex."
         )

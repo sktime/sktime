@@ -239,3 +239,14 @@ VAR (Vector Autoregression)
     :template: class.rst
 
     VAR
+
+SARIMAX
+----------
+
+.. currentmodule:: sktime.forecasting.sarimax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SARIMAX
