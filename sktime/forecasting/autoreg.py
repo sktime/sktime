@@ -66,6 +66,8 @@ class AutoReg(_StatsModelsAdapter):
     _tags = {
         "scitype:y": "univariate",
         "univariate-only": True,
+        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "requires-fh-in-fit": False,
     }
 
     def __init__(
@@ -112,6 +114,33 @@ class AutoReg(_StatsModelsAdapter):
         )
         self._fitted_forecaster = self._forecaster.fit()
         return self
+
+    def _predict(self, fh=None, X=None):
+        """
+        Wrap Statmodel's AutoReg forecast method.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
+            i.e. np.array([1])
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+
+        Returns
+        -------
+        y_pred : np.ndarray
+            Returns series of predicted values.
+        """
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        y_pred = self._fitted_forecaster.predict(start=start, end=end)
+
+        return y_pred.loc[valid_indices]
 
     def summary(self):
         """Get a summary of the fitted forecaster.
