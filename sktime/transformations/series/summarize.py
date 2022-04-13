@@ -6,10 +6,12 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
-import warnings
+
 import re
-import pandas as pd
+import warnings
+
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
@@ -315,7 +317,8 @@ class WindowSummarizer(BaseTransformer):
             # Convert lags to default list notation with window_length 1
             boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [x, 1])
             func_dict.loc[lags, "window"] = boost_lag
-        # self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
+        # self.truncate_start = func_dict["window"]\
+        # .apply(lambda x: x[0] + x[1] - 1).max()
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):
@@ -449,9 +452,10 @@ def get_name_list(Z):
     Z_name = [str(z) for z in Z_name]
     return Z_name
 
+
 def find_numbers_letters(string):
-    letters = re.findall(r'[a-zA-Z]+', string)
-    digits = re.findall(r'\d+', string)
+    letters = re.findall(r"[a-zA-Z]+", string)
+    digits = re.findall(r"\d+", string)
 
     length_letters = len(letters)
     length_digits = len(digits)
@@ -459,13 +463,16 @@ def find_numbers_letters(string):
     if length_letters == 1 and length_digits == 1:
         return letters[0], int(digits[0])
     else:
-        raise ValueError('passed incompatible time span')
+        raise ValueError("passed incompatible time span")
 
-time_units = ['D', 'H', 'T', 'S', 'L', 'U', 'N']
+
+time_units = ["D", "H", "T", "S", "L", "U", "N"]
 
 
 def _calc_freq_data(shift_val, shift_freq, data):
-    components_shift = np.abs(data.shift(shift_val, shift_freq).index - data.index).min().components
+    components_shift = (
+        np.abs(data.shift(shift_val, shift_freq).index - data.index).min().components
+    )
     components_shift = [i for i, x in enumerate(components_shift) if x != 0]
 
     components_data = pd.Series(data.index).diff().min().components
@@ -473,7 +480,7 @@ def _calc_freq_data(shift_val, shift_freq, data):
 
     min_timedelta = max(components_shift + components_data)
 
-    freq = {0: 'D', 1: 'H', 2: 'T', 3: 'S', 4: 'L', 5: 'U', 6: 'N'}[min_timedelta]
+    freq = {0: "D", 1: "H", 2: "T", 3: "S", 4: "L", 5: "U", 6: "N"}[min_timedelta]
 
     _data = data.asfreq(freq)
 
@@ -513,13 +520,13 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
 
     _index = Z.index
     _index = pd.DataFrame([0] * len(Z), index=_index)
-    _index.rename(columns={0: '_index'}, inplace=True)
+    _index.rename(columns={0: "_index"}, inplace=True)
 
     if isinstance(lag, str):
         freq, lag_value = find_numbers_letters(lag)
         lag = lag_value + 1
         if freq not in time_units:
-            raise ValueError(f'shift freq not in {time_units}')
+            raise ValueError(f"shift freq not in {time_units}")
 
         Z = _calc_freq_data(lag_value, freq, Z)
 
@@ -540,12 +547,16 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         else:
             if bfill is False:
                 feat = Z.apply(
-                    lambda x: getattr(x.shift(lag, freq).rolling(window_length), summarizer)()
+                    lambda x: getattr(
+                        x.shift(lag, freq).rolling(window_length), summarizer
+                    )()
                 )
             else:
                 feat = Z.apply(
                     lambda x: getattr(
-                        x.shift(lag, freq).fillna(method="bfill").rolling(window_length),
+                        x.shift(lag, freq)
+                        .fillna(method="bfill")
+                        .rolling(window_length),
                         summarizer,
                     )()
                 )
@@ -555,11 +566,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         else:
             feat = Z.shift(lag, freq).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.apply(
                 lambda x: x.rolling(window_length).apply(summarizer, raw=True)
@@ -586,8 +597,8 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             inplace=True,
         )
 
-    feat = _index.merge(feat, left_index=True, right_index=True, how='left')
-    feat.drop(columns=['_index'], inplace=True)
+    feat = _index.merge(feat, left_index=True, right_index=True, how="left")
+    feat.drop(columns=["_index"], inplace=True)
 
     return feat
 
