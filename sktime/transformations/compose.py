@@ -159,6 +159,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
+        # need to escape if other is BaseForecaster
+        #   this is because forecsting Pipelines are *also* transformers
+        #   but they need to take precedence in parsing the expression
+        from sktime.forecasting.base import BaseForecaster
+
+        if isinstance(other, BaseForecaster):
+            return NotImplemented
+
         # we don't use names but _get_estimator_names to get the *original* names
         #   to avoid multiple "make unique" calls which may grow strings too much
         _, trafos = zip(*self.steps_)
@@ -171,7 +179,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         elif isinstance(other, BaseTransformer):
             new_names = names + (type(other).__name__,)
             new_trafos = trafos + (other,)
-        elif self._is_name_and_trafo(other):
+        elif self._is_name_and_est(other, BaseTransformer):
             other_name = other[0]
             other_trafo = other[1]
             new_names = names + (other_name,)
@@ -200,6 +208,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
+        # need to escape if other is BaseForecaster
+        #   this is because forecsting Pipelines are *also* transformers
+        #   but they need to take precedence in parsing the expression
+        from sktime.forecasting.base import BaseForecaster
+
+        if isinstance(other, BaseForecaster):
+            return NotImplemented
+
         _, trafos = zip(*self.steps_)
         names = tuple(self._get_estimator_names(self.steps))
         if isinstance(other, TransformerPipeline):
@@ -210,7 +226,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         elif isinstance(other, BaseTransformer):
             new_names = (type(other).__name__,) + names
             new_trafos = (other,) + trafos
-        elif self._is_name_and_trafo(other):
+        elif self._is_name_and_est(other, BaseTransformer):
             other_name = other[0]
             other_trafo = other[1]
             new_names = (other_name,) + names
@@ -223,14 +239,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return TransformerPipeline(steps=list(new_trafos))
         else:
             return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
-
-    @staticmethod
-    def _is_name_and_trafo(obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
-            return False
-        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
-            return False
-        return True
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -536,7 +544,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         elif isinstance(other, BaseTransformer):
             new_names = names + (type(other).__name__,)
             new_trafos = trafos + (other,)
-        elif self._is_name_and_trafo(other):
+        elif self._is_name_and_est(other, BaseTransformer):
             other_name = other[0]
             other_trafo = other[1]
             new_names = names + (other_name,)
@@ -549,14 +557,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
             return FeatureUnion(transformer_list=list(new_trafos))
         else:
             return FeatureUnion(transformer_list=list(zip(new_names, new_trafos)))
-
-    @staticmethod
-    def _is_name_and_trafo(obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
-            return False
-        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
-            return False
-        return True
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
