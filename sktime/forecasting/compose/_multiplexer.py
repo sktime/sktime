@@ -5,14 +5,15 @@
 
 from sklearn.base import clone
 
+from sktime.base import _HeterogenousMetaEstimator
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 __author__ = ["kkoralturk", "aiwalter", "fkiraly"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster):
+class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -33,19 +34,22 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
 
     Parameters
     ----------
-    forecasters : list
-        List of (forecaster names, forecaster objects)
+    forecasters : list of sktime forecasters, or
+        list of tuples (str, estimator) of sktime forecasters
         MultiplexForecaster can switch ("multiplex") between these forecasters.
-        These act as blueprints and never change state.
+        These are "blueprint" forecasters, states do not change when `fit` is called.
     selected_forecaster: str or None, optional, Default=None.
         If str, must be one of the forecaster names.
+            If no names are provided, must coincide with auto-generated name strings.
+            To inspect auto-generated name strings, call get_params.
         If None, behaves as if the first forecaster in the list is selected.
         Selects the forecaster as which MultiplexForecaster behaves.
 
     Attributes
     ----------
-    forecaster_ : Sktime forecaster
+    forecaster_ : sktime forecaster
         clone of the selected forecaster used for fitting and forecasting.
+    forecasters_ :
 
     Examples
     --------
@@ -87,16 +91,23 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
         forecasters: list,
         selected_forecaster=None,
     ):
-        super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
+        super(MultiplexForecaster, self).__init__()
         self.selected_forecaster = selected_forecaster
 
-        self._check_forecasters()
+        self.forecasters = forecasters
+        self.forecasters_ = self._check_estimators(
+            forecasters,
+            attr_name="forecasters",
+            cls_type=BaseForecaster,
+            clone_ests=False,
+        )
         self._set_forecaster()
 
         self.clone_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
 
     def _check_selected_forecaster(self):
-        component_names = self._get_estimator_names(self.forecasters, make_unique=True)
+        component_names = self._get_estimator_names(self.forecasters_, make_unique=True)
         selected = self.selected_forecaster
         if selected is not None and selected not in component_names:
             raise Exception(
@@ -115,6 +126,34 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
         else:
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
+
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("forecasters", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
+        self._set_params("forecasters", **kwargs)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
