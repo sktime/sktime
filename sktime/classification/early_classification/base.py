@@ -372,6 +372,11 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         Abstract method, must be implemented.
 
+        This method should update state_info with any values necessary to make future
+        decisions. It is recommended that the previous time stamp used for each case
+        should be stored in the state_info. The number of rows in state_info after the
+        method has been called should match the number of input rows.
+
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -399,6 +404,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         Abstract method, must be implemented.
 
+        Uses information from previous decisions stored in state_info. This method
+        should update state_info with any values necessary to make future decisions.
+        It is recommended that the previous time stamp used for each case should be
+        stored in the state_info. The number of rows in state_info after the method has
+        been called should match the number of input rows.
+
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -422,6 +433,11 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
     def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
+
+        This method should update state_info with any values necessary to make future
+        decisions. It is recommended that the previous time stamp used for each case
+        should be stored in the state_info. The number of rows in state_info after the
+        method has been called should match the number of input rows.
 
         Default behaviour is to call _predict and set the predicted class probability
         to 1, other class probabilities to 0 if a positive decision is made. Override if
@@ -460,6 +476,12 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
     def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update label probabilities for sequences in X at a larger series length.
+
+        Uses information from previous decisions stored in state_info. This method
+        should update state_info with any values necessary to make future decisions.
+        It is recommended that the previous time stamp used for each case should be
+        stored in the state_info. The number of rows in state_info after the method has
+        been called should match the number of input rows.
 
         Default behaviour is to call _update_predict and set the predicted class
         probability to 1, other class probabilities to 0 if a positive decision is made.

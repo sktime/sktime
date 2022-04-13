@@ -148,6 +148,11 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
 
         core logic
 
+        This method should update state_info with any values necessary to make future
+        decisions. It is recommended that the previous time stamp used for each case
+        should be stored in the state_info. The number of rows in state_info after the
+        method has been called should match the number of input rows.
+
         Parameters
         ----------
         X : data not used in training, of type self.get_tag("X_inner_mtype")
@@ -167,11 +172,49 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         # i.e. the number of consecutive 'safe' decisions required to return a final
         # decision to use the returned predictions.
 
+    # todo: implement this, mandatory
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+        """Update labels for sequences in X using a larger series length.
+
+        core logic
+
+        Uses information from previous decisions stored in state_info. This method
+        should update state_info with any values necessary to make future decisions.
+        It is recommended that the previous time stamp used for each case should be
+        stored in the state_info. The number of rows in state_info after the method has
+        been called should match the number of input rows.
+
+        Parameters
+        ----------
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
+
+        Returns
+        -------
+        y : predictions of labels for X, np.ndarray
+        decisions : decisions on whether the prediction is sage, np.ndarray
+        """
+
+        # implement here
+        # IMPORTANT: update the number of rows in state_info to math the cases in
+        #            X at the beginning of the method.
+        # IMPORTANT: avoid side effects to X
+
+        # At the end of the method, state_info should be updated to reflect the current
+        # state in the early classifiers decision-making process on the safety of
+        # predictions for cases in X.
+        # i.e. the number of consecutive 'safe' decisions required to return a final
+        # decision to use the returned predictions.
+
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _predict_proba will be  called.
     # the default simply calls predict and sets probas to 0 or 1.
     def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
+
+        This method should update state_info with any values necessary to make future
+        decisions. It is recommended that the previous time stamp used for each case
+        should be stored in the state_info. The number of rows in state_info after the
+        method has been called should match the number of input rows.
 
         Default behaviour is to call _predict and set the predicted class probability
         to 1, other class probabilities to 0. Override if better estimates are
@@ -196,42 +239,17 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         # i.e. the number of consecutive 'safe' decisions required to return a final
         # decision to use the returned predictions.
 
-    # todo: implement this, mandatory
-    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
-        """Update labels for sequences in X using a larger series length.
-
-        Uses information from previous decisions stored in state_info.
-
-        core logic
-
-        Parameters
-        ----------
-        X : data not used in training, of type self.get_tag("X_inner_mtype")
-
-        Returns
-        -------
-        y : predictions of labels for X, np.ndarray
-        decisions : decisions on whether the prediction is sage, np.ndarray
-        """
-
-        # implement here
-        # IMPORTANT: update the number of rows in state_info to math the cases in
-        #            X at the beginning of the method.
-        # IMPORTANT: avoid side effects to X
-
-        # At the end of the method, state_info should be updated to reflect the current
-        # state in the early classifiers decision-making process on the safety of
-        # predictions for cases in X.
-        # i.e. the number of consecutive 'safe' decisions required to return a final
-        # decision to use the returned predictions.
-
     # todo: consider implementing this, optional
     # if you do not implement it, then the default _update_predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
     def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Update labels probabilities for sequences in X using a larger series length.
 
-        Uses information from previous decisions stored in state_info.
+        Uses information from previous decisions stored in state_info. This method
+        should update state_info with any values necessary to make future decisions.
+        It is recommended that the previous time stamp used for each case should be
+        stored in the state_info. The number of rows in state_info after the method has
+        been called should match the number of input rows.
 
         Default behaviour is to call _predict and set the predicted class probability
         to 1, other class probabilities to 0. Override if better estimates are
