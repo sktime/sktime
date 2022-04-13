@@ -536,7 +536,7 @@ class ForecastingPipeline(_Pipeline):
 #     return Zt
 
 
-class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
+class TransformedTargetForecaster(_Pipeline):
     """Meta-estimator for forecasting transformed time series.
 
     Pipeline functionality to apply transformers to the target series. The
