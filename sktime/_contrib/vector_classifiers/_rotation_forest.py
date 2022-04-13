@@ -94,7 +94,7 @@ class RotationForest(BaseEstimator):
 
     Examples
     --------
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
