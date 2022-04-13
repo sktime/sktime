@@ -8,12 +8,16 @@ from inspect import isclass
 from sktime.registry._base_classes import BASE_CLASS_REGISTER
 
 
-def scitype(obj, coerce_to_list=False):
+def scitype(obj, force_single_scitype=True, coerce_to_list=False):
     """Determine scitype string of obj.
 
     Parameters
     ----------
     obj : class or object inheriting from sktime BaseObject
+    force_single_scitype : bool, optional, default = True
+        whether only a single scitype is returned
+        if True, only the *first* scitype found will be returned
+        order is determined by the order in BASE_CLASS_REGISTER
     coerce_to_list : bool, optional, default = False
         whether return should be coerced to list, even if only one scitype is identified
 
@@ -35,10 +39,13 @@ def scitype(obj, coerce_to_list=False):
     else:
         scitypes = [sci[0] for sci in BASE_CLASS_REGISTER if isinstance(obj, sci[1])]
 
-    if len(scitypes) == 1 and not coerce_to_list:
-        return scitypes[0]
-
     if len(scitypes) == 0:
         raise TypeError("Error, no scitype could be determined for obj")
+
+    if force_single_scitype:
+        scitypes = [scitypes[0]]
+
+    if len(scitypes) == 1 and not coerce_to_list:
+        return scitypes[0]
 
     return scitypes
