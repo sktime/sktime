@@ -21,38 +21,31 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
     to get full utilization. It can be used with univariate and
     multivariate forecasters.
 
-    Single use of MultiplexForecaster with forecasters
-    and selected_forecaster parameter specified,
-    works just like the selected component.
-    It does not provide any further use in that case.
+    MultiplexForecaster is specified with a (named) list of forecasters
+    and a selected_forecaster hyper-parameter, which is one of the forecaster names.
+    The MultiplexForecaster then behaves precisely as the forecaster with
+    name selected_forecaster, ignoring functionality in the other forecasters.
 
     When used with ForecastingGridSearchCV, MultiplexForecaster
-    provides an ability to compare different model class
-    performances with each other, just like a model tournament.
-    When ForecastingGridSearchCV is fitted with a MultiplexForecaster,
-    returned value for the selected_forecaster argument of best_params_
-    attribute of ForecastingGridSearchCV, gives the best
-    performing model class among given models provided in forecasters.
+    provides an ability to tune across multiple estimators, i.e., to perform AutoML,
+    by tuning the selected_forecaster hyper-parameter. This combination will then
+    select one of the passed forecasters via the tuning algorithm.
 
     Parameters
     ----------
     forecasters : list
         List of (forecaster names, forecaster objects)
-        MultiplexForecaster switches between these forecasters
-        objects when used with ForecastingGridSearchCV to
-        find the optimal model
-    selected_forecaster: str
-        An argument to make a selection among forecasters.
-        MultiplexForecaster uses selected_forecaster
-        to choose which component to fit.
-        Important for using with ForecastingGridSearchCV as a
-        hyperparameter.
+        MultiplexForecaster can switch ("multiplex") between these forecasters.
+        These act as blueprints and never change state.
+    selected_forecaster: str or None, optional, Default=None.
+        If str, must be one of the forecaster names.
+        If None, behaves as if the first forecaster in the list is selected.
+        Selects the forecaster as which MultiplexForecaster behaves.
 
     Attributes
     ----------
     forecaster_ : Sktime forecaster
-        forecaster that MultiplexForecaster will currently
-        forecast with.
+        clone of the selected forecaster used for fitting and forecasting.
 
     Examples
     --------
@@ -104,18 +97,24 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
 
     def _check_selected_forecaster(self):
         component_names = self._get_estimator_names(self.forecasters, make_unique=True)
-        if self.selected_forecaster not in component_names:
+        selected = self.selected_forecaster
+        if selected is not None and selected not in component_names:
             raise Exception(
-                "Please check the selected_forecaster argument provided "
-                " Valid selected_forecaster parameters: {}".format(component_names)
+                f"Invalid selected_forecaster parameter value provided, "
+                f" found: {self.selected_forecaster}. Must be one of these"
+                f" valid selected_forecaster parameter values: {component_names}."
             )
 
     def _set_forecaster(self):
         self._check_selected_forecaster()
+        # clone the selected forecaster to self.forecaster_
         if self.selected_forecaster is not None:
             for name, forecaster in self._get_estimator_tuples(self.forecasters):
                 if self.selected_forecaster == name:
                     self.forecaster_ = clone(forecaster)
+        else:
+            # if None, simply clone the first forecaster to self.forecaster_
+            self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
