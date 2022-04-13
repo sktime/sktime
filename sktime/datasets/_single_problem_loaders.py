@@ -275,28 +275,36 @@ def load_italy_power_demand(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_unit_test(split=None, return_X_y=True):
-    """Load UnitTest time series classification problem.
+def load_unit_test(split=None, return_X_y=True, return_type=None):
+    """
+    Load UnitTest data.
 
-    This problem is a stripped down version of the ChinaTown problem that is used in
-    correctness tests for classification.
+    This is an equal length univariate time series classification problem. It is a
+    stripped down version of the ChinaTown problem that is used in correctness tests
+    for classification. It loads a two class classification problem with number of
+    cases, n, where n = 42 (if split is None) or 20/22 (if split is "train"/"test")
+    of series length m = 24
 
     Parameters
     ----------
     split: None or str{"train", "test"}, optional (default=None)
-        Whether to load the train or test partition of the problem. By
-        default it loads both.
+        Whether to load the train or test partition of the problem. By default it
+        loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (features, target) separately instead of a concatenated data
+        structure.
+    return_type: None or str{"numpy2d", "numpyflat", "numpy3d", "nested_univ"},
+        optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,1,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,1), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
     Examples
     --------
@@ -305,17 +313,19 @@ def load_unit_test(split=None, return_X_y=True):
 
     Details
     -------
-    This is the Chinatown problem with a smaller test set, useful for rapid tests. See
-    http://timeseriesclassification.com/description.php?Dataset=Chinatown
-    for the full dataset
+    This is the Chinatown problem with a smaller test set, useful for rapid tests.
     Dimensionality:     univariate
     Series length:      24
     Train cases:        20
     Test cases:         22 (full dataset has 345)
     Number of classes:  2
+
+     See
+    http://timeseriesclassification.com/description.php?Dataset=Chinatown
+    for the full dataset
     """
     name = "UnitTest"
-    return _load_provided_dataset(name, split, return_X_y)
+    return _load_provided_dataset(name, split, return_X_y, return_type)
 
 
 def load_japanese_vowels(split=None, return_X_y=True):
@@ -478,8 +488,13 @@ def load_acsf1(split=None, return_X_y=True):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
-    """Load the  BasicMotions time series classification problem and returns X and y.
+def load_basic_motions(split=None, return_X_y=True, return_type=None):
+    """
+    Load the BasicMotions time series classification problem and returns X and y.
+
+    This is an equal length multivariate time series classification problem. It loads a
+    4 class classification problem with number of cases, n, where n = 80 (if
+    split is None) or 40 (if split is "train"/"test") of series length m = 100.
 
     Parameters
     ----------
@@ -487,22 +502,24 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
         Whether to load the train or test partition of the problem. By
         default it loads both.
     return_X_y: bool, optional (default=True)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+        If True, returns (time series, target) separately as X and y instead of a single
+        data structure.
+    return_type: None or str{"numpy3d", "nested_univ"},
+        optional (default=None). Controls the returned data structure.
 
     Returns
     -------
-    X: pd.DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
+    X:  The time series data for the problem. If return_type is either
+        "numpy2d"/"numpyflat", it returns 2D numpy array of shape (n,m), if "numpy3d" it
+        returns 3D numpy array of shape (n,6,m) and if "nested_univ" or None it returns
+        a nested pandas DataFrame of shape (n,6), where each cell is a pd.Series of
+        length m.
+    y: (optional) numpy array shape (n,1). The class labels for each case in X.
+        If return_X_y is False, y is appended to X.
 
-    Examples
-    --------
-    >>> from sktime.datasets import load_basic_motions
-    >>> X, y = load_basic_motions()
-
+    Raises
+    ------
+    ValueError if argument "numpy2d"/"numpyflat" is passed as return_type
     Notes
     -----
     Dimensionality:     multivariate, 6
@@ -522,6 +539,12 @@ def load_basic_motions(split=None, return_X_y=True, return_type="nested_univ"):
     =BasicMotions
     """
     name = "BasicMotions"
+    if return_type == "numpy2d" or return_type == "numpyflat":
+        raise ValueError(
+            f"{name} loader: Error, attempting to load into a numpy2d "
+            f"array, but cannot because it is a multivariate problem. Use "
+            f"numpy3d instead"
+        )
     return _load_provided_dataset(
         name=name, split=split, return_X_y=return_X_y, return_type=return_type
     )

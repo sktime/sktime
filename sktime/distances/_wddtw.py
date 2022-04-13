@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
 
 import warnings
 from typing import Any
@@ -8,7 +8,7 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._ddtw import DerivativeCallable, _average_of_slope
+from sktime.distances._ddtw import DerivativeCallable, average_of_slope
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances._wdtw import _weighted_cost_matrix
 from sktime.distances.base import DistanceCallable, NumbaDistance
@@ -33,26 +33,28 @@ class _WddtwDistance(NumbaDistance):
         window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = _average_of_slope,
+        compute_derivative: DerivativeCallable = average_of_slope,
         g: float = 0.0,
         **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled wddtw distance callable.
 
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
         window: int, defaults = None
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding).
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding).
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None)
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -76,8 +78,8 @@ class _WddtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If the compute derivative callable is not no_python compiled.
