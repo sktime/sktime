@@ -24,7 +24,20 @@ class _Pipeline(
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
-        return [scitype(x[1]) for x in estimators]
+        def resolve_scitype(x):
+            """Return forecaster, then transformer, then None, from scitype list."""
+            if "forecaster" in x:
+                return "forecaster"
+            elif "transformer" in x:
+                return "transformer"
+            else:
+                return None
+        # first we get lists
+        scitypes = [scitype(x[1], coerce_to_list=True) for x in estimators]
+        # then we default to one scitype, forecaster if contained, else transformer
+        scitypes = [resolve_scitype(x) for x in scitypes]
+
+        return scitypes
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
