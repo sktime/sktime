@@ -70,6 +70,15 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
         self._class_dictionary = {}
         self._threads_to_use = 1
 
+        """
+        An array containing the state info for each decision in X from update and
+        predict methods. Contains classifier dependant information for future decisions
+        on the data and information on when a cases decision has been made. Each row
+        contains information for a case from the latest decision on its safety made in
+        update/predict. Successive updates are likely to remove rows from the
+        state_info, as it will only store as many rows as there are input instances to
+        update/predict.
+        """
         self.state_info = None
 
         super(BaseEarlyClassifier, self).__init__()
@@ -306,11 +315,13 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
         Returns
         -------
-        An array containing the state info for each decision in X, contains classifier
-        depndant information for future decisions on the data and information on when a
-        cases decision has been made. Each row contains information for a case from the
-        latest decision on its safety. Successive updates are likely to remove rows from
-        the state_info.
+        An array containing the state info for each decision in X from update and
+        predict methods. Contains classifier dependant information for future decisions
+        on the data and information on when a cases decision has been made. Each row
+        contains information for a case from the latest decision on its safety made in
+        update/predict. Successive updates are likely to remove rows from the
+        state_info, as it will only store as many rows as there are input instances to
+        update/predict.
         """
         return self.state_info
 
