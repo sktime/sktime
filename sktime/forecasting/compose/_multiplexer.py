@@ -93,7 +93,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
         self._check_forecasters()
         self._set_forecaster()
 
-        self.clone_tags(selected_forecaster)
+        self.clone_tags(self.forecaster_)
 
     def _check_selected_forecaster(self):
         component_names = self._get_estimator_names(self.forecasters, make_unique=True)
@@ -132,7 +132,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
         """
         from sktime.forecasting.naive import NaiveForecaster
 
-        params = {
+        params1 = {
             "forecasters": [
                 ("Naive_mean", NaiveForecaster(strategy="mean")),
                 ("Naive_last", NaiveForecaster(strategy="last")),
@@ -140,4 +140,11 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
             ],
             "selected_forecaster": "Naive_mean",
         }
-        return params
+        params2 = {
+            "forecasters": [
+                ("Naive_mean", NaiveForecaster(strategy="mean")),
+                ("Naive_last", NaiveForecaster(strategy="last")),
+                ("Naive_drift", NaiveForecaster(strategy="drift")),
+            ],
+        }
+        return [params1, params2]
