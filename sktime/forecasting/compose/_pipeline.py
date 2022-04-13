@@ -12,7 +12,6 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.registry import scitype
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
