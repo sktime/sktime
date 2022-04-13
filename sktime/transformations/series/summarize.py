@@ -315,7 +315,9 @@ class WindowSummarizer(BaseTransformer):
             # Convert lags to default list notation with window_length 1
             boost_lag = func_dict.loc[lags, "window"].apply(lambda x: [x, 1])
             func_dict.loc[lags, "window"] = boost_lag
+
         # self.truncate_start = func_dict["window"].apply(lambda x: x[0] + x[1] - 1).max()
+
         self._func_dict = func_dict
 
     def _transform(self, X, y=None):

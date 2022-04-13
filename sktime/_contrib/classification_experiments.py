@@ -10,7 +10,7 @@ __author__ = ["TonyBagnall"]
 import os
 import sys
 
-from sktime.contrib.set_classifier import set_classifier
+from sktime._contrib.set_classifier import set_classifier
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
