@@ -158,34 +158,12 @@ def level_sample_data(request):
     return model_spec.level, data_df
 
 
-@pytest.mark.parametrize("level", [m.level for m in MODELS])
-@pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
-def test_results_consistency(level, fh_length):
-    """Check consistency between wrapper and statsmodels original implementation."""
-    y = load_airline()
-    fh = np.arange(fh_length) + 1
-    # Fit and predict with forecaster.
-    forecaster = UnobservedComponents(level=level)
-    forecaster.fit(y)
-    y_pred_forecaster = forecaster.predict(fh=fh)
-    # Fit train statsmodels original model.
-    model = _UnobservedComponents(level=level, endog=y)
-    result = model.fit(disp=0)
-    y_pred_base = result.forecast(steps=fh_length)
-    assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
-    assert len(fh) == y_pred_forecaster.shape[0]
-
-
-def test_result_consistency_exog(level_sample_data):
-    """Check consistency between wrapper and statsmodels original implementation.
-
-    We add external regressors and a seasonality component.
-    """
+@pytest.fixture
+def level_sample_data_split(level_sample_data):
+    """Split sample data into train and test sets."""
     train_test_ratio = 0.80
     level, data_df = level_sample_data
-    # Prepare data.
     n = data_df.shape[0]
-
     n_train = int(n * train_test_ratio)
     n_test = n - n_train
 
@@ -196,6 +174,38 @@ def test_result_consistency_exog(level_sample_data):
     X_train = data_train_df[["x"]]
     X_test = data_test_df[["x"]]
     fh = np.arange(X_test.shape[0]) + 1
+    return level, y_train, X_train, X_test, fh
+
+
+@pytest.fixture
+def y_airlines():
+    """Load sample data from the airlines dataset."""
+    return load_airline()
+
+
+@pytest.mark.parametrize("level", [m.level for m in MODELS])
+@pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
+def test_results_consistency(level, fh_length, y_airlines):
+    """Check consistency between wrapper and statsmodels original implementation."""
+    fh = np.arange(fh_length) + 1
+    # Fit and predict with forecaster.
+    forecaster = UnobservedComponents(level=level)
+    forecaster.fit(y_airlines)
+    y_pred_forecaster = forecaster.predict(fh=fh)
+    # Fit train statsmodels original model.
+    model = _UnobservedComponents(level=level, endog=y_airlines)
+    result = model.fit(disp=0)
+    y_pred_base = result.forecast(steps=fh_length)
+    assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
+    assert len(fh) == y_pred_forecaster.shape[0]
+
+
+def test_result_consistency_exog(level_sample_data_split):
+    """Check consistency between wrapper and statsmodels original implementation.
+
+    We add external regressors and a seasonality component.
+    """
+    level, y_train, X_train, X_test, fh = level_sample_data_split
 
     model_spec = {
         "level": level,
@@ -210,6 +220,47 @@ def test_result_consistency_exog(level_sample_data):
     # Fit train statsmodels original model.
     model = _UnobservedComponents(endog=y_train, exog=X_train, **model_spec)
     result = model.fit(disp=0)
+    n_test = X_test.shape[0]
     y_pred_base = result.forecast(steps=n_test, exog=X_test)
     assert_series_equal(left=y_pred_forecaster, right=y_pred_base)
     assert len(fh) == y_pred_forecaster.shape[0]
+
+
+@pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
+@pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
+def test_prediction_intervals_no_exog(alpha, fh_length, y_airlines):
+    """Test prediction intervals when no exogenous regressors are present."""
+    fh = np.arange(fh_length) + 1
+    forecaster = UnobservedComponents()
+    forecaster.fit(y_airlines)
+    quantiles_df = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+
+    if isinstance(alpha, list):
+        assert quantiles_df.shape == (fh_length, 2 * len(alpha))
+    else:
+        quantiles_np = quantiles_df.to_numpy().flatten()
+        assert quantiles_df.shape == (fh_length, 2)
+        assert quantiles_np[0] < quantiles_np[1]
+
+
+@pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
+def test_prediction_intervals_exog(alpha, level_sample_data_split):
+    """Test prediction intervals when exogenous regressors are present."""
+    level, y_train, X_train, X_test, fh = level_sample_data_split
+    fh_length = X_test.shape[0]
+    model_spec = {
+        "level": level,
+        "freq_seasonal": [{"period": 12, "harmonics": 4}],
+        "autoregressive": 1,
+        "mle_regression": False,
+    }
+    forecaster = UnobservedComponents(**model_spec)
+    forecaster.fit(y=y_train, X=X_train)
+    quantiles_df = forecaster.predict_quantiles(fh=fh, X=X_test, alpha=alpha)
+
+    if isinstance(alpha, list):
+        assert quantiles_df.shape == (fh_length, 2 * len(alpha))
+    else:
+        quantiles_np = quantiles_df.to_numpy().flatten()
+        assert quantiles_df.shape == (fh_length, 2)
+        assert quantiles_np[0] < quantiles_np[1]

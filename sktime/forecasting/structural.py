@@ -366,7 +366,7 @@ class UnobservedComponents(_StatsModelsAdapter):
 
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end
+            start=start, end=end, exog=X
         )
 
         pred_int = pd.DataFrame()
@@ -375,7 +375,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             pred_int[(a, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
                 valid_indices
             ]
-            pred_int[(a, "upper")] = pred_statsmodels["mean_ci_lower"].loc[
+            pred_int[(a, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
                 valid_indices
             ]
         index = pd.MultiIndex.from_product([["Quantiles"], alpha, ["lower", "upper"]])
