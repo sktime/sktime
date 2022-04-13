@@ -515,37 +515,3 @@ class UnobservedComponents(_StatsModelsAdapter):
             figsize=figsize,
             truncate_endog_names=truncate_endog_names,
         )
-
-    # TODO: This plot function generates an error:
-    # "TypeError: float() argument must be a string or a number, not 'Period'"
-    #
-    # def plot_components(
-    #     self,
-    #     which=None,
-    #     alpha=0.05,
-    #     observed=True,
-    #     level=True,
-    #     trend=True,
-    #     seasonal=True,
-    #     freq_seasonal=True,
-    #     cycle=True,
-    #     autoregressive=True,
-    #     legend_loc="upper right",
-    #     fig=None,
-    #     figsize=None,
-    # ):
-    #     """TODO: Add docstrings."""
-    #     self._fitted_forecaster.plot_components(
-    #         which=which,
-    #         alpha=alpha,
-    #         observed=observed,
-    #         level=level,
-    #         trend=trend,
-    #         seasonal=seasonal,
-    #         freq_seasonal=freq_seasonal,
-    #         cycle=cycle,
-    #         autoregressive=autoregressive,
-    #         legend_loc=legend_loc,
-    #         fig=fig,
-    #         figsize=figsize,
-    #     )
