@@ -662,13 +662,6 @@ class _DirRecReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
-        # Exogenous variables are not yet supported for the dirrec strategy.
-        if X is not None:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not yet support exogenous "
-                f"variables `X`."
-            )
-
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
 
@@ -704,8 +697,6 @@ class _DirRecReducer(_Reducer):
 
             estimator.fit(X_fit, yt[:, i])
             self.estimators_.append(estimator)
-
-        self._is_fitted = True
         return self
 
     def _predict_last_window(
