@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for forecasting pipelines."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = []
 
 import numpy as np
@@ -106,4 +106,4 @@ def test_nesting_pipelines():
 
     scenario = ForecasterFitPredictUnivariateWithX()
 
-    scenario.run(pipe)
+    scenario.run(pipe, method_sequence=["fit", "predict"])
