@@ -85,19 +85,22 @@ def test_nesting_pipelines():
     from sktime.transformations.series.detrend import Detrender
 
     from sktime.utils._testing.scenarios_forecasting import (
-        ForecasterFitPredictUnivariateWithX
+        ForecasterFitPredictUnivariateWithX,
     )
 
-    pipe = ForecastingPipeline(steps=[
+    pipe = ForecastingPipeline(
+        steps=[
             ("logX", OptionalPassthrough(LogTransformer())),
             ("detrenderX", OptionalPassthrough(Detrender(forecaster=AutoETS()))),
-            ("prophetforecaster", TransformedTargetForecaster(
-                steps=[
-                    ("log", OptionalPassthrough(LogTransformer())),
-                    ("autoETS", AutoETS()),
+            (
+                "etsforecaster",
+                TransformedTargetForecaster(
+                    steps=[
+                        ("log", OptionalPassthrough(LogTransformer())),
+                        ("autoETS", AutoETS()),
                     ]
-                )
-            )
+                ),
+            ),
         ]
     )
 

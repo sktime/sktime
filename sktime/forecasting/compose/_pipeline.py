@@ -24,6 +24,7 @@ class _Pipeline(
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
+
         def resolve_scitype(x):
             """Return forecaster, then transformer, then None, from scitype list."""
             if "forecaster" in x:
@@ -32,6 +33,7 @@ class _Pipeline(
                 return "transformer"
             else:
                 return None
+
         # first we get lists
         scitypes = [scitype(x[1], coerce_to_list=True) for x in estimators]
         # then we default to one scitype, forecaster if contained, else transformer
