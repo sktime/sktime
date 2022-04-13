@@ -33,7 +33,7 @@ SOFT_DEPENDENCIES = {
     "sktime.alignment.dtw_python": ["dtw"],
     "sktime.clustering": ["tslearn"],
 }
-MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
+MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 
 
 def _is_test(module):
