@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._euclidean import _local_euclidean_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -17,7 +16,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _ErpDistance(NumbaDistance):
-    """Edit distance with real penalty (erp) between two timeseries."""
+    """Edit distance with real penalty (erp) between two time series."""
 
     def _distance_factory(
         self,
@@ -31,20 +30,23 @@ class _ErpDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled erp distance callable.
 
+        Similar to LCSS with a different penalty.
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Series can be different lengths.
+
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
         window: float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -71,13 +73,12 @@ class _ErpDistance(NumbaDistance):
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
-
         if not isinstance(g, float):
             raise ValueError("The value of g must be a float.")
 
         @njit(cache=True)
         def numba_erp_distance(_x: np.ndarray, _y: np.ndarray) -> float:
-            cost_matrix = _erp_cost_matrix(x, y, _bounding_matrix, g)
+            cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
 
             return cost_matrix[-1, -1]
 
@@ -88,14 +89,14 @@ class _ErpDistance(NumbaDistance):
 def _erp_cost_matrix(
     x: np.ndarray, y: np.ndarray, bounding_matrix: np.ndarray, g: float
 ):
-    """Compute the erp cost matrix between two timeseries.
+    """Compute the erp cost matrix between two time series.
 
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Bounding matrix where the values in bound are marked by finite values and
         outside bound points are infinite values.
@@ -108,24 +109,34 @@ def _erp_cost_matrix(
     np.ndarray (2d of size mxn where m is len(x) and n is len(y))
         Erp cost matrix between x and y.
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    dimensions = x.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
     cost_matrix = np.zeros((x_size + 1, y_size + 1))
-
-    x_g = np.full_like(x[0], g)
-    y_g = np.full_like(y[0], g)
-
-    gx_distance = np.array([abs(_local_euclidean_distance(x_g, ts)) for ts in x])
-    gy_distance = np.array([abs(_local_euclidean_distance(y_g, ts)) for ts in y])
+    gx_distance = np.zeros(x_size)
+    gy_distance = np.zeros(y_size)
+    for j in range(x_size):
+        for i in range(dimensions):
+            gx_distance[j] += (x[i][j] - g) * (x[i][j] - g)
+        gx_distance[j] = np.sqrt(gx_distance[j])
+    for j in range(y_size):
+        for i in range(dimensions):
+            gy_distance[j] += (y[i][j] - g) * (y[i][j] - g)
+        gy_distance[j] = np.sqrt(gy_distance[j])
     cost_matrix[1:, 0] = np.sum(gx_distance)
     cost_matrix[0, 1:] = np.sum(gy_distance)
 
     for i in range(1, x_size + 1):
         for j in range(1, y_size + 1):
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
+                curr_dist = 0
+                for k in range(dimensions):
+                    curr_dist += (x[k][i - 1] - y[k][j - 1]) * (
+                        x[k][i - 1] - y[k][j - 1]
+                    )
+                curr_dist = np.sqrt(curr_dist)
                 cost_matrix[i, j] = min(
-                    cost_matrix[i - 1, j - 1]
-                    + _local_euclidean_distance(x[i - 1], y[j - 1]),
+                    cost_matrix[i - 1, j - 1] + curr_dist,
                     cost_matrix[i - 1, j] + gx_distance[i - 1],
                     cost_matrix[i, j - 1] + gy_distance[j - 1],
                 )
