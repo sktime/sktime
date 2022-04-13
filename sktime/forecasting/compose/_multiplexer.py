@@ -82,6 +82,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         "handles-missing-data": False,
         "scitype:y": "both",
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "fit_is_empty": False,
     }
 
     _delegate_name = "forecaster_"
