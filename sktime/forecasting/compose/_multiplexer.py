@@ -103,7 +103,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
         self.clone_tags(selected_forecaster)
 
     def _check_selected_forecaster(self):
-        component_names = self._get_estimator_names(self.forecasters)
+        component_names = self._get_estimator_names(self.forecasters, make_unique=True)
         if self.selected_forecaster not in component_names:
             raise Exception(
                 "Please check the selected_forecaster argument provided "
@@ -113,7 +113,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster)
     def _set_forecaster(self):
         self._check_selected_forecaster()
         if self.selected_forecaster is not None:
-            for name, forecaster in self.forecasters:
+            for name, forecaster in self._get_estimator_tuples(self.forecasters):
                 if self.selected_forecaster == name:
                     self.forecaster_ = clone(forecaster)
 
