@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
 from sktime.datasets import load_airline
-from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
@@ -57,8 +57,7 @@ def test_pipeline():
 
 
 def test_skip_inverse_transform():
-    # testing that transformers which have the "skip-inverse-transform" tag
-    # are working in a pipeline
+    """Test transformers with skip-inverse-transform tag in pipeline."""
     y = load_airline()
     # add nan and outlier
     y.iloc[3] = np.nan
@@ -76,3 +75,24 @@ def test_skip_inverse_transform():
     forecaster.fit(y_train, fh=fh)
     y_pred = forecaster.predict()
     assert isinstance(y_pred, pd.Series)
+
+
+def test_nesting_pipelines():
+    """Test that nesting of pipelines works."""
+    from sktime.transformations.series.compose import OptionalPassthrough
+    from sktime.transformations.series.boxcox import LogTransformer
+    from sktime.transformations.series.detrend import Detrender
+    from sktime.forecasting.ets import AutoETS
+
+    ForecastingPipeline(steps=[
+            ("logX", OptionalPassthrough(LogTransformer())),
+            ("detrenderX", OptionalPassthrough(Detrender(forecaster=AutoETS()))),
+            ("prophetforecaster", TransformedTargetForecaster(
+                steps=[
+                    ("log", OptionalPassthrough(LogTransformer())),
+                    ("autoETS", AutoETS()),
+                    ]
+                )
+            )
+        ]
+    )
