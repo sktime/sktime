@@ -83,7 +83,6 @@ def test_nesting_pipelines():
     from sktime.transformations.series.boxcox import LogTransformer
     from sktime.transformations.series.compose import OptionalPassthrough
     from sktime.transformations.series.detrend import Detrender
-
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
     )
