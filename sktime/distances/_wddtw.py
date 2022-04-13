@@ -13,7 +13,7 @@ from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances._wdtw import _weighted_cost_matrix
 from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances._dtw import _compute_dtw_path
+from sktime.distances._distance_paths import compute_return_path
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -114,7 +114,7 @@ class _WddtwDistance(NumbaDistance):
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
         else:
             @njit(cache=True)
@@ -125,7 +125,7 @@ class _WddtwDistance(NumbaDistance):
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
         return numba_wddtw_distance_path

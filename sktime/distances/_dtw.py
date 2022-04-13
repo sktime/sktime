@@ -11,6 +11,7 @@ from numba.core.errors import NumbaWarning
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
+from sktime.distances._distance_paths import compute_return_path
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -120,7 +121,7 @@ class _DtwDistance(NumbaDistance):
                     _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
         else:
             @njit(cache=True)
@@ -129,7 +130,7 @@ class _DtwDistance(NumbaDistance):
                     _y: np.ndarray,
             ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
         return numba_dtw_distance_path
@@ -233,7 +234,7 @@ def _cost_matrix(
             if np.isfinite(bounding_matrix[i, j]):
                 sum = 0
                 for k in range(dimensions):
-                    sum += (x[k][i] - y[k][j]) * (x[k][i] - y[k][j])
+                    sum += (x[k][i] - y[k][j]) ** 2
                 cost_matrix[i + 1, j + 1] = sum
                 cost_matrix[i + 1, j + 1] += min(
                     cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
@@ -241,44 +242,44 @@ def _cost_matrix(
 
     return cost_matrix[1:, 1:]
 
-@njit(cache=True)
-def _compute_dtw_path(cost_matrix: np.ndarray) -> list:
-    """Compute the path from dtw cost matrix.
-
-    Series should be shape (d, m), where d is the number of dimensions, m the series
-    length. Series can be different lengths.
-
-    Parameters
-    ----------
-    cost_matrix: np.ndarray
-        Dtw cost matrix to find dtw path through.
-
-    Returns
-    -------
-    np.ndarray
-        Array containing tuple for each path location.
-    """
-    x_size, y_size = cost_matrix.shape
-    alignment = [(x_size - 1, y_size - 1)]
-    while alignment[-1] != (0, 0):
-        i, j = alignment[-1]
-        if i == 0:
-            alignment.append((0, j - 1))
-        elif j == 0:
-            alignment.append((i - 1, 0))
-        else:
-            test1 = cost_matrix[i - 1][j - 1]
-            test2 = cost_matrix[i - 1][j]
-            test3 = cost_matrix[i][j - 1]
-            arr = np.array([cost_matrix[i - 1][j - 1],
-                            cost_matrix[i - 1][j],
-                            cost_matrix[i][j - 1]])
-
-            score = np.argmin(arr)
-            if score == 0:
-                alignment.append((i - 1, j - 1))
-            elif score == 1:
-                alignment.append((i - 1, j))
-            else:
-                alignment.append((i, j - 1))
-    return alignment[::-1]
+# @njit(cache=True)
+# def _compute_dtw_path(cost_matrix: np.ndarray) -> list:
+#     """Compute the path from dtw cost matrix.
+#
+#     Series should be shape (d, m), where d is the number of dimensions, m the series
+#     length. Series can be different lengths.
+#
+#     Parameters
+#     ----------
+#     cost_matrix: np.ndarray
+#         Dtw cost matrix to find dtw path through.
+#
+#     Returns
+#     -------
+#     np.ndarray
+#         Array containing tuple for each path location.
+#     """
+#     x_size, y_size = cost_matrix.shape
+#     alignment = [(x_size - 1, y_size - 1)]
+#     while alignment[-1] != (0, 0):
+#         i, j = alignment[-1]
+#         if i == 0:
+#             alignment.append((0, j - 1))
+#         elif j == 0:
+#             alignment.append((i - 1, 0))
+#         else:
+#             test1 = cost_matrix[i - 1][j - 1]
+#             test2 = cost_matrix[i - 1][j]
+#             test3 = cost_matrix[i][j - 1]
+#             arr = np.array([cost_matrix[i - 1][j - 1],
+#                             cost_matrix[i - 1][j],
+#                             cost_matrix[i][j - 1]])
+#
+#             score = np.argmin(arr)
+#             if score == 0:
+#                 alignment.append((i - 1, j - 1))
+#             elif score == 1:
+#                 alignment.append((i - 1, j))
+#             else:
+#                 alignment.append((i, j - 1))
+#     return alignment[::-1]

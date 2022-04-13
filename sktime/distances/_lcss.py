@@ -10,7 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances._dtw import _compute_dtw_path
+from sktime.distances._distance_paths import compute_return_path
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -121,7 +121,7 @@ class _LcssDistance(NumbaDistance):
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
                 distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, distance, cost_matrix
         else:
             @njit(cache=True)
@@ -133,7 +133,7 @@ class _LcssDistance(NumbaDistance):
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
                 distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, distance
 
         return numba_lcss_distance

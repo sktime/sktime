@@ -10,7 +10,8 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances._dtw import _compute_dtw_path
+from sktime.distances._distance_paths import compute_return_path
+
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -107,7 +108,7 @@ class _EdrDistance(NumbaDistance):
                 else:
                     _epsilon = epsilon
                 cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
                 return path, distance, cost_matrix
         else:
@@ -121,7 +122,7 @@ class _EdrDistance(NumbaDistance):
                 else:
                     _epsilon = epsilon
                 cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
-                path = _compute_dtw_path(cost_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
                 distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
                 return path, distance
 

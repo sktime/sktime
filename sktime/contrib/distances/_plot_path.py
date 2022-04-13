@@ -22,8 +22,8 @@ def _path_mask(cost_matrix, path, ax, theme=gray_cmap):
     for i in range(max_size):
         for j in range(max_size):
             c = cost_matrix[j, i]
-            ax.text(i, j, str(round(c, 3)), va='center', ha='center', size=6)
-            ax.text(i, j, str(round(c, 3)), va='center', ha='center', size=6)
+            ax.text(i, j, str(round(c, 2)), va='center', ha='center', size=10)
+            ax.text(i, j, str(round(c, 2)), va='center', ha='center', size=10)
 
 
     ax.matshow(plot_matrix, cmap=theme)
@@ -89,7 +89,7 @@ def plot_path(
 
     ax_s_x.set_title(title, size=10)
 
-    plt.show()
+    return plt
 
 def plot_alignment(
         x,
@@ -122,7 +122,7 @@ def plot_alignment(
     plt.title(title)
 
     plt.tight_layout()
-    plt.show()
+    return plt
 
 
 if __name__ == '__main__':
@@ -151,10 +151,30 @@ if __name__ == '__main__':
         - 0.9444888843,
         - 0.239523623
     ])
+    import os
+    def save_plt(plt):
+        plt[0].savefig(f'{metric_path}/{plt[1]}')
+        plt[0].cla()
+        plt[0].clf()
 
-    plot_path(x, y, 'euclidean')
-    plot_path(x, y, 'dtw')
-    plot_path(x, y, 'dtw', {'window': 0.2})
+    if not os.path.exists('./plots'):
+        os.makedirs('./plots')
+    # plot_path(x, y, 'squared')
+    # metrics = ['euclidean', 'erp', 'edr', 'lcss', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'msm']
+    metrics = ['wdtw']
+    for metric in metrics:
+        metric_path = f'./plots/{metric}'
+        if not os.path.exists(metric_path):
+            os.makedirs(metric_path)
 
-    plot_alignment(x, y, 'dtw')
-    plot_alignment(x, y, 'dtw', {'window': 0.2})
+        save_plt((plot_path(x, y, metric), f'{metric}_path_through_cost_matrix'))
+        save_plt((plot_path(x, y, metric, {'window': 0.2}), f'{metric}_path_through_20_cost_matrix'))
+
+        g_val = [0.2, 0.3]
+        for g in g_val:
+            file_save = str(g).split('.')
+            save_plt((plot_path(x, y, metric, {'g': g}), f'{metric}_path_through_g{file_save[1]}_cost_matrix'))
+
+        save_plt((plot_alignment(x, y, metric), f'{metric}_alignment'))
+        save_plt((plot_alignment(x, y, metric, {'window': 0.2}), f'{metric}_alignment_20'))
+
