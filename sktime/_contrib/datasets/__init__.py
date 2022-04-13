@@ -37,7 +37,7 @@ __all__ = [
     "load_unit_test_tsf",
 ]
 
-from sktime.contrib.datasets._data_io import (
+from sktime._contrib.datasets._data_io import (
     generate_example_long_table,
     load_from_arff_to_dataframe,
     load_from_long_to_dataframe,
@@ -51,7 +51,7 @@ from sktime.contrib.datasets._data_io import (
     write_results_to_uea_format,
     write_tabular_transformation_to_arff,
 )
-from sktime.contrib.datasets._single_problem_loaders import (
+from sktime._contrib.datasets._single_problem_loaders import (
     load_acsf1,
     load_airline,
     load_arrow_head,
