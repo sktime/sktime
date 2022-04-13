@@ -41,7 +41,7 @@ def _make_panel_X(
         X = X + (y * 100).reshape(-1, 1, 1)
 
     if all_positive:
-        X = X ** 2
+        X = X**2
 
     if return_numpy:
         return X
