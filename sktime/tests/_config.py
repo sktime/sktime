@@ -48,6 +48,8 @@ EXCLUDE_ESTIMATORS = [
     "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
+    # CNN is a work
+    "CNNClassifier",
 ]
 
 

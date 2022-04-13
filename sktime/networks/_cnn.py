@@ -3,9 +3,10 @@
 
 __author__ = ["James-Large, Withington, TonyBagnall"]
 
-from tensorflow import keras
-
 from sktime.networks.base import BaseDeepNetwork
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tensorflow", severity="warning")
 
 
 class CNNNetwork(BaseDeepNetwork):
@@ -67,6 +68,8 @@ class CNNNetwork(BaseDeepNetwork):
         output_layer : a keras layer
         """
         # not sure of the whole padding thing
+        from tensorflow import keras
+
         padding = "valid"
         input_layer = keras.layers.Input(input_shape)
         # sort this out, why hard coded to 60?

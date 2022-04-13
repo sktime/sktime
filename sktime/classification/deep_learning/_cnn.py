@@ -3,11 +3,11 @@
 
 __author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
-
-from tensorflow import keras
-
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks import CNNNetwork
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+_check_soft_dependencies("tensorflow", severity="warning")
 
 
 class CNNClassifier(BaseDeepClassifier, CNNNetwork):
@@ -80,6 +80,8 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         -------
         output : a compiled Keras Model
         """
+        from tensorflow import keras
+
         input_layer, output_layer = self.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=n_classes, activation="sigmoid")(
