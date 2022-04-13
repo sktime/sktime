@@ -352,6 +352,10 @@ class UnobservedComponents(_StatsModelsAdapter):
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+
+        See Also
+        --------
+        statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
         """
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
