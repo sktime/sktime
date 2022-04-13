@@ -1557,6 +1557,16 @@
       "contributions": [
         "code",
       ]
+    },
+    {
+      "login": "RISHIKESHAVAN",
+      "name": "Rishikeshavan Rengarajan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44740714?v=4",
+      "profile": "https://github.com/RISHIKESHAVAN",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",
