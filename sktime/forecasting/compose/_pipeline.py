@@ -24,7 +24,7 @@ class _Pipeline(
 
     def _get_pipeline_scitypes(self, estimators):
         """Get list of scityes (str) from names/estimator list."""
-        return [scitype(x[1], coerce_to_list=True) for x in estimators]
+        return [scitype(x[1]) for x in estimators]
 
     def _get_forecaster_index(self, estimators):
         """Get the index of the first forecaster in the list."""
