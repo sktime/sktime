@@ -5,13 +5,14 @@
 
 from sklearn.base import clone
 
+from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
-__author__ = ["kkoralturk", "aiwalter"]
+__author__ = ["kkoralturk", "aiwalter", "fkiraly"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_HeterogenousEnsembleForecaster):
+class MultiplexForecaster(_HeterogenousEnsembleForecaster, _DelegatedForecaster):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -86,6 +87,8 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
     }
 
+    _delegate_name = "forecaster_"
+
     def __init__(
         self,
         forecasters: list,
@@ -94,8 +97,13 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         super(MultiplexForecaster, self).__init__(forecasters=forecasters, n_jobs=None)
         self.selected_forecaster = selected_forecaster
 
+        self._check_forecasters()
+        self._set_forecaster()
+
+        self.clone_tags(selected_forecaster)
+
     def _check_selected_forecaster(self):
-        component_names = [name for name, _ in self.forecasters]
+        component_names = self._get_estimator_names(self.forecasters)
         if self.selected_forecaster not in component_names:
             raise Exception(
                 "Please check the selected_forecaster argument provided "
@@ -108,60 +116,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
             for name, forecaster in self.forecasters:
                 if self.selected_forecaster == name:
                     self.forecaster_ = clone(forecaster)
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._check_forecasters()
-        self._set_forecaster()
-        self.forecaster_.fit(y, X=X, fh=fh)
-        return self
-
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-
-        Returns
-        -------
-        y_pred : pd.Series
-            Point predictions
-        """
-        return self.forecaster_.predict(fh=fh, X=X)
-
-    def _update(self, y, X=None, update_params=True):
-        """Call predict on the forecaster with the best found parameters.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame
-        X : pd.DataFrame, optional (default=None)
-        update_params : bool, optional (default=True)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        self.forecaster_.update(y, X, update_params=update_params)
-        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
