@@ -79,12 +79,16 @@ def test_skip_inverse_transform():
 
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
-    from sktime.transformations.series.compose import OptionalPassthrough
-    from sktime.transformations.series.boxcox import LogTransformer
-    from sktime.transformations.series.detrend import Detrender
     from sktime.forecasting.ets import AutoETS
+    from sktime.transformations.series.boxcox import LogTransformer
+    from sktime.transformations.series.compose import OptionalPassthrough
+    from sktime.transformations.series.detrend import Detrender
 
-    ForecastingPipeline(steps=[
+    from sktime.utils._testing.scenarios_forecasting import (
+        ForecasterFitPredictUnivariateWithX
+    )
+
+    pipe = ForecastingPipeline(steps=[
             ("logX", OptionalPassthrough(LogTransformer())),
             ("detrenderX", OptionalPassthrough(Detrender(forecaster=AutoETS()))),
             ("prophetforecaster", TransformedTargetForecaster(
@@ -96,3 +100,7 @@ def test_nesting_pipelines():
             )
         ]
     )
+
+    scenario = ForecasterFitPredictUnivariateWithX()
+
+    scenario.run(pipe)
