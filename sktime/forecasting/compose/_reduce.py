@@ -708,11 +708,9 @@ class _DirRecReducer(_Reducer):
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         # Exogenous variables are not yet support for the dirrec strategy.
+        # todo: implement this. For now, we escape.
         if X is not None:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not yet support exogenous "
-                f"variables `X`."
-            )
+            X = None
 
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
