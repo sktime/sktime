@@ -72,7 +72,7 @@ def _calc_uniform_order_statistic_medians(n):
 
     """
     v = np.empty(n, dtype=np.float64)
-    v[-1] = 0.5**(1.0 / n)
+    v[-1] = 0.5 ** (1.0 / n)
     v[0] = 1 - v[-1]
     i = np.arange(2, n)
     v[1:-1] = (i - 0.3175) / (n + 0.365)
