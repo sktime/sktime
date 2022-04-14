@@ -66,8 +66,9 @@ class AutoReg(_StatsModelsAdapter):
     _tags = {
         "scitype:y": "univariate",
         "univariate-only": True,
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "requires-fh-in-fit": False,
+        "handles-missing-data": False,
     }
 
     def __init__(
@@ -76,18 +77,16 @@ class AutoReg(_StatsModelsAdapter):
         trend="c",
         missing="none",
         seasonal=False,
-        exog=None,
     ):
         # Model params
         self.trend = trend
         self.lags = lags
         self.missing = missing
         self.seasonal = seasonal
-        self.exog = None
 
         super(AutoReg, self).__init__()
 
-    def _fit_forecaster(self, y, X=None):
+    def _fit_forecaster(self, y, fh=None, X=None):
         """Fit forecaster to training data.
 
         Wraps Statsmodel's AutoReg fit method.
@@ -106,7 +105,7 @@ class AutoReg(_StatsModelsAdapter):
         """
         self._forecaster = _AutoReg(
             endog=y,
-            exog=self.exog,
+            exog=X,
             lags=self.lags,
             missing=self.missing,
             trend=self.trend,
@@ -115,9 +114,8 @@ class AutoReg(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit()
         return self
 
-    def _predict(self, fh=None, X=None):
-        """
-        Wrap Statmodel's AutoReg forecast method.
+    def _predict(self, fh, X=None):
+        """Make forecasts.
 
         Parameters
         ----------
@@ -130,17 +128,18 @@ class AutoReg(_StatsModelsAdapter):
 
         Returns
         -------
-        y_pred : np.ndarray
+        y_pred : pd.Series
             Returns series of predicted values.
         """
+        # statsmodels requires zero-based indexing starting at the
+        # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-        # statsmodels forecasts all periods from start to end of forecasting
-        # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
-        return y_pred.loc[valid_indices]
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
     def summary(self):
         """Get a summary of the fitted forecaster.
