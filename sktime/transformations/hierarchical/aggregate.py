@@ -19,7 +19,8 @@ class Aggregator(BaseTransformer):
 
     This transformer adds aggregate levels via summation to a DataFrame with a
     multiindex. The aggregate levels are included with the special tag "__total"
-    in the index.
+    in the index. The aggregate nodes are discovered from top-to-bottom from
+    the input data multiindex.
 
     Parameters
     ----------
@@ -81,16 +82,14 @@ class Aggregator(BaseTransformer):
             # check the tests are ok
             if not _check_index_good(X):
                 raise ValueError(
-                    """
-                        Please check the index of X does not contain any elements
-                        named "__total".
-                    """
+                    "Please check the index of X does not contain any elements "
+                    "named '__total'"
                 )
             else:
                 pass
 
             # starting from top aggregate
-            df_out = X
+            df_out = X.copy()
             for i in range(0, X.index.nlevels - 1, 1):
                 # finding "__totals" parent/child from (up -> down)
                 indx_grouper = np.arange(0, i, 1).tolist()
@@ -118,13 +117,14 @@ class Aggregator(BaseTransformer):
             # now remove duplicated aggregate indexes
             if self.flatten_single_levels:
                 new_index = _flatten_single_indexes(X)
-                nm = X.index.names[-1]
 
+                nm = X.index.names[-1]
                 if nm is None:
                     nm = "level_" + str(X.index.nlevels - 1)
                 else:
                     pass
 
+                # now reindex with new non-duplicated axis
                 df_out = (
                     df_out.reset_index(level=-1)
                     .loc[new_index]
@@ -196,9 +196,17 @@ def _flatten_single_indexes(X):
             agg_ids = list(tmp[tmp > 1].dropna().index)
 
             # add the aggregate label down the the length of the orginal index
-            # only id add if there are two elements in list
-            if len(agg_ids) > 1:
 
+            # only add if >=1 elements in list and not at the 2nd aggregate level
+            add_indicator1 = (i < (len(ind_df.columns) - 1)) & (len(agg_ids) >= 1)
+            # or at the second most aggregate level and there are two aggs to add
+            # or at the second most aggregate level and there is 1 agg to add,
+            #   but the top level has more than one unique index
+            add_indicator2 = (len(agg_ids) > 1) | (
+                (len(agg_ids) == 1) & (ind_df.iloc[:, 0].nunique() > 1)
+            )
+
+            if add_indicator1 | add_indicator2:
                 agg_ids = [tuple([x]) if type(x) is not tuple else x for x in agg_ids]
                 for _j in range(i):
                     agg_ids = [x + ("__total",) for x in agg_ids]
