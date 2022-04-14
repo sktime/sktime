@@ -157,6 +157,69 @@ def test_all_estimators_exclude_estimators(exclude_estimators):
         assert estimator not in names
 
 
+def _get_tag_fixture():
+    """Generate a simple list of test cases for optional return_tags."""
+    # just picked a few valid tags to try out as valid str return_tags args:
+    test_str_as_arg = [
+        "X-y-must-have-same-index",
+        "capability:pred_var",
+        "skip-inverse-transform",
+    ]
+
+    # we can also make them into a list to test list of str as a valid arg:
+    test_list_as_arg = [test_str_as_arg]
+    # Note - I don't include None explicitly as a test case - tested elsewhere
+    return test_str_as_arg + test_list_as_arg
+
+
+# test that all_estimators returns as expected if given correct return_tags:
+@pytest.mark.parametrize("return_tags", _get_tag_fixture())
+@pytest.mark.parametrize("return_names", [True, False])
+def test_all_estimators_return_tags(return_tags, return_names):
+    """Test ability to return estimator value of passed tags."""
+    estimators = all_estimators(
+        return_tags=return_tags,
+        return_names=return_names,
+    )
+    # Helps us keep track of estimator index within the tuple:
+    ESTIMATOR_INDEX = 1 if return_names else 0
+    TAG_START_INDEX = ESTIMATOR_INDEX + 1
+
+    assert isinstance(estimators[0], tuple)
+    # check length of tuple is what we expect:
+    if isinstance(return_tags, str):
+        assert len(estimators[0]) == TAG_START_INDEX + 1
+    else:
+        assert len(estimators[0]) == len(return_tags) + TAG_START_INDEX
+
+    # check that for each estimator the value for that tag is correct:
+    for est_tuple in estimators:
+        est = est_tuple[ESTIMATOR_INDEX]
+        if isinstance(return_tags, str):
+            assert est.get_class_tag(return_tags) == est_tuple[TAG_START_INDEX]
+        else:
+            for tag_index, tag in enumerate(return_tags):
+                assert est.get_class_tag(tag) == est_tuple[TAG_START_INDEX + tag_index]
+
+
+def _get_bad_return_tags():
+    """Get return_tags arguments that should throw an exception."""
+    # case not a str or a list:
+    is_int = [12]
+    # case is a list, but not all elements are str:
+    is_not_all_str = [["this", "is", "a", "test", 12, "!"]]
+
+    return is_int + is_not_all_str
+
+
+# test that all_estimators breaks as expected if given bad return_tags:
+@pytest.mark.parametrize("return_tags", _get_bad_return_tags())
+def test_all_estimators_return_tags_bad_arg(return_tags):
+    """Test ability to catch bad arguments of return_tags."""
+    with pytest.raises(TypeError):
+        _ = all_estimators(return_tags=return_tags)
+
+
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""

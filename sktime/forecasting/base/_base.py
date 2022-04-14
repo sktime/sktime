@@ -108,6 +108,68 @@ class BaseForecaster(BaseEstimator):
 
         super(BaseForecaster, self).__init__()
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformedTargetForecaster.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return self_as_pipeline * other
+        elif is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return other * self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -1922,15 +1984,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
@@ -1939,16 +1993,11 @@ class BaseForecaster(BaseEstimator):
         cv : temporal cross-validation generator
         X : pd.DataFrame
         update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
         y_pred = pd.Series
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
@@ -1963,34 +2012,22 @@ class BaseForecaster(BaseEstimator):
 
                 # we use `update_predict_single` here
                 #  this updates the forecasting horizon
-                y_pred = self._update_predict_single(
-                    y_new,
-                    fh,
-                    X,
+                y_pred = self.update_predict_single(
+                    y=y_new,
+                    fh=fh,
+                    X=X,
                     update_params=update_params,
                 )
-                if return_pred_int:
-                    y_pred_int = self.predict_interval(fh, X, alpha=alpha)
-                    y_pred_int = self._convert_new_to_old_pred_int(y_pred_int)
-                    y_pred = (y_pred, y_pred_int)
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
 
                 for i in range(len(y_preds)):
-                    if not return_pred_int:
-                        y_preds[i] = convert_to(
-                            y_preds[i],
-                            self._y_mtype_last_seen,
-                            store=self._converter_store_y,
-                            store_behaviour="freeze",
-                        )
-                    else:
-                        y_preds[i][0] = convert_to(
-                            y_preds[i][0],
-                            self._y_mtype_last_seen,
-                            store=self._converter_store_y,
-                            store_behaviour="freeze",
-                        )
+                    y_preds[i] = convert_to(
+                        y_preds[i],
+                        self._y_mtype_last_seen,
+                        store=self._converter_store_y,
+                        store_behaviour="freeze",
+                    )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     # TODO: remove in v0.11.0

@@ -3,7 +3,7 @@
 
 """Functions for checking input data."""
 
-__author__ = ["Markus Löning", "Drishti Bhasin"]
+__author__ = ["Markus Löning", "Drishti Bhasin", "khrapovs"]
 __all__ = [
     "check_series",
     "check_time_index",
@@ -18,13 +18,7 @@ import pandas as pd
 
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
-VALID_INDEX_TYPES = (
-    pd.Int64Index,
-    pd.RangeIndex,
-    pd.PeriodIndex,
-    pd.DatetimeIndex,
-    pd.TimedeltaIndex,
-)
+VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
 RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
 ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)

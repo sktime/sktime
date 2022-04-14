@@ -47,9 +47,6 @@ import pandas as pd
 
 from sktime.datatypes._series._check import check_pddataframe_series
 
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
-VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
-
 
 def _list_all_equal(obj):
     """Check whether elements of list are all equal.
@@ -104,7 +101,7 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     if len(bad_inds) > 0:
         msg = (
             f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
-            " not at i={bad_inds}"
+            f" not at i={bad_inds}"
         )
         return _ret(False, msg, None, return_metadata)
 
