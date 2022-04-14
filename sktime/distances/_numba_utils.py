@@ -8,22 +8,23 @@ from sktime.distances.base import DistanceCallable
 
 
 @njit(cache=True)
-def _check_numba_pairwise_series(x: np.ndarray) -> np.ndarray:
-    """Check a potential series being passed into pairwise.
+def _make_3d_series(x: np.ndarray) -> np.ndarray:
+    """Check a series being passed into pairwise is 3d.
+
+    "Pairwise assumes it has been passed two sets of series, if passed a single
+    series this function reshapes.
 
     Parameters
     ----------
-    x: np.ndarray
-        A timeseries
+    x: np.ndarray, 2d or 3d
 
     Returns
     -------
-    np.ndarray
-        Validated and reshaped (where appropriate) timeseries.
+    np.ndarray, 3d
     """
     if x.ndim == 2:
         shape = x.shape
-        _x = np.reshape(x, (shape[0], shape[1], 1))
+        _x = np.reshape(x, (1, shape[0], shape[1]))
     else:
         _x = x
     return _x
@@ -36,25 +37,24 @@ def _compute_pairwise_distance(
 
     Parameters
     ----------
-    x: np.ndarray (2d or 3d array)
-        First timeseries.
-    y: np.ndarray (2d or 3d array)
-        Second timeseries.
+    x: np.ndarray (2d or 3d array of shape (d,m) or (n1,d,m))
+        First time series.
+    y: np.ndarray (2d or 3d array of shape (d,m) or (n2,d,m))
+        Second time series.
     symmetric: bool
-        Boolean that is true when x == y and false when x != y. Used in some instances
-        to speed up pairwise computation.
+        Boolean that is true when distance_callable(x,y) == distance_callable(y,x).
+        Used in some to speed up pairwise computation for symmetric distance functions.
     distance_callable: Callable[[np.ndarray, np.ndarray], float]
         No_python distance callable to measure the distance between two 2d numpy
         arrays.
 
     Returns
     -------
-    np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
-        Pairwise distance matrix between the two timeseries.
+    np.ndarray (2d of shape (n1, n2).
+        Pairwise distance matrix between the two collections of time series.
     """
-    _x = _check_numba_pairwise_series(x)
-    _y = _check_numba_pairwise_series(y)
-
+    _x = _make_3d_series(x)
+    _y = _make_3d_series(y)
     x_size = _x.shape[0]
     y_size = _y.shape[0]
 
@@ -67,7 +67,6 @@ def _compute_pairwise_distance(
                 pairwise_matrix[i, j] = pairwise_matrix[j, i]
             else:
                 pairwise_matrix[i, j] = distance_callable(curr_x, _y[j])
-
     return pairwise_matrix
 
 
@@ -108,12 +107,12 @@ def is_no_python_compiled_callable(
 
 
 def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
-    """Convert a timeseries to a valid timeseries for numba pairwise use.
+    """Convert a time series to a valid time series for numba pairwise use.
 
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d array)
-        A timeseries.
+        A time series.
 
     Returns
     -------
@@ -139,10 +138,7 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
         _x = np.reshape(_x, (1, 1, shape[0]))
     elif num_dims == 2:
         shape = _x.shape
-        _x = np.reshape(_x, (shape[0], shape[1], 1))
-    elif num_dims == 3:
-        shape = _x.shape
-        _x = np.reshape(_x, (shape[0], shape[1], shape[2]))
+        _x = np.reshape(_x, (1, shape[1], shape[0]))
     elif num_dims > 3:
         raise ValueError(
             "The matrix provided has more than 3 dimensions. This is not"
@@ -180,11 +176,26 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
     _x = np.array(x, copy=True, dtype=float)
     num_dims = _x.ndim
     shape = _x.shape
-    if num_dims == 1:
-        _x = np.reshape(_x, (shape[0], 1))
-    if num_dims == 2 and shape[0] == 1:
-        _x = np.reshape(_x, (shape[1], shape[0]))
+    # If passed a series shape (m,1), this assumes it is a mistake, and converts to (
+    # shape (1,m)
+    if num_dims == 1 or (num_dims == 2 and _x.shape[1] == 1 and _x.shape[0] != 1):
+        _x = np.reshape(_x, (1, shape[0]))
+    elif num_dims > 2:
+        raise ValueError(
+            "The matrix provided has more than 2 dimensions. This is not"
+            "supported. Please provide a matrix with less than "
+            "2 dimensions"
+        )
+    return _x
 
+
+@njit(cache=True)
+def _numba_to_timeseries(x: np.ndarray) -> np.ndarray:
+    _x = x.copy()
+    num_dims = _x.ndim
+    shape = _x.shape
+    if num_dims == 1 or (num_dims == 2 and _x.shape[1] == 1 and _x.shape[0] != 1):
+        _x = np.reshape(_x, (1, shape[0]))
     elif num_dims > 2:
         raise ValueError(
             "The matrix provided has more than 2 dimensions. This is not"
