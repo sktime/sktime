@@ -310,4 +310,4 @@ Execution of tests in local has been containerized with the help of ``docker``. 
 
 The command to execute the tests is: ``make dockertest pyversion=<python version>``. You can specify the Python version to be used for the tests using the ``pyversion`` argument. For example, to execute the tests in the Python version ``3.7``, use ``make dockertest pyversion=3.7``. The supported versions are ``3.7``, ``3.8`` and ``3.9`` (``3.10`` is under development). If the ``pyversion`` argument is not passed, version ``3.8`` will be used by default.
 
-Once the command is executed, ``docker`` will then create a container using the python base image of the specified version and execute the tests within it. 
+Once the command is executed, ``docker`` will then create a container using the python base image of the specified version and execute the tests within it.
