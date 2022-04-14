@@ -4,8 +4,9 @@
 from typing import Any, Callable, Union
 
 import numpy as np
+from numba import njit
 
-from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
+from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
@@ -14,6 +15,7 @@ from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
+    _numba_to_timeseries,
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
@@ -93,7 +95,7 @@ def erp_distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> erp_distance(x_2d, y_2d)
-    32.0
+    45.254833995939045
 
     References
     ----------
@@ -305,7 +307,7 @@ def wddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
+    compute_derivative: DerivativeCallable = average_of_slope,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -410,7 +412,7 @@ def wdtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    g: float = 0.0,
+    g: float = 0.05,
     **kwargs: Any,
 ) -> float:
     """Compute the weighted dynamic time warping (WDTW) distance between time series.
@@ -477,12 +479,12 @@ def wdtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wdtw_distance(x_1d, y_1d)
-    29.0
+    27.975712863958133
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wdtw_distance(x_2d, y_2d)
-    256.0
+    243.2106560107827
 
     References
     ----------
@@ -507,7 +509,7 @@ def ddtw_distance(
     window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
+    compute_derivative: DerivativeCallable = average_of_slope,
     **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
@@ -800,8 +802,8 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Euclidean distance is supported for 1d, 2d and 3d arrays.
 
-    The Euclidean distance between two time series is the square root of the squared
-    distance and is defined as:
+    The Euclidean distance between two time series of length m is the square root of
+    the squared distance and is defined as:
 
     .. math::
         ed(x, y) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
@@ -992,13 +994,21 @@ def distance_factory(
         If the metric type cannot be determined.
     """
     if x is None:
-        x = np.zeros((10, 10))
+        x = np.zeros((1, 10))
     if y is None:
-        y = np.zeros((10, 10))
+        y = np.zeros((1, 10))
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    return _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+
+    @njit(cache=True)
+    def dist_callable(x: np.ndarray, y: np.ndarray):
+        _x = _numba_to_timeseries(x)
+        _y = _numba_to_timeseries(y)
+        return callable(_x, _y)
+
+    return dist_callable
 
 
 def pairwise_distance(
@@ -1068,32 +1078,29 @@ def pairwise_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
-    array([[64.]])
+    array([[58.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw')
-    array([[256., 576.],
-           [ 58., 256.]])
+    array([[512.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
     >>> pairwise_distance(x_3d, y_3d, metric='dtw')
     array([[256., 576.],
-           [ 58., 256.]])
+           [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
-    array([[256., 576.],
-           [ 58., 256.]])
+    array([[512.]])
     """
     _x = to_numba_pairwise_timeseries(x)
     if y is None:
         y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
-
     _metric_callable = _resolve_metric(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
