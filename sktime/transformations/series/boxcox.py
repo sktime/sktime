@@ -10,10 +10,73 @@ import numpy as np
 from scipy import optimize, special, stats
 from scipy.special import boxcox, inv_boxcox
 from scipy.stats import boxcox_llf, distributions, variation
-from scipy.stats.morestats import _calc_uniform_order_statistic_medians
 
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import is_int
+
+
+# copy-pasted from scipy 1.7.3 since it moved in 1.8.0 and broke this estimator
+# todo: find a suitable replacement
+def _calc_uniform_order_statistic_medians(n):
+    """Approximations of uniform order statistic medians.
+
+    Parameters
+    ----------
+    n : int
+        Sample size.
+
+    Returns
+    -------
+    v : 1d float array
+        Approximations of the order statistic medians.
+
+    References
+    ----------
+    .. [1] James J. Filliben, "The Probability Plot Correlation Coefficient
+           Test for Normality", Technometrics, Vol. 17, pp. 111-117, 1975.
+
+    Examples
+    --------
+    Order statistics of the uniform distribution on the unit interval
+    are marginally distributed according to beta distributions.
+    The expectations of these order statistic are evenly spaced across
+    the interval, but the distributions are skewed in a way that
+    pushes the medians slightly towards the endpoints of the unit interval:
+
+    >>> n = 4
+    >>> k = np.arange(1, n+1)
+    >>> from scipy.stats import beta
+    >>> a = k
+    >>> b = n-k+1
+    >>> beta.mean(a, b)
+    array([0.2, 0.4, 0.6, 0.8])
+    >>> beta.median(a, b)
+    array([0.15910358, 0.38572757, 0.61427243, 0.84089642])
+
+    The Filliben approximation uses the exact medians of the smallest
+    and greatest order statistics, and the remaining medians are approximated
+    by points spread evenly across a sub-interval of the unit interval:
+
+    >>> from scipy.morestats import _calc_uniform_order_statistic_medians
+    >>> _calc_uniform_order_statistic_medians(n)
+    array([0.15910358, 0.38545246, 0.61454754, 0.84089642])
+
+    This plot shows the skewed distributions of the order statistics
+    of a sample of size four from a uniform distribution on the unit interval:
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = np.linspace(0.0, 1.0, num=50, endpoint=True)
+    >>> pdfs = [beta.pdf(x, a[i], b[i]) for i in range(n)]
+    >>> plt.figure()
+    >>> plt.plot(x, pdfs[0], x, pdfs[1], x, pdfs[2], x, pdfs[3])
+
+    """
+    v = np.empty(n, dtype=np.float64)
+    v[-1] = 0.5**(1.0 / n)
+    v[0] = 1 - v[-1]
+    i = np.arange(2, n)
+    v[1:-1] = (i - 0.3175) / (n + 0.365)
+    return v
 
 
 class BoxCoxTransformer(BaseTransformer):
