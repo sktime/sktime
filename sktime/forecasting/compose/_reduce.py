@@ -631,6 +631,7 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "ignores-exogeneous-X": True,
     }
 
     def _transform(self, y, X=None):
@@ -662,6 +663,10 @@ class _DirRecReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
+        # todo: logic for X below is broken. Escape X until fixed.
+        if X is not None:
+            X = None
+
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
 
