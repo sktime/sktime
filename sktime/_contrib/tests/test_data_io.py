@@ -10,7 +10,7 @@ import pytest
 from pandas._testing import assert_frame_equal
 
 import sktime
-from sktime.contrib.data_io import load_from_tsfile
+from sktime._contrib.data_io import load_from_tsfile
 from sktime.datasets._data_io import MODULE
 
 
