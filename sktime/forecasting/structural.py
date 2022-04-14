@@ -325,7 +325,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             low_memory=self.low_memory,
         )
 
-    def _predict_interval(self, fh, X=None, coverage=0.90):
+    def _predict_interval(self, fh, X=None, coverage=None):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_interval containing the core logic,
@@ -337,7 +337,7 @@ class UnobservedComponents(_StatsModelsAdapter):
             Forecasting horizon, default = y.index (in-sample forecast)
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
-        coverage : list of float (guaranteed not None and floats in [0,1]i interval)
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
            nominal coverage(s) of predictive interval(s)
 
         Returns
