@@ -5,10 +5,6 @@ from typing import Callable
 
 import numpy as np
 
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tslearn")
-
 
 def mean_average(X: np.ndarray) -> np.ndarray:
     """Compute the mean average of time series.
