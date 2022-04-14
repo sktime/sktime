@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
 
 import warnings
 from typing import Any
@@ -8,7 +8,6 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._squared import _local_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
@@ -17,23 +16,23 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _WdtwDistance(NumbaDistance):
-    r"""Weighted dynamic time warping (wdtw) distance between two time series.
+    r"""Weighted dynamic time warping (WDTW) distance between two time series.
 
-    Uses DTW with a weighted pairwise distance matrix rather than a window. When
-    creating the distance matrix $M$, a weight penalty  $w_{|i-j|}$ for a warping
-    distance of $|i-j|$ is applied, so that for series a = <a_1, ..., a_m> and
-    b=<b_1,...,b_m>,
+    WDTW uses DTW with a weighted pairwise distance matrix rather than a window. When
+    creating the distance matrix :math:'M', a weight penalty  :math:'w_{|i-j|}' for a
+    warping distance of :math:'|i-j|' is applied, so that for series
+    :math:'a = <a_1, ..., a_m>' and :math:'b=<b_1,...,b_m>',
+    .. math:: M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
+    A logistic weight function, proposed in [1] is used, so that a warping of :math:'x'
+    places imposes a weighting of
+    .. math:: w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
+    where :math:'w_{max}' is an upper bound on the weight (set to 1), :math:'m' is
+    the series length and :math:'g' is a parameter that controls the penalty level
+    for larger warpings. The greater :math:'g' is, the greater the penalty for warping.
+    Once :math:'M' is found, standard dynamic time warping is applied.
 
-    .. math::
-    M_{i,j}=  w(|i-j|) (a_i-b_j)^2.
-    A logistic weight function, proposed in [1] is used, so that a warping of $x$ places
-    imposes a weighting of
-    .. math::
-    w(x)=\frac{w_{max}}{1+e^{-g(x-m/2)}},
-    where $w_{max}$ is an upper bound on the weight (set to 1), $m$ is the series
-    length and $g$ is a parameter that controls the penalty level for larger warpings.
-    The greater $g$ is, the greater the penalty for warping. Once $M$ is found,
-    standard dynamic time warping is applied.
+    WDTW is set up so you can use it with a bounding box in addition to the weight
+    function is so desired. This is for consistency with the other distance functions.
 
     References
     ----------
@@ -48,25 +47,24 @@ class _WdtwDistance(NumbaDistance):
         window: int = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
-        g: float = 0.0,
+        g: float = 0.05,
         **kwargs: Any,
     ) -> DistanceCallable:
         """Create a no_python compiled wdtw distance callable.
 
         Parameters
         ----------
-        x: np.ndarray (2d array)
-            First timeseries.
-        y: np.ndarray (2d array)
-            Second timeseries.
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
         window: float, defaults = None
             Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
-                                        defaults = None)
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
             Custom bounding matrix to use. If defined then other lower_bounding params
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
@@ -87,8 +85,8 @@ class _WdtwDistance(NumbaDistance):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series are not numpy array.
+            If the input time series do not have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
             If the value of g is not a float
@@ -137,8 +135,9 @@ def _weighted_cost_matrix(
     np.ndarray
         Weighted cost matrix between x and y time series.
     """
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    dimensions = x.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
     cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
     cost_matrix[0, 0] = 0.0
 
@@ -149,8 +148,12 @@ def _weighted_cost_matrix(
     for i in range(x_size):
         for j in range(y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                cost_matrix[i + 1, j + 1] = min(
-                    cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
-                ) + weight_vector[np.abs(i - j)] * _local_squared_distance(x[i], y[j])
+                sum = 0
+                for k in range(dimensions):
+                    sum += (x[k][i] - y[k][j]) * (x[k][i] - y[k][j])
+                cost_matrix[i + 1, j + 1] = (
+                    min(cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j])
+                    + weight_vector[np.abs(i - j)] * sum
+                )
 
     return cost_matrix[1:, 1:]

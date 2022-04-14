@@ -52,6 +52,8 @@ def _validate_distance_result(
     expected_result:
         float that is the expected result of tests.
     """
+    if expected_result is None:
+        return
     if kwargs_dict is None:
         kwargs_dict = {}
     metric_str_result = distance(x, y, metric=metric_str, **kwargs_dict)
@@ -170,16 +172,6 @@ def test_distance(dist: MetricInfo) -> None:
     _validate_distance_result(
         x=create_test_distance_numpy(10),
         y=create_test_distance_numpy(10, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][1],
-    )
-
-    _validate_distance_result(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
