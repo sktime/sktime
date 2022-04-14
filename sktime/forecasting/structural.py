@@ -325,38 +325,33 @@ class UnobservedComponents(_StatsModelsAdapter):
             low_memory=self.low_memory,
         )
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction quantiles for a forecast.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1]i interval)
+           nominal coverage(s) of predictive interval(s)
 
         Returns
         -------
-        quantiles : pd.DataFrame
+        pred_int : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
 
         See Also
         --------
@@ -368,17 +363,17 @@ class UnobservedComponents(_StatsModelsAdapter):
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X
         )
-
         pred_int = pd.DataFrame()
-        for a in alpha:
-            pred_statsmodels = prediction_results.summary_frame(alpha=a)
-            pred_int[(a, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
+        for c in coverage:
+            alpha = 1 - c
+            pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
+            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
                 valid_indices
             ]
-            pred_int[(a, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
+            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
                 valid_indices
             ]
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha, ["lower", "upper"]])
+        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
         pred_int.columns = index
         return pred_int
 

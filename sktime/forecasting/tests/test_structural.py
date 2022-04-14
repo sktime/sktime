@@ -227,24 +227,31 @@ def test_result_consistency_exog(level_sample_data_split):
 
 
 @pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
+@pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
 @pytest.mark.parametrize("fh_length", [1, 3, 5, 10, 20])
-def test_prediction_intervals_no_exog(alpha, fh_length, y_airlines):
+def test_prediction_intervals_no_exog(alpha, coverage, fh_length, y_airlines):
     """Test prediction intervals when no exogenous regressors are present."""
     fh = np.arange(fh_length) + 1
     forecaster = UnobservedComponents()
     forecaster.fit(y_airlines)
     quantiles_df = forecaster.predict_quantiles(fh=fh, alpha=alpha)
-
+    intervals_df = forecaster.predict_interval(fh=fh, coverage=coverage)
     if isinstance(alpha, list):
-        assert quantiles_df.shape == (fh_length, 2 * len(alpha))
+        assert quantiles_df.shape == (fh_length, len(alpha))
     else:
-        quantiles_np = quantiles_df.to_numpy().flatten()
-        assert quantiles_df.shape == (fh_length, 2)
-        assert quantiles_np[0] < quantiles_np[1]
+        assert quantiles_df.shape == (fh_length, 1)
+
+    if isinstance(coverage, list):
+        assert intervals_df.shape == (fh_length, 2 * len(coverage))
+    else:
+        intervals_np = intervals_df.to_numpy().flatten()
+        assert intervals_df.shape == (fh_length, 2)
+        assert intervals_np[0] < intervals_np[1]
 
 
 @pytest.mark.parametrize("alpha", [0.01, 0.05, [0.01, 0.05]])
-def test_prediction_intervals_exog(alpha, level_sample_data_split):
+@pytest.mark.parametrize("coverage", [0.6, 0.99, [0.9, 0.95]])
+def test_prediction_intervals_exog(alpha, coverage, level_sample_data_split):
     """Test prediction intervals when exogenous regressors are present."""
     level, y_train, X_train, X_test, fh = level_sample_data_split
     fh_length = X_test.shape[0]
@@ -257,10 +264,16 @@ def test_prediction_intervals_exog(alpha, level_sample_data_split):
     forecaster = UnobservedComponents(**model_spec)
     forecaster.fit(y=y_train, X=X_train)
     quantiles_df = forecaster.predict_quantiles(fh=fh, X=X_test, alpha=alpha)
+    intervals_df = forecaster.predict_interval(fh=fh, X=X_test, coverage=coverage)
 
     if isinstance(alpha, list):
-        assert quantiles_df.shape == (fh_length, 2 * len(alpha))
+        assert quantiles_df.shape == (fh_length, len(alpha))
     else:
-        quantiles_np = quantiles_df.to_numpy().flatten()
-        assert quantiles_df.shape == (fh_length, 2)
-        assert quantiles_np[0] < quantiles_np[1]
+        assert quantiles_df.shape == (fh_length, 1)
+
+    if isinstance(coverage, list):
+        assert intervals_df.shape == (fh_length, 2 * len(coverage))
+    else:
+        intervals_np = intervals_df.to_numpy().flatten()
+        assert intervals_df.shape == (fh_length, 2)
+        assert intervals_np[0] < intervals_np[1]
