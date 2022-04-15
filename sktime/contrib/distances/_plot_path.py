@@ -17,7 +17,7 @@ def _path_mask(cost_matrix, path, ax, theme=gray_cmap):
             elif cost_matrix[i, j] == np.inf:
                 plot_matrix[i, j] = 0.0
             else:
-                plot_matrix[i, j] = 0.5
+                plot_matrix[i, j] = 0.25
 
     for i in range(max_size):
         for j in range(max_size):
@@ -44,13 +44,29 @@ def plot_path(
         y: np.ndarray,
         metric: str,
         dist_kwargs: dict = None,
-        title: str = ''
+        title: str = '',
+        plot_over_pw: bool = False
 ):
     if dist_kwargs is None:
         dist_kwargs = {}
     try:
         path, dist, cost_matrix = \
             distance_path(x, y, metric=metric, return_cost_matrix=True, **dist_kwargs)
+
+        if metric == 'lcss':
+            _path = []
+            for tup in path:
+                _path.append(tuple(x+1 for x in tup))
+            path = _path
+
+        if plot_over_pw is True:
+            if metric == 'lcss':
+                pw = pairwise_distance(x, y, metric='euclidean')
+                cost_matrix = np.zeros_like(cost_matrix)
+                cost_matrix[1:, 1:] = pw
+            else:
+                pw = pairwise_distance(x, y, metric='squared')
+                cost_matrix = pw
     except NotImplementedError:
         path, dist, cost_matrix = _pairwise_path(x, y, metric)
 
@@ -111,6 +127,7 @@ def plot_alignment(
     plt.plot(x, "b-", color='black')
     plt.plot(y, "g-", color='black')
 
+
     for positions in path:
         try:
             plt.plot([positions[0], positions[1]],
@@ -123,7 +140,6 @@ def plot_alignment(
 
     plt.tight_layout()
     return plt
-
 
 if __name__ == '__main__':
     x = np.array([
@@ -159,21 +175,21 @@ if __name__ == '__main__':
 
     if not os.path.exists('./plots'):
         os.makedirs('./plots')
-    # plot_path(x, y, 'squared')
-    # metrics = ['euclidean', 'erp', 'edr', 'lcss', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'msm']
-    metrics = ['wdtw']
+    metrics = ['euclidean', 'erp', 'edr', 'lcss', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'msm']
+    # metrics = ['lcss']
     for metric in metrics:
         metric_path = f'./plots/{metric}'
         if not os.path.exists(metric_path):
             os.makedirs(metric_path)
 
-        save_plt((plot_path(x, y, metric), f'{metric}_path_through_cost_matrix'))
-        save_plt((plot_path(x, y, metric, {'window': 0.2}), f'{metric}_path_through_20_cost_matrix'))
+        save_plt((plot_path(x, y, metric, {'epsilon': 1.0}), f'{metric}_path_through_cost_matrix'))
+        save_plt((plot_path(x, y, metric, {'window': 0.2, 'epsilon': 1.0}), f'{metric}_path_through_20_cost_matrix'))
 
-        g_val = [0.2, 0.3]
-        for g in g_val:
-            file_save = str(g).split('.')
-            save_plt((plot_path(x, y, metric, {'g': g}), f'{metric}_path_through_g{file_save[1]}_cost_matrix'))
+        if metric == 'wdtw':
+            g_val = [0.2, 0.3]
+            for g in g_val:
+                file_save = str(g).split('.')
+                save_plt((plot_path(x, y, metric, {'g': g}), f'{metric}_path_through_g{file_save[1]}_cost_matrix'))
 
         save_plt((plot_alignment(x, y, metric), f'{metric}_alignment'))
         save_plt((plot_alignment(x, y, metric, {'window': 0.2}), f'{metric}_alignment_20'))

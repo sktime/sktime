@@ -10,7 +10,7 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances._distance_paths import compute_return_path
+from sktime.distances._distance_paths import compute_lcss_return_path
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -121,7 +121,10 @@ class _LcssDistance(NumbaDistance):
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
                 distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_lcss_return_path(
+                    _x, _y, epsilon=epsilon,
+                    bounding_matrix=_bounding_matrix, cost_matrix=cost_matrix
+                )
                 return path, distance, cost_matrix
         else:
             @njit(cache=True)
@@ -133,7 +136,10 @@ class _LcssDistance(NumbaDistance):
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
                 distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_lcss_return_path(
+                    _x, _y, epsilon=epsilon,
+                    bounding_matrix=_bounding_matrix, cost_matrix=cost_matrix
+                )
                 return path, distance
 
         return numba_lcss_distance
@@ -242,15 +248,12 @@ def _sequence_cost_matrix(
             if np.isfinite(bounding_matrix[i - 1, j - 1]):
                 curr_dist = 0
                 for k in range(dimensions):
-                    curr_dist += (x[k][i - 1] - y[k][j - 1]) * (
-                        x[k][i - 1] - y[k][j - 1]
-                    )
+                    curr_dist += (x[k][i - 1] - y[k][j - 1]) ** 2
                 curr_dist = np.sqrt(curr_dist)
-                if curr_dist < epsilon:
+                if curr_dist <= epsilon:
                     cost_matrix[i, j] = 1 + cost_matrix[i - 1, j - 1]
                 else:
                     cost_matrix[i, j] = max(
                         cost_matrix[i, j - 1], cost_matrix[i - 1, j]
                     )
-
     return cost_matrix

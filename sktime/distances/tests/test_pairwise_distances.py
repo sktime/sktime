@@ -209,8 +209,6 @@ def _test_pw_equal_single_dists(
             curr_y = y[j]
             matrix[i, j] = distance_function(curr_x, curr_y)
 
-    if conical_name == 'dtw':
-        joe = ''
     assert np.allclose(matrix, pw_result)
 
 
