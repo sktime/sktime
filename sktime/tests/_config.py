@@ -48,8 +48,6 @@ EXCLUDE_ESTIMATORS = [
     "TSFreshRelevantFeatureExtractor",
     # PlateauFinder seems to be broken, see #2259
     "PlateauFinder",
-    # CNN is a work
-    "CNNClassifier",
 ]
 
 
@@ -63,6 +61,11 @@ EXCLUDED_TESTS = {
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
         "test_classifier_on_basic_motions",
+    ],
+    # test fail with deep problem with pickling inside tensorflow.
+    "CNNClassifier": [
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
     ],
 }
 

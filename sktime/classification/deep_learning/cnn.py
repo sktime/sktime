@@ -3,6 +3,8 @@
 
 __author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
+from sklearn.utils import check_random_state
+
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -27,7 +29,6 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
     n_conv_layers   : int, default = 2
         the number of convolutional plus average pooling layers
     filter_sizes    : array of shape (n_conv_layers) default = [6, 12]
-    callbacks       : list of tf.keras.callbacks.Callback objects, default = None
     random_state    : int or None, default=None
         Seed for random number generation.
     verbose         : boolean, default = False
@@ -58,7 +59,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         verbose=False,
     ):
         super(CNNClassifier, self).__init__()
-        self.nb_conv_layers = n_conv_layers
+        self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size
         self.callbacks = callbacks
@@ -96,7 +97,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         )
         return model
 
-    def _fit(self, X, y, validation_X=None, validation_y=None, **kwargs):
+    def _fit(self, X, y, **kwargs):
         """Fit the classifier on the training set (X, y).
 
         Parameters
@@ -121,21 +122,22 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         self : object
         """
         if self.callbacks is None:
-            self.callbacks = []
+            self._callbacks = []
         y_onehot = self.convert_y(y)
+        check_random_state(self.random_state)
 
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
         self.input_shape = X.shape[1:]
-        self.model = self.build_model(self.input_shape, self.n_classes)
+        self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
             self.model.summary()
-        self.history = self.model.fit(
+        self.history = self.model_.fit(
             X,
             y_onehot,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks,
+            callbacks=self._callbacks,
         )
         return self

@@ -39,6 +39,8 @@ class BaseDeepClassifier(BaseClassifier, ABC):
     # can probably handle multivariate??
 
     def __init__(self, batch_size=40, random_state=None):
+        super(BaseDeepClassifier, self).__init__()
+
         self.batch_size = batch_size
         self.random_state = random_state
         self.model_ = None
@@ -62,7 +64,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         ...
 
     def _predict(self, X, **kwargs):
-        probs = self._predict_proba(self, X, **kwargs)
+        probs = self._predict_proba(X, **kwargs)
         rng = check_random_state(self.random_state)
         return np.array(
             [
