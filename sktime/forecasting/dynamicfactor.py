@@ -155,7 +155,7 @@ class DynamicFactor(_StatsModelsAdapter):
         includes_fixed=False,
         cov_type=None,
         cov_kwds=None,
-        method="ibfgs",
+        method="lbfgs",
         maxiter=50,
         full_output=1,
         disp=5,
@@ -195,7 +195,7 @@ class DynamicFactor(_StatsModelsAdapter):
 
         super(DynamicFactor, self).__init__()
 
-    def _fit_forcaster(self, y, X=None):
+    def _fit_forecaster(self, y, X=None):
         """Fit to training data.
 
         Parameters
