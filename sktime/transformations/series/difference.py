@@ -98,9 +98,9 @@ class Differencer(BaseTransformer):
         Example: there are only 3 differences in a series of length 4,
             differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
             so we need to determine what happens with the "?" (= unknown value)
-        "drop_na" - we drop the unknown value
-        "keep_na" - we fill with NaN
-        "fill_zero" - we fill zero
+        "drop_na" - we drop the unknown value(s) and shorten the series
+        "keep_na" - we replace unknown value(s) with NaN
+        "fill_zero" - we replace unknown value(s) with zero
 
     Examples
     --------
