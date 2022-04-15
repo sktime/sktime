@@ -60,14 +60,20 @@ def _inverse_diff(Z, lag):
     return Z
 
 
+# understand syntax
+# design - new parameters? for handling input part
+#   there is already drop_na, but there isn't a "fill" option
+#   padding, or fill (zeros?)
+# perhaps bonus: ensure this also works out of the box for hierarchical (using pandas?)
+
+
 class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
     The transformation works for univariate and multivariate timeseries. However,
     the multivariate case applies the same differencing to every series.
 
-    Difference transformations are applied at the specified lags in the order
-    provided.
+    Difference transformations are applied at the specified lags in the order provided.
 
     For example, given a timeseries with monthly periodicity, using lags=[1, 12]
     corresponds to applying a standard first difference to handle trend, and
@@ -87,15 +93,6 @@ class Differencer(BaseTransformer):
     drop_na : bool, default = True
         Whether the differencer should drop the initial observations that
         contain missing values as a result of the differencing operation(s).
-
-    Attributes
-    ----------
-    lags : int or array-like
-        Lags used to perform the differencing of the input series.
-
-    drop_na : bool
-        Stores whether the Differencer drops the initial observations that contain
-        missing values as a result of the differencing operation(s).
 
     Examples
     --------
