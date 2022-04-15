@@ -61,13 +61,6 @@ def _inverse_diff(Z, lag):
     return Z
 
 
-# understand syntax
-# design - new parameters? for handling input part
-#   there is already drop_na, but there isn't a "fill" option
-#   padding, or fill (zeros?)
-# perhaps bonus: ensure this also works out of the box for hierarchical (using pandas?)
-
-
 # todo: deprecation in 0.13.0
 #   remove the drop_na *argument* and its handling
 #   change the default behaviour form "drop_na" to "fill_zero"
