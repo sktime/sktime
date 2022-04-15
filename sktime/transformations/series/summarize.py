@@ -529,7 +529,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         if freq not in time_units:
             raise ValueError(f"shift freq not in {time_units}")
 
-        Z = _calc_freq_data(lag_value, freq, Z)
+        Z = calc_freq_data(lag_value, freq, Z)
 
     else:
         freq = None
