@@ -161,3 +161,20 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     )
 
     assert valid, msg
+
+
+@pytest.mark.parametrize("method", PROBA_DF_METHODS)
+def test_vectorization_preserves_row_index_names(method):
+    """Test that forecaster vectorization preserves row index names in forecast."""
+    hierarchy_levels = (2, 4)
+    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
+
+    est = ARIMA().fit(y, fh=[1, 2, 3])
+    y_pred = getattr(est, method)()
+
+    msg = (
+        f"vectorization of forecaster method {method} changes row index names, "
+        f"but it shouldn't. Tested using the ARIMA forecaster."
+    )
+
+    assert y_pred.index.names == y.index.names, msg
