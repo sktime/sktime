@@ -4,7 +4,7 @@
 __author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.networks import CNNNetwork
+from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tensorflow", severity="warning")
