@@ -471,7 +471,7 @@ def find_numbers_letters(string):
 time_units = ["D", "H", "T", "S", "L", "U", "N"]
 
 
-def _calc_freq_data(shift_val, shift_freq, data):
+def calc_freq_data(shift_val, shift_freq, data):
     components_shift = (
         np.abs(data.shift(shift_val, shift_freq).index - data.index).min().components
     )
@@ -484,9 +484,9 @@ def _calc_freq_data(shift_val, shift_freq, data):
 
     freq = {0: "D", 1: "H", 2: "T", 3: "S", 4: "L", 5: "U", 6: "N"}[min_timedelta]
 
-    _data = data.asfreq(freq)
+    new_data = data.asfreq(freq)
 
-    return _data
+    return new_data
 
 
 def _window_feature(Z, summarizer=None, window=None, bfill=False):
@@ -520,9 +520,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     lag = window[0]
     window_length = window[1]
 
-    _index = Z.index
-    _index = pd.DataFrame([0] * len(Z), index=_index)
-    _index.rename(columns={0: "_index"}, inplace=True)
+    Z_index = Z.index
+    Z_index = pd.DataFrame([0] * len(Z), index=Z_index)
+    Z_index.rename(columns={0: "col_index"}, inplace=True)
 
     if isinstance(lag, str):
         freq, lag_value = find_numbers_letters(lag)
@@ -599,8 +599,8 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             inplace=True,
         )
 
-    feat = _index.merge(feat, left_index=True, right_index=True, how="left")
-    feat.drop(columns=["_index"], inplace=True)
+    feat = Z_index.merge(feat, left_index=True, right_index=True, how="left")
+    feat.drop(columns=["col_index"], inplace=True)
 
     return feat
 
