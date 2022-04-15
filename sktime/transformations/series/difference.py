@@ -165,8 +165,8 @@ class Differencer(BaseTransformer):
         """Check na_handling parameter, should be a valid string as per docstring."""
         if na_handling not in self.VALID_NA_HANDLING_STR:
             raise ValueError(
-                "unreachable condition, invalid na_handling value encoutnered: "
-                f"{na_handling}"
+                f'invalid na_handling parameter value encountered: "{na_handling}", '
+                f"na_handling must be one of: {self.VALID_NA_HANDLING_STR}"
             )
 
         return na_handling
@@ -263,7 +263,7 @@ class Differencer(BaseTransformer):
             pass
         else:
             raise RuntimeError(
-                "unreachable condition, invalid na_handling value encoutnered: "
+                "unreachable condition, invalid na_handling value encountered: "
                 f"{na_handling}"
             )
         return Xt
