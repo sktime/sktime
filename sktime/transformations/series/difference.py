@@ -135,7 +135,7 @@ class Differencer(BaseTransformer):
         # note: internally, we will use self._na_handling
         #   because we must never change input param saves for sklearn compatibility
         #   and because we need to "translate" the old "drop_na" arg
-        #   this could, in certain cases, overwrite the self. parameger
+        #   this could, in certain cases, overwrite the self. parameter
         #   and cause sklearn compatibility issues due to the point mentioned
 
         translate_arg = {True: "drop_na", False: "keep_na"}
