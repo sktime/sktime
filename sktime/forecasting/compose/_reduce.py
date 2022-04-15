@@ -615,7 +615,7 @@ class _RecursiveReducer(_Reducer):
 
         if isinstance(self._y.index, pd.MultiIndex):
             yi_grp = self._y.index.names[0:-1]
-            y_return = self._y.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
+            y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
         elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             y_return = y_pred.iloc[fh_idx]
             if hasattr(y_return.index, "freq"):

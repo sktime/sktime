@@ -51,7 +51,6 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
@@ -155,4 +154,7 @@ build_doc_site/
 # dev files
 envs/
 *.html
-sktime/contrib/debug.py
+sktime/_contrib/debug.py
+sktime/_contrib/local_code.py
+sktime/_contrib/main.py
+sktime/_contrib/temp/
