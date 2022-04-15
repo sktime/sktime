@@ -442,13 +442,7 @@ class MyForecaster(BaseForecaster):
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
-    def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-    ):
+    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters

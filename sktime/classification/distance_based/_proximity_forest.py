@@ -154,9 +154,6 @@ def numba_wrapper(distance_measure):
     def distance(instance_a, instance_b, **params):
         instance_a = from_nested_to_2d_array(instance_a, return_numpy=True)
         instance_b = from_nested_to_2d_array(instance_b, return_numpy=True)
-        # dimension rather than whole thing?
-        instance_a = np.transpose(instance_a)
-        instance_b = np.transpose(instance_b)
         return distance_measure(instance_a, instance_b, **params)
 
     return distance
@@ -1053,7 +1050,7 @@ class ProximityTree(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityTree()
+    >>> clf = ProximityTree(max_depth=2, n_stump_evaluations=1)
     >>> clf.fit(X_train, y_train)
     ProximityTree(...)
     >>> y_pred = clf.predict(X_test)
@@ -1317,7 +1314,7 @@ class ProximityForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = ProximityForest(n_estimators=2)
+    >>> clf = ProximityForest(n_estimators=2, max_depth=2, n_stump_evaluations=1)
     >>> clf.fit(X_train, y_train)
     ProximityForest(...)
     >>> y_pred = clf.predict(X_test)

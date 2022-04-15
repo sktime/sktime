@@ -24,7 +24,7 @@ from sktime.transformations.base import (
 )
 from sktime.utils.validation.panel import check_X
 
-__author__ = ["Markus Löning", "Sajay Ganesh"]
+__author__ = ["mloning", "sajaysurya"]
 __all__ = [
     "ColumnTransformer",
     "SeriesToPrimitivesRowTransformer",
@@ -197,7 +197,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         return Xt
 
 
-class ColumnConcatenator(_PanelToPanelTransformer):
+class ColumnConcatenator(BaseTransformer):
     """Concatenate multivariate series to a long univariate series.
 
     Transformer that concatenates multivariate time series/panel data
@@ -205,7 +205,19 @@ class ColumnConcatenator(_PanelToPanelTransformer):
         data by simply concatenating times series in time.
     """
 
-    def transform(self, X, y=None):
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
+
+    def _transform(self, X, y=None):
         """Transform the data.
 
         Concatenate multivariate time series/panel data into long
@@ -223,9 +235,6 @@ class ColumnConcatenator(_PanelToPanelTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         # We concatenate by tabularizing all columns and then detabularizing
         # them into a single column
         if isinstance(X, pd.DataFrame):

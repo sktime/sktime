@@ -10,9 +10,8 @@ from joblib import Parallel, delayed
 from sklearn.base import clone
 
 from sktime.datatypes import convert_to
-from sktime.transformations.base import BaseTransformer, _PanelToPanelTransformer
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.utils.validation.panel import check_X
 
 
 class PlateauFinder(BaseTransformer):
@@ -110,15 +109,23 @@ class PlateauFinder(BaseTransformer):
         return Xt
 
 
-class DerivativeSlopeTransformer(_PanelToPanelTransformer):
+class DerivativeSlopeTransformer(BaseTransformer):
     """Derivative slope transformer."""
 
-    # TODO add docstrings
-    def transform(self, X, y=None):
-        """Transform X."""
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
+    _tags = {
+        "fit_is_empty": True,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
+    # TODO add docstrings
+    def _transform(self, X, y=None):
+        """Transform X."""
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
         for dim in range(num_dim):
