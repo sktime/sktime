@@ -120,11 +120,6 @@ Time Series Regression
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. warning::
-
-   The time series clustering API is still experimental. Features may change
-   in future releases.
-
 .. code-block:: python
 
     >>> from sklearn.model_selection import train_test_split
