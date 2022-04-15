@@ -59,23 +59,3 @@ Clustering models
     :template: class.rst
 
     TimeSeriesKernelKMeans
-
-Metrics
--------
-
-.. currentmodule:: sktime.clustering.metrics.averaging
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    mean_average
-    dba
-
-.. currentmodule:: sktime.clustering.metrics.medoids
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    medoids
