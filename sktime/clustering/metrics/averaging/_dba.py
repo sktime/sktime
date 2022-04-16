@@ -1,4 +1,5 @@
 import numpy as np
+from numba import njit
 
 from sktime.clustering.metrics.medoids import medoids
 from sktime.distances._distance import distance_path_factory
@@ -25,8 +26,6 @@ def dba(X: np.ndarray, iterations = 30):
         center = _dba_update(center, X, path_callable)
     return center
 
-
-
 def _dba_update(center: np.ndarray, X: np.ndarray, path_callable):
     """Perform a update iteration for dba.
 
@@ -49,15 +48,15 @@ def _dba_update(center: np.ndarray, X: np.ndarray, path_callable):
         curr_alignment, _ = path_callable(center, curr_ts)
         for j in range(len(curr_alignment)):
             if len(alignment) <= j:
-                alignment.append(np.zeros(X_dims))
-            alignment[j] += X[curr_alignment[j]]
+                alignment.append([])
+            alignment[j].append(X[curr_alignment[j]])
 
-    alignment = np.array(alignment)/X_size
-    return alignment
+    average_ts = []
+    for i in range(len(alignment)):
+        vals = alignment[i]
+        average_ts.append(np.sum(vals, axis=0) / len(vals))
 
-
-
-
+    return np.array(average_ts)
 
     pass
 
