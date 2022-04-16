@@ -2,24 +2,14 @@ from typing import Callable
 
 import numpy as np
 import pytest
-from numpy.testing import assert_almost_equal
 
-from sktime.distances.base import MetricInfo, NumbaDistance
-from sktime.distances.tests._expected_results import _expected_distance_results
-from sktime.distances.tests._shared_tests import (
-    _test_incorrect_parameters,
-    _test_metric_parameters,
-)
 from sktime.distances.tests._utils import create_test_distance_numpy
 from sktime.distances._distance import distance_path, dtw_path, distance, _METRIC_INFOS
-from tslearn.metrics import dtw_path as tslearn_path
-from tslearn.metrics.dtw_variants import _return_path
 
 def _validate_distance_path_result(
         x: np.ndarray,
         y: np.ndarray,
         metric_str: str,
-        distance_instance,
         distance_path_callable,
         kwargs_dict: dict = None,
         expected_result: float = None
@@ -29,7 +19,57 @@ def _validate_distance_path_result(
     if kwargs_dict is None:
         kwargs_dict = {}
 
-    pass
+    metric_str_result = distance_path(x, y, metric=metric_str, **kwargs_dict)
+    assert isinstance(metric_str_result, tuple), (
+        f"The result for a distance path using the string: {metric_str} as the "
+        f'"metric" parameter should return a tuple. The return type provided is of '
+        f"type {type(metric_str_result)}"
+    )
+    assert len(metric_str_result) == 2
+
+    assert isinstance(metric_str_result[0], list),  (
+        f"The result for a distance path first return using the string: {metric_str} as"
+        f' the metric parameter should return a tuple. The return type provided is of '
+        f"type {type(metric_str_result)}"
+    )
+
+    assert isinstance(metric_str_result[1], float),  (
+        f"The result for a distance path first return using the string: {metric_str} as"
+        f' the metric parameter should return a tuple. The return type provided is of '
+        f"type {type(metric_str_result)}"
+    )
+
+    distance_result = distance(x, y, metric=metric_str)
+    path_result = distance_path_callable(x, y)
+
+    assert distance_result == metric_str_result[1]
+    assert distance_result == path_result[1]
+
+    metric_str_result_cm = distance_path(
+        x, y, metric=metric_str, return_cost_matrix=True, **kwargs_dict
+    )
+
+    assert isinstance(metric_str_result_cm, tuple), (
+        f"The result for a distance path using the string: {metric_str} as the "
+        f'"metric" parameter should return a tuple. The return type provided is of '
+        f"type {type(metric_str_result)}"
+    )
+    assert len(metric_str_result_cm) == 3
+
+    assert isinstance(metric_str_result_cm[0], list),  (
+        f"The result for a distance path first return using the string: {metric_str} as"
+        f' the metric parameter should return a tuple. The return type provided is of '
+        f"type {type(metric_str_result_cm[0])}"
+    )
+
+    assert isinstance(metric_str_result_cm[1], float),  (
+        f"The result for a distance path first return using the string: {metric_str} as"
+        f' the metric parameter should return a tuple. The return type provided is of '
+        f"type {type(metric_str_result)}"
+    )
+    assert metric_str_result_cm[0] == metric_str_result[0]
+    assert metric_str_result_cm[1] == metric_str_result[1]
+
 
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
 def test_distance_path(dist):
@@ -37,45 +77,10 @@ def test_distance_path(dist):
 
         x = create_test_distance_numpy(10, 1)
         y = create_test_distance_numpy(10, 1, random_state=2)
-
-        _validate_distance_path_result(x, y, dist.canonical_name, dist.dist_instance, dist.dist_path_func)
-
-
-def test_lcss():
-    x = create_test_distance_numpy(10, 1)
-    y = create_test_distance_numpy(10, 1, random_state=2)
-
-    # x = np.array([
-    #     -0.7553383207,
-    #     0.4460987596,
-    #     1.197682907,
-    #     0.1714334808,
-    #     0.5639929213,
-    #     0.6891222874,
-    #     1.793828873,
-    #     0.06570866314,
-    #     0.2877381702,
-    #     1.633620422
-    # ])
-    #
-    # y = np.array([
-    #     0.01765193577,
-    #     1.536784164,
-    #     - 0.1413292622,
-    #     - 0.7609346135,
-    #     - 0.1767363331,
-    #     - 2.192007072,
-    #     - 0.1933165696,
-    #     - 0.4648166839,
-    #     - 0.9444888843,
-    #     - 0.239523623
-    # ])
-    from sktime.distances import lcss_path, lcss_distance, pairwise_distance
-    from tslearn.metrics import lcss_path as tslearn_lcss
-    eps = 1.0
-    joe = tslearn_lcss(x, y, eps=eps)
-    path, distance, cost = lcss_path(x, y, epsilon=eps, return_cost_matrix=True)
-    pw = pairwise_distance(x, y, metric='euclidean')
-    test_dist = lcss_distance(x, y, epsilon=eps)
-    joe = ''
-
+        _validate_distance_path_result(
+            x=x,
+            y=y,
+            metric_str=dist.canonical_name,
+            distance_path_callable=dist.dist_path_func,
+            expected_result=0.0
+        )

@@ -27,6 +27,8 @@ class NumbaDistance(ABC):
         float
             Distance between x and y.
         """
+        from sktime.distances._numba_utils import to_numba_timeseries
+
         dist_callable = self.distance_factory(x, y, **kwargs)
         return dist_callable(x, y)
 
@@ -57,6 +59,8 @@ class NumbaDistance(ABC):
         float
             Distance between x and y.
         """
+        from sktime.distances._numba_utils import to_numba_timeseries
+
         dist_callable = self.distance_path_factory(
             x, y, return_cost_matrix=return_cost_matrix, **kwargs
         )
@@ -103,6 +107,8 @@ class NumbaDistance(ABC):
         RuntimeError
             If the distance metric could not be compiled to no_python.
         """
+        from sktime.distances._numba_utils import to_numba_timeseries
+
         NumbaDistance._validate_factory_timeseries(x)
         NumbaDistance._validate_factory_timeseries(y)
 
@@ -148,6 +154,8 @@ class NumbaDistance(ABC):
         RuntimeError
             If the distance metric could not be compiled to no_python.
         """
+        from sktime.distances._numba_utils import to_numba_timeseries
+
         NumbaDistance._validate_factory_timeseries(x)
         NumbaDistance._validate_factory_timeseries(y)
 
