@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Compute the distance between two time series."""
 
-from typing import Any, Callable, Union
+from typing import Any, Callable, List, Union
 
 import numpy as np
 from numba import njit
@@ -284,12 +284,12 @@ def lcss_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> lcss_distance(x_1d, y_1d)
-    1.0
+    0.75
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> lcss_distance(x_2d, y_2d)
-    1.0
+    0.75
 
     References
     ----------
@@ -1777,12 +1777,16 @@ def pairwise_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
-    array([[58.]])
+    array([[16., 25., 36., 49.],
+           [ 9., 16., 25., 36.],
+           [ 4.,  9., 16., 25.],
+           [ 1.,  4.,  9., 16.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw')
-    array([[512.]])
+    array([[256., 576.],
+           [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
@@ -1793,7 +1797,8 @@ def pairwise_distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
-    array([[512.]])
+    array([[256., 576.],
+           [ 58., 256.]])
     """
     _x = to_numba_pairwise_timeseries(x)
     if y is None:
@@ -1819,7 +1824,7 @@ def distance_path(
     ],
     return_cost_matrix: bool = False,
     **kwargs: Any,
-) -> Union[list, float]:
+) -> Union[List, float]:
     """Compute the path and distance between two time series.
 
     First the distance metric is 'resolved'. This means the metric that is passed
@@ -1894,7 +1899,7 @@ def distance_path_factory(
     ],
     return_cost_matrix: bool = False,
     **kwargs: Any,
-) -> Callable[[np.ndarray, np.ndarray], Union[list, float]]:
+) -> Callable[[np.ndarray, np.ndarray], Union[List, float, np.ndarray]]:
     """Produce a distance factory numba callable.
 
     First the distance metric is 'resolved'. This means the metric that is passed
