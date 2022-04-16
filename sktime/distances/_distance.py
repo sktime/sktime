@@ -279,18 +279,6 @@ def lcss_distance(
         If the metric type cannot be determined
         If both window and itakura_max_slope are set
 
-    Examples
-    --------
-    >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
-    >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
-    >>> lcss_distance(x_1d, y_1d)
-    1.0
-
-    >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
-    >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> lcss_distance(x_2d, y_2d)
-    1.0
-
     References
     ----------
     .. [1] M. Vlachos, D. Gunopoulos, and G. Kollios. 2002. "Discovering
