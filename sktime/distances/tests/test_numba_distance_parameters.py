@@ -8,10 +8,10 @@ from numba import njit
 
 from sktime.distances import distance, distance_factory
 from sktime.distances._distance import _METRIC_INFOS
+from sktime.distances._numba_utils import to_numba_timeseries
 from sktime.distances.base import MetricInfo
 from sktime.distances.tests._expected_results import _expected_distance_results_params
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.distances._numba_utils import to_numba_timeseries
 
 
 def _test_distance_params(
