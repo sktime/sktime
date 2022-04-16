@@ -2,12 +2,13 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import warnings
-from typing import Any, Union, List
+from typing import Any
 
 import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
+from sktime.distances._distance_paths import compute_return_path
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
@@ -60,13 +61,14 @@ class _DtwDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            **kwargs: Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        **kwargs: Any
     ) -> DistancePathCallable:
         """Create a no_python compiled dtw path distance callable.
 
@@ -79,6 +81,8 @@ class _DtwDistance(NumbaDistance):
             First time series.
         y: np.ndarray (2d array of shape (d,m2)).
             Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         window: Float, defaults = None
             Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
             lower bounding). Must be between 0 and 1.
@@ -95,7 +99,7 @@ class _DtwDistance(NumbaDistance):
 
         Returns
         -------
-        Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]]
+        Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
             No_python compiled Dtw distance path callable.
 
         Raises
@@ -110,14 +114,27 @@ class _DtwDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
-        def numba_dtw_distance_path(
+        if return_cost_matrix is True:
+
+            @njit(cache=True)
+            def numba_dtw_distance_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-        ) -> Union[List, float]:
-            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-            path = _compute_dtw_path(cost_matrix)
-            return path, cost_matrix[-1, -1]
+            ) -> tuple[list, float, np.ndarray]:
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
+                return path, cost_matrix[-1, -1], cost_matrix
+
+        else:
+
+            @njit(cache=True)
+            def numba_dtw_distance_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+            ) -> tuple[list, float]:
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+                path = compute_return_path(cost_matrix, _bounding_matrix)
+                return path, cost_matrix[-1, -1]
 
         return numba_dtw_distance_path
 
@@ -220,50 +237,10 @@ def _cost_matrix(
             if np.isfinite(bounding_matrix[i, j]):
                 sum = 0
                 for k in range(dimensions):
-                    sum += (x[k][i] - y[k][j]) * (x[k][i] - y[k][j])
+                    sum += (x[k][i] - y[k][j]) ** 2
                 cost_matrix[i + 1, j + 1] = sum
                 cost_matrix[i + 1, j + 1] += min(
                     cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
                 )
 
     return cost_matrix[1:, 1:]
-
-@njit(cache=True)
-def _compute_dtw_path(cost_matrix: np.ndarray) -> List:
-    """Compute the path from dtw cost matrix.
-
-    Series should be shape (d, m), where d is the number of dimensions, m the series
-    length. Series can be different lengths.
-
-    Parameters
-    ----------
-    cost_matrix: np.ndarray
-        Dtw cost matrix to find dtw path through.
-
-    Returns
-    -------
-    np.ndarray
-        Array containing tuple for each path location.
-    """
-    i, j = cost_matrix.shape
-    alignment = []
-    alignment.append((i - 1, j - 1))
-    while alignment[-1] != (0, 0):
-        i, j = alignment[-1]
-        if i == 0:
-            alignment.append((0, j - 1))
-        elif j == 0:
-            alignment.append((i - 1, 0))
-        else:
-            arr = np.array([cost_matrix[i - 1][j - 1],
-                            cost_matrix[i - 1][j],
-                            cost_matrix[i][j - 1]])
-
-            score = np.argmin(arr)
-            if score == 0:
-                alignment.append((i - 1, j - 1))
-            elif score == 1:
-                alignment.append((i - 1, j))
-            else:
-                alignment.append((i, j - 1))
-    return alignment[::-1]

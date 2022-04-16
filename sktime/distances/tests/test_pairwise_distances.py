@@ -77,8 +77,6 @@ def _validate_pairwise_result(
     metric_str_result = pairwise_distance(x, y, metric=metric_str, **kwargs_dict)
 
     expected_size = (len(x), len(y))
-    if x.ndim <= 2:
-        expected_size = (1, 1)
 
     assert metric_str_result.shape == expected_size, (
         f'The result for a pairwise using the string: {metric_str} as the "metric" '
@@ -198,14 +196,16 @@ def _test_pw_equal_single_dists(
 
     x = to_numba_pairwise_timeseries(x)
     y = to_numba_pairwise_timeseries(y)
+
     matrix = np.zeros((len(x), len(y)))
+
     for i in range(len(x)):
         curr_x = x[i]
         for j in range(len(y)):
             curr_y = y[j]
             matrix[i, j] = distance_function(curr_x, curr_y)
 
-    assert np.array_equal(matrix, pw_result)
+    assert np.allclose(matrix, pw_result)
 
 
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
@@ -220,6 +220,7 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     name = dist.canonical_name
     distance_numba_class = dist.dist_instance
     distance_function = dist.dist_func
+
     distance_factory = distance_numba_class.distance_factory
 
     _validate_pairwise_result(
@@ -234,15 +235,6 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     _validate_pairwise_result(
         x=create_test_distance_numpy(5),
         y=create_test_distance_numpy(5, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-    )
-
-    _validate_pairwise_result(
-        x=create_test_distance_numpy(5, 1),
-        y=create_test_distance_numpy(5, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,

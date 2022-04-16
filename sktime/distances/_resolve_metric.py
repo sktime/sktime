@@ -7,12 +7,13 @@ import numpy as np
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 
+
 def _resolve_dist_instance(
-        metric: Union[str, Callable, NumbaDistance],
-        x: np.ndarray,
-        y: np.ndarray,
-        known_metric_dict: List[MetricInfo],
-        **kwargs: dict,
+    metric: Union[str, Callable, NumbaDistance],
+    x: np.ndarray,
+    y: np.ndarray,
+    known_metric_dict: List[MetricInfo],
+    **kwargs: dict,
 ):
 
     numba_dist_instance: Union[NumbaDistance, None] = None
@@ -48,7 +49,6 @@ def _resolve_dist_instance(
     return numba_dist_instance
 
 
-
 def _resolve_metric_to_factory(
     metric: Union[str, Callable, NumbaDistance],
     x: np.ndarray,
@@ -63,9 +63,9 @@ def _resolve_metric_to_factory(
     metric: str or Callable or NumbaDistance
         The distance metric to use.
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     known_metric_dict: List[MetricInfo]
         List of known distance functions.
     kwargs: dict, optional

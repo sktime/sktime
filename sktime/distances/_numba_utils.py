@@ -135,10 +135,10 @@ def to_numba_pairwise_timeseries(x: np.ndarray) -> np.ndarray:
     num_dims = _x.ndim
     if num_dims == 1:
         shape = _x.shape
-        _x = np.reshape(_x, (1, 1, shape[0]))
+        _x = np.reshape(_x, (shape[0], 1, 1))
     elif num_dims == 2:
         shape = _x.shape
-        _x = np.reshape(_x, (1, shape[1], shape[0]))
+        _x = np.reshape(_x, (shape[0], 1, shape[1]))
     elif num_dims > 3:
         raise ValueError(
             "The matrix provided has more than 3 dimensions. This is not"
@@ -192,7 +192,7 @@ def _numba_to_timeseries(x: np.ndarray) -> np.ndarray:
     _x = x.copy()
     num_dims = _x.ndim
     shape = _x.shape
-    if num_dims == 1 or (num_dims == 2 and _x.shape[1] == 1 and _x.shape[0] != 1):
+    if num_dims == 1:
         _x = np.reshape(_x, (1, shape[0]))
     elif num_dims > 2:
         raise ValueError(

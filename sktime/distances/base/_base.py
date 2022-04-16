@@ -16,9 +16,9 @@ class NumbaDistance(ABC):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
         kwargs: dict
             kwargs for the distance computation.
 
@@ -30,15 +30,23 @@ class NumbaDistance(ABC):
         dist_callable = self.distance_factory(x, y, **kwargs)
         return dist_callable(x, y)
 
-    def distance_path(self, x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
-        """Compute the distance path between two timeseries.
+    def distance_path(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict,
+    ) -> float:
+        """Compute the distance path between two time series.
 
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (2d array)
-            Second timeseries.
+            Second time series.
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix
         kwargs: dict
             kwargs for the distance computation.
 
@@ -49,7 +57,9 @@ class NumbaDistance(ABC):
         float
             Distance between x and y.
         """
-        dist_callable = self.distance_path_factory(x, y, **kwargs)
+        dist_callable = self.distance_path_factory(
+            x, y, return_cost_matrix=return_cost_matrix, **kwargs
+        )
         return dist_callable(x, y)
 
     def distance_factory(
@@ -69,9 +79,9 @@ class NumbaDistance(ABC):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries
+            First time series
         y: np.ndarray (2d array)
-            Second timeseries
+            Second time series
         kwargs: kwargs
             kwargs for the given distance metric
 
@@ -98,19 +108,25 @@ class NumbaDistance(ABC):
         return no_python_callable
 
     def distance_path_factory(
-            self, x: np.ndarray, y: np.ndarray, **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict,
     ) -> DistanceCallable:
         """Create a no_python distance path.
 
         It should validate kwargs and then compile a no_python callable
         that takes (x, y) as parameters and returns a float that represents the distance
-        between the two timeseries.
+        between the two time series.
 
         ----------
         x: np.ndarray (2d array)
-            First timeseries
+            First time series
         y: np.ndarray (2d array)
-            Second timeseries
+            Second time series
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         kwargs: kwargs
             kwargs for the given distance metric
 
@@ -132,10 +148,11 @@ class NumbaDistance(ABC):
         NumbaDistance._validate_factory_timeseries(x)
         NumbaDistance._validate_factory_timeseries(y)
 
-        no_python_callable = self._distance_path_factory(x, y, **kwargs)
+        no_python_callable = self._distance_path_factory(
+            x, y, return_cost_matrix=return_cost_matrix, **kwargs
+        )
 
         return no_python_callable
-
 
     @staticmethod
     def _validate_factory_timeseries(x: np.ndarray) -> None:
@@ -178,9 +195,9 @@ class NumbaDistance(ABC):
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries
+            First time series
         y: np.ndarray (2d array)
-            Second timeseries
+            Second time series
         kwargs: kwargs
             kwargs for the given distance metric
 
@@ -194,20 +211,26 @@ class NumbaDistance(ABC):
         ...
 
     def _distance_path_factory(
-            self, x: np.ndarray, y: np.ndarray, **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict,
     ) -> DistancePathCallable:
         """Abstract method to create a no_python compiled distance path computation.
 
         _distance_factory should validate kwargs and then compile a no_python callable
         that takes (x, y) as parameters and returns a float that represents the distance
-        between the two timeseries.
+        between the two time series.
 
         Parameters
         ----------
         x: np.ndarray (2d array)
-            First timeseries
+            First time series
         y: np.ndarray (2d array)
-            Second timeseries
+            Second time series
+        return_cost_matrix: bool, defaults = False
+            Boolean that when true will also return the cost matrix.
         kwargs: kwargs
             kwargs for the given distance metric
 

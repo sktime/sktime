@@ -8,6 +8,7 @@ __all__ = [
     "DistancePairwiseCallable",
     "ValidCallableTypes",
     "MetricInfo",
+    "DistancePathCallable",
 ]
 
 from sktime.distances.base._base import MetricInfo, NumbaDistance
@@ -15,5 +16,6 @@ from sktime.distances.base._types import (
     DistanceCallable,
     DistanceFactoryCallable,
     DistancePairwiseCallable,
+    DistancePathCallable,
     ValidCallableTypes,
 )

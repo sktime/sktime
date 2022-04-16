@@ -71,6 +71,11 @@ class Aggregator(BaseTransformer):
         -------
         df_out : multi-indexed pd.DataFrame of Panel mtype pd_multiindex
         """
+        X = X.copy()
+        X_orig_idx_names = X.index.names
+        new_idx_names = [str(x) for x in range(len(X_orig_idx_names))]
+        X.index.names = new_idx_names
+
         if X.index.nlevels == 1:
             warn(
                 "Aggregator is intended for use with X.index.nlevels > 1. "
@@ -146,6 +151,8 @@ class Aggregator(BaseTransformer):
                 )
 
             df_out.sort_index(inplace=True)
+
+            df_out.index.names = X_orig_idx_names
             return df_out
 
     @classmethod
