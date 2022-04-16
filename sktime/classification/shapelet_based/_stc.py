@@ -11,9 +11,9 @@ __all__ = ["ShapeletTransformClassifier"]
 import numpy as np
 from sklearn.model_selection import cross_val_predict
 
+from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.utils.validation.panel import check_X_y
 
@@ -29,7 +29,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ----------
-    n_shapelet_samples : int, default=100000
+    n_shapelet_samples : int, default=10000
         The number of candidate shapelets to be considered for the final transform.
         Filtered down to <= max_shapelets, keeping the shapelets with the most
         information gain.
@@ -58,10 +58,9 @@ class ShapeletTransformClassifier(BaseClassifier):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``-1`` means using all processors.
-    batch_size : int or None, default=None
+    batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
-        shapelets in the transform. If none the max of n_instances and max_shapelets is
-        used.
+        shapelets in the transform.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -102,15 +101,15 @@ class ShapeletTransformClassifier(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.shapelet_based import ShapeletTransformClassifier
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = ShapeletTransformClassifier(
     ...     estimator=RotationForest(n_estimators=3),
-    ...     n_shapelet_samples=500,
-    ...     max_shapelets=20,
-    ...     batch_size=100,
+    ...     n_shapelet_samples=100,
+    ...     max_shapelets=10,
+    ...     batch_size=20,
     ... )
     >>> clf.fit(X_train, y_train)
     ShapeletTransformClassifier(...)
@@ -122,11 +121,12 @@ class ShapeletTransformClassifier(BaseClassifier):
         "capability:train_estimate": True,
         "capability:contractable": True,
         "capability:multithreading": True,
+        "classifier_type": "shapelet",
     }
 
     def __init__(
         self,
-        n_shapelet_samples=100000,
+        n_shapelet_samples=10000,
         max_shapelets=None,
         max_shapelet_length=None,
         estimator=None,
@@ -135,7 +135,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         contract_max_n_shapelet_samples=np.inf,
         save_transformed_data=False,
         n_jobs=1,
-        batch_size=None,
+        batch_size=100,
         random_state=None,
     ):
         self.n_shapelet_samples = n_shapelet_samples
@@ -231,7 +231,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -248,7 +248,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         return self._estimator.predict(X_t)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -273,7 +273,7 @@ class ShapeletTransformClassifier(BaseClassifier):
                 dists[i, np.where(self.classes_ == preds[i])] = 1
             return dists
 
-    def _get_train_probs(self, X, y):
+    def _get_train_probs(self, X, y) -> np.ndarray:
         self.check_is_fitted()
         X, y = check_X_y(X, y, coerce_to_pandas=True)
 
@@ -281,7 +281,7 @@ class ShapeletTransformClassifier(BaseClassifier):
 
         if n_instances != self.n_instances_ or n_dims != self.n_dims_:
             raise ValueError(
-                "n_instances, n_dims, series_length mismatch. X should be "
+                "n_instances, n_dims mismatch. X should be "
                 "the same as the training data used in fit for generating train "
                 "probabilities."
             )
@@ -312,3 +312,42 @@ class ShapeletTransformClassifier(BaseClassifier):
                 method="predict_proba",
                 n_jobs=self._threads_to_use,
             )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+
+        if parameter_set == "results_comparison":
+            return {
+                "estimator": RandomForestClassifier(n_estimators=5),
+                "n_shapelet_samples": 50,
+                "max_shapelets": 10,
+                "batch_size": 10,
+            }
+        else:
+            return {
+                "estimator": RotationForest(n_estimators=2),
+                "n_shapelet_samples": 10,
+                "max_shapelets": 3,
+                "batch_size": 5,
+            }

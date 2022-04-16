@@ -67,6 +67,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
     _tags = {
         "capability:multithreading": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -124,7 +125,7 @@ class MatrixProfileClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict class values of n instances in X.
 
         Parameters
@@ -139,7 +140,7 @@ class MatrixProfileClassifier(BaseClassifier):
         """
         return self._estimator.predict(self._transformer.transform(X))
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
 
         Parameters
@@ -161,3 +162,27 @@ class MatrixProfileClassifier(BaseClassifier):
             for i in range(0, X.shape[0]):
                 dists[i, self._class_dictionary[preds[i]]] = 1
             return dists
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {"subsequence_length": 4}

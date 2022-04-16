@@ -162,7 +162,7 @@ def _segmentation(X, clasp, n_change_points=None, exclusion_radius=0.05):
                 full_profile.fill(0.5)
                 np.copyto(
                     full_profile[ranges[0] : ranges[0] + len(profile)],
-                    profile.values,
+                    profile,
                 )
 
                 global_change_point = ranges[0] + change_point
@@ -219,7 +219,7 @@ class ClaSPSegmentation(BaseSeriesAnnotator):
     >>> scores = clasp.scores
     """
 
-    _tags = {"univariate-only": True, "fit-in-predict": True}  # for unit test cases
+    _tags = {"univariate-only": True, "fit_is_empty": True}  # for unit test cases
 
     def __init__(self, period_length=10, n_cps=1, fmt="sparse"):
         self.period_length = int(period_length)

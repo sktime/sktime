@@ -50,9 +50,6 @@ Simple (or first-degree) transformations:
 | Random Interval Feature Extractor | transformers.summarise.RandomIntervalFeatureExtractor | @mloning |  |
 | Matrix profile | transformers.matrix_profile | Claudia Rincon Sanchez | (custom implementation) |
 | Principal component scores after tabularization | transformers.PCATransformer | @prockenschaub | [Hotelling (1933) - Analysis of a complex of statistical variables into principal components](https://psycnet.apa.org/record/1934-00645-001) |
-| Shapelet transform | transformers.ShapeletTransform | @jasonlines| [Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
-| Shapelet transform (contracted) | transformers.ContractedShapeletTransform | @jasonlines| [Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
-| Shapelet transform (random sampled) | transformers.RandomEnumerationShapeletTransform | @jasonlines| [Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Canonical Time-series Characteristics  | transformers.catch22.Catch22 | @MatthewMiddlehurst  | [Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
 
@@ -126,8 +123,6 @@ Paired (or second-degree) transformations:
 | ROCKET Classifier | classification.kernel_based._rocket_classifier.ROCKETClassifier | @MatthewMiddlehurst  | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Arsenal Classifier | classification.kernel_based._arsenal.Arsenal | @MatthewMiddlehurst  | [Middlehurst et al (2020) - HIVE-COTE 2.0: a new meta ensemble for time series classification](https://arxiv.org/abs/2104.07551) |
 | Shapelet Transform Classifier (STC) | classification.shapelet_based._stc.ShapeletTransformClassifier | @TonyBagnall | [Hills et al (2014) - Classification of time series by shapelet transformation](https://ieeexplore.ieee.org/document/7837946) |
-| Mr-SEQL | classification.shapelet_based.mrseql.mrseql.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
-
 
 
 ### Multivariate time series classifiers

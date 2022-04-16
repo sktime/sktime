@@ -14,7 +14,7 @@ from sktime.series_as_features.base.estimators.interval_based._tsf import (
     BaseTimeSeriesForest,
     _transform,
 )
-from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
@@ -67,7 +67,17 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     .. [3] Arxiv paper: https://arxiv.org/abs/1302.2277
     """
 
+    _tags = {"capability:multivariate": False}
+
     _base_estimator = DecisionTreeRegressor()
+
+    def fit(self, X, y, **kwargs):
+        """Wrap BaseForest._fit.
+
+        This is a temporary measure prior to the BaseRegressor refactor.
+        """
+        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
+        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
 
     def predict(self, X):
         """Predict.

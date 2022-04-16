@@ -4,15 +4,18 @@
 from typing import Any, Callable, Union
 
 import numpy as np
+from numba import njit
 
-from sktime.distances._ddtw import DerivativeCallable, _average_of_slope, _DdtwDistance
+from sktime.distances._ddtw import DerivativeCallable, _DdtwDistance, average_of_slope
 from sktime.distances._dtw import _DtwDistance
 from sktime.distances._edr import _EdrDistance
 from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
+from sktime.distances._msm import _MsmDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
+    _numba_to_timeseries,
     to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
@@ -26,7 +29,7 @@ from sktime.distances.base import DistanceCallable, MetricInfo, NumbaDistance
 def erp_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
+    window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
     g: float = 0.0,
@@ -46,12 +49,12 @@ def erp_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -71,8 +74,8 @@ def erp_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 3 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -92,7 +95,7 @@ def erp_distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> erp_distance(x_2d, y_2d)
-    32.0
+    45.254833995939045
 
     References
     ----------
@@ -114,7 +117,7 @@ def erp_distance(
 def edr_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
+    window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
     epsilon: float = None,
@@ -136,12 +139,12 @@ def edr_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d array), defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
         are ignored. The matrix should be structure so that indexes considered in
@@ -164,8 +167,8 @@ def edr_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 3 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -208,7 +211,7 @@ def edr_distance(
 def lcss_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
+    window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
     epsilon: float = 1.0,
@@ -230,12 +233,12 @@ def lcss_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -258,8 +261,8 @@ def lcss_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -301,10 +304,10 @@ def lcss_distance(
 def wddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
-    itakura_max_slope: Union[int, None] = None,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
     bounding_matrix: Union[np.ndarray, None] = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
+    compute_derivative: DerivativeCallable = average_of_slope,
     g: float = 0.0,
     **kwargs: Any,
 ) -> float:
@@ -330,12 +333,12 @@ def wddtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -361,8 +364,8 @@ def wddtw_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -406,10 +409,10 @@ def wddtw_distance(
 def wdtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
+    window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    g: float = 0.0,
+    g: float = 0.05,
     **kwargs: Any,
 ) -> float:
     """Compute the weighted dynamic time warping (WDTW) distance between time series.
@@ -434,12 +437,12 @@ def wdtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -461,8 +464,8 @@ def wdtw_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -476,12 +479,12 @@ def wdtw_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> wdtw_distance(x_1d, y_1d)
-    29.0
+    27.975712863958133
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> wdtw_distance(x_2d, y_2d)
-    256.0
+    243.2106560107827
 
     References
     ----------
@@ -503,10 +506,10 @@ def wdtw_distance(
 def ddtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
+    window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
-    compute_derivative: DerivativeCallable = _average_of_slope,
+    compute_derivative: DerivativeCallable = average_of_slope,
     **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
@@ -530,12 +533,12 @@ def ddtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -557,8 +560,8 @@ def ddtw_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -571,6 +574,7 @@ def ddtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> ddtw_distance(x_1d, y_1d)
@@ -601,14 +605,14 @@ def ddtw_distance(
 def dtw_distance(
     x: np.ndarray,
     y: np.ndarray,
-    window: Union[int, None] = None,
+    window: Union[float, None] = None,
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
-    Originally proposedin [1]_ DTW computes the distance between two time series by
+    Originally proposed in [1]_ DTW computes the distance between two time series by
     considering their alignments during the calculation. This is done by measuring
     the pointwise distance (normally using Euclidean) between all elements of the two
     time series and then using dynamic programming to find the warping path
@@ -625,12 +629,12 @@ def dtw_distance(
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    window: int, defaults = None
-        Integer that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-        lower bounding).
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
     itakura_max_slope: float, defaults = None
         Gradient of the slope for itakura parallelogram (if using Itakura
-        Parallelogram lower bounding).
+        Parallelogram lower bounding). Value must be between 0. and 1.
     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
                                     defaults = None
         Custom bounding matrix to use. If defined then other lower_bounding params
@@ -648,8 +652,8 @@ def dtw_distance(
     Raises
     ------
     ValueError
-        If the sakoe_chiba_window_radius is not an integer.
-        If the itakura_max_slope is not a float or int.
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
         If the value of x or y provided is not a numpy array.
         If the value of x or y has more than 2 dimensions.
         If a metric string provided, and is not a defined valid string.
@@ -661,6 +665,7 @@ def dtw_distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> dtw_distance(x_1d, y_1d)
@@ -685,6 +690,61 @@ def dtw_distance(
     format_kwargs = {**format_kwargs, **kwargs}
 
     return distance(x, y, metric="dtw", **format_kwargs)
+
+
+def msm_distance(
+    x: np.ndarray,
+    y: np.ndarray,
+    c: float = 0.0,
+    **kwargs: Any,
+) -> float:
+    """Compute the move-split-merge distance.
+
+    This metric uses as building blocks three fundamental operations: Move, Split,
+    and Merge. A Move operation changes the value of a single element, a Split
+    operation converts a single element into two consecutive elements, and a Merge
+    operation merges two consecutive elements into one. Each operation has an
+    associated cost, and the MSM distance between two time series is defined to be
+    the cost of the cheapest sequence of operations that transforms the first time
+    series into the second one.
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    float
+        Msm distance between x and y.
+
+    Raises
+    ------
+    ValueError
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined
+
+    References
+    ----------
+    .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
+    for time  series. IEEE  Transactions  on  Knowledge  and  Data  Engineering,
+    25(6):1425–1438, 2013.
+    """
+    format_kwargs = {
+        "c": c,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="msm", **format_kwargs)
 
 
 def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
@@ -723,6 +783,7 @@ def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> squared_distance(x_1d, y_1d)
@@ -741,8 +802,8 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Euclidean distance is supported for 1d, 2d and 3d arrays.
 
-    The Euclidean distance between two time series is the square root of the squared
-    distance and is defined as:
+    The Euclidean distance between two time series of length m is the square root of
+    the squared distance and is defined as:
 
     .. math::
         ed(x, y) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
@@ -775,6 +836,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> euclidean_distance(x_1d, y_1d)
@@ -816,7 +878,8 @@ def distance(
     metric: str or Callable
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
-        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
+        'msm'
 
         If callable then it has to be a distance factory or numba distance callable.
         If you want to pass custom kwargs to the distance at runtime, use a distance
@@ -845,6 +908,7 @@ def distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> distance(x_1d, y_1d, metric='dtw')
@@ -857,7 +921,7 @@ def distance(
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> distance(x_2d, y_2d, metric='dtw', window=3)
+    >>> distance(x_2d, y_2d, metric='dtw', window=0.5)
     512.0
 
     Returns
@@ -930,18 +994,26 @@ def distance_factory(
         If the metric type cannot be determined.
     """
     if x is None:
-        x = np.zeros((10, 10))
+        x = np.zeros((1, 10))
     if y is None:
-        y = np.zeros((10, 10))
+        y = np.zeros((1, 10))
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    return _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+    callable = _resolve_metric(metric, _x, _y, _METRIC_INFOS, **kwargs)
+
+    @njit(cache=True)
+    def dist_callable(x: np.ndarray, y: np.ndarray):
+        _x = _numba_to_timeseries(x)
+        _y = _numba_to_timeseries(y)
+        return callable(_x, _y)
+
+    return dist_callable
 
 
 def pairwise_distance(
     x: np.ndarray,
-    y: np.ndarray,
+    y: np.ndarray = None,
     metric: Union[
         str,
         Callable[
@@ -949,7 +1021,7 @@ def pairwise_distance(
         ],
         Callable[[np.ndarray, np.ndarray], float],
         NumbaDistance,
-    ],
+    ] = "euclidean",
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two time series.
@@ -963,9 +1035,9 @@ def pairwise_distance(
     ----------
     x: np.ndarray (1d, 2d or 3d array)
         First time series.
-    y: np.ndarray (1d, 2d or 3d array)
-        Second time series.
-    metric: str or Callable
+    y: np.ndarray (1d, 2d or 3d array), defaults = None
+        Second time series. If not specified then y is set to the value of x.
+    metric: str or Callable, defaults = 'euclidean'
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp'
@@ -1002,33 +1074,33 @@ def pairwise_distance(
 
     Examples
     --------
+    >>> import numpy as np
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
-    array([[64.]])
+    array([[58.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw')
-    array([[256., 576.],
-           [ 58., 256.]])
+    array([[512.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
     >>> pairwise_distance(x_3d, y_3d, metric='dtw')
     array([[256., 576.],
-           [ 58., 256.]])
+           [ 64., 256.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
-    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=3)
-    array([[256., 576.],
-           [ 58., 256.]])
+    >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
+    array([[512.]])
     """
     _x = to_numba_pairwise_timeseries(x)
+    if y is None:
+        y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
-
     _metric_callable = _resolve_metric(metric, _x[0], _y[0], _METRIC_INFOS, **kwargs)
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
@@ -1088,6 +1160,12 @@ _METRIC_INFOS = [
         dist_func=wddtw_distance,
         dist_instance=_WddtwDistance(),
     ),
+    MetricInfo(
+        canonical_name="msm",
+        aka={"msm", "move-split-merge"},
+        dist_func=msm_distance,
+        dist_instance=_MsmDistance(),
+    ),
 ]
 
 _METRICS = {info.canonical_name: info for info in _METRIC_INFOS}
@@ -1096,3 +1174,17 @@ _METRIC_CALLABLES = dict(
     (info.canonical_name, info.dist_func) for info in _METRIC_INFOS
 )
 _METRICS_NAMES = list(_METRICS.keys())
+
+
+ALL_DISTANCES = (
+    ddtw_distance,
+    dtw_distance,
+    edr_distance,
+    erp_distance,
+    euclidean_distance,
+    lcss_distance,
+    msm_distance,
+    squared_distance,
+    wddtw_distance,
+    wdtw_distance,
+)

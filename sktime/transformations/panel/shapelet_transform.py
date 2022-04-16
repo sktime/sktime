@@ -17,14 +17,15 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from numba import NumbaPendingDeprecationWarning, njit
+from sklearn import preprocessing
 from sklearn.utils import check_random_state
 
-from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import BaseTransformer
+from sktime.utils.numba.general import z_normalise_series
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
-class RandomShapeletTransform(_PanelToTabularTransformer):
+class RandomShapeletTransform(BaseTransformer):
     """Random Shapelet Transform.
 
     Implementation of the binary shapelet transform along the lines of [1]_[2]_, with
@@ -48,7 +49,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    n_shapelet_samples : int, default=100000
+    n_shapelet_samples : int, default=10000
         The number of candidate shapelets to be considered for the final transform.
         Filtered down to <= max_shapelets, keeping the shapelets with the most
         information gain.
@@ -70,9 +71,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     n_jobs : int, default=1
         The number of jobs to run in parallel for both `fit` and `transform`.
         ``-1`` means using all processors.
-    batch_size : int or None, default=None
+    batch_size : int or None, default=100
         Number of shapelet candidates processed before being merged into the set of best
-        shapelets. If none the max of n_instances and max_shapelets is used.
+        shapelets.
     random_state : int or None, default=None
         Seed for random number generation.
 
@@ -132,9 +133,22 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
     >>> X_t = t.transform(X_train)
     """
 
+    _tags = {
+        "fit_is_empty": False,
+        "univariate-only": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "numpy1D",  # and for y?
+        "requires_y": True,
+    }
+
     def __init__(
         self,
-        n_shapelet_samples=100000,
+        n_shapelet_samples=10000,
         max_shapelets=None,
         min_shapelet_length=3,
         max_shapelet_length=None,
@@ -142,7 +156,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         time_limit_in_minutes=0.0,
         contract_max_n_shapelet_samples=np.inf,
         n_jobs=1,
-        batch_size=None,
+        batch_size=100,
         random_state=None,
     ):
         self.n_shapelet_samples = n_shapelet_samples
@@ -177,7 +191,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
 
         super(RandomShapeletTransform, self).__init__()
 
-    def fit(self, X, y):
+    def _fit(self, X, y=None):
         """Fit the shapelet transform to a specified X and y.
 
         Parameters
@@ -192,8 +206,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         self : RandomShapeletTransform
             This estimator.
         """
-        X, y = check_X_y(X, y, coerce_to_numpy=True)
-
         # this is a few versions away currently, and heaps dont support the replacement
         warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
@@ -204,16 +216,13 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
-        self.n_instances, self.n_dims, self.series_length = X.shape
+        le = preprocessing.LabelEncoder()
+        y = le.fit_transform(y)
 
-        # if self.n_shapelet_samples is None:
-        #     self._n_shapelet_samples = ??? todo find good default
+        self.n_instances, self.n_dims, self.series_length = X.shape
 
         if self.max_shapelets is None:
             self._max_shapelets = min(10 * self.n_instances, 1000)
-
-        if self.batch_size is None:
-            self._batch_size = max(self.n_instances, self._max_shapelets)
 
         if self.max_shapelet_length is None:
             self._max_shapelet_length = self.series_length
@@ -304,7 +313,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                 s[3],
                 s[4],
                 self.classes_[s[5]],
-                _z_norm(X[s[4], s[3], s[2] : s[2] + s[1]]),
+                z_normalise_series(X[s[4], s[3], s[2] : s[2] + s[1]]),
             )
             for class_shapelets in shapelets
             for s in class_shapelets
@@ -321,11 +330,9 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
             self._sorted_indicies.append(
                 sorted(range(s[1]), reverse=True, key=lambda i: sabs[i])
             )
-
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform X according to the extracted shapelets.
 
         Parameters
@@ -338,9 +345,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         output : pandas DataFrame
             The transformed dataframe in tabular format.
         """
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True)
-
         # this is a few versions away currently, and heaps dont support the replacement
         warnings.simplefilter("ignore", category=NumbaPendingDeprecationWarning)
 
@@ -372,7 +376,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         rng = check_random_state(rs)
 
         inst_idx = i % self.n_instances
-        cls_idx = self._class_dictionary[y[inst_idx]]
+        cls_idx = int(y[inst_idx])
         worst_quality = (
             shapelets[cls_idx][0][0] if shapelets == max_shapelets_per_class else -1
         )
@@ -384,7 +388,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         position = rng.randint(0, self.series_length - length)
         dim = rng.randint(0, self.n_dims)
 
-        shapelet = _z_norm(X[inst_idx, dim, position : position + length])
+        shapelet = z_normalise_series(X[inst_idx, dim, position : position + length])
         sabs = np.abs(shapelet)
         sorted_indicies = sorted(range(length), reverse=True, key=lambda i: sabs[i])
 
@@ -419,6 +423,7 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
         other_cls_count,
         worst_quality,
     ):
+        # todo optimise this more, we spend 99% of time here
         orderline = []
         this_cls_traversed = 0
         other_cls_traversed = 0
@@ -513,17 +518,6 @@ class RandomShapeletTransform(_PanelToTabularTransformer):
                     to_keep[n] = False
 
         return to_keep
-
-
-@njit(fastmath=True, cache=True)
-def _z_norm(shapelet):
-    std = np.std(shapelet)
-    if std > 0:
-        shapelet = (shapelet - np.mean(shapelet)) / std
-    else:
-        shapelet = np.zeros(len(shapelet))
-
-    return shapelet
 
 
 @njit(fastmath=True, cache=True)
@@ -699,9 +693,9 @@ def _binary_entropy(c1, c2):
 def _is_self_similar(s1, s2):
     # not self similar if from different series or dimension
     if s1[4] == s2[4] and s1[3] == s2[3]:
-        if s1[2] >= s2[2] and s1[2] <= s2[2] + s2[1]:
+        if s2[2] <= s1[2] <= s2[2] + s2[1]:
             return True
-        if s2[2] >= s1[2] and s2[2] <= s1[2] + s1[1]:
+        if s1[2] <= s2[2] <= s1[2] + s1[1]:
             return True
 
     return False

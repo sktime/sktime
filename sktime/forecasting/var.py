@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.api import VAR as _VAR
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -19,15 +18,32 @@ class VAR(_StatsModelsAdapter):
 
     Parameters
     ----------
-    maxlags: int or None (default= None)
+    maxlags: int or None (default=None)
         Maximum number of lags to check for order selection,
         defaults to 12 * (nobs/100.)**(1./4)
-    method : str
+    method : str (default="ols")
         Estimation method to use
-    verbose : bool (default = False)
+    verbose : bool (default=False)
         Print order selection output to the screen
+    trend : str {"c", "ct", "ctt", "n"} (default="c")
+        "c" - add constant
+        "ct" - constant and trend
+        "ctt" - constant, linear and quadratic trend
+        "n" - co constant, no trend
+        Note that these are prepended to the columns of the dataset.
     missing: str, optional (default='none')
         A string specifying if data is missing
+    freq: str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
+        A frequency specification for either `dates` or the row labels from
+        the endog / exog data.
+    dates: array_like, optional (default=None)
+        An array like object containing dates.
+    ic: One of {'aic', 'fpe', 'hqic', 'bic', None} (default=None)
+        Information criterion to use for VAR order selection.
+        aic : Akaike
+        fpe : Final prediction error
+        hqic : Hannan-Quinn
+        bic : Bayesian a.k.a. Schwarz
 
     References
     ----------
@@ -63,6 +79,9 @@ class VAR(_StatsModelsAdapter):
         verbose=False,
         trend="c",
         missing="none",
+        dates=None,
+        freq=None,
+        ic=None,
     ):
         # Model params
         self.trend = trend
@@ -70,6 +89,9 @@ class VAR(_StatsModelsAdapter):
         self.method = method
         self.verbose = verbose
         self.missing = missing
+        self.dates = dates
+        self.freq = freq
+        self.ic = ic
 
         super(VAR, self).__init__()
 
@@ -90,16 +112,19 @@ class VAR(_StatsModelsAdapter):
         -------
         self : returns an instance of self.
         """
-        self._forecaster = _VAR(endog=y, exog=X, missing=self.missing)
+        self._forecaster = _VAR(
+            endog=y, exog=X, dates=self.dates, freq=self.freq, missing=self.missing
+        )
         self._fitted_forecaster = self._forecaster.fit(
             trend=self.trend,
             maxlags=self.maxlags,
             method=self.method,
             verbose=self.verbose,
+            ic=self.ic,
         )
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """
         Wrap Statmodel's VAR forecast method.
 
@@ -111,8 +136,6 @@ class VAR(_StatsModelsAdapter):
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list, optional (default=0.95)
 
         Returns
         -------
@@ -156,8 +179,15 @@ class VAR(_StatsModelsAdapter):
         return y_pred
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

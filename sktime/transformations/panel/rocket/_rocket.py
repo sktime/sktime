@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
-__author__ = "Angus Dempster"
+"""Rocket transformer."""
+
+__author__ = "angus924"
 __all__ = ["Rocket"]
 
 import multiprocessing
 
 import numpy as np
 import pandas as pd
+from numba import get_num_threads, njit, prange, set_num_threads
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
-
-from numba import njit, get_num_threads, set_num_threads
-from numba import prange
+from sktime.transformations.base import BaseTransformer
 
 
-class Rocket(_PanelToTabularTransformer):
-    """ROCKET
+class Rocket(BaseTransformer):
+    """ROCKET.
 
     RandOm Convolutional KErnel Transform
 
@@ -39,6 +38,18 @@ class Rocket(_PanelToTabularTransformer):
     random seed (optional, default None)
     """
 
+    _tags = {
+        "univariate-only": False,
+        "fit_is_empty": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
+
     def __init__(self, num_kernels=10_000, normalise=True, n_jobs=1, random_state=None):
         self.num_kernels = num_kernels
         self.normalise = normalise
@@ -46,45 +57,45 @@ class Rocket(_PanelToTabularTransformer):
         self.random_state = random_state if isinstance(random_state, int) else None
         super(Rocket, self).__init__()
 
-    def fit(self, X, y=None):
-        """Infers time series length and number of channels / dimensions (
+    def _fit(self, X, y=None):
+        """Generate random kernels adjusted to time series shape.
+
+        Infers time series length and number of channels / dimensions (
         for multivariate time series) from input pandas DataFrame,
         and generates random kernels.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         self
         """
-        X = check_X(X, coerce_to_numpy=True)
         _, self.n_columns, n_timepoints = X.shape
         self.kernels = _generate_kernels(
             n_timepoints, self.num_kernels, self.n_columns, self.random_state
         )
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
-        """Transforms input time series using random convolutional kernels.
+    def _transform(self, X, y=None):
+        """Transform input time series using random convolutional kernels.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         pandas DataFrame, transformed features
         """
-        self.check_is_fitted()
-        _X = check_X(X, coerce_to_numpy=True)
         if self.normalise:
-            _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
-                _X.std(axis=-1, keepdims=True) + 1e-8
+            X = (X - X.mean(axis=-1, keepdims=True)) / (
+                X.std(axis=-1, keepdims=True) + 1e-8
             )
         prev_threads = get_num_threads()
         if self.n_jobs < 1 or self.n_jobs > multiprocessing.cpu_count():
@@ -92,14 +103,14 @@ class Rocket(_PanelToTabularTransformer):
         else:
             n_jobs = self.n_jobs
         set_num_threads(n_jobs)
-        t = pd.DataFrame(_apply_kernels(_X, self.kernels))
+        t = pd.DataFrame(_apply_kernels(X.astype(np.float32), self.kernels))
         set_num_threads(prev_threads)
         return t
 
 
 @njit(
-    "Tuple((float64[:],int32[:],float64[:],int32[:],int32[:],int32[:],"
-    "int32[:]))(int64,int64,int64,optional(int64))",
+    "Tuple((float32[:],int32[:],float32[:],int32[:],int32[:],int32[:],"
+    "int32[:]))(int32,int32,int32,optional(int32))",
     cache=True,
 )
 def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
@@ -107,7 +118,7 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         np.random.seed(seed)
 
     candidate_lengths = np.array((7, 9, 11), dtype=np.int32)
-    lengths = np.random.choice(candidate_lengths, num_kernels)
+    lengths = np.random.choice(candidate_lengths, num_kernels).astype(np.int32)
 
     num_channel_indices = np.zeros(num_kernels, dtype=np.int32)
     for i in range(num_kernels):
@@ -118,11 +129,11 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
 
     weights = np.zeros(
         np.int32(
-            np.dot(lengths.astype(np.float64), num_channel_indices.astype(np.float64))
+            np.dot(lengths.astype(np.float32), num_channel_indices.astype(np.float32))
         ),
-        dtype=np.float64,
+        dtype=np.float32,
     )
-    biases = np.zeros(num_kernels, dtype=np.float64)
+    biases = np.zeros(num_kernels, dtype=np.float32)
     dilations = np.zeros(num_kernels, dtype=np.int32)
     paddings = np.zeros(num_kernels, dtype=np.int32)
 
@@ -134,7 +145,9 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         _length = lengths[i]
         _num_channel_indices = num_channel_indices[i]
 
-        _weights = np.random.normal(0, 1, _num_channel_indices * _length)
+        _weights = np.random.normal(0, 1, _num_channel_indices * _length).astype(
+            np.float32
+        )
 
         b1 = a1 + (_num_channel_indices * _length)
         b2 = a2 + _num_channel_indices
@@ -206,7 +219,7 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
         if _sum > 0:
             _ppv += 1
 
-    return _ppv / output_length, _max
+    return np.float32(_ppv / output_length), np.float32(_max)
 
 
 @njit(fastmath=True, cache=True)
@@ -243,11 +256,11 @@ def _apply_kernel_multivariate(
         if _sum > 0:
             _ppv += 1
 
-    return _ppv / output_length, _max
+    return np.float32(_ppv / output_length), np.float32(_max)
 
 
 @njit(
-    "float64[:,:](float64[:,:,:],Tuple((float64[::1],int32[:],float64[:],"
+    "float32[:,:](float32[:,:,:],Tuple((float32[::1],int32[:],float32[:],"
     "int32[:],int32[:],int32[:],int32[:])))",
     parallel=True,
     fastmath=True,
@@ -268,7 +281,7 @@ def _apply_kernels(X, kernels):
     num_kernels = len(lengths)
 
     _X = np.zeros(
-        (n_instances, num_kernels * 2), dtype=np.float64
+        (n_instances, num_kernels * 2), dtype=np.float32
     )  # 2 features per kernel
 
     for i in prange(n_instances):
@@ -313,4 +326,4 @@ def _apply_kernels(X, kernels):
             a2 = b2
             a3 = b3
 
-    return _X
+    return _X.astype(np.float32)

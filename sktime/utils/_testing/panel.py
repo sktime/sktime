@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.clustering.tests._clustering_tests import generate_univaritate_series
+from sktime.datatypes import convert_to
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 
 
@@ -22,6 +22,7 @@ def _make_panel_X(
     n_columns=1,
     n_timepoints=20,
     y=None,
+    all_positive=False,
     return_numpy=False,
     random_state=None,
 ):
@@ -38,6 +39,9 @@ def _make_panel_X(
     # Generate association between data and target variable
     if y is not None:
         X = X + (y * 100).reshape(-1, 1, 1)
+
+    if all_positive:
+        X = X**2
 
     if return_numpy:
         return X
@@ -111,20 +115,26 @@ def make_regression_problem(
 
 def make_clustering_problem(
     n_instances=20,
-    series_size=20,
-    return_numpy=True,
+    n_columns=1,
+    n_timepoints=20,
+    return_numpy=False,
     random_state=None,
-    n_columns=None,
 ):
     """Make Clustering Problem."""
     # Can only currently support univariate so converting
     # to univaritate for the time being
-    X = generate_univaritate_series(n_instances, series_size, random_state)
+    X = _make_panel_X(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_numpy=return_numpy,
+        random_state=random_state,
+    )
 
     if return_numpy:
-        return X
+        return convert_to(X, "numpy3D")
     else:
-        return pd.Series(X)
+        return X
 
 
 def make_transformer_problem(
