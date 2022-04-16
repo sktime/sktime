@@ -381,15 +381,15 @@ class WindowSummarizer(BaseTransformer):
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
                 X_grouped = X.groupby("instances")[cols]
-                df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
+                df = [#Parallel(n_jobs=self.n_jobs)(
+                    _window_feature(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
-                )
+                ]
             else:
-                df = Parallel(n_jobs=self.n_jobs)(
-                    delayed(_window_feature)(X.loc[:, [cols]], **kwargs, bfill=bfill)
-                    for _index, kwargs in func_dict.iterrows()
-                )
+                df = [#Parallel(n_jobs=self.n_jobs)(
+                    _window_feature(X.loc[:, [cols]], **kwargs, bfill=bfill)
+                    for index, kwargs in func_dict.iterrows()
+                ]
             Xt = pd.concat(df, axis=1)
             Xt = Xt.add_prefix(str(cols) + "_")
             Xt_out.append(Xt)
