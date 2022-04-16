@@ -27,17 +27,15 @@ class NumbaDistance(ABC):
         float
             Distance between x and y.
         """
-        from sktime.distances._numba_utils import to_numba_timeseries
-
         dist_callable = self.distance_factory(x, y, **kwargs)
         return dist_callable(x, y)
 
     def distance_path(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict,
     ) -> float:
         """Compute the distance path between two time series.
 
@@ -59,18 +57,13 @@ class NumbaDistance(ABC):
         float
             Distance between x and y.
         """
-        from sktime.distances._numba_utils import to_numba_timeseries
-
         dist_callable = self.distance_path_factory(
             x, y, return_cost_matrix=return_cost_matrix, **kwargs
         )
         return dist_callable(x, y)
 
     def distance_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            **kwargs: dict
+        self, x: np.ndarray, y: np.ndarray, **kwargs: dict
     ) -> DistanceCallable:
         """Create a no_python distance.
 
@@ -107,8 +100,6 @@ class NumbaDistance(ABC):
         RuntimeError
             If the distance metric could not be compiled to no_python.
         """
-        from sktime.distances._numba_utils import to_numba_timeseries
-
         NumbaDistance._validate_factory_timeseries(x)
         NumbaDistance._validate_factory_timeseries(y)
 
@@ -117,11 +108,11 @@ class NumbaDistance(ABC):
         return no_python_callable
 
     def distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict,
     ) -> DistanceCallable:
         """Create a no_python distance path.
 
@@ -154,8 +145,6 @@ class NumbaDistance(ABC):
         RuntimeError
             If the distance metric could not be compiled to no_python.
         """
-        from sktime.distances._numba_utils import to_numba_timeseries
-
         NumbaDistance._validate_factory_timeseries(x)
         NumbaDistance._validate_factory_timeseries(y)
 
@@ -164,7 +153,6 @@ class NumbaDistance(ABC):
         )
 
         return no_python_callable
-
 
     @staticmethod
     def _validate_factory_timeseries(x: np.ndarray) -> None:
@@ -223,11 +211,11 @@ class NumbaDistance(ABC):
         ...
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            **kwargs: dict
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        **kwargs: dict,
     ) -> DistancePathCallable:
         """Abstract method to create a no_python compiled distance path computation.
 

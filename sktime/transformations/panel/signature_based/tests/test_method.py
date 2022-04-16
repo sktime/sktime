@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Tests for signature method."""
+
 import numpy as np
 import pytest
-from sktime.transformations.panel.signature_based import SignatureTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("esig")
-import esig  # noqa: E402
+from sktime.transformations.panel.signature_based import SignatureTransformer
 
 
 def test_generalised_signature_method():
+    """Check that dimension and dim of output are correct."""
     # Build an array X, note that this is [n_sample, n_channels, length] shape.
+    import esig
+
     n_channels = 3
     depth = 4
     X = np.random.randn(5, n_channels, 10)
@@ -35,6 +37,7 @@ def test_generalised_signature_method():
 
 
 def test_window_error():
+    """Test that wrong window parameters raise error."""
     X = np.random.randn(5, 2, 3)
 
     # Check dyadic gives a value error

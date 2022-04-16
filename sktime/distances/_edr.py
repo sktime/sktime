@@ -8,10 +8,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 from sktime.distances._distance_paths import compute_return_path
-
+from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -34,15 +33,15 @@ class _EdrDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            epsilon: float = None,
-            **kwargs: Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        epsilon: float = None,
+        **kwargs: Any
     ) -> DistancePathCallable:
         """Create a no_python compiled edr path distance callable.
 
@@ -96,12 +95,11 @@ class _EdrDistance(NumbaDistance):
         if epsilon is not None and not isinstance(epsilon, float):
             raise ValueError("The value of epsilon must be a float.")
 
-
         if return_cost_matrix is True:
+
             @njit(cache=True)
             def numba_edr_distance_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray
+                _x: np.ndarray, _y: np.ndarray
             ) -> tuple[list, float]:
                 if epsilon is None:
                     _epsilon = max(np.std(_x), np.std(_y)) / 4
@@ -111,11 +109,12 @@ class _EdrDistance(NumbaDistance):
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
                 return path, distance, cost_matrix
+
         else:
+
             @njit(cache=True)
             def numba_edr_distance_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray
+                _x: np.ndarray, _y: np.ndarray
             ) -> tuple[list, float]:
                 if epsilon is None:
                     _epsilon = max(np.std(_x), np.std(_y)) / 4

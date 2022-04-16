@@ -132,13 +132,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
+        Input number of cases (n), with series of dimension (d), each series length (d).
+
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
-        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
+        X : sktime-format pandas dataframe with shape(n,d),
+        or numpy ndarray with shape(n,d,m)
 
         y : {array-like, sparse matrix}
-            Target values of shape = [n_samples]
+            Target values of shape = [n]
         """
         if isinstance(self.distance, str):
             if self.distance_params is None:
@@ -147,8 +149,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 self.metric = distance_factory(
                     X[0], X[0], metric=self.distance, **self.distance_params
                 )
-
-        y = np.asarray(y)
         check_classification_targets(y)
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             self.outputs_2d_ = False

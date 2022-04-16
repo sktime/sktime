@@ -7,9 +7,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 from sktime.distances._distance_paths import compute_return_path
+from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -40,16 +40,16 @@ class _MsmDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            c: float = 0.0,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            **kwargs: dict,
-    ) -> DistanceCallable:
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        c: float = 0.0,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        **kwargs: dict,
+    ) -> DistancePathCallable:
         """Create a no_python compiled MSM distance path callable.
 
         Series should be shape (1, m), where m is the series length. Series can be
@@ -92,21 +92,23 @@ class _MsmDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-
         if return_cost_matrix is True:
+
             @njit(cache=True)
             def numba_msm_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
+
         else:
+
             @njit(cache=True)
             def numba_msm_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
                 path = compute_return_path(cost_matrix, _bounding_matrix)

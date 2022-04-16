@@ -20,28 +20,28 @@ from sktime.distances._numba_utils import (
     to_numba_timeseries,
 )
 from sktime.distances._resolve_metric import (
+    _resolve_dist_instance,
     _resolve_metric_to_factory,
-    _resolve_dist_instance
 )
 from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import (
     DistanceCallable,
+    DistancePathCallable,
     MetricInfo,
     NumbaDistance,
-    DistancePathCallable
 )
 
 
 def erp_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        g: float = 0.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    g: float = 0.0,
+    **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real penalty (ERP) distance between two series.
 
@@ -123,13 +123,13 @@ def erp_distance(
 
 
 def edr_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        epsilon: float = None,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    epsilon: float = None,
+    **kwargs: Any,
 ) -> float:
     """Compute the Edit distance for real sequences (EDR) between two series.
 
@@ -217,13 +217,13 @@ def edr_distance(
 
 
 def lcss_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        epsilon: float = 1.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    epsilon: float = 1.0,
+    **kwargs: Any,
 ) -> float:
     """Compute the longest common subsequence (LCSS) score between two time series.
 
@@ -310,14 +310,14 @@ def lcss_distance(
 
 
 def wddtw_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
-        g: float = 0.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    compute_derivative: DerivativeCallable = average_of_slope,
+    g: float = 0.0,
+    **kwargs: Any,
 ) -> float:
     r"""Compute the weighted derivative dynamic time warping (WDDTW) distance.
 
@@ -415,13 +415,13 @@ def wddtw_distance(
 
 
 def wdtw_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        g: float = 0.05,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    g: float = 0.05,
+    **kwargs: Any,
 ) -> float:
     """Compute the weighted dynamic time warping (WDTW) distance between time series.
 
@@ -512,13 +512,13 @@ def wdtw_distance(
 
 
 def ddtw_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    compute_derivative: DerivativeCallable = average_of_slope,
+    **kwargs: Any,
 ) -> float:
     r"""Compute the derivative dynamic time warping (DDTW) distance between time series.
 
@@ -611,12 +611,12 @@ def ddtw_distance(
 
 
 def dtw_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    **kwargs: Any,
 ) -> float:
     r"""Compute the dynamic time warping (DTW) distance between two time series.
 
@@ -701,10 +701,10 @@ def dtw_distance(
 
 
 def msm_distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        c: float = 0.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    c: float = 0.0,
+    **kwargs: Any,
 ) -> float:
     """Compute the move-split-merge distance.
 
@@ -859,13 +859,13 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
 
 
 def dtw_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        **kwargs: Any
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     r"""Compute the dynamic time warping (DTW) path between two time series.
 
@@ -943,14 +943,14 @@ def dtw_path(
 
 
 def wdtw_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        g: float = 0.05,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    g: float = 0.05,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     """Compute the weighted dynamic time warping (wdtw) path between two time series.
 
@@ -1035,14 +1035,14 @@ def wdtw_path(
 
 
 def ddtw_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: np.ndarray = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: np.ndarray = None,
+    compute_derivative: DerivativeCallable = average_of_slope,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     r"""Compute the derivative dynamic time warping (DDTW) path between time series.
 
@@ -1128,15 +1128,15 @@ def ddtw_path(
 
 
 def wddtw_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        compute_derivative: DerivativeCallable = average_of_slope,
-        g: float = 0.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    compute_derivative: DerivativeCallable = average_of_slope,
+    g: float = 0.0,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     r"""Compute the weighted derivative dynamic time warping (WDDTW) path.
 
@@ -1226,15 +1226,16 @@ def wddtw_path(
         x, y, metric="wddtw", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
+
 def edr_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        epsilon: float = None,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    epsilon: float = None,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     """Compute the Edit distance for real sequences (EDR) path between two series.
 
@@ -1312,15 +1313,16 @@ def edr_path(
         x, y, metric="edr", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
+
 def erp_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        g: float = 0.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    g: float = 0.0,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     """Compute the Edit distance for real penalty (ERP) path between two series.
 
@@ -1394,15 +1396,16 @@ def erp_path(
         x, y, metric="erp", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
+
 def lcss_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        window: Union[float, None] = None,
-        itakura_max_slope: Union[float, None] = None,
-        bounding_matrix: Union[np.ndarray, None] = None,
-        epsilon: float = 1.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: Union[float, None] = None,
+    itakura_max_slope: Union[float, None] = None,
+    bounding_matrix: Union[np.ndarray, None] = None,
+    epsilon: float = 1.0,
+    **kwargs: Any,
 ) -> DistancePathCallable:
     """Compute the longest common subsequence (LCSS) path between two time series.
 
@@ -1483,11 +1486,11 @@ def lcss_path(
 
 
 def msm_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        c: float = 0.0,
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    c: float = 0.0,
+    **kwargs: Any,
 ) -> float:
     """Compute the move-split-merge path between time series.
 
@@ -1543,19 +1546,19 @@ def msm_path(
         x, y, metric="msm", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
+
 def distance(
-        x: np.ndarray,
-        y: np.ndarray,
-        metric: Union[
-            str,
-            Callable[
-                [np.ndarray, np.ndarray, dict], Callable[
-                    [np.ndarray, np.ndarray], float]
-            ],
-            Callable[[np.ndarray, np.ndarray], float],
-            NumbaDistance,
+    x: np.ndarray,
+    y: np.ndarray,
+    metric: Union[
+        str,
+        Callable[
+            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
         ],
-        **kwargs: Any,
+        Callable[[np.ndarray, np.ndarray], float],
+        NumbaDistance,
+    ],
+    **kwargs: Any,
 ) -> float:
     """Compute the distance between two time series.
 
@@ -1626,25 +1629,25 @@ def distance(
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
-    _metric_callable = _resolve_metric_to_factory(metric, _x, _y, _METRIC_INFOS,
-                                                  **kwargs)
+    _metric_callable = _resolve_metric_to_factory(
+        metric, _x, _y, _METRIC_INFOS, **kwargs
+    )
 
     return _metric_callable(_x, _y)
 
 
 def distance_factory(
-        x: np.ndarray = None,
-        y: np.ndarray = None,
-        metric: Union[
-            str,
-            Callable[
-                [np.ndarray, np.ndarray, dict], Callable[
-                    [np.ndarray, np.ndarray], float]
-            ],
-            Callable[[np.ndarray, np.ndarray], float],
-            NumbaDistance,
-        ] = "euclidean",
-        **kwargs: Any,
+    x: np.ndarray = None,
+    y: np.ndarray = None,
+    metric: Union[
+        str,
+        Callable[
+            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+        ],
+        Callable[[np.ndarray, np.ndarray], float],
+        NumbaDistance,
+    ] = "euclidean",
+    **kwargs: Any,
 ) -> DistanceCallable:
     """Create a no_python distance callable.
 
@@ -1708,18 +1711,17 @@ def distance_factory(
 
 
 def pairwise_distance(
-        x: np.ndarray,
-        y: np.ndarray = None,
-        metric: Union[
-            str,
-            Callable[
-                [np.ndarray, np.ndarray, dict], Callable[
-                    [np.ndarray, np.ndarray], float]
-            ],
-            Callable[[np.ndarray, np.ndarray], float],
-            NumbaDistance,
-        ] = "euclidean",
-        **kwargs: Any,
+    x: np.ndarray,
+    y: np.ndarray = None,
+    metric: Union[
+        str,
+        Callable[
+            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
+        ],
+        Callable[[np.ndarray, np.ndarray], float],
+        NumbaDistance,
+    ] = "euclidean",
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute the pairwise distance matrix between two time series.
 
@@ -1798,25 +1800,25 @@ def pairwise_distance(
         y = x
     _y = to_numba_pairwise_timeseries(y)
     symmetric = np.array_equal(_x, _y)
-    _metric_callable = _resolve_metric_to_factory(metric, _x[0], _y[0], _METRIC_INFOS,
-                                                  **kwargs)
+    _metric_callable = _resolve_metric_to_factory(
+        metric, _x[0], _y[0], _METRIC_INFOS, **kwargs
+    )
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
 
 def distance_path(
-        x: np.ndarray,
-        y: np.ndarray,
-        metric: Union[
-            str,
-            Callable[
-                [np.ndarray, np.ndarray, dict], Callable[
-                    [np.ndarray, np.ndarray], float]
-            ],
-            Callable[[np.ndarray, np.ndarray], float],
-            NumbaDistance,
+    x: np.ndarray,
+    y: np.ndarray,
+    metric: Union[
+        str,
+        Callable[
+            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
         ],
-        return_cost_matrix: bool = False,
-        **kwargs: Any,
+        Callable[[np.ndarray, np.ndarray], float],
+        NumbaDistance,
+    ],
+    return_cost_matrix: bool = False,
+    **kwargs: Any,
 ) -> Union[list, float]:
     """Compute the path and distance between two time series.
 
@@ -1880,19 +1882,18 @@ def distance_path(
 
 
 def distance_path_factory(
-        x: np.ndarray,
-        y: np.ndarray,
-        metric: Union[
-            str,
-            Callable[
-                [np.ndarray, np.ndarray, dict], Callable[
-                    [np.ndarray, np.ndarray], float]
-            ],
-            Callable[[np.ndarray, np.ndarray], float],
-            NumbaDistance,
+    x: np.ndarray,
+    y: np.ndarray,
+    metric: Union[
+        str,
+        Callable[
+            [np.ndarray, np.ndarray, dict], Callable[[np.ndarray, np.ndarray], float]
         ],
-        return_cost_matrix: bool = False,
-        **kwargs: Any,
+        Callable[[np.ndarray, np.ndarray], float],
+        NumbaDistance,
+    ],
+    return_cost_matrix: bool = False,
+    **kwargs: Any,
 ) -> Callable[[np.ndarray, np.ndarray], Union[list, float]]:
     """Produce a distance factory numba callable.
 
@@ -1975,21 +1976,21 @@ _METRIC_INFOS = [
         aka={"erp", "edit distance with real penalty"},
         dist_func=erp_distance,
         dist_instance=_ErpDistance(),
-        dist_path_func=erp_path
+        dist_path_func=erp_path,
     ),
     MetricInfo(
         canonical_name="edr",
         aka={"edr", "edit distance for real sequences"},
         dist_func=edr_distance,
         dist_instance=_EdrDistance(),
-        dist_path_func=edr_path
+        dist_path_func=edr_path,
     ),
     MetricInfo(
         canonical_name="lcss",
         aka={"lcss", "longest common subsequence"},
         dist_func=lcss_distance,
         dist_instance=_LcssDistance(),
-        dist_path_func=lcss_path
+        dist_path_func=lcss_path,
     ),
     MetricInfo(
         canonical_name="squared",
@@ -2002,35 +2003,35 @@ _METRIC_INFOS = [
         aka={"dtw", "dynamic time warping"},
         dist_func=dtw_distance,
         dist_instance=_DtwDistance(),
-        dist_path_func=dtw_path
+        dist_path_func=dtw_path,
     ),
     MetricInfo(
         canonical_name="ddtw",
         aka={"ddtw", "derivative dynamic time warping"},
         dist_func=ddtw_distance,
         dist_instance=_DdtwDistance(),
-        dist_path_func=ddtw_path
+        dist_path_func=ddtw_path,
     ),
     MetricInfo(
         canonical_name="wdtw",
         aka={"wdtw", "weighted dynamic time warping"},
         dist_func=wdtw_distance,
         dist_instance=_WdtwDistance(),
-        dist_path_func=wdtw_path
+        dist_path_func=wdtw_path,
     ),
     MetricInfo(
         canonical_name="wddtw",
         aka={"wddtw", "weighted derivative dynamic time warping"},
         dist_func=wddtw_distance,
         dist_instance=_WddtwDistance(),
-        dist_path_func=wddtw_path
+        dist_path_func=wddtw_path,
     ),
     MetricInfo(
         canonical_name="msm",
         aka={"msm", "move-split-merge"},
         dist_func=msm_distance,
         dist_instance=_MsmDistance(),
-        dist_path_func=msm_path
+        dist_path_func=msm_path,
     ),
 ]
 

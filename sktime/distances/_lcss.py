@@ -8,9 +8,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 from sktime.distances._distance_paths import compute_lcss_return_path
+from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -52,15 +52,15 @@ class _LcssDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            epsilon: float = 1.0,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            **kwargs: Any,
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        epsilon: float = 1.0,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        **kwargs: Any,
     ) -> DistancePathCallable:
         """Create a no_python compiled lcss distance path callable.
 
@@ -112,33 +112,42 @@ class _LcssDistance(NumbaDistance):
             raise ValueError("The value of epsilon must be a float.")
 
         if return_cost_matrix is True:
+
             @njit(cache=True)
             def numba_lcss_distance(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 x_size = _x.shape[1]
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
                 distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
                 path = compute_lcss_return_path(
-                    _x, _y, epsilon=epsilon,
-                    bounding_matrix=_bounding_matrix, cost_matrix=cost_matrix
+                    _x,
+                    _y,
+                    epsilon=epsilon,
+                    bounding_matrix=_bounding_matrix,
+                    cost_matrix=cost_matrix,
                 )
                 return path, distance, cost_matrix
+
         else:
+
             @njit(cache=True)
             def numba_lcss_distance(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 x_size = _x.shape[1]
                 y_size = _y.shape[1]
                 cost_matrix = _sequence_cost_matrix(_x, _y, _bounding_matrix, epsilon)
                 distance = 1 - float(cost_matrix[x_size, y_size] / min(x_size, y_size))
                 path = compute_lcss_return_path(
-                    _x, _y, epsilon=epsilon,
-                    bounding_matrix=_bounding_matrix, cost_matrix=cost_matrix
+                    _x,
+                    _y,
+                    epsilon=epsilon,
+                    bounding_matrix=_bounding_matrix,
+                    cost_matrix=cost_matrix,
                 )
                 return path, distance
 

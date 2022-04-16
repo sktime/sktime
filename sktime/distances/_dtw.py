@@ -8,10 +8,10 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
+from sktime.distances._distance_paths import compute_return_path
 from sktime.distances.base import DistanceCallable, NumbaDistance
 from sktime.distances.base._types import DistancePathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
-from sktime.distances._distance_paths import compute_return_path
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -61,14 +61,14 @@ class _DtwDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            **kwargs: Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        **kwargs: Any
     ) -> DistancePathCallable:
         """Create a no_python compiled dtw path distance callable.
 
@@ -115,19 +115,22 @@ class _DtwDistance(NumbaDistance):
         )
 
         if return_cost_matrix is True:
+
             @njit(cache=True)
             def numba_dtw_distance_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
+
         else:
+
             @njit(cache=True)
             def numba_dtw_distance_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
@@ -241,6 +244,7 @@ def _cost_matrix(
                 )
 
     return cost_matrix[1:, 1:]
+
 
 # @njit(cache=True)
 # def _compute_dtw_path(cost_matrix: np.ndarray) -> list:

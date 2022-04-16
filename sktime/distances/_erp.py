@@ -8,10 +8,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 from sktime.distances._distance_paths import compute_return_path
-
+from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -21,15 +20,15 @@ class _ErpDistance(NumbaDistance):
     """Edit distance with real penalty (erp) between two time series."""
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            window: float = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            g: float = 0.0,
-            **kwargs: Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        g: float = 0.0,
+        **kwargs: Any
     ) -> DistancePathCallable:
         """Create a no_python compiled erp distance path callable.
 
@@ -82,24 +81,20 @@ class _ErpDistance(NumbaDistance):
             raise ValueError("The value of g must be a float.")
 
         if return_cost_matrix is True:
+
             @njit(cache=True)
-            def numba_erp_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray
-            ) -> tuple[list, float]:
+            def numba_erp_path(_x: np.ndarray, _y: np.ndarray) -> tuple[list, float]:
                 cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
+
         else:
+
             @njit(cache=True)
-            def numba_erp_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray
-            ) -> tuple[list, float]:
+            def numba_erp_path(_x: np.ndarray, _y: np.ndarray) -> tuple[list, float]:
                 cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
-
 
         return numba_erp_path
 

@@ -8,7 +8,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
+from sktime.clustering.partitioning import TimeSeriesLloyds
 from sktime.distances import pairwise_distance
 
 

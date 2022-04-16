@@ -8,11 +8,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from sktime.distances._distance import (
-    _METRIC_INFOS,
-    pairwise_distance,
-    squared_distance
-)
+from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
 from sktime.distances._numba_utils import to_numba_pairwise_timeseries
 from sktime.distances.base import MetricInfo, NumbaDistance
 from sktime.distances.tests._shared_tests import (

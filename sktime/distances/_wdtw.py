@@ -8,9 +8,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances.base import DistanceCallable, NumbaDistance, DistancePathCallable
-from sktime.distances.lower_bounding import resolve_bounding_matrix
 from sktime.distances._distance_paths import compute_return_path
+from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
@@ -42,15 +42,15 @@ class _WdtwDistance(NumbaDistance):
     """
 
     def _distance_path_factory(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            return_cost_matrix: bool = False,
-            window: int = None,
-            itakura_max_slope: float = None,
-            bounding_matrix: np.ndarray = None,
-            g: float = 0.05,
-            **kwargs: Any
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        return_cost_matrix: bool = False,
+        window: int = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        g: float = 0.05,
+        **kwargs: Any,
     ) -> DistancePathCallable:
         """Create a no_python compiled wdtw path distance callable.
 
@@ -111,19 +111,22 @@ class _WdtwDistance(NumbaDistance):
         )
 
         if return_cost_matrix is True:
+
             @njit(cache=True)
             def numba_wdtw_distance_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
+
         else:
+
             @njit(cache=True)
             def numba_wdtw_distance_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
+                _x: np.ndarray,
+                _y: np.ndarray,
             ) -> tuple[list, float]:
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_return_path(cost_matrix, _bounding_matrix)

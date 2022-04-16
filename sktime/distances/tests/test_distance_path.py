@@ -1,21 +1,19 @@
-from typing import Callable
-
+# -*- coding: utf-8 -*-
+"""Test for distance path functionality."""
 import numpy as np
 import pytest
 
+from sktime.distances._distance import _METRIC_INFOS, distance, distance_path
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.distances._distance import distance_path, dtw_path, distance, _METRIC_INFOS
+
 
 def _validate_distance_path_result(
-        x: np.ndarray,
-        y: np.ndarray,
-        metric_str: str,
-        distance_path_callable,
-        kwargs_dict: dict = None,
-        expected_result: float = None
+    x: np.ndarray,
+    y: np.ndarray,
+    metric_str: str,
+    distance_path_callable,
+    kwargs_dict: dict = None,
 ):
-    if expected_result is None:
-        return
     if kwargs_dict is None:
         kwargs_dict = {}
 
@@ -27,15 +25,15 @@ def _validate_distance_path_result(
     )
     assert len(metric_str_result) == 2
 
-    assert isinstance(metric_str_result[0], list),  (
+    assert isinstance(metric_str_result[0], list), (
         f"The result for a distance path first return using the string: {metric_str} as"
-        f' the metric parameter should return a tuple. The return type provided is of '
+        f" the metric parameter should return a tuple. The return type provided is of "
         f"type {type(metric_str_result)}"
     )
 
-    assert isinstance(metric_str_result[1], float),  (
+    assert isinstance(metric_str_result[1], float), (
         f"The result for a distance path first return using the string: {metric_str} as"
-        f' the metric parameter should return a tuple. The return type provided is of '
+        f" the metric parameter should return a tuple. The return type provided is of "
         f"type {type(metric_str_result)}"
     )
 
@@ -56,15 +54,15 @@ def _validate_distance_path_result(
     )
     assert len(metric_str_result_cm) == 3
 
-    assert isinstance(metric_str_result_cm[0], list),  (
+    assert isinstance(metric_str_result_cm[0], list), (
         f"The result for a distance path first return using the string: {metric_str} as"
-        f' the metric parameter should return a tuple. The return type provided is of '
+        f" the metric parameter should return a tuple. The return type provided is of "
         f"type {type(metric_str_result_cm[0])}"
     )
 
-    assert isinstance(metric_str_result_cm[1], float),  (
+    assert isinstance(metric_str_result_cm[1], float), (
         f"The result for a distance path first return using the string: {metric_str} as"
-        f' the metric parameter should return a tuple. The return type provided is of '
+        f" the metric parameter should return a tuple. The return type provided is of "
         f"type {type(metric_str_result)}"
     )
     assert metric_str_result_cm[0] == metric_str_result[0]
@@ -73,6 +71,7 @@ def _validate_distance_path_result(
 
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
 def test_distance_path(dist):
+    """Test the distance paths."""
     if dist.dist_path_func is not None:
 
         x = create_test_distance_numpy(10, 1)
@@ -82,5 +81,4 @@ def test_distance_path(dist):
             y=y,
             metric_str=dist.canonical_name,
             distance_path_callable=dist.dist_path_func,
-            expected_result=0.0
         )
