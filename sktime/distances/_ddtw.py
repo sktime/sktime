@@ -2,7 +2,7 @@
 __author__ = ["chrisholder"]
 
 import warnings
-from typing import Any, Callable
+from typing import Any, Callable, List, Tuple
 
 import numpy as np
 from numba import njit
@@ -153,7 +153,7 @@ class _DdtwDistance(NumbaDistance):
             def numba_ddtw_distance_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> tuple[list, float]:
+            ) -> Tuple[List, float, np.ndarray]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
@@ -166,7 +166,7 @@ class _DdtwDistance(NumbaDistance):
             def numba_ddtw_distance_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> tuple[list, float]:
+            ) -> Tuple[List, float]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)

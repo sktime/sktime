@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import List, Tuple
+
 import numpy as np
 from numba import njit
 
@@ -6,7 +8,7 @@ from numba import njit
 @njit(cache=True)
 def compute_return_path(
     cost_matrix: np.ndarray, bounding_matrix: np.ndarray
-) -> list[tuple]:
+) -> List[Tuple]:
     """Compute the path from the cost matrix.
 
     Parameters
@@ -52,7 +54,13 @@ def compute_return_path(
 
 
 @njit(cache=True)
-def compute_lcss_return_path(x, y, epsilon, bounding_matrix, cost_matrix):
+def compute_lcss_return_path(
+    x: np.ndarray,
+    y: np.ndarray,
+    epsilon: float,
+    bounding_matrix: np.ndarray,
+    cost_matrix: np.ndarray,
+) -> List[Tuple]:
     """Compute the path from lcss cost matrix.
 
     Parameters

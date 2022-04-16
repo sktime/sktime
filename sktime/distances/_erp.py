@@ -2,7 +2,7 @@
 __author__ = ["chrisholder"]
 
 import warnings
-from typing import Any
+from typing import Any, List, Tuple
 
 import numpy as np
 from numba import njit
@@ -83,7 +83,9 @@ class _ErpDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_erp_path(_x: np.ndarray, _y: np.ndarray) -> tuple[list, float]:
+            def numba_erp_path(
+                _x: np.ndarray, _y: np.ndarray
+            ) -> Tuple[List, float, np.ndarray]:
                 cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -91,7 +93,7 @@ class _ErpDistance(NumbaDistance):
         else:
 
             @njit(cache=True)
-            def numba_erp_path(_x: np.ndarray, _y: np.ndarray) -> tuple[list, float]:
+            def numba_erp_path(_x: np.ndarray, _y: np.ndarray) -> Tuple[List, float]:
                 cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]

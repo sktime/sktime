@@ -2,6 +2,7 @@
 __author__ = ["chrisholder", "jlines", "TonyBagnall"]
 
 import warnings
+from typing import List, Tuple
 
 import numpy as np
 from numba import njit
@@ -98,7 +99,7 @@ class _MsmDistance(NumbaDistance):
             def numba_msm_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> tuple[list, float]:
+            ) -> Tuple[List, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
@@ -109,7 +110,7 @@ class _MsmDistance(NumbaDistance):
             def numba_msm_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
-            ) -> tuple[list, float]:
+            ) -> Tuple[List, float]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
                 path = compute_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
