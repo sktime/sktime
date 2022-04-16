@@ -7,8 +7,8 @@ from typing import Callable, Union
 import numpy as np
 from numpy.random import RandomState
 
-from sktime.clustering.metrics.averaging._averaging import resolve_average_callable
-from sktime.clustering.partitioning._lloyds import TimeSeriesLloyds
+from sktime.clustering.metrics.averaging import _resolve_average_callable
+from sktime.clustering.partitioning import TimeSeriesLloyds
 
 
 class TimeSeriesKMeans(TimeSeriesLloyds):
@@ -77,7 +77,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         distance_params: dict = None,
     ):
         self.averaging_method = averaging_method
-        self._averaging_method = resolve_average_callable(averaging_method)
+        self._averaging_method = _resolve_average_callable(averaging_method)
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,
