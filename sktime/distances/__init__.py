@@ -23,29 +23,34 @@ __all__ = [
     "lcss_path",
     "msm_path",
     "erp_path",
-    "edr_path"
+    "edr_path",
+    "distance_path_factory",
+    "distance_path",
 ]
 
-from sktime.distances._distance import distance, distance_factory, pairwise_distance
 from sktime.distances._distance import (
     ddtw_distance,
+    ddtw_path,
+    distance,
+    distance_factory,
+    distance_path,
+    distance_path_factory,
     dtw_distance,
+    dtw_path,
     edr_distance,
+    edr_path,
     erp_distance,
+    erp_path,
     euclidean_distance,
     lcss_distance,
+    lcss_path,
     msm_distance,
+    msm_path,
+    pairwise_distance,
     squared_distance,
     wddtw_distance,
-    wdtw_distance,
-    distance_path,
-    dtw_path,
-    ddtw_path,
-    wdtw_path,
     wddtw_path,
-    lcss_path,
-    msm_path,
-    erp_path,
-    edr_path
+    wdtw_distance,
+    wdtw_path,
 )
 from sktime.distances.lower_bounding import LowerBounding

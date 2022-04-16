@@ -1,16 +1,13 @@
-import warnings
-from typing import Any
-
+# -*- coding: utf-8 -*-
 import numpy as np
 from numba import njit
 
 
 @njit(cache=True)
-def compute_return_path(cost_matrix: np.ndarray, bounding_matrix: np.ndarray) -> list:
-    """Compute the path from dtw cost matrix.
-
-    Series should be shape (d, m), where d is the number of dimensions, m the series
-    length. Series can be different lengths.
+def compute_return_path(
+    cost_matrix: np.ndarray, bounding_matrix: np.ndarray
+) -> list[tuple]:
+    """Compute the path from the cost matrix.
 
     Parameters
     ----------
@@ -19,8 +16,8 @@ def compute_return_path(cost_matrix: np.ndarray, bounding_matrix: np.ndarray) ->
 
     Returns
     -------
-    np.ndarray
-        Array containing tuple for each path location.
+    list[tuple]
+        List containing tuples that is the path through the cost matrix.
     """
     x_size, y_size = cost_matrix.shape
     for i in range(x_size):
@@ -36,9 +33,13 @@ def compute_return_path(cost_matrix: np.ndarray, bounding_matrix: np.ndarray) ->
         elif j == 0:
             alignment.append((i - 1, 0))
         else:
-            arr = np.array([cost_matrix[i - 1][j - 1],
-                            cost_matrix[i - 1][j],
-                            cost_matrix[i][j - 1]])
+            arr = np.array(
+                [
+                    cost_matrix[i - 1][j - 1],
+                    cost_matrix[i - 1][j],
+                    cost_matrix[i][j - 1],
+                ]
+            )
 
             score = np.argmin(arr)
             if score == 0:
@@ -52,7 +53,18 @@ def compute_return_path(cost_matrix: np.ndarray, bounding_matrix: np.ndarray) ->
 
 @njit(cache=True)
 def compute_lcss_return_path(x, y, epsilon, bounding_matrix, cost_matrix):
+    """Compute the path from lcss cost matrix.
 
+    Parameters
+    ----------
+    cost_matrix: np.ndarray
+        Dtw cost matrix to find dtw path through.
+
+    Returns
+    -------
+    list[tuple]
+        List containing tuples that is the path through the cost matrix.
+    """
     x_size = x.shape[1]
     y_size = y.shape[1]
     dimensions = x.shape[0]
@@ -69,25 +81,8 @@ def compute_lcss_return_path(x, y, epsilon, bounding_matrix, cost_matrix):
             if curr_dist <= epsilon:
                 path.append((i - 1, j - 1))
                 i, j = (i - 1, j - 1)
-            elif cost_matrix[i - 1][j] > cost_matrix[i][j-1]:
+            elif cost_matrix[i - 1][j] > cost_matrix[i][j - 1]:
                 i = i - 1
             else:
                 j = j - 1
     return path[::-1]
-#
-# def compute_lcss_return_path(x, y, epsilon, bounding_matrix, cost_matrix):
-#     from sktime.distances import pairwise_distance
-#     sz1, sz2 = cost_matrix.shape
-#     i, j = (sz1, sz2)
-#     path = []
-#     dist_matrix = pairwise_distance(x, y, metric='euclidean', epsilon=epsilon)
-#     while i > 0 and j > 0:
-#         if np.isfinite(bounding_matrix[i - 1, j - 1]):
-#             if dist_matrix[i - 1, j - 1] <= epsilon:
-#                 path.append((i - 1, j - 1))
-#                 i, j = (i - 1, j - 1)
-#             elif cost_matrix[i - 1][j] > cost_matrix[i][j-1]:
-#                 i = i - 1
-#             else:
-#                 j = j - 1
-#     return path[::-1]
