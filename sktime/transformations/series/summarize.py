@@ -519,11 +519,13 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     lag = window[0]
     window_length = window[1]
 
-    Z_index = Z.index
-    Z_index = pd.DataFrame([0] * len(Z), index=Z_index)
-    Z_index.rename(columns={0: "col_index"}, inplace=True)
+    timedelta_flag = isinstance(lag, str)
 
-    if isinstance(lag, str):
+    if timedelta_flag:
+        Z_index = Z.index
+        Z_index = pd.DataFrame([0] * len(Z), index=Z_index)
+        Z_index.rename(columns={0: "col_index"}, inplace=True)
+
         freq, lag_value = find_numbers_letters(lag)
         lag = lag_value + 1
         if freq not in time_units:
@@ -598,8 +600,9 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             inplace=True,
         )
 
-    feat = Z_index.merge(feat, left_index=True, right_index=True, how="left")
-    feat.drop(columns=["col_index"], inplace=True)
+    if timedelta_flag:
+        feat = Z_index.merge(feat, left_index=True, right_index=True, how="left")
+        feat.drop(columns=["col_index"], inplace=True)
 
     return feat
 
