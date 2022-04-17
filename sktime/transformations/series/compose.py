@@ -469,6 +469,7 @@ class Featureizer(BaseTransformer):
         "y_inner_mtype": ["pd.Series"],
         "scitype:y": "univariate",
         "fit_is_empty": False,
+        "requires_y": True,
         # "scitype:X": "multivariate",
     }
 
