@@ -381,12 +381,12 @@ class WindowSummarizer(BaseTransformer):
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
                 X_grouped = X.groupby("instances")[cols]
-                df = [#Parallel(n_jobs=self.n_jobs)(
+                df = [ #Parallel(n_jobs=self.n_jobs)(
                     _window_feature(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
                 ]
             else:
-                df = [#Parallel(n_jobs=self.n_jobs)(
+                df = [ #Parallel(n_jobs=self.n_jobs)(
                     _window_feature(X.loc[:, [cols]], **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
                 ]
