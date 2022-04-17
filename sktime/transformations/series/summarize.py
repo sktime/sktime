@@ -56,7 +56,7 @@ class WindowSummarizer(BaseTransformer):
         * N - nanosecond.
         For instance, the following offesets would be acceptable: '1D', '2H', '30S'.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
