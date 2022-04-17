@@ -516,10 +516,13 @@ class Featureizer(BaseTransformer):
         # swap X, y
         self.transformer_.fit(X=y, y=X)
         # set suffix from transformer class name if None
-        self._suffix = (
+        _suffix = (
             self.suffix
             if self.suffix is not None
             else self.transformer.__class__.__name__
+        )
+        self._featureized_col = (
+            self._y.name + "_" + _suffix if self._y.name else _suffix
         )
 
     def _transform(self, X, y=None):
@@ -540,21 +543,18 @@ class Featureizer(BaseTransformer):
         transformed version of X
         """
         X = X.copy()
-
-        if len(X) != self.lags and self.lags > 0:
-            raise ValueError(
-                f"""
-                Given len of X must be equal to len of lags but found
-                len(X)={len(X)} and lags={self.lags}"""
-            )
+        if not X.index.equals(self._X.index):
+            if len(X) != self.lags:
+                raise ValueError(
+                    f"""
+                    Given len of X must be equal to len of lags but found
+                    len(X)={len(X)} and lags={self.lags}"""
+                )
 
         # get input from self for transform_.predict()
         y_t = self._y.iloc[-self.lags :]
         X_t = self._X.iloc[-self.lags :]
 
-        self._featureized_col = (
-            self._y.name + "_" + self._suffix if self._y.name else self._suffix
-        )
         if self._featureized_col in X.columns:
             raise AttributeError(
                 f"""Name {self._featureized_col} is already in X.columns,
