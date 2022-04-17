@@ -23,7 +23,13 @@ y_true = _make_series(n_columns=2, n_timepoints=20, random_state=42)
 @pytest.mark.parametrize("metric", metrics, ids=names)
 def test_metric_output(metric, multioutput):
     """Test output is correct class."""
-    res = metric(y_true=y_true, y_pred=y_pred, multioutput=multioutput)
+    res = metric(
+        y_true=y_true,
+        y_pred=y_pred,
+        multioutput=multioutput,
+        y_pred_benchmark=y_pred,
+        y_train=y_true,
+    )
 
     if multioutput == "uniform_average":
         assert isinstance(res, float)
