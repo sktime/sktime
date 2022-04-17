@@ -22,9 +22,9 @@ def _resolve_metric(
     metric: str or Callable or NumbaDistance
         The distance metric to use.
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     known_metric_dict: List[MetricInfo]
         List of known distance functions.
     kwargs: dict, optional
@@ -57,17 +57,10 @@ def _resolve_metric(
         elif _is_no_python_distance_callable(metric):
             metric = metric
         else:
-            # found = False
             for val in known_metric_dict:
                 if val.dist_func is metric:
                     numba_dist_instance = val.dist_instance
-                    # found = True
                     break
-            # if found is False:
-            #     raise ValueError(
-            #         "The callable provided must be no_python (using njit()) for"
-            #         "this operation. Please compile the function and try again."
-            #     )
     else:
         raise ValueError(
             "Unable to resolve the metric with the parameters provided."

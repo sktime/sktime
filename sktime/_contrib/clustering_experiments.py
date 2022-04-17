@@ -103,12 +103,12 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/post_1_3_22/tuned/kmeans/"
+        results_dir = "/home/ajb/results/kmeans/"
         dataset = sys.argv[1]
         resample = int(sys.argv[2]) - 1
         tf = True
@@ -123,28 +123,34 @@ if __name__ == "__main__":
         distance = "ddtw"
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        dataset = "UnitTest"
+        data_dir = f"../datasets/data/"
         results_dir = "./temp"
-        dataset = "Chinatown"
         resample = 0
         tf = True
-        distance = "dtw"
+        distance = "edr"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    normalize(train_X, norm="l1", copy=False)
-    normalize(test_X, norm="l1", copy=False)
-    epsilon = 0.5
+    from sklearn.preprocessing import StandardScaler
+
+    s = StandardScaler()
+    train_X = s.fit_transform(train_X.T)
+    train_X = train_X.T
+    test_X = s.fit_transform(test_X.T)
+    test_X = test_X.T
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
     else:
-        window = 0.2
         name = clusterer + "-" + distance
-    parameters = {"window": window, "epsilon": epsilon}
+    if distance == "wdtw" or distance == "dwdtw":
+        parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
+    else:
+        parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
 
     clst = config_clusterer(
         averaging_method="mean",
@@ -164,5 +170,6 @@ if __name__ == "__main__":
         cls_name=name,
         dataset_name=dataset,
         resample_id=resample,
+        overwrite=True,
     )
     print("done")

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Factory module that adds 3D vectorization to all exported distances.
 
-Applies pairwise_distance to all distanes exported by module, so
+Applies pairwise_distance to all distances exported by module, so
     exported distances function with 1D, 2D and 3D input.
 """
 
