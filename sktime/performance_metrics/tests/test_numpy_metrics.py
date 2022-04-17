@@ -8,7 +8,6 @@ import pytest
 from sktime.performance_metrics.forecasting import _functions
 from sktime.utils._testing.series import _make_series
 
-
 numpy_metrics = getmembers(_functions, isfunction)
 
 exclude_starts_with = ("_", "check", "gmean")
