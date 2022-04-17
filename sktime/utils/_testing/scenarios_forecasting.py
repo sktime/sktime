@@ -102,7 +102,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": False}
 
     args = {
         "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1},
