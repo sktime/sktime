@@ -498,8 +498,8 @@ class Featureizer(BaseTransformer):
         self: a fitted instance of the estimator
         """
         # store y and X in self to use it in transform for outsample transformation
-        if y is None:
-            raise NotImplementedError("y must be nopt None to use Featureizer.")
+        # if y is None:
+        #     raise NotImplementedError("y must be nopt None to use Featureizer.")
         self._y = y.copy()
         self._X = X.copy()
 
