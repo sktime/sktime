@@ -541,7 +541,7 @@ class Featureizer(BaseTransformer):
         """
         X = X.copy()
 
-        if len(X) != self.lags:
+        if len(X) != self.lags and self.lags > 0:
             raise ValueError(
                 f"""
                 Given len of X must be equal to len of lags but found

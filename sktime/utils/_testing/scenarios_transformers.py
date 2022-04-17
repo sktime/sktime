@@ -227,10 +227,33 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 
     args = {
         "fit": {
-            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
+            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED),
         },
         "transform": {
             "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
+        },
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
+    """Fit/transform, multivariate Series X."""
+
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": True,
+        "has_y": True,
+        "pre-refactor": True,
+    }
+
+    args = {
+        "fit": {
+            "X": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+            "y": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+        },
+        "transform": {
+            "X": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
+            "y": _make_series(n_columns=1, n_timepoints=10, random_state=RAND_SEED),
         },
     }
     default_method_sequence = ["fit", "transform"]
@@ -368,6 +391,7 @@ class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
 scenarios_transformers = [
     TransformerFitTransformSeriesUnivariate,
     TransformerFitTransformSeriesMultivariate,
+    TransformerFitTransformSeriesUnivariateWithY,
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,

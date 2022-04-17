@@ -287,7 +287,7 @@ class BaseTransformer(BaseEstimator):
 
         # if requires_y is set, y is required in fit and update
         if self.get_tag("requires_y") and y is None:
-            raise ValueError(f"The {self.__class__.__name__} requires `y` in `fit`.")
+            raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
