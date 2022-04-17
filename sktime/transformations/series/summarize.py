@@ -385,7 +385,7 @@ class WindowSummarizer(BaseTransformer):
                     for index, kwargs in func_dict.iterrows()
                 ]
             else:
-                df = [ # Parallel(n_jobs=self.n_jobs)(
+                df = [ #   Parallel(n_jobs=self.n_jobs)(
                     _window_feature(X.loc[:, [cols]], **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
                 ]
