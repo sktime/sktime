@@ -2,7 +2,7 @@
 """Test Featureizer."""
 __author__ = ["aiwalter"]
 
-from pandas.testing import assert_series_equal
+from numpy.testing import assert_array_equal
 
 from sktime.datasets import load_longley
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -27,6 +27,4 @@ def test_featureized_values():
     exp_transformer = ExponentTransformer()
     exp_transformer.fit(y_train[:-lags])
     y_hat = exp_transformer.transform(y_train[-lags:])
-    assert_series_equal(
-        X_hat["TOTEMP_ExponentTransformer"], y_hat, check_index=False, check_names=False
-    )
+    assert_array_equal(X_hat["TOTEMP_ExponentTransformer"].values, y_hat.values)
