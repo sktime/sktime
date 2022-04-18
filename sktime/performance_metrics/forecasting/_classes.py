@@ -9,7 +9,6 @@ the lower the better.
 """
 from warnings import warn
 
-import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
@@ -233,15 +232,19 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         multioutput = self.multioutput
         n = y_true.shape[0]
-        out_series = pd.Series(index=y_pred.index)
+        if multioutput == "raw_values":
+            out_series = pd.DataFrame(index=y_true.index, columns=y_true.columns)
+        else:
+            out_series = pd.Series(index=y_true.index)
         try:
             x_bar = self.evaluate(y_true, y_pred, **kwargs)
             for i in range(n):
-                out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
-                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),
-                    multioutput,
+                idx = y_true.index[i]
+                pseudovalue = n * x_bar - (n - 1) * self.evaluate(
+                    y_true.drop(idx),
+                    y_pred.drop(idx),
                 )
+                out_series.loc[idx] = pseudovalue
             return out_series
         except RecursionError:
             RecursionError("Must implement one of _evaluate or _evaluate_by_index")
@@ -267,12 +270,16 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "This may indicate incorrect objects passed to the metric. "
                 "Indices of y_true will be used for y_pred."
             )
+            y_pred = y_pred.copy()
+            y_pred.index = y_true.index
         if not same_cols:
             warn(
                 "y_pred and y_true do not have the same column index. "
                 "This may indicate incorrect objects passed to the metric. "
                 "Indices of y_true will be used for y_pred."
             )
+            y_pred = y_pred.copy()
+            y_pred.columns = y_true.columns
 
         # check multioutput arg
         allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
