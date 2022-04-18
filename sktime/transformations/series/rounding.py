@@ -20,7 +20,13 @@ from sktime.transformations.base import BaseTransformer
 
 
 class Discretizer(BaseTransformer):
-    """_summary_
+    """
+    A transformer which can be used to round values by methods useful for forecasting. 
+    This is particularly useful as the last step of a `TransformedTargetForecaster` to convert floating point forecasts to discrete values.
+    The default method is to round to the nearest integer.
+    - By using `round_to_dp`, the values will be rounded to the specified number of decimal places.
+    - By using `round_to_multiple`, the values will be rounded to the nearest multiple of the specified value.
+    - By using `round_to_list`, the values will be rounded to the nearest value in the specified list.
 
     Parameters
     ----------
@@ -52,8 +58,8 @@ class Discretizer(BaseTransformer):
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "univariate-only": True,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
@@ -153,10 +159,7 @@ class Discretizer(BaseTransformer):
                 round_to_list: {self.round_to_list}, not all elements are integer or float.
                 {wrong_types} were found in the list.
                 """)
-
-    def _fit(self, X, y=None):
-        return super()._fit()
-
+                
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
