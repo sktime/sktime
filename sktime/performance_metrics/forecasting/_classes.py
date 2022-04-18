@@ -868,8 +868,8 @@ class MedianAbsoluteScaledError(_ScaledForecastingErrorMetric):
     >>> import numpy as np
     >>> from sktime.performance_metrics.forecasting import MedianAbsoluteScaledError
     >>> y_train = np.array([5, 0.5, 4, 6, 3, 5, 2])
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> y_true = np.array([3, -0.5, 2, 7])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8])
     >>> mdase = MedianAbsoluteScaledError()
     >>> mdase(y_true, y_pred, y_train=y_train)
     0.16666666666666666
