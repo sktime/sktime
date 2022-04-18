@@ -358,38 +358,6 @@ class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
     _tags = {"lower_is_better": False}
 
 
-class _RelativeLossMixin:
-    def _evaluate(self, y_true, y_pred, **kwargs):
-        """Calculate metric value using underlying metric function.
-
-        Parameters
-        ----------
-        y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-                (fh, n_outputs) where fh is the forecasting horizon
-            Ground truth (correct) target values.
-
-        y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or  \
-                (fh, n_outputs)  where fh is the forecasting horizon
-            Forecasted values.
-
-        y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) \
-             or (fh, n_outputs) where fh is the forecasting horizon
-            Optional keyword argument to pass benchmark predictions.
-
-        Returns
-        -------
-        loss : float
-            Calculated loss metric.
-        """
-        return self.func(
-            y_true,
-            y_pred,
-            multioutput=self.multioutput,
-            relative_loss_function=self.relative_loss_function,
-            **kwargs,
-        )
-
-
 class _ScaledMetricTags:
     """Tags for metrics that are scaled on training data y_train."""
 
@@ -398,26 +366,6 @@ class _ScaledMetricTags:
         "requires-y-pred-benchmark": False,
         "univariate-only": False,
     }
-
-
-class _RelativeLossForecastingErrorMetric(
-    _RelativeLossMixin, BaseForecastingErrorMetricFunc
-):
-    _tags = {
-        "requires-y-train": False,
-        "requires-y-pred-benchmark": True,
-        "univariate-only": False,
-    }
-
-    def __init__(
-        self,
-        func,
-        name=None,
-        multioutput="uniform_average",
-        relative_loss_function=mean_absolute_error,
-    ):
-        self.relative_loss_function = relative_loss_function
-        super().__init__(func=func, name=name, multioutput=multioutput)
 
 
 def make_forecasting_scorer(
@@ -2314,7 +2262,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         super().__init__(multioutput=multioutput, multilevel=multilevel)
 
 
-class RelativeLoss(_RelativeLossForecastingErrorMetric):
+class RelativeLoss(BaseForecastingErrorMetricFunc):
     """Calculate relative loss of forecast versus benchmark forecast.
 
     Applies a forecasting performance metric to a set of forecasts and
@@ -2398,6 +2346,12 @@ class RelativeLoss(_RelativeLossForecastingErrorMetric):
     >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
     0.927272727272727
     """
+
+    _tags = {
+        "requires-y-train": False,
+        "requires-y-pred-benchmark": True,
+        "univariate-only": False,
+    }
 
     func = relative_loss
 
