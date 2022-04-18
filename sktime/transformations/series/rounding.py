@@ -98,7 +98,7 @@ class Discretizer(BaseTransformer):
         super(Discretizer, self).__init__()
 
         # validate arguments
-        self._check_arguments()
+        self._check_method()
 
     def _check_method(self):
         """
@@ -197,7 +197,7 @@ class Discretizer(BaseTransformer):
         if self.round_to_list is not None:
             # First convert list to ndarray
             # Return result from method call
-            return self.round_to_nearest_value(X, np.array(self.round_to_list))
+            return round_to_nearest_value(X, np.array(self.round_to_list))
 
     def _inverse_transform(self, X, y=None):
         """Not possible to back-calculate transformation without storing all values
@@ -263,30 +263,29 @@ class Discretizer(BaseTransformer):
         # return params
 
 
-def round_to_nearest_value(values: Union[np.ndarray, pd.Series],
-                           allowed_values: Union[np.ndarray]) -> Union[np.ndarray, pd.Series]:
+def round_to_nearest_value(values: Union[np.ndarray, pd.Series, pd.DataFrame()],
+                           allowed_values: Union[np.ndarray]) -> Union[np.ndarray, pd.Series, pd.DataFrame]:
     """
     Finds the closest values in allowed_values from values.
     Returns the original index if values is a Series.
 
     Parameters
     ----------
-    values : Union[np.ndarray,pd.Series]
+    values : Union[np.ndarray,pd.Series, pd.DataFrame]
         Values to be rounded to values of second array.
     allowed_values : Union[np.ndarray]
         Values that are allowed, (desired discrete outputs).
 
     Returns
     -------
-    Union[np.ndarray,pd.Series]
-        Closest values in allowed_values from values.
+    Union[np.ndarray,pd.Series, pd.DataFrame]
+        Object transformed to closest values in allowed_values from values.
     """
-
-    if isinstance(values, pd.Series):
+    print(type(values))
+    is_pandas:bool = False
+    if isinstance(values, (pd.Series,pd.DataFrame)):
         original_index = values.index
-        is_series = True
-    else:
-        is_series = False
+        is_pandas:bool = True
 
     # Sort outputs array if isn't sorted.
     if not all(allowed_values[:-1] <= allowed_values[1:]):
@@ -294,6 +293,7 @@ def round_to_nearest_value(values: Union[np.ndarray, pd.Series],
 
     # find index to the left of the allowed_values
     idxs = np.searchsorted(allowed_values, values, side="left")
+    
     # find indexes where previous (left) index is closer
     prev_idx_is_less = (
         (idxs == len(allowed_values)) | (
@@ -306,7 +306,11 @@ def round_to_nearest_value(values: Union[np.ndarray, pd.Series],
 
     rounded_vals = allowed_values[idxs]
 
-    if is_series:
-        return pd.Series(rounded_vals, index=original_index)
+    if is_pandas:
+        # set values directly to pandas object using slice notation
+        values[:] = rounded_vals
+        # and return
+        return values
     else:
+        # otherwise just return np.ndarray
         return rounded_vals
