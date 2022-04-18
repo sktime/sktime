@@ -16,6 +16,7 @@ class BaseMetric(BaseObject):
     Extends sktime BaseObject.
     """
 
+    # todo: 0.13.0, remove the func/name args here and to all the metrics
     def __init__(
         self,
         func=None,

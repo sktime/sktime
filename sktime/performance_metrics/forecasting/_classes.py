@@ -105,8 +105,6 @@ class BaseForecastingErrorMetric(BaseMetric):
         If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
-    greater_is_better = False
-
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
@@ -115,6 +113,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
         "inner_implements_multilevel": False,
     }
+
+    # todo: 0.13.0, remove the greater_is_better property
+    @property
+    def greater_is_better(self):
+        """Whether `fit` has been called."""
+        warn(
+            "The greater_is_better attribute is deprecated from 0.12.0 "
+            "and will be removed in 0.13.0. Use the lower_is_better tag instead, "
+            'e.g., my_metric.get_tag("lower_is_better")'
+        )
+        return not self.get_tag("lower_is_better", False)
 
     def __init__(
         self,
@@ -332,7 +341,7 @@ class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
     values are better.
     """
 
-    greater_is_better = True
+    _tags = {"lower_is_better": False}
 
 
 class _PercentageErrorMixin:
