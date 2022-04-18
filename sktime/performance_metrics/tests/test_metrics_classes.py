@@ -51,5 +51,5 @@ def test_metric_output_direct(metric, multioutput):
         assert all(x.ndim == 1 for x in res.values())
         assert all(len(x) == len(y_true.columns) for x in res.values())
 
-    # assert results from all four options are equal
+    # assert results from all options are equal
     assert np.allclose(res[1], res[2])
