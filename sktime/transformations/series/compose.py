@@ -3,6 +3,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Meta-transformers for building composite transformers."""
 
+__author__ = ["aiwalter", "SveaMeyer13"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featureizer"]
+
 import pandas as pd
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -12,9 +15,6 @@ from sktime.transformations.series.exponent import (
     ExponentTransformer as _ExponentTransformer,
 )
 from sktime.utils.validation.series import check_series
-
-__author__ = ["aiwalter", "SveaMeyer13"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featureizer"]
 
 
 class OptionalPassthrough(BaseTransformer):
