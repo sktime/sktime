@@ -397,3 +397,14 @@ MovingBlockBootstrapTransformer
     :template: class.rst
 
     MovingBlockBootstrapTransformer
+
+Discretizer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.rounding
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Discretizer
