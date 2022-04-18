@@ -175,8 +175,8 @@ class BaseForecastingErrorMetric(BaseMetric):
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         # Default implementation relies on implementation of evaluate_by_index
-        multioutput = self.multioutput
-        multilevel = self.multilevel
+        # multioutput = self.multioutput
+        # multilevel = self.multilevel
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             return index_df.mean(axis=0)
