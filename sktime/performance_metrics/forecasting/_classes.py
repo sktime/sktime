@@ -11,7 +11,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-
 from sklearn.utils import check_array
 
 from sktime.datatypes import check_is_scitype, convert_to
