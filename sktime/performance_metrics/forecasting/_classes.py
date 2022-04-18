@@ -105,6 +105,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
+    greater_is_better = False
+
     _tags = {
         "requires-y-train": False,
         "requires-y-pred-benchmark": False,
