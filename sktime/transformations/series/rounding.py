@@ -21,12 +21,15 @@ from sktime.transformations.base import BaseTransformer
 
 class Discretizer(BaseTransformer):
     """
-    A transformer which can be used to round values by methods useful for forecasting. 
-    This is particularly useful as the last step of a `TransformedTargetForecaster` to convert floating point forecasts to discrete values.
+    A transformer which can be used to round values by methods useful for forecasting.
+    This is particularly useful as the last step of a `TransformedTargetForecaster` to convert
+     floating point forecasts to discrete values.
     The default method is to round to the nearest integer.
     - By using `round_to_dp`, the values will be rounded to the specified number of decimal places.
-    - By using `round_to_multiple`, the values will be rounded to the nearest multiple of the specified value.
-    - By using `round_to_list`, the values will be rounded to the nearest value in the specified list.
+    - By using `round_to_multiple`, the values will be rounded to the nearest multiple
+     of the specified value.
+    - By using `round_to_list`, the values will be rounded to the nearest value in the specified
+     list.
 
     Parameters
     ----------
@@ -159,7 +162,7 @@ class Discretizer(BaseTransformer):
                 round_to_list: {self.round_to_list}, not all elements are integer or float.
                 {wrong_types} were found in the list.
                 """)
-                
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -196,7 +199,10 @@ class Discretizer(BaseTransformer):
             # Return result from method call
             return self.round_to_nearest_value(X, np.array(self.round_to_list))
 
-  
+    def _inverse_transform(self, X, y=None):
+        """Not possible to back-calculate transformation without storing all values
+        , therefore just return X"""
+        return X
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
