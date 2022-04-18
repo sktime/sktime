@@ -1,6 +1,6 @@
 
-.. _forecasting_ref:
 .. module:: sktime.forecasting
+.. _forecasting_ref:
 
 Forecasting
 ===========
