@@ -1,9 +1,9 @@
-
-.. module:: sktime.forecasting
 .. _forecasting_ref:
 
 Forecasting
 ===========
+
+.. module:: sktime.forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
