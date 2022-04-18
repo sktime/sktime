@@ -37,7 +37,7 @@ def test_metric_output_direct(metric, multioutput):
         y_train=y_true,
     )
 
-    res[2] = metric(multioutput=multioutput)(
+    res[2] = metric(multioutput=multioutput).evaluate(
         y_true=y_true,
         y_pred=y_pred,
         y_pred_benchmark=y_pred,
