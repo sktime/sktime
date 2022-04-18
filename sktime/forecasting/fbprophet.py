@@ -217,7 +217,7 @@ class Prophet(_ProphetAdapter):
             "yearly_seasonality": False,
             "weekly_seasonality": False,
             "daily_seasonality": False,
-            "uncertainty_samples": 1000,
+            "uncertainty_samples": 10,
             "verbose": False,
         }
         return params
