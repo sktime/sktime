@@ -7,14 +7,14 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
+from warnings import warn
 
 import numpy as np
 import pandas as pd
-from warnings import warn
 
-from sklearn.utils import check_array, check_consistent_length
+from sklearn.utils import check_array
 
-from sktime.datatypes import check_is_scitype, convert, convert_to
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
@@ -242,9 +242,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         same_col_num = len(y_true.columns) == len(y_pred.columns)
 
         if not same_row_num:
-            raise ValueError(
-                "y_pred and y_true do not have the same number of rows."
-            )
+            raise ValueError("y_pred and y_true do not have the same number of rows.")
         if not same_col_num:
             raise ValueError(
                 "y_pred and y_true do not have the same number of columns."
@@ -284,9 +282,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         allowed_multilevel_str = ("raw_values", "uniform_average")
 
         if not isinstance(multilevel, str):
-            raise ValueError(
-                f"multilevel must be a str, but found {type(multilevel)}"
-            )
+            raise ValueError(f"multilevel must be a str, but found {type(multilevel)}")
         if multilevel not in allowed_multilevel_str:
             raise ValueError(
                 f"Allowed 'multilevel' values are {allowed_multilevel_str}, "
