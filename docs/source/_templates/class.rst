@@ -1,4 +1,4 @@
-{{objname}}
+:mod:`{{module}}`.{{objname}}
 {{ underline }}==============
 
 .. currentmodule:: {{ module }}
