@@ -6,6 +6,7 @@
 __all__ = ["UnobservedComponents"]
 __author__ = ["juanitorduz"]
 
+import pandas as pd
 from statsmodels.tsa.statespace.structural import (
     UnobservedComponents as _UnobservedComponents,
 )
@@ -195,6 +196,11 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
+    _tags = {
+        "capability:pred_int": True,
+        "handles-missing-data": False,
+    }
+
     def __init__(
         self,
         level=False,
@@ -318,6 +324,58 @@ class UnobservedComponents(_StatsModelsAdapter):
             flags=self.flags,
             low_memory=self.low_memory,
         )
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon, default = y.index (in-sample forecast)
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh. Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+
+        See Also
+        --------
+        statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
+        """
+        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+
+        start, end = valid_indices[[0, -1]]
+        prediction_results = self._fitted_forecaster.get_prediction(
+            start=start, end=end, exog=X
+        )
+        pred_int = pd.DataFrame()
+        for c in coverage:
+            alpha = 1 - c
+            pred_statsmodels = prediction_results.summary_frame(alpha=alpha)
+            pred_int[(c, "lower")] = pred_statsmodels["mean_ci_lower"].loc[
+                valid_indices
+            ]
+            pred_int[(c, "upper")] = pred_statsmodels["mean_ci_upper"].loc[
+                valid_indices
+            ]
+        index = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
+        pred_int.columns = index
+        return pred_int
 
     def summary(self):
         """Get a summary of the fitted forecaster.
@@ -456,37 +514,3 @@ class UnobservedComponents(_StatsModelsAdapter):
             figsize=figsize,
             truncate_endog_names=truncate_endog_names,
         )
-
-    # TODO: This plot function generates an error:
-    # "TypeError: float() argument must be a string or a number, not 'Period'"
-    #
-    # def plot_components(
-    #     self,
-    #     which=None,
-    #     alpha=0.05,
-    #     observed=True,
-    #     level=True,
-    #     trend=True,
-    #     seasonal=True,
-    #     freq_seasonal=True,
-    #     cycle=True,
-    #     autoregressive=True,
-    #     legend_loc="upper right",
-    #     fig=None,
-    #     figsize=None,
-    # ):
-    #     """TODO: Add docstrings."""
-    #     self._fitted_forecaster.plot_components(
-    #         which=which,
-    #         alpha=alpha,
-    #         observed=observed,
-    #         level=level,
-    #         trend=trend,
-    #         seasonal=seasonal,
-    #         freq_seasonal=freq_seasonal,
-    #         cycle=cycle,
-    #         autoregressive=autoregressive,
-    #         legend_loc=legend_loc,
-    #         fig=fig,
-    #         figsize=figsize,
-    #     )

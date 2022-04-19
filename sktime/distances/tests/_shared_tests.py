@@ -36,7 +36,7 @@ def _test_metric_parameters(distance_func: Callable):
         x_numpy, y_numpy, metric=_standalone_numba_distance
     )
 
-    if isinstance(class_result, float):
+    if isinstance(class_result, float) or class_result.shape == (1, 1):
         expected = 5.0
         assert class_result == expected, (
             f"Using a custom NumbaDistance did not produce the expected result. Ensure"
