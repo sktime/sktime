@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """Sequence feature extraction transformers.
-
-These transformers expect a dataframe of series, usually univariate and
-perform transformations on this dataframe returning another dataframe.
-Depending on the transformer the returned dataframe has nested series or not.
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -32,10 +28,11 @@ class PlateauFinder(BaseTransformer):
     nested empty lists.
 
     In this context the `value` parameter tells the transformer to look for flat
-    segments with a specific value, the `min_lenght` tells to filter
+    segments with a specific value, the `min_lenght` tells to select
     plateau(s) with a minimum length, and the `max_length` parameter, which is
-    optional, tells the transformer to filter for segments with a specific
-    maximum length.
+    optional, tells the transformer to select segments with a specific
+    maximum length. Essentially they filter out the segments that are not within
+    a minimum and maximum lenghts.
 
     Parameters
     ----------
