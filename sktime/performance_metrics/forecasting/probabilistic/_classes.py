@@ -454,6 +454,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     ----------
     multioutput : string "uniform_average" or "raw_values" determines how\
         multioutput results will be treated.
+
+    score_average : bool, optional, default = True
+        specifies whether scores for each quantile should be averaged.
     """
 
     _tags = {
@@ -525,6 +528,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     ----------
     multioutput : string "uniform_average" or "raw_values" determines how\
         multioutput results will be treated.
+
+    score_average : bool, optional, default = True
+        specifies whether scores for each quantile should be averaged.
     """
 
     _tags = {
