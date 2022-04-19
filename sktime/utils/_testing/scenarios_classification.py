@@ -103,7 +103,7 @@ X_test_multivariate = _make_panel_X(
 class ClassifierFitPredict(ClassifierTestScenario):
     """Fit/predict with univariate panel X and labels y."""
 
-    _tags = {"X_univariate": True, "pre-refactor": True, "n_classes": 2}
+    _tags = {"X_univariate": True, "is_enabled": True, "n_classes": 2}
 
     args = {
         "fit": {"y": y, "X": X},
@@ -116,7 +116,7 @@ class ClassifierFitPredict(ClassifierTestScenario):
 class ClassifierFitPredictMultivariate(ClassifierTestScenario):
     """Fit/predict with multivariate panel X and labels y."""
 
-    _tags = {"X_univariate": False, "pre-refactor": True, "n_classes": 2}
+    _tags = {"X_univariate": False, "is_enabled": True, "n_classes": 2}
 
     args = {
         "fit": {"y": y, "X": X_multivariate},

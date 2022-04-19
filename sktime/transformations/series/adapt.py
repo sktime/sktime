@@ -109,7 +109,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
             self.set_tags(**{"capability:inverse_transform": True})
 
         if fit_in_transform:
-            self.set_tags(**{"fit-in-transform": True})
+            self.set_tags(**{"fit_is_empty": True})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.

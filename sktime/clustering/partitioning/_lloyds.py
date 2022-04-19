@@ -10,7 +10,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.extmath import stable_cumsum
 
 from sktime.clustering.base import BaseClusterer
-from sktime.clustering.metrics.averaging._averaging import mean_average
+from sktime.clustering.metrics.averaging import mean_average
 from sktime.distances import distance_factory, pairwise_distance
 from sktime.distances._ddtw import average_of_slope_transform
 

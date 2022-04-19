@@ -102,7 +102,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "pre-refactor": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": False}
 
     args = {
         "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1},
@@ -159,7 +159,7 @@ X_test_short = LONG_X.iloc[20:21]
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
         "fit": {
@@ -191,7 +191,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
     """Fit/predict only, multivariate y, no X."""
 
-    _tags = {"univariate_y": False, "fh_passed_in_fit": True, "pre-refactor": True}
+    _tags = {"univariate_y": False, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
         "fit": {
