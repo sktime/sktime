@@ -73,13 +73,6 @@ class NumbaDistance(ABC):
 
         no_python_callable = self._distance_factory(x, y, **kwargs)
 
-        if not hasattr(no_python_callable, "signatures"):
-            raise RuntimeError(
-                "The distance metric specified could not be no_python"
-                "compiled. Try again and if the problem persists raise"
-                "an issue."
-            )
-
         return no_python_callable
 
     @staticmethod

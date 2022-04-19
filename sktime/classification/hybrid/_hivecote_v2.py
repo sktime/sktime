@@ -92,23 +92,23 @@ class HIVECOTEV2(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.hybrid import HIVECOTEV2
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = HIVECOTEV2(
     ...     stc_params={
     ...         "estimator": RotationForest(n_estimators=3),
-    ...         "n_shapelet_samples": 500,
-    ...         "max_shapelets": 20,
-    ...         "batch_size": 100,
+    ...         "n_shapelet_samples": 100,
+    ...         "max_shapelets": 10,
+    ...         "batch_size": 20,
     ...     },
-    ...     drcif_params={"n_estimators": 10},
-    ...     arsenal_params={"num_kernels": 100, "n_estimators": 5},
+    ...     drcif_params={"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2},
+    ...     arsenal_params={"num_kernels": 50, "n_estimators": 3},
     ...     tde_params={
-    ...         "n_parameter_samples": 25,
-    ...         "max_ensemble_size": 5,
-    ...         "randomly_selected_params": 10,
+    ...         "n_parameter_samples": 10,
+    ...         "max_ensemble_size": 3,
+    ...         "randomly_selected_params": 5,
     ...     },
     ... )
     >>> clf.fit(X_train, y_train)

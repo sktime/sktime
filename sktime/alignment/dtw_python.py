@@ -13,7 +13,7 @@ from sklearn import clone
 from sktime.alignment.base import BaseAligner
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("dtw", severity="warning")
+_check_soft_dependencies("dtw", severity="warning", suppress_import_stdout=True)
 
 
 class AlignerDTW(BaseAligner):
