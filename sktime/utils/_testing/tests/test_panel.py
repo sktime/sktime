@@ -10,9 +10,9 @@ import pytest
 
 from sktime.datatypes import check_is_mtype
 from sktime.utils._testing.panel import (
+    _make_panel,
     make_classification_problem,
     make_regression_problem,
-    _make_panel,
 )
 
 N_INSTANCES = [10, 15]
