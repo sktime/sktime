@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 from numba import njit
 
@@ -5,7 +6,7 @@ from sktime.clustering.metrics.medoids import medoids
 from sktime.distances._distance import distance_path_factory
 
 
-def dba(X: np.ndarray, iterations = 30):
+def _dba(X: np.ndarray, iterations=30):
     """Compute the dtw barycenter average of time series.
 
     Parameters
@@ -20,12 +21,16 @@ def dba(X: np.ndarray, iterations = 30):
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the computed average series.
     """
+    if len(X) <= 1:
+        return X
     center = medoids(X)
-    path_callable = distance_path_factory(X[0], X[1], metric='dtw')
+    path_callable = distance_path_factory(X[0], X[1], metric="dtw")
     for i in range(iterations):
         center = _dba_update(center, X, path_callable)
     return center
 
+
+@njit(cache=True, fastmath=True)
 def _dba_update(center: np.ndarray, X: np.ndarray, path_callable):
     """Perform a update iteration for dba.
 
@@ -41,22 +46,15 @@ def _dba_update(center: np.ndarray, X: np.ndarray, path_callable):
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the computed average series.
     """
-    X_size, X_timepoints, X_dims = X.shape
-    alignment = []
+    X_size, X_dims, X_timepoints = X.shape
+    alignment = np.zeros((X_dims, X_timepoints))
+    sum = np.zeros((X_timepoints))
+
     for i in range(X_size):
         curr_ts = X[i]
         curr_alignment, _ = path_callable(center, curr_ts)
-        for j in range(len(curr_alignment)):
-            if len(alignment) <= j:
-                alignment.append([])
-            alignment[j].append(X[curr_alignment[j]])
+        for j, k in curr_alignment:
+            alignment[:, j] += curr_ts[:, k]
+            sum[j] += 1
 
-    average_ts = []
-    for i in range(len(alignment)):
-        vals = alignment[i]
-        average_ts.append(np.sum(vals, axis=0) / len(vals))
-
-    return np.array(average_ts)
-
-    pass
-
+    return alignment / sum

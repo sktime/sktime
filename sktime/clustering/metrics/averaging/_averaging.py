@@ -5,6 +5,9 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from typing import Callable
 
 import numpy as np
+from numba import njit
+
+from sktime.clustering.metrics.averaging._dba import _dba
 
 
 def mean_average(X: np.ndarray) -> np.ndarray:
@@ -38,9 +41,8 @@ def dba(X: np.ndarray) -> np.ndarray:
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the computed average series.
     """
-    from tslearn.barycenters import dtw_barycenter_averaging
-
-    return dtw_barycenter_averaging(X)
+    result = _dba(X, iterations=5)
+    return result
 
 
 _AVERAGE_DICT = {"mean": mean_average, "dba": dba}
