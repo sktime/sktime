@@ -125,7 +125,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
         if isinstance(out, pd.DataFrame):
             if out.shape[1] == 1:  # if result only one column, return as float
-                out = float(out)
+                out = out.astype(float)
 
         return out
 
@@ -387,7 +387,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
             name=name, multioutput=multioutput, score_average=score_average
         )
 
-    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+    def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
 
         y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
