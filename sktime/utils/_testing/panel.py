@@ -30,6 +30,12 @@ def _make_panel_X(
     if return_numpy:
         return_mtype = "numpy3D"
 
+    # if return_mtype is None:
+    #     if return_numpy:
+    #         return_mtype = "numpy3D"
+    #     else:
+    #         return_mtype = "nested_univ"
+
     # If target variable y is given, we ignore n_instances and instead generate as
     # many instances as in the target variable
     if y is not None:
