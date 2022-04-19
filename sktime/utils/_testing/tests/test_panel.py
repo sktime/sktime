@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_mtype
 from sktime.utils._testing.panel import (
     make_classification_problem,
     make_regression_problem,
