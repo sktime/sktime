@@ -4,7 +4,7 @@
 """Meta-transformers for building composite transformers."""
 
 __author__ = ["aiwalter", "SveaMeyer13"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featureizer"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featurizer"]
 
 import pandas as pd
 from sklearn.base import clone
@@ -435,7 +435,7 @@ def _check_is_pdseries(z):
     return z, is_series
 
 
-class Featureizer(BaseTransformer):
+class Featurizer(BaseTransformer):
     """Create new exogenous features based on a given transformer.
 
     Parameters
@@ -447,7 +447,7 @@ class Featureizer(BaseTransformer):
         Lags to shift the created feature. In forecasting context,
         this param must be >=1 as in predict(fh, X) the new feature
         also needs to be given as part of X. If fh=[1,2,3], then
-        the Featureizer needs to get lags=3.
+        the Featurizer needs to get lags=3.
     suffix : str, default = None
         The suffix is used to name the new feature/columns of X.
         If None, then then feature gets the target name and the class
@@ -477,7 +477,7 @@ class Featureizer(BaseTransformer):
         self.transformer = transformer
         self.lags = lags
         self.suffix = suffix
-        super(Featureizer, self).__init__()
+        super(Featurizer, self).__init__()
 
     def _fit(self, X, y=None):
         """
@@ -499,7 +499,7 @@ class Featureizer(BaseTransformer):
         """
         # store y and X in self to use it in transform for outsample transformation
         # if y is None:
-        #     raise NotImplementedError("y must be nopt None to use Featureizer.")
+        #     raise NotImplementedError("y must be nopt None to use Featurizer.")
         self._y = y.copy()
         self._X = X.copy()
 
@@ -521,9 +521,7 @@ class Featureizer(BaseTransformer):
             if self.suffix is not None
             else self.transformer.__class__.__name__
         )
-        self._featureized_col = (
-            self._y.name + "_" + _suffix if self._y.name else _suffix
-        )
+        self._featurized_col = self._y.name + "_" + _suffix if self._y.name else _suffix
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -555,19 +553,19 @@ class Featureizer(BaseTransformer):
         y_t = self._y.iloc[-self.lags :]
         X_t = self._X.iloc[-self.lags :]
 
-        if self._featureized_col in X.columns:
+        if self._featurized_col in X.columns:
             raise AttributeError(
-                f"""Name {self._featureized_col} is already in X.columns,
+                f"""Name {self._featurized_col} is already in X.columns,
                 please give (another) suffix."""
             )
         # swap y and X
-        X[self._featureized_col] = self.transformer_.transform(X=y_t, y=X_t).values
+        X[self._featurized_col] = self.transformer_.transform(X=y_t, y=X_t).values
         return X
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
 
-        Drops featureized column that was added in transform().
+        Drops featurized column that was added in transform().
 
         Parameters
         ----------
@@ -581,7 +579,7 @@ class Featureizer(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        X_inv = X.copy().drop(columns=[self._featureized_col])
+        X_inv = X.copy().drop(columns=[self._featurized_col])
         return X_inv
 
     @classmethod
