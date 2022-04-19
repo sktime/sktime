@@ -4,89 +4,34 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.theta import ThetaForecaster
-from sktime.performance_metrics.forecasting.probabilistic import (
-    ConstraintViolation,
-    EmpiricalCoverage,
-    PinballLoss,
-)
-from sktime.utils._testing.series import _make_series
+from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
 
-list_of_metrics = [PinballLoss, EmpiricalCoverage]
-
-# added test line
+list_of_metrics = [PinballLoss]
 
 # test data
-# y = np.log1p(load_airline())
-y_uni = _make_series(n_columns=1)
-y_train_uni, y_test_uni = temporal_train_test_split(y_uni)
-fh_uni = np.arange(len(y_test_uni)) + 1
-f_uni = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
-f_uni.fit(y_train_uni)
-
-y_multi = _make_series(n_columns=1)
-y_train_multi, y_test_multi = temporal_train_test_split(y_multi)
-fh_multi = np.arange(len(y_test_multi)) + 1
-f_multi = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
-f_multi.fit(y_train_multi)
-"""
-score average = TRUE/FALSE
-multivariable = TRUE/FALSE
-multiscores = TRUE/FALSE
-
-Data types
-Univariate and single score
-Univariate and multi score
-
-Multivariate and single score
-Multivariate and multiscore
-
-For each of the data types we need to test with score average = T/F \
-    and multioutput with "raw_values" and "uniform_average"
-"""
-QUANTILE_PRED_UNI_S = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
-INTERVAL_PRED_UNI_S = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
-
-QUANTILE_PRED_UNI_M = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.05, 0.5, 0.95])
-INTERVAL_PRED_UNI_M = f_uni.predict_interval(fh=fh_uni, coverage=[0.7, 0.8, 0.9, 0.99])
-
-QUANTILE_PRED_multi_S = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.5])
-INTERVAL_PRED_multi_S = f_multi.predict_interval(fh=fh_multi, coverage=0.9)
-
-QUANTILE_PRED_multi_M = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.05, 0.5, 0.95])
-INTERVAL_PRED_multi_M = f_multi.predict_interval(
-    fh=fh_multi, coverage=[0.7, 0.8, 0.9, 0.99]
-)
+y = np.log1p(load_airline())
+y_train, y_test = temporal_train_test_split(y)
+fh = np.arange(len(y_test)) + 1
+f = ThetaForecaster(sp=12)
+f.fit(y_train)
 
 
-@pytest.mark.parametrize("y_pred", [QUANTILE_PRED_UNI_S, INTERVAL_PRED_UNI_S])
-@pytest.mark.parametrize("metric", list_of_metrics)
-def test_output_univariate(metric, y_pred):
-    """Test output is correct format."""
+QUANTILE_PRED = f.predict_quantiles(fh=fh, alpha=[0.5])
+INTERVAL_PRED = f.predict_interval(fh=fh, coverage=0.9)
+
+
+@pytest.mark.parametrize("score_average", [True, False])
+@pytest.mark.parametrize("Metric", list_of_metrics)
+def test_output(Metric, score_average):
+    """Test output is correct class."""
     y_true = y_test
-    loss = metric.create_test_instance()
-    eval_loss = loss.evaluate(y_true, y_pred=y_pred)
-    index_loss = loss.evaluate_by_index(y_true, y_pred=y_pred)
-
-    assert isinstance(eval_loss, float)
-    assert isinstance(index_loss, pd.DataFrame)
-
-    # same number of rows, one col since univariate
-    assert index_loss.shape == (y_true.shape[0], 1)
-    assert index_loss.index == y_true.index
-
-
-@pytest.mark.parametrize("y_pred", [QUANTILE_PRED_UNI_S, INTERVAL_PRED_UNI_S])
-@pytest.mark.parametrize("metric", list_of_metrics)
-def test_output_no_avg(metric, y_pred):
-    """Test output is correct format."""
-    y_true = y_test
-    loss = metric.create_test_instance()
-    loss.set_param(score_average=False)
-    eval_loss = loss.evaluate(y_true, y_pred=y_pred)
-    index_loss = loss.evaluate_by_index(y_true, y_pred=y_pred)
+    loss = Metric.create_test_instance()
+    loss.set_params(score_average=score_average)
+    eval_loss = loss.evaluate(y_true, y_pred=QUANTILE_PRED)
+    index_loss = loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
 
     if score_average:
         assert isinstance(eval_loss, float)
@@ -94,53 +39,6 @@ def test_output_no_avg(metric, y_pred):
     else:
         assert isinstance(eval_loss, pd.DataFrame)
         assert isinstance(index_loss, pd.DataFrame)
-
-    expected_index = y_pred.index.get_level_values([0, 1]).unique()
-    ncol = len(expected_index)
-
-    # same number of rows, one col per variable and quantile/coverage value
-    assert eval_loss.shape == (1, ncol)
-    assert eval_loss.shape[0] == 0
-    assert eval_loss.index == expected_index
-
-    # same number of rows, one col per variable and quantile/coverage value
-    assert index_loss.shape == (y_true.shape[0], ncol)
-    assert index_loss.index == y_true.index
-    assert index_loss.index == expected_index
-
-
-@pytest.mark.parametrize("y_pred", [QUANTILE_PRED_UNI_S, INTERVAL_PRED_UNI_S])
-@pytest.mark.parametrize("Metric", list_of_metrics)
-def test_output_multivariate_default(metric, y_pred):
-    """Test output is correct format."""
-    y_true = y_test
-    loss = metric.create_test_instance()
-    eval_loss = loss.evaluate(y_true, y_pred=y_pred)
-    index_loss = loss.evaluate_by_index(y_true, y_pred=y_pred)
-
-    assert isinstance(eval_loss, float)
-    assert isinstance(index_loss, pd.DataFrame)
-
-    # same number of rows, one col since univariate
-    assert index_loss.shape == (y_true.shape[0], 1)
-    assert index_loss.index == y_true.index
-
-
-@pytest.mark.parametrize("y_pred", [QUANTILE_PRED_UNI_S, INTERVAL_PRED_UNI])
-@pytest.mark.parametrize("Metric", list_of_metrics)
-def test_output_multivariate_no_avg(metric, y_pred):
-    """Test output is correct format."""
-    y_true = y_test
-    loss = metric.create_test_instance()
-    eval_loss = loss.evaluate(y_true, y_pred=y_pred)
-    index_loss = loss.evaluate_by_index(y_true, y_pred=y_pred)
-
-    assert isinstance(eval_loss, float)
-    assert isinstance(index_loss, pd.DataFrame)
-
-    # same number of rows, one col since univariate
-    assert index_loss.shape == (y_true.shape[0], 1)
-    assert index_loss.index == y_true.index
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
@@ -157,8 +55,8 @@ def test_evaluate_by_index_to_zero(Metric):
     """Tests whether metric returns 0 when y_true=y_pred by index."""
     loss = Metric.create_test_instance()
     y_true = QUANTILE_PRED["Quantiles"][0.5]
-    index_loss = Loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
-    assert all([np.isclose(0, a) for a in index_loss.values[:, 0]])
+    index_loss = loss.evaluate_by_index(y_true, y_pred=QUANTILE_PRED)
+    assert all(np.isclose(0, a) for a in index_loss)
 
 
 @pytest.mark.parametrize("Metric", list_of_metrics)
