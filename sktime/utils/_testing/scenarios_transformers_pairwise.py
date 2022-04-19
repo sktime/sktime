@@ -50,7 +50,7 @@ d2 = pd.DataFrame(d2)
 class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):
     """Empty fit, one argument in transform."""
 
-    _tags = {"symmetric": True, "pre-refactor": True}
+    _tags = {"symmetric": True, "is_enabled": True}
 
     args = {
         "fit": {"X": None, "X2": None},
@@ -62,7 +62,7 @@ class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):
 class TransformerPairwiseTransformAsymm(TransformerPairwiseTestScenario):
     """Empty fit, two arguments of different length in transform."""
 
-    _tags = {"symmetric": False, "pre-refactor": False}
+    _tags = {"symmetric": False, "is_enabled": False}
 
     args = {
         "fit": {"X": None, "X2": None},
@@ -83,7 +83,7 @@ X2 = [d2, d, d2]
 class TransformerPairwisePanelTransformSymm(TransformerPairwisePanelTestScenario):
     """Empty fit, one argument in transform."""
 
-    _tags = {"symmetric": True, "pre-refactor": True}
+    _tags = {"symmetric": True, "is_enabled": True}
 
     args = {
         "fit": {"X": None, "X2": None},
@@ -95,7 +95,7 @@ class TransformerPairwisePanelTransformSymm(TransformerPairwisePanelTestScenario
 class TransformerPairwisePanelTransformAsymm(TransformerPairwisePanelTestScenario):
     """Empty fit, two arguments of different length in transform."""
 
-    _tags = {"symmetric": False, "pre-refactor": False}
+    _tags = {"symmetric": False, "is_enabled": False}
 
     args = {
         "fit": {"X": None, "X2": None},
