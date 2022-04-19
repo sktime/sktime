@@ -11,7 +11,7 @@ from sklearn.utils import check_array, check_consistent_length
 from sktime.datatypes import check_is_scitype, convert
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
 
-# TODO: Rework tests
+# TODO: Rework tests now
 
 
 class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
