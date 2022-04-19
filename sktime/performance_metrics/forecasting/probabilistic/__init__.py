@@ -9,6 +9,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
+# TODO: Linting
+
 __author__ = ["euanenticott-shell"]
 
 __all__ = [
@@ -19,8 +21,8 @@ __all__ = [
 ]
 
 from sktime.performance_metrics.forecasting.probabilistic._classes import (
+    ConstraintViolation,
+    EmpiricalCoverage,
     PinballLoss,
     _BaseProbaForecastingErrorMetric,
-    ConstraintViolation,
-    EmpiricalCoverage
 )
