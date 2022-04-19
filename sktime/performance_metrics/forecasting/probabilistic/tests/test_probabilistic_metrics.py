@@ -12,7 +12,6 @@ from sktime.performance_metrics.forecasting.probabilistic import (
     EmpiricalCoverage,
     PinballLoss,
 )
-
 from sktime.utils._testing.series import _make_series
 
 list_of_metrics = [PinballLoss, EmpiricalCoverage]
@@ -22,14 +21,16 @@ list_of_metrics = [PinballLoss, EmpiricalCoverage]
 # test data
 # y = np.log1p(load_airline())
 y_uni = _make_series(n_columns=1)
-y_train, y_test = temporal_train_test_split(y_uni)
-fh = np.arange(len(y_test)) + 1
-f = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
-f.fit(y_train)
+y_train_uni, y_test_uni = temporal_train_test_split(y_uni)
+fh_uni = np.arange(len(y_test_uni)) + 1
+f_uni = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
+f_uni.fit(y_train_uni)
 
-y_multi = _make_series(n_columns=3)
-y_train, y_test = temporal_train_test_split(y_multi)
-
+y_multi = _make_series(n_columns=1)
+y_train_multi, y_test_multi = temporal_train_test_split(y_multi)
+fh_multi = np.arange(len(y_test_multi)) + 1
+f_multi = ColumnEnsembleForecaster(ThetaForecaster(sp=12))
+f_multi.fit(y_train_multi)
 """
 score average = TRUE/FALSE
 multivariable = TRUE/FALSE
@@ -45,11 +46,19 @@ Multivariate and multiscore
 For each of the data types we need to test with score average = T/F \
     and multioutput with "raw_values" and "uniform_average"
 """
-QUANTILE_PRED_UNI_S = f.predict_quantiles(fh=fh, alpha=[0.5])
-INTERVAL_PRED_UNI_S = f.predict_interval(fh=fh, coverage=0.9)
+QUANTILE_PRED_UNI_S = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
+INTERVAL_PRED_UNI_S = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
 
-QUANTILE_PRED_UNI_M = f.predict_quantiles(fh=fh, alpha=[0.05, 0.5, 0.95])
-INTERVAL_PRED_UNI_M = f.predict_interval(fh=fh, coverage=[0.7, 0.8, 0.9, 0.99])
+QUANTILE_PRED_UNI_M = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.05, 0.5, 0.95])
+INTERVAL_PRED_UNI_M = f_uni.predict_interval(fh=fh_uni, coverage=[0.7, 0.8, 0.9, 0.99])
+
+QUANTILE_PRED_multi_S = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.5])
+INTERVAL_PRED_multi_S = f_multi.predict_interval(fh=fh_multi, coverage=0.9)
+
+QUANTILE_PRED_multi_M = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.05, 0.5, 0.95])
+INTERVAL_PRED_multi_M = f_multi.predict_interval(
+    fh=fh_multi, coverage=[0.7, 0.8, 0.9, 0.99]
+)
 
 
 @pytest.mark.parametrize("y_pred", [QUANTILE_PRED_UNI_S, INTERVAL_PRED_UNI_S])
