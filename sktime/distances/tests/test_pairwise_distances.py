@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
+from sktime.distances._numba_utils import to_numba_pairwise_timeseries
 from sktime.distances.base import MetricInfo, NumbaDistance
 from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
@@ -65,12 +66,18 @@ def _validate_pairwise_result(
     kwargs_dict: dict
         Extra kwargs
     """
+    # Msm doesn't support multivariate so skip
+    if len(x.shape) == 3 and x.shape[1] > 1 and metric_str == "msm":
+        return
+    if len(x.shape) == 2 and x.shape[0] > 1 and metric_str == "msm":
+        return
+
     if kwargs_dict is None:
         kwargs_dict = {}
     metric_str_result = pairwise_distance(x, y, metric=metric_str, **kwargs_dict)
 
     expected_size = (len(x), len(y))
-    if x.ndim <= 1:
+    if x.ndim <= 2:
         expected_size = (1, 1)
 
     assert metric_str_result.shape == expected_size, (
@@ -189,6 +196,8 @@ def _test_pw_equal_single_dists(
         return
     pw_result = pairwise_distance(x, y, metric=conical_name)
 
+    x = to_numba_pairwise_timeseries(x)
+    y = to_numba_pairwise_timeseries(y)
     matrix = np.zeros((len(x), len(y)))
     for i in range(len(x)):
         curr_x = x[i]
@@ -250,8 +259,8 @@ def test_pairwise_distance(dist: MetricInfo) -> None:
     )
 
     _validate_pairwise_result(
-        x=create_test_distance_numpy(5, 5, 1),
-        y=create_test_distance_numpy(5, 5, 1, random_state=2),
+        x=create_test_distance_numpy(5, 1, 5),
+        y=create_test_distance_numpy(5, 1, 5, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,
