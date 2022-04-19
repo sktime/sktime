@@ -710,6 +710,19 @@ class BaseWindowSplitter(BaseSplitter):
     def _split_for_initial_window(
         self, y: Optional[ACCEPTED_Y_TYPES]
     ) -> SPLIT_ARRAY_TYPE:
+        """Get train/test splits for non-empty initial window.
+
+        Parameters
+        ----------
+        y : pd.Index
+            Index of the time series to split
+
+        Returns
+        -------
+        (np.ndarray, np.ndarray)
+            Integer indices of the train/test windows
+
+        """
         fh = _check_fh(self.fh)
         if not self.start_with_window:
             raise ValueError(
