@@ -80,7 +80,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = SupervisedTimeSeriesForest(n_estimators=10)
+    >>> clf = SupervisedTimeSeriesForest(n_estimators=5)
     >>> clf.fit(X_train, y_train)
     SupervisedTimeSeriesForest(...)
     >>> y_pred = clf.predict(X_test)
@@ -452,6 +452,6 @@ def _fisher_score(X, y, classes, class_counts):
         xy_std = np.std(X_cls)
 
         a += class_counts[i] * (xy_mean - x_mean) ** 2
-        b += class_counts[i] * xy_std ** 2
+        b += class_counts[i] * xy_std**2
 
     return 0 if b == 0 else a / b

@@ -17,12 +17,12 @@ from sklearn.base import BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
-from sktime.base._base import _clone_estimator
-from sktime.classification.base import BaseClassifier
-from sktime.contrib.vector_classifiers._continuous_interval_tree import (
+from sktime._contrib.vector_classifiers._continuous_interval_tree import (
     ContinuousIntervalTree,
     _drcif_feature,
 )
+from sktime.base._base import _clone_estimator
+from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.utils.validation.panel import check_X_y
 
@@ -132,7 +132,7 @@ class DrCIF(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = DrCIF(n_estimators=10)
+    >>> clf = DrCIF(n_estimators=3, n_intervals=2, att_subsample_size=2)
     >>> clf.fit(X_train, y_train)
     DrCIF(...)
     >>> y_pred = clf.predict(X_test)

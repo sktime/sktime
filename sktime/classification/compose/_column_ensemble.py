@@ -222,12 +222,18 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.interval_based import DrCIF
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(split="train")
     >>> X_test, y_test = load_basic_motions(split="test")
-    >>> clf = DrCIF(n_estimators=3)
-    >>> estimators = [("DrCIF", clf, [0, 1])]
+    >>> cboss = ContractableBOSS(
+    ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
+    ... )
+    >>> cif = CanonicalIntervalForest(
+    ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+    ... )
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
     >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
     >>> col_ens.fit(X_train, y_train)
     ColumnEnsembleClassifier(...)

@@ -104,17 +104,24 @@ class BaseTransformer(BaseEstimator):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "handles-missing-data": False,  # can estimator handle missing data?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "capability:unequal_length": True,
+        # can the transformer handle unequal length time series (if passed Panel)?
+        "capability:unequal_length:removes": False,
+        # is transform result always guaranteed to be equal length (and series)?
+        "handles-missing-data": False,  # can estimator handle missing data?
+        # todo: rename to capability:missing_values
+        "capability:missing_values:removes": False,
+        # is transform result always guaranteed to contain no missing values?
     }
 
     # allowed mtypes for transformers - Series and Panel
