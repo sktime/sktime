@@ -526,6 +526,24 @@ class BaseSplitter:
     def _get_train_window(
         y: ACCEPTED_Y_TYPES, train_start: int, split_point: int
     ) -> np.ndarray:
+        """Get train window.
+
+        For formal definition of the train window see docstring of the `BaseSplitter`
+
+        Parameters
+        ----------
+        y : pd.Index
+            Index of time series to split
+        train_start : int
+            Integer index of the training window start
+        split_point : int
+            Integer index of the train window end
+
+        Returns
+        -------
+        np.ndarray with integer indices of the train window
+
+        """
         if (split_point <= len(y)) & (split_point > 0):
             return np.argwhere(
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
