@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for data and scenario generators in _testing.panel module."""
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = []
 
 import numpy as np
@@ -11,6 +11,7 @@ import pytest
 from sktime.utils._testing.panel import (
     make_classification_problem,
     make_regression_problem,
+    _make_panel,
 )
 
 N_INSTANCES = [10, 15]
@@ -39,6 +40,26 @@ def _check_X_y(X, y, n_instances, n_columns, n_timepoints, check_numpy=False):
         _check_X_y_numpy(X, y, n_instances, n_columns, n_timepoints)
     else:
         _check_X_y_pandas(X, y, n_instances, n_columns, n_timepoints)
+
+
+@pytest.mark.parametrize("n_instances", N_INSTANCES)
+@pytest.mark.parametrize("n_columns", N_COLUMNS)
+@pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
+@pytest.mark.parametrize("return_mtype", ["numpy3D", "nested_univ"])
+def test_make_panel(n_instances, n_columns, n_timepoints, return_mtype):
+    """Test that _make_panel utility returns panel data of right format."""
+    X = _make_panel(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_mtype=return_mtype,
+    )
+
+    valid, _, metadata = check_is_mtype(X, mtype=return_mtype, return_metadata=True)
+    msg = f"_make_panel_X generated data does not comply with mtype {return_mtype}"
+    assert valid, msg
+    assert metadata["n_instances"] == n_instances
+    assert metadata["is_univariate"] == (n_columns == 1)
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
