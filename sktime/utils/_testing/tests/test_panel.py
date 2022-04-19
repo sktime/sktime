@@ -1,16 +1,18 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tests for data and scenario generators in _testing.panel module."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = []
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_mtype
 from sktime.utils._testing.panel import (
     make_classification_problem,
     make_regression_problem,
+    _make_panel,
 )
 
 N_INSTANCES = [10, 15]
@@ -34,8 +36,8 @@ def _check_X_y_numpy(X, y, n_instances, n_columns, n_timepoints):
     assert y.shape == (n_instances,)
 
 
-def _check_X_y(X, y, n_instances, n_columns, n_timepoints, check_numpy=False):
-    if check_numpy:
+def _check_X_y(X, y, n_instances, n_columns, n_timepoints, mtype="nested_univ"):
+    if mtype == "numpy3D":
         _check_X_y_numpy(X, y, n_instances, n_columns, n_timepoints)
     else:
         _check_X_y_pandas(X, y, n_instances, n_columns, n_timepoints)
@@ -44,21 +46,42 @@ def _check_X_y(X, y, n_instances, n_columns, n_timepoints, check_numpy=False):
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
+@pytest.mark.parametrize("return_mtype", ["numpy3D", "nested_univ"])
+def test_make_panel(n_instances, n_columns, n_timepoints, return_mtype):
+    """Test that _make_panel utility returns panel data of right format."""
+    X = _make_panel(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_mtype=return_mtype,
+    )
+
+    valid, _, metadata = check_is_mtype(X, mtype=return_mtype, return_metadata=True)
+    msg = f"_make_panel_X generated data does not comply with mtype {return_mtype}"
+    assert valid, msg
+    assert metadata["n_instances"] == n_instances
+    assert metadata["is_univariate"] == n_columns == 1
+
+
+@pytest.mark.parametrize("n_instances", N_INSTANCES)
+@pytest.mark.parametrize("n_columns", N_COLUMNS)
+@pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 @pytest.mark.parametrize("n_classes", N_CLASSES)
-@pytest.mark.parametrize("return_numpy", [True, False])
+@pytest.mark.parametrize("return_mtype", ["numpy3D", "nested_univ"])
 def test_make_classification_problem(
-    n_instances, n_columns, n_timepoints, n_classes, return_numpy
+    n_instances, n_columns, n_timepoints, n_classes, return_mtype
 ):
+    """Test that make_classification_problem returns panel data of right format."""
     X, y = make_classification_problem(
         n_instances=n_instances,
         n_classes=n_classes,
         n_columns=n_columns,
         n_timepoints=n_timepoints,
-        return_numpy=return_numpy,
+        return_mtype=return_mtype,
     )
 
     # check dimensions of generated data
-    _check_X_y(X, y, n_instances, n_columns, n_timepoints, check_numpy=return_numpy)
+    _check_X_y(X, y, n_instances, n_columns, n_timepoints, mtype=return_mtype)
 
     # check number of classes
     assert len(np.unique(y)) == n_classes
@@ -67,14 +90,15 @@ def test_make_classification_problem(
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
-@pytest.mark.parametrize("return_numpy", [True, False])
-def test_make_regression_problem(n_instances, n_columns, n_timepoints, return_numpy):
+@pytest.mark.parametrize("return_mtype", ["numpy3D", "nested_univ"])
+def test_make_regression_problem(n_instances, n_columns, n_timepoints, return_mtype):
+    """Test that make_regression_problem returns panel data of right format."""
     X, y = make_regression_problem(
         n_instances=n_instances,
         n_columns=n_columns,
         n_timepoints=n_timepoints,
-        return_numpy=return_numpy,
+        return_mtype=return_mtype,
     )
 
     # check dimensions of generated data
-    _check_X_y(X, y, n_instances, n_columns, n_timepoints, check_numpy=return_numpy)
+    _check_X_y(X, y, n_instances, n_columns, n_timepoints, mtype=return_mtype)

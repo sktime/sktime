@@ -16,26 +16,43 @@ from sklearn.utils.validation import check_random_state
 from sktime.datatypes import convert
 
 
-def _make_panel_X(
+def _make_panel(
     n_instances=20,
     n_columns=1,
     n_timepoints=20,
     y=None,
     all_positive=False,
-    return_numpy=False,
     random_state=None,
     return_mtype="pd-multiindex",
 ):
+    """Generate sktime compatible test data, Panel data formats.
 
-    if return_numpy:
-        return_mtype = "numpy3D"
+    Parameters
+    ----------
+    n_instances : int, optional, default=20
+        number of instances per series in the panel
+    n_columns : int, optional, default=1
+        number of variables in the time series
+    n_timepoints : int, optional, default=20
+        number of time points in each series
+    y : None (default), or 1D np.darray or 1D array-like, shape (n_instances, )
+        if passed, return will be generated with association to y
+    all_positive : bool, optional, default=False
+        whether series contain only positive values when generated
+    random_state : None (default) or int
+        if int is passed, will be used in numpy RandomState for generation
+    return_mtype : str, sktime Panel mtype str, default="pd-multiindex"
+        see sktime.datatypes.MTYPE_LIST_PANEL for a full list of admissible strings
+        see sktime.datatypes.MTYPE_REGISTER for an short explanation of formats
+        see examples/AA_datatypes_and_datasets.ipynb for a full specification
 
-    # if return_mtype is None:
-    #     if return_numpy:
-    #         return_mtype = "numpy3D"
-    #     else:
-    #         return_mtype = "nested_univ"
-
+    Returns
+    -------
+    X : an sktime time series data container of mtype return_mtype
+        with n_instances instances, n_columns variables, n_timepoints time points
+        generating distribution is all values i.i.d. normal with std 0.5
+        if y is passed, i-th series values are additively shifted by y[i] * 100
+    """
     # If target variable y is given, we ignore n_instances and instead generate as
     # many instances as in the target variable
     if y is not None:
@@ -55,6 +72,31 @@ def _make_panel_X(
 
     X = convert(X, from_type="numpy3D", to_type=return_mtype)
     return X
+
+
+def _make_panel_X(
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    y=None,
+    all_positive=False,
+    return_numpy=False,
+    random_state=None,
+):
+    if return_numpy:
+        return_mtype = "numpy3D"
+    else:
+        return_mtype = "nested_univ"
+
+    return _make_panel(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        y=y,
+        all_positive=all_positive,
+        random_state=random_state,
+        return_mtype=return_mtype,
+    )
 
 
 def _make_regression_y(n_instances=20, return_numpy=True, random_state=None):
@@ -88,7 +130,6 @@ def make_classification_problem(
     n_classes=2,
     return_numpy=False,
     random_state=None,
-    return_mtype="pd-multiindex",
 ):
     """Make Classification Problem."""
     y = _make_classification_y(
@@ -100,7 +141,6 @@ def make_classification_problem(
         return_numpy=return_numpy,
         random_state=random_state,
         y=y,
-        return_mtype=return_mtype,
     )
 
     return X, y
@@ -112,7 +152,6 @@ def make_regression_problem(
     n_timepoints=20,
     return_numpy=False,
     random_state=None,
-    return_mtype="pd-multiindex",
 ):
     """Make Regression Problem."""
     y = _make_regression_y(
@@ -124,7 +163,6 @@ def make_regression_problem(
         return_numpy=return_numpy,
         random_state=random_state,
         y=y,
-        return_mtype=return_mtype,
     )
     return X, y
 
@@ -135,7 +173,6 @@ def make_clustering_problem(
     n_timepoints=20,
     return_numpy=False,
     random_state=None,
-    return_mtype="pd-multiindex",
 ):
     """Make Clustering Problem."""
     # Can only currently support univariate so converting
@@ -146,7 +183,6 @@ def make_clustering_problem(
         n_timepoints=n_timepoints,
         return_numpy=return_numpy,
         random_state=random_state,
-        return_mtype=return_mtype,
     )
 
 
