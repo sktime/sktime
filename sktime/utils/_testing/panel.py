@@ -48,6 +48,7 @@ def _make_panel_X(
         X = X**2
 
     X = convert(X, from_type="numpy3D", to_type=return_mtype)
+    return X
 
 
 def _make_regression_y(n_instances=20, return_numpy=True, random_state=None):
