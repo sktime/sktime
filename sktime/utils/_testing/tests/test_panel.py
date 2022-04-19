@@ -43,10 +43,13 @@ def _check_X_y(X, y, n_instances, n_columns, n_timepoints, check_numpy=False):
         _check_X_y_pandas(X, y, n_instances, n_columns, n_timepoints)
 
 
+MTYPES = ["pd-multiindex", "numpy3D", "nested_univ", "df-list"]
+
+
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
-@pytest.mark.parametrize("return_mtype", ["numpy3D", "nested_univ"])
+@pytest.mark.parametrize("return_mtype", MTYPES)
 def test_make_panel(n_instances, n_columns, n_timepoints, return_mtype):
     """Test that _make_panel utility returns panel data of right format."""
     X = _make_panel(
