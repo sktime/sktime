@@ -6,7 +6,7 @@ __author__ = ["James-Large, Withington, TonyBagnall"]
 from sktime.networks.base import BaseDeepNetwork
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tensorflow", severity="warning")
+_check_soft_dependencies("tensorflow", severity="error")
 
 
 class CNNNetwork(BaseDeepNetwork):

@@ -9,7 +9,7 @@ from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("tensorflow", severity="warning")
+_check_soft_dependencies("tensorflow", severity="error")
 
 
 class CNNClassifier(BaseDeepClassifier, CNNNetwork):
@@ -97,7 +97,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         )
         return model
 
-    def _fit(self, X, y, **kwargs):
+    def _fit(self, X, y):
         """Fit the classifier on the training set (X, y).
 
         Parameters
@@ -123,7 +123,7 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         """
         if self.callbacks is None:
             self._callbacks = []
-        y_onehot = self.convert_y(y)
+        y_onehot = self.convert_y_to_keras(y)
         check_random_state(self.random_state)
 
         # Transpose to conform to Keras input style.

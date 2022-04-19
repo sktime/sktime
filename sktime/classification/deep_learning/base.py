@@ -59,7 +59,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
         Returns
         -------
-        output : a compiled Keras Model
+        A compiled Keras Model
         """
         ...
 
@@ -97,7 +97,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
 
         return probs
 
-    def convert_y(self, y, label_encoder=None, onehot_encoder=None):
+    def convert_y_to_keras(self, y, label_encoder=None, onehot_encoder=None):
         """Convert y to required Keras format."""
         if (label_encoder is None) and (onehot_encoder is None):
             # make the encoders and store in self
