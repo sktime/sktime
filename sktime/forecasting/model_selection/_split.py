@@ -544,7 +544,7 @@ class BaseSplitter:
         np.ndarray with integer indices of the train window
 
         """
-        if (split_point <= len(y)) & (split_point > 0):
+        if split_point > max(0, train_start):
             return np.argwhere(
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
             ).flatten()
