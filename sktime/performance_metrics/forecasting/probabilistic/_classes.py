@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 from pickle import FALSE, TRUE
+
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array, check_consistent_length
@@ -10,7 +11,7 @@ from sklearn.utils import check_array, check_consistent_length
 from sktime.datatypes import check_is_scitype, convert
 from sktime.performance_metrics.forecasting._classes import _BaseForecastingErrorMetric
 
-# TODO: add formal tests
+# TODO: Rework tests
 
 
 class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
@@ -190,9 +191,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             y_true, y_pred, multioutput
         )
         # pass to inner function
-        out = self._evaluate_by_index(
-            y_true_inner, y_pred_inner, multioutput, **kwargs
-        )
+        out = self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
         if self.score_average and multioutput == "uniform_average":
             out = out.mean(axis=1, level=None)  # average over all
@@ -230,8 +229,8 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             x_bar = self.evaluate(y_true, y_pred, multioutput, **kwargs)
             for i in range(n):
                 out_series[i] = n * x_bar - (n - 1) * self.evaluate(
-                    np.vstack((y_true[:i, :], y_true[i + 1:, :])),  # noqa
-                    np.vstack((y_pred[:i, :], y_pred[i + 1:, :])),  # noqa
+                    np.vstack((y_true[:i, :], y_true[i + 1 :, :])),  # noqa
+                    np.vstack((y_pred[:i, :], y_pred[i + 1 :, :])),  # noqa
                     multioutput,
                 )
             return out_series
@@ -385,10 +384,8 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
         self.alpha = self._check_alpha(alpha)
         self.metric_args = {"alpha": alpha}
         super().__init__(
-            name=name,
-            multioutput=multioutput,
-            score_average=score_average
-            )
+            name=name, multioutput=multioutput, score_average=score_average
+        )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -423,12 +420,14 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
         alpha_preds = y_pred.iloc[
             :, [x in alphas for x in y_pred.columns.get_level_values(1)]
-            ]
+        ]
 
         alpha_preds_np = alpha_preds.to_numpy()
         alpha_mat = np.repeat(
             (y_pred.columns.get_level_values(1).to_numpy().reshape(1, -1)),
-            repeats=y_true.shape[0], axis=0)
+            repeats=y_true.shape[0],
+            axis=0,
+        )
 
         y_true_np = np.repeat(y_true, axis=1, repeats=len(alphas))
         diff = y_true_np - alpha_preds_np
@@ -464,18 +463,12 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
         "lower_is_better": FALSE,
     }
 
-    def __init__(
-        self,
-        multioutput="uniform_average",
-        score_average=True
-    ):
+    def __init__(self, multioutput="uniform_average", score_average=True):
         name = "EmpiricalCoverage"
         self.score_average = score_average
         super().__init__(
-            name=name,
-            score_average=score_average,
-            multioutput=multioutput
-            )
+            name=name, score_average=score_average, multioutput=multioutput
+        )
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -491,10 +484,8 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
         multioutput : string "uniform_average" or "raw_values" determines how \
             multioutput results will be treated.
         """
-        lower = y_pred.iloc[
-            :, y_pred.columns.get_level_values(2) == "lower"].to_numpy()
-        upper = y_pred.iloc[
-            :, y_pred.columns.get_level_values(2) == "upper"].to_numpy()
+        lower = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "lower"].to_numpy()
+        upper = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "upper"].to_numpy()
 
         if not isinstance(y_true, np.ndarray):
             y_true_np = y_true.to_numpy()
@@ -502,15 +493,13 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
             y_true_np = y_true.reshape(-1, 1)
         y_true_np = np.tile(
             y_true_np, len(np.unique(y_pred.columns.get_level_values(1)))
-            )
-
-        truth_array = (
-            (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
         )
 
+        truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
+
         out_df = pd.DataFrame(
-            truth_array,
-            columns=y_pred.columns.droplevel(level=2).unique())
+            truth_array, columns=y_pred.columns.droplevel(level=2).unique()
+        )
 
         return out_df
 
@@ -538,18 +527,12 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         "lower_is_better": TRUE,
     }
 
-    def __init__(
-        self,
-        multioutput="uniform_average",
-        score_average=True
-    ):
+    def __init__(self, multioutput="uniform_average", score_average=True):
         name = "ConstraintViolation"
         self.score_average = score_average
         super().__init__(
-            name=name,
-            score_average=score_average,
-            multioutput=multioutput
-            )
+            name=name, score_average=score_average, multioutput=multioutput
+        )
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
@@ -576,17 +559,15 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
         y_true_np = np.tile(
             y_true_np, len(np.unique(y_pred.columns.get_level_values(1)))
-            )
+        )
 
-        int_distance = (
-            ((y_true_np < lower).astype(int) * abs(lower - y_true_np)) +
-            ((y_true_np > upper).astype(int) * abs(y_true_np - upper))
-            )
+        int_distance = ((y_true_np < lower).astype(int) * abs(lower - y_true_np)) + (
+            (y_true_np > upper).astype(int) * abs(y_true_np - upper)
+        )
 
         out_df = pd.DataFrame(
-            int_distance,
-            columns=y_pred.columns.droplevel(level=2).unique()
-            )
+            int_distance, columns=y_pred.columns.droplevel(level=2).unique()
+        )
 
         return out_df
 
