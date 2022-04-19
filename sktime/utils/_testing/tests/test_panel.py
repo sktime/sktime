@@ -60,7 +60,7 @@ def test_make_panel(n_instances, n_columns, n_timepoints, return_mtype):
     msg = f"_make_panel_X generated data does not comply with mtype {return_mtype}"
     assert valid, msg
     assert metadata["n_instances"] == n_instances
-    assert metadata["is_univariate"] == n_columns == 1
+    assert metadata["is_univariate"] == (n_columns == 1)
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
