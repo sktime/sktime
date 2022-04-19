@@ -9,7 +9,6 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# TODO: Linting
 
 __author__ = ["euanenticott-shell"]
 
