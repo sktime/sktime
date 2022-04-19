@@ -1,8 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Utility functions for generating panel data and learning task scenarios."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = [
     "make_classification_problem",
     "make_regression_problem",
@@ -13,8 +13,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.datatypes import convert_to
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
+from sktime.datatypes import convert
 
 
 def _make_panel_X(
@@ -25,7 +24,12 @@ def _make_panel_X(
     all_positive=False,
     return_numpy=False,
     random_state=None,
+    return_mtype="pd-multiindex",
 ):
+
+    if return_numpy:
+        return_mtype = "numpy3D"
+
     # If target variable y is given, we ignore n_instances and instead generate as
     # many instances as in the target variable
     if y is not None:
@@ -43,10 +47,7 @@ def _make_panel_X(
     if all_positive:
         X = X**2
 
-    if return_numpy:
-        return X
-    else:
-        return from_3d_numpy_to_nested(X)
+    X = convert(X, from_type="numpy3D", to_type=return_mtype)
 
 
 def _make_regression_y(n_instances=20, return_numpy=True, random_state=None):
@@ -80,6 +81,7 @@ def make_classification_problem(
     n_classes=2,
     return_numpy=False,
     random_state=None,
+    return_mtype="pd-multiindex",
 ):
     """Make Classification Problem."""
     y = _make_classification_y(
@@ -91,13 +93,19 @@ def make_classification_problem(
         return_numpy=return_numpy,
         random_state=random_state,
         y=y,
+        return_mtype=return_mtype,
     )
 
     return X, y
 
 
 def make_regression_problem(
-    n_instances=20, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    return_numpy=False,
+    random_state=None,
+    return_mtype="pd-multiindex",
 ):
     """Make Regression Problem."""
     y = _make_regression_y(
@@ -109,6 +117,7 @@ def make_regression_problem(
         return_numpy=return_numpy,
         random_state=random_state,
         y=y,
+        return_mtype=return_mtype,
     )
     return X, y
 
@@ -119,22 +128,19 @@ def make_clustering_problem(
     n_timepoints=20,
     return_numpy=False,
     random_state=None,
+    return_mtype="pd-multiindex",
 ):
     """Make Clustering Problem."""
     # Can only currently support univariate so converting
     # to univaritate for the time being
-    X = _make_panel_X(
+    return _make_panel_X(
         n_instances=n_instances,
         n_columns=n_columns,
         n_timepoints=n_timepoints,
         return_numpy=return_numpy,
         random_state=random_state,
+        return_mtype=return_mtype,
     )
-
-    if return_numpy:
-        return convert_to(X, "numpy3D")
-    else:
-        return X
 
 
 def make_transformer_problem(
