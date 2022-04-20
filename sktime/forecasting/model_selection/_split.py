@@ -167,28 +167,30 @@ def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
     return check_fh(fh, enforce_relative=True)
 
 
-def _get_end(y: pd.Index, fh: ForecastingHorizon) -> int:
+def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     """Compute the end of the last training window for a forecasting horizon.
 
-    For a time series `y`, `y.iloc[end]` will give
-    the last value of the training window,
-    while `y.index[end]` will provide the last index of the training window.
+    For a time series index `y_index`, `y_index[end]` will give
+    the index of the training window.
+    Correspondingly, for a time series `y`,
+    `y.iloc[end]` or `y.loc[y_index[end]]`
+    will provide the last index of the training window.
 
     Parameters
     ----------
-    y : pd.Index
+    y_index : pd.Index
         Index of time series
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
 
     Returns
     -------
     end : int
-        end of the training window
+        0-indexed integer end of the training window
     """
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
-    n_timepoints = y.shape[0]
-    assert isinstance(y, pd.Index)
+    n_timepoints = y_index.shape[0]
+    assert isinstance(y_index, pd.Index)
 
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
@@ -198,7 +200,7 @@ def _get_end(y: pd.Index, fh: ForecastingHorizon) -> int:
     if array_is_int(fh):
         return n_timepoints - fh_offset - 1
     else:
-        return y.get_loc(y[-1] - fh_offset)
+        return y_index.get_loc(y_index[-1] - fh_offset)
 
 
 def _check_window_lengths(
@@ -705,7 +707,7 @@ class BaseWindowSplitter(BaseSplitter):
             yield train, test
 
         start = self._get_start(y=y, fh=fh)
-        end = _get_end(y=y, fh=fh) + 2
+        end = _get_end(y_index=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
         for train, test in self._split_windows(
@@ -829,7 +831,7 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             start = self._get_start(y=y, fh=fh)
 
-        end = _get_end(y, fh) + 2
+        end = _get_end(y_index=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
         return np.arange(start, end, step_length) - 1
@@ -997,7 +999,7 @@ class SingleWindowSplitter(BaseSplitter):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
-        end = _get_end(y, fh)
+        end = _get_end(y_index=y, fh=fh)
 
         if window_length is None:
             start = 0
@@ -1055,7 +1057,7 @@ class SingleWindowSplitter(BaseSplitter):
             )
         fh = _check_fh(self.fh)
         y = _get_index_of_time_series(y)
-        end = _get_end(y=y, fh=fh)
+        end = _get_end(y_index=y, fh=fh)
         if array_is_int(fh):
             cutoff = end
         else:
