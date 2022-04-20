@@ -547,7 +547,14 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
     """
     lag = window[0]
     window_length = window[1]
-    timedelta_flag = isinstance(lag, str)
+
+    if isinstance(lag, str):
+        lag = pd.Timedelta(lag)
+
+    if isinstance(window_length, str):
+        window_length = pd.Timedelta(window_length)
+
+    timedelta_flag = isinstance(lag, pd.Timedelta)
 
     if timedelta_flag:
         Z_index = Z.index
