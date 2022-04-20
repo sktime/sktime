@@ -28,7 +28,7 @@ def mean_average(X: np.ndarray) -> np.ndarray:
     return X.mean(axis=0)
 
 
-def dba(X: np.ndarray) -> np.ndarray:
+def dba(X: np.ndarray, distance_metric: str = 'dtw') -> np.ndarray:
     """Compute the dtw barycenter average of time series.
 
     Parameters
@@ -41,7 +41,7 @@ def dba(X: np.ndarray) -> np.ndarray:
     np.ndarray (2d array of shape (n_dimensions, series_length)
         The time series that is the computed average series.
     """
-    result = _dba(X, iterations=5)
+    result = _dba(X, iterations=5, distance_metric=distance_metric)
     return result
 
 

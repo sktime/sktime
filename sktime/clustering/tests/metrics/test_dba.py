@@ -7,7 +7,7 @@ from sktime.clustering.metrics.medoids import medoids
 from sktime.datasets import load_acsf1
 from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
-from sktime.clustering.tests.metrics.tslearn_pe import dtw_barycenter_averaging_petitjean
+from tslearn.barycenters import dtw_barycenter_averaging_petitjean
 
 
 def test_dba():
@@ -37,7 +37,7 @@ def test_tslearn_ploat():
     X_train, y_train, _, _ = CachedDatasets().load_dataset("Trace")
     # tslearn_X = X_train[y_train == 2]
 
-    tslearn_X = X_train[y_train == 2]
+    tslearn_X = X_train
     length_of_sequence = tslearn_X.shape[1]
 
     sktime_X = tslearn_X.copy()
@@ -55,20 +55,24 @@ def test_tslearn_ploat():
     ax1 = plt.subplot()
 
     plt.subplot(4, 1, 1, sharex=ax1)
-    plt.title("Sktime DBA")
-    plot_helper(dba(sktime_X))
+    plt.title("Sktime DBA (using dtw)")
+    plot_helper(dba(sktime_X, distance_metric='dtw'))
 
     plt.subplot(4, 1, 2, sharex=ax1)
-    plt.title("Sktime medoids")
-    plot_helper(medoids(sktime_X))
+    plt.title("Sktime DBA (using wdtw)")
+    plot_helper(dba(sktime_X, distance_metric='wdtw'))
     #
-    # plt.subplot(4, 1, 3, sharex=ax1)
-    # plt.title("Tslearn DBA")
-    # plot_helper(dtw_barycenter_averaging(tslearn_X))
+    plt.subplot(4, 1, 3, sharex=ax1)
+    plt.title("Sktime DBA (using lcss)")
+    plot_helper(dba(sktime_X, distance_metric='lcss'))
 
     plt.subplot(4, 1, 4, sharex=ax1)
-    plt.title("Tslearn PE DBA")
-    plot_helper(dtw_barycenter_averaging_petitjean(tslearn_X))
+    plt.title("Sktime DBA (using msm)")
+    plot_helper(dba(sktime_X, distance_metric='msm'))
+
+    # plt.subplot(4, 1, 4, sharex=ax1)
+    # plt.title("Tslearn DBA")
+    # plot_helper(dtw_barycenter_averaging_petitjean(tslearn_X))
 
     # clip the axes for better readability
     ax1.set_xlim([0, length_of_sequence])
