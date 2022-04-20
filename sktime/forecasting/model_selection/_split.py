@@ -192,21 +192,13 @@ def _get_end(y: pd.Index, fh: ForecastingHorizon) -> int:
 
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
-    if fh.is_all_in_sample():
-        if array_is_int(fh):
-            end = n_timepoints - 1
-        else:
-            end = y.get_loc(y[-1])
-
     # Otherwise, the last point must ensure that the last horizon is within the data.
+    null = 0 if array_is_int(fh) else pd.Timedelta(0)
+    fh_offset = null if fh.is_all_in_sample() else fh[-1]
+    if array_is_int(fh):
+        return n_timepoints - fh_offset - 1
     else:
-        fh_max = fh[-1]
-        if is_int(fh_max):
-            end = n_timepoints - fh_max - 1
-        else:
-            end = y.get_loc(y[-1] - fh_max)
-
-    return end
+        return y.get_loc(y[-1] - fh_offset)
 
 
 def _check_window_lengths(
