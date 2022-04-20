@@ -99,13 +99,13 @@ def _make_hierarchical(
     return df
 
 
-# todo adds some docs
 def _bottom_hier_datagen(
     no_levels=3,
     no_bottom_nodes=6,
     intercept_max=20,
     coef_1_max=20,
     coef_2_max=0.1,
+    random_seed=None,
 ):
     """Hierarchical data generator using the flights dataset.
 
@@ -134,6 +134,8 @@ def _bottom_hier_datagen(
     """
     if no_levels > no_bottom_nodes:
         raise ValueError("no_levels should be less than no_bottom_nodes")
+
+    rng = np.random.default_rng(random_seed)
 
     base_ts = load_airline()
     df = pd.DataFrame(base_ts, index=base_ts.index)
@@ -166,18 +168,29 @@ def _bottom_hier_datagen(
                     lambda x: "l"
                     + str(i)
                     + "_node"
-                    + f"{int(np.sort(np.random.choice(np.arange(1,np.floor(len(node_lookup.index)/i)+1, 1), size=1))):02d}"  # noqa from flake8 E501
+                    + "{:02d}".format(
+                        int(
+                            np.sort(
+                                rng.choice(
+                                    np.arange(
+                                        1, np.floor(len(node_lookup.index) / i) + 1, 1
+                                    ),
+                                    size=1,
+                                )
+                            )
+                        )
+                    )
                 )
 
         node_lookup = node_lookup.set_index("l1_agg", drop=True)
 
         for i in range(2, no_bottom_nodes + 1):
             df["l1_node" + f"{i:02d}"] = (
-                np.random.choice(intercept, size=1)
-                + np.random.choice(coef_1, size=1) * df["l1_node01"]
+                rng.choice(intercept, size=1)
+                + rng.choice(coef_1, size=1) * df["l1_node01"]
                 + (
-                    np.random.choice(coef_2, size=1)
-                    * (df["l1_node01"] ** np.random.choice(power_2, size=1))
+                    rng.choice(coef_2, size=1)
+                    * (df["l1_node01"] ** rng.choice(power_2, size=1))
                 )
             )
 

@@ -5,7 +5,6 @@
 
 __author__ = ["ciaran-g"]
 
-import numpy as np
 import pytest
 
 from sktime.transformations.hierarchical.aggregate import Aggregator
@@ -29,20 +28,16 @@ def test_aggregator_fit_transform_index(flatten_single_levels):
     )
     # named indexes
     X_agg = agg.fit_transform(X)
-    assert X_agg.index.names == X.index.names, " ".join(
-        ["Aggregator returns wrong index names"]
-    )
+    msg = "Aggregator returns wrong index names."
+    assert X_agg.index.names == X.index.names, msg
 
     # unnamed indexes
     X.index.rename([None] * X.index.nlevels, inplace=True)
     X_agg_unnamed = agg.fit_transform(X)
-    assert X_agg_unnamed.index.names == X.index.names, " ".join(
-        ["Aggregator returns wrong index names"]
-    )
+    assert X_agg_unnamed.index.names == X.index.names, msg
 
-    assert X_agg.equals(X_agg_unnamed), " ".join(
-        ["Aggregator returns different output for named and unnamed indexes"]
-    )
+    msg = "Aggregator returns different output for named and unnamed indexes."
+    assert X_agg.equals(X_agg_unnamed), msg
 
 
 # test value error on aggregate with __total already present
@@ -78,26 +73,24 @@ def test_aggregator_flatten():
     agg = Aggregator(flatten_single_levels=False)
     agg_flat = Aggregator(flatten_single_levels=True)
 
-    np.random.seed(10)
     X = _bottom_hier_datagen(
         no_bottom_nodes=10,
         no_levels=4,
+        random_seed=111,
     )
     # aggregate without flattening
     X_agg = agg.fit_transform(X)
     # aggregate with flattening
     X_agg_flat = agg_flat.fit_transform(X)
 
-    assert len(X_agg.droplevel(-1).index.unique()) == 21, " ".join(
-        [
-            "Aggregator without flattening should have 21 unique levels, ",
-            "with the time index removed",
-        ]
+    msg = (
+        "Aggregator without flattening should have 21 unique levels, "
+        "with the time index removed, for random_seed=111."
     )
+    assert len(X_agg.droplevel(-1).index.unique()) == 21, msg
 
-    assert len(X_agg_flat.droplevel(-1).index.unique()) == 16, " ".join(
-        [
-            "Aggregator with flattening should have 16 unique levels, ",
-            "with the time index removed",
-        ]
+    msg = (
+        "Aggregator with flattening should have 17 unique levels, "
+        "with the time index removed, for random_seed=111."
     )
+    assert len(X_agg_flat.droplevel(-1).index.unique()) == 17, msg
