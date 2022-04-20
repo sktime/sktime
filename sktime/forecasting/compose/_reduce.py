@@ -615,7 +615,7 @@ class _RecursiveReducer(_Reducer):
 
         if isinstance(self._y.index, pd.MultiIndex):
             yi_grp = self._y.index.names[0:-1]
-            y_return = self._y.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
+            y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
         elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             y_return = y_pred.iloc[fh_idx]
             if hasattr(y_return.index, "freq"):
@@ -631,6 +631,7 @@ class _DirRecReducer(_Reducer):
     strategy = "dirrec"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "ignores-exogeneous-X": True,
     }
 
     def _transform(self, y, X=None):
@@ -662,12 +663,9 @@ class _DirRecReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
-        # Exogenous variables are not yet supported for the dirrec strategy.
+        # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not yet support exogenous "
-                f"variables `X`."
-            )
+            X = None
 
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
             raise NotImplementedError("In-sample predictions are not implemented")
@@ -704,19 +702,15 @@ class _DirRecReducer(_Reducer):
 
             estimator.fit(X_fit, yt[:, i])
             self.estimators_.append(estimator)
-
-        self._is_fitted = True
         return self
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         # Exogenous variables are not yet support for the dirrec strategy.
+        # todo: implement this. For now, we escape.
         if X is not None:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not yet support exogenous "
-                f"variables `X`."
-            )
+            X = None
 
         # Get last window of available data.
         y_last, X_last = self._get_last_window()
