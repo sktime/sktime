@@ -124,10 +124,10 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         if self.callbacks is None:
             self._callbacks = []
         y_onehot = self.convert_y_to_keras(y)
-        check_random_state(self.random_state)
-
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
+
+        check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:

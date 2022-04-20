@@ -5,8 +5,10 @@ __author__ = ["Withington", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
 
+from sktime.base import BaseObject
 
-class BaseDeepNetwork(ABC):
+
+class BaseDeepNetwork(BaseObject, ABC):
     """Abstract base class for deep learning networks."""
 
     @abstractmethod
