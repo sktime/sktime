@@ -107,7 +107,31 @@ def _bottom_hier_datagen(
     coef_1_max=20,
     coef_2_max=0.1,
 ):
-    """Hierarchical data generator using the flights dataset."""
+    """Hierarchical data generator using the flights dataset.
+
+    This function generates bottom level, i.e. not aggregated, time-series
+    from the flights dataset.
+
+    Each series is generated from the flights dataset using a linear model,
+    y = c0 + c1x + c2x^(c3), where the coefficients, intercept, and exponent
+    are randomly sampled for each series. The coefficients and intercept are
+    sampled between np.arange(0, *_max, 0.01) to keep the values positive. The
+    exponent is sampled from [0.5, 1, 1.5, 2].
+
+
+    Parameters
+    ----------
+    no_levels : int, optional
+        the number of levels not considering the time-index, by default 3
+    no_bottom_nodes : int, optional
+       number of time series, i.e. bottom nodes, to generate, by default 6.
+    *_max : int, optional
+        maximum possible value of the coefficient or intercept value.
+
+    Returns
+    -------
+    pd.DataFrame with multiindex
+    """
     if no_levels > no_bottom_nodes:
         raise ValueError("no_levels should be less than no_bottom_nodes")
 
@@ -126,7 +150,7 @@ def _bottom_hier_datagen(
         intercept = np.arange(0, intercept_max, 0.01)
         coef_1 = np.arange(0, coef_1_max, 0.01)
         coef_2 = np.arange(0, coef_2_max, 0.01)
-        power_2 = ([0.5, 1, 1.5, 2],)
+        power_2 = [0.5, 1, 1.5, 2]
 
         node_lookup = pd.DataFrame(
             ["l1_node" + f"{x:02d}" for x in range(1, no_bottom_nodes + 1)]
