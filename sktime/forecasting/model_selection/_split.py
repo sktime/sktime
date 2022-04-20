@@ -186,6 +186,7 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
     n_timepoints = y.shape[0]
+    assert isinstance(y, pd.Index)
 
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
@@ -193,10 +194,7 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
         if array_is_int(fh):
             end = n_timepoints - 1
         else:
-            if isinstance(y, pd.Index):
-                end = y.get_loc(y[-1])
-            else:
-                end = y.index.get_loc(y.index[-1])
+            end = y.get_loc(y[-1])
 
     # Otherwise, the last point must ensure that the last horizon is within the data.
     else:
@@ -204,10 +202,7 @@ def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
         if is_int(fh_max):
             end = n_timepoints - fh_max - 1
         else:
-            if isinstance(y, pd.Index):
-                end = y.get_loc(y[-1] - fh_max)
-            else:
-                end = y.index.get_loc(y.index[-1] - fh_max)
+            end = y.get_loc(y[-1] - fh_max)
 
     return end
 
@@ -1059,11 +1054,12 @@ class SingleWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         fh = _check_fh(self.fh)
+        y = _check_y(y)
         end = _get_end(y, fh)
         if array_is_int(fh):
             cutoff = end
         else:
-            cutoff = y.index[end].to_datetime64()
+            cutoff = y[end].to_datetime64()
         return np.array([cutoff])
 
 
