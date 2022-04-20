@@ -7,6 +7,7 @@ from sktime.clustering.metrics.medoids import medoids
 from sktime.datasets import load_acsf1
 from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.clustering.tests.metrics.tslearn_pe import dtw_barycenter_averaging_petitjean
 
 
 def test_dba():
@@ -22,3 +23,56 @@ def test_dba():
     test_dba = dba(X_train)
     test_medoids = medoids(X_train)
     joe = ""
+
+
+def test_tslearn_ploat():
+    import numpy
+    import matplotlib.pyplot as plt
+
+    from tslearn.barycenters import dtw_barycenter_averaging
+    from tslearn.datasets import CachedDatasets
+
+    # fetch the example data set
+    numpy.random.seed(0)
+    X_train, y_train, _, _ = CachedDatasets().load_dataset("Trace")
+    # tslearn_X = X_train[y_train == 2]
+
+    tslearn_X = X_train[y_train == 2]
+    length_of_sequence = tslearn_X.shape[1]
+
+    sktime_X = tslearn_X.copy()
+    sktime_X = sktime_X.reshape((sktime_X.shape[0], sktime_X.shape[2], sktime_X.shape[1]))
+
+    def plot_helper(barycenter):
+        # plot all points of the data set
+        for series in sktime_X:
+            plt.plot(series.ravel(), "k-", alpha=.2)
+        # plot the given barycenter of them
+        plt.plot(barycenter.ravel(), "r-", linewidth=2)
+
+    # plot the four variants with the same number of iterations and a tolerance of
+    # 1e-3 where applicable
+    ax1 = plt.subplot()
+
+    plt.subplot(4, 1, 1, sharex=ax1)
+    plt.title("Sktime DBA")
+    plot_helper(dba(sktime_X))
+
+    plt.subplot(4, 1, 2, sharex=ax1)
+    plt.title("Sktime medoids")
+    plot_helper(medoids(sktime_X))
+    #
+    # plt.subplot(4, 1, 3, sharex=ax1)
+    # plt.title("Tslearn DBA")
+    # plot_helper(dtw_barycenter_averaging(tslearn_X))
+
+    plt.subplot(4, 1, 4, sharex=ax1)
+    plt.title("Tslearn PE DBA")
+    plot_helper(dtw_barycenter_averaging_petitjean(tslearn_X))
+
+    # clip the axes for better readability
+    ax1.set_xlim([0, length_of_sequence])
+
+    # show the plot(s)
+    plt.tight_layout()
+    plt.show()
