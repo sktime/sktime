@@ -172,7 +172,7 @@ def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
 
     For a time series index `y_index`, `y_index[end]` will give
     the index of the training window.
-    Correspondingly, for a time series `y`,
+    Correspondingly, for a time series `y` with index `y_index`,
     `y.iloc[end]` or `y.loc[y_index[end]]`
     will provide the last index of the training window.
 
