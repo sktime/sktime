@@ -13,7 +13,7 @@ from sktime.classification.base import (
     _internal_convert,
 )
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.utils._testing.panel import _make_panel, _make_classification_y
+from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
 class _DummyClassifier(BaseClassifier):
