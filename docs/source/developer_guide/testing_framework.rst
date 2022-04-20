@@ -303,3 +303,12 @@ If a module for a new estimator type is added, multiple things need to be create
   This can be modelled off ``test_all_estimators`` or ``test_all_forecasters``.
 * and, a collection of tests for interface compliance with the base class of the estimator type.
   The tests should cover positive cases, as well as testing raising of informative error message in negative cases.
+
+Local Testing
+~~~~~~~~~~~~~~
+
+Execution of tests in local has been containerized with the help of ``docker``. In order to execute the tests, you need to have ``docker`` installed in your system. If you need to install ``docker``, please follow the instructions `here <https://docs.docker.com/desktop/>`.
+
+The command to execute the tests is: ``make dockertest pyversion=<python version>``. You can specify the Python version to be used for the tests using the ``pyversion`` argument. For example, to execute the tests in the Python version ``3.7``, use ``make dockertest pyversion=3.7``. The supported versions are ``3.7``, ``3.8`` and ``3.9`` (``3.10`` is under development). If the ``pyversion`` argument is not passed, version ``3.8`` will be used by default.
+
+Once the command is executed, ``docker`` will then create a container using the python base image of the specified version and execute the tests within it.
