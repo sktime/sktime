@@ -4,7 +4,7 @@
 Builds classifiers on each dimension (column) independently.
 """
 
-__author__ = ["Aaron Bostrom"]
+__author__ = ["abostrom"]
 __all__ = ["ColumnEnsembleClassifier"]
 
 from itertools import chain
@@ -23,7 +23,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     _tags = {
         "capability:multivariate": True,
-        "X_inner_mtype": "pd-multiindex",
+        "X_inner_mtype": ["nested_univ", "pd-multiindex"],
     }
 
     def __init__(self, estimators, verbose=False):
@@ -165,7 +165,6 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
-        self._is_fitted = True
         return self
 
     def _collect_probas(self, X):
@@ -178,7 +177,6 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for X using 'soft' voting."""
-        self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
