@@ -8,8 +8,8 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_paths import compute_return_path
-from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances._distance_alignment_paths import compute_min_return_path
+from sktime.distances.base import DistanceCallable, DistanceAlignmentPathCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -40,7 +40,7 @@ class _MsmDistance(NumbaDistance):
     series. IEEE Transactions on Knowledge and Data Engineering 25(6):1425–1438, 2013
     """
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
@@ -50,7 +50,7 @@ class _MsmDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         **kwargs: dict,
-    ) -> DistancePathCallable:
+    ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled MSM distance path callable.
 
         Series should be shape (1, m), where m is the series length. Series can be
@@ -96,26 +96,26 @@ class _MsmDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_msm_path(
+            def numba_msm_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_msm_path(
+            def numba_msm_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
-        return numba_msm_path
+        return numba_msm_distance_alignment_path
 
     def _distance_factory(
         self,

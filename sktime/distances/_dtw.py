@@ -8,9 +8,9 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_paths import compute_return_path
+from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.base._types import DistancePathCallable
+from sktime.distances.base._types import DistanceAlignmentPathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -60,7 +60,7 @@ class _DtwDistance(NumbaDistance):
     1):67–72, 1975
     """
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
@@ -69,7 +69,7 @@ class _DtwDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         **kwargs: Any
-    ) -> DistancePathCallable:
+    ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled dtw path distance callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
@@ -117,26 +117,26 @@ class _DtwDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_dtw_distance_path(
+            def numba_dtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_dtw_distance_path(
+            def numba_dtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
-        return numba_dtw_distance_path
+        return numba_dtw_distance_alignment_path
 
     def _distance_factory(
         self,
@@ -205,7 +205,7 @@ def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
     bounding_matrix: np.ndarray,
-) -> float:
+) -> np.ndarray:
     """Dtw distance compiled to no_python.
 
     Series should be shape (d, m), where d is the number of dimensions, m the series
@@ -223,8 +223,8 @@ def _cost_matrix(
 
     Returns
     -------
-    distance: float
-        Dtw distance between the x and y time series.
+    cost_matrix: np.ndarray (of shape (n, m) where n is the len(x) and m is len(y))
+        The dtw cost matrix.
     """
     dimensions = x.shape[0]
     x_size = x.shape[1]

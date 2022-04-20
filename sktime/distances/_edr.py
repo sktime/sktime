@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
 
 import warnings
 from typing import Any, List, Tuple
@@ -8,8 +8,8 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_paths import compute_return_path
-from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances._distance_alignment_paths import compute_min_return_path
+from sktime.distances.base import DistanceCallable, DistanceAlignmentPathCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -32,7 +32,7 @@ class _EdrDistance(NumbaDistance):
     on Management of Data, 2005
     """
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
@@ -42,8 +42,8 @@ class _EdrDistance(NumbaDistance):
         bounding_matrix: np.ndarray = None,
         epsilon: float = None,
         **kwargs: Any
-    ) -> DistancePathCallable:
-        """Create a no_python compiled edr path distance callable.
+    ) -> DistanceAlignmentPathCallable:
+        """Create a no_python compiled edr alignment path distance callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
         length. Series can be different lengths.
@@ -98,7 +98,7 @@ class _EdrDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_edr_distance_path(
+            def numba_edr_distance_alignment_path(
                 _x: np.ndarray, _y: np.ndarray
             ) -> Tuple[List, float, np.ndarray]:
                 if epsilon is None:
@@ -106,14 +106,14 @@ class _EdrDistance(NumbaDistance):
                 else:
                     _epsilon = epsilon
                 cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
                 return path, distance, cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_edr_distance_path(
+            def numba_edr_distance_alignment_path(
                 _x: np.ndarray, _y: np.ndarray
             ) -> Tuple[List, float]:
                 if epsilon is None:
@@ -121,11 +121,11 @@ class _EdrDistance(NumbaDistance):
                 else:
                     _epsilon = epsilon
                 cost_matrix = _edr_cost_matrix(_x, _y, _bounding_matrix, _epsilon)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 distance = float(cost_matrix[-1, -1] / max(_x.shape[1], _y.shape[1]))
                 return path, distance
 
-        return numba_edr_distance_path
+        return numba_edr_distance_alignment_path
 
     def _distance_factory(
         self,

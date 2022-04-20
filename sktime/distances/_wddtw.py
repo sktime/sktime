@@ -9,10 +9,10 @@ from numba import njit
 from numba.core.errors import NumbaWarning
 
 from sktime.distances._ddtw import DerivativeCallable, average_of_slope
-from sktime.distances._distance_paths import compute_return_path
+from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances._numba_utils import is_no_python_compiled_callable
 from sktime.distances._wdtw import _weighted_cost_matrix
-from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.base import DistanceCallable, DistanceAlignmentPathCallable, NumbaDistance
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -26,7 +26,7 @@ class _WddtwDistance(NumbaDistance):
     distance.
     """
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
@@ -37,8 +37,8 @@ class _WddtwDistance(NumbaDistance):
         compute_derivative: DerivativeCallable = average_of_slope,
         g: float = 0.0,
         **kwargs: Any,
-    ) -> DistancePathCallable:
-        """Create a no_python compiled wddtw distance path callable.
+    ) -> DistanceAlignmentPathCallable:
+        """Create a no_python compiled wddtw distance alignment path callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
         length. Series can be different lengths.
@@ -107,30 +107,30 @@ class _WddtwDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_wddtw_distance_path(
+            def numba_wddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_wddtw_distance_path(
+            def numba_wddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _weighted_cost_matrix(_x, _y, _bounding_matrix, g)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
-        return numba_wddtw_distance_path
+        return numba_wddtw_distance_alignment_path
 
     def _distance_factory(
         self,

@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-from abc import ABC, abstractmethod
-from typing import Callable, NamedTuple, Set, Union
+__author__ = ["chrisholder", "TonyBagnall"]
 
+from abc import ABC, abstractmethod
+from typing import Callable, NamedTuple, Set, Union, Tuple, List
 import numpy as np
 
-from sktime.distances.base._types import DistanceCallable, DistancePathCallable
+from sktime.distances.base._types import (
+    DistanceCallable, DistanceAlignmentPathCallable, AlignmentPathReturn
+)
 
 
 class NumbaDistance(ABC):
@@ -30,14 +33,14 @@ class NumbaDistance(ABC):
         dist_callable = self.distance_factory(x, y, **kwargs)
         return dist_callable(x, y)
 
-    def distance_path(
+    def distance_alignment_path(
         self,
         x: np.ndarray,
         y: np.ndarray,
         return_cost_matrix: bool = False,
         **kwargs: dict,
     ) -> float:
-        """Compute the distance path between two time series.
+        """Compute the distance alignment path between two time series.
 
         Parameters
         ----------
@@ -52,12 +55,15 @@ class NumbaDistance(ABC):
 
         Returns
         -------
-        np.ndarray (of shape (len(x))
-            Array of tuples that is the path through the matrix
+        list[tuple]
+            List of tuples that is the path through the matrix
         float
             Distance between x and y.
+        np.ndarray (of shape (len(x), len(y)).
+            Optional return only given if return_cost_matrix = True.
+            Cost matrix used to compute the distance.
         """
-        dist_callable = self.distance_path_factory(
+        dist_callable = self.distance_alignment_path_factory(
             x, y, return_cost_matrix=return_cost_matrix, **kwargs
         )
         return dist_callable(x, y)
@@ -107,14 +113,14 @@ class NumbaDistance(ABC):
 
         return no_python_callable
 
-    def distance_path_factory(
+    def distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
         return_cost_matrix: bool = False,
         **kwargs: dict,
     ) -> DistanceCallable:
-        """Create a no_python distance path.
+        """Create a no_python distance alignment path.
 
         It should validate kwargs and then compile a no_python callable
         that takes (x, y) as parameters and returns a float that represents the distance
@@ -148,7 +154,7 @@ class NumbaDistance(ABC):
         NumbaDistance._validate_factory_timeseries(x)
         NumbaDistance._validate_factory_timeseries(y)
 
-        no_python_callable = self._distance_path_factory(
+        no_python_callable = self._distance_alignment_path_factory(
             x, y, return_cost_matrix=return_cost_matrix, **kwargs
         )
 
@@ -210,13 +216,13 @@ class NumbaDistance(ABC):
         """
         ...
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
         return_cost_matrix: bool = False,
         **kwargs: dict,
-    ) -> DistancePathCallable:
+    ) -> DistanceAlignmentPathCallable:
         """Abstract method to create a no_python compiled distance path computation.
 
         _distance_factory should validate kwargs and then compile a no_python callable
@@ -258,4 +264,4 @@ class MetricInfo(NamedTuple):
     # NumbaDistance class
     dist_instance: NumbaDistance
     # Distance path callable
-    dist_path_func: Callable[[np.ndarray, np.ndarray], Union[np.ndarray, float]] = None
+    dist_alignment_path_func: AlignmentPathReturn = None

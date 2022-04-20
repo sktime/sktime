@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["chrisholder", "TonyBagnall"]
+
 from typing import List, Tuple
 
 import numpy as np
@@ -6,15 +8,25 @@ from numba import njit
 
 
 @njit(cache=True)
-def compute_return_path(
-    cost_matrix: np.ndarray, bounding_matrix: np.ndarray
+def compute_min_return_path(
+        cost_matrix: np.ndarray,
+        bounding_matrix: np.ndarray
 ) -> List[Tuple]:
-    """Compute the path from the cost matrix.
+    """Compute the minimum cost path through the cost matrix.
+
+    The return path is computed by finding a path through the cost matrix by taking
+    the min(cost_matrix[i - 1][j - 1], cost_matrix[i - 1][j], cost_matrix[i][j - 1]).
+    This is ideal for dtw based distances or others where the objective is to minimise
+    the cost.
 
     Parameters
     ----------
-    cost_matrix: np.ndarray
-        Dtw cost matrix to find dtw path through.
+    cost_matrix: np.ndarray (of size (n, m) where n is the length of the first time
+                    series and m is the length of the second time series)
+        Cost matrix used to compute the distance.
+    bounding_matrix: np.ndarray (of size (n, m) where n is the length of the first
+                    time series and m is the length of the second time series)
+        The bounding matrix that restricts the warping path.
 
     Returns
     -------
@@ -63,11 +75,22 @@ def compute_lcss_return_path(
 ) -> List[Tuple]:
     """Compute the path from lcss cost matrix.
 
+
     Parameters
     ----------
-    cost_matrix: np.ndarray
-        Dtw cost matrix to find dtw path through.
-
+    x: np.ndarray (of shape (dimensions, timepoints)
+        First time series.
+    y: np.ndarray (of shape (dimensions, timepoints)
+        Second time series.
+    epsilon : float
+        Matching threshold to determine if two subsequences are considered close
+        enough to be considered 'common'.
+    cost_matrix: np.ndarray (of size (n, m) where n is the length of the first time
+                    series and m is the length of the second time series)
+        The cost matrix used to compute the lcss distance.
+    bounding_matrix: np.ndarray (of size (n, m) where n is the length of the first
+                    time series and m is the length of the second time series)
+        The bounding matrix that restricts the warping path.
     Returns
     -------
     list[tuple]
