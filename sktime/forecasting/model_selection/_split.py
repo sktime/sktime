@@ -23,7 +23,7 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
-from sktime.datatypes._utilities import get_time_index
+from sktime.datatypes._utilities import get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.datetime import _coerce_duration_to_int
@@ -46,7 +46,7 @@ from sktime.utils.validation.forecasting import (
     check_fh,
     check_step_length,
 )
-from sktime.utils.validation.series import check_equal_time_index, check_time_index
+from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -122,43 +122,6 @@ def _repr(self) -> str:
     params = {k: v for k, v in params.items() if has_changed(k, v)}
 
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
-
-
-def _get_index_of_time_series(y: ACCEPTED_Y_TYPES) -> pd.Index:
-    """Coerce input to `split` function.
-
-    Parameters
-    ----------
-    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
-        coerced and checked version of input y
-
-    Returns
-    -------
-    check_time_index(y_index), where y_index is as follows:
-        if y is pd.Series, pd.DataFrame, y_index = y.index
-        if y is pd.Index, y_index = y itself
-        if y is np.ndarray, y_index =  pd.Index(y)
-
-    Raises
-    ------
-    TypeError
-        if y is not of one of the expected types
-    NotImplementedError
-        if y_index is not a supported sktime index type
-    ValueError
-        if y_index is not monotonous
-    """
-    if isinstance(y, (pd.Series, pd.DataFrame)):
-        y_index = y.index
-    elif isinstance(y, np.ndarray):
-        y_index = pd.Index(y.flatten())
-    elif isinstance(y, pd.Index):
-        y_index = y
-    else:
-        raise TypeError(
-            "Input to _check_y must be pd.Series, pd.DataFrame, np.ndarray, or pd.Index"
-        )
-    return check_time_index(index=y_index)
 
 
 def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
@@ -458,7 +421,7 @@ class BaseSplitter:
         test : np.ndarray
             Test window indices
         """
-        y_index = _get_index_of_time_series(y)
+        y_index = get_index_for_series(y)
         for train, test in self._split(y_index):
             yield train[train >= 0], test[test >= 0]
 
@@ -863,7 +826,7 @@ class BaseWindowSplitter(BaseSplitter):
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
-        y = _get_index_of_time_series(y)
+        y = get_index_for_series(y)
         fh = _check_fh(self.fh)
         step_length = check_step_length(self.step_length)
 
