@@ -49,7 +49,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     ):
         self.multioutput = multioutput
         self.score_average = score_average
-        super().__init__(func, name=name)
+        super().__init__(func, name=name, multioutput=multioutput)
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -121,12 +121,10 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         if not self.score_average and multioutput == "uniform_average":
             out = out.mean(axis=1, level=1)  # average over variables
         if not self.score_average and multioutput == "raw_values":
-            out = out  # don't averageW
+            out = out  # don't average
 
         if isinstance(out, pd.DataFrame):
             out = out.squeeze(axis=0)
-            if len(out) == 1:  # if result only one column, return as float
-                out = float(out)
 
         return out
 
@@ -287,12 +285,20 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
         y_pred_mtype = metadata["mtype"]
         inner_y_pred_mtype = self.get_tag("scitype:y_pred")
+
         y_pred_inner = convert(
             y_pred,
             from_type=y_pred_mtype,
             to_type=inner_y_pred_mtype,
             as_scitype="Proba",
         )
+
+        if inner_y_pred_mtype == "pred_interval":
+            if 0.0 in y_pred_inner.columns.get_level_values(1):
+                for var in y_pred_inner.columns.get_level_values(0):
+                    y_pred_inner[var, 0.0, "upper"] = y_pred_inner[var, 0.0, "lower"]
+
+        y_pred_inner.sort_index(axis=1, level=[0, 1], inplace=True)
 
         y_true, y_pred, multioutput = self._check_consistent_input(
             y_true, y_pred, multioutput
@@ -467,6 +473,7 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     def __init__(self, multioutput="uniform_average", score_average=True):
         name = "EmpiricalCoverage"
         self.score_average = score_average
+        self.multioutput = multioutput
         super().__init__(
             name=name, score_average=score_average, multioutput=multioutput
         )
@@ -490,6 +497,8 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
         if not isinstance(y_true, np.ndarray):
             y_true_np = y_true.to_numpy()
+        else:
+            y_true_np = y_true
         if y_true_np.ndim == 1:
             y_true_np = y_true.reshape(-1, 1)
         y_true_np = np.tile(
@@ -531,6 +540,7 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     def __init__(self, multioutput="uniform_average", score_average=True):
         name = "ConstraintViolation"
         self.score_average = score_average
+        self.multioutput = multioutput
         super().__init__(
             name=name, score_average=score_average, multioutput=multioutput
         )
@@ -554,6 +564,8 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
         if not isinstance(y_true, np.ndarray):
             y_true_np = y_true.to_numpy()
+        else:
+            y_true_np = y_true
 
         if y_true_np.ndim == 1:
             y_true_np = y_true.reshape(-1, 1)
