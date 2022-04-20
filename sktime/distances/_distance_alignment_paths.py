@@ -75,7 +75,6 @@ def compute_lcss_return_path(
 ) -> List[Tuple]:
     """Compute the path from lcss cost matrix.
 
-
     Parameters
     ----------
     x: np.ndarray (of shape (dimensions, timepoints)
@@ -91,6 +90,7 @@ def compute_lcss_return_path(
     bounding_matrix: np.ndarray (of size (n, m) where n is the length of the first
                     time series and m is the length of the second time series)
         The bounding matrix that restricts the warping path.
+
     Returns
     -------
     list[tuple]

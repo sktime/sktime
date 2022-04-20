@@ -2,7 +2,7 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 
-from typing import Any, Callable, List, Union, Tuple
+from typing import Any, Callable, Union
 
 import numpy as np
 from numba import njit
