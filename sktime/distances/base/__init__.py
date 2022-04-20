@@ -9,15 +9,15 @@ __all__ = [
     "ValidCallableTypes",
     "MetricInfo",
     "DistanceAlignmentPathCallable",
-    "AlignmentPathReturn"
+    "AlignmentPathReturn",
 ]
 
 from sktime.distances.base._base import MetricInfo, NumbaDistance
 from sktime.distances.base._types import (
+    AlignmentPathReturn,
+    DistanceAlignmentPathCallable,
     DistanceCallable,
     DistanceFactoryCallable,
     DistancePairwiseCallable,
-    DistanceAlignmentPathCallable,
     ValidCallableTypes,
-    AlignmentPathReturn
 )

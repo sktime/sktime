@@ -28,11 +28,11 @@ from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import (
-    DistanceCallable,
+    AlignmentPathReturn,
     DistanceAlignmentPathCallable,
+    DistanceCallable,
     MetricInfo,
     NumbaDistance,
-    AlignmentPathReturn
 )
 
 

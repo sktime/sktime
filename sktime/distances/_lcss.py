@@ -10,7 +10,11 @@ from numba import njit
 from numba.core.errors import NumbaWarning
 
 from sktime.distances._distance_alignment_paths import compute_lcss_return_path
-from sktime.distances.base import DistanceCallable, DistanceAlignmentPathCallable, NumbaDistance
+from sktime.distances.base import (
+    DistanceAlignmentPathCallable,
+    DistanceCallable,
+    NumbaDistance,
+)
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)

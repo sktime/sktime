@@ -9,8 +9,7 @@ from numba import njit
 
 @njit(cache=True)
 def compute_min_return_path(
-        cost_matrix: np.ndarray,
-        bounding_matrix: np.ndarray
+    cost_matrix: np.ndarray, bounding_matrix: np.ndarray
 ) -> List[Tuple]:
     """Compute the minimum cost path through the cost matrix.
 

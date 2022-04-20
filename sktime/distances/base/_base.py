@@ -3,10 +3,13 @@ __author__ = ["chrisholder", "TonyBagnall"]
 
 from abc import ABC, abstractmethod
 from typing import Callable, NamedTuple, Set
+
 import numpy as np
 
 from sktime.distances.base._types import (
-    DistanceCallable, DistanceAlignmentPathCallable, AlignmentPathReturn
+    AlignmentPathReturn,
+    DistanceAlignmentPathCallable,
+    DistanceCallable,
 )
 
 

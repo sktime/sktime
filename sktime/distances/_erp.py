@@ -9,7 +9,11 @@ from numba import njit
 from numba.core.errors import NumbaWarning
 
 from sktime.distances._distance_alignment_paths import compute_min_return_path
-from sktime.distances.base import DistanceCallable, DistanceAlignmentPathCallable, NumbaDistance
+from sktime.distances.base import (
+    DistanceAlignmentPathCallable,
+    DistanceCallable,
+    NumbaDistance,
+)
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -94,8 +98,7 @@ class _ErpDistance(NumbaDistance):
 
             @njit(cache=True)
             def numba_erp_distance_alignment_path(
-                    _x: np.ndarray,
-                    _y: np.ndarray
+                _x: np.ndarray, _y: np.ndarray
             ) -> Tuple[List, float]:
                 cost_matrix = _erp_cost_matrix(_x, _y, _bounding_matrix, g)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
