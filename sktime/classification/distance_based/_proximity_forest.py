@@ -739,25 +739,18 @@ class ProximityStump(BaseClassifier):
 
     Model a decision stump which uses a distance measure to partition data.
 
-    Attributes
+    Parameters
     ----------
-        label_encoder: label encoder to change string labels to numeric indices
-        y_exemplar: class label list of the exemplar instances
-        X_exemplar: dataframe of the exemplar instances
-        X_branches: dataframes for each branch, one per exemplar
-        y_branches: class label list for each branch, one per exemplar
-        classes_: unique list of classes
-        entropy: the gain associated with the split of data
-        random_state: the random state
-        get_exemplars: function to extract exemplars from a dataframe and
-        class value list
-        setup_distance_measure: function to setup the distance measure
-        getters from dataframe and class value list
-        get_distance_measure: distance measure getters
-        distance_measure: distance measures
-        get_gain: function to score the quality of a split
-        verbosity: logging verbosity
-        n_jobs: number of jobs to run in parallel *across threads"
+    random_state: integer, the random state
+    get_exemplars: function
+        extract exemplars from a dataframe and class value list
+    setup_distance_measure: function
+        setup the distance measure getters from dataframe and class value list
+    get_distance_measure: distance measure getters
+    distance_measure: distance measures
+    get_gain: function to score the quality of a split
+    verbosity: logging verbosity
+    n_jobs: number of jobs to run in parallel *across threads"
 
     Examples
     --------
@@ -789,22 +782,6 @@ class ProximityStump(BaseClassifier):
         verbosity=0,
         n_jobs=1,
     ):
-        """
-        Construct a proximity stump.
-
-        Parameters
-        ----------
-        random_state: integer, the random state
-        get_exemplars: function to extract exemplars from a dataframe and class value
-        list
-        setup_distance_measure: function to setup the distance
-        measure getters from dataframe and class value list
-        get_distance_measure: distance measure getters
-        distance_measure: distance measures
-        get_gain: function to score the quality of a split
-        verbosity: logging verbosity
-        n_jobs: number of jobs to run in parallel *across threads"
-        """
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
         self.get_distance_measure = get_distance_measure
@@ -1023,26 +1000,37 @@ class ProximityTree(BaseClassifier):
 
     Attributes
     ----------
-        label_encoder: label encoder to change string labels to numeric indices
-        classes_: unique list of classes
-        random_state: the random state
-        get_exemplars: function to extract exemplars from a dataframe and
-        class value list
-        setup_distance_measure: function to setup the distance measure
-        getters from dataframe and class value list
-        get_distance_measure: distance measure getters
-        distance_measure: distance measures
-        get_gain: function to score the quality of a split
+        random_state            : the random state
+        get_exemplars:
+            function to extract exemplars from a dataframe and class value list
+        distance_measure        : distance measures
+        get_distance_measure    : distance measure getters
+        setup_distance_measure  : function
+            setup the distance measure getters from dataframe and class value list
+        get_gain                : function
+            score the quality of a split
         verbosity: logging verbosity
+        is_leaf                 : function
+            decide when to mark a node as a leaf node
         n_jobs: number of jobs to run in parallel *across threads"
         find_stump: function to find the best split of data
         max_depth: max tree depth
         depth: current depth of tree, as each node is a tree itself,
         therefore can have a depth of >=0
-        X: train data
-        y: train data labels
         stump: the stump used to split data at this node
         branches: the partitions of data driven by the stump
+        get_exemplars: get the exemplars from a given dataframe and list of class labels
+        distance_measure: distance measure to use
+        get_distance_measure: method to get the distance measure
+        setup_distance_measure: method to setup the distance measures based upon the
+        dataset given
+        get_gain: method to find the gain of a data split
+        max_depth: maximum depth of the tree
+        verbosity: number reflecting the verbosity of logging
+        n_jobs: number of parallel threads to use while building
+        find_stump: method to find the best split of data / stump at a node
+        n_stump_evaluations: number of stump evaluations to do if
+        find_stump method is None
 
     Examples
     --------
@@ -1076,25 +1064,6 @@ class ProximityTree(BaseClassifier):
         n_stump_evaluations=5,
         find_stump=None,
     ):
-        """Build a Proximity Tree object.
-
-        Parameters
-        ----------
-        random_state: the random state
-        get_exemplars: get the exemplars from a given dataframe and list of class labels
-        distance_measure: distance measure to use
-        get_distance_measure: method to get the distance measure
-        setup_distance_measure: method to setup the distance measures based upon the
-        dataset given
-        get_gain: method to find the gain of a data split
-        max_depth: maximum depth of the tree
-        is_leaf: function to decide when to mark a node as a leaf node
-        verbosity: number reflecting the verbosity of logging
-        n_jobs: number of parallel threads to use while building
-        find_stump: method to find the best split of data / stump at a node
-        n_stump_evaluations: number of stump evaluations to do if
-        find_stump method is None
-        """
         self.verbosity = verbosity
         self.n_stump_evaluations = n_stump_evaluations
         self.find_stump = find_stump
@@ -1270,31 +1239,24 @@ class ProximityForest(BaseClassifier):
 
     Parameters
     ----------
-    random_state: random, default = None seed for reproducibility
-    n_estimators : int, default=100 The number of trees in the forest.
+    random_state        : random, default = None
+        seed for reproducibility
+    n_estimators        : int, default=100
+        The number of trees in the forest.
     distance_measure: default = None
-    get_distance_measure: default=None, distance measure getters
-    get_exemplars: default=get_one_exemplar_per_class_proximity,
-    get_gain: default=gini_gain, function to score the quality of a split
-    verbosity: default=0, logging verbosity
-    max_depth: default=np.math.inf,
-    is_leaf: default=pure,
-    n_jobs: default=int, 1, number of jobs to run in parallel *across threads"
-    n_stump_evaluations: int, default=5,
+    get_exemplars: default=get_one_exemplar_per_class_proximity
+    get_gain: default=gini_gain
+        function to score the quality of a split
+    verbosity: default=0
+    max_depth: default=np.math.inf
+        maximum depth of the tree
+    is_leaf: default=pure
+        function to decide when to mark a node as a leaf node
+    n_jobs: default=int, 1
+        number of jobs to run in parallel *across threads"
+    n_stump_evaluations: int, default=5
     find_stump: default=None, function to find the best split of data
-    setup_distance_measure_getter=setup_all_distance_measure_getter,
-    setup_distance_measure_getter: function to setup the distance
-
-    Attributes
-    ----------
-    label_encoder: label encoder to change string labels to numeric indices
-    classes_: unique list of classes
-    get_exemplars: function to extract exemplars from a dataframe and
-           class value list
-    max_depth: max tree depth
-    X: train data
-    y: train data labels
-    trees: list of trees in the forest
+    setup_distance_measure_getter=setup_all_distance_measure_getter
 
     Notes
     -----
@@ -1342,29 +1304,6 @@ class ProximityForest(BaseClassifier):
         find_stump=None,
         setup_distance_measure_getter=setup_all_distance_measure_getter,
     ):
-        """Build a Proximity Forest object.
-
-        Parameters
-        ----------
-        random_state: the random state
-        get_exemplars: get the exemplars from a given dataframe and
-        list of class labels
-        distance_measure: distance measure to use
-        get_distance_measure: method to get the distance measure if
-        no already set
-        setup_distance_measure_getter: method to setup the distance
-        measures based upon the dataset given
-        get_gain: method to find the gain of a data split
-        max_depth: maximum depth of the tree
-        is_leaf: function to decide when to mark a node as a leaf node
-        verbosity: number reflecting the verbosity of logging
-        n_jobs: number of parallel threads to use while building
-        find_stump: method to find the best split of data / stump at
-        a node
-        n_stump_evaluations: number of stump evaluations to do if
-        find_stump method is None
-        n_estimators: number of trees to construct
-        """
         self.is_leaf = is_leaf
         self.verbosity = verbosity
         self.max_depth = max_depth
