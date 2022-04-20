@@ -23,6 +23,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     _tags = {
         "capability:multivariate": True,
+        "X_inner_mtype": "pd-multiindex",
     }
 
     def __init__(self, estimators, verbose=False):
@@ -30,6 +31,12 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self.estimators = estimators
         self.remainder = "drop"
         super(BaseColumnEnsembleClassifier, self).__init__()
+        self._anytagis_then_set(
+            "capability:unequal_length", False, True, self._estimators
+        )
+        self._anytagis_then_set(
+            "capability:missing_values", False, True, self._estimators
+        )
 
     @property
     def _estimators(self):
