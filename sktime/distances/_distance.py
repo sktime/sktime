@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Compute the distance between two time series."""
+__author__ = ["chrisholder", "TonyBagnall"]
+
 
 from typing import Any, Callable, Union
 
@@ -27,8 +28,9 @@ from sktime.distances._squared import _SquaredDistance
 from sktime.distances._wddtw import _WddtwDistance
 from sktime.distances._wdtw import _WdtwDistance
 from sktime.distances.base import (
+    AlignmentPathReturn,
+    DistanceAlignmentPathCallable,
     DistanceCallable,
-    DistancePathCallable,
     MetricInfo,
     NumbaDistance,
 )
@@ -846,7 +848,7 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
     return distance(x, y, metric="euclidean", **kwargs)
 
 
-def dtw_path(
+def dtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -854,8 +856,8 @@ def dtw_path(
     itakura_max_slope: Union[float, None] = None,
     bounding_matrix: np.ndarray = None,
     **kwargs: Any,
-) -> DistancePathCallable:
-    r"""Compute the dynamic time warping (DTW) path between two time series.
+) -> AlignmentPathReturn:
+    r"""Compute the dynamic time warping (DTW) alignment path.
 
     Originally proposed in [1]_ DTW computes the distance between two time series by
     considering their alignments during the calculation. This is done by measuring
@@ -893,10 +895,13 @@ def dtw_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Dtw path.
+    list[tuple]
+        List of tuples containing the dtw alignment path.
     float
         Dtw distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -925,12 +930,12 @@ def dtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="dtw", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def wdtw_path(
+def wdtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -939,8 +944,8 @@ def wdtw_path(
     bounding_matrix: np.ndarray = None,
     g: float = 0.05,
     **kwargs: Any,
-) -> DistancePathCallable:
-    """Compute the weighted dynamic time warping (wdtw) path between two time series.
+) -> AlignmentPathReturn:
+    """Compute the weighted dynamic time warping (wdtw) alignment path.
 
     First proposed in [1]_, WDTW adds a  adds a multiplicative weight penalty based on
     the warping distance. This means that time series with lower phase difference have
@@ -985,10 +990,13 @@ def wdtw_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Wdtw path.
+    list[tuple]
+        List of tuples containing the wdtw alignment path.
     float
         Wdtw distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -1017,12 +1025,12 @@ def wdtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="wdtw", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def ddtw_path(
+def ddtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -1031,8 +1039,8 @@ def ddtw_path(
     bounding_matrix: np.ndarray = None,
     compute_derivative: DerivativeCallable = average_of_slope,
     **kwargs: Any,
-) -> DistancePathCallable:
-    r"""Compute the derivative dynamic time warping (DDTW) path between time series.
+) -> AlignmentPathReturn:
+    r"""Compute the derivative dynamic time warping (DDTW) alignment path.
 
     DDTW is an adaptation of DTW originally proposed in [1]_. DDTW attempts to
     improve on dtw by better account for the 'shape' of the time series.
@@ -1076,10 +1084,13 @@ def ddtw_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Ddtw path.
+    list[tuple]
+        List of tuples containing the ddtw alignment path.
     float
         Ddtw distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -1110,12 +1121,12 @@ def ddtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="ddtw", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def wddtw_path(
+def wddtw_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -1125,8 +1136,8 @@ def wddtw_path(
     compute_derivative: DerivativeCallable = average_of_slope,
     g: float = 0.0,
     **kwargs: Any,
-) -> DistancePathCallable:
-    r"""Compute the weighted derivative dynamic time warping (WDDTW) path.
+) -> AlignmentPathReturn:
+    r"""Compute the weighted derivative dynamic time warping (WDDTW) alignment path.
 
     WDDTW was first proposed in [1]_ as an extension of DDTW. By adding a weight
     to the derivative it means the alignment isn't only considering the shape of the
@@ -1175,10 +1186,13 @@ def wddtw_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Wddtw path.
+    list[tuple]
+        List of tuples containing the wddtw alignment path.
     float
         Wddtw distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -1210,12 +1224,12 @@ def wddtw_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="wddtw", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def edr_path(
+def edr_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -1224,8 +1238,8 @@ def edr_path(
     bounding_matrix: Union[np.ndarray, None] = None,
     epsilon: float = None,
     **kwargs: Any,
-) -> DistancePathCallable:
-    """Compute the Edit distance for real sequences (EDR) path between two series.
+) -> AlignmentPathReturn:
+    """Compute the Edit distance for real sequences (EDR) alignment path.
 
     EDR computes the minimum number of elements (as a percentage) that must be removed
     from x and y so that the sum of the distance between the remaining signal elements
@@ -1263,10 +1277,14 @@ def edr_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Edr path.
+    list[tuple]
+        List of tuples containing the edr alignment path.
     float
         Edr distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
+
 
     Raises
     ------
@@ -1297,12 +1315,12 @@ def edr_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="edr", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def erp_path(
+def erp_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -1311,8 +1329,8 @@ def erp_path(
     bounding_matrix: Union[np.ndarray, None] = None,
     g: float = 0.0,
     **kwargs: Any,
-) -> DistancePathCallable:
-    """Compute the Edit distance for real penalty (ERP) path between two series.
+) -> AlignmentPathReturn:
+    """Compute the Edit distance for real penalty (ERP) alignment path.
 
     ERP, first proposed in [1]_, attempts align time series
     by better considering how indexes are carried forward through the cost matrix.
@@ -1347,10 +1365,13 @@ def erp_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Erp path.
+    list[tuple]
+        List of tuples containing the erp alignment path.
     float
         Erp distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -1380,12 +1401,12 @@ def erp_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="erp", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def lcss_path(
+def lcss_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
@@ -1394,8 +1415,8 @@ def lcss_path(
     bounding_matrix: Union[np.ndarray, None] = None,
     epsilon: float = 1.0,
     **kwargs: Any,
-) -> DistancePathCallable:
-    """Compute the longest common subsequence (LCSS) path between two time series.
+) -> AlignmentPathReturn:
+    """Compute the longest common subsequence (LCSS) alignment path.
 
     LCSS attempts to find the longest common sequence between two time series and
     returns a value that is the percentage that longest common sequence assumes.
@@ -1433,12 +1454,15 @@ def lcss_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Ddtw path.
+    list[tuple]
+        List of tuples containing the lcss alignment path.
     float
         Lcss distance between x and y. The value returned will be between 0.0 and 1.0,
         where 0.0 means the two time series are exactly the same and 1.0 means they
         are complete opposites.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -1468,19 +1492,19 @@ def lcss_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="lcss", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
 
-def msm_path(
+def msm_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
     c: float = 0.0,
     **kwargs: Any,
-) -> float:
-    """Compute the move-split-merge path between time series.
+) -> AlignmentPathReturn:
+    """Compute the move-split-merge alignment path.
 
     This metric uses as building blocks three fundamental operations: Move, Split,
     and Merge. A Move operation changes the value of a single element, a Split
@@ -1503,10 +1527,13 @@ def msm_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
-        Ddtw path.
+    list[tuple]
+        List of tuples containing the msm alignment path.
     float
         Msm distance between x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
 
     Raises
     ------
@@ -1530,7 +1557,7 @@ def msm_path(
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
-    return distance_path(
+    return distance_alignment_path(
         x, y, metric="msm", return_cost_matrix=return_cost_matrix, **format_kwargs
     )
 
@@ -1765,12 +1792,16 @@ def pairwise_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> pairwise_distance(x_1d, y_1d, metric='dtw')
-    array([[58.]])
+    array([[16., 25., 36., 49.],
+           [ 9., 16., 25., 36.],
+           [ 4.,  9., 16., 25.],
+           [ 1.,  4.,  9., 16.]])
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw')
-    array([[512.]])
+    array([[256., 576.],
+           [ 58., 256.]])
 
     >>> x_3d = np.array([[[1], [2], [3], [4]], [[5], [6], [7], [8]]])  # 3d array
     >>> y_3d = np.array([[[9], [10], [11], [12]], [[13], [14], [15], [16]]])  # 3d array
@@ -1781,7 +1812,8 @@ def pairwise_distance(
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> pairwise_distance(x_2d, y_2d, metric='dtw', window=0.5)
-    array([[512.]])
+    array([[256., 576.],
+           [ 58., 256.]])
     """
     _x = to_numba_pairwise_timeseries(x)
     if y is None:
@@ -1794,7 +1826,7 @@ def pairwise_distance(
     return _compute_pairwise_distance(_x, _y, symmetric, _metric_callable)
 
 
-def distance_path(
+def distance_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     metric: Union[
@@ -1807,8 +1839,8 @@ def distance_path(
     ],
     return_cost_matrix: bool = False,
     **kwargs: Any,
-) -> Union[list, float]:
-    """Compute the path and distance between two time series.
+) -> AlignmentPathReturn:
+    """Compute the alignment path and distance between two time series.
 
     First the distance metric is 'resolved'. This means the metric that is passed
     is resolved to a callable. The callable is then called with x and y and the
@@ -1855,21 +1887,25 @@ def distance_path(
 
     Returns
     -------
-    np.ndarray (1d array of tuples)
+    list[tuple]
+        List of tuples containing the alginment path for the distance.
     float
         Distance between the x and y.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
     """
     _x = to_numba_timeseries(x)
     _y = to_numba_timeseries(y)
 
     _dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
 
-    return _dist_instance.distance_path(
+    return _dist_instance.distance_alignment_path(
         _x, _y, return_cost_matrix=return_cost_matrix, **kwargs
     )
 
 
-def distance_path_factory(
+def distance_alignment_path_factory(
     x: np.ndarray,
     y: np.ndarray,
     metric: Union[
@@ -1882,8 +1918,8 @@ def distance_path_factory(
     ],
     return_cost_matrix: bool = False,
     **kwargs: Any,
-) -> Callable[[np.ndarray, np.ndarray], Union[list, float]]:
-    """Produce a distance factory numba callable.
+) -> DistanceAlignmentPathCallable:
+    """Produce a distance alignment path factory numba callable.
 
     First the distance metric is 'resolved'. This means the metric that is passed
     is resolved to a callable. The callable is then called with x and y and the
@@ -1941,7 +1977,9 @@ def distance_path_factory(
     _y = to_numba_timeseries(y)
 
     dist_instance = _resolve_dist_instance(metric, _x, _y, _METRIC_INFOS, **kwargs)
-    callable = dist_instance.distance_path_factory(_x, _y, return_cost_matrix, **kwargs)
+    callable = dist_instance.distance_alignment_path_factory(
+        _x, _y, return_cost_matrix, **kwargs
+    )
 
     @njit(cache=True)
     def dist_callable(x: np.ndarray, y: np.ndarray):
@@ -1964,21 +2002,21 @@ _METRIC_INFOS = [
         aka={"erp", "edit distance with real penalty"},
         dist_func=erp_distance,
         dist_instance=_ErpDistance(),
-        dist_path_func=erp_path,
+        dist_alignment_path_func=erp_alignment_path,
     ),
     MetricInfo(
         canonical_name="edr",
         aka={"edr", "edit distance for real sequences"},
         dist_func=edr_distance,
         dist_instance=_EdrDistance(),
-        dist_path_func=edr_path,
+        dist_alignment_path_func=edr_alignment_path,
     ),
     MetricInfo(
         canonical_name="lcss",
         aka={"lcss", "longest common subsequence"},
         dist_func=lcss_distance,
         dist_instance=_LcssDistance(),
-        dist_path_func=lcss_path,
+        dist_alignment_path_func=lcss_alignment_path,
     ),
     MetricInfo(
         canonical_name="squared",
@@ -1991,35 +2029,35 @@ _METRIC_INFOS = [
         aka={"dtw", "dynamic time warping"},
         dist_func=dtw_distance,
         dist_instance=_DtwDistance(),
-        dist_path_func=dtw_path,
+        dist_alignment_path_func=dtw_alignment_path,
     ),
     MetricInfo(
         canonical_name="ddtw",
         aka={"ddtw", "derivative dynamic time warping"},
         dist_func=ddtw_distance,
         dist_instance=_DdtwDistance(),
-        dist_path_func=ddtw_path,
+        dist_alignment_path_func=ddtw_alignment_path,
     ),
     MetricInfo(
         canonical_name="wdtw",
         aka={"wdtw", "weighted dynamic time warping"},
         dist_func=wdtw_distance,
         dist_instance=_WdtwDistance(),
-        dist_path_func=wdtw_path,
+        dist_alignment_path_func=wdtw_alignment_path,
     ),
     MetricInfo(
         canonical_name="wddtw",
         aka={"wddtw", "weighted derivative dynamic time warping"},
         dist_func=wddtw_distance,
         dist_instance=_WddtwDistance(),
-        dist_path_func=wddtw_path,
+        dist_alignment_path_func=wddtw_alignment_path,
     ),
     MetricInfo(
         canonical_name="msm",
         aka={"msm", "move-split-merge"},
         dist_func=msm_distance,
         dist_instance=_MsmDistance(),
-        dist_path_func=msm_path,
+        dist_alignment_path_func=msm_alignment_path,
     ),
 ]
 

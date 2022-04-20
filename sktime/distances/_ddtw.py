@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
+
 
 import warnings
 from typing import Any, Callable, List, Tuple
@@ -8,10 +9,14 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_paths import compute_return_path
+from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances._dtw import _cost_matrix
 from sktime.distances._numba_utils import is_no_python_compiled_callable
-from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances.base import (
+    DistanceAlignmentPathCallable,
+    DistanceCallable,
+    NumbaDistance,
+)
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -20,18 +25,19 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 DerivativeCallable = Callable[[np.ndarray], np.ndarray]
 
 
-def average_of_slope_transform(X: np.ndarray):
+def average_of_slope_transform(X: np.ndarray) -> np.ndarray:
     """Compute the average of a slope between points for multiple series.
 
     Parameters
     ----------
-    q: np.ndarray (2d array) A times series.
+    X: np.ndarray (of shape (d, m) where d is the dimensions and m is the timepoints.
+        A time series.
 
     Returns
     -------
     np.ndarray (2d array of shape nxm where n is len(q.shape[0]-2) and m is
                 len(q.shape[1]))
-
+        The derviative of the time series X.
     """
     derivative_X = []
     for val in X:
@@ -40,7 +46,7 @@ def average_of_slope_transform(X: np.ndarray):
 
 
 @njit(cache=True, fastmath=True)
-def average_of_slope(q: np.ndarray):
+def average_of_slope(q: np.ndarray) -> np.ndarray:
     r"""Compute the average of a slope between points.
 
     Computes the average of the slope of the line through the point in question and
@@ -54,7 +60,8 @@ def average_of_slope(q: np.ndarray):
 
     Parameters
     ----------
-    q: np.ndarray (2d array) A times series.
+    q: np.ndarray (of shape (d, m) where d is the dimensions and m is the timepoints.
+        A time series.
 
     Returns
     -------
@@ -80,7 +87,7 @@ class _DdtwDistance(NumbaDistance):
     then applies DTW (using the _cost_matrix from _DtwDistance)
     """
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
@@ -90,8 +97,8 @@ class _DdtwDistance(NumbaDistance):
         bounding_matrix: np.ndarray = None,
         compute_derivative: DerivativeCallable = average_of_slope,
         **kwargs: Any,
-    ) -> DistancePathCallable:
-        """Create a no_python compiled ddtw distance path callable.
+    ) -> DistanceAlignmentPathCallable:
+        """Create a no_python compiled ddtw distance alignment path callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
         length. Series can be different lengths.
@@ -150,30 +157,30 @@ class _DdtwDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_ddtw_distance_path(
+            def numba_ddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
         else:
 
             @njit(cache=True)
-            def numba_ddtw_distance_path(
+            def numba_ddtw_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
                 _x = compute_derivative(_x)
                 _y = compute_derivative(_y)
                 cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = compute_return_path(cost_matrix, _bounding_matrix)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
-        return numba_ddtw_distance_path
+        return numba_ddtw_distance_alignment_path
 
     def _distance_factory(
         self,

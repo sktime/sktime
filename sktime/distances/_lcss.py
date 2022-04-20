@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
+
 
 import warnings
 from typing import Any, List, Tuple
@@ -8,8 +9,12 @@ import numpy as np
 from numba import njit
 from numba.core.errors import NumbaWarning
 
-from sktime.distances._distance_paths import compute_lcss_return_path
-from sktime.distances.base import DistanceCallable, DistancePathCallable, NumbaDistance
+from sktime.distances._distance_alignment_paths import compute_lcss_return_path
+from sktime.distances.base import (
+    DistanceAlignmentPathCallable,
+    DistanceCallable,
+    NumbaDistance,
+)
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
@@ -51,7 +56,7 @@ class _LcssDistance(NumbaDistance):
     of the ACM 24(4), 664--675, 1977
     """
 
-    def _distance_path_factory(
+    def _distance_alignment_path_factory(
         self,
         x: np.ndarray,
         y: np.ndarray,
@@ -61,8 +66,8 @@ class _LcssDistance(NumbaDistance):
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
         **kwargs: Any,
-    ) -> DistancePathCallable:
-        """Create a no_python compiled lcss distance path callable.
+    ) -> DistanceAlignmentPathCallable:
+        """Create a no_python compiled lcss distance alignment path callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
         length. Series can be different lengths.
@@ -114,7 +119,7 @@ class _LcssDistance(NumbaDistance):
         if return_cost_matrix is True:
 
             @njit(cache=True)
-            def numba_lcss_distance(
+            def numba_lcss_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
@@ -134,7 +139,7 @@ class _LcssDistance(NumbaDistance):
         else:
 
             @njit(cache=True)
-            def numba_lcss_distance(
+            def numba_lcss_distance_alignment_path(
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
@@ -151,7 +156,7 @@ class _LcssDistance(NumbaDistance):
                 )
                 return path, distance
 
-        return numba_lcss_distance
+        return numba_lcss_distance_alignment_path
 
     def _distance_factory(
         self,
