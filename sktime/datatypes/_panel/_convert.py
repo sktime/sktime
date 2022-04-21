@@ -889,8 +889,9 @@ def from_nested_to_3d_numpy(X):
     # for column in range(n_columns):
     #     array[:, column, :] = X.iloc[:, column].tolist()
     # return array
-    if not is_nested_dataframe(X):
-        raise ValueError("Input DataFrame is not a nested DataFrame")
+    valid, msg, _ = is_nested_dataframe(X, return_metadata=True)
+    if not valid:
+        raise ValueError(msg)
 
     # n_columns = X.shape[1]
     nested_col_mask = [*are_columns_nested(X)]
