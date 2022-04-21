@@ -1251,7 +1251,7 @@ class ProximityTree(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"max_depth": 2, "n_stump_evaluations": 1}
+        return {"max_depth": 1, "n_stump_evaluations": 1}
 
 
 class ProximityForest(BaseClassifier):
@@ -1570,9 +1570,9 @@ class ProximityForest(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
+            return {"n_estimators": 3, "max_depth": 1, "n_stump_evaluations": 2}
         else:
-            return {"n_estimators": 2, "max_depth": 2, "n_stump_evaluations": 1}
+            return {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
 
 
 # start of util functions
