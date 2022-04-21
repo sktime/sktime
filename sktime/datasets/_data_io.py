@@ -35,8 +35,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert, MTYPE_LIST_PANEL
-from sktime.datatypes._hierarchical import MTYPE_LIST_HIERARCHICAL
+from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, MTYPE_LIST_PANEL, convert
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
