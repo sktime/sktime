@@ -15,7 +15,7 @@ from sklearn.preprocessing import normalize
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.datatypes import convert
 from sktime.distances import (
     dtw_distance,
     erp_distance,
@@ -152,8 +152,8 @@ def numba_wrapper(distance_measure):
     """
 
     def distance(instance_a, instance_b, **params):
-        instance_a = from_nested_to_2d_array(instance_a, return_numpy=True)
-        instance_b = from_nested_to_2d_array(instance_b, return_numpy=True)
+        instance_a = convert(instance_a, "nested_univ", "numpyflat")
+        instance_b = convert(instance_b, "nested_univ", "numpyflat")
         return distance_measure(instance_a, instance_b, **params)
 
     return distance
