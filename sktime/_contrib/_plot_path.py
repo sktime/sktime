@@ -3,7 +3,7 @@ import matplotlib.colors as colorplt
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sktime.distances._distance import distance_path, pairwise_distance
+from sktime.distances._distance import distance_alignment_path, pairwise_distance
 
 gray_cmap = colorplt.LinearSegmentedColormap.from_list("", ["#c9cacb", "white"])
 
@@ -50,7 +50,7 @@ def _plot_path(
     if dist_kwargs is None:
         dist_kwargs = {}
     try:
-        path, dist, cost_matrix = distance_path(
+        path, dist, cost_matrix = distance_alignment_path(
             x, y, metric=metric, return_cost_matrix=True, **dist_kwargs
         )
 
@@ -112,7 +112,7 @@ def _plot_alignment(x, y, metric, dist_kwargs: dict = None, title: str = ""):
     if dist_kwargs is None:
         dist_kwargs = {}
     try:
-        path, dist, cost_matrix = distance_path(
+        path, dist, cost_matrix = distance_alignment_path(
             x, y, metric=metric, return_cost_matrix=True, **dist_kwargs
         )
     except NotImplementedError:

@@ -3,11 +3,11 @@
 import numpy as np
 import pytest
 
-from sktime.distances._distance import _METRIC_INFOS, distance, distance_path
+from sktime.distances._distance import _METRIC_INFOS, distance, distance_alignment_path
 from sktime.distances.tests._utils import create_test_distance_numpy
 
 
-def _validate_distance_path_result(
+def _validate_distance_alignment_path_result(
     x: np.ndarray,
     y: np.ndarray,
     metric_str: str,
@@ -17,7 +17,7 @@ def _validate_distance_path_result(
     if kwargs_dict is None:
         kwargs_dict = {}
 
-    metric_str_result = distance_path(x, y, metric=metric_str, **kwargs_dict)
+    metric_str_result = distance_alignment_path(x, y, metric=metric_str, **kwargs_dict)
     assert isinstance(metric_str_result, tuple), (
         f"The result for a distance path using the string: {metric_str} as the "
         f'"metric" parameter should return a tuple. The return type provided is of '
@@ -43,7 +43,7 @@ def _validate_distance_path_result(
     assert distance_result == metric_str_result[1]
     assert distance_result == path_result[1]
 
-    metric_str_result_cm = distance_path(
+    metric_str_result_cm = distance_alignment_path(
         x, y, metric=metric_str, return_cost_matrix=True, **kwargs_dict
     )
 
@@ -70,15 +70,15 @@ def _validate_distance_path_result(
 
 
 @pytest.mark.parametrize("dist", _METRIC_INFOS)
-def test_distance_path(dist):
+def test_distance_alignment_path(dist):
     """Test the distance paths."""
-    if dist.dist_path_func is not None:
+    if dist.dist_alignment_path_func is not None:
 
         x = create_test_distance_numpy(10, 1)
         y = create_test_distance_numpy(10, 1, random_state=2)
-        _validate_distance_path_result(
+        _validate_distance_alignment_path_result(
             x=x,
             y=y,
             metric_str=dist.canonical_name,
-            distance_path_callable=dist.dist_path_func,
+            distance_path_callable=dist.dist_alignment_path_func,
         )

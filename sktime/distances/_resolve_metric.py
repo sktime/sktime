@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__author__ = ["chrisholder", "TonyBagnall"]
+
 import inspect
 from typing import Callable, List, Union
 
@@ -15,7 +17,39 @@ def _resolve_dist_instance(
     known_metric_dict: List[MetricInfo],
     **kwargs: dict,
 ):
+    """Resolve a metric from a string, callable or NumbaDistance instance.
 
+    This will take a given input (metric) and try and find the distance metric it
+    is referring to and return the callable for it.
+
+    Parameters
+    ----------
+    metric: str or Callable or NumbaDistance
+        The distance metric to use.
+    x: np.ndarray (2d array)
+        First time series.
+    y: np.ndarray (2d array)
+        Second time series.
+    known_metric_dict: List[MetricInfo]
+        List of known distance functions.
+    kwargs: dict, optional
+        Extra arguments for metric. Refer to each metric documentation for a list of
+        possible arguments.
+
+    Returns
+    -------
+    Callable[[np.ndarray, np.ndarray], float]]
+        No_python compiled distance resolved from the metric input.
+
+    Raises
+    ------
+    ValueError
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined.
+    """
     numba_dist_instance: Union[NumbaDistance, None] = None
 
     if isinstance(metric, NumbaDistance):
@@ -28,17 +62,10 @@ def _resolve_dist_instance(
         elif _is_no_python_distance_callable(metric):
             metric = metric
         else:
-            # found = False
             for val in known_metric_dict:
                 if val.dist_func is metric:
                     numba_dist_instance = val.dist_instance
-                    # found = True
                     break
-            # if found is False:
-            #     raise ValueError(
-            #         "The callable provided must be no_python (using njit()) for"
-            #         "this operation. Please compile the function and try again."
-            #     )
     else:
         raise ValueError(
             "Unable to resolve the metric with the parameters provided."
