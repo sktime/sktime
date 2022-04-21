@@ -106,13 +106,20 @@ if __name__ == "__main__":
     tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
-        print(sys.argv)
-        data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/kmeans/"
-        dataset = sys.argv[1]
-        resample = int(sys.argv[2]) - 1
-        tf = True
+        data_dir = sys.argv[1]
+        results_dir = sys.argv[2]
         distance = sys.argv[3]
+        dataset = sys.argv[4]
+        resample = int(sys.argv[5]) - 1
+        tf = True
+    # kraken run, needs sorting out
+    #        print(sys.argv)
+    #        data_dir = "/home/ajb/data/Univariate_ts/"
+    #        results_dir = "/home/ajb/results/kmeans/"
+    #        dataset = sys.argv[1]
+    #        resample = int(sys.argv[2]) - 1
+    #        tf = True
+    #        distance = sys.argv[3]
     elif chris_config is True:
         path = "/home/chris/Documents/masters-results/"
         data_dir = os.path.abspath(f"{path}/datasets/")
