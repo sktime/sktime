@@ -154,7 +154,12 @@ if __name__ == "__main__":
         name = clusterer + "-" + distance + "-tuned"
     else:
         name = clusterer + "-" + distance
-    if distance == "wdtw" or distance == "dwdtw":
+    if (
+        distance == "wdtw"
+        or distance == "dwdtw"
+        or distance == "dtw"
+        or distance == "wdtw"
+    ):
         parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
     else:
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
