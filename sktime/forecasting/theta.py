@@ -217,7 +217,7 @@ class ThetaForecaster(ExponentialSmoothing):
         pred_quantiles = pd.DataFrame(columns=index)
 
         sem = self.sigma_ * np.sqrt(
-            self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
+            self.fh.to_relative(self.cutoff) * self.initial_level_**2 + 1
         )
 
         y_pred = super(ThetaForecaster, self)._predict(fh, X)
