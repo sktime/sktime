@@ -5,6 +5,7 @@
 
 __author__ = ["ltsaprounis"]
 
+import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
@@ -50,14 +51,12 @@ class BaggingForecaster(BaseForecaster):
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
+        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement predict_quantiles?
-        # deprecated and will be renamed to capability:predict_quantiles in 0.11.0
+        "capability:pred_int": True,  # does forecaster implement predict_quantiles?
+        "capability:predict_quantiles": True,
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, bootstrapping_transformer, forecaster, sp):
@@ -119,14 +118,10 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        y_bootstraps = self.bootstrapping_transformer.fit_transform(y)
+        self.forecaster.fit(y_bootstraps)
 
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals shoudld be used or fitted if needed
+        return self
 
     # todo: implement this, mandatory
     def _predict(self, fh, X=None):
@@ -154,71 +149,9 @@ class BaggingForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        y_bootstraps_pred = self.forecaster.predict(fh)
+        return y_bootstraps_pred.groupby(level=-1).mean()
 
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
-    def _update(self, y, X=None, update_params=True):
-        """Update time series to incremental training data.
-
-        private _update containing the core logic, called from update
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
-
-        Parameters
-        ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to X, fh
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update_predict_single method
-    def _update_predict_single(self, y, fh, X=None, update_params=True):
-        """Update forecaster and then make forecasts.
-
-        Implements default behaviour of calling update and predict
-        sequentially, but can be overwritten by subclasses
-        to implement more efficient updating algorithms when available.
-        """
-        self.update(y, X, update_params=update_params)
-        return self.predict(fh, X)
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh
-
-    # todo: consider implementing one of _predict_quantiles and _predict_interval
-    #   if one is implemented, the other one works automatically
-    #   when interfacing or implementing, consider which of the two is easier
-    #   both can be implemented if desired, but usually that is not necessary
-    #
-    # if implementing _predict_interval, delete _predict_quantiles
-    # if not implementing either, delete both methods
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
@@ -250,82 +183,16 @@ class BaggingForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, alpha
-        #
-        # Note: unlike in predict_quantiles where alpha can be float or list of float
-        #   alpha in _predict_quantiles is guaranteed to be a list of float
+        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        pred_quantiles = pd.DataFrame(columns=index)
+        y_pred = self.forecaster.predict(fh, X)
 
-    # implement one of _predict_interval or _predict_quantiles (above), or delete both
-    #
-    # if implementing _predict_quantiles, delete _predict_interval
-    # if not implementing either, delete both methods
-    def _predict_interval(self, fh, X=None, coverage=None):
-        """Compute/return prediction quantiles for a forecast.
+        for a in alpha:
+            pred_quantiles[("Quantiles", a)] = (
+                y_pred.groupby(level=-1, as_index=True).quantile(a).squeeze()
+            )
 
-        private _predict_interval containing the core logic,
-            called from predict_interval and possibly predict_quantiles
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        coverage : list of float (guaranteed not None and floats in [0,1] interval)
-           nominal coverage(s) of predictive interval(s)
-
-        Returns
-        -------
-        pred_int : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level coverage fractions for which intervals were computed.
-                    in the same order as in input `coverage`.
-                Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
-                for var in col index, at nominal coverage in second col index,
-                lower/upper depending on third col index, for the row index.
-                Upper/lower interval end forecasts are equivalent to
-                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
-        """
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, fh, coverage
-        #
-        # Note: unlike in predict_interval where coverage can be float or list of float
-        #   coverage in _predict_interval is guaranteed to be a list of float
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-    ):
-        """Make single-step or multi-step moving cutoff predictions.
-
-        Parameters
-        ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
-
-        Returns
-        -------
-        y_pred = pd.Series
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to y, X, cv
+        return pred_quantiles
 
     # todo: consider implementing this, optional
     # if not implementing, delete the get_fitted_params method
@@ -336,6 +203,7 @@ class BaggingForecaster(BaseForecaster):
         -------
         fitted_params : dict
         """
+        # check _Pipeline and TransformedTargetForecaster
         # implement here
 
     # todo: implement this if this is an estimator contributed to sktime
