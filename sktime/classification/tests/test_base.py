@@ -285,7 +285,7 @@ def _create_unequal_length_nested_dataframe(cases=5, dimensions=1, length=10):
     return testy
 
 
-MTYPES = ["numpy3D", "pd-multiindex", "df-list", "numpyflat"]
+MTYPES = ["numpy3D", "pd-multiindex", "df-list", "numpyflat", "nested_univ"]
 
 
 @pytest.mark.parametrize("mtype", MTYPES)
