@@ -303,7 +303,7 @@ def load_from_tsfile(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     return_y=True,
-    return_data_type=None,
+    return_data_type="nested_univ",
 ):
     """Load time series .ts file into X and (optionally) y.
 
