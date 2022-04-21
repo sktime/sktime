@@ -1116,12 +1116,14 @@ def _concat(fun1, fun2):
 
 for tp in set(MTYPE_LIST_PANEL).difference(["numpyflat", "numpy3D"]):
     if ("numpy3D", tp, "Panel") in convert_dict.keys():
-        convert_dict[("numpyflat", tp, "Panel")] = _concat(
-            convert_dict[("numpyflat", "numpy3D", "Panel")],
-            convert_dict[("numpy3D", tp, "Panel")],
-        )
+        if ("numpy3D", "numpyflat", "Panel") not in convert_dict.keys():
+            convert_dict[("numpyflat", tp, "Panel")] = _concat(
+                convert_dict[("numpyflat", "numpy3D", "Panel")],
+                convert_dict[("numpy3D", tp, "Panel")],
+            )
     if (tp, "numpy3D", "Panel") in convert_dict.keys():
-        convert_dict[(tp, "numpyflat", "Panel")] = _concat(
-            convert_dict[(tp, "numpy3D", "Panel")],
-            convert_dict[("numpy3D", "numpyflat", "Panel")],
-        )
+        if ("numpyflat", "numpy3D", "Panel") not in convert_dict.keys():
+            convert_dict[(tp, "numpyflat", "Panel")] = _concat(
+                convert_dict[(tp, "numpy3D", "Panel")],
+                convert_dict[("numpy3D", "numpyflat", "Panel")],
+            )
