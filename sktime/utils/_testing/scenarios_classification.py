@@ -112,7 +112,7 @@ class ClassifierFitPredict(ClassifierTestScenario):
         "X_univariate": True,
         "X_unequal_length": False,
         "is_enabled": True,
-        "n_classes": 2
+        "n_classes": 2,
     }
 
     args = {
@@ -130,7 +130,7 @@ class ClassifierFitPredictMultivariate(ClassifierTestScenario):
         "X_univariate": False,
         "X_unequal_length": False,
         "is_enabled": True,
-        "n_classes": 2
+        "n_classes": 2,
     }
 
     args = {
@@ -156,7 +156,7 @@ class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
         "X_univariate": True,
         "X_unequal_length": True,
         "is_enabled": True,
-        "n_classes": 2
+        "n_classes": 2,
     }
 
     args = {
