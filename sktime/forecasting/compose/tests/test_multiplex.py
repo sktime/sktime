@@ -12,6 +12,7 @@ from sktime.forecasting.all import (
     ForecastingGridSearchCV,
     MultiplexForecaster,
     NaiveForecaster,
+    ThetaForecaster,
 )
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
@@ -32,12 +33,44 @@ def _score_forecasters(forecasters, cv, y):
     return best_name
 
 
-def test_multiplex():
+def test_multiplex_forecaster_alone():
     """Test results of MultiplexForecaster.
 
-    Because MultiplexForecaster should essentially just be a framework for
-    comparing different models/selecting which model does best, we can check
-    that it performs as expected.
+    Because MultiplexForecaster is in many ways a wrapper for an underlying
+    forecaster - we can confirm that if the selected_forecaster is set that the
+    MultiplexForecaster performs as expected.
+    """
+    from numpy.testing import assert_array_equal
+
+    y = load_shampoo_sales()
+    # Note - we select two forecasters which are deterministic.
+    forecaster_tuples = [
+        ("naive", NaiveForecaster()),
+        ("theta", ThetaForecaster()),
+    ]
+    forecaster_names = [name for name, _ in forecaster_tuples]
+    forecasters = [forecaster for _, forecaster in forecaster_tuples]
+    multiplex_forecaster = MultiplexForecaster(forecasters=forecaster_tuples)
+    fh_test = [1, 2, 3]
+    # for each of the forecasters - check that the wrapped forecaster predictions
+    # agree with the unwrapped forecaster predictions!
+    for ind, name in enumerate(forecaster_names):
+        multiplex_forecaster.selected_forecaster = name
+        multiplex_forecaster.fit(y)
+        forecasters[ind].fit(y)
+        y_pred_indiv = forecasters[ind].predict(fh=fh_test)
+        y_pred_multi = multiplex_forecaster.predict(fh=fh_test)
+        assert_array_equal(y_pred_indiv, y_pred_multi)
+
+
+def test_multiplex_with_grid_search():
+    """Test MultiplexForecaster perfromas as expected with ForecastingGridSearchCV.
+
+    Because the typical use case of MultiplexForecaster is to use it with the
+    ForecastingGridSearchCV forecaster - here we simply test that the best
+    "selected_forecaster" for MultiplexForecaster found using ForecastingGridSearchCV
+    is the same forecaster we would find if we evaluated all the forecasters in
+    MultiplexForecaster independently.
     """
     y = load_shampoo_sales()
     forecasters = [
