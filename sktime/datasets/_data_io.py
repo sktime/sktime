@@ -350,7 +350,7 @@ def load_from_tsfile(
     """
     if return_data_type is None:
         return_data_type = "nested_univ"
-    if return_data_type in ["numpy2d", "np2d", "np2D"]:
+    if return_data_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
         return_data_type = "numpyflat"
     if return_data_type in ["numpy3d", "np3d", "np3D"]:
         return_data_type = "numpy3D"
