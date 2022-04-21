@@ -193,7 +193,7 @@ class WEASEL(BaseClassifier):
             window_size,
         ):
             rng = check_random_state(window_size)
-            all_words = [dict() for x in range(len(X))]
+            all_words = [[] for x in range(len(X))]
             relevant_features_count = 0
 
             # for window_size in self.window_sizes:
@@ -239,7 +239,7 @@ class WEASEL(BaseClassifier):
                         # append the prefixes to the words to
                         # distinguish between window-sizes
                         word = WEASEL._shift_left(key, self.highest_bit, window_size)
-                        all_words[j][word] = value
+                        all_words[j].append((word, value))
 
             return all_words, transformer, relevant_features_count
 
@@ -256,8 +256,7 @@ class WEASEL(BaseClassifier):
             relevant_features_count += rel_features_count
 
             for idx, bag in enumerate(sfa_words):
-                for word, count in bag.items():
-                    all_words[idx][word] = count
+                all_words[idx].update(bag)
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=True, sort=False),
@@ -311,12 +310,11 @@ class WEASEL(BaseClassifier):
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
-        def _parallel_transform_words(X, transformer, dilation):
-            bag_all_words = [dict() for x in range(len(X))]
-            X2 = self._dilation(X, dilation)
+        def _parallel_transform_words(X, transformer):
+            bag_all_words = [[] for x in range(len(X))]
 
             # SFA transform
-            sfa_words = transformer.transform(X2)
+            sfa_words = transformer.transform(X)
             bag = sfa_words[0]
 
             # merging bag-of-patterns of different window_sizes
@@ -324,26 +322,24 @@ class WEASEL(BaseClassifier):
             # the used window-length
             for j in range(len(bag)):
                 for (key, value) in bag[j].items():
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    word = WEASEL._shift_left(
-                        key, self.highest_bit, transformer.window_size
-                    )
-                    bag_all_words[j][word] = value
+                    if value > 1:
+                        # append the prefices to the words to distinguish
+                        # between window-sizes
+                        word = WEASEL._shift_left(
+                            key, self.highest_bit, transformer.window_size
+                        )
+                        bag_all_words[j].append((word, value))
 
             return bag_all_words
 
         parallel_res = Parallel(n_jobs=self._threads_to_use)(
-            delayed(_parallel_transform_words)(X, transformer, dilation)
-            for transformer, dilation in zip(
-                self.SFA_transformers, self.dilation_factors
-            )
+            delayed(_parallel_transform_words)(X, transformer)
+            for transformer in self.SFA_transformers
         )
         all_words = [dict() for x in range(len(X))]
         for sfa_words in parallel_res:
             for idx, bag in enumerate(sfa_words):
-                for word, count in bag.items():
-                    all_words[idx][word] = count
+                all_words[idx].update(bag)
         return all_words
 
     def _compute_window_inc(self):

@@ -14,8 +14,9 @@ from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -137,15 +138,15 @@ class WEASEL2(BaseClassifier):
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
-        self.binning_strategies = ["equi-width", "equi-depth", "information-gain"]
+        # self.binning_strategies = ["equi-depth"]
         self.random_state = random_state
 
-        self.min_window = 8  # 9???
+        self.min_window = 8
         self.max_window = 16
         self.num = 100
 
         self.min_dilation = 1
-        self.max_dilation = 32  # 2er Potenzen??
+        self.max_dilation = 64
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -173,6 +174,20 @@ class WEASEL2(BaseClassifier):
             second = X[:, :, i::d]
             first = np.concatenate((first, second), axis=2)
         return first
+
+    class MyDict:
+        """Own Dict implementation for speed issues."""
+
+        def __init__(self):
+            self.content = []
+
+        def update(self, bag):
+            """Update the bag, adding all elements."""
+            self.content.extend(bag)
+
+        def items(self):
+            """Iterate the bag."""
+            return self.content
 
     def _fit(self, X, y):
         """Build a WEASEL classifiers from the training set (X, y).
@@ -213,12 +228,12 @@ class WEASEL2(BaseClassifier):
         ):
             rng = check_random_state(i)
             window_size = rng.choice(self.window_sizes)
-            all_words = [[] for _ in range(len(X))]
+            word_length = min(window_size - 2, rng.choice(self.word_lengths))
             relevant_features_count = 0
 
             # for window_size in self.window_sizes:
             transformer = SFA(
-                word_length=rng.choice(self.word_lengths),
+                word_length=word_length,
                 alphabet_size=self.alphabet_size,
                 window_size=window_size,
                 norm=rng.choice(self.norm_options),
@@ -235,24 +250,27 @@ class WEASEL2(BaseClassifier):
                 [
                     2**j
                     for j in np.arange(
-                        np.log2(self.min_dilation), np.log2(self.max_dilation) + 1
+                        np.log2(self.min_dilation),
+                        max(
+                            self.min_dilation + 1,
+                            min(
+                                np.log2(self.max_dilation) + 1,
+                                np.log2(np.shape(X)[2] // window_size),
+                            ),
+                        ),
                     )
                 ]
             )
-            # ds = range(self.min_dilation,
-            #           max(self.min_dilation+1,
-            #               min(self.max_dilation+1, np.shape(X)[2] // window_size)))
+
             dilation = rng.choice(ds)
             differences = rng.choice([False])
             X2 = self._dilation(X, dilation, differences)
 
             sfa_words = transformer.fit_transform(X2, y)
-
-            # self.SFA_transformers.append(transformer)
             bag = sfa_words[0]
-            apply_chi_squared = self.p_threshold < 1
 
             # chi-squared test to keep only relevant features
+            apply_chi_squared = self.p_threshold < 1
             if apply_chi_squared:
                 vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
                 bag_vec = vectorizer.fit_transform(bag)
@@ -267,14 +285,18 @@ class WEASEL2(BaseClassifier):
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
             # the used window-length
+            all_words = [[] for _ in range(len(X))]
             for j in range(len(bag)):
                 for (key, value) in bag[j].items():
                     # chi-squared test
                     if (not apply_chi_squared) or (key in relevant_features):
-                        # append the prefixes to the words to
-                        # distinguish between window-sizes
-                        word = WEASEL2._shift_left(key, self.highest_bit, window_size)
-                        all_words[j].append((word, value))
+                        if value > 1:
+                            # append the prefixes to the words to
+                            # distinguish between window-sizes
+                            word = WEASEL2._shift_left(
+                                key, self.highest_bit, window_size
+                            )
+                            all_words[j].append((word, value))
 
             return (
                 all_words,
@@ -286,7 +308,7 @@ class WEASEL2(BaseClassifier):
 
         parallel_res = Parallel(n_jobs=self._threads_to_use)(
             delayed(_parallel_fit)(i) for i in range(self.num)
-        )  # , verbose=self.verbose
+        )
 
         relevant_features_count = 0
         all_words = [dict() for x in range(len(X))]
@@ -303,15 +325,19 @@ class WEASEL2(BaseClassifier):
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=True, sort=False),
-            # StandardScaler(copy=False),
-            # RidgeClassifierCV(alphas=np.logspace(-3, 3, 10))
-            LogisticRegression(
+            StandardScaler(copy=False, with_mean=False),
+            # RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), store_cv_values=True)
+            LogisticRegressionCV(
+                refit=True,
+                Cs=[1],
+                cv=5,
                 max_iter=5000,
                 solver="liblinear",
                 dual=True,
                 # class_weight="balanced",
                 penalty="l2",
                 random_state=self.random_state,
+                scoring="accuracy"
                 # n_jobs=self._threads_to_use,
             ),
         )
