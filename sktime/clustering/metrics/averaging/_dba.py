@@ -30,7 +30,7 @@ def _init_avg(_X, barycenter_size):
 
 def dba(
         X: np.ndarray,
-        iterations=30,
+        iterations=10,
         averaging_distance_metric='dtw',
         **kwargs
 ) -> np.ndarray:
@@ -57,8 +57,8 @@ def dba(
     if len(X) <= 1:
         return X
 
-    # center = medoids(X)
-    center = _init_avg(X, X.shape[2])
+    center = medoids(X)
+    # center = _init_avg(X, X.shape[2])
     path_callable = distance_alignment_path_factory(
         X[0],
         X[1],
