@@ -356,11 +356,15 @@ def load_from_tsfile(
         return_data_type = "numpy3D"
 
     if not isinstance(return_data_type, str):
-        raise TypeError("return_data_type argument must be a str")
+        raise TypeError(
+            f"return_data_type argument must be a str, but found "
+            f"{type(return_data_type)}"
+        )
     if return_data_type not in MTYPE_LIST_PANEL:
         raise ValueError(
             f"return_data_type must be one of the following identifier strings for "
-            f"sktime panel time series data format specifications: {MTYPE_LIST_PANEL}"
+            f"sktime panel time series data format specifications: {MTYPE_LIST_PANEL}, "
+            f"but found {return_data_type}"
         )
 
     # Initialize flags and variables used when parsing the file
