@@ -360,8 +360,16 @@ def load_from_tsfile(
     if return_data_type in ["numpy3d", "np3d"]:
         return_data_type = "numpy3D"
 
+    if return_y:
+        y = X[1]
+        X = X[0]
+
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
-    return X
+
+    if return_y:
+        return X, y
+    else:
+        return X
 
 
 def load_from_tsfile_to_dataframe(
