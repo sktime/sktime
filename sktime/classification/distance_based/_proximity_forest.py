@@ -1570,7 +1570,7 @@ class ProximityForest(BaseClassifier):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         if parameter_set == "results_comparison":
-            return {"n_estimators": 3, "max_depth": 1, "n_stump_evaluations": 2}
+            return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
             return {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
 
