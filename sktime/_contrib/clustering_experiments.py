@@ -135,7 +135,7 @@ if __name__ == "__main__":
         results_dir = "./temp"
         resample = 0
         tf = True
-        distance = "dtw"
+        distance = "msm"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -165,6 +165,7 @@ if __name__ == "__main__":
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
     clst = TimeSeriesKMeans(
         averaging_method="dba",
+        average_params={"averaging_distance_metric": distance},
         metric=distance,
         distance_params=parameters,
         n_clusters=len(set(train_Y)),
