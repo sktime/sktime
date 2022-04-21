@@ -12,7 +12,7 @@ from sktime.utils.validation._dependencies import _check_soft_dependencies
 _check_soft_dependencies("tensorflow", severity="error")
 
 
-class CNNClassifier(BaseDeepClassifier, CNNNetwork):
+class CNNClassifier(BaseDeepClassifier):
     """Time Convolutional Neural Network (CNN), as described in [1].
 
     Parameters
@@ -57,6 +57,8 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         n_conv_layers=2,
         callbacks=None,
         verbose=False,
+        loss="mean_squared_error",
+        metrics=None,
     ):
         super(CNNClassifier, self).__init__()
         self.n_conv_layers = n_conv_layers
@@ -66,6 +68,9 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
+        self.loss = (loss,)
+        self.metrics = (metrics,)
+        self._network = CNNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -83,7 +88,11 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
         """
         from tensorflow import keras
 
-        input_layer, output_layer = self.build_network(input_shape, **kwargs)
+        if self.metrics is None:
+            metrics = ["accuracy"]
+        else:
+            metrics = self.metrics
+        input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=n_classes, activation="sigmoid")(
             output_layer
@@ -91,9 +100,9 @@ class CNNClassifier(BaseDeepClassifier, CNNNetwork):
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
-            loss="mean_squared_error",
+            loss=self.loss,
             optimizer=keras.optimizers.Adam(),
-            metrics=["accuracy"],
+            metrics=metrics,
         )
         return model
 
