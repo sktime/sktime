@@ -35,7 +35,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert
+from sktime.datatypes import convert, MTYPE_LIST_PANEL
 from sktime.datatypes._hierarchical import MTYPE_LIST_HIERARCHICAL
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
@@ -313,14 +313,14 @@ def load_from_tsfile(
 
     Parameters
     ----------
-    full_file_path_and_name: str
+    full_file_path_and_name : str
         The full pathname and file name of the .ts file to read.
-    replace_missing_vals_with: str, default NaN
+    replace_missing_vals_with : str, default NaN
        The value that missing values in the text file should be replaced with prior
        to parsing.
-    return_y: boolean, default True
+    return_y : boolean, default True
        whether to return the y variable, if it is present.
-    return_data_type: str, optional, default = "nested_univ"
+    return_data_type : str, optional, default = "nested_univ"
         memory data format specification to return X in.
         str can be any other supported Panel mtype
             for list of mtypes, see datatypes.SCITYPE_REGISTER
@@ -334,10 +334,10 @@ def load_from_tsfile(
 
     Returns
     -------
-    X:  sktime compatible in-memory container of mtype return_data_type
+    X : sktime compatible in-memory container of mtype return_data_type
         for list of mtypes, see datatypes.SCITYPE_REGISTER
         for specifications, see examples/AA_datatypes_and_datasets.ipynb
-    y (optional, returned only if return_y=True): ndarray.
+    y : returned only if return_y=True, np.ndarray
 
     Raises
     ------
@@ -349,16 +349,27 @@ def load_from_tsfile(
     ValueError if return_data_type = numpy2d but the data are multivariate and/
     or unequal length series
     """
+    if return_data_type is None:
+        return_data_type = "nested_univ"
+    if return_data_type in ["numpy2d", "np2d"]:
+        return_data_type = "numpyflat"
+    if return_data_type in ["numpy3d", "np3d"]:
+        return_data_type = "numpy3D"
+
+    if not isinstance(return_data_type, str):
+        raise TypeError("return_data_type argument must be a str")
+    if return_data_type not in MTYPE_LIST_PANEL:
+        raise ValueError(
+            f"return_data_type must be one of the following identifier strings for "
+            f"sktime panel time series data format specifications: {MTYPE_LIST_PANEL}"
+        )
+
     # Initialize flags and variables used when parsing the file
     X = load_from_tsfile_to_dataframe(
         full_file_path_and_name=full_file_path_and_name,
         return_separate_X_and_y=return_y,
         replace_missing_vals_with=replace_missing_vals_with,
     )
-    if return_data_type in ["numpy2d", "np2d"]:
-        return_data_type = "numpyflat"
-    if return_data_type in ["numpy3d", "np3d"]:
-        return_data_type = "numpy3D"
 
     if return_y:
         y = X[1]
