@@ -70,7 +70,7 @@ def dba(
     return center
 
 
-@njit(cache=True)
+@njit()
 def _dba_update(
         center: np.ndarray,
         X: np.ndarray,

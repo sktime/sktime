@@ -80,10 +80,9 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         self.averaging_method = averaging_method
         self._averaging_method = _resolve_average_callable(averaging_method)
 
-        if average_params is None:
-            self.averaging_params = {}
-        else:
-            self.averaging_params = average_params
+        self.average_params = {}
+        if average_params is not None:
+            self.average_params = average_params
 
         super(TimeSeriesKMeans, self).__init__(
             n_clusters,
@@ -117,7 +116,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
             curr_indexes = np.where(assignment_indexes == i)[0]
-            result = self._averaging_method(X[curr_indexes], **self.averaging_params)
+            result = self._averaging_method(X[curr_indexes], **self.average_params)
             if result.shape[0] > 0:
                 new_centers[i, :] = result
         return new_centers
