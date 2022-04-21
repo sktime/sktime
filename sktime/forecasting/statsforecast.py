@@ -303,5 +303,6 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
             "max_Q": 1,
             "max_order": 3,
             "n_fits": 10,
+            "truncate": 10,
         }
         return params
