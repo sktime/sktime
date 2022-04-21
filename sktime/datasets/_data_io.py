@@ -368,15 +368,11 @@ def load_from_tsfile(
         )
 
     # Initialize flags and variables used when parsing the file
-    X = load_from_tsfile_to_dataframe(
+    X, y = load_from_tsfile_to_dataframe(
         full_file_path_and_name=full_file_path_and_name,
-        return_separate_X_and_y=return_y,
+        return_separate_X_and_y=True,
         replace_missing_vals_with=replace_missing_vals_with,
     )
-
-    if return_y:
-        y = X[1]
-        X = X[0]
 
     X = convert(X, from_type="nested_univ", to_type=return_data_type)
 
