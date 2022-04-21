@@ -45,9 +45,7 @@ def test_multiplex():
         ("naive", NaiveForecaster()),
     ]
     multiplex_forecaster = MultiplexForecaster(forecasters=forecasters)
-    forecaster_names = multiplex_forecaster.get_forecaster_names()
-    # check that get_forcaster_names performs as expected:
-    assert forecaster_names == [name for name, _ in forecasters]
+    forecaster_names = [name for name, _ in forecasters]
     cv = ExpandingWindowSplitter(start_with_window=True, step_length=12)
     gscv = ForecastingGridSearchCV(
         cv=cv,
