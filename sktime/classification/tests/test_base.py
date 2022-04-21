@@ -12,6 +12,8 @@ from sktime.classification.base import (
     _check_classifier_input,
     _internal_convert,
 )
+from sktime.classification.feature_based import Catch22Classifier
+from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
 class _DummyClassifier(BaseClassifier):
@@ -281,3 +283,21 @@ def _create_unequal_length_nested_dataframe(cases=5, dimensions=1, length=10):
         testy["dimension_" + str(i + 1)] = instance_list
 
     return testy
+
+
+MTYPES = ["numpy3D", "pd-multiindex", "df-list", "numpyflat", "nested_univ"]
+
+
+@pytest.mark.parametrize("mtype", MTYPES)
+def test_input_conversion_fit_predict(mtype):
+    """Test that base class lets all Panel mtypes through."""
+    y = _make_classification_y()
+    X = _make_panel(return_mtype=mtype)
+
+    clf = Catch22Classifier()
+    clf.fit(X, y)
+    clf.predict(X)
+
+    clf = _DummyConvertPandas()
+    clf.fit(X, y)
+    clf.predict(X)
