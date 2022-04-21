@@ -3,18 +3,20 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for MultiplexForecaster and associated dunders."""
 
-__author__ = ["aiwalter", "miraep8"]
+__author__ = ["miraep8"]
+
+from sklearn.base import clone
 
 from sktime.datasets import load_shampoo_sales
-from sktime.forecasting.all import (
-    AutoETS,
+from sktime.forecasting.compose import MultiplexForecaster
+from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.model_evaluation import evaluate
+from sktime.forecasting.model_selection import (
     ExpandingWindowSplitter,
     ForecastingGridSearchCV,
-    MultiplexForecaster,
-    NaiveForecaster,
-    ThetaForecaster,
 )
-from sktime.forecasting.model_evaluation import evaluate
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.theta import ThetaForecaster
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -55,10 +57,13 @@ def test_multiplex_forecaster_alone():
     # for each of the forecasters - check that the wrapped forecaster predictions
     # agree with the unwrapped forecaster predictions!
     for ind, name in enumerate(forecaster_names):
+        # make a copy to ensure we don't reference the same objectL
+        test_forecaster = clone(forecasters[ind])
+        test_forecaster.fit(y)
         multiplex_forecaster.selected_forecaster = name
+        # Note- MultiplexForecaster will make a copy of the forecaster before fitting.
         multiplex_forecaster.fit(y)
-        forecasters[ind].fit(y)
-        y_pred_indiv = forecasters[ind].predict(fh=fh_test)
+        y_pred_indiv = test_forecaster.predict(fh=fh_test)
         y_pred_multi = multiplex_forecaster.predict(fh=fh_test)
         assert_array_equal(y_pred_indiv, y_pred_multi)
 
