@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Testing panel converters - internal functions and more extensive fixtures."""
+"""Testing converters."""
 import numpy as np
 import pandas as pd
 import pytest
