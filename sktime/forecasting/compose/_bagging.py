@@ -212,18 +212,6 @@ class BaggingForecaster(BaseForecaster):
 
         return pred_quantiles
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the get_fitted_params method
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # TODO: check _Pipeline and TransformedTargetForecaster
-        # implement here
-
     # todo: implement this if this is an estimator contributed to sktime
     #   or to run local automated unit and integration testing of estimator
     #   method should return default parameters, so that a test instance can be created
