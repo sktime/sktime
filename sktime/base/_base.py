@@ -14,9 +14,9 @@ Interface specifications below.
 
     class name: BaseObject
 
-Hyper-parameter inspection and setter methods:
-    inspect hyper-parameters     - get_params()
-    setting hyper-parameters     - set_params(**params)
+Hyper-parameter inspection and setter methods
+    inspect hyper-parameters      - get_params()
+    setting hyper-parameters      - set_params(**params)
 
 Tag inspection and setter methods
     inspect tags (all)            - get_tags()
@@ -25,6 +25,9 @@ Tag inspection and setter methods
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags          - set_tag(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+
+Re-initialize object to post-init state with same hyper-parameters
+    reset estimator to post-init  - reset()
 
 Testing with default parameters methods
     getting default parameters (all sets)         - get_test_params()
