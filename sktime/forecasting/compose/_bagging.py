@@ -11,7 +11,9 @@ import pandas as pd
 from sklearn import clone
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.bootstrap import STLBootstrapTransformer
 
 
 class BaggingForecaster(BaseForecaster):
@@ -195,9 +197,6 @@ class BaggingForecaster(BaseForecaster):
 
         return _calculate_data_quantiles(y_pred, alpha)
 
-    # todo: implement this if this is an estimator contributed to sktime
-    #   or to run local automated unit and integration testing of estimator
-    #   method should return default parameters, so that a test instance can be created
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -210,26 +209,14 @@ class BaggingForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        params = [
+            {
+                "forecaster": NaiveForecaster(sp=1),
+                "bootstrap_transformer": STLBootstrapTransformer(sp=3),
+            }
+        ]
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        #
-        # this can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
+        return params
 
 
 def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFrame:
