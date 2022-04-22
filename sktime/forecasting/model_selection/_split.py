@@ -1015,21 +1015,21 @@ class SingleWindowSplitter(BaseSplitter):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
-        end = _get_end(y_index=y, fh=fh) + 1
+        end = _get_end(y_index=y, fh=fh)
 
         if window_length is None:
             start = 0
         elif is_int(window_length):
-            start = end - window_length
+            start = end - window_length + 1
         else:
-            start = np.argwhere(y >= y[end - 1] - window_length).flatten()[0] + 1
+            start = np.argwhere(y > y[end] - window_length).flatten()[0]
 
-        train = self._get_train_window(y=y, train_start=start, split_point=end)
+        train = self._get_train_window(y=y, train_start=start, split_point=end + 1)
 
         if array_is_int(fh):
-            test = end + fh.to_numpy() - 1
+            test = end + fh.to_numpy()
         else:
-            test = np.array([y.get_loc(y[end - 1] + x) for x in fh.to_pandas()])
+            test = np.array([y.get_loc(y[end] + x) for x in fh.to_pandas()])
 
         yield train, test
 
