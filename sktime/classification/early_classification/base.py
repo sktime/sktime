@@ -331,21 +331,27 @@ class BaseEarlyClassifier(BaseEstimator, ABC):
 
     @staticmethod
     def filter_X(X, decisions):
-        """Remove True cases from X given a boolean array decisions."""
+        """Remove True cases from X given a boolean array of decisions."""
         inv_dec = np.invert(decisions)
         return X[inv_dec]
 
     @staticmethod
     def filter_X_y(X, y, decisions):
-        """Remove True cases from X and y given a boolean array decisions."""
+        """Remove True cases from X and y given a boolean array of decisions."""
         inv_dec = np.invert(decisions)
         return X[inv_dec], y[inv_dec]
 
     @staticmethod
     def split_indices(indices, decisions):
-        """Split a list of indices given a boolean array decisions."""
+        """Split a list of indices given a boolean array of decisions."""
         inv_dec = np.invert(decisions)
         return indices[inv_dec], indices[decisions]
+
+    @staticmethod
+    def split_indices_and_filter(X, indices, decisions):
+        """Remove True cases and split a list of indices given an array of decisions."""
+        inv_dec = np.invert(decisions)
+        return X[inv_dec], indices[inv_dec], indices[decisions]
 
     @abstractmethod
     def _fit(self, X, y):

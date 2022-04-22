@@ -37,10 +37,10 @@ def test_teaser_on_unit_test_data():
 
     for i in teaser.classification_points:
         probas, decisions = teaser.update_predict_proba(X_test[:, :, :i])
-        open_idx, final_idx = teaser.split_indices(open_idx, decisions)
-
+        X_test, open_idx, final_idx = teaser.split_indices_and_filter(
+            X_test, open_idx, decisions
+        )
         final_probas[final_idx] = probas[decisions]
-        X_test = teaser.filter_X(X_test, decisions)
 
     testing.assert_array_equal(final_probas, teaser_unit_test_probas)
 
@@ -65,10 +65,10 @@ def test_teaser_with_different_decision_maker():
 
     for i in teaser.classification_points:
         probas, decisions = teaser.update_predict_proba(X_test[:, :, :i])
-        open_idx, final_idx = teaser.split_indices(open_idx, decisions)
-
+        X_test, open_idx, final_idx = teaser.split_indices_and_filter(
+            X_test, open_idx, decisions
+        )
         final_probas[final_idx] = probas[decisions]
-        X_test = teaser.filter_X(X_test, decisions)
 
     testing.assert_array_equal(final_probas, teaser_if_unit_test_probas)
 
