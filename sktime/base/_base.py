@@ -69,6 +69,26 @@ class BaseObject(_BaseEstimator):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
 
+    def reset(self):
+        """Reset the object to a clean post-init state.
+
+        Equivalent to sklearn.clone but overwrites self.
+        After self.reset() call, self is equal in value to
+        `type(self)(**self.get_params(deep=False))`
+        """
+        # retrieve parameters to copy them later
+        params = self.get_params(deep=False)
+
+        # delete all object attributes in self
+        attrs = [attr for attr in dir(self) if not attr.startswith("__")]
+        cls_attrs = [attr for attr in dir(type(self))]
+        self_attrs = set(attrs).difference(cls_attrs)
+        for attr in self_attrs:
+            delattr(self, attr)
+
+        # run init with a copy of parameters self had at the start
+        self.__init__(**params)
+
     @classmethod
     def get_class_tags(cls):
         """Get class tags from estimator class and all its parent classes.
