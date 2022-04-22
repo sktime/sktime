@@ -5,38 +5,53 @@
 
 __author__ = ["ltsaprounis"]
 
+from typing import List
+
 import pandas as pd
 from sklearn import clone
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("tensorflow-probability", severity="warning")
 
 
 class BaggingForecaster(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+    """Bagged "Bootrstrap Aggregating" Forecasts.
 
-    todo: describe your custom forecaster here
+    Bagged Forecasts are obtained by forecasting bootsrapped time series and then
+    aggregating the resulting forecasts. For the point forecast, the different forecasts
+    are aggregated using the mean function [1]. Prediction intervals and quantiles are
+    calculated for each time point in the forecasting horizon by calculating the sampled
+    forecast quantiles.
 
-    Hyper-parameters
-    ----------------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
+    Bergmeir et al. (2016) [2] show that, on average, bagging ETS forecasts gives better
+    forecasts than just applying ETS directly.
 
-    Components
+    Parameters
     ----------
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    bootstrapping_transformer : BaseTransformer
+        Bootrstrapping Transformer that takes a series as input and returns a panel
+        of bootstrapped time series
+    forecaster : BaseForecaster
+        A valid sktime Forecaster
+
+    See Also
+    --------
+    sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
+        Transofrmer that applies the Moving Block Bootstrapping method to create
+        a panel of synthetic time series.
+
+    sktime.transformations.bootstrap.STLBootstrapTransformer :
+        Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
+        a panel of similar time series.
+
+    References
+    ----------
+    .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and
+        practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3,
+        Chapter 12.5. Accessed on February 13th 2022.
+    .. [2] Bergmeir, C., Hyndman, R. J., & Benítez, J. M. (2016). Bagging exponential
+        smoothing methods using STL decomposition and Box-Cox transformation.
+        International Journal of Forecasting, 32(2), 303-312
     """
 
     _tags = {
@@ -52,38 +67,14 @@ class BaggingForecaster(BaseForecaster):
         "capability:predict_quantiles": True,
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self, bootstrapping_transformer: BaseTransformer, forecaster: BaseForecaster
     ):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
-
-        # todo: write any hyper-parameters and components to self
         self.bootstrap_transformer = bootstrapping_transformer
         self.forecaster = forecaster
-        # important: no checking or other logic should happen here
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.estimator = MyDefaultEstimator()
-
-        # todo: change "MyForecaster" to the name of the class
         super(BaggingForecaster, self).__init__()
 
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
-
-    # todo: implement this, mandatory
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -141,7 +132,6 @@ class BaggingForecaster(BaseForecaster):
 
         return self
 
-    # todo: implement this, mandatory
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
@@ -201,16 +191,9 @@ class BaggingForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
-        pred_quantiles = pd.DataFrame(columns=index)
         y_pred = self.forecaster_.predict(fh, X)
 
-        for a in alpha:
-            pred_quantiles[("Quantiles", a)] = (
-                y_pred.groupby(level=-1, as_index=True).quantile(a).squeeze()
-            )
-
-        return pred_quantiles
+        return _calculate_data_quantiles(y_pred, alpha)
 
     # todo: implement this if this is an estimator contributed to sktime
     #   or to run local automated unit and integration testing of estimator
@@ -247,3 +230,28 @@ class BaggingForecaster(BaseForecaster):
         #           {"est": value3, "parama": value4}]
         #
         # return params
+
+
+def _calculate_data_quantiles(df: pd.DataFrame, alpha: List[float]) -> pd.DataFrame:
+    """Generate quantiles for each time point.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        A dataframe of mtype pd-multiindex or hierarchical
+    alpha : List[float]
+        list of the desired quantiles
+
+    Returns
+    -------
+    pd.DataFrame
+        The specified quantiles
+    """
+    index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+    pred_quantiles = pd.DataFrame(columns=index)
+    for a in alpha:
+        pred_quantiles[("Quantiles", a)] = (
+            df.groupby(level=-1, as_index=True).quantile(a).squeeze()
+        )
+
+    return pred_quantiles
