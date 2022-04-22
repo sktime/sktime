@@ -14,12 +14,12 @@ class _MockEstimatorMixin:
     """Mixin class for constructing Mock estimators."""
 
     def __init__(self):
-        self._log = []
+        self.__log = []
 
     @property
     def log(self):
         """Log of the methods called and the parameters passed in each method."""
-        return self._log
+        return self.__log
 
 
 def _method_logger(method):
@@ -30,7 +30,7 @@ def _method_logger(method):
         if not isinstance(self, _MockEstimatorMixin):
             raise TypeError("method_logger requires a MockEstimator class")
         args_dict.pop("self")
-        self._log.append((method.__name__, deepcopy(args_dict)))
+        self.__log.append((method.__name__, deepcopy(args_dict)))
         return method(self, *args, **kwargs)
 
     return wrapper
