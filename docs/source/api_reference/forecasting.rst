@@ -171,6 +171,7 @@ Composition
     DirRecTabularRegressionForecaster
     DirRecTimeSeriesRegressionForecaster
     MultiplexForecaster
+    BaggingForecaster
 
 .. autosummary::
     :toctree: auto_generated/
