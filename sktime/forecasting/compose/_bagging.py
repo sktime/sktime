@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.ets import AutoETS
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 
@@ -54,6 +54,20 @@ class BaggingForecaster(BaseForecaster):
     .. [2] Bergmeir, C., Hyndman, R. J., & Benítez, J. M. (2016). Bagging exponential
         smoothing methods using STL decomposition and Box-Cox transformation.
         International Journal of Forecasting, 32(2), 303-312
+
+    Examples
+    --------
+    >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.compose import BaggingForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = BaggingForecaster(
+    ...     STLBootstrapTransformer(sp=12), NaiveForecaster(sp=12)
+    ... )
+    >>> forecaster.fit(y)
+    BaggingForecaster(...)
+    >>> y_hat = forecaster.predict([1,2,3])
     """
 
     _tags = {
@@ -70,9 +84,9 @@ class BaggingForecaster(BaseForecaster):
     }
 
     def __init__(
-        self, bootstrapping_transformer: BaseTransformer, forecaster: BaseForecaster
+        self, bootstrap_transformer: BaseTransformer, forecaster: BaseForecaster
     ):
-        self.bootstrap_transformer = bootstrapping_transformer
+        self.bootstrap_transformer = bootstrap_transformer
         self.forecaster = forecaster
 
         super(BaggingForecaster, self).__init__()
@@ -211,7 +225,7 @@ class BaggingForecaster(BaseForecaster):
         """
         params = [
             {
-                "forecaster": NaiveForecaster(sp=1),
+                "forecaster": AutoETS(sp=1),
                 "bootstrap_transformer": STLBootstrapTransformer(sp=3),
             }
         ]
