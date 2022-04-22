@@ -844,7 +844,7 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             start = self._get_start(y=y, fh=fh)
 
-        end = _get_end(y=y, fh=fh) + 2
+        end = _get_end(y_index=y, fh=fh) + 2
         if is_int(x=step_length):
             return self._get_cutoffs_with_integer_step_length(
                 end=end, start=start, step_length=step_length
