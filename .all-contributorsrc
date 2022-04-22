@@ -163,6 +163,16 @@
       ]
     },
     {
+      "login": "miraep8",
+      "name": "Mirae Parker",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10511777?s=400&u=10a774fd4be767fa3b23a82a98bbfe102c17f0f3&v=4",
+      "profile": "https://github.com/miraep8",
+      "contributions": [
+        "code",
+        "test"
+        ]
+    },
+    {
       "login": "jesellier",
       "name": "jesellier",
       "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
@@ -1537,6 +1547,15 @@
       "contributions": [
         "code",
 	"example"
+      ]
+    },
+    {
+      "login": "TNTran92",
+      "name": "TNTran92",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55965636?v=4",
+      "profile": "https://github.com/TNTran92",
+      "contributions": [
+        "code",
       ]
     }
   ],

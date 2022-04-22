@@ -155,9 +155,6 @@ def numba_wrapper(distance_measure):
     def distance(instance_a, instance_b, **params):
         instance_a = from_nested_to_2d_array(instance_a, return_numpy=True)
         instance_b = from_nested_to_2d_array(instance_b, return_numpy=True)
-        # dimension rather than whole thing?
-        instance_a = np.transpose(instance_a)
-        instance_b = np.transpose(instance_b)
         return distance_measure(instance_a, instance_b, **params)
 
     return distance
@@ -1254,7 +1251,7 @@ class ProximityTree(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        return {"max_depth": 2, "n_stump_evaluations": 1}
+        return {"max_depth": 1, "n_stump_evaluations": 1}
 
 
 class ProximityForest(BaseClassifier):
@@ -1575,7 +1572,7 @@ class ProximityForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 3, "max_depth": 2, "n_stump_evaluations": 2}
         else:
-            return {"n_estimators": 2, "max_depth": 2, "n_stump_evaluations": 1}
+            return {"n_estimators": 2, "max_depth": 1, "n_stump_evaluations": 1}
 
 
 # start of util functions
