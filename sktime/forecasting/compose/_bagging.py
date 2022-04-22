@@ -6,6 +6,7 @@
 __author__ = ["ltsaprounis"]
 
 import pandas as pd
+from sklearn import clone
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.transformations.base import BaseTransformer
@@ -127,8 +128,16 @@ class BaggingForecaster(BaseForecaster):
                 "bootstrap_transformer in BaggingForecaster should be a Transformer "
                 "that take as input a Series and output a Panel."
             )
-        y_bootstraps = self.bootstrap_transformer.fit_transform(y)
-        self.forecaster.fit(y_bootstraps)
+
+        if not isinstance(self.forecaster, BaseForecaster):
+            raise TypeError(
+                "forecaster in BaggingForecaster should be an sktime Forecaster"
+            )
+
+        self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
+        self.forecaster_ = clone(self.forecaster)
+        y_bootstraps = self.bootstrap_transformer_.fit_transform(y)
+        self.forecaster_.fit(y_bootstraps)
 
         return self
 
@@ -158,7 +167,7 @@ class BaggingForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        y_bootstraps_pred = self.forecaster.predict(fh)
+        y_bootstraps_pred = self.forecaster_.predict(fh)
         return y_bootstraps_pred.groupby(level=-1).mean()
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -194,7 +203,7 @@ class BaggingForecaster(BaseForecaster):
         """
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
-        y_pred = self.forecaster.predict(fh, X)
+        y_pred = self.forecaster_.predict(fh, X)
 
         for a in alpha:
             pred_quantiles[("Quantiles", a)] = (
@@ -212,7 +221,7 @@ class BaggingForecaster(BaseForecaster):
         -------
         fitted_params : dict
         """
-        # check _Pipeline and TransformedTargetForecaster
+        # TODO: check _Pipeline and TransformedTargetForecaster
         # implement here
 
     # todo: implement this if this is an estimator contributed to sktime
