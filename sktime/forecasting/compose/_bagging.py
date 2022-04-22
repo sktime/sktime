@@ -80,7 +80,6 @@ class BaggingForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
-        "capability:predict_quantiles": True,
     }
 
     def __init__(
@@ -207,7 +206,8 @@ class BaggingForecaster(BaseForecaster):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        y_pred = self.forecaster_.predict(fh, X)
+        # X is ignored
+        y_pred = self.forecaster_.predict(fh)
 
         return _calculate_data_quantiles(y_pred, alpha)
 
