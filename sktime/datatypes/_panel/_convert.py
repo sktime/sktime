@@ -753,7 +753,7 @@ def from_multi_index_to_nested(
             ]
 
         x_nested[_label] = pd.Series(dim_list)
-    x_nested = pd.DataFrame(x_nested)
+    x_nested = pd.DataFrame(x_nested).set_axis(instance_idxs)
 
     col_msg = "Multi-index and nested DataFrames should have same columns names"
     assert (x_nested.columns == multi_ind_dataframe.columns).all(), col_msg
@@ -994,9 +994,9 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 def from_multiindex_to_dflist(obj, store=None):
 
     instance_index = obj.index.levels[0]
-    n = len(instance_index)
+    # n = len(instance_index)
 
-    Xlist = [obj.loc[i].rename_axis(None) for i in range(n)]
+    Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
 
     return Xlist
 

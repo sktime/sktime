@@ -40,29 +40,6 @@ def test_aggregator_fit_transform_index(flatten_single_levels):
     assert X_agg.equals(X_agg_unnamed), msg
 
 
-# test value error on aggregate with __total already present
-@pytest.mark.parametrize("flatten_single_levels", [True, False])
-def test_aggregator_total(flatten_single_levels):
-    """Tests Aggregator with "__total" already present in input index.
-
-    This asserts that a value error is raised with a message containing "__total"
-    if the input value already has the special aggregation label in the index.
-    """
-    agg = Aggregator(flatten_single_levels=flatten_single_levels)
-
-    X = _bottom_hier_datagen(
-        no_bottom_nodes=3,
-        no_levels=1,
-    )
-    # aggregate to include "__total"
-    X_agg = agg.fit_transform(X)
-
-    # now try again and raise error
-    with pytest.raises(ValueError) as errorinfo:
-        agg.fit_transform(X_agg)
-    assert "__total" in str(errorinfo.value)
-
-
 # test that flatten_single_levels works as expected
 def test_aggregator_flatten():
     """Tests Aggregator flattening single levels.
