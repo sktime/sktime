@@ -8,6 +8,7 @@ __author__ = ["ltsaprounis"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("tensorflow-probability", severity="warning")
@@ -37,14 +38,6 @@ class BaggingForecaster(BaseForecaster):
     and so on
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
@@ -59,14 +52,15 @@ class BaggingForecaster(BaseForecaster):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, bootstrapping_transformer, forecaster, sp):
+    def __init__(
+        self, bootstrapping_transformer: BaseTransformer, forecaster: BaseForecaster
+    ):
         # estimators should precede parameters
         #  if estimators have default values, set None and initalize below
 
         # todo: write any hyper-parameters and components to self
-        self.bootstrapping_transformer = bootstrapping_transformer
+        self.bootstrap_transformer = bootstrapping_transformer
         self.forecaster = forecaster
-        self.sp = sp
         # important: no checking or other logic should happen here
 
         # todo: default estimators should have None arg defaults
@@ -118,7 +112,22 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        y_bootstraps = self.bootstrapping_transformer.fit_transform(y)
+        if (
+            self.bootstrap_transformer.get_tag(
+                "scitype:transform-input", raise_error=False
+            )
+            != "Series"
+            and self.bootstrap_transformer.get_tag(
+                "scitype:transform-output", raise_error=False
+            )
+            != "Panel"
+            and not isinstance(self.bootstrap_transformer, BaseTransformer)
+        ):
+            raise TypeError(
+                "bootstrap_transformer in BaggingForecaster should be a Transformer "
+                "that take as input a Series and output a Panel."
+            )
+        y_bootstraps = self.bootstrap_transformer.fit_transform(y)
         self.forecaster.fit(y_bootstraps)
 
         return self
