@@ -12,7 +12,7 @@ import pytest
 from sktime.datatypes import check_is_mtype, convert
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.panel import _make_panel
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
@@ -27,8 +27,7 @@ def test_vectorization_series_to_panel(mtype):
     """
     n_instances = 10
 
-    y = _make_panel_X(n_instances=n_instances, random_state=42)
-    y = convert(y, from_type="nested_univ", to_type=mtype)
+    y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     y_pred = ARIMA().fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
@@ -108,8 +107,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     """
     n_instances = 10
 
-    y = _make_panel_X(n_instances=n_instances, random_state=42)
-    y = convert(y, from_type="nested_univ", to_type=mtype)
+    y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     est = ARIMA().fit(y)
     y_pred = getattr(est, method)([1, 2, 3])
