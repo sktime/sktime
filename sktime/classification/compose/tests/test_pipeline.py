@@ -9,7 +9,9 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.classification.compose import ClassifierPipeline
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.series.impute import Imputer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 
@@ -63,3 +65,17 @@ def test_mul_sklearn_autoadapt():
 
     _assert_array_almost_equal(y_pred, t12c_2.fit(X, y).predict(X_test))
     _assert_array_almost_equal(y_pred, t12c_3.fit(X, y).predict(X_test))
+
+
+def test_missing_unequal_tag_inference():
+    """Test that ClassifierPipeline infers missing/unequal tags correctly."""
+    c = KNeighborsTimeSeriesClassifier()
+    c1 = ExponentTransformer() * PaddingTransformer() * ExponentTransformer() * c
+    c2 = ExponentTransformer() * ExponentTransformer() * c
+    c3 = Imputer() * ExponentTransformer() * c
+    c4 = ExponentTransformer() * Imputer() * c
+
+    assert c1.get_tag("capability:unequal_length")
+    assert not c2.get_tag("capability:unequal_length")
+    assert c3.get_tag("capability:missing_values")
+    assert not c4.get_tag("capability:missing_values")

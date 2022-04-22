@@ -204,7 +204,7 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
         "X_scitype": "Series",
         "X_univariate": True,
         "has_y": False,
-        "pre-refactor": True,
+        "is_enabled": True,
     }
 
     args = {
@@ -222,7 +222,7 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
         "X_scitype": "Series",
         "X_univariate": False,
         "has_y": False,
-        "pre-refactor": True,
+        "is_enabled": True,
     }
 
     args = {
@@ -243,7 +243,7 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
         "X_scitype": "Panel",
         "X_univariate": True,
         "has_y": False,
-        "pre-refactor": False,
+        "is_enabled": False,
     }
 
     args = {
@@ -268,7 +268,7 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
         "X_scitype": "Panel",
         "X_univariate": False,
         "has_y": False,
-        "pre-refactor": False,
+        "is_enabled": False,
     }
 
     args = {
@@ -292,7 +292,7 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
     _tags = {
         "X_scitype": "Panel",
         "X_univariate": True,
-        "pre-refactor": True,
+        "is_enabled": True,
         "has_y": True,
         "y_scitype": "classes",
     }
@@ -328,7 +328,7 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
     _tags = {
         "X_scitype": "Panel",
         "X_univariate": True,
-        "pre-refactor": False,
+        "is_enabled": False,
         "has_y": True,
         "y_scitype": "classes",
     }
@@ -349,7 +349,7 @@ class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
     _tags = {
         "X_scitype": "Hierarchical",
         "X_univariate": True,
-        "pre-refactor": False,
+        "is_enabled": False,
         "has_y": False,
     }
 

@@ -224,6 +224,8 @@ class AutoARIMA(_PmdArimaAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
 
+    _tags = {"handles-missing-data": True}
+
     def __init__(
         self,
         start_p=2,
@@ -564,6 +566,8 @@ class ARIMA(_PmdArimaAdapter):
     ARIMA(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """  # noqa: E501
+
+    _tags = {"handles-missing-data": True}
 
     def __init__(
         self,

@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
+from sktime.datasets import load_airline
 from sktime.utils._testing.series import _make_index
 
 
@@ -96,3 +97,85 @@ def _make_hierarchical(
     )
 
     return df
+
+
+# todo adds some docs
+def _bottom_hier_datagen(
+    no_levels=3,
+    no_bottom_nodes=6,
+    intercept_max=20,
+    coef_1_max=20,
+    coef_2_max=0.1,
+):
+    """Hierarchical data generator using the flights dataset."""
+    if no_levels > no_bottom_nodes:
+        raise ValueError("no_levels should be less than no_bottom_nodes")
+
+    base_ts = load_airline()
+    df = pd.DataFrame(base_ts, index=base_ts.index)
+    df.index.rename(None, inplace=True)
+
+    if no_levels == 0:
+        df.columns = ["passengers"]
+        df.index.rename("timepoints", inplace=True)
+        return df
+    else:
+
+        df.columns = ["l1_node01"]
+
+        intercept = np.arange(0, intercept_max, 0.01)
+        coef_1 = np.arange(0, coef_1_max, 0.01)
+        coef_2 = np.arange(0, coef_2_max, 0.01)
+        power_2 = ([0.5, 1, 1.5, 2],)
+
+        node_lookup = pd.DataFrame(
+            ["l1_node" + f"{x:02d}" for x in range(1, no_bottom_nodes + 1)]
+        )
+        node_lookup.columns = ["l1_agg"]
+
+        if no_levels >= 2:
+
+            for i in range(2, no_levels + 1):
+                node_lookup["l" + str(i) + "_agg"] = node_lookup.groupby(
+                    ["l" + str(i - 1) + "_agg"]
+                )["l1_agg"].transform(
+                    lambda x: "l"
+                    + str(i)
+                    + "_node"
+                    + f"{int(np.sort(np.random.choice(np.arange(1,np.floor(len(node_lookup.index)/i)+1, 1), size=1))):02d}"  # noqa from flake8 E501
+                )
+
+        node_lookup = node_lookup.set_index("l1_agg", drop=True)
+
+        for i in range(2, no_bottom_nodes + 1):
+            df["l1_node" + f"{i:02d}"] = (
+                np.random.choice(intercept, size=1)
+                + np.random.choice(coef_1, size=1) * df["l1_node01"]
+                + (
+                    np.random.choice(coef_2, size=1)
+                    * (df["l1_node01"] ** np.random.choice(power_2, size=1))
+                )
+            )
+
+        df = (
+            df.melt(ignore_index=False)
+            .reset_index(drop=False)
+            .rename(
+                columns={
+                    "variable": "l1_agg",
+                    "index": "timepoints",
+                    "value": "passengers",
+                }
+            )
+        )
+
+        df = pd.merge(left=df, right=node_lookup.reset_index(), on="l1_agg")
+        df = df[df.columns.sort_values(ascending=True)]
+
+        df_newindex = ["l" + str(x) + "_agg" for x in range(1, no_levels + 1)][::-1]
+        df_newindex.append("timepoints")
+
+        df = df.set_index(df_newindex)
+        df.sort_index(inplace=True)
+
+        return df

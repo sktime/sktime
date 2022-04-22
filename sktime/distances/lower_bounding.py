@@ -123,7 +123,7 @@ def no_bounding(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         Bounding matrix where the values inside the bound are finite values (0s) and
         outside the bounds are infinity (non finite).
     """
-    return np.zeros((x.shape[0], y.shape[0]))
+    return np.zeros((x.shape[1], y.shape[1]))
 
 
 @njit(cache=True)
@@ -152,11 +152,11 @@ def sakoe_chiba(x: np.ndarray, y: np.ndarray, window: float) -> np.ndarray:
     """
     if window < 0 or window > 1:
         raise ValueError("Window must between 0 and 1")
-    bounding_matrix = np.full((x.shape[0], y.shape[0]), np.inf)
-    sakoe_chiba_window_radius = ((x.shape[0] / 100) * window) * 100
 
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
+    bounding_matrix = np.full((x_size, y_size), np.inf)
+    sakoe_chiba_window_radius = ((x_size / 100) * window) * 100
 
     x_upper_line_values = np.interp(
         list(range(x_size)),
@@ -204,11 +204,10 @@ def itakura_parallelogram(
     """
     if itakura_max_slope < 0 or itakura_max_slope > 1:
         raise ValueError("Window must between 0 and 1")
-    bounding_matrix = np.full((y.shape[0], x.shape[0]), np.inf)
-    itakura_max_slope = math.floor(((x.shape[0] / 100) * itakura_max_slope) * 100) / 2
-
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
+    bounding_matrix = np.full((y_size, x_size), np.inf)
+    itakura_max_slope = math.floor(((x_size / 100) * itakura_max_slope) * 100) / 2
 
     middle_x_upper = math.ceil(x_size / 2)
     middle_x_lower = math.floor(x_size / 2)
