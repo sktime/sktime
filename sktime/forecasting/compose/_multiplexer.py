@@ -103,7 +103,6 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             clone_ests=False,
         )
         self._set_forecaster()
-
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
 
@@ -127,6 +126,43 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         else:
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+            if self.get_tag("scitype:y")=="univariate":
+                guaranteed to have a single column/variable
+            if self.get_tag("scitype:y")=="multivariate":
+                guaranteed to have 2 or more columns
+            if self.get_tag("scitype:y")=="both": no restrictions apply
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._set_forecaster()
+        self.clone_tags(self.forecaster_)
+        self.set_tags(**{"fit_is_empty": False})
+
+        super()._fit(y=y, X=X, fh=fh)
+
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
