@@ -73,15 +73,5 @@ nb: clean
 	. .venv/bin/activate && python -m pip install .[all_extras,binder] && ./build_tools/run_examples.sh
 
 dockertest:
-
-ifeq ($(pyversion),3.7)
-	docker build -t sktime -f build_tools/docker/py37.dockerfile .
-else ifeq ($(pyversion),3.9)
-	docker build -t sktime -f build_tools/docker/py39.dockerfile .
-else ifeq ($(pyversion),3.10)
-	docker build -t sktime -f build_tools/docker/py310.dockerfile .
-else
-	docker build -t sktime -f build_tools/docker/py38.dockerfile .
-endif
-
+	docker build -t sktime -f build_tools/docker/$(PYTHON_VERSION).dockerfile .
 	docker run -it --name sktime sktime bash -c "make test"

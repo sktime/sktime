@@ -307,8 +307,21 @@ If a module for a new estimator type is added, multiple things need to be create
 Local Testing
 ~~~~~~~~~~~~~~
 
-Execution of tests in local has been containerized with the help of ``docker``. In order to execute the tests, you need to have ``docker`` installed in your system. If you need to install ``docker``, please follow the instructions `here <https://docs.docker.com/desktop/>`.
+Execution of tests in local has been containerized with the help of ``docker``. In order to execute the tests, you need to have ``docker`` installed in your system. If you need to install ``docker``, please follow the instructions `here <https://docs.docker.com/desktop/>`_.
 
-The command to execute the tests is: ``make dockertest pyversion=<python version>``. You can specify the Python version to be used for the tests using the ``pyversion`` argument. For example, to execute the tests in the Python version ``3.7``, use ``make dockertest pyversion=3.7``. The supported versions are ``3.7``, ``3.8`` and ``3.9`` (``3.10`` is under development). If the ``pyversion`` argument is not passed, version ``3.8`` will be used by default.
+The command to execute the tests is: ``make dockertest PYTHON_VERSION=<python version>``. You can specify the Python version to be used for the tests using the ``PYTHON_VERSION`` argument. For example, to execute the tests in the Python version ``3.7``, use ``make dockertest PYTHON_VERSION=py37``. The supported versions and the value to be passed to the ``PYTHON_VERSION`` argument are listed in the table below.
+
++----------------+----------------+
+| Python version | PYTHON_VERSION |
++================+================+
+|       3.7      |      py37      |
++----------------+----------------+
+|       3.8      |      py38      |
++----------------+----------------+
+|       3.9      |      py39      |
++----------------+----------------+
+|       3.10     |      py310     |
++----------------+----------------+
+
 
 Once the command is executed, ``docker`` will then create a container using the python base image of the specified version and execute the tests within it.
