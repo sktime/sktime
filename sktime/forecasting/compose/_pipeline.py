@@ -585,8 +585,9 @@ class TransformedTargetForecaster(_Pipeline):
     ----------
     steps : list of sktime transformers and forecasters, or
         list of tuples (str, estimator) of sktime transformers or forecasters
-            must contain exactly one transformer
-        these are "blueprint" transformers, states do not change when `fit` is called
+            the list must contain exactly one forecaster
+        these are "blueprint" transformers resp forecasters,
+            forecaster/transformer states do not change when `fit` is called
 
     Attributes
     ----------
