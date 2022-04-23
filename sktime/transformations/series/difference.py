@@ -143,7 +143,8 @@ class Differencer(BaseTransformer):
         if drop_na is not None:
             warn(
                 f"the drop_na parameter is deprecated and will be removed in 0.13.0, "
-                f'use na_handling="{translate_arg[drop_na]}" instead'
+                f'use na_handling="{translate_arg[drop_na]}" instead',
+                DeprecationWarning,
             )
             self._na_handling = translate_arg[drop_na]
         else:
