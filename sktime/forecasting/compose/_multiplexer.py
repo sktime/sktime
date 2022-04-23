@@ -156,10 +156,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             return new_multiplex_forecaster
         # If is anyother type of forecaster, simply add it to forecasters:
         else:
-            raise ValueError(
-                f"Input to MultiplexForecaster | dunder method must be either"
-                f"a MultiplexForecaster, or another forecaster. Not type {type(other)}"
-            )
+            return NotImplemented
 
     def _set_forecaster(self):
         self._check_selected_forecaster()
