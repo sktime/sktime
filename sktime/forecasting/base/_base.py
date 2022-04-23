@@ -185,11 +185,11 @@ class BaseForecaster(BaseEstimator):
         """
         from sktime.forecasting.compose import MultiplexForecaster
 
-        # generate a name for our forecaster based on class name:
-        self_name = type(self).__name__.lower()
-        # create wrap self in MultiplexForecaster, pass most of '|' logic to that class
-        multiplex_self = MultiplexForecaster([(self_name, self)])
-        return multiplex_self | other
+        if isinstance(other, MultiplexForecaster) or isinstance(other, BaseForecaster):
+            multiplex_self = MultiplexForecaster([self])
+            return multiplex_self | other
+        else:
+            return NotImplemented
 
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.

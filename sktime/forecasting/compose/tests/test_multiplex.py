@@ -126,7 +126,16 @@ def test_multiplex_or_dunder():
     )
     assert isinstance(multiplex_same_name_three_test, MultiplexForecaster)
     assert len(multiplex_same_name_three_test.forecasters) == 3
-    assert len(set(multiplex_same_name_three_test._get_forecaster_names())) == 3
+    assert (
+        len(
+            set(
+                multiplex_same_name_three_test._get_estimator_names(
+                    multiplex_same_name_three_test.forecasters
+                )
+            )
+        )
+        == 3
+    )
     # test we get a ValueError if we try to | with anything else:
     with pytest.raises(ValueError):
         multiplex_one | "this shouldn't work"

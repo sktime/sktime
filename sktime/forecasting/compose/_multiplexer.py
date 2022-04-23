@@ -103,34 +103,6 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
                 " Valid selected_forecaster parameters: {}".format(component_names)
             )
 
-    def _ensure_unique_names(self, list_to_verify, deep_copy=False):
-        """Ensure that the names in list_to_verify are unique.
-
-        Helper method which helps guarantee that any new (name, forecaster) tuples to
-            be added to self are unique (with respect to the (name, forecaster) tuples
-            already in self, and with respect to eachother.
-
-        Parameters
-        ----------
-        list_to_verify: a list of tuples of name, forecaster.
-
-        Returns
-        -------
-        verified_list: a list of tuples of name, forecaster such that the names
-            are all unique to eachother and to forecasters already in self.forecasters.
-        """
-        cur_names = self._get_estimator_names(list_to_verify)
-        unique_names = self._make_strings_unique(
-            cur_names + self._get_forecaster_names()
-        )
-        unique_names = unique_names[: len(cur_names)]
-        if deep_copy:
-            return [
-                (name, clone(list_to_verify[ind][1]))
-                for ind, name in enumerate(unique_names)
-            ]
-        return [(name, list_to_verify[ind][1]) for ind, name in enumerate(unique_names)]
-
     def __or__(self, other):
         """Magic | method, return MultiplexForecaster.
 
@@ -155,20 +127,20 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         """
         from sktime.forecasting.base._base import BaseForecaster
 
+        # if other was a BaseForecaster - lets make it a MultiplexForecaster:
         # if already a MultiplexForecaster make new MultiplexForecaster
         # with forecasters from both MultiplexForecasters:
+        if isinstance(other, BaseForecaster) and not isinstance(
+            other, MultiplexForecaster
+        ):
+            other = MultiplexForecaster([other])
         if isinstance(other, MultiplexForecaster):
-            other_forecasters = self._ensure_unique_names(other.forecasters)
-            new_multiplex_forecaster = MultiplexForecaster(
-                self.forecasters + other_forecasters
+            new_tuples = self._get_estimator_tuples(
+                self.forecasters + other.forecasters
             )
+            new_multiplex_forecaster = MultiplexForecaster(new_tuples)
             return new_multiplex_forecaster
         # If is anyother type of forecaster, simply add it to forecasters:
-        elif isinstance(other, BaseForecaster):
-            other_name = type(other).__name__.lower()
-            other_tuple = self._ensure_unique_names([(other_name, other)])
-            self.forecasters.append(other_tuple[0])
-            return self
         else:
             raise ValueError(
                 f"Input to MultiplexForecaster | dunder method must be either"

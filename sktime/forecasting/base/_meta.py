@@ -105,9 +105,6 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
         """
         return self._get_params("forecasters", deep=deep)
 
-    def _get_forecaster_names(self):
-        return self._get_estimator_names(self.forecasters)
-
     def set_params(self, **params):
         """Set the parameters of this estimator.
 
