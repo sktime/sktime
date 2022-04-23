@@ -55,8 +55,7 @@ class BasePairwiseTransformer(BaseEstimator):
     }
 
     def __init__(self):
-        super().__init__()
-        self.X_equals_X2 = False
+        super(BasePairwiseTransformer, self).__init__()
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -113,7 +112,6 @@ class BasePairwiseTransformer(BaseEstimator):
 
         if X2 is None:
             X2 = X
-            self.X_equals_X2 = True
         else:
             X2 = self._pairwise_table_x_check(X2, var_name="X2")
             # todo, possibly:
@@ -201,7 +199,6 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
     def __init__(self):
         super(BasePairwiseTransformerPanel, self).__init__()
-        self.X_equals_X2 = False
 
     def __call__(self, X, X2=None):
         """Compute distance/kernel matrix, call shorthand.
@@ -281,12 +278,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         if X2 is None:
             X2 = X
-            self.X_equals_X2 = True
         else:
             X2 = self._pairwise_panel_x_check(X2, var_name="X2")
-            # todo, possibly:
-            # check X, X2 for equality, then set X_equals_X2
-            # could use deep_equals
 
         return self._transform(X=X, X2=X2)
 
