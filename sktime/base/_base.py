@@ -78,6 +78,16 @@ class BaseObject(_BaseEstimator):
         Equivalent to sklearn.clone but overwrites self.
         After self.reset() call, self is equal in value to
         `type(self)(**self.get_params(deep=False))`
+
+        Detail behaviour:
+        removes any object attributes, except:
+            hyper-parameters = arguments of __init__
+            object attributes containing double-underscores, i.e., the string "__"
+        runs __init__ with current values of hyper-parameters (result of get_params) 
+
+        Not affected by the reset are:
+        object attributes containing double-underscores
+        class and object methods, class attributes
         """
         # retrieve parameters to copy them later
         params = self.get_params(deep=False)

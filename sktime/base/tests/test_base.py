@@ -209,7 +209,11 @@ def test_reset():
 
     Raises
     ------
-    AssertionError if logic behind reset is incorrect
+    AssertionError if logic behind reset is incorrect, logic tested:
+        reset should remove any object attributes that are not hyper-parameters,
+        with the exception of attributes containing double-underscore "__"
+        reset should not remove class attributes or methods
+        reset should set hyper-parameters as in pre-reset state
     """
     x = ResetTester(168)
     x.foo()
