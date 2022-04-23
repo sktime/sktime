@@ -63,7 +63,7 @@ def _sliding_mean_std(X, m):
         The moving mean and moving std
     """
     s = np.insert(np.cumsum(X), 0, 0)
-    sSq = np.insert(np.cumsum(X ** 2), 0, 0)
+    sSq = np.insert(np.cumsum(X**2), 0, 0)
     segSum = s[m:] - s[:-m]
     segSumSq = sSq[m:] - sSq[:-m]
     movmean = segSum / m
