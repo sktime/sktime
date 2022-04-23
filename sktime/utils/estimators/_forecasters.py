@@ -360,13 +360,11 @@ class MockForecaster(BaseForecaster):
             cols = ["Quantiles"]
 
         col_index = pd.MultiIndex.from_product([cols, alpha])
-        pred_quantiles = pd.DataFrame(columns=index)
-
         fh_index = fh.to_absolute(self.cutoff)
         pred_quantiles = pd.DataFrame(index=fh_index, columns=col_index)
 
-        for col, a in zip(col_index, alpha):
-            pred_quantiles[(col, a)] = pd.Series(
+        for col, a in col_index:
+            pred_quantiles[col, a] = pd.Series(
                 self.prediction_constant * 2 * a, index=fh_index
             )
 
