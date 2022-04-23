@@ -137,5 +137,5 @@ def test_multiplex_or_dunder():
         == 3
     )
     # test we get a ValueError if we try to | with anything else:
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         multiplex_one | "this shouldn't work"
