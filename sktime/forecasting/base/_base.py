@@ -33,7 +33,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 
 __all__ = ["BaseForecaster"]
 
@@ -169,6 +169,27 @@ class BaseForecaster(BaseEstimator):
             return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexForecaster.
+
+        Implemented for `other` being either a MultiplexForecaster or a forecaster.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster or sktime MultiplexForecaster
+
+        Returns
+        -------
+        MultiplexForecaster object
+        """
+        from sktime.forecasting.compose import MultiplexForecaster
+
+        # generate a name for our forecaster based on class name:
+        self_name = type(self).__name__.lower()
+        # create wrap self in MultiplexForecaster, pass most of '|' logic to that class
+        multiplex_self = MultiplexForecaster([(self_name, self)])
+        return multiplex_self | other
 
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
