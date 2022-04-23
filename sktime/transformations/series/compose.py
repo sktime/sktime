@@ -436,12 +436,21 @@ def _check_is_pdseries(z):
 
 
 class FitInTransform(BaseTransformer):
-    """Transformer compostion to always fit a given transformer on the transform data.
+    """Transformer compostion to always fit a given transformer on the transform data only.
+
+    Some transformers like Imputer(method="mean") might be more accurate for some use
+    cases if they are fitted only on the transform/predict data. The FitInTransform
+    transformer can be best used in a pipeline context where train data is different to
+    the transform/predict data.
 
     Parameters
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series.
+
+    Attributes
+    ----------
+    transformer_ : Fitted transformer.
 
     Examples
     --------
