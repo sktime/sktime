@@ -83,7 +83,7 @@ class BaseObject(_BaseEstimator):
         params = self.get_params(deep=False)
 
         # delete all object attributes in self
-        attrs = [attr for attr in dir(self) if not attr.startswith("__")]
+        attrs = [attr for attr in dir(self) if not "__" in attr]
         cls_attrs = [attr for attr in dir(type(self))]
         self_attrs = set(attrs).difference(cls_attrs)
         for attr in self_attrs:

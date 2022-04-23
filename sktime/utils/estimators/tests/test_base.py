@@ -41,15 +41,9 @@ def test_mixin(base):
             pass
 
     dummy_instance = _DummyClass()
-    assert hasattr(dummy_instance, "_log") & hasattr(dummy_instance, "log")
-
-
-def test_log_is_property():
-    """Test _MockEstimatorMixin.log can't be overwritten."""
-    mixin = _MockEstimatorMixin()
-    with pytest.raises(AttributeError) as excinfo:
-        mixin.log = 1
-        assert "can't set attribute" in str(excinfo.value)
+    assert hasattr(dummy_instance, "log")
+    dummy_instance.log = 42
+    assert hasattr(dummy_instance, "_MockEstimatorMixin__log")
 
 
 def test_method_logger_exception():
