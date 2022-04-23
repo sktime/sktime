@@ -9,7 +9,7 @@ __all__ = []
 from pandas.testing import assert_frame_equal
 
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformations.series.compose import FitInTransform
+from sktime.transformations.compose import FitInTransform
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
