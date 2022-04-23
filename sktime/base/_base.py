@@ -83,7 +83,7 @@ class BaseObject(_BaseEstimator):
         removes any object attributes, except:
             hyper-parameters = arguments of __init__
             object attributes containing double-underscores, i.e., the string "__"
-        runs __init__ with current values of hyper-parameters (result of get_params) 
+        runs __init__ with current values of hyper-parameters (result of get_params)
 
         Not affected by the reset are:
         object attributes containing double-underscores
