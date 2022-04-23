@@ -155,7 +155,7 @@ class MyTransformer(BaseTransformer):
         #
         # special case: if no fitting happens before transformation
         #  then: delete _fit (don't implement)
-        #   set "fit-in-transform" tag to True
+        #   set "fit_is_empty" tag to True
         #
         # Note: when interfacing a model that has fit, with parameters
         #   that are not data (X, y) or data-like
