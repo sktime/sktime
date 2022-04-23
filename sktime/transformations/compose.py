@@ -673,15 +673,13 @@ class FitInTransform(BaseTransformer):
     cases if they are fitted only on the transform/predict data. The FitInTransform
     transformer can be best used in a pipeline context where train data is different to
     the transform/predict data.
+    Warning: This transformer can not inverse transform, so in pipelining the
+    inverse_transform will just be skipped.
 
     Parameters
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series.
-
-    Attributes
-    ----------
-    transformer_ : Fitted transformer, only available after calling transform().
 
     Examples
     --------
@@ -714,7 +712,7 @@ class FitInTransform(BaseTransformer):
         self.transformer = transformer
         super(FitInTransform, self).__init__()
         self.clone_tags(transformer, None)
-        self.set_tags(**{"fit_is_empty": True})
+        self.set_tags(**{"fit_is_empty": True, "skip-inverse-transform": True})
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -733,28 +731,8 @@ class FitInTransform(BaseTransformer):
         -------
         transformed version of X
         """
-        self.transformer_ = clone(self.transformer)
-        self.transformer_.fit(X=X, y=y)
-        return self.transformer_.transform(X=X, y=y)
-
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform, inverse operation to transform.
-
-        private _inverse_transform containing core logic, called from inverse_transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        return self.transformer_.inverse_transform(X=X, y=y)
+        self._transformer = clone(self.transformer)
+        return self._transformer.fit_transform(X=X, y=y)
 
     def get_fitted_params(self):
         """Get fitted parameters.
