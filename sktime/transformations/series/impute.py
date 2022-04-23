@@ -116,7 +116,7 @@ class Imputer(BaseTransformer):
         if self.method in ["drift", "forecaster"]:
             # save train data as needed for multivariate fitting int _fit()
             self._X = X.copy()
-            self._y = y.copy()
+            self._y = y.copy() if y is not None else None
             if self.method == "drift":
                 self._forecaster = PolynomialTrendForecaster(degree=1)
             elif self.method == "forecaster":
