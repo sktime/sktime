@@ -80,20 +80,6 @@ unit_test_proba["ElasticEnsemble"] = np.array(
         [1.0, 0.0],
     ]
 )
-unit_test_proba["ProximityForest"] = np.array(
-    [
-        [0.0, 1.0],
-        [0.6667, 0.3333],
-        [0.0, 1.0],
-        [0.3333, 0.6667],
-        [0.6667, 0.3333],
-        [1.0, 0.0],
-        [0.6667, 0.3333],
-        [0.0, 1.0],
-        [0.6667, 0.3333],
-        [1.0, 0.0],
-    ]
-)
 unit_test_proba["ShapeDTW"] = np.array(
     [
         [0.0, 1.0],
