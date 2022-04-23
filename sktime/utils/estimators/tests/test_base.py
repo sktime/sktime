@@ -42,7 +42,7 @@ def test_mixin(base):
 
     dummy_instance = _DummyClass()
     assert hasattr(dummy_instance, "log")
-    dummy_instance.log = 42
+    dummy_instance.add_log_item(42)
     assert hasattr(dummy_instance, "_MockEstimatorMixin__log")
 
 
