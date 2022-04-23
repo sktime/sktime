@@ -259,9 +259,12 @@ class Imputer(BaseTransformer):
                 fh = ForecastingHorizon(values=na_index, is_relative=False)
 
                 # fill NaN before fitting with ffill and backfill (heuristic)
+
                 self._forecaster.fit(
                     y=self._X[col].fillna(method="ffill").fillna(method="backfill"),
-                    X=self._y[col].fillna(method="ffill").fillna(method="backfill"),
+                    X=self._y[col].fillna(method="ffill").fillna(method="backfill")
+                    if self._y is not None
+                    else None,
                 )
 
                 # replace missing values with predicted values
