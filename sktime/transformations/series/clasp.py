@@ -400,7 +400,6 @@ class ClaSPTransformer(BaseTransformer):
 
     def __init__(self, window_length=10, scoring_metric="ROC_AUC"):
         self.window_length = int(window_length)
-        self.knn_mask = None
         self.scoring_metric = scoring_metric
         super(ClaSPTransformer, self).__init__()
 
@@ -427,7 +426,7 @@ class ClaSPTransformer(BaseTransformer):
         scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
         X = X.flatten()
-        Xt, self.knn_mask = clasp(X, self.window_length, score=scoring_metric_call)
+        Xt, _ = clasp(X, self.window_length, score=scoring_metric_call)
 
         return Xt
 
