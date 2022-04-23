@@ -16,7 +16,7 @@ from sktime.utils._testing.scenarios_transformers import (
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
-    """Fixture generator for forecasting tests.
+    """Fixture generator for transformer tests.
 
     Fixtures parameterized
     ----------------------
@@ -37,7 +37,7 @@ class TransformerFixtureGenerator(BaseFixtureGenerator):
 
 
 class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
-    """Module level tests for all sktime forecasters."""
+    """Module level tests for all sktime transformers."""
 
     def test_capability_inverse_tag_is_correct(self, estimator_instance):
         """Test that the capability:inverse_transform tag is set correctly."""
