@@ -199,6 +199,8 @@ class ResetTester(BaseObject):
 
     def foo(self):
         self.d = 126
+        self._d = 126
+        self.d_ = 126
         self.f__o__o = 252
 
 
@@ -219,5 +221,7 @@ def test_reset():
     assert hasattr(x, "c") and x.c == 84
     assert hasattr(x, "clsvar") and x.clsvar == 210
     assert not hasattr(x, "d")
+    assert not hasattr(x, "_d")
+    assert not hasattr(x, "d_")
     assert hasattr(x, "f__o__o") and x.f__o__o == 252
     assert hasattr(x, "foo")
