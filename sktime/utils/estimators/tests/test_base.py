@@ -46,6 +46,15 @@ def test_mixin(base):
     assert hasattr(dummy_instance, "_MockEstimatorMixin__log")
 
 
+def test_log_is_property():
+    """Test _MockEstimatorMixin.log elements can't be overwritten."""
+    mixin = _MockEstimatorMixin()
+    mixin.log = 1
+    mixin.log = 2
+    assert mixin.log[0] == 1
+    assert mixin.log[1] == 2
+
+
 def test_method_logger_exception():
     """Test that _method_logger only works for _MockEstimatorMixin subclasses."""
 
