@@ -12,7 +12,7 @@ from pytest import raises
 
 from sktime.utils.validation.forecasting import check_fh
 
-empty_input = (np.array([]), [], pd.Int64Index([]))
+empty_input = (np.array([], dtype=int), [], pd.Index([], dtype=int))
 
 
 @pytest.mark.parametrize("arg", empty_input)

@@ -16,7 +16,7 @@ from sktime.utils._testing.scenarios_transformers import (
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
-    """Fixture generator for forecasting tests.
+    """Fixture generator for transformer tests.
 
     Fixtures parameterized
     ----------------------
@@ -37,7 +37,7 @@ class TransformerFixtureGenerator(BaseFixtureGenerator):
 
 
 class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
-    """Module level tests for all sktime forecasters."""
+    """Module level tests for all sktime transformers."""
 
     def test_capability_inverse_tag_is_correct(self, estimator_instance):
         """Test that the capability:inverse_transform tag is set correctly."""
@@ -112,6 +112,12 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         # we now know that Xt has its expected scitype
         # assign this variable for better readability
         Xt_scitype = Xt_expected_scitype
+
+        # skip the "number of instances" test below for Aggregator, Reconciler
+        #   reason: this adds "pseudo-instances" for the __total and increases the count
+        #   todo: we probably want to mirror this into a "hierarchical" tag later on
+        if type(estimator_instance).__name__ in ["Aggregator", "Reconciler"]:
+            return None
 
         # if we vectorize, number of instances before/after transform should be same
         if trafo_input == "Series" and trafo_output == "Series":

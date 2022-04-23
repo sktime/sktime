@@ -4,7 +4,7 @@
 Builds classifiers on each dimension (column) independently.
 """
 
-__author__ = ["Aaron Bostrom"]
+__author__ = ["abostrom"]
 __all__ = ["ColumnEnsembleClassifier"]
 
 from itertools import chain
@@ -23,6 +23,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     _tags = {
         "capability:multivariate": True,
+        "X_inner_mtype": ["nested_univ", "pd-multiindex"],
     }
 
     def __init__(self, estimators, verbose=False):
@@ -30,6 +31,12 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         self.estimators = estimators
         self.remainder = "drop"
         super(BaseColumnEnsembleClassifier, self).__init__()
+        self._anytagis_then_set(
+            "capability:unequal_length", False, True, self._estimators
+        )
+        self._anytagis_then_set(
+            "capability:missing_values", False, True, self._estimators
+        )
 
     @property
     def _estimators(self):
@@ -158,7 +165,6 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
-        self._is_fitted = True
         return self
 
     def _collect_probas(self, X):
@@ -171,7 +177,6 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for X using 'soft' voting."""
-        self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
@@ -222,12 +227,18 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.interval_based import DrCIF
+    >>> from sktime.classification.dictionary_based import ContractableBOSS
+    >>> from sktime.classification.interval_based import CanonicalIntervalForest
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(split="train")
     >>> X_test, y_test = load_basic_motions(split="test")
-    >>> clf = DrCIF(n_estimators=3)
-    >>> estimators = [("DrCIF", clf, [0, 1])]
+    >>> cboss = ContractableBOSS(
+    ...     n_parameter_samples=4, max_ensemble_size=2, random_state=0
+    ... )
+    >>> cif = CanonicalIntervalForest(
+    ...     n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
+    ... )
+    >>> estimators = [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]
     >>> col_ens = ColumnEnsembleClassifier(estimators=estimators)
     >>> col_ens.fit(X_train, y_train)
     ColumnEnsembleClassifier(...)

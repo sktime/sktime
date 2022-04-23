@@ -29,11 +29,14 @@ import textwrap
 import zipfile
 from datetime import datetime
 from distutils.util import strtobool
+from typing import Dict
 from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes._convert import convert
+from sktime.datatypes._hierarchical import MTYPE_LIST_HIERARCHICAL
 from sktime.datatypes._panel._convert import (
     _make_column_names,
     from_long_to_nested,
@@ -1666,6 +1669,7 @@ def load_tsf_to_dataframe(
     full_file_path_and_name,
     replace_missing_vals_with="NaN",
     value_column_name="series_value",
+    return_type="pd_multiindex_hier",
 ):
     """
     Convert the contents in a .tsf file into a dataframe.
@@ -1683,19 +1687,27 @@ def load_tsf_to_dataframe(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
+    return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
+        mtype string for in-memory data container format specification of the
+        return type:
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "tsf_default" = container that faithfully mirrors tsf format from the original
+            implementation in: https://github.com/rakshitha123/TSForecasting/
+            blob/master/utils/data_loader.py.
+        - other valid mtype strings are Panel or Hierarchical mtypes in
+            datatypes.MTYPE_REGISTER. If Panel or Hierarchical mtype str is given, a
+            conversion to that mtype will be attempted
+        For tutorials and detailed specifications, see
+        examples/AA_datatypes_and_datasets.ipynb
 
     Returns
     -------
     loaded_data: pd.DataFrame
         The converted dataframe containing the time series.
-    frequency: str
-        The frequency of the dataset.
-    forecast_horizon: int
-        The expected forecast horizon of the dataset.
-    contain_missing_values: bool
-        Whether the dataset contains missing values or not.
-    contain_equal_length: bool
-        Whether the series have equal lengths or not.
+    metadata: dict
+        The metadata for the forecasting problem. The dictionary keys are:
+        "frequency", "forecast_horizon", "contain_missing_values",
+        "contain_equal_length"
     """
     col_names = []
     col_types = []
@@ -1839,10 +1851,105 @@ def load_tsf_to_dataframe(
         all_data[value_column_name] = all_series
         loaded_data = pd.DataFrame(all_data)
 
-        return (
-            loaded_data,
-            frequency,
-            forecast_horizon,
-            contain_missing_values,
-            contain_equal_length,
+        # metadata dict
+        metadata = dict(
+            zip(
+                (
+                    "frequency",
+                    "forecast_horizon",
+                    "contain_missing_values",
+                    "contain_equal_length",
+                ),
+                (
+                    frequency,
+                    forecast_horizon,
+                    contain_missing_values,
+                    contain_equal_length,
+                ),
+            )
         )
+
+        if return_type != "default_tsf":
+            loaded_data = _convert_tsf_to_hierarchical(
+                loaded_data, metadata, value_column_name=value_column_name
+            )
+            if (
+                loaded_data.index.nlevels == 2
+                and return_type not in MTYPE_LIST_HIERARCHICAL
+            ):
+                loaded_data = convert(
+                    loaded_data, from_type="pd-multiindex", to_type=return_type
+                )
+            else:
+                loaded_data = convert(
+                    loaded_data, from_type="pd_multiindex_hier", to_type=return_type
+                )
+
+        return loaded_data, metadata
+
+
+def _convert_tsf_to_hierarchical(
+    data: pd.DataFrame,
+    metadata: Dict,
+    freq: str = None,
+    value_column_name: str = "series_value",
+) -> pd.DataFrame:
+    """Convert the data from default_tsf to pd_multiindex_hier.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        nested values dataframe
+    metadata : Dict
+        tsf file metadata
+    freq : str, optional
+        pandas compatible time frequency, by default None
+        if not speciffied it's automatically mapped from the tsf frequency to a pandas
+        frequency
+    value_column_name: str, optional
+        The name of the column that contains the values, by default "series_value"
+
+    Returns
+    -------
+    pd.DataFrame
+        sktime pd_multiindex_hier mtype
+    """
+    df = data.copy()
+
+    if freq is None:
+        freq_map = {
+            "daily": "D",
+            "weekly": "W",
+            "monthly": "MS",
+            "yearly": "YS",
+        }
+        freq = freq_map[metadata["frequency"]]
+
+    # create the time index
+    if "start_timestamp" in df.columns:
+        df["timestamp"] = df.apply(
+            lambda x: pd.date_range(
+                start=x["start_timestamp"], periods=len(x[value_column_name]), freq=freq
+            ),
+            axis=1,
+        )
+        drop_columns = ["start_timestamp"]
+    else:
+        df["timestamp"] = df.apply(
+            lambda x: pd.RangeIndex(start=0, stop=len(x[value_column_name])), axis=1
+        )
+        drop_columns = []
+
+    # pandas implementation of multiple column explode
+    # can be removed and replaced by explode if we move to pandas version 1.3.0
+    columns = [value_column_name, "timestamp"]
+    index_columns = [c for c in list(df.columns) if c not in drop_columns + columns]
+    result = pd.DataFrame({c: df[c].explode() for c in columns})
+    df = (
+        df.drop(columns=columns + drop_columns)
+        .join(result)
+        .set_index(index_columns + ["timestamp"])
+    )
+    df = df.astype({value_column_name: "float"}, errors="ignore")
+
+    return df

@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	cd ${TEST_DIR}; python -m pytest --cov-report html --cov=sktime -v -n 2 --showlocals --durations=20 --pyargs $(PACKAGE)
+	cd ${TEST_DIR}; python -m pytest -v -n auto --showlocals --durations=20 $(PYTESTOPTIONS) --pyargs $(PACKAGE)
 
 tests: test
 
@@ -39,7 +39,6 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./htmlcov
 	rm -rf ./junit
 	rm -rf ./$(PACKAGE).egg-info
-	rm -rf ./cover
 	rm -rf coverage.xml
 	rm -f MANIFEST
 	rm -rf ./wheelhouse/*

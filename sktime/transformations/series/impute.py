@@ -74,6 +74,8 @@ class Imputer(BaseTransformer):
         "handles-missing-data": True,
         "skip-inverse-transform": True,
         "univariate-only": False,
+        "capability:missing_values:removes": True,
+        # is transform result always guaranteed to contain no missing values?
     }
 
     def __init__(
