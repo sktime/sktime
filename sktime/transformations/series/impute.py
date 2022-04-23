@@ -151,10 +151,10 @@ class Imputer(BaseTransformer):
         # TODO v0.13.0: Remove this if statement and warning
         if self.method in ["drift", "mean", "median", "random"]:
             warn(
-                """Imputer methods "drift", "mean", "median" have been moved to the fit()
-                method, so usage via transform() is deprecated. To still fit on the
-                transform data only, please use the new FitInTransform transformer.
-                v.0.13.0. Please use method \"drift\" instead for linear imputation.
+                """Imputer methods "drift", "mean", "median", "random" have been
+                moved to the fit() method, so usage via transform() is
+                deprecated. To still fit on the transform data only, please use the
+                new FitInTransform transformer.
                 """,
                 DeprecationWarning,
             )
