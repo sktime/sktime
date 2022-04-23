@@ -186,3 +186,38 @@ def test_is_composite():
 
     assert not non_composite.is_composite()
     assert composite.is_composite()
+
+
+class ResetTester(BaseObject):
+
+    clsvar = 210
+
+    def __init__(self, a, b=42):
+        self.a = a
+        self.b = b
+        self.c = 84
+
+    def foo(self):
+        self.d = 126
+        setattr(self, "f__o__o", 252)
+
+
+def test_reset():
+    """Tests reset method for correct behaviour.
+
+    Raises
+    ------
+    AssertionError if logic behind reset is incorrect
+    """
+    x = ResetTester(168)
+    x.foo()
+
+    x.reset()
+
+    assert hasattr(x, "a") and x.a == 168
+    assert hasattr(x, "b") and x.b == 42
+    assert hasattr(x, "c") and x.c == 84
+    assert hasattr(x, "clsvar") and x.clsvar == 210
+    assert not hasattr(x, "d")
+    assert hasattr(x, "f__o__o") and getattr(x, "f__o__o") == 252
+    assert hasattr(x, "foo")
