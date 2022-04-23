@@ -116,6 +116,7 @@ class Imputer(BaseTransformer):
         if self.method in ["drift", "forecaster"]:
             # save train data as needed for multivariate fitting int _fit()
             self._X = X.copy()
+            self._y = y.copy()
             if self.method == "drift":
                 self._forecaster = PolynomialTrendForecaster(degree=1)
             elif self.method == "forecaster":
@@ -147,6 +148,16 @@ class Imputer(BaseTransformer):
         """
         X = X.copy()
 
+        # TODO v0.13.0: Remove this if statement and warning
+        if self.method in ["drift", "mean", "median", "random"]:
+            warn(
+                """Imputer methods "drift", "mean", "median" have been moved to the fit()
+                method, so usage via transform() is deprecated. To still fit on the
+                transform data only, please use the new FitInTransform transformer.
+                v.0.13.0. Please use method \"drift\" instead for linear imputation.
+                """,
+                DeprecationWarning,
+            )
         # replace missing_values with np.nan
         if self.missing_values:
             X = X.replace(to_replace=self.missing_values, value=np.nan)
@@ -164,22 +175,14 @@ class Imputer(BaseTransformer):
         elif self.method in ["backfill", "bfill", "pad", "ffill"]:
             X = X.fillna(method=self.method)
         elif self.method == "drift":
-            X = self._impute_with_forecaster(X)
+            X = self._impute_with_forecaster(X, y)
         elif self.method == "forecaster":
-            X = self._impute_with_forecaster(X)
+            X = self._impute_with_forecaster(X, y)
         elif self.method == "mean":
             X = X.fillna(value=self._mean)
         elif self.method == "median":
             X = X.fillna(value=self._median)
         elif self.method in ["nearest", "linear"]:
-            if self.method == "linear":
-                # TODO v0.13.0: Remove method "linear"
-                warn(
-                    """Imputer method \"linear\" is deprecated and will be removed in release
-                    v.0.13.0. Please use method \"drift\" instead for linear imputation.
-                    """,
-                    FutureWarning,
-                )
             X = X.interpolate(method=self.method)
         else:
             raise ValueError(f"`method`: {self.method} not available.")
@@ -232,13 +235,15 @@ class Imputer(BaseTransformer):
         else:
             return rng.uniform(self._X[col].min(), self._X[col].max())
 
-    def _impute_with_forecaster(self, X):
+    def _impute_with_forecaster(self, X, y):
         """Use a given forecaster for imputation by in-sample predictions.
 
         Parameters
         ----------
         X : pd.DataFrame
             Series to impute.
+        y : pd.DataFrame
+            Exog data for forecaster.
 
         Returns
         -------
@@ -253,11 +258,12 @@ class Imputer(BaseTransformer):
 
                 # fill NaN before fitting with ffill and backfill (heuristic)
                 self._forecaster.fit(
-                    y=self._X[col].fillna(method="ffill").fillna(method="backfill")
+                    y=self._X[col].fillna(method="ffill").fillna(method="backfill"),
+                    X=self._y[col].fillna(method="ffill").fillna(method="backfill"),
                 )
 
                 # replace missing values with predicted values
-                X[col][na_index] = self._forecaster.predict(fh=fh)
+                X[col][na_index] = self._forecaster.predict(fh=fh, X=y)
         return X
 
     @classmethod
