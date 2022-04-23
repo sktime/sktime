@@ -25,16 +25,3 @@ def test_transform_fitintransform():
 
     y_hat_expected = BoxCoxTransformer().fit_transform(X_test)
     assert_series_equal(y_hat, y_hat_expected)
-
-
-def test_inverse_transform_fitintransform():
-    """Test inverse_transform against BoxCoxTransformer."""
-    fitintransform = FitInTransform(BoxCoxTransformer())
-    fitintransform.fit(X=X_train)
-    _ = fitintransform.transform(X=X_test)
-
-    exponent = BoxCoxTransformer().fit(X_test)
-
-    y_inv = fitintransform.inverse_transform(X_train)
-    y_inv_expected = exponent.inverse_transform(X_train)
-    assert_series_equal(y_inv, y_inv_expected)
