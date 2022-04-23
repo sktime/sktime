@@ -424,10 +424,10 @@ class ClaSPTransformer(BaseTransformer):
             ClaSP of the single time series as output
             with length as (n-window_length+1)
         """
-        self._check_scoring_metric(self.scoring_metric)
+        scoring_metric_call = self._check_scoring_metric(self.scoring_metric)
 
         X = X.flatten()
-        Xt, self.knn_mask = clasp(X, self.window_length, score=self.scoring_metric_call)
+        Xt, self.knn_mask = clasp(X, self.window_length, score=scoring_metric_call)
 
         return Xt
 
@@ -438,6 +438,12 @@ class ClaSPTransformer(BaseTransformer):
         ----------
         scoring_metric : string
             Choose from "ROC_AUC" or "F1"
+
+        Returns
+        -------
+        scoring_metric_call : a callable, keyed by the `scoring_metric` input
+            _roc_auc_score, if scoring_metric = "ROC_AUC"
+            _binary_f1_score, if scoring_metric = "F1"
         """
         valid_scores = ("ROC_AUC", "F1")
 
@@ -445,9 +451,9 @@ class ClaSPTransformer(BaseTransformer):
             raise ValueError(f"invalid input, please use one of {valid_scores}")
 
         if scoring_metric == "ROC_AUC":
-            self.scoring_metric_call = _roc_auc_score
+            return _roc_auc_score
         elif scoring_metric == "F1":
-            self.scoring_metric_call = _binary_f1_score
+            return _binary_f1_score
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
