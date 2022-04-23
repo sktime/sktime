@@ -12,7 +12,7 @@ __author__ = ["fkiraly"]
 import numpy as np
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
-from sktime.utils._testing import deep_equals
+from sktime.utils._testing.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
