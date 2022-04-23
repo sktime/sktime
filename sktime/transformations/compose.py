@@ -784,7 +784,7 @@ class FitInTransform(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
 
-        params = {"transformer": ExponentTransformer()}
+        params = {"transformer": BoxCoxTransformer()}
         return params
