@@ -28,10 +28,11 @@ def _check_soft_dependencies(
         should be provided if import name differs from package name
     severity : str, "error" (default) or "warning"
         whether the check should raise an error, or only a warning
-    object : python class, object or None, default=None
+    object : python class, object, str, or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__,
         or a class is passed when it is called at the start of a single-class module,
-        the error message is more informative and will refer to the class
+        the error message is more informative and will refer to the class/object;
+        if str is passed, will be used as name of the class/object or module
     suppress_import_stdout : bool, optional. Default=False
         whether to suppress stdout printout upon import.
 
@@ -81,7 +82,10 @@ def _check_soft_dependencies(
             else:
                 if not isclass(object):
                     class_ref = type(object)
-                class_name = class_ref.__name__
+                elif not isinstance(object, str):
+                    class_name = class_ref.__name__
+                else:
+                    class_name = object
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "
