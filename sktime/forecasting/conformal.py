@@ -81,7 +81,10 @@ class ConformalIntervals(BaseForecaster):
     }
 
     ALLOWED_METHODS = [
-        "empirical", "empirical_residual", "conformal", "conformal_bonferroni"
+        "empirical",
+        "empirical_residual",
+        "conformal",
+        "conformal_bonferroni",
     ]
 
     def __init__(self, forecaster, method="empirical", verbose=False):
