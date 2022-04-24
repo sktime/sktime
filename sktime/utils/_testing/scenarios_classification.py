@@ -14,6 +14,7 @@ from inspect import isclass
 from sktime.base import BaseObject
 from sktime.classification.base import BaseClassifier
 from sktime.regression.base import BaseRegressor
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
@@ -81,8 +82,12 @@ class ClassifierTestScenario(TestScenario, BaseObject):
 
         # if X is multivariate, applicable only if can handle multivariate
         is_multivariate = not self.get_tag("X_univariate")
-
         if is_multivariate and not get_tag(obj, "capability:multivariate"):
+            return False
+
+        # if X is unequal length, applicable only if can handle unequal length
+        is_unequal_length = self.get_tag("X_unequal_length")
+        if is_unequal_length and not get_tag(obj, "capability:unequal_length"):
             return False
 
         return True
@@ -103,7 +108,12 @@ X_test_multivariate = _make_panel_X(
 class ClassifierFitPredict(ClassifierTestScenario):
     """Fit/predict with univariate panel X and labels y."""
 
-    _tags = {"X_univariate": True, "is_enabled": True, "n_classes": 2}
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": False,
+        "is_enabled": True,
+        "n_classes": 2,
+    }
 
     args = {
         "fit": {"y": y, "X": X},
@@ -116,7 +126,12 @@ class ClassifierFitPredict(ClassifierTestScenario):
 class ClassifierFitPredictMultivariate(ClassifierTestScenario):
     """Fit/predict with multivariate panel X and labels y."""
 
-    _tags = {"X_univariate": False, "is_enabled": True, "n_classes": 2}
+    _tags = {
+        "X_univariate": False,
+        "X_unequal_length": False,
+        "is_enabled": True,
+        "n_classes": 2,
+    }
 
     args = {
         "fit": {"y": y, "X": X_multivariate},
@@ -126,13 +141,41 @@ class ClassifierFitPredictMultivariate(ClassifierTestScenario):
     default_arg_sequence = ["fit", "predict", "predict", "predict"]
 
 
+X_unequal_length = _make_hierarchical(
+    hierarchy_levels=(10,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
+)
+X_unequal_length_test = _make_hierarchical(
+    hierarchy_levels=(5,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
+)
+
+
+class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
+    """Fit/predict with univariate panel X and labels y, unequal length series."""
+
+    _tags = {
+        "X_univariate": True,
+        "X_unequal_length": True,
+        "is_enabled": True,
+        "n_classes": 2,
+    }
+
+    args = {
+        "fit": {"y": y, "X": X_unequal_length},
+        "predict": {"X": X_unequal_length_test},
+    }
+    default_method_sequence = ["fit", "predict", "predict_proba", "decision_function"]
+    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+
+
 scenarios_classification = [
     ClassifierFitPredict,
     ClassifierFitPredictMultivariate,
+    ClassifierFitPredictUnequalLength,
 ]
 
 # we use the same scenarios for regression, as in the old test suite
 scenarios_regression = [
     ClassifierFitPredict,
     ClassifierFitPredictMultivariate,
+    ClassifierFitPredictUnequalLength,
 ]
