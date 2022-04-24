@@ -161,8 +161,8 @@ class BaggingForecaster(BaseForecaster):
         set_random_state(self.bootstrap_transformer_, random_state=self.random_state_)
         self.forecaster_ = clone(self.forecaster)
         set_random_state(self.forecaster_, random_state=self.random_state_)
-        y_bootstraps = self.bootstrap_transformer_.fit_transform(y)
-        self.forecaster_.fit(y_bootstraps)
+        y_bootstraps = self.bootstrap_transformer_.fit_transform(X=y)
+        self.forecaster_.fit(y=y_bootstraps, fh=fh, X=None)
 
         return self
 
@@ -191,7 +191,7 @@ class BaggingForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        y_bootstraps_pred = self.forecaster_.predict(fh)
+        y_bootstraps_pred = self.forecaster_.predict(fh=fh, X=None)
         return y_bootstraps_pred.groupby(level=-1).mean()
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -226,7 +226,7 @@ class BaggingForecaster(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         # X is ignored
-        y_pred = self.forecaster_.predict(fh)
+        y_pred = self.forecaster_.predict(fh=fh, X=None)
 
         return _calculate_data_quantiles(y_pred, alpha)
 
