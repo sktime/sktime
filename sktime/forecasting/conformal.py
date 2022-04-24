@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Implements simple conformal forecast intervals."""
+"""Implements simple conformal forecast intervals.
+
+Code based partially on NaiveVariance by ilyasmoutawwakil.
+"""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["ConformalIntervals"]
