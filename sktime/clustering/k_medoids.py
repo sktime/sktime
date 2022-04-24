@@ -127,11 +127,14 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
             curr_indexes = np.where(assignment_indexes == i)[0]
-            distance_matrix = np.zeros((len(curr_indexes), len(curr_indexes)))
-            for j in range(len(curr_indexes)):
+            curr_size = len(curr_indexes)
+            distance_matrix = np.zeros((curr_size, curr_size))
+            for j in range(curr_size):
                 for k in range(len(curr_indexes)):
                     distance_matrix[j, k] = self._precomputed_pairwise[j, k]
-            result = medoids(X[curr_indexes], self._precomputed_pairwise)
+            result = medoids(
+                X[curr_indexes], precomputed_pairwise_distance=distance_matrix
+            )
             if result.shape[0] > 0:
                 new_centers[i, :] = result
         return new_centers
