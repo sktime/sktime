@@ -30,6 +30,7 @@ class ConformalIntervals(BaseForecaster):
     method="conformal_bonferroni" is the method described in [1]_,
         where an arbitrary forecaster is used instead of the RNN.
     method="conformal" is the method in [1]_, but without Bonferroni correction.
+        i.e., separate forecasts are made which results in H=1 (at all horizons).
     method="empirical" uses quantiles of relative signed residuals on training set,
         i.e., y_t+h^(i) - y-hat_t+h^(i), ranging over i, in the notation of [1]_,
         at quantiles 0.5-0.5*coverage (lower) and 0.5+0.5*coverage (upper),
