@@ -433,6 +433,8 @@ class NaiveVariance(BaseForecaster):
     ----------
     forecaster : estimator
         Estimator to which probabilistic forecasts are being added
+    initial_window : int, optional, default=1
+        number of minimum initial indices to use for fitting when computing residuals
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
 
@@ -460,9 +462,10 @@ class NaiveVariance(BaseForecaster):
         # deprecated and likely to be removed in 0.12.0
     }
 
-    def __init__(self, forecaster, verbose=False):
+    def __init__(self, forecaster, initial_window=1, verbose=False):
 
         self.forecaster = forecaster
+        self.initial_window = initial_window
         self.verbose = verbose
         super(NaiveVariance, self).__init__()
 
@@ -485,7 +488,7 @@ class NaiveVariance(BaseForecaster):
 
         if self.fh_early_:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=y, X=X, forecaster=self.forecaster
+                y=y, X=X, forecaster=self.forecaster, initial_window=self.initial_window
             )
 
         return self
@@ -497,7 +500,10 @@ class NaiveVariance(BaseForecaster):
         self.forecaster_.update(y, X, update_params=update_params)
         if update_params and self._fh is not None:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=self._y, X=self._X, forecaster=self.forecaster
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
             )
         return self
 
@@ -565,7 +571,10 @@ class NaiveVariance(BaseForecaster):
             residuals_matrix = self.residuals_matrix_
         else:
             residuals_matrix = self._compute_sliding_residuals(
-                y=self._y, X=self._X, forecaster=self.forecaster
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
             )
 
         fh_relative = fh.to_relative(self.cutoff)
@@ -599,9 +608,27 @@ class NaiveVariance(BaseForecaster):
 
         return pred_var
 
-    def _compute_sliding_residuals(self, y, X, forecaster):
-        """Compute sliding residuals used in uncertainty estimates."""
-        y_index = y.index
+    def _compute_sliding_residuals(self, y, X, forecaster, initial_window):
+        """Compute sliding residuals used in uncertainty estimates.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            sktime compatible time series to use in computing residuals matrix
+        X : pd.DataFrame
+            sktime compatible exogeneous time series to use in forecasts
+        forecaster : sktime compatible forecaster
+            forecaster to use in computing the sliding residuals
+        initial_window : int
+            minimum length of initial window to use in fitting
+
+        Returns
+        -------
+        residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
+            [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
+            using a clone of the forecaster passed through the forecaster arg
+        """
+        y_index = y.index[initial_window:]
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
         for id in y_index:
