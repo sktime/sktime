@@ -471,8 +471,16 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
+
+        self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
+
+        if self.fh_early_:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=y, fh=fh, forecaster=self.forecaster
+            )
+
         return self
 
     def _predict(self, fh, X=None):
@@ -480,6 +488,10 @@ class NaiveVariance(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
+        if update_params and self._fh is not None:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=self._y, fh=self.fh, forecaster=self.forecaster
+            )
         return self
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
@@ -542,32 +554,15 @@ class NaiveVariance(BaseForecaster):
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-        y_index = self._y.index
+        if self.fh_early_:
+            residuals_matrix = self.residuals_matrix_
+        else:
+            residuals_matrix = self._compute_sliding_residuals(
+                y=self._y, fh=fh, forecaster=self.forecaster
+            )
+
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
-
-        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
-        for id in y_index:
-            forecaster = clone(self.forecaster)
-            subset = self._y[:id]  # subset on which we fit
-            try:
-                forecaster.fit(subset)
-            except ValueError:
-                if self.verbose:
-                    warn(
-                        f"Couldn't fit the model on "
-                        f"time series window length {len(subset)}.\n"
-                    )
-                continue
-
-            y_true = self._y[id:]  # subset on which we predict
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
-            except IndexError:
-                warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(subset)}.\n"
-                )
 
         if cov:
             fh_size = len(fh)
@@ -596,6 +591,35 @@ class NaiveVariance(BaseForecaster):
             )
 
         return pred_var
+
+    def _compute_sliding_residuals(self, y, fh, forecaster):
+        """Compute sliding residuals used in uncertainty estimates."""
+        y_index = y.index
+        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+
+        for id in y_index:
+            forecaster = clone(forecaster)
+            subset = y[:id]  # subset on which we fit
+            try:
+                forecaster.fit(subset)
+            except ValueError:
+                if self.verbose:
+                    warn(
+                        f"Couldn't fit the model on "
+                        f"time series window length {len(subset)}.\n"
+                    )
+                continue
+
+            y_true = self._y[id:]  # subset on which we predict
+            try:
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
+            except IndexError:
+                warn(
+                    f"Couldn't predict after fitting on time series of length \
+                     {len(subset)}.\n"
+                )
+
+        return residuals_matrix
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
