@@ -30,8 +30,13 @@ class ConformalIntervals(BaseForecaster):
     method="conformal_bonferroni" is the method described in [1]_,
         where an arbitrary forecaster is used instead of the RNN.
     method="conformal" is the method in [1]_, but without Bonferroni correction.
-    method="empirical" uses empirical quantiles of epsilon-h (in notation of [1]_),
-        at quantiles 0.5-0.5*coverage (lower) and 0.5+0.5*coverage (upper)
+    method="empirical" uses quantiles of relative signed residuals on training set,
+        i.e., y_t+h^(i) - y-hat_t+h^(i), ranging over i, in the notation of [1]_,
+        at quantiles 0.5-0.5*coverage (lower) and 0.5+0.5*coverage (upper),
+        as offsets to the point prediction
+    method="empirical_residual" uses empirical quantiles of absolute residuals
+        on the training set, i.e., quantiles of epsilon-h (in notation [1]_),
+        at quantile point (1-coverage)/2 quantiles, as offsets to point prediction
 
     Parameters
     ----------
@@ -39,6 +44,8 @@ class ConformalIntervals(BaseForecaster):
         Estimator to which probabilistic forecasts are being added
     method : str, optional, default="empirical"
         "empirical": predictive interval bounds are empirical quantiles from training
+        "empirical_residual": upper/lower are plusminus (1-coverage)/2 quantiles
+            of the absolute residuals at horizon, i.e., of epsilon-h
         "conformal_bonferroni": Bonferroni, as in Stankeviciute et al
             Caveat: this does not give frequentist but conformal predictive intervals
         "conformal": as in Stankeviciute et al, but with H=1,
@@ -73,7 +80,9 @@ class ConformalIntervals(BaseForecaster):
         "capability:pred_int": True,
     }
 
-    ALLOWED_METHODS = ["empirical", "conformal", "conformal_bonferroni"]
+    ALLOWED_METHODS = [
+        "empirical", "empirical_residual", "conformal", "conformal_bonferroni"
+    ]
 
     def __init__(self, forecaster, method="empirical", verbose=False):
 
@@ -178,28 +187,39 @@ class ConformalIntervals(BaseForecaster):
                      {len(subset)}.\n"
                 )
 
+        ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
+
         cols = pd.MultiIndex.from_product([["Coverage"], coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
-            abs_resids = np.abs(np.diagonal(residuals_matrix, offset=offset))
-            abs_resids = abs_resids[~np.isnan(abs_resids)]
+            resids = np.diagonal(residuals_matrix, offset=offset)
+            resids = resids[~np.isnan(resids)]
+            abs_resids = np.abs(resids)
             coverage2 = np.repeat(coverage, 2)
             if self.method == "empirical":
                 quantiles = 0.5 + np.tile([-0.5, 0.5], len(coverage)) * coverage2
+                pred_int_row = np.quantile(resids, quantiles)
+            if self.method == "empirical_residual":
+                quantiles = 0.5 - 0.5 * coverage2
+                pred_int_row = np.quantile(abs_resids, quantiles)
             elif self.method == "conformal_bonferroni":
                 alphas = 1 - coverage2
                 quantiles = 1 - alphas / len(fh)
+                pred_int_row = np.quantile(abs_resids, quantiles)
             elif self.method == "conformal":
                 quantiles = coverage2
+                pred_int_row = np.quantile(abs_resids, quantiles)
 
-            pred_int_row = np.quantile(abs_resids, quantiles)
             pred_int.loc[fh_ind] = pred_int_row
 
-        if self.method in ["conformal", "conformal_bonferroni"]:
-            y_pred = self.predict(fh=fh, X=X)
-            for col in cols:
+        y_pred = self.predict(fh=fh, X=X)
+
+        for col in cols:
+            if self.method in ABS_RESIDUAL_BASED:
                 sign = 1 - 2 * (col[2] == "lower")
-                pred_int[col] = y_pred + sign * pred_int[col]
+            else:
+                sign = 1
+            pred_int[col] = y_pred + sign * pred_int[col]
 
         return pred_int.convert_dtypes()
 
