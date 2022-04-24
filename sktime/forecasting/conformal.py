@@ -33,7 +33,7 @@ class ConformalIntervals(BaseForecaster):
     method="empirical" uses quantiles of relative signed residuals on training set,
         i.e., y_t+h^(i) - y-hat_t+h^(i), ranging over i, in the notation of [1]_,
         at quantiles 0.5-0.5*coverage (lower) and 0.5+0.5*coverage (upper),
-        as offsets to the point prediction
+        as offsets to the point prediction at forecast horizon h
     method="empirical_residual" uses empirical quantiles of absolute residuals
         on the training set, i.e., quantiles of epsilon-h (in notation [1]_),
         at quantile point (1-coverage)/2 quantiles, as offsets to point prediction
