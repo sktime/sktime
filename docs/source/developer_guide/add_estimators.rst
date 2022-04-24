@@ -133,10 +133,30 @@ or third party modules that aim for interface compliance with ``sktime``,
 the ``sktime`` test suite can be imported and extended in two ways:
 
 *   importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+
+.. code-block:: python
+
+    >>> from sktime.utils.estimator_checks import check_estimator
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> check_estimator(NaiveForecaster)
+
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
     ``test_all_forecasters.TestAllForecasters``. The imports will be discovered directly
     by ``pytest``. The test suite also be extended by inheriting from the test classes.
 
+.. code-block:: python
+
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.tests.test_all_estimators import TestAllEstimators
+    >>> TestAllEstimators().run_tests(
+    ...     NaiveForecaster,
+    ...     tests_to_run="test_required_params"
+    ... )
+    {'test_required_params[NaiveForecaster]': 'PASSED'}
+    >>> TestAllEstimators().run_tests(
+    ...     NaiveForecaster, fixtures_to_run="test_repr[NaiveForecaster-2]"
+    ... )
+    {'test_repr[NaiveForecaster-2]': 'PASSED'}
 
 Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
