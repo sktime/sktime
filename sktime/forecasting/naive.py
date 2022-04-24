@@ -617,7 +617,7 @@ class NaiveVariance(BaseForecaster):
                     )
                 continue
 
-            y_true = self._y[id:]  # subset on which we predict
+            y_true = y[id:]  # subset on which we predict
             try:
                 residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, X)
             except IndexError:
