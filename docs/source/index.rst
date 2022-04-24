@@ -6,19 +6,6 @@ Welcome to sktime
 
   A unified framework for machine learning with time series
 
-Google Summer of Code 2022
-==========================
-
-.. admonition:: Join us for Google Summer of Code 2022
-
-   .. figure:: https://summerofcode.withgoogle.com/assets/media/logo.svg
-      :scale: 100 %
-      :alt: GSoC logo
-      :target: events/gsoc_2022.html
-
-
-   :doc:`Check out our GSoC 2022 page for more details </events/gsoc_2022>`
-
 
 Mission
 =======
