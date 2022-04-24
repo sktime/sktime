@@ -54,7 +54,7 @@ def _method_logger(method):
 def make_mock_estimator(
     estimator_class: BaseEstimator, method_regex: str = ".*"
 ) -> BaseEstimator:
-    r"""Transform any estimator class into a logged estimator class.
+    r"""Transform any estimator class into a mock estimator class.
 
     Parameters
     ----------
