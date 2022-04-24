@@ -5,10 +5,13 @@
 
 __author__ = ["ltsaprounis"]
 
-from typing import List
+from typing import List, Union
 
+import numpy as np
 import pandas as pd
 from sklearn import clone
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import set_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.ets import AutoETS
@@ -83,12 +86,25 @@ class BaggingForecaster(BaseForecaster):
     }
 
     def __init__(
-        self, bootstrap_transformer: BaseTransformer, forecaster: BaseForecaster
+        self,
+        bootstrap_transformer: BaseTransformer,
+        forecaster: BaseForecaster,
+        random_state: Union[int, np.random.RandomState] = None,
     ):
         self.bootstrap_transformer = bootstrap_transformer
         self.forecaster = forecaster
+        self.random_state = random_state
 
         super(BaggingForecaster, self).__init__()
+
+        # set the tags based on forecaster
+        tags_to_clone = [
+            "scitype:y",  # which y are fine? univariate/multivariate/both
+            "requires-fh-in-fit",  # is forecasting horizon already required in fit?
+            "X-y-must-have-same-index",  # can estimator handle different X/y index?
+            "enforce_index_type",  # index type that needs to be enforced in X/y
+        ]
+        self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -140,8 +156,11 @@ class BaggingForecaster(BaseForecaster):
                 "forecaster in BaggingForecaster should be an sktime Forecaster"
             )
 
+        self.random_state_ = check_random_state(self.random_state)
         self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
+        set_random_state(self.bootstrap_transformer_, random_state=self.random_state_)
         self.forecaster_ = clone(self.forecaster)
+        set_random_state(self.forecaster_, random_state=self.random_state_)
         y_bootstraps = self.bootstrap_transformer_.fit_transform(y)
         self.forecaster_.fit(y_bootstraps)
 
