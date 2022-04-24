@@ -673,13 +673,18 @@ class FitInTransform(BaseTransformer):
     cases if they are fitted only on the transform/predict data. The FitInTransform
     transformer can be best used in a pipeline context where train data is different to
     the transform/predict data.
-    Warning: This transformer can not inverse transform, so in pipelining the
-    inverse_transform will just be skipped.
 
     Parameters
     ----------
     transformer : Estimator
         scikit-learn-like or sktime-like transformer to fit and apply to series.
+    skip_inverse_transform : bool
+        The FitInTransform will skip inverse_transform by default, of the param
+        skip_inverse_transform=False, then the inverse_transform is calculated
+        by means of transformer.fit(X=X, y=y).inverse_transform(X=X, y=y) where
+        transformer is the inner transformer. So the inner transformer is
+        fitted on the inverse_transform data. This is required to have a non-
+        state changing transform() method of FitInTransform.
 
     Examples
     --------
@@ -708,11 +713,17 @@ class FitInTransform(BaseTransformer):
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
-    def __init__(self, transformer):
+    def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer
+        self.skip_inverse_transform = skip_inverse_transform
         super(FitInTransform, self).__init__()
         self.clone_tags(transformer, None)
-        self.set_tags(**{"fit_is_empty": True, "skip-inverse-transform": True})
+        self.set_tags(
+            **{
+                "fit_is_empty": True,
+                "skip-inverse-transform": self.skip_inverse_transform,
+            }
+        )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -733,6 +744,25 @@ class FitInTransform(BaseTransformer):
         """
         self._transformer = clone(self.transformer)
         return self._transformer.fit_transform(X=X, y=y)
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
+
+        private _inverse_transform containing core logic, called from inverse_transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        inverse transformed version of X
+        """
+        return self._transformer.fit(X=X, y=y).inverse_transform(X=X, y=y)
 
     def get_fitted_params(self):
         """Get fitted parameters.
