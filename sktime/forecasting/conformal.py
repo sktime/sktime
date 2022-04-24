@@ -79,8 +79,7 @@ class ConformalIntervals(BaseForecaster):
 
         if method not in self.ALLOWED_METHODS:
             raise ValueError(
-                f"method must be one of {self.ALLOWED_METHODS}, "
-                f"but found {method}"
+                f"method must be one of {self.ALLOWED_METHODS}, but found {method}"
             )
 
         self.forecaster = forecaster
