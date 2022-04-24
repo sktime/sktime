@@ -485,7 +485,7 @@ class NaiveVariance(BaseForecaster):
 
         if self.fh_early_:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=y, fh=fh, X=X, forecaster=self.forecaster
+                y=y, X=X, forecaster=self.forecaster
             )
 
         return self
@@ -497,7 +497,7 @@ class NaiveVariance(BaseForecaster):
         self.forecaster_.update(y, X, update_params=update_params)
         if update_params and self._fh is not None:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=self._y, fh=self.fh, X=self._X, forecaster=self.forecaster
+                y=self._y, X=self._X, forecaster=self.forecaster
             )
         return self
 
@@ -565,7 +565,7 @@ class NaiveVariance(BaseForecaster):
             residuals_matrix = self.residuals_matrix_
         else:
             residuals_matrix = self._compute_sliding_residuals(
-                y=self._y, fh=fh, X=self._X, forecaster=self.forecaster
+                y=self._y, X=self._X, forecaster=self.forecaster
             )
 
         fh_relative = fh.to_relative(self.cutoff)
@@ -599,31 +599,30 @@ class NaiveVariance(BaseForecaster):
 
         return pred_var
 
-    def _compute_sliding_residuals(self, y, fh, X, forecaster):
+    def _compute_sliding_residuals(self, y, X, forecaster):
         """Compute sliding residuals used in uncertainty estimates."""
         y_index = y.index
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 
         for id in y_index:
             forecaster = clone(forecaster)
-            subset = y[:id]  # subset on which we fit
+            y_train = y[:id]  # subset on which we fit
+            y_test = y[id:]  # subset on which we predict
             try:
-                forecaster.fit(subset, fh=fh)
+                forecaster.fit(y_train, fh=y_test.index)
             except ValueError:
                 if self.verbose:
                     warn(
                         f"Couldn't fit the model on "
-                        f"time series window length {len(subset)}.\n"
+                        f"time series window length {len(y_train)}.\n"
                     )
                 continue
-
-            y_true = y[id:]  # subset on which we predict
             try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, X)
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
             except IndexError:
                 warn(
                     f"Couldn't predict after fitting on time series of length \
-                     {len(subset)}.\n"
+                     {len(y_train)}.\n"
                 )
 
         return residuals_matrix
