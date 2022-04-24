@@ -51,13 +51,14 @@ class ConformalIntervals(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
+    >>> from sktime.forecasting.conformal import ConformalIntervals
+    >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> variance_forecaster = NaiveVariance(forecaster)
-    >>> variance_forecaster.fit(y)
-    NaiveVariance(...)
-    >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
+    >>> conformal_forecaster = ConformalIntervals(forecaster)
+    >>> conformal_forecaster.fit(y, fh=[1,2,3])
+    ConformalIntervals(...)
+    >>> pred_int = conformal_forecaster.predict_interval()
     """
 
     _required_parameters = ["forecaster"]
@@ -69,9 +70,18 @@ class ConformalIntervals(BaseForecaster):
         "capability:pred_int": True,
     }
 
-    ALLOWED_METHODS = ["empirical", "conformal"]
+    ALLOWED_METHODS = ["empirical", "conformal", "conformal_bonferroni"]
 
     def __init__(self, forecaster, method="empirical", verbose=False):
+
+        if not isinstance(method, str):
+            raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
+
+        if method not in self.ALLOWED_METHODS:
+            raise ValueError(
+                f"method must be one of {self.ALLOWED_METHODS}, "
+                f"but found {method}"
+            )
 
         self.forecaster = forecaster
         self.method = method
@@ -189,7 +199,7 @@ class ConformalIntervals(BaseForecaster):
                 sign = 1 - 2 * (col[2] == "lower")
                 pred_int[col] = y_pred + sign * pred_int[col]
 
-        return pred_int
+        return pred_int.convert_dtypes()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
