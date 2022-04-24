@@ -10,7 +10,4 @@ __all__ = [
 ]
 
 from sktime.utils.estimators._base import make_mock_estimator
-from sktime.utils.estimators._forecasters import (
-    MockForecaster,
-    MockForecasterLogger,
-)
+from sktime.utils.estimators._forecasters import MockForecaster, MockForecasterLogger
