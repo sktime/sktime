@@ -1,36 +1,55 @@
 # -*- coding: utf-8 -*-
+"""Tests for DBA."""
 
-import numpy as np
+import time
+
+from tslearn.barycenters import (
+    dtw_barycenter_averaging,
+    dtw_barycenter_averaging_petitjean,
+)
 
 from sktime.clustering.metrics.averaging import dba
-from sktime.clustering.metrics.medoids import medoids
-from sktime.datasets import load_acsf1
-from sktime.datatypes import convert_to
 from sktime.distances.tests._utils import create_test_distance_numpy
-from tslearn.barycenters import dtw_barycenter_averaging_petitjean
-from sktime.clustering.metrics.averaging._dba import _init_avg
+
+
+def _tslearn_time(X_train, callable):
+    X = X_train.copy()
+    X = X.reshape((X.shape[0], X.shape[2], X.shape[1]))
+    start = time.time()
+    callable(X, max_iter=10)
+    total = time.time() - start
+    return total
+
+
+def _timing_exper(X_train):
+
+    start = time.time()
+    dba(X_train)
+    sktime_dba = time.time() - start
+
+    tslearn_paj = _tslearn_time(X_train, dtw_barycenter_averaging_petitjean)
+    tslearn_reg = _tslearn_time(X_train, dtw_barycenter_averaging)
+
+    return sktime_dba, tslearn_paj, tslearn_reg
 
 
 def test_dba():
-    """Test medoids."""
-    X_train, y_train = load_acsf1(split="train")
-    X_test, y_test = load_acsf1(split="test")
-    # X_train = create_test_distance_numpy(10, 4, 3, random_state=2)
+    """Test dba."""
+    X_train = create_test_distance_numpy(100, 100, 100, random_state=2)
 
-    X_train = convert_to(X_train, "numpy3D")
+    # time_path(X_train)
 
-    X_train = X_train[:5]
-
-    test_dba = dba(X_train)
-    test_medoids = medoids(X_train)
-    joe = ""
+    result = _timing_exper(X_train)
+    print("\n")  # noqa: T001
+    print(f"sktime: {result[0]}")  # noqa: T001
+    print(f"tslearn paj: {result[1]}")  # noqa: T001
+    print(f"tslearn reg: {result[2]}")  # noqa: T001
 
 
-def test_tslearn_ploat():
-    import numpy
+def test_plot():
+    """Plot dba."""
     import matplotlib.pyplot as plt
-
-    from tslearn.barycenters import dtw_barycenter_averaging
+    import numpy
     from tslearn.datasets import CachedDatasets
 
     # fetch the example data set
@@ -42,12 +61,14 @@ def test_tslearn_ploat():
     length_of_sequence = tslearn_X.shape[1]
 
     sktime_X = tslearn_X.copy()
-    sktime_X = sktime_X.reshape((sktime_X.shape[0], sktime_X.shape[2], sktime_X.shape[1]))
+    sktime_X = sktime_X.reshape(
+        (sktime_X.shape[0], sktime_X.shape[2], sktime_X.shape[1])
+    )
 
     def plot_helper(barycenter):
         # plot all points of the data set
         for series in sktime_X:
-            plt.plot(series.ravel(), "k-", alpha=.2)
+            plt.plot(series.ravel(), "k-", alpha=0.2)
         # plot the given barycenter of them
         plt.plot(barycenter.ravel(), "r-", linewidth=2)
 
@@ -57,34 +78,25 @@ def test_tslearn_ploat():
 
     plt.subplot(4, 1, 1, sharex=ax1)
     plt.title("Sktime DBA (using dtw)")
-    plot_helper(dba(sktime_X, distance_metric='dtw'))
+    plot_helper(dba(sktime_X, distance_metric="dtw", medoids_distance_metric="dtw"))
 
-    # plt.subplot(4, 1, 2, sharex=ax1)
-    # plt.title("Sktime DBA (using wdtw)")
-    # plot_helper(dba(sktime_X, distance_metric='wdtw'))
-    #
-    # plt.subplot(4, 1, 3, sharex=ax1)
-    # plt.title("Sktime DBA (using lcss)")
-    # plot_helper(dba(sktime_X, distance_metric='lcss'))
-    # plt.subplot(4, 1, 4, sharex=ax1)
-    # plt.title("Sktime DBA (using msm)")
-    # plot_helper(dba(sktime_X, distance_metric='msm'))
-
-    test = medoids(sktime_X)
     plt.subplot(4, 1, 2, sharex=ax1)
-    plt.title("Medoids algo")
-    plot_helper(medoids(sktime_X.copy(0)))
+    plt.title("Sktime DBA (using wdtw)")
+    plot_helper(dba(sktime_X, distance_metric="wdtw", medoids_distance_metric="wdtw"))
 
     plt.subplot(4, 1, 3, sharex=ax1)
-    plt.title("Init algo")
-    plot_helper(_init_avg(sktime_X))
+    plt.title("Sktime DBA (using lcss)")
+    plot_helper(dba(sktime_X, distance_metric="lcss", medoids_distance_metric="lcss"))
 
     plt.subplot(4, 1, 4, sharex=ax1)
-    plt.title("Arith mean")
-    plot_helper(mean_average(sktime_X))
+    plt.title("Sktime DBA (using msm)")
+    plot_helper(dba(sktime_X, distance_metric="msm"))
 
-
-
+    # test = medoids(sktime_X)
+    # plt.subplot(4, 1, 2, sharex=ax1)
+    # plt.title("Medoids algo")
+    # plot_helper(medoids(sktime_X.copy(0)))
+    #
     # plt.subplot(4, 1, 4, sharex=ax1)
     # plt.title("Tslearn DBA")
     # plot_helper(dtw_barycenter_averaging_petitjean(tslearn_X))
