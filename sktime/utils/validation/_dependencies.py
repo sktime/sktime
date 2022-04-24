@@ -81,11 +81,13 @@ def _check_soft_dependencies(
                 )
             else:
                 if not isclass(object):
-                    class_ref = type(object)
-                elif not isinstance(object, str):
-                    class_name = class_ref.__name__
-                else:
+                    class_name = type(object).__name__
+                elif isclass(object):
+                    class_name = object.__name__
+                elif isinstance(object, str):
                     class_name = object
+                else:
+                    raise TypeError("object must be a class, an object, a str, or None")
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "
