@@ -5,6 +5,7 @@ import io
 import sys
 import warnings
 from importlib import import_module
+from inspect import isclass
 
 
 def _check_soft_dependencies(
@@ -27,8 +28,9 @@ def _check_soft_dependencies(
         should be provided if import name differs from package name
     severity : str, "error" (default) or "warning"
         whether the check should raise an error, or only a warning
-    object : python object or None, default=None
-        if self is passed here when _check_soft_dependencies is called within __init__
+    object : python class, object or None, default=None
+        if self is passed here when _check_soft_dependencies is called within __init__,
+        or a class is passed when it is called at the start of a single-class module,
         the error message is more informative and will refer to the class
     suppress_import_stdout : bool, optional. Default=False
         whether to suppress stdout printout upon import.
@@ -77,7 +79,9 @@ def _check_soft_dependencies(
                     f"sktime[all_extras]`"
                 )
             else:
-                class_name = type(object).__name__
+                if not isclass(object):
+                    class_ref = type(object)
+                class_name = class_ref.__name__
                 msg = (
                     f"{class_name} requires package '{package}' to be present "
                     f"in the python environment, but '{package}' was not found. "
