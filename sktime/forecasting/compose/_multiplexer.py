@@ -90,6 +90,9 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
     }
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods to those of same name in self.forecaster_
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     def __init__(
