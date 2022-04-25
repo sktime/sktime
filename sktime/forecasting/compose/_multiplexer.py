@@ -186,7 +186,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("forecasters", deep=deep)
+        return self._get_params("forecasters_", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -197,7 +197,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("forecasters", **kwargs)
+        self._set_params("forecasters_", **kwargs)
         return self
 
     @classmethod
