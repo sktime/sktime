@@ -56,12 +56,11 @@ def test_add_log_item():
 
 
 def test_log_is_property():
-    """Test _MockEstimatorMixin.log elements can't be overwritten."""
+    """Test _MockEstimatorMixin.log can't be overwritten."""
     mixin = _MockEstimatorMixin()
-    mixin.log = 1
-    mixin.log = 2
-    assert mixin.log[0] == 1
-    assert mixin.log[1] == 2
+    with pytest.raises(AttributeError) as excinfo:
+        mixin.log = 1
+        assert "can't set attribute" in str(excinfo.value)
 
 
 def test_method_logger_exception():
