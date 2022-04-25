@@ -135,29 +135,24 @@ def test_kmeans():
         assert np.count_nonzero(val == 1.0) == 1
 
 
-def test_kmeans_t():
-    """Test implementation of Kmeans."""
-    X_train, y_train = load_basic_motions(split="train")
-    X_test, y_test = load_basic_motions(split="test")
-
-    kmeans = TimeSeriesKMeans(
-        averaging_method="dba",
-        random_state=1,
-        n_init=2,
-        n_clusters=4,
-        init_algorithm="kmeans++",
-        metric="dtw",
-        distance_params={
-            "window": 0.2
-        },
-        average_params={
-            "window": 0.2
-        }
-    )
-    train_predict = kmeans.fit_predict(X_train)
-    train_mean_score = metrics.rand_score(y_train, train_predict)
-
-    test_mean_result = kmeans.predict(X_test)
-    mean_score = metrics.rand_score(y_test, test_mean_result)
-    proba = kmeans.predict_proba(X_test)
-    je = ''
+# def test_kmeans_t():
+#     """Test implementation of Kmeans."""
+#     X_train, y_train = load_basic_motions(split="train")
+#     X_test, y_test = load_basic_motions(split="test")
+#
+#     kmeans = TimeSeriesKMeans(
+#         averaging_method="dba",
+#         random_state=1,
+#         n_init=2,
+#         n_clusters=4,
+#         init_algorithm="kmeans++",
+#         metric="dtw",
+#         distance_params={"window": 0.2},
+#         average_params={"window": 0.2},
+#     )
+#     train_predict = kmeans.fit_predict(X_train)
+#     train_mean_score = metrics.rand_score(y_train, train_predict)
+#
+#     test_mean_result = kmeans.predict(X_test)
+#     mean_score = metrics.rand_score(y_test, test_mean_result)
+#     proba = kmeans.predict_proba(X_test)

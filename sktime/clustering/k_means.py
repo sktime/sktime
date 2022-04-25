@@ -157,6 +157,7 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
                         distance_matrix[j, k] = self._precomputed_pairwise[
                             curr_j, curr_indexes[k]
                         ]
+
                 self._average_params[
                     "precomputed_medoids_pairwise_distance"
                 ] = distance_matrix
