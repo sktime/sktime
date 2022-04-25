@@ -725,30 +725,10 @@ class BaseWindowSplitter(BaseSplitter):
         if self.initial_window <= self.window_length:
             raise ValueError("`initial_window` must greater than `window_length`")
         if is_timedelta_or_date_offset(x=self.initial_window):
-            initial_window_threshold = y.get_loc(y[0] + self.initial_window)
+            initial_end = y.get_loc(y[0] + self.initial_window)
         else:
-            initial_window_threshold = self.initial_window
-        # For in-sample forecasting horizons, the first split must ensure that
-        # in-sample test set is still within the data.
-        if (
-            not fh.is_all_out_of_sample()
-            and (
-                _coerce_duration_to_int(abs(fh[0]), freq="D")
-                if is_timedelta_or_date_offset(abs(fh[0]))
-                else abs(fh[0])
-            )
-            >= initial_window_threshold
-        ):
-            initial_start = abs(fh[0]) - self.initial_window + 1
-        else:
-            initial_start = 0
-        if is_timedelta_or_date_offset(x=self.initial_window):
-            initial_end = y.get_loc(y[initial_start] + self.initial_window)
-        else:
-            initial_end = initial_start + self.initial_window
-        train = self._get_train_window(
-            y=y, train_start=initial_start, split_point=initial_end
-        )
+            initial_end = self.initial_window
+        train = self._get_train_window(y=y, train_start=0, split_point=initial_end)
         _fh = (
             _coerce_duration_to_int(fh.to_pandas(), freq="D")
             if array_is_timedelta_or_date_offset(fh.to_pandas())
