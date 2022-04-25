@@ -691,7 +691,6 @@ class BaseWindowSplitter(BaseSplitter):
 
         start = self._get_start(y=y, fh=fh)
         end = _get_end(y_index=y, fh=fh) + 2
-        step_length = self._get_step_length(x=step_length)
 
         for train, test in self._split_windows(
             start=start,
@@ -775,7 +774,9 @@ class BaseWindowSplitter(BaseSplitter):
             if hasattr(self, "initial_window") and self.initial_window is not None:
 
                 if hasattr(self, "step_length"):
-                    step_length = self._get_step_length(x=self.step_length)
+                    step_length = _coerce_duration_to_int(
+                        duration=self.step_length, freq="D"
+                    )
                 else:
                     step_length = 1
 
@@ -799,10 +800,6 @@ class BaseWindowSplitter(BaseSplitter):
                 shifted_y0 = y[0] + fh_min
                 start = np.argmin(y <= shifted_y0) if shifted_y0 >= y[start] else start
         return start
-
-    @staticmethod
-    def _get_step_length(x: NON_FLOAT_WINDOW_LENGTH_TYPES) -> int:
-        return _coerce_duration_to_int(duration=x, freq="D")
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
@@ -854,7 +851,7 @@ class BaseWindowSplitter(BaseSplitter):
             start = self._get_start(y=y, fh=fh)
 
         end = _get_end(y_index=y, fh=fh) + 2
-        step_length = self._get_step_length(x=step_length)
+        step_length = _coerce_duration_to_int(duration=step_length, freq="D")
 
         return np.arange(start, end, step_length) - 1
 
@@ -918,6 +915,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         y: pd.Index,
         fh: ForecastingHorizon,
     ) -> SPLIT_GENERATOR_TYPE:
+        step_length = _coerce_duration_to_int(duration=step_length, freq="D")
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
@@ -988,6 +986,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         y: pd.Index,
         fh: ForecastingHorizon,
     ) -> SPLIT_GENERATOR_TYPE:
+        step_length = _coerce_duration_to_int(duration=step_length, freq="D")
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
