@@ -17,7 +17,7 @@ class NumbaDistance(ABC):
     """Abstract class to define a numba compatible distance metric."""
 
     def distance(self, x: np.ndarray, y: np.ndarray, **kwargs: dict) -> float:
-        """Compute the distance between two timeseries.
+        """Compute the distance between two time series.
 
         Parameters
         ----------
@@ -165,12 +165,12 @@ class NumbaDistance(ABC):
 
     @staticmethod
     def _validate_factory_timeseries(x: np.ndarray) -> None:
-        """Ensure the timeseries are correct format.
+        """Ensure the time series are correct format.
 
         Parameters
         ----------
         x: np.ndarray (2d array)
-            A timeseries to check.
+            A time series to check.
 
         Raises
         ------
@@ -199,7 +199,7 @@ class NumbaDistance(ABC):
 
         _distance_factory should validate kwargs and then compile a no_python callable
         that takes (x, y) as parameters and returns a float that represents the distance
-        between the two timeseries.
+        between the two time series.
 
         Parameters
         ----------

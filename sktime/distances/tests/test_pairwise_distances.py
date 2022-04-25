@@ -52,9 +52,9 @@ def _validate_pairwise_result(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries.
+        Second time series.
     metric_str: str
         Metric string name.
     distance_factory: Callable
@@ -151,7 +151,7 @@ def _validate_pairwise_result(
     )
     if metric_str != "lcss":
         assert metric_str_result_to_self.trace() == 0, (
-            f"The pairwise distance when given two of the same timeseries e.g."
+            f"The pairwise distance when given two of the same time series e.g."
             f"pairwise_distance(x, x, ...), diagonal should equal 0."
             f"(np.trace(result)). Instead for the pairwise metric given where "
             f"metric={metric_str} is {metric_str_result_to_self.trace()}"
@@ -160,7 +160,7 @@ def _validate_pairwise_result(
     assert np.array_equal(metric_dist_self_func_result, metric_str_result_to_self)
 
     assert _check_symmetric(metric_str_result_to_self) is True, (
-        f"The pairwise distance when given two of the same timeseries e.g."
+        f"The pairwise distance when given two of the same time series e.g."
         f"pairwise_distance(x, x, ...), should produce a symmetric matrix. This"
         f"means the left of the center diagonal should equal the right of the "
         f"center diagonal. This criteria is not met for the pairwise metric "
@@ -178,9 +178,9 @@ def _test_pw_equal_single_dists(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries
+        First time series
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries
+        Second time series
     distance_function: Callable
         Distance function to test
     conical_name: str

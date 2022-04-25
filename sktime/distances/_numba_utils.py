@@ -70,7 +70,7 @@ def _compute_pairwise_distance(
     Returns
     -------
     np.ndarray (2d of size mxn where m is len(x) and n is len(y)).
-        Pairwise distance matrix between the two timeseries.
+        Pairwise distance matrix between the two time series.
     """
     _x = _make_3d_series(x)
     _y = _make_3d_series(y)
@@ -131,17 +131,17 @@ def is_no_python_compiled_callable(
 
 
 def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
-    """Convert a timeseries to a valid timeseries for numba use.
+    """Convert a time series to a valid time series for numba use.
 
     Parameters
     ----------
     x: np.ndarray (1d or 2d)
-        A timeseries.
+        A time series.
 
     Returns
     -------
     np.ndarray (2d array)
-        2d array that is the formatted timeseries.
+        2d array that is the formatted time series.
 
     Raises
     ------
