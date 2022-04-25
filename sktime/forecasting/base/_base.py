@@ -1919,7 +1919,7 @@ class BaseForecaster(BaseEstimator):
             pred_var = pd.DataFrame(vars_dict)
 
             # check whether column format was "nameless", set it to RangeIndex then
-            if pred_var.columns == "Coverage":
+            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
                 pred_var.columns = pd.RangeIndex(1)
 
         return pred_var
