@@ -1112,8 +1112,7 @@ class SingleWindowSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
         y = get_index_for_series(y)
         end = _get_end(y_index=y, fh=fh)
-        cutoff = end  # if array_is_int(fh) else y[end].to_datetime64()
-        return np.array([cutoff])
+        return np.array([end])
 
 
 def temporal_train_test_split(
