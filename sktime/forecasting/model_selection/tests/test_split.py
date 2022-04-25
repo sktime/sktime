@@ -223,7 +223,7 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
@@ -254,7 +254,7 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
@@ -302,7 +302,7 @@ def _get_n_incomplete_windows(window_length, step_length) -> int:
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter_start_with_empty_window(
@@ -379,7 +379,7 @@ def _check_expanding_windows(windows):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter_start_with_empty_window(
@@ -411,7 +411,7 @@ def test_expanding_window_splitter_start_with_empty_window(
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):

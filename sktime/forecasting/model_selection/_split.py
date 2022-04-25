@@ -34,6 +34,7 @@ from sktime.utils.validation import (
     all_inputs_are_time_like,
     array_is_datetime64,
     array_is_int,
+    array_is_timedelta_or_date_offset,
     check_window_length,
     is_datetime,
     is_int,
@@ -646,10 +647,37 @@ class BaseWindowSplitter(BaseSplitter):
         _check_inputs_for_compatibility(
             [fh, initial_window, window_length, step_length]
         )
-        self.step_length = step_length
-        self.start_with_window = start_with_window
-        self.initial_window = initial_window
-        super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        self.step_length = (
+            _coerce_duration_to_int(step_length, freq="D")
+            if is_timedelta_or_date_offset(step_length)
+            else step_length
+        )
+        self.start_with_window = (
+            _coerce_duration_to_int(start_with_window, freq="D")
+            if is_timedelta_or_date_offset(start_with_window)
+            else start_with_window
+        )
+        self.initial_window = (
+            _coerce_duration_to_int(initial_window, freq="D")
+            if is_timedelta_or_date_offset(initial_window)
+            else initial_window
+        )
+        if is_int(fh):
+            _fh = fh
+        elif is_timedelta_or_date_offset(fh):
+            _fh = _coerce_duration_to_int(fh, freq="D")
+        elif array_is_int(fh):
+            _fh = fh
+        elif array_is_timedelta_or_date_offset(fh):
+            _fh = [_coerce_duration_to_int(x, freq="D") for x in fh]
+        else:
+            raise ValueError()
+        super(BaseWindowSplitter, self).__init__(
+            fh=_fh,
+            window_length=_coerce_duration_to_int(window_length, freq="D")
+            if is_timedelta_or_date_offset(window_length)
+            else window_length,
+        )
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
