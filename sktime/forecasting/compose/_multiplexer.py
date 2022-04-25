@@ -50,8 +50,11 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     forecaster_ : sktime forecaster
         clone of the selected forecaster used for fitting and forecasting.
     forecasters_ : list of (str, forecaster) tuples
-        forecasters are reference to forecasters in arg forecasters
-        strings are identical if passed, or generated if not
+        str are identical to those passed, if passed strings are unique
+        otherwise unique strings are generated from class name; if not unique,
+        the string `_[i]` is appended where `[i]` is count of occurrence up until then
+        forecasters in `forecasters_`are reference to forecasters in arg `forecasters`
+        i-th forecaster in `forecasters_` is clone of i-th in `forecasters`
 
     Examples
     --------
