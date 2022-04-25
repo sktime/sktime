@@ -818,8 +818,8 @@ class BaseWindowSplitter(BaseSplitter):
             if is_int(fh_min):
                 start = fh_min + 1 if fh_min >= start else start
             else:
-                if y[0] + fh_min >= y[start]:
-                    start = np.argmin(y <= y[0] + fh_min)
+                shifted_y0 = y[0] + fh_min
+                start = np.argmin(y <= shifted_y0) if shifted_y0 >= y[start] else start
         return start
 
     @staticmethod
