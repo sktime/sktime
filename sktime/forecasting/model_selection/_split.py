@@ -814,14 +814,12 @@ class BaseWindowSplitter(BaseSplitter):
         # For in-sample forecasting horizons, the first split must ensure that
         # in-sample test set is still within the data.
         if not fh.is_all_out_of_sample():
-            fh_min = (
-                _coerce_duration_to_int(abs(fh[0]), freq="D")
-                if is_timedelta_or_date_offset(abs(fh[0]))
-                else abs(fh[0])
-            )
-            if fh_min >= start:
-                start = fh_min + 1
-
+            fh_min = abs(fh[0])
+            if is_int(fh_min):
+                start = fh_min + 1 if fh_min >= start else start
+            else:
+                if y[0] + fh_min >= y[start]:
+                    start = np.argmin(y <= y[0] + fh_min)
         return start
 
     @staticmethod
