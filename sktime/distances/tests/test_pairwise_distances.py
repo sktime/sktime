@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from sktime.distances._distance import _METRIC_INFOS, pairwise_distance
-from sktime.distances._numba_utils import to_numba_pairwise_timeseries
+from sktime.distances._numba_utils import _make_3d_series
 from sktime.distances.base import MetricInfo, NumbaDistance
 from sktime.distances.tests._shared_tests import (
     _test_incorrect_parameters,
@@ -194,8 +194,8 @@ def _test_pw_equal_single_dists(
         return
     pw_result = pairwise_distance(x, y, metric=conical_name)
 
-    x = to_numba_pairwise_timeseries(x)
-    y = to_numba_pairwise_timeseries(y)
+    x = _make_3d_series(x)
+    y = _make_3d_series(y)
 
     matrix = np.zeros((len(x), len(y)))
 
