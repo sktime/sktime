@@ -51,7 +51,7 @@ expected_results = {
     ]
 }
 
-expected_train_result = {"mean": 0.4846153846153846}
+expected_train_result = {"mean": 0.48717948717948717}
 
 expected_score = {"mean": 0.3153846153846154}
 
