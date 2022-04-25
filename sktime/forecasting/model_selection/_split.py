@@ -689,8 +689,8 @@ class BaseWindowSplitter(BaseSplitter):
         if self.initial_window is not None:
             yield self._split_for_initial_window(y)
 
-        fh = _check_fh(_coerce_fh_to_int(fh))
         start = self._get_start(y=y, fh=fh)
+        fh = _check_fh(_coerce_fh_to_int(fh))
         end = _get_end(y_index=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
