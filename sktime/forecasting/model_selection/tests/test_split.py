@@ -87,9 +87,12 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     if is_int(fh[-1]):
         expected = np.array([window[-1] - fh[-1] for window in windows])
     elif array_is_timedelta_or_date_offset(fh):
-        expected = np.array(
-            [(y.index[window[-1]] - fh[-1]).to_datetime64() for window in windows]
-        )
+        expected = list()
+        for window in windows:
+            arg = y.index[window[-1]] - fh[-1]
+            val = y.index.get_loc(arg) if arg >= y.index[0] else -1
+            expected.append(val)
+        expected = np.array(expected)
     else:
         raise ValueError(f"Provided `fh` type is not supported: {type(fh[-1])}")
     np.testing.assert_array_equal(cutoffs, expected)

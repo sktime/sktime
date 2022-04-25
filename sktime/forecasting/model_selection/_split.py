@@ -130,6 +130,19 @@ def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
     return check_fh(fh, enforce_relative=True)
 
 
+def _coerce_fh_to_int(fh):
+    if is_int(fh):
+        return fh
+    elif is_timedelta_or_date_offset(fh):
+        return _coerce_duration_to_int(fh, freq="D")
+    elif array_is_int(fh):
+        return fh
+    elif array_is_timedelta_or_date_offset(fh):
+        return [_coerce_duration_to_int(x, freq="D") for x in fh]
+    else:
+        raise ValueError()
+
+
 def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     """Compute the end of the last training window for a forecasting horizon.
 
@@ -202,7 +215,7 @@ def _check_window_lengths(
         f"is smaller than the length of the time series `y` itself."
     )
     if is_timedelta_or_date_offset(x=window_length):
-        if y.get_loc(min(y[-1], y[0] + window_length)) + fh_max > n_timepoints:
+        if y[0] + window_length + fh_max > y[-1]:
             raise ValueError(error_msg_for_incompatible_window_length)
     else:
         if window_length + fh_max > n_timepoints:
@@ -221,7 +234,7 @@ def _check_window_lengths(
     )
     if initial_window is not None:
         if is_timedelta_or_date_offset(x=initial_window):
-            if y.get_loc(min(y[-1], y[0] + initial_window)) + fh_max > n_timepoints:
+            if y[0] + initial_window + fh_max > y[-1]:
                 raise ValueError(error_msg_for_incompatible_initial_window)
             if not is_timedelta_or_date_offset(x=window_length):
                 raise TypeError(error_msg_for_incompatible_types)
@@ -630,7 +643,13 @@ class CutoffSplitter(BaseSplitter):
         cutoffs : np.array
             The array of cutoff points.
         """
-        return check_cutoffs(self.cutoffs)
+        if array_is_int(self.cutoffs):
+            return check_cutoffs(self.cutoffs)
+        else:
+            if isinstance(y, pd.Index):
+                return (y[:, None] == check_cutoffs(self.cutoffs)).argmax(axis=0)
+            else:
+                return (y.index[:, None] == check_cutoffs(self.cutoffs)).argmax(axis=0)
 
 
 class BaseWindowSplitter(BaseSplitter):
@@ -647,37 +666,10 @@ class BaseWindowSplitter(BaseSplitter):
         _check_inputs_for_compatibility(
             [fh, initial_window, window_length, step_length]
         )
-        self.step_length = (
-            _coerce_duration_to_int(step_length, freq="D")
-            if is_timedelta_or_date_offset(step_length)
-            else step_length
-        )
-        self.start_with_window = (
-            _coerce_duration_to_int(start_with_window, freq="D")
-            if is_timedelta_or_date_offset(start_with_window)
-            else start_with_window
-        )
-        self.initial_window = (
-            _coerce_duration_to_int(initial_window, freq="D")
-            if is_timedelta_or_date_offset(initial_window)
-            else initial_window
-        )
-        if is_int(fh):
-            _fh = fh
-        elif is_timedelta_or_date_offset(fh):
-            _fh = _coerce_duration_to_int(fh, freq="D")
-        elif array_is_int(fh):
-            _fh = fh
-        elif array_is_timedelta_or_date_offset(fh):
-            _fh = [_coerce_duration_to_int(x, freq="D") for x in fh]
-        else:
-            raise ValueError()
-        super(BaseWindowSplitter, self).__init__(
-            fh=_fh,
-            window_length=_coerce_duration_to_int(window_length, freq="D")
-            if is_timedelta_or_date_offset(window_length)
-            else window_length,
-        )
+        self.step_length = step_length
+        self.start_with_window = start_with_window
+        self.initial_window = initial_window
+        super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -696,7 +688,7 @@ class BaseWindowSplitter(BaseSplitter):
         _check_window_lengths(
             y=y, fh=fh, window_length=window_length, initial_window=initial_window
         )
-
+        fh = _check_fh(_coerce_fh_to_int(fh))
         if self.initial_window is not None:
             yield self._split_for_initial_window(y)
 
@@ -741,7 +733,15 @@ class BaseWindowSplitter(BaseSplitter):
             initial_window_threshold = self.initial_window
         # For in-sample forecasting horizons, the first split must ensure that
         # in-sample test set is still within the data.
-        if not fh.is_all_out_of_sample() and abs(fh[0]) >= initial_window_threshold:
+        if (
+            not fh.is_all_out_of_sample()
+            and (
+                _coerce_duration_to_int(abs(fh[0]), freq="D")
+                if is_timedelta_or_date_offset(abs(fh[0]))
+                else abs(fh[0])
+            )
+            >= initial_window_threshold
+        ):
             initial_start = abs(fh[0]) - self.initial_window + 1
         else:
             initial_start = 0
@@ -752,7 +752,12 @@ class BaseWindowSplitter(BaseSplitter):
         train = self._get_train_window(
             y=y, train_start=initial_start, split_point=initial_end
         )
-        test = initial_end + fh.to_numpy() - 1
+        _fh = (
+            _coerce_duration_to_int(fh.to_pandas(), freq="D")
+            if array_is_timedelta_or_date_offset(fh.to_pandas())
+            else fh
+        )
+        test = initial_end + _fh.to_numpy() - 1
         return train, test
 
     def _split_windows(
@@ -812,7 +817,11 @@ class BaseWindowSplitter(BaseSplitter):
         # For in-sample forecasting horizons, the first split must ensure that
         # in-sample test set is still within the data.
         if not fh.is_all_out_of_sample():
-            fh_min = abs(fh[0])
+            fh_min = (
+                _coerce_duration_to_int(abs(fh[0]), freq="D")
+                if is_timedelta_or_date_offset(abs(fh[0]))
+                else abs(fh[0])
+            )
             if fh_min >= start:
                 start = fh_min + 1
 
@@ -1103,7 +1112,7 @@ class SingleWindowSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
         y = get_index_for_series(y)
         end = _get_end(y_index=y, fh=fh)
-        cutoff = end if array_is_int(fh) else y[end].to_datetime64()
+        cutoff = end  # if array_is_int(fh) else y[end].to_datetime64()
         return np.array([cutoff])
 
 
