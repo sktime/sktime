@@ -226,9 +226,9 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         }
         params2 = {
             "forecasters": [
-                ("Naive_mean", NaiveForecaster(strategy="mean")),
-                ("Naive_last", NaiveForecaster(strategy="last")),
-                ("Naive_drift", NaiveForecaster(strategy="drift")),
+                NaiveForecaster(strategy="mean"),
+                NaiveForecaster(strategy="last"),
+                NaiveForecaster(strategy="drift"),
             ],
         }
         return [params1, params2]
