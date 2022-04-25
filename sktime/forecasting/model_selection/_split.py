@@ -646,10 +646,7 @@ class CutoffSplitter(BaseSplitter):
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
         else:
-            if isinstance(y, pd.Index):
-                return (y[:, None] == check_cutoffs(self.cutoffs)).argmax(axis=0)
-            else:
-                return (y.index[:, None] == check_cutoffs(self.cutoffs)).argmax(axis=0)
+            return (y.index[:, None] == check_cutoffs(self.cutoffs)).argmax(axis=0)
 
 
 class BaseWindowSplitter(BaseSplitter):
