@@ -867,10 +867,7 @@ class BaseWindowSplitter(BaseSplitter):
         step_length: DATETIME_INTERVAL_TYPES,
         y: ACCEPTED_Y_TYPES,
     ) -> np.ndarray:
-        if start >= 1:
-            start_date = y[y < y[start]][-1]
-        else:
-            start_date = y[y < y[0] + step_length][-1]
+        start_date = y[y < y[start] + step_length][-1]
         if end <= len(y):
             end_date = y[y <= y[min(len(y), end) - 1] - step_length][-1] + step_length
             inclusive = "left"
@@ -881,7 +878,7 @@ class BaseWindowSplitter(BaseSplitter):
             start=start_date, end=end_date, freq=step_length, inclusive=inclusive
         )
         train = np.argwhere(y.isin(date_range)).flatten()
-        if start <= 0:
+        if start == 0:
             train = np.hstack((-1, train))
         return train
 
