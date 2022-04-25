@@ -742,8 +742,7 @@ class FitInTransform(BaseTransformer):
         -------
         transformed version of X
         """
-        self._transformer = clone(self.transformer)
-        return self._transformer.fit_transform(X=X, y=y)
+        return clone(self.transformer).fit_transform(X=X, y=y)
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
@@ -762,7 +761,7 @@ class FitInTransform(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        return self._transformer.fit(X=X, y=y).inverse_transform(X=X, y=y)
+        return clone(self.transformer).fit(X=X, y=y).inverse_transform(X=X, y=y)
 
     def get_fitted_params(self):
         """Get fitted parameters.
