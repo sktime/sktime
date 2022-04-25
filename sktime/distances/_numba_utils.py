@@ -77,11 +77,6 @@ def _compute_pairwise_distance(
     x_size = _x.shape[0]
     y_size = _y.shape[0]
 
-    if x_size == 1:
-        x_size = _x.shape[1]
-    if y_size == 1:
-        y_size = _y.shape[1]
-
     pairwise_matrix = np.zeros((x_size, y_size))
 
     for i in range(x_size):
