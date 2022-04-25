@@ -690,7 +690,6 @@ class BaseWindowSplitter(BaseSplitter):
             yield self._split_for_initial_window(y)
 
         start = self._get_start(y=y, fh=fh)
-        fh = _check_fh(_coerce_fh_to_int(fh))
         end = _get_end(y_index=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
@@ -700,7 +699,7 @@ class BaseWindowSplitter(BaseSplitter):
             step_length=step_length,
             window_length=window_length,
             y=y,
-            fh=fh.to_numpy(),
+            fh=fh,
         ):
             yield train, test
 
@@ -743,7 +742,7 @@ class BaseWindowSplitter(BaseSplitter):
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
-        fh: np.ndarray,
+        fh: ForecastingHorizon,
     ) -> SPLIT_GENERATOR_TYPE:
         """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
@@ -917,7 +916,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
-        fh: np.ndarray,
+        fh: ForecastingHorizon,
     ) -> SPLIT_GENERATOR_TYPE:
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
@@ -926,7 +925,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             train = self._get_train_window(
                 y=y, train_start=train_start, split_point=split_point
             )
-            test = split_point + fh - 1
+            test = split_point + _check_fh(_coerce_fh_to_int(fh)).to_numpy() - 1
             yield train, test
 
 
@@ -987,7 +986,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
-        fh: np.ndarray,
+        fh: ForecastingHorizon,
     ) -> SPLIT_GENERATOR_TYPE:
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
@@ -996,7 +995,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             train = self._get_train_window(
                 y=y, train_start=train_start, split_point=split_point
             )
-            test = split_point + fh - 1
+            test = split_point + _check_fh(_coerce_fh_to_int(fh)).to_numpy() - 1
             yield train, test
 
 
