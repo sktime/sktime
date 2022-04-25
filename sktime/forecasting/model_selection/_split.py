@@ -685,6 +685,7 @@ class BaseWindowSplitter(BaseSplitter):
         _check_window_lengths(
             y=y, fh=fh, window_length=window_length, initial_window=initial_window
         )
+
         if self.initial_window is not None:
             yield self._split_for_initial_window(y)
 
