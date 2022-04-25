@@ -129,8 +129,11 @@ class TimeSeriesKMedoids(TimeSeriesLloyds):
             curr_indexes = np.where(assignment_indexes == i)[0]
             distance_matrix = np.zeros((len(curr_indexes), len(curr_indexes)))
             for j in range(len(curr_indexes)):
+                curr_j = curr_indexes[j]
                 for k in range(len(curr_indexes)):
-                    distance_matrix[j, k] = self._precomputed_pairwise[j, k]
+                    distance_matrix[j, k] = self._precomputed_pairwise[
+                        curr_j, curr_indexes[k]
+                    ]
             result = medoids(
                 X[curr_indexes], precomputed_pairwise_distance=distance_matrix
             )
