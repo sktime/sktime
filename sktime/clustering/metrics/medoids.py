@@ -3,10 +3,12 @@
 __author__ = ["chrisholder", "TonyBagnall"]
 
 import numpy as np
+from numba import njit
 
 from sktime.distances import pairwise_distance
 
 
+@njit(cache=True, fastmath=True)
 def medoids(
     X: np.ndarray,
     precomputed_pairwise_distance: np.ndarray = None,
