@@ -134,7 +134,7 @@ if __name__ == "__main__":
         results_dir = "./temp"
         resample = 0
         tf = True
-        distance = "edr"
+        distance = "dtw"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         name = clusterer + "-" + distance + "-tuned"
     else:
         name = clusterer + "-" + distance
-    if distance == "wdtw" or distance == "dwdtw":
+    if distance == "dtw" or distance == "ddtw":
         parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
     else:
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
