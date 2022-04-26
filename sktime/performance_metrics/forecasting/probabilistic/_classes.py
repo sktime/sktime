@@ -125,8 +125,6 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
         if isinstance(out, pd.DataFrame):
             out = out.squeeze(axis=0)
-            if len(out) == 1:  # if result only one column, return as float
-                out = float(out)
 
         return out
 

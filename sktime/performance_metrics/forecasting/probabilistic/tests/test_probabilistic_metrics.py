@@ -39,7 +39,7 @@ def test_output(Metric, score_average, Predictions):
         assert isinstance(eval_loss, float)
         assert isinstance(index_loss, pd.Series)
     else:
-        assert isinstance(eval_loss, pd.DataFrame)
+        assert isinstance(eval_loss, pd.Series)
         assert isinstance(index_loss, pd.DataFrame)
 
 
