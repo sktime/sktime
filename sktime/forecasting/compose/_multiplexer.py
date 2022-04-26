@@ -175,7 +175,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
 
         Returns
         -------
-        params : dict or list of dict
+        params : dicct or list of dict
         """
         from sktime.forecasting.naive import NaiveForecaster
 
