@@ -740,12 +740,11 @@ class BaseWindowSplitter(BaseSplitter):
             if array_is_int(fh):
                 test = split_point + fh.to_numpy() - 1
             else:
+                test = np.argwhere(
+                    y.isin(y[max(0, split_point - 1)] + fh.to_pandas())
+                ).flatten()
                 if split_point == 0:
-                    test = np.argwhere(y.isin(y[0] + fh.to_pandas())).flatten() - 1
-                else:
-                    test = np.argwhere(
-                        y.isin(y[split_point - 1] + fh.to_pandas())
-                    ).flatten()
+                    test -= 1
             yield train, test
 
     @staticmethod
