@@ -159,7 +159,7 @@ if __name__ == "__main__":
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
 
     if clusterer == "kmeans":
-        cls = TimeSeriesKMeans(
+        clst = TimeSeriesKMeans(
             averaging_method="mean",
             metric=distance,
             distance_params=parameters,
@@ -167,7 +167,7 @@ if __name__ == "__main__":
             random_state=resample + 1,
         )
     elif clusterer == "kmedoids":
-        cls = TimeSeriesKMedoids(
+        clst = TimeSeriesKMedoids(
             metric=distance,
             distance_params=parameters,
             n_clusters=len(set(train_Y)),
