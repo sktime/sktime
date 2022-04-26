@@ -862,7 +862,7 @@ class BaseWindowSplitter(BaseSplitter):
         offset = step_length if start == 0 else pd.Timedelta(0)
         start_date = y[y < y[start] + offset][-1]
         if end <= len(y):
-            end_date = y[y <= y[min(len(y), end) - 1] - step_length][-1] + step_length
+            end_date = y[end - 1]
             inclusive = "left"
         else:
             end_date = y[-1]
