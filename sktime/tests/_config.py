@@ -32,10 +32,6 @@ from sktime.transformations.panel.summarize import FittedParamExtractor
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
-    # known issues, see PR 1989 for fix
-    "ProximityForest",
-    "ProximityStump",
-    "ProximityTree",
     # ConditionalDeseasonalizer and STLtransformer still need refactoring
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
@@ -58,10 +54,30 @@ EXCLUDED_TESTS = {
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
     # test fails in the Panel case for Differencer, see #2522
     "Differencer": ["test_transform_inverse_transform_equivalent"],
+    # tagged in issue #2490
     "SignatureClassifier": [
         "test_classifier_on_unit_test_data",
         "test_classifier_on_basic_motions",
     ],
+    # pickling problem with local method see #2490
+    "ProximityStump": [
+        "test_persistence_via_pickle",
+        "test_fit_does_not_overwrite_hyper_params",
+    ],
+    "ProximityTree": [
+        "test_persistence_via_pickle",
+        "test_fit_does_not_overwrite_hyper_params",
+    ],
+    "ProximityForest": [
+        "test_persistence_via_pickle",
+        "test_fit_does_not_overwrite_hyper_params",
+    ],
+    # sth is not quite right with the RowTransformer-s changing state,
+    #   but these are anyway on their path to deprecation, see #2370
+    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
+    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
+    # ColumnTransformer still needs to be refactored, see #2537
+    "ColumnTransformer": ["test_methods_do_not_change_state"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
