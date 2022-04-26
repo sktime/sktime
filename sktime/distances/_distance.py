@@ -1662,6 +1662,102 @@ def msm_alignment_path(
     )
 
 
+def twe_alignment_path(
+    x: np.ndarray,
+    y: np.ndarray,
+    return_cost_matrix: bool = False,
+    window: float = None,
+    itakura_max_slope: float = None,
+    bounding_matrix: np.ndarray = None,
+    lmbda: float = 1.0,
+    nu: float = 0.001,
+    p: int = 2,
+    **kwargs: Any,
+) -> AlignmentPathReturn:
+    """Time Warp Edit (TWE) distance between two time series.
+
+    The Time Warp Edit (TWE) distance is a distance measure for discrete time series
+    matching with time 'elasticity'. In comparison to other distance measures, (e.g.
+    DTW (Dynamic Time Warping) or LCS (Longest Common Subsequence Problem)), TWE is a
+    metric. Its computational time complexity is O(n^2), but can be drastically reduced
+    in some specific situation by using a corridor to reduce the search space. Its
+    memory space complexity can be reduced to O(n). It was first proposed in [1].
+
+    Parameters
+    ----------
+    x: np.ndarray (1d or 2d array)
+        First time series.
+    y: np.ndarray (1d or 2d array)
+        Second time series.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Value must be between 0. and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Value must be between 0. and 1.
+    bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y)),
+                                    defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should be
+        infinity.
+    lmbda: float, defaults = 1.0
+        A constant penalty that punishes the editing efforts. Must be >= 1.0.
+    nu: float, defaults = 0.001
+        A non-negative constant which characterizes the stiffness of the elastic
+        twe measure. Must be > 0.
+    p: int, defaults = 2
+        Order of the p-norm for local cost.
+    kwargs: Any
+        Extra kwargs.
+
+    Returns
+    -------
+    list[tuple]
+        List of tuples containing the twe alignment path.
+    float
+        Twe distance between x and y. The value returned will be between 0.0 and 1.0,
+        where 0.0 means the two time series are exactly the same and 1.0 means they
+        are complete opposites.
+    np.ndarray (of shape (len(x), len(y)).
+        Optional return only given if return_cost_matrix = True.
+        Cost matrix used to compute the distance.
+
+    Raises
+    ------
+    ValueError
+        If the sakoe_chiba_window_radius is not a float.
+        If the itakura_max_slope is not a float.
+        If the value of x or y provided is not a numpy array.
+        If the value of x or y has more than 2 dimensions.
+        If a metric string provided, and is not a defined valid string.
+        If a metric object (instance of class) is provided and doesn't inherit from
+        NumbaDistance.
+        If a resolved metric is not no_python compiled.
+        If the metric type cannot be determined
+        If both window and itakura_max_slope are set
+
+    References
+    ----------
+    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
+    Intelligence. 31 (2): 306–318.
+    """
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "lmbda": lmbda,
+        "nu": nu,
+        "p": p,
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance_alignment_path(
+        x, y, metric="twe", return_cost_matrix=return_cost_matrix, **format_kwargs
+    )
+
+
 def distance(
     x: np.ndarray,
     y: np.ndarray,
@@ -2164,7 +2260,7 @@ _METRIC_INFOS = [
         aka={"twe", "time warped edit"},
         dist_func=twe_distance,
         dist_instance=_TweDistance(),
-        # dist_alignment_path_func=msm_alignment_path,
+        dist_alignment_path_func=twe_alignment_path,
     ),
 ]
 
@@ -2186,4 +2282,5 @@ ALL_DISTANCES = (
     squared_distance,
     wddtw_distance,
     wdtw_distance,
+    twe_distance,
 )
