@@ -16,8 +16,8 @@ from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
+    _make_3d_series,
     _numba_to_timeseries,
-    to_numba_pairwise_timeseries,
     to_numba_timeseries,
 )
 from sktime.distances._resolve_metric import (
@@ -1815,10 +1815,10 @@ def pairwise_distance(
     array([[256., 576.],
            [ 58., 256.]])
     """
-    _x = to_numba_pairwise_timeseries(x)
+    _x = _make_3d_series(x)
     if y is None:
         y = x
-    _y = to_numba_pairwise_timeseries(y)
+    _y = _make_3d_series(y)
     symmetric = np.array_equal(_x, _y)
     _metric_callable = _resolve_metric_to_factory(
         metric, _x[0], _y[0], _METRIC_INFOS, **kwargs

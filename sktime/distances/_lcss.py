@@ -235,7 +235,7 @@ def _sequence_cost_matrix(
     bounding_matrix: np.ndarray,
     epsilon: float,
 ):
-    """Compute the lcss cost matrix between two timeseries.
+    """Compute the lcss cost matrix between two time series.
 
     Parameters
     ----------

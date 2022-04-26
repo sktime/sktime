@@ -212,7 +212,7 @@ def _edr_cost_matrix(
     bounding_matrix: np.ndarray,
     epsilon: float,
 ):
-    """Compute the edr cost matrix between two timeseries.
+    """Compute the edr cost matrix between two time series.
 
     Parameters
     ----------

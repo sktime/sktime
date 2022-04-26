@@ -21,7 +21,7 @@ warnings.simplefilter("ignore", category=NumbaWarning)
 
 
 class _MsmDistance(NumbaDistance):
-    r"""Move-split-merge (MSM) distance between two timeseries.
+    r"""Move-split-merge (MSM) distance between two time series.
 
     (MSM) [1] is a distance measure that is conceptually similar to other edit
     distance-based approaches, where similarity is calculated by using a set of
@@ -258,7 +258,7 @@ def _cost_matrix(
     Returns
     -------
     distance: float
-        MSM distance between the x and y timeseries.
+        MSM distance between the x and y time series.
     """
     x_size = x.shape[1]
     y_size = y.shape[1]
