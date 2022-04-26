@@ -99,32 +99,14 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
 
 def _check_cutoffs_against_train_windows(cutoffs, windows, y):
     # Cutoffs should always be the last values of the train windows.
-    if array_is_int(cutoffs):
-        actual = np.array([window[-1] for window in windows[1:]])
-    elif array_is_datetime64(cutoffs):
-        actual = np.array(
-            [y.index[window[-1]].to_datetime64() for window in windows[1:]],
-            dtype="datetime64",
-        )
-    else:
-        raise ValueError(
-            f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
-        )
+    assert array_is_int(cutoffs)
+    actual = np.array([window[-1] for window in windows[1:]])
     np.testing.assert_array_equal(actual, cutoffs[1:])
 
     # We treat the first window separately, since it may be empty when setting
     # `start_with_window=False`.
     if len(windows[0]) > 0:
-        if array_is_int(cutoffs):
-            np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
-        elif array_is_datetime64(cutoffs):
-            np.testing.assert_array_equal(
-                y.index[windows[0][-1]].to_datetime64(), cutoffs[0]
-            )
-        else:
-            raise ValueError(
-                f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
-            )
+        np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
 
 
 def _check_cv(cv, y, allow_empty_window=False):

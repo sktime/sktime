@@ -376,7 +376,7 @@ class BaseSplitter:
 
     Method `.get_cutoffs` returns the cutoff points between each train/test split.
     Using the above notation, for a single split it corresponds
-    to the last index of the training window, :math:`t(k)`
+    to the last integer index of the training window, :math:`k`
 
     In order to illustrate the difference in integer/interval arithmetic
     in calculating train/test indices, let us consider the following examples.
@@ -472,8 +472,8 @@ class BaseSplitter:
 
         Returns
         -------
-        cutoffs : np.array
-            The array of cutoff points.
+        cutoffs : np.ndarray
+            The array of integer cutoff points.
         """
         raise NotImplementedError("abstract method")
 
@@ -626,8 +626,8 @@ class CutoffSplitter(BaseSplitter):
 
         Returns
         -------
-        cutoffs : np.array
-            The array of cutoff points.
+        cutoffs : np.ndarray
+            The array of integer cutoff points.
         """
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
@@ -825,8 +825,8 @@ class BaseWindowSplitter(BaseSplitter):
 
         Returns
         -------
-        cutoffs : np.array
-            The array of cutoff points.
+        cutoffs : np.ndarray
+            The array of integer cutoff points.
         """
         if y is None:
             raise ValueError(
@@ -1055,8 +1055,8 @@ class SingleWindowSplitter(BaseSplitter):
 
         Returns
         -------
-        cutoffs : np.array
-            The array of cutoff points.
+        cutoffs : np.ndarray
+            The array of integer cutoff points.
         """
         if y is None:
             raise ValueError(
