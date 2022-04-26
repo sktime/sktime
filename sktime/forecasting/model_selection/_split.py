@@ -724,10 +724,10 @@ class BaseWindowSplitter(BaseSplitter):
             )
         if self.initial_window <= self.window_length:
             raise ValueError("`initial_window` must greater than `window_length`")
-        if is_timedelta_or_date_offset(x=self.initial_window):
-            end = y.get_loc(y[0] + self.initial_window)
-        else:
+        if is_int(x=self.initial_window):
             end = self.initial_window
+        else:
+            end = y.get_loc(y[0] + self.initial_window)
         train = self._get_train_window(y=y, train_start=0, split_point=end)
         if array_is_int(fh):
             test = end + fh.to_numpy() - 1
