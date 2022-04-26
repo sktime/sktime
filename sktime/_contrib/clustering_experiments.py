@@ -161,7 +161,6 @@ if __name__ == "__main__":
     if clusterer == "kmeans":
         cls = TimeSeriesKMeans(
             averaging_method="mean",
-            clusterer=clusterer,
             metric=distance,
             distance_params=parameters,
             n_clusters=len(set(train_Y)),
@@ -169,7 +168,6 @@ if __name__ == "__main__":
         )
     elif clusterer == "kmedoids":
         cls = TimeSeriesKMedoids(
-            clusterer=clusterer,
             metric=distance,
             distance_params=parameters,
             n_clusters=len(set(train_Y)),
