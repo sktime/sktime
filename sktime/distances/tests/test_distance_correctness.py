@@ -17,9 +17,9 @@ from sktime.distances import (
     euclidean_distance,
     lcss_distance,
     msm_distance,
+    twe_distance,
     wddtw_distance,
     wdtw_distance,
-    twe_distance
 )
 
 distances = [
@@ -32,7 +32,7 @@ distances = [
     "erp",
     "ddtw",
     "wddtw",
-    "twe"
+    "twe",
 ]
 
 distance_parameters = {
@@ -70,6 +70,7 @@ basic_motions_distances = {
     "wddtw": [80.149117, 1.458858, 0.0],
     "twe": [1.001, 12.620531031063596, 172.85784967286418],
 }
+
 
 def test_multivariate_correctness():
     """Test distance correctness on BasicMotions: multivariate, equal length."""
