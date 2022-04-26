@@ -732,7 +732,7 @@ class BaseWindowSplitter(BaseSplitter):
         if array_is_int(fh):
             test = end + fh.to_numpy() - 1
         else:
-            test = (y[:, None] == y[end - 1] + fh.to_pandas().values).argmax(axis=0)
+            test = np.argwhere(y.isin(y[end - 1] + fh)).flatten()
         return train, test
 
     def _split_windows(
