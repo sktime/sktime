@@ -671,7 +671,6 @@ class BaseWindowSplitter(BaseSplitter):
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
-        step_length = check_step_length(self.step_length)
         window_length = check_window_length(
             window_length=self.window_length,
             n_timepoints=n_timepoints,
@@ -690,9 +689,7 @@ class BaseWindowSplitter(BaseSplitter):
         if self.initial_window is not None:
             yield self._split_for_initial_window(y)
 
-        for train, test in self._split_windows(
-            step_length=step_length, window_length=window_length, y=y, fh=fh
-        ):
+        for train, test in self._split_windows(window_length=window_length, y=y, fh=fh):
             yield train, test
 
     def _split_for_initial_window(self, y: pd.Index) -> SPLIT_ARRAY_TYPE:
@@ -729,7 +726,6 @@ class BaseWindowSplitter(BaseSplitter):
 
     def _split_windows(
         self,
-        step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
         fh: ForecastingHorizon,
@@ -739,20 +735,15 @@ class BaseWindowSplitter(BaseSplitter):
 
     def _split_windows_generic(
         self,
-        step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
         fh: ForecastingHorizon,
         expanding: bool,
     ) -> SPLIT_GENERATOR_TYPE:
         start = self._get_start(y=y, fh=fh)
-        end = _get_end(y_index=y, fh=fh) + 2
-        if is_int(step_length):
-            split_points = range(start, end, step_length)
-        else:
-            split_points = self.get_cutoffs(pd.Series(1, index=y)) + 1
-            if self.initial_window is not None:
-                split_points = split_points[1:]
+        split_points = self.get_cutoffs(pd.Series(1, index=y)) + 1
+        if self.initial_window is not None:
+            split_points = split_points[1:]
         for split_point in split_points:
             train_start = self._get_train_start(
                 start=start if expanding else split_point,
