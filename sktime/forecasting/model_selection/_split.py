@@ -690,16 +690,8 @@ class BaseWindowSplitter(BaseSplitter):
         if self.initial_window is not None:
             yield self._split_for_initial_window(y)
 
-        start = self._get_start(y=y, fh=fh)
-        end = _get_end(y_index=y, fh=fh) + 2
-
         for train, test in self._split_windows(
-            start=start,
-            end=end,
-            step_length=step_length,
-            window_length=window_length,
-            y=y,
-            fh=fh,
+            step_length=step_length, window_length=window_length, y=y, fh=fh
         ):
             yield train, test
 
@@ -737,8 +729,6 @@ class BaseWindowSplitter(BaseSplitter):
 
     def _split_windows(
         self,
-        start: int,
-        end: int,
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
@@ -749,14 +739,14 @@ class BaseWindowSplitter(BaseSplitter):
 
     def _split_windows_generic(
         self,
-        start: int,
-        end: int,
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         y: pd.Index,
         fh: ForecastingHorizon,
         expanding: bool,
     ) -> SPLIT_GENERATOR_TYPE:
+        start = self._get_start(y=y, fh=fh)
+        end = _get_end(y_index=y, fh=fh) + 2
         step_length = _coerce_duration_to_int(duration=step_length, freq="D")
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
