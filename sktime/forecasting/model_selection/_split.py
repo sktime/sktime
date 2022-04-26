@@ -861,19 +861,14 @@ class BaseWindowSplitter(BaseSplitter):
     ) -> np.ndarray:
         offset = step_length if start == 0 else pd.Timedelta(0)
         start_date = y[y < y[start] + offset][-1]
-        if end <= len(y):
-            end_date = y[end - 1]
-            inclusive = "left"
-        else:
-            end_date = y[-1]
-            inclusive = "both"
-        date_range = pd.date_range(
+        end_date, inclusive = (y[end - 1], "left") if end <= len(y) else (y[-1], "both")
+        date_cutoffs = pd.date_range(
             start=start_date, end=end_date, freq=step_length, inclusive=inclusive
         )
-        train = np.argwhere(y.isin(date_range)).flatten()
+        cutoffs = np.argwhere(y.isin(date_cutoffs)).flatten()
         if start <= 0:
-            train = np.hstack((-1, train))
-        return train
+            cutoffs = np.hstack((-1, cutoffs))
+        return cutoffs
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
