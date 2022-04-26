@@ -198,3 +198,93 @@ def test_metric_parameters():
 def test_incorrect_parameters():
     """Ensure incorrect parameters raise errors."""
     _test_incorrect_parameters(distance)
+
+def test_twe():
+    from sktime.distances._distance import twe_distance
+
+    x = create_test_distance_numpy(10)
+    y = create_test_distance_numpy(10, random_state=2)
+
+    s1 = np.array([[9.868, 14.54],
+                   [5.235, 16.3],
+                   [6.203, 16.76],
+                   [7.968, 17.13],
+                   [6.493, 17.58],
+                   [12.466, 16.68],
+                   [13.255, 14.31],
+                   [11.263, 12.09],
+                   [7.155, 10.53],
+                   [7.377, 9.48],
+                   [8.672, 8.73],
+                   [7.881, 8.58]]).astype('float64')
+    s2 = np.array([[9.428, 5.06],
+                   [12.91, 5.78],
+                   [9.365, 7.01],
+                   [12.535, 7.99],
+                   [10.152, 8.89],
+                   [11.473, 9.58],
+                   [14.701, 8.12],
+                   [10.156, 6.9],
+                   [8.292, 5.82],
+                   [5.946, 4.96],
+                   [6.339, 4.09],
+                   [5.395, 4.]]).astype('float64')
+
+    x = s1.reshape((s1.shape[1], s1.shape[0]))
+    y = s2.reshape((s2.shape[1], s2.shape[0]))
+
+    s1 = np.array([[9.868, 14.54],
+                   [5.235, 16.3],
+                   [6.203, 16.76],
+                   [7.968, 17.13],
+                   [6.493, 17.58],
+                   [12.466, 16.68],
+                   [13.255, 14.31],
+                   [11.263, 12.09],
+                   [7.155, 10.53],
+                   [7.377, 9.48],
+                   [8.672, 8.73],
+                   [7.881, 8.58]]).astype('float64')
+    s2 = np.array([[9.428, 5.06],
+                   [12.91, 5.78],
+                   [9.365, 7.01],
+                   [12.535, 7.99],
+                   [10.152, 8.89],
+                   [11.473, 9.58],
+                   [14.701, 8.12],
+                   [10.156, 6.9],
+                   [8.292, 5.82],
+                   [5.946, 4.96],
+                   [6.339, 4.09],
+                   [5.395, 4.]]).astype('float64')
+
+
+
+    reshape_x = s1
+    reshape_y = s2
+
+    def reshapey(x_ts):
+        reshaped = [[] for i in range(x_ts.shape[0])]
+        for ts in x_ts:
+            curr_start = 0
+            for i in range(x_ts.shape[0]):
+                for j in range(curr_start, len(ts), x_ts.shape[0]):
+                    reshaped[i].append(ts[j])
+                curr_start += 1
+        return np.array(reshaped)
+
+    if reshape_x.ndim > 1:
+        x = reshapey(x)
+        y = reshapey(y)
+    else:
+        x = reshape_x
+        y = reshape_y
+
+    nu = .1
+    lmbda = .2
+    p = 2
+    from sktime.distances.tests.twetemp import twed as actual_twe
+
+    test, cm1 = twe_distance(x, y, nu=nu, lmbda=lmbda, p=p)
+    test2, cm2 = actual_twe(s1, s2, nu = nu, lmbda = lmbda, p = p, fast=True)
+    joe = ''

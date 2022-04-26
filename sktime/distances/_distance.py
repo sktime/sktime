@@ -14,6 +14,7 @@ from sktime.distances._erp import _ErpDistance
 from sktime.distances._euclidean import _EuclideanDistance
 from sktime.distances._lcss import _LcssDistance
 from sktime.distances._msm import _MsmDistance
+from sktime.distances._twe import _TweDistance
 from sktime.distances._numba_utils import (
     _compute_pairwise_distance,
     _make_3d_series,
@@ -743,6 +744,29 @@ def msm_distance(
     format_kwargs = {**format_kwargs, **kwargs}
 
     return distance(x, y, metric="msm", **format_kwargs)
+
+def twe_distance(
+        x: np.ndarray,
+        y: np.ndarray,
+        window: Union[float, None] = None,
+        itakura_max_slope: Union[float, None] = None,
+        bounding_matrix: np.ndarray = None,
+        lmbda: float = 1.0,
+        nu: float = 0.001,
+        p: int = 2,
+        **kwargs: Any,
+) -> float:
+    format_kwargs = {
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
+        "lmbda": lmbda,
+        "nu": nu,
+        "p": p
+    }
+    format_kwargs = {**format_kwargs, **kwargs}
+
+    return distance(x, y, metric="twe", **format_kwargs)
 
 
 def squared_distance(x: np.ndarray, y: np.ndarray, **kwargs: Any) -> float:
@@ -2058,6 +2082,13 @@ _METRIC_INFOS = [
         dist_func=msm_distance,
         dist_instance=_MsmDistance(),
         dist_alignment_path_func=msm_alignment_path,
+    ),
+    MetricInfo(
+        canonical_name="twe",
+        aka={"twe", "time warped edit"},
+        dist_func=msm_distance,
+        dist_instance=_TweDistance(),
+        # dist_alignment_path_func=msm_alignment_path,
     ),
 ]
 
