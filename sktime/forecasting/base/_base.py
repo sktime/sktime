@@ -37,7 +37,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
 
 __all__ = ["BaseForecaster"]
 
-from contextlib import contextmanager
+from copy import deepcopy
 from warnings import warn
 
 import numpy as np
@@ -1382,24 +1382,6 @@ class BaseForecaster(BaseEstimator):
         cutoff_idx = get_cutoff(y, self.cutoff)
         self._cutoff = cutoff_idx
 
-    @contextmanager
-    def _detached_cutoff(self):
-        """Detached cutoff mode.
-
-        When in detached cutoff mode, the cutoff can be updated but will
-        be reset to the initial value after leaving the detached cutoff mode.
-
-        This is useful during rolling-cutoff forecasts when the cutoff needs
-        to be repeatedly reset, but afterwards should be restored to the
-        original value.
-        """
-        cutoff = self.cutoff  # keep initial cutoff
-        try:
-            yield
-        finally:
-            # re-set cutoff to initial value
-            self._set_cutoff(cutoff)
-
     @property
     def fh(self):
         """Forecasting horizon that was passed."""
@@ -2003,31 +1985,32 @@ class BaseForecaster(BaseEstimator):
         cutoffs = []
 
         # enter into a detached cutoff mode
-        with self._detached_cutoff():
-            # set cutoff to time point before data
-            self._set_cutoff(_shift(y.index[0], by=-1))
-            # iterate over data
-            for new_window, _ in cv.split(y):
-                y_new = y.iloc[new_window]
+        self_copy = deepcopy(self)
 
-                # we use `update_predict_single` here
-                #  this updates the forecasting horizon
-                y_pred = self.update_predict_single(
-                    y=y_new,
-                    fh=fh,
-                    X=X,
-                    update_params=update_params,
+        # set cutoff to time point before data
+        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        # iterate over data
+        for new_window, _ in cv.split(y):
+            y_new = y.iloc[new_window]
+
+            # we use `update_predict_single` here
+            #  this updates the forecasting horizon
+            y_pred = self_copy.update_predict_single(
+                y=y_new,
+                fh=fh,
+                X=X,
+                update_params=update_params,
+            )
+            y_preds.append(y_pred)
+            cutoffs.append(self_copy.cutoff)
+
+            for i in range(len(y_preds)):
+                y_preds[i] = convert_to(
+                    y_preds[i],
+                    self._y_mtype_last_seen,
+                    store=self._converter_store_y,
+                    store_behaviour="freeze",
                 )
-                y_preds.append(y_pred)
-                cutoffs.append(self.cutoff)
-
-                for i in range(len(y_preds)):
-                    y_preds[i] = convert_to(
-                        y_preds[i],
-                        self._y_mtype_last_seen,
-                        store=self._converter_store_y,
-                        store_behaviour="freeze",
-                    )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     # TODO: remove in v0.11.0
