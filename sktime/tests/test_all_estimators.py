@@ -662,6 +662,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         if hasattr(estimator, "predict_proba"):
             assert hasattr(estimator, "predict")
 
+    def test_no_cross_test_side_effects_part1(self, estimator_instance):
+        """Tests that there are no side effects across tests."""
+        estimator_instance.test__attr = 42
+
+    def test_no_cross_test_side_effects_part2(self, estimator_instance):
+        """Tests that there are no side effects across tests."""
+        assert not hasattr(estimator_instance, "test__attr")
+
     def test_get_params(self, estimator_instance):
         """Check that get_params works correctly."""
         estimator = estimator_instance
