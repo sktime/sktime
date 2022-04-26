@@ -15,6 +15,7 @@ __all__ = [
     "erp_distance",
     "msm_distance",
     "lcss_distance",
+    "twe_distance",
     "LowerBounding",
     "dtw_alignment_path",
     "ddtw_alignment_path",
@@ -52,5 +53,6 @@ from sktime.distances._distance import (
     wddtw_distance,
     wdtw_alignment_path,
     wdtw_distance,
+    twe_distance
 )
 from sktime.distances.lower_bounding import LowerBounding

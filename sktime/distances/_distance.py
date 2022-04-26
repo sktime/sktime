@@ -2086,7 +2086,7 @@ _METRIC_INFOS = [
     MetricInfo(
         canonical_name="twe",
         aka={"twe", "time warped edit"},
-        dist_func=msm_distance,
+        dist_func=twe_distance,
         dist_instance=_TweDistance(),
         # dist_alignment_path_func=msm_alignment_path,
     ),

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder", "TonyBagnall"]
 
-
 import warnings
 from typing import Any, List, Tuple
 
@@ -38,20 +37,24 @@ class _TweDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
+        @njit(cache=True)
         def numba_twe_distance(
                 _x: np.ndarray,
                 _y: np.ndarray,
         ) -> float:
             cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
-            return cost_matrix[-1, -1], cost_matrix
+            return cost_matrix[-1, -1]
 
         return numba_twe_distance
 
 
+@njit(cache=True)
 def Dlp(A, B, p=2):
     cost = np.sum(np.power(np.abs(A - B), p))
     return np.power(cost, 1.0 / p)
 
+
+@njit(cache=True)
 def pad_ts(x):
     padded_x = np.zeros((x.shape[0], x.shape[1] + 1))
     zero_arr = np.array([0.0])
@@ -59,6 +62,8 @@ def pad_ts(x):
         padded_x[i, :] = np.concatenate((zero_arr, x[i, :]))
     return padded_x
 
+
+@njit(cache=True)
 def _twe_cost_matrix(
         x: np.ndarray,
         y: np.ndarray,
@@ -75,8 +80,6 @@ def _twe_cost_matrix(
     p: int
         Order of the p-norm for local cost.
     """
-    # padded_x = np.zeros((x.shape[0] + 1, x.shape[1] + 1))
-    # padded_x[1, :] = x
     x = pad_ts(x)
     y = pad_ts(y)
     dimensions = x.shape[0]
@@ -84,28 +87,26 @@ def _twe_cost_matrix(
     y_size = y.shape[1]
 
     cost_matrix = np.zeros((x_size, y_size))
-
-    # Initialize DP Matrix and set first row and column to infinity
     cost_matrix[0, 1:] = np.inf
     cost_matrix[1:, 0] = np.inf
+
+    delete_addition = nu + lmbda
 
     for i in range(1, x_size):
         for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                # Deletion in A
-                del_a = (
+                # Deletion in x
+                del_x = (
                         cost_matrix[i - 1, j]
                         + Dlp(x[:, i - 1], x[:, i], p=p)
-                        + nu
-                        + lmbda
+                        + delete_addition
                 )
 
-                # Deletion in B
-                del_b = (
+                # Deletion in y
+                del_y = (
                         cost_matrix[i, j - 1]
                         + Dlp(y[:, j - 1], y[:, j], p=p)
-                        + nu
-                        + lmbda
+                        + delete_addition
                 )
 
                 # Keep data points in both time series
@@ -117,5 +118,5 @@ def _twe_cost_matrix(
                 )
 
                 # Choose the operation with the minimal cost and update DP Matrix
-                cost_matrix[i, j] = min(del_a, del_b, match)
+                cost_matrix[i, j] = min(del_x, del_y, match)
     return cost_matrix
