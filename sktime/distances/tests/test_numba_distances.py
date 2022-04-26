@@ -136,7 +136,7 @@ def _validate_distance_result(
 
     metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)
 
-    if metric_str != 'twe':
+    if metric_str != "twe":
         assert metric_str_result_to_self == 0, (
             f"The distance when given two of the same time series e.g."
             f"distance(x, x, ...), result should equal 0. This criteria is not met for "
