@@ -28,7 +28,6 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
-    DATETIME_INTERVAL_TYPES,
     NON_FLOAT_WINDOW_LENGTH_TYPES,
     all_inputs_are_iloc_like,
     all_inputs_are_time_like,
@@ -847,25 +846,16 @@ class BaseWindowSplitter(BaseSplitter):
         if is_int(x=step_length):
             return np.arange(start, end, step_length) - 1
         else:
-            return self._get_cutoffs_with_non_integer_step_length(
-                end=end, start=start, step_length=step_length, y=y
+            offset = step_length if start == 0 else pd.Timedelta(0)
+            start_date = y[y < y[start] + offset][-1]
+            end_date = y[end - 1] - step_length if end <= len(y) else y[-1]
+            date_cutoffs = pd.date_range(
+                start=start_date, end=end_date, freq=step_length
             )
-
-    @staticmethod
-    def _get_cutoffs_with_non_integer_step_length(
-        end: int,
-        start: int,
-        step_length: DATETIME_INTERVAL_TYPES,
-        y: pd.Index,
-    ) -> np.ndarray:
-        offset = step_length if start == 0 else pd.Timedelta(0)
-        start_date = y[y < y[start] + offset][-1]
-        end_date = y[end - 1] - step_length if end <= len(y) else y[-1]
-        date_cutoffs = pd.date_range(start=start_date, end=end_date, freq=step_length)
-        cutoffs = np.argwhere(y.isin(date_cutoffs)).flatten()
-        if start <= 0:
-            cutoffs = np.hstack((-1, cutoffs))
-        return cutoffs
+            cutoffs = np.argwhere(y.isin(date_cutoffs)).flatten()
+            if start <= 0:
+                cutoffs = np.hstack((-1, cutoffs))
+            return cutoffs
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
