@@ -747,8 +747,13 @@ class BaseWindowSplitter(BaseSplitter):
     ) -> SPLIT_GENERATOR_TYPE:
         start = self._get_start(y=y, fh=fh)
         end = _get_end(y_index=y, fh=fh) + 2
-        step_length = _coerce_duration_to_int(duration=step_length, freq="D")
-        for split_point in range(start, end, step_length):
+        if is_int(step_length):
+            split_points = range(start, end, step_length)
+        else:
+            split_points = self.get_cutoffs(pd.Series(1, index=y)) + 1
+            if self.initial_window is not None:
+                split_points = split_points[1:]
+        for split_point in split_points:
             train_start = self._get_train_start(
                 start=start if expanding else split_point,
                 window_length=window_length,
