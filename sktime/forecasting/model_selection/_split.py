@@ -26,7 +26,6 @@ from sklearn.model_selection import train_test_split as _train_test_split
 from sktime.datatypes._utilities import get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
-from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     ACCEPTED_WINDOW_LENGTH_TYPES,
     DATETIME_INTERVAL_TYPES,
@@ -35,7 +34,6 @@ from sktime.utils.validation import (
     all_inputs_are_time_like,
     array_is_datetime64,
     array_is_int,
-    array_is_timedelta_or_date_offset,
     check_window_length,
     is_datetime,
     is_int,
@@ -129,19 +127,6 @@ def _repr(self) -> str:
 def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
     """Check and convert fh to format expected by CV splitters."""
     return check_fh(fh, enforce_relative=True)
-
-
-def _coerce_fh_to_int(fh):
-    if is_int(fh):
-        return fh
-    elif is_timedelta_or_date_offset(fh):
-        return _coerce_duration_to_int(fh, freq="D")
-    elif array_is_int(fh):
-        return fh
-    elif array_is_timedelta_or_date_offset(fh):
-        return [_coerce_duration_to_int(x, freq="D") for x in fh]
-    else:
-        raise ValueError()
 
 
 def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
@@ -752,7 +737,15 @@ class BaseWindowSplitter(BaseSplitter):
             train = self._get_train_window(
                 y=y, train_start=train_start, split_point=split_point
             )
-            test = split_point + _check_fh(_coerce_fh_to_int(fh)).to_numpy() - 1
+            if array_is_int(fh):
+                test = split_point + fh.to_numpy() - 1
+            else:
+                if split_point == 0:
+                    test = np.argwhere(y.isin(y[0] + fh.to_pandas())).flatten() - 1
+                else:
+                    test = np.argwhere(
+                        y.isin(y[split_point - 1] + fh.to_pandas())
+                    ).flatten()
             yield train, test
 
     @staticmethod
