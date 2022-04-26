@@ -836,13 +836,12 @@ class BaseWindowSplitter(BaseSplitter):
         fh = _check_fh(self.fh)
         step_length = check_step_length(self.step_length)
 
-        if hasattr(self, "initial_window") and self.initial_window is not None:
-            if is_timedelta_or_date_offset(x=self.initial_window):
-                start = y.get_loc(y[0] + self.initial_window)
-            else:
-                start = self.initial_window
-        else:
+        if self.initial_window is None:
             start = self._get_start(y=y, fh=fh)
+        elif is_int(x=self.initial_window):
+            start = self.initial_window
+        else:
+            start = y.get_loc(y[0] + self.initial_window)
 
         end = _get_end(y_index=y, fh=fh) + 2
         if is_int(x=step_length):
