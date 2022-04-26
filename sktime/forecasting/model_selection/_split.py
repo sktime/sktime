@@ -748,7 +748,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     @staticmethod
     def _get_train_start(
-        start, window_length: ACCEPTED_WINDOW_LENGTH_TYPES, y: pd.Index
+        start: int, window_length: ACCEPTED_WINDOW_LENGTH_TYPES, y: pd.Index
     ) -> int:
         if is_timedelta_or_date_offset(x=window_length):
             train_start = y.get_loc(
