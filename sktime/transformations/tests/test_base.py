@@ -55,7 +55,7 @@ def test_series_in_series_out_supported():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = False
+        "fit_is_empty" = False
         "X_inner_mtype" supports "Series
 
     X input to fit/transform has Series scitype
@@ -68,7 +68,7 @@ def test_series_in_series_out_supported():
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Series" in inner_X_scitypes(est)
-    assert not est.get_tag("fit-in-transform")
+    assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
 
@@ -87,7 +87,7 @@ def test_series_in_series_out_supported_fit_in_transform():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = True
+        "fit_is_empty" = True
         "X_inner_mtype" supports "Series"
 
     X input to fit/transform has Series scitype
@@ -100,7 +100,7 @@ def test_series_in_series_out_supported_fit_in_transform():
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Series" in inner_X_scitypes(est)
-    assert est.get_class_tag("fit-in-transform")
+    assert est.get_class_tag("fit_is_empty")
     assert est.get_class_tag("scitype:transform-input") == "Series"
     assert est.get_class_tag("scitype:transform-output") == "Series"
 
@@ -119,7 +119,7 @@ def test_series_in_series_out_not_supported_but_panel():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = False
+        "fit_is_empty" = False
         "X_inner_mtype" does not support "Series" but does support "Panel"
             i.e., none of the mtypes in the list is "Series" but some are "Panel"
 
@@ -134,7 +134,7 @@ def test_series_in_series_out_not_supported_but_panel():
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Panel" in inner_X_scitypes(est)
     assert "Series" not in inner_X_scitypes(est)
-    assert not est.get_tag("fit-in-transform")
+    assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
 
@@ -153,7 +153,7 @@ def test_panel_in_panel_out_supported():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = False
+        "fit_is_empty" = False
         "X_inner_mtype" supports "Panel"
 
     X input to fit/transform has Panel scitype
@@ -166,7 +166,7 @@ def test_panel_in_panel_out_supported():
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Panel" in inner_X_scitypes(est)
-    assert not est.get_tag("fit-in-transform")
+    assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
 
@@ -185,7 +185,7 @@ def test_panel_in_panel_out_not_supported_but_series():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = False
+        "fit_is_empty" = False
         "X_inner_mtype" supports "Series" but not "Panel" and not "Hierarchical"
 
     X input to fit/transform has Panel scitype
@@ -200,7 +200,7 @@ def test_panel_in_panel_out_not_supported_but_series():
     assert "Series" in inner_X_scitypes(est)
     assert "Panel" not in inner_X_scitypes(est)
     assert "Hierarchical" not in inner_X_scitypes(est)
-    assert not est.get_tag("fit-in-transform")
+    assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
 
@@ -219,7 +219,7 @@ def test_series_in_primitives_out_supported_fit_in_transform():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Primitives"
-        "fit-in-transform" = True
+        "fit_is_empty" = True
         "X_inner_mtype" supports "Series"
 
     X input to fit/transform has Series scitype
@@ -232,7 +232,7 @@ def test_series_in_primitives_out_supported_fit_in_transform():
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Series" in inner_X_scitypes(est)
-    assert est.get_tag("fit-in-transform")
+    assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Primitives"
 
@@ -253,7 +253,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Primitives"
-        "fit-in-transform" = True
+        "fit_is_empty" = True
         "X_inner_mtype" does not support "Panel", but does supports "Series"
 
     X input to fit/transform has Panel scitype
@@ -268,7 +268,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     assert "Series" in inner_X_scitypes(est)
     assert "Panel" not in inner_X_scitypes(est)
     assert "Hierarchical" not in inner_X_scitypes(est)
-    assert est.get_tag("fit-in-transform")
+    assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Primitives"
 
@@ -289,7 +289,7 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Primitives"
-        "fit-in-transform" = True
+        "fit_is_empty" = True
         "X_inner_mtype" supports "Panel" but does not support "Series"
 
     X input to fit/transform has Series scitype
@@ -303,7 +303,7 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Panel" in inner_X_scitypes(est)
     assert "Series" not in inner_X_scitypes(est)
-    assert est.get_tag("fit-in-transform")
+    assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Primitives"
 
@@ -324,7 +324,7 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Primitives"
-        "fit-in-transform" = False
+        "fit_is_empty" = False
         "requires_y" = True
         "X_inner_mtype" supports "Panel"
 
@@ -338,7 +338,7 @@ def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     #   (if this changes, it may be due to implementing more scitypes)
     #   (then this is not a failure of cls, but we need to choose another example)
     assert "Panel" in inner_X_scitypes(est)
-    assert not est.get_tag("fit-in-transform")
+    assert not est.get_tag("fit_is_empty")
     assert est.get_tag("requires_y")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Primitives"
@@ -360,7 +360,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series():
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = False
+        "fit_is_empty" = False
         "X_inner_mtype" supports "Series" but not "Panel" and not "Hierarchical
 
     X input to fit/transform has Hierarchical scitype
@@ -375,7 +375,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series():
     assert "Series" in inner_X_scitypes(est)
     assert "Panel" not in inner_X_scitypes(est)
     assert "Hierarchical" not in inner_X_scitypes(est)
-    assert not est.get_tag("fit-in-transform")
+    assert not est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
 
@@ -396,7 +396,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     Setting: transformer has tags
         "scitype:transform-input" = "Series"
         "scitype:transform-output" = "Series"
-        "fit-in-transform" = True
+        "fit_is_empty" = True
         "X_inner_mtype" supports "Series" but not "Panel" and not "Hierarchical
 
     X input to fit/transform has Hierarchical scitype
@@ -411,7 +411,7 @@ def test_hierarchical_in_hierarchical_out_not_supported_but_series_fit_in_transf
     assert "Series" in inner_X_scitypes(est)
     assert "Panel" not in inner_X_scitypes(est)
     assert "Hierarchical" not in inner_X_scitypes(est)
-    assert est.get_tag("fit-in-transform")
+    assert est.get_tag("fit_is_empty")
     assert est.get_tag("scitype:transform-input") == "Series"
     assert est.get_tag("scitype:transform-output") == "Series"
 
