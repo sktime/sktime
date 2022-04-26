@@ -169,7 +169,6 @@ if __name__ == "__main__":
         )
     elif clusterer == "kmedoids":
         cls = TimeSeriesKMedoids(
-            averaging_method="mean",
             clusterer=clusterer,
             metric=distance,
             distance_params=parameters,
