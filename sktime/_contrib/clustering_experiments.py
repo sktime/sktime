@@ -158,14 +158,24 @@ if __name__ == "__main__":
     else:
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
 
-    clst = config_clusterer(
-        averaging_method="mean",
-        clusterer=clusterer,
-        metric=distance,
-        distance_params=parameters,
-        n_clusters=len(set(train_Y)),
-        random_state=resample + 1,
-    )
+    if clusterer == "kmeans":
+        cls = TimeSeriesKMeans(
+            averaging_method="mean",
+            clusterer=clusterer,
+            metric=distance,
+            distance_params=parameters,
+            n_clusters=len(set(train_Y)),
+            random_state=resample + 1,
+        )
+    elif clusterer == "kmedoids":
+        cls = TimeSeriesKMedoids(
+            averaging_method="mean",
+            clusterer=clusterer,
+            metric=distance,
+            distance_params=parameters,
+            n_clusters=len(set(train_Y)),
+            random_state=resample + 1,
+        )
     run_clustering_experiment(
         train_X,
         clst,
