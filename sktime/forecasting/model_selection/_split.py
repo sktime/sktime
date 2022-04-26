@@ -857,12 +857,10 @@ class BaseWindowSplitter(BaseSplitter):
         end: int,
         start: int,
         step_length: DATETIME_INTERVAL_TYPES,
-        y: ACCEPTED_Y_TYPES,
+        y: pd.Index,
     ) -> np.ndarray:
-        if start >= 1:
-            start_date = y[y < y[start]][-1]
-        else:
-            start_date = y[y < y[0] + step_length][-1]
+        offset = step_length if start == 0 else pd.Timedelta(0)
+        start_date = y[y < y[start] + offset][-1]
         if end <= len(y):
             end_date = y[y <= y[min(len(y), end) - 1] - step_length][-1] + step_length
             inclusive = "left"
