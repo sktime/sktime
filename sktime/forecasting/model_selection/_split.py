@@ -647,7 +647,7 @@ class CutoffSplitter(BaseSplitter):
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
         else:
-            return (y.index[:, None] == check_cutoffs(self.cutoffs)).argmax(axis=0)
+            return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
 
 
 class BaseWindowSplitter(BaseSplitter):
