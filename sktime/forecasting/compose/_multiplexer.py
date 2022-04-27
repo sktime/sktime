@@ -3,8 +3,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
-from sklearn.base import clone
-
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
 __author__ = ["kkoralturk", "aiwalter"]
@@ -107,7 +105,7 @@ class MultiplexForecaster(_HeterogenousEnsembleForecaster):
         if self.selected_forecaster is not None:
             for name, forecaster in self.forecasters:
                 if self.selected_forecaster == name:
-                    self.forecaster_ = clone(forecaster)
+                    self.forecaster_ = forecaster.clone()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.

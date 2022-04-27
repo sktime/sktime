@@ -7,7 +7,6 @@ __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
@@ -318,13 +317,13 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
-                t = clone(transformer)
+                t = transformer.clone()
                 X = t.fit_transform(X=X, y=y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
-        f = clone(forecaster)
+        f = forecaster.clone()
         f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
 

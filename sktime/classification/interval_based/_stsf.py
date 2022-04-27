@@ -5,7 +5,7 @@ Interval based STSF classifier extracting summary features from intervals select
 through a supervised process.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["matthewmiddlehurst"]
 __all__ = ["SupervisedTimeSeriesForest"]
 
 import math
@@ -13,7 +13,6 @@ import math
 import numpy as np
 from joblib import Parallel, delayed
 from scipy import signal, stats
-from sklearn.base import clone
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_random_state
@@ -345,7 +344,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         Transformed using the supervised intervals for each feature and representation.
         """
-        estimator = clone(self._base_estimator)
+        estimator = self._base_estimator.clone()
         rs = 5465 if self.random_state == 0 else self.random_state
         rs = (
             None

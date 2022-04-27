@@ -16,7 +16,6 @@ from inspect import getfullargspec, isclass, signature
 import joblib
 import numpy as np
 import pytest
-from sklearn import clone
 from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
@@ -679,7 +678,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     def test_clone(self, estimator_instance):
         """Check we can call clone from scikit-learn."""
         estimator = estimator_instance
-        clone(estimator)
+        estimator.clone()
 
     def test_repr(self, estimator_instance):
         """Check we can call repr."""
