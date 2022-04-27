@@ -58,7 +58,7 @@ class BaseFixtureGenerator:
     """Fixture generator for base testing functionality in sktime.
 
     Test classes inheriting from this and not overriding pytest_generate_tests
-        will have estimator and scenario fixtures parameterized out of the box.
+        will have estimator and scenario fixtures parametrized out of the box.
 
     Descendants can override:
         estimator_type_filter: str, class variable; None or scitype string
@@ -80,8 +80,8 @@ class BaseFixtureGenerator:
             whether scenario should be skipped in test with test_name test_name
             requires _generate_estimator_scenario as is
 
-    Fixtures parameterized
-    ----------------------
+    Fixtures parametrized
+    ---------------------
     estimator_class: estimator inheriting from BaseObject
         ranges over estimator classes not excluded by EXCLUDE_ESTIMATORS, EXCLUDED_TESTS
     estimator_instance: instance of estimator inheriting from BaseObject
@@ -103,7 +103,7 @@ class BaseFixtureGenerator:
         """Test parameterization routine for pytest.
 
         This uses create_conditional_fixtures_and_names and generator_dict
-        to create the fixtures for a mark.parameterize decoration of all tests.
+        to create the fixtures for a mark.parametrize decoration of all tests.
         """
         # get name of the test
         test_name = metafunc.function.__name__
@@ -170,7 +170,7 @@ class BaseFixtureGenerator:
     def _generate_estimator_class(self, test_name, **kwargs):
         """Return estimator class fixtures.
 
-        Fixtures parameterized
+        Fixtures parametrized
         ----------------------
         estimator_class: estimator inheriting from BaseObject
             ranges over all estimator classes not excluded by EXCLUDED_TESTS
@@ -187,7 +187,7 @@ class BaseFixtureGenerator:
     def _generate_estimator_instance(self, test_name, **kwargs):
         """Return estimator instance fixtures.
 
-        Fixtures parameterized
+        Fixtures parametrized
         ----------------------
         estimator_instance: instance of estimator inheriting from BaseObject
             ranges over all estimator classes not excluded by EXCLUDED_TESTS
@@ -212,7 +212,7 @@ class BaseFixtureGenerator:
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
 
-        Fixtures parameterized
+        Fixtures parametrized
         ----------------------
         scenario: instance of TestScenario
             ranges over all scenarios returned by retrieve_scenarios
@@ -394,8 +394,8 @@ class QuickTester:
                 raise_exceptions=raise_exceptions,
             )
 
-            # if function is decorated with mark.parameterize, add variable settings
-            # NOTE: currently this works only with single-variable mark.parameterize
+            # if function is decorated with mark.parametrize, add variable settings
+            # NOTE: currently this works only with single-variable mark.parametrize
             if hasattr(test_fun, "pytestmark"):
                 if len([x for x in test_fun.pytestmark if x.name == "parametrize"]) > 0:
                     # get the three lists from pytest
@@ -467,7 +467,7 @@ class QuickTester:
         Returns
         -------
         pytest_fixture_vars: list of str
-            names of args participating in mark.parameterize marks, in pytest order
+            names of args participating in mark.parametrize marks, in pytest order
         pytest_fixt_list: list of tuple
             list of value tuples from the mark parameterization
             i-th value in each tuple corresponds to i-th arg name in pytest_fixture_vars
@@ -669,6 +669,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     def test_no_cross_test_side_effects_part2(self, estimator_instance):
         """Tests that there are no side effects across tests."""
         assert not hasattr(estimator_instance, "test__attr")
+
+    @pytest.mark.parametrize("a", [True, 42])
+    def test_no_between_test_case_side_effects(self, estimator_instance, scenario, a):
+        """Tests that there are no side effects across tests."""
+        assert not hasattr(estimator_instance, "test__attr")
+        estimator_instance.test__attr = 42
 
     def test_get_params(self, estimator_instance):
         """Check that get_params works correctly."""
