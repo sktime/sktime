@@ -688,7 +688,6 @@ class FitInTransform(BaseTransformer):
 
     Examples
     --------
-        Forecasting example:
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
@@ -696,7 +695,6 @@ class FitInTransform(BaseTransformer):
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> from sktime.transformations.compose import FitInTransform
     >>> from sktime.transformations.series.impute import Imputer
-
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -711,21 +709,6 @@ class FitInTransform(BaseTransformer):
     >>> pipe.fit(y_train, X_train)
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
-
-        Classification example:
-    >>> from sktime.transformations.panel.pca import PCATransformer
-    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
-    >>> from sktime.transformations.compose import FitInTransform
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
-    >>> pipeline = ClassifierPipeline(
-    ...     classifier=TimeSeriesForestClassifier(n_estimators=5),
-    ...     transformers=[FitInTransform(Imputer(method="mean")), PCATransformer()]
-    ... )
-    >>> pipeline.fit(X_train, y_train)
-    ClassifierPipeline(...)
-    >>> y_pred = pipeline.predict(X_test)
     """
 
     def __init__(self, transformer, skip_inverse_transform=True):

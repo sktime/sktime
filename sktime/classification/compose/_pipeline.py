@@ -76,6 +76,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     >>> from sktime.transformations.panel.pca import PCATransformer
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
+    >>> from sktime.classification.compose import ClassifierPipeline
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> pipeline = ClassifierPipeline(
