@@ -73,6 +73,8 @@ class MiniRocketMultivariate(BaseTransformer):
             )
         if isinstance(random_state, int):
             self.random_state_ = np.int32(random_state)
+        else:
+            self.random_state_ = random_state
 
         super(MiniRocketMultivariate, self).__init__()
 
