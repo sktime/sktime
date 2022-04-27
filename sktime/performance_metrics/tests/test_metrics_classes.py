@@ -3,6 +3,7 @@
 from inspect import getmembers, isclass
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.performance_metrics.forecasting import _classes
@@ -15,19 +16,24 @@ metric_classes = [x for x in metric_classes if not x[0].startswith(exclude_start
 
 names, metrics = zip(*metric_classes)
 
-y_pred = _make_series(n_columns=2, n_timepoints=20, random_state=21)
-y_true = _make_series(n_columns=2, n_timepoints=20, random_state=42)
 
-
+@pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
 @pytest.mark.parametrize("metric", metrics, ids=names)
-def test_metric_output_direct(metric, multioutput):
+def test_metric_output_direct(metric, multioutput, n_columns):
     """Test output is of correct type, dependent on multioutput.
 
     Also tests that four ways to call the metric yield equivalent results:
         1. passing multioutput in constructor, then __call__
         2. passing multioutput in constructor, then evaluate
     """
+    y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
+    y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
+
+    # coerce to DataFrame since _make_series does not return consisten output type
+    y_pred = pd.DataFrame(y_pred)
+    y_true = pd.DataFrame(y_true)
+
     res = dict()
 
     res[1] = metric(multioutput=multioutput)(
