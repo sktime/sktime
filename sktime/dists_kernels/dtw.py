@@ -42,18 +42,6 @@ class DtwDist(BasePairwiseTransformerPanel):
     to the derivative it means the alignment isn't only considering the shape of the
     time series, but also the phase.
 
-    Mathematical definitions follow. Let :math:`x` and :math:`y` be tuples taking
-    values in the reals, not necessarily of equal length.
-    These are interpreted as series/sequences to compute distances between.
-
-    The DTW distance is defined as:
-
-    .. math::
-        dtw(x, y) = \sqrt{\sum_{(i, j) \in \pi} \|x_{i} - y_{j}\|^2}
-
-    todo: add formulae for other distances from distances module once they look correct.
-
-
     Parameters
     ----------
     weighted : bool, optional, default=False

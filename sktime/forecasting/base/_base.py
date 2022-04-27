@@ -1917,7 +1917,7 @@ class BaseForecaster(BaseEstimator):
             pred_var = pd.DataFrame(vars_dict)
 
             # check whether column format was "nameless", set it to RangeIndex then
-            if pred_var.columns == "Coverage":
+            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
                 pred_var.columns = pd.RangeIndex(1)
 
         return pred_var
@@ -1984,15 +1984,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
@@ -2001,16 +1993,11 @@ class BaseForecaster(BaseEstimator):
         cv : temporal cross-validation generator
         X : pd.DataFrame
         update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
 
         Returns
         -------
         y_pred = pd.Series
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
@@ -2025,34 +2012,22 @@ class BaseForecaster(BaseEstimator):
 
                 # we use `update_predict_single` here
                 #  this updates the forecasting horizon
-                y_pred = self._update_predict_single(
-                    y_new,
-                    fh,
-                    X,
+                y_pred = self.update_predict_single(
+                    y=y_new,
+                    fh=fh,
+                    X=X,
                     update_params=update_params,
                 )
-                if return_pred_int:
-                    y_pred_int = self.predict_interval(fh, X, alpha=alpha)
-                    y_pred_int = self._convert_new_to_old_pred_int(y_pred_int)
-                    y_pred = (y_pred, y_pred_int)
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
 
                 for i in range(len(y_preds)):
-                    if not return_pred_int:
-                        y_preds[i] = convert_to(
-                            y_preds[i],
-                            self._y_mtype_last_seen,
-                            store=self._converter_store_y,
-                            store_behaviour="freeze",
-                        )
-                    else:
-                        y_preds[i][0] = convert_to(
-                            y_preds[i][0],
-                            self._y_mtype_last_seen,
-                            store=self._converter_store_y,
-                            store_behaviour="freeze",
-                        )
+                    y_preds[i] = convert_to(
+                        y_preds[i],
+                        self._y_mtype_last_seen,
+                        store=self._converter_store_y,
+                        store_behaviour="freeze",
+                    )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     # TODO: remove in v0.11.0
