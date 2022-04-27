@@ -156,12 +156,14 @@ class BaggingForecaster(BaseForecaster):
                 "forecaster in BaggingForecaster should be an sktime Forecaster"
             )
 
+        # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
         self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
         set_random_state(self.bootstrap_transformer_, random_state=self.random_state_)
         self.forecaster_ = clone(self.forecaster)
         set_random_state(self.forecaster_, random_state=self.random_state_)
-        y_bootstraps = self.bootstrap_transformer_.fit_transform(X=y)
+        self.bootstrap_transformer_.fit(X=y)
+        y_bootstraps = self.bootstrap_transformer_.transform(X=y)
         self.forecaster_.fit(y=y_bootstraps, fh=fh, X=None)
 
         return self
