@@ -43,7 +43,7 @@ class Aggregator(BaseTransformer):
         ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": True,  # does transformer have inverse
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
@@ -64,9 +64,7 @@ class Aggregator(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
+        X : Panel of pd.DataFrame data to be transformed.
         y : Ignored argument for interface compatibility.
 
         Returns
@@ -139,9 +137,7 @@ class Aggregator(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
+        X : Panel of pd.DataFrame data to be inverse transformed.
         y : Ignored argument for interface compatibility.
 
         Returns

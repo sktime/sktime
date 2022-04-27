@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hierarchical Data Generators."""
 
-__author__ = ["ltsaprounis"]
+__author__ = ["ltsaprounis", "ciaran-g"]
 
 from itertools import product
 from typing import Tuple, Union
@@ -122,11 +122,14 @@ def _bottom_hier_datagen(
     Parameters
     ----------
     no_levels : int, optional
-        the number of levels not considering the time-index, by default 3
+        The number of levels not considering the time-index, by default 3
     no_bottom_nodes : int, optional
-       number of time series, i.e. bottom nodes, to generate, by default 6.
+       Number of time series, i.e. bottom nodes, to generate, by default 6.
     *_max : int, optional
-        maximum possible value of the coefficient or intercept value.
+        Maximum possible value of the coefficient or intercept value.
+    random_seed : int, optional
+        Random seed for reproducability.
+
 
     Returns
     -------
@@ -154,6 +157,7 @@ def _bottom_hier_datagen(
         coef_2 = np.arange(0, coef_2_max, 0.01)
         power_2 = [0.5, 1, 1.5, 2]
 
+        # create structure of hierarchy
         node_lookup = pd.DataFrame(
             ["l1_node" + f"{x:02d}" for x in range(1, no_bottom_nodes + 1)]
         )
@@ -161,6 +165,7 @@ def _bottom_hier_datagen(
 
         if no_levels >= 2:
 
+            # create index from bottom up, sampling node names
             for i in range(2, no_levels + 1):
                 node_lookup["l" + str(i) + "_agg"] = node_lookup.groupby(
                     ["l" + str(i - 1) + "_agg"]
@@ -168,22 +173,12 @@ def _bottom_hier_datagen(
                     lambda x: "l"
                     + str(i)
                     + "_node"
-                    + "{:02d}".format(
-                        int(
-                            np.sort(
-                                rng.choice(
-                                    np.arange(
-                                        1, np.floor(len(node_lookup.index) / i) + 1, 1
-                                    ),
-                                    size=1,
-                                )
-                            )
-                        )
-                    )
+                    + "{:02d}".format(_sample_node(node_lookup.index, i, rng))
                 )
 
         node_lookup = node_lookup.set_index("l1_agg", drop=True)
 
+        # now define the series for each level by sampling coefficients etc.
         for i in range(2, no_bottom_nodes + 1):
             df["l1_node" + f"{i:02d}"] = (
                 rng.choice(intercept, size=1)
@@ -216,3 +211,12 @@ def _bottom_hier_datagen(
         df.sort_index(inplace=True)
 
         return df
+
+
+def _sample_node(index_table, level, sampler):
+    """Sample a number of nodes depending on the size of hierarchy and level."""
+    nodes = np.arange(1, np.floor(len(index_table) / level) + 1, 1)
+    # return a single sample of them
+    sample_nodes = int(sampler.choice(nodes, size=1))
+
+    return sample_nodes

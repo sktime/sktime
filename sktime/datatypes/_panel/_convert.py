@@ -994,7 +994,6 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 def from_multiindex_to_dflist(obj, store=None):
 
     instance_index = obj.index.levels[0]
-    # n = len(instance_index)
 
     Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
 
