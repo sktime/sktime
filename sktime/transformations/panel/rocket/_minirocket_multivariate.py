@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = "Angus Dempster"
+"""Multivariate MiniRocket transformer."""
+
+__author__ = "angus924"
 __all__ = ["MiniRocketMultivariate"]
 
 import multiprocessing
