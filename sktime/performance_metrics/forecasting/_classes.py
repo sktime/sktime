@@ -359,7 +359,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_pred.columns = y_true.columns
 
         # check multioutput arg
-        # allowed_multioutput_str = 
+        # allowed_multioutput_str =
         # ("raw_values", "uniform_average", "variance_weighted")
         allowed_multioutput_str = ("raw_values", "uniform_average")
 
