@@ -62,9 +62,12 @@ class MiniRocketMultivariate(BaseTransformer):
         self.max_dilations_per_kernel = max_dilations_per_kernel
 
         self.n_jobs = n_jobs
-        self.random_state = (
-            np.int32(random_state) if isinstance(random_state, int) else None
-        )
+        self.random_state = random_state
+
+        if not isinstance(random_state, int):
+            raise ValueError("random_state in MiniRocketMultivariate must be int")
+        else:
+            self.random_state_ = np.int32(random_state)
 
         super(MiniRocketMultivariate, self).__init__()
 
@@ -91,7 +94,7 @@ class MiniRocketMultivariate(BaseTransformer):
                 )
             )
         self.parameters = _fit_multi(
-            X, self.num_kernels, self.max_dilations_per_kernel, self.random_state
+            X, self.num_kernels, self.max_dilations_per_kernel, self.random_state_
         )
         return self
 
