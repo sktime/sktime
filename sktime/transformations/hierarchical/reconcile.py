@@ -7,16 +7,24 @@ These reconcilers only depend on the structure of the hierarchy.
 
 __author__ = ["ciaran-g", "eenticott-shell", "k1m190r"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 from numpy.linalg import inv
 
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 
-# TODO: test predictions for each method to guarantee coherency for single example?
-# TODO: why should this run for single level index?
-# TODO: failing tests
-# TODO: rename with convention
+# Done
+# test: check preds are actually hierarchical
+
+# TODO:
+# remove the unique naming rest. on the botton level (multiindex in column s_matrix)?
+# check that the fitted_g/s matrice matches X during transform
+# test: check that the transformer works for named and unnamed indexes
+# check _check_bl_good(X) for 2 level hier, i.e. simple
+# failing test which are escaped?
 
 
 class Reconciler(BaseTransformer):
@@ -48,7 +56,12 @@ class Reconciler(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -61,7 +74,7 @@ class Reconciler(BaseTransformer):
 
     METHOD_LIST = ["bu", "ols", "wls_str"]
 
-    def __init__(self, method="bu"):
+    def __init__(self, method="ols"):
 
         self.method = method
 
@@ -94,11 +107,15 @@ class Reconciler(BaseTransformer):
         if X.index.nlevels < 2:
             return self
 
-        # check index and bottom level of hierarchy are named correctly
-        #   if not, add totals to X
-        if not _check_index_good(X):
+        # check index for no "__total", if not add totals to X
+        if _check_index_no_total(X):
+            warn(
+                "No elements of the index of X named '__total' found. Adding "
+                "aggregate levels using the default Aggregator transformer."
+            )
             X = self._add_totals(X)
 
+        # this checks that the bottom level indexes for unique names
         _check_bl_good(X)
 
         if self.method == "bu":
@@ -131,12 +148,22 @@ class Reconciler(BaseTransformer):
         """
         # check the length of index
         if X.index.nlevels < 2:
+            warn(
+                "Reconciler is intended for use with X.index.nlevels > 1. "
+                "Returning X unchanged."
+            )
             return X
 
-        # check index and bottom level of hierarchy are named correctly
-        #   if not, add totals to X
-        if not _check_index_good(X):
+        # check index for no "__total", if not add totals to X
+        if _check_index_no_total(X):
+            warn(
+                "No elements of the index of X named '__total' found. Adding "
+                "aggregate levels using the default Aggregator transformer "
+                "before reconciliation."
+            )
             X = self._add_totals(X)
+
+        # check here that index of X matches the self.s_matrix?
 
         # include index between matrices here as in df.dot()?
         X = X.groupby(level=-1)
@@ -178,6 +205,9 @@ def _get_s_matrix(X):
         the hierarchy. Single index on columns for each bottom level of the
         hierarchy.
     """
+    # need to make this robust to naming
+    # multiindex on the columns as well!
+
     # get bottom level indexes
     bl_inds = (
         X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
@@ -308,15 +338,6 @@ def _get_g_matrix_wls_str(X):
     g_wls_str = g_wls_str.transpose()
 
     return g_wls_str
-
-
-# TODO: check for any missing timepoint indexes?
-def _check_index_good(X):
-    """Check the index of X and return boolean."""
-    # check the first index elements for "__total"
-    tot_chk = np.any(X.index.get_level_values(level=0).isin(["__total"]))
-
-    return tot_chk
 
 
 def _check_bl_good(X):
