@@ -112,6 +112,7 @@ def test_output(metric, score_average, multioutput, y_true, y_pred):
 
     if not score_average and multioutput == "uniform_average":
         assert isinstance(eval_loss, pd.Series)
+        assert isinstance(index_loss, pd.DataFrame)
 
         # get two quantiles from each interval so if not score averaging
         # get twice number of unique coverages
@@ -123,3 +124,7 @@ def test_output(metric, score_average, multioutput, y_true, y_pred):
             assert len(eval_loss) == 2 * score_number
         else:
             assert len(eval_loss) == score_number
+
+    if not score_average and multioutput == "raw_values":
+        assert isinstance(eval_loss, pd.Series)
+        assert isinstance(index_loss, pd.DataFrame)
