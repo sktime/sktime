@@ -7,6 +7,7 @@ transformations as building blocks.
 import numpy as np
 import pandas as pd
 from scipy import sparse
+from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
 from sktime.datatypes._panel._convert import (
@@ -281,7 +282,7 @@ class _RowTransformer(BaseTransformer):
         self.check_is_fitted()
         self._check_transformer()
         X = check_X(X, coerce_to_numpy=True)
-        self.transformer_ = [self.transformer.clone() for _ in range(X.shape[0])]
+        self.transformer_ = [clone(self.transformer) for _ in range(X.shape[0])]
         return X
 
 
