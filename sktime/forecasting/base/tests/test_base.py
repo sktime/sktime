@@ -13,6 +13,7 @@ from sktime.datatypes import check_is_mtype, convert
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
+from sktime.utils._testing.series import _make_series
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
@@ -180,10 +181,9 @@ def test_vectorization_preserves_row_index_names(method):
 
 def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
+    from sktime.forecasting.compose import MultiplexForecaster
     from sktime.forecasting.theta import ThetaForecaster
     from sktime.forecasting.var import VAR
-    from sktime.forecasting.compose import MultiplexForecaster
-    from sktime.utils._testing.series import _make_series
 
     # this forecaster will have the scitype:y tag set to "univariate"
     f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
