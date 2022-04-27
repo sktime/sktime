@@ -187,7 +187,7 @@ def test_dynamic_tags_reset_properly():
 
     # this forecaster will have the scitype:y tag set to "univariate"
     f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
-    f.set_params(selected_forecaster="VAR")
+    f.set_params(selected_forecaster="var")
 
     X_multivariate = _make_series(n_columns=2)
     # fit should reset the estimator, and set scitype:y tag to "multivariate"
