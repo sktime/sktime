@@ -252,10 +252,10 @@ class BaseFixtureGenerator:
             if not scenario.get_tag("fh_passed_in_fit", True, raise_error=False):
                 return True
 
-        # this line excludes all scenarios that are not 1:1 to the "pre-scenario" state
-        #   pre-refactor, all tests pass, so all post-refactor tests should with below
+        # this line excludes all scenarios that do not have "is_enabled" flag
+        #   we should slowly enable more scenarios for better coverage
         # comment out to run the full test suite with new scenarios
-        if not scenario.get_tag("pre-refactor", False, raise_error=False):
+        if not scenario.get_tag("is_enabled", False, raise_error=False):
             return True
 
         return False
@@ -896,20 +896,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 _ = scenario.run(estimator, method_sequence=[method])
                 dict_after = estimator.__dict__
 
-                if method == "transform" and estimator.get_class_tag("fit_is_empty"):
-                    # Some transformations fit during transform, as they apply
-                    # some transformation to each series passed to transform,
-                    # so transform will actually change the state of these estimator.
-                    continue
-
-                if method == "predict" and estimator.get_class_tag("fit_is_empty"):
-                    # Some annotators fit during predict, as they apply
-                    # some apply annotation to each series passed to predict,
-                    # so predict will actually change the state of these annotators.
-                    continue
-
-                # old logic uses equality without auto-msg, keep comment until refactor
-                # is_equal = dict_after == dict_before
                 is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
                 assert is_equal, (
                     f"Estimator: {type(estimator).__name__} changes __dict__ "

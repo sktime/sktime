@@ -73,7 +73,7 @@ jobs:
         run: |
           conda install -c anaconda "pystan==2.19.1.1"
           conda install -c conda-forge "prophet>=1.0"
-          conda install -c conda-forge scipy matplotlib
+          conda install -c anaconda scipy matplotlib
 
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
@@ -87,7 +87,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime -v -n 2 --pyargs sktime
+          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime --timeout=600 -v -n 2 --pyargs sktime
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
@@ -115,7 +115,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml" test
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
@@ -156,7 +156,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml" test
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
