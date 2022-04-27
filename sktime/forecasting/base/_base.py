@@ -748,6 +748,7 @@ class BaseForecaster(BaseEstimator):
         cv=None,
         X=None,
         update_params=True,
+        reset_forecaster=True,
     ):
         """Make predictions and update model iteratively over the test set.
 
@@ -760,11 +761,13 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
-        Writes to self:
+        Writes to self, if reset_forecaster=False:
             Update self._y and self._X with `y` and `X`, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
+
+        Does not update state if reset_forecaster=True.
 
         Parameters
         ----------
@@ -795,6 +798,13 @@ class BaseForecaster(BaseEstimator):
                 X.index must contain y.index and fh.index both
             there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optionel (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
@@ -815,6 +825,7 @@ class BaseForecaster(BaseEstimator):
             cv=cv,
             X=X_inner,
             update_params=update_params,
+            reset_forecaster=reset_forecaster,
         )
 
     def update_predict_single(
@@ -1966,15 +1977,47 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
+    def _predict_moving_cutoff(
+        self, y, cv, X=None, update_params=True, reset_forecaster=True
+    ):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        cv : temporal cross-validation generator, optional (default=None)
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain y.index and fh.index both
+            there are no restrictions on number of columns (unlike for y)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optionel (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
@@ -1984,8 +2027,12 @@ class BaseForecaster(BaseEstimator):
         y_preds = []
         cutoffs = []
 
-        # enter into a detached cutoff mode
-        self_copy = deepcopy(self)
+        # enter into a detached cutoff mode, if reset_forecaster is True
+        if reset_forecaster:
+            self_copy = deepcopy(self)
+        # otherwise just work with a reference to self
+        else:
+            self_copy = self
 
         # set cutoff to time point before data
         self_copy._set_cutoff(_shift(y.index[0], by=-1))
