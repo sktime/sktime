@@ -343,7 +343,8 @@ class WindowSummarizer(BaseTransformer):
             bfill = False
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = X.groupby("instances")[cols]
+                hier_levels = list(range(X.index.nlevels - 1))
+                X_grouped = X.groupby(level=hier_levels)[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
