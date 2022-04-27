@@ -13,13 +13,28 @@ from sktime.base import BaseEstimator
 class _MockEstimatorMixin:
     """Mixin class for constructing Mock estimators."""
 
-    def __init__(self):
-        self._log = []
-
     @property
     def log(self):
         """Log of the methods called and the parameters passed in each method."""
-        return self._log
+        if not hasattr(self, "_MockEstimatorMixin__log"):
+            return []
+        else:
+            return self._MockEstimatorMixin__log
+
+    def add_log_item(self, value):
+        """Append an item to the log.
+
+        State change:
+        self.log - `value` is appended to the list self.log
+
+        Parameters
+        ----------
+        value : any object
+        """
+        if not hasattr(self, "_MockEstimatorMixin__log"):
+            self._MockEstimatorMixin__log = [value]
+        else:
+            self._MockEstimatorMixin__log = self._MockEstimatorMixin__log + [value]
 
 
 def _method_logger(method):
@@ -30,7 +45,7 @@ def _method_logger(method):
         if not isinstance(self, _MockEstimatorMixin):
             raise TypeError("method_logger requires a MockEstimator class")
         args_dict.pop("self")
-        self._log.append((method.__name__, deepcopy(args_dict)))
+        self.add_log_item((method.__name__, deepcopy(args_dict)))
         return method(self, *args, **kwargs)
 
     return wrapper
