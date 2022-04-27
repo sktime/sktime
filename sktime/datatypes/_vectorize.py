@@ -190,7 +190,7 @@ class VectorizedDF:
         X_mi_index = X_mi_reconstructed.index
         X_orig_index = self.X_multiindex.index
         if overwrite_index and len(X_mi_index.names) == len(X_orig_index.names):
-            X_mi_reconstructed.index.set_names(X_orig_index.names)
+            X_mi_reconstructed.index = X_mi_index.set_names(X_orig_index.names)
 
         if not convert_back:
             return X_mi_reconstructed
