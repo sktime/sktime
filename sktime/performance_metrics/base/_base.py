@@ -26,7 +26,8 @@ class BaseMetric(BaseObject):
         if func is not None or name is not None:
             warn(
                 "func and name parameters of BaseMetric are deprecated from 0.12.0"
-                "and will be removed in 0.13.0"
+                "and will be removed in 0.13.0",
+                DeprecationWarning,
             )
 
         self.func = func
