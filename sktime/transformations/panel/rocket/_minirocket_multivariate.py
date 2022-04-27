@@ -66,9 +66,12 @@ class MiniRocketMultivariate(BaseTransformer):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        if not isinstance(random_state, int):
-            raise ValueError("random_state in MiniRocketMultivariate must be int")
-        else:
+        if random_state is not None and not isinstance(random_state, int):
+            raise ValueError(
+                f"random_state in MiniRocketMultivariate must be int or None, "
+                f"but found {type(random_state)}"
+            )
+        if isinstance(random_state, int):
             self.random_state_ = np.int32(random_state)
 
         super(MiniRocketMultivariate, self).__init__()
