@@ -14,6 +14,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
+from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import (
     MAX_INT,
@@ -108,7 +109,7 @@ class BaseTimeSeriesForest(BaseForest):
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = self.estimator_.clone()
+        estimator = clone(self.estimator_.clone)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
