@@ -220,6 +220,8 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
+        # if fit is called, object is reset
+        self.reset()
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -1550,7 +1552,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -1917,7 +1919,7 @@ class BaseForecaster(BaseEstimator):
             pred_var = pd.DataFrame(vars_dict)
 
             # check whether column format was "nameless", set it to RangeIndex then
-            if pred_var.columns == "Coverage":
+            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
                 pred_var.columns = pd.RangeIndex(1)
 
         return pred_var
