@@ -176,3 +176,20 @@ def test_vectorization_preserves_row_index_names(method):
     )
 
     assert y_pred.index.names == y.index.names, msg
+
+
+def test_dynamic_tags_reset_properly():
+    """Test that dynamic tags are being reset properly."""
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.forecasting.var import VAR
+    from sktime.forecasting.compose import MultiplexForecaster
+    from sktime.utils._testing.series import _make_series
+
+    # this forecaster will have the scitype:y tag set to "univariate"
+    f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
+    f.set_params(selected_forecaster="VAR")
+
+    X_multivariate = _make_series(n_columns=2)
+    # fit should reset the estimator, and set scitype:y tag to "multivariate"
+    # the fit will cause an error if this is not happening properly
+    f.fit(X_multivariate)
