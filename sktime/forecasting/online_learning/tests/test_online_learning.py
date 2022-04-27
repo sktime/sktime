@@ -21,7 +21,6 @@ from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
     NormalHedgeEnsemble,
 )
 
-
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 
 
