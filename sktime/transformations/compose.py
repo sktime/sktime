@@ -667,7 +667,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
 
 class FitInTransform(BaseTransformer):
-    """Transformer compostion to always fit a given transformer on the transform data only.
+    """Transformer composition to always fit a given transformer on the transform data only.
 
     Some transformers like Imputer(method="mean") might be more accurate for some use
     cases if they are fitted only on the transform/predict data. The FitInTransform
@@ -688,6 +688,7 @@ class FitInTransform(BaseTransformer):
 
     Examples
     --------
+        Forecasting example:
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
@@ -699,7 +700,6 @@ class FitInTransform(BaseTransformer):
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-
     >>> # we want to fit the Imputer only on the predict (=transform) data.
     >>> # note that NaiveForecaster cant use X data, this is just a show case.
     >>> pipe = ForecastingPipeline(
@@ -711,6 +711,21 @@ class FitInTransform(BaseTransformer):
     >>> pipe.fit(y_train, X_train)
     ForecastingPipeline(...)
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
+
+        Classification example:
+    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.transformations.compose import FitInTransform
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> pipeline = ClassifierPipeline(
+    ...     classifier=TimeSeriesForestClassifier(n_estimators=5),
+    ...     transformers=[FitInTransform(Imputer(method="mean")), PCATransformer()]
+    ... )
+    >>> pipeline.fit(X_train, y_train)
+    ClassifierPipeline(...)
+    >>> y_pred = pipeline.predict(X_test)
     """
 
     def __init__(self, transformer, skip_inverse_transform=True):

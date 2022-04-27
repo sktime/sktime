@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Unit tests of Imputer functionality."""
+"""Unit tests of FitInTransform functionality."""
 
 __author__ = ["aiwalter"]
 __all__ = []
