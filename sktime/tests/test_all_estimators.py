@@ -672,7 +672,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     @pytest.mark.parametrize("a", [True, 42])
     def test_no_between_test_case_side_effects(self, estimator_instance, scenario, a):
-        """Tests that there are no side effects across tests."""
+        """Tests that there are no side effects across instances of the same test."""
         assert not hasattr(estimator_instance, "test__attr")
         estimator_instance.test__attr = 42
 
