@@ -6,6 +6,8 @@
 __author__ = ["mloning"]
 __all__ = ["TabularToSeriesAdaptor"]
 
+from sklearn.base import clone
+
 from sktime.transformations.base import BaseTransformer
 
 
@@ -98,7 +100,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
 
     def __init__(self, transformer, fit_in_transform=False):
         self.transformer = transformer
-        self.transformer_ = self.transformer.clone()
+        self.transformer_ = clone(self.transformer)
         self.fit_in_transform = fit_in_transform
 
         super(TabularToSeriesAdaptor, self).__init__()
