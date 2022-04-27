@@ -151,7 +151,6 @@ def _cost_matrix(
     y_size = y.shape[1]
     cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
     cost_matrix[0, 0] = 0.0
-
     for i in range(x_size):
         for j in range(y_size):
             if np.isfinite(bounding_matrix[i, j]):

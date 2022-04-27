@@ -129,8 +129,9 @@ if __name__ == "__main__":
         distance = "ddtw"
     else:  # Local run
         print(" Local Run")
-        dataset = "UnitTest"
-        data_dir = f"../datasets/data/"
+        dataset = "Wafer"
+        data_dir = f"c:/temp/"
+        #        data_dir = f"../datasets/data/"
         results_dir = "./temp"
         resample = 0
         tf = True

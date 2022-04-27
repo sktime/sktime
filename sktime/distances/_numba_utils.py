@@ -57,7 +57,6 @@ def _compute_pairwise_distance(
     _y = _make_3d_series(y)
     x_size = _x.shape[0]
     y_size = _y.shape[0]
-
     pairwise_matrix = np.zeros((x_size, y_size))
 
     for i in range(x_size):
