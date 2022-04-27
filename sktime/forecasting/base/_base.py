@@ -220,11 +220,10 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, object is reset
+        # if fit is called, estimator is reset, including fitted state
         self.reset()
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
         # check and convert X/y
