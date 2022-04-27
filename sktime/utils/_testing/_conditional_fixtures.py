@@ -170,12 +170,10 @@ def create_conditional_fixtures_and_names(
             else:
                 kwargs = dict(zip(old_fixture_vars, fixture))
             # retrieve conditional fixtures, conditional on fixture values in kwargs
-            new_fixtures, new_fixture_names_r = deepcopy(
-                get_fixtures(fixture_var, **kwargs)
-            )
+            new_fixtures, new_fixture_names_r = get_fixtures(fixture_var, **kwargs)
             # new fixture values are concatenation/product of old values plus new
             new_fixture_prod += [
-                deepcopy(fixture) + (new_fixture,) for new_fixture in new_fixtures
+                fixture + (new_fixture,) for new_fixture in new_fixtures
             ]
             # new fixture name is concatenation of name so far and "dash-new name"
             #   if the new name is empty string, don't add a dash
@@ -195,6 +193,8 @@ def create_conditional_fixtures_and_names(
     # we need to remove the tuple bracket from singleton
     #   in pytest convention, only multiple variables (2 or more) are tuples
     fixture_prod = [_remove_single(x) for x in fixture_prod]
+    # we run deepcopy on every element of fixture_prod to make them independent
+    fixture_prod = [deepcopy(x) for x in fixture_prod]
 
     return fixture_param_str, fixture_prod, fixture_names
 
