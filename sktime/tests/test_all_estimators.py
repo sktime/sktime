@@ -856,11 +856,13 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         original_params = deepcopy(params)
 
         # Fit the model
-        fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
-
+        assert not estimator.is_fitted
+        _ = scenario.run(estimator_instance, method_sequence=["fit"])
+        assert estimator.is_fitted
         # Compare the state of the model parameters with the original parameters
-        new_params = fitted_est.get_params()
+        new_params = estimator.get_params()
         for param_name, original_value in original_params.items():
+            assert param_name in new_params
             new_value = new_params[param_name]
 
             # We should never change or mutate the internal state of input

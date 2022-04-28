@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
+from numpy import inf
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
@@ -127,7 +128,8 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     def _check_selected_forecaster(self):
         component_names = self._get_estimator_names(self.forecasters_, make_unique=True)
         selected = self.selected_forecaster
-        if selected is not None and selected not in component_names:
+        sklearn_fuzz = [None, -inf, inf]
+        if selected not in sklearn_fuzz and selected not in component_names:
             raise Exception(
                 f"Invalid selected_forecaster parameter value provided, "
                 f" found: {self.selected_forecaster}. Must be one of these"

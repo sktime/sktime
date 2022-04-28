@@ -72,7 +72,10 @@ class BaseObject(_BaseEstimator):
     _delegate_name = None
 
     def _get_delegate(self):
-        return getattr(self, self._delegate_name)
+        est = self
+        while est._delegate_name:
+            est = getattr(self, self._delegate_name)
+        return est
 
     def __init__(self):
         self._tags_dynamic = dict()
@@ -640,6 +643,7 @@ class BaseEstimator(TagAliaserMixin, BaseObject):
         super(BaseEstimator, self).__init__()
 
     @property
+    @delegate_if_needed
     def is_fitted(self):
         """Whether `fit` has been called."""
         return self._is_fitted
