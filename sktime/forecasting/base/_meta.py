@@ -94,7 +94,7 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
 
