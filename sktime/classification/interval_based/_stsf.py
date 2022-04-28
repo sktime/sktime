@@ -13,6 +13,7 @@ import math
 import numpy as np
 from joblib import Parallel, delayed
 from scipy import signal, stats
+from sklearn.base import clone
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_random_state
@@ -344,7 +345,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
 
         Transformed using the supervised intervals for each feature and representation.
         """
-        estimator = self._base_estimator.clone()
+        estimator = clone(self._base_estimator)
         rs = 5465 if self.random_state == 0 else self.random_state
         rs = (
             None
