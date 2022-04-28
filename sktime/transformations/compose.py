@@ -675,10 +675,8 @@ class FitInTransform(BaseTransformer):
     be used to wrap any transformer to ensure that `fit` and `transform` happen always
     on the same series, by delaying the `fit` to the `transform` batch.
 
-    Warning
-    -------
-    The use of `FitInTransform` will typically not be useful, or can constitute a
-    mistake (data leakage) when naively used in a forecasting setting.
+    Warning: The use of `FitInTransform` will typically not be useful, or can constitute
+    a mistake (data leakage) when naively used in a forecasting setting.
     cases if they are fitted only on the transform/predict data. The FitInTransform
     transformer can be best used in a pipeline context where train data is different to
     the transform/predict data.
