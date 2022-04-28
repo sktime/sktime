@@ -62,7 +62,7 @@ def test_multiplex_forecaster_alone():
         # make a copy to ensure we don't reference the same objectL
         test_forecaster = clone(forecasters[ind])
         test_forecaster.fit(y)
-        multiplex_forecaster.change_selected_forecaster(name)
+        multiplex_forecaster.selected_forecaster = name
         # Note- MultiplexForecaster will make a copy of the forecaster before fitting.
         multiplex_forecaster.fit(y)
         y_pred_indiv = test_forecaster.predict(fh=fh_test)
@@ -93,6 +93,7 @@ def test_multiplex_with_grid_search():
         forecaster=multiplex_forecaster,
     )
     gscv.fit(y)
+    gscv.predict([1, 2, 3])
     gscv_best_name = gscv.best_forecaster_.selected_forecaster
     best_name = _score_forecasters(forecasters, cv, y)
     assert gscv_best_name == best_name

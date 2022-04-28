@@ -60,6 +60,7 @@ from sklearn.base import BaseEstimator as _BaseEstimator
 from sklearn.ensemble._base import _set_random_states
 
 from sktime.exceptions import NotFittedError
+from sktime.utils.estimator_checks import delegate_if_needed
 
 
 class BaseObject(_BaseEstimator):
@@ -643,6 +644,7 @@ class BaseEstimator(TagAliaserMixin, BaseObject):
         """Whether `fit` has been called."""
         return self._is_fitted
 
+    @delegate_if_needed
     def check_is_fitted(self):
         """Check if the estimator has been fitted.
 

@@ -94,7 +94,6 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     ):
         super(MultiplexForecaster, self).__init__()
         self.selected_forecaster = selected_forecaster
-
         self.forecasters = forecasters
         self.forecasters_ = self._check_estimators(
             forecasters,
@@ -102,6 +101,7 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             cls_type=BaseForecaster,
             clone_ests=False,
         )
+
         self._set_forecaster()
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
@@ -201,22 +201,22 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
 
-        super()._fit(y=y, X=X, fh=fh)
+        super().fit(y=y, X=X, fh=fh)
 
         return self
 
-    def change_selected_forecaster(self, new_selected_forecaster):
-        """Change the selected forecaster and update forecaster_.
-
-        Parameters
-        ----------
-        new_selected_forecaster : (str) should match either one of the forecaster
-            names initially provided or one of the generated forecaster names.
-        """
-        self.selected_forecaster = new_selected_forecaster
-        self._set_forecaster()
-        self.clone_tags(self.forecaster_)
-        self.set_tags(**{"fit_is_empty": False})
+    def __setattr__(self, key, value):
+        """Handle special case where selected_forecaster is changed."""
+        super(MultiplexForecaster, self).__setattr__(key, value)
+        """Update forecastert_ if selected_forecaster is changed."""
+        if (
+            hasattr(self, "forecasters_")
+            and hasattr(self, "forecasters")
+            and key == "selected_forecaster"
+        ):
+            self._set_forecaster()
+            self.clone_tags(self.forecaster_)
+            self.set_tags(**{"fit_is_empty": False})
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -278,3 +278,6 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             ],
         }
         return [params1, params2]
+
+    def _predict(self, *args, **kwargs):
+        self.predict(*args, **kwargs)
