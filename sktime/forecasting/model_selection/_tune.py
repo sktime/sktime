@@ -11,7 +11,6 @@ from joblib import Parallel, delayed
 from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.model_selection._search import _check_param_grid
-from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
@@ -20,6 +19,8 @@ from sktime.utils.validation.forecasting import check_scoring
 
 
 class BaseGridSearch(BaseForecaster):
+
+    _delegate_name = "best_forecaster_"
 
     _tags = {
         "scitype:y": "both",
@@ -67,76 +68,6 @@ class BaseGridSearch(BaseForecaster):
         ]
         self.clone_tags(forecaster, tags_to_clone)
 
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _update(self, y, X=None, update_params=False):
-        """Call _update on the forecaster with the best found parameters."""
-        self.check_is_fitted("update")
-        self.best_forecaster_._update(y, X, update_params=update_params)
-        return self
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None):
-        """Call _predict on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict(fh=fh, X=X)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_interval(self, fh=None, X=None, coverage=None):
-        """Call _predict_interval on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_interval(fh=fh, X=X, coverage=coverage)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_quantiles(self, fh=None, X=None, alpha=None):
-        """Call _predict_quantiles on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_quantiles(fh=fh, X=X, alpha=alpha)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_var(self, fh=None, X=None, cov=False):
-        """Call _predict_var on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_var(fh=fh, X=X, cov=cov)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict_proba(self, fh=None, X=None, marginal=True):
-        """Call _predict_proba on the forecaster with the best found parameters."""
-        self.check_is_fitted("predict")
-        return self.best_forecaster_._predict_proba(fh=fh, X=X, marginal=marginal)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def transform(self, y, X=None):
-        """Call transform on the forecaster with the best found parameters."""
-        self.check_is_fitted("transform")
-        return self.best_forecaster_.transform(y, X)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        self.check_is_fitted("get_fitted_params")
-        return self.best_forecaster_.get_fitted_params()
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def inverse_transform(self, y, X=None):
-        """Call inverse_transform on the forecaster with the best found params.
-
-        Only available if the underlying forecaster implements
-        ``inverse_transform`` and ``refit=True``.
-
-        Parameters
-        ----------
-        y : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying forecaster.
-        """
-        self.check_is_fitted("inverse_transform")
-        return self.best_forecaster_.inverse_transform(y, X)
-
     def score(self, y, X=None, fh=None):
         """Return the score on the given data, if forecaster been refitted.
 
@@ -159,10 +90,10 @@ class BaseGridSearch(BaseForecaster):
         self.check_is_fitted("score")
 
         if self.scoring is None:
-            return self.best_forecaster_.score(y, X=X, fh=fh)
+            return self.get_delegate().score(y, X=X, fh=fh)
 
         else:
-            y_pred = self.best_forecaster_.predict(fh, X=X)
+            y_pred = self.get_delegate().predict(fh, X=X)
             return self.scoring(y, y_pred)
 
     def _run_search(self, evaluate_candidates):
@@ -195,9 +126,9 @@ class BaseGridSearch(BaseForecaster):
                     "attribute" % (type(self).__name__, method_name)
                 )
             else:
-                self.best_forecaster_.check_is_fitted()
+                self.get_delegate().check_is_fitted()
 
-    def _fit(self, y, X=None, fh=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters

@@ -26,8 +26,8 @@ def delegate_if_needed(func):
     def inner(*args, **kwargs):
         self = args[0]
         estimator = self
-        if self._delegate_name:
-            estimator = self._get_delegate()
+        while estimator._delegate_name:
+            estimator = estimator._get_delegate()
         valid_calls = dir(estimator)
         if func.__name__ in valid_calls:
             new_args = list(deepcopy(args))
