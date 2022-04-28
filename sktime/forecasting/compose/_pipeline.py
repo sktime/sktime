@@ -12,7 +12,6 @@ from sklearn.base import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.registry import scitype
-from sktime.transformations.base import _SeriesToSeriesTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -536,7 +535,7 @@ class ForecastingPipeline(_Pipeline):
 #     return Zt
 
 
-class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
+class TransformedTargetForecaster(_Pipeline):
     """Meta-estimator for forecasting transformed time series.
 
     Pipeline functionality to apply transformers to the target series. The
@@ -586,8 +585,9 @@ class TransformedTargetForecaster(_Pipeline, _SeriesToSeriesTransformer):
     ----------
     steps : list of sktime transformers and forecasters, or
         list of tuples (str, estimator) of sktime transformers or forecasters
-            must contain exactly one transformer
-        these are "blueprint" transformers, states do not change when `fit` is called
+            the list must contain exactly one forecaster
+        these are "blueprint" transformers resp forecasters,
+            forecaster/transformer states do not change when `fit` is called
 
     Attributes
     ----------
