@@ -24,8 +24,8 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     """Test output is of correct type, dependent on multioutput.
 
     Also tests that four ways to call the metric yield equivalent results:
-        1. passing multioutput in constructor, then __call__
-        2. passing multioutput in constructor, then evaluate
+        1. using the __call__ dunder
+        2. calling the evaluate method
     """
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
