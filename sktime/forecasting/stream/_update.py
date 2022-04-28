@@ -8,10 +8,10 @@ import pandas as pd
 from sklearn import clone
 
 from sktime.datatypes._utilities import get_window
-from sktime.forecasting.base._delegate import _DelegatedForecaster
+from sktime.forecasting.base import BaseForecaster
 
 
-class UpdateRefitsEvery(_DelegatedForecaster):
+class UpdateRefitsEvery(BaseForecaster):
     """Refits periodically when update is called.
 
     If update is called with update_params=True and refit_interval or more has

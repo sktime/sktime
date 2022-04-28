@@ -68,6 +68,11 @@ class BaseObject(_BaseEstimator):
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
     """
 
+    _delegate_name = None
+
+    def _get_delegate(self):
+        return getattr(self, self._delegate_name)
+
     def __init__(self):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()

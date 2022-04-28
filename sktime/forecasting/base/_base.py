@@ -55,6 +55,7 @@ from sktime.datatypes import (
 )
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
+from sktime.utils.estimator_checks import check_if_function_call_is_valid
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -191,6 +192,7 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
+    @check_if_function_call_is_valid
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -271,6 +273,7 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
+    @check_if_function_call_is_valid
     def predict(
         self,
         fh=None,
@@ -331,6 +334,7 @@ class BaseForecaster(BaseEstimator):
 
         return y_out
 
+    @check_if_function_call_is_valid
     def fit_predict(self, y, X=None, fh=None):
         """Fit and forecast time series at future horizon.
 
@@ -408,6 +412,7 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
+    @check_if_function_call_is_valid
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 
@@ -479,6 +484,7 @@ class BaseForecaster(BaseEstimator):
 
         return quantiles
 
+    @check_if_function_call_is_valid
     def predict_interval(
         self,
         fh=None,
@@ -556,6 +562,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
+    @check_if_function_call_is_valid
     def predict_var(self, fh=None, X=None, cov=False):
         """Compute/return variance forecasts.
 
@@ -626,6 +633,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
+    @check_if_function_call_is_valid
     def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
@@ -691,6 +699,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
+    @check_if_function_call_is_valid
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
 
@@ -765,6 +774,7 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
+    @check_if_function_call_is_valid
     def update_predict(
         self,
         y,
@@ -840,6 +850,7 @@ class BaseForecaster(BaseEstimator):
             update_params=update_params,
         )
 
+    @check_if_function_call_is_valid
     def update_predict_single(
         self,
         y=None,
@@ -928,6 +939,7 @@ class BaseForecaster(BaseEstimator):
             update_params=update_params,
         )
 
+    @check_if_function_call_is_valid
     def predict_residuals(self, y=None, X=None):
         """Return residuals of time series forecasts.
 
@@ -1002,6 +1014,7 @@ class BaseForecaster(BaseEstimator):
 
         return y_res
 
+    @check_if_function_call_is_valid
     def score(self, y, X=None, fh=None):
         """Scores forecast against ground truth, using MAPE.
 

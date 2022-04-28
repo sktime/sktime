@@ -1,8 +1,45 @@
 # -*- coding: utf-8 -*-
 """Estimator checker for extension."""
 
-__author__ = ["fkiraly"]
-__all__ = ["check_estimator"]
+__author__ = ["fkiraly", "miraep8"]
+__all__ = ["check_estimator", "check_if_function_call_is_valid"]
+
+
+def check_if_function_call_is_valid(func):
+    """Check that func is supported by the delegated estimator type.
+
+    Intended to be used as a decorator.
+    Will check whether func is supported for estimators of type(self.delegate_name)
+        if so - will delegate the call, else will raise error.
+
+    Parameters
+    ----------
+    func - the function in question - will be one of the decorated functions below
+
+    Raises
+    ------
+    TypeError if the func is not included in the list of methods supported by
+        self._delegate_name
+    """
+    from copy import deepcopy
+
+    def inner(*args, **kwargs):
+        self = args[0]
+        estimator = self
+        if self._delegate_name:
+            estimator = self._get_delegate()
+        valid_calls = dir(estimator)
+        if func.__name__ in valid_calls:
+            new_args = list(deepcopy(args))
+            new_args[0] = estimator
+            return func(*tuple(new_args), **kwargs)
+        else:
+            raise TypeError(
+                f"{func.__name__} is not supported for estimators of type"
+                f" {type(self._delegate_name)}"
+            )
+
+    return inner
 
 
 def check_estimator(

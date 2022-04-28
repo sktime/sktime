@@ -7,13 +7,12 @@ from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 __author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
-class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
+class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -205,6 +204,17 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         super()._fit(y=y, X=X, fh=fh)
 
         return self
+
+    def change_selected_forecaster(self, new_selected_forecaster):
+        """Change the selected forecaster and update forecaster_.
+
+        Parameters
+        ----------
+        new_selected_forecaster : (str) should match either one of the forecaster
+            names initially provided or one of the generated forecaster names.
+        """
+        self.selected_forecaster = new_selected_forecaster
+        self._set_forecaster()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
