@@ -2,6 +2,7 @@
 """Tests for feature importances in time series forests."""
 import numpy as np
 import pytest
+from sklearn.base import clone
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
@@ -60,7 +61,7 @@ def test_feature_importances_single_feature_interval_and_estimator():
                 ]
             ),
         ),
-        ("clf", clf1.estimators_[0].steps[-1][1]).clone(),
+        ("clf", clone(clf1.estimators_[0].steps[-1][1])),
     ]
     clf2 = Pipeline(steps)
     clf2.fit(X_train, y_train)
@@ -131,7 +132,7 @@ def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimator
                     ]
                 ),
             ),
-            ("clf", clf1.estimators_[i].steps[-1][1]).clone(),
+            ("clf", clone(clf1.estimators_[i].steps[-1][1])),
         ]
         clf2 = Pipeline(steps)
         clf2.fit(X_train, y_train)
