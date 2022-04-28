@@ -2,10 +2,10 @@
 """Estimator checker for extension."""
 
 __author__ = ["fkiraly", "miraep8"]
-__all__ = ["check_estimator", "check_if_function_call_is_valid"]
+__all__ = ["check_estimator", "delegate_if_needed"]
 
 
-def check_if_function_call_is_valid(func):
+def delegate_if_needed(func):
     """Check that func is supported by the delegated estimator type.
 
     Intended to be used as a decorator.
