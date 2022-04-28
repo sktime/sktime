@@ -203,6 +203,7 @@ class WindowSummarizer(BaseTransformer):
         "X_inner_mtype": [
             "pd-multiindex",
             "pd.DataFrame",
+            "pd_multiindex_hier",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
