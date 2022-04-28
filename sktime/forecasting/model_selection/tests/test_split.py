@@ -101,7 +101,8 @@ def _check_cutoffs_against_train_windows(cutoffs, windows, y):
         actual = np.array([window[-1] for window in windows[1:]])
     elif array_is_datetime64(cutoffs):
         actual = np.array(
-            [y.index[window[-1]].to_datetime64() for window in windows[1:]]
+            [y.index[window[-1]].to_datetime64() for window in windows[1:]],
+            dtype="datetime64",
         )
     else:
         raise ValueError(
@@ -142,7 +143,7 @@ def _check_cv(cv, y, allow_empty_window=False):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
@@ -156,16 +157,23 @@ def test_single_window_splitter(y, fh, window_length):
         assert train_window.shape[0] == _coerce_duration_to_int(
             duration=window_length, freq="D"
         )
-        assert test_window.shape[0] == len(check_fh(fh))
+        checked_fh = check_fh(fh)
+        assert test_window.shape[0] == len(checked_fh)
 
-        np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+        if array_is_int(checked_fh):
+            test_window_expected = train_window[-1] + checked_fh
+        else:
+            test_window_expected = np.array(
+                [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
+            )
+        np.testing.assert_array_equal(test_window, test_window_expected)
     else:
         with pytest.raises(TypeError, match="Unsupported combination of types"):
             SingleWindowSplitter(fh=fh, window_length=window_length)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_single_window_splitter_default_window_length(y, fh):
     """Test SingleWindowSplitter."""
     cv = SingleWindowSplitter(fh=fh)
@@ -175,15 +183,27 @@ def test_single_window_splitter_default_window_length(y, fh):
     test_window = test_windows[0]
 
     assert n_splits == 1
-    assert test_window.shape[0] == len(check_fh(fh))
+    checked_fh = check_fh(fh)
+    assert test_window.shape[0] == len(checked_fh)
 
     fh = cv.get_fh()
     if fh.is_all_in_sample():
         assert train_window.shape[0] == len(y)
     else:
-        assert train_window.shape[0] == len(y) - fh.max()
+        if array_is_int(checked_fh):
+            assert train_window.shape[0] == len(y) - checked_fh.max()
+        else:
+            assert train_window.shape[0] == len(
+                y[y.index <= y.index.max() - checked_fh.max()]
+            )
 
-    np.testing.assert_array_equal(test_window, train_window[-1] + check_fh(fh))
+    if array_is_int(checked_fh):
+        test_window_expected = train_window[-1] + checked_fh
+    else:
+        test_window_expected = np.array(
+            [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
+        )
+    np.testing.assert_array_equal(test_window, test_window_expected)
 
 
 @pytest.mark.parametrize("y", TEST_YS)

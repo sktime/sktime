@@ -186,3 +186,46 @@ def test_is_composite():
 
     assert not non_composite.is_composite()
     assert composite.is_composite()
+
+
+class ResetTester(BaseObject):
+
+    clsvar = 210
+
+    def __init__(self, a, b=42):
+        self.a = a
+        self.b = b
+        self.c = 84
+
+    def foo(self):
+        self.d = 126
+        self._d = 126
+        self.d_ = 126
+        self.f__o__o = 252
+
+
+def test_reset():
+    """Tests reset method for correct behaviour.
+
+    Raises
+    ------
+    AssertionError if logic behind reset is incorrect, logic tested:
+        reset should remove any object attributes that are not hyper-parameters,
+        with the exception of attributes containing double-underscore "__"
+        reset should not remove class attributes or methods
+        reset should set hyper-parameters as in pre-reset state
+    """
+    x = ResetTester(168)
+    x.foo()
+
+    x.reset()
+
+    assert hasattr(x, "a") and x.a == 168
+    assert hasattr(x, "b") and x.b == 42
+    assert hasattr(x, "c") and x.c == 84
+    assert hasattr(x, "clsvar") and x.clsvar == 210
+    assert not hasattr(x, "d")
+    assert not hasattr(x, "_d")
+    assert not hasattr(x, "d_")
+    assert hasattr(x, "f__o__o") and x.f__o__o == 252
+    assert hasattr(x, "foo")
