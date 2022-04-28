@@ -12,6 +12,7 @@ __all__ = [
 import numpy as np
 from joblib import Parallel, delayed
 from numba import int64, jit, prange
+from sklearn.base import clone
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_random_state
@@ -63,7 +64,7 @@ def _make_estimator(base_estimator, random_state=None):
     Warning: This method should be used to properly instantiate new
     sub-estimators.
     """
-    estimator = base_estimator.clone()
+    estimator = clone(base_estimator)
     estimator.set_params(**{"random_state": random_state})
     return estimator
 

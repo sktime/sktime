@@ -8,6 +8,7 @@ __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
@@ -70,7 +71,7 @@ class TrendForecaster(BaseForecaster):
         self.regressor_ = self.regressor or LinearRegression(fit_intercept=True)
 
         # create a clone of self.regressor
-        self.regressor_ = self.regressor_.clone()
+        self.regressor_ = clone(self.regressor_)
 
         # transform data
         X = y.index.astype("int").to_numpy().reshape(-1, 1)
