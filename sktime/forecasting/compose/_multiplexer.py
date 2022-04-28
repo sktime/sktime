@@ -103,8 +103,8 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         )
 
         self._set_forecaster()
-        self.clone_tags(self.forecaster_)
-        self.set_tags(**{"fit_is_empty": False})
+        # self.clone_tags(self.forecaster_)
+        # self.set_tags(**{"fit_is_empty": False})
 
     def _check_selected_forecaster(self):
         component_names = self._get_estimator_names(self.forecasters_, make_unique=True)
@@ -215,8 +215,8 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             and key == "selected_forecaster"
         ):
             self._set_forecaster()
-            self.clone_tags(self.forecaster_)
-            self.set_tags(**{"fit_is_empty": False})
+            # self.clone_tags(self.forecaster_)
+            # self.set_tags(**{"fit_is_empty": False})
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

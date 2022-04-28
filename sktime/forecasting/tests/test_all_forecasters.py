@@ -550,26 +550,24 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
         # check that _y and cutoff are empty when estimator is constructed
-        assert f._y is None
+        assert f.y is None
         assert f.cutoff is None
 
         # check that _y and cutoff is updated during fit
         f.fit(y_train, fh=FH0)
-        # assert isinstance(f._y, pd.Series)
+        # assert isinstance(f.y, pd.Series)
         # action:uncomments the line above
         # why: fails for multivariates cause they are DataFrames
         # solution: look for a general solution for Series and DataFrames
-        assert len(f._y) > 0
+        assert len(f.y) > 0
         assert f.cutoff == y_train.index[-1]
 
         # check data pointers
-        np.testing.assert_array_equal(f._y.index, y_train.index)
+        np.testing.assert_array_equal(f.y.index, y_train.index)
 
         # check that _y and cutoff is updated during update
         f.update(y_test, update_params=False)
-        np.testing.assert_array_equal(
-            f._y.index, np.append(y_train.index, y_test.index)
-        )
+        np.testing.assert_array_equal(f.y.index, np.append(y_train.index, y_test.index))
         assert f.cutoff == y_test.index[-1]
 
     def test__y_when_refitting(self, estimator_instance, n_columns):
@@ -579,7 +577,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         estimator_instance.fit(y_train[3:], fh=FH0)
         # using np.squeeze to make the test flexible to shape differeces like
         # (50,) and (50, 1)
-        assert np.all(np.squeeze(estimator_instance._y) == np.squeeze(y_train[3:]))
+        assert np.all(np.squeeze(estimator_instance.y) == np.squeeze(y_train[3:]))
 
     def test_fh_attribute(self, estimator_instance, n_columns):
         """Check fh attribute and error handling if two different fh are passed."""

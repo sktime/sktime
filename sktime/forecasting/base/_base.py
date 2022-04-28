@@ -1379,6 +1379,7 @@ class BaseForecaster(BaseEstimator):
         return y_pred
 
     @property
+    @delegate_if_needed
     def cutoff(self):
         """Cut-off = "present time" state of forecaster.
 
@@ -1437,6 +1438,13 @@ class BaseForecaster(BaseEstimator):
             self._set_cutoff(cutoff)
 
     @property
+    @delegate_if_needed
+    def y(self):
+        """Return y that was passed."""
+        return self._y
+
+    @property
+    @delegate_if_needed
     def fh(self):
         """Forecasting horizon that was passed."""
         # raise error if some method tries to accessed it before it has been set

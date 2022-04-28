@@ -27,7 +27,7 @@ class BaseGridSearch(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
-        "capability:pred_int": True,
+        "capability:pred_int": False,
     }
 
     def __init__(
@@ -54,10 +54,10 @@ class BaseGridSearch(BaseForecaster):
         self.scoring = scoring
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
+        self.best_forecaster_ = forecaster
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
-            "capability:pred_int",
             "scitype:y",
             "ignores-exogeneous-X",
             "handles-missing-data",
@@ -90,10 +90,10 @@ class BaseGridSearch(BaseForecaster):
         self.check_is_fitted("score")
 
         if self.scoring is None:
-            return self.get_delegate().score(y, X=X, fh=fh)
+            return self._get_delegate().score(y, X=X, fh=fh)
 
         else:
-            y_pred = self.get_delegate().predict(fh, X=X)
+            y_pred = self._get_delegate().predict(fh, X=X)
             return self.scoring(y, y_pred)
 
     def _run_search(self, evaluate_candidates):
@@ -126,7 +126,7 @@ class BaseGridSearch(BaseForecaster):
                     "attribute" % (type(self).__name__, method_name)
                 )
             else:
-                self.get_delegate().check_is_fitted()
+                self._get_delegate().check_is_fitted()
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
