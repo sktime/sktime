@@ -121,7 +121,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             "The greater_is_better attribute is deprecated from 0.12.0 "
             "and will be removed in 0.13.0. Use the lower_is_better tag instead, "
             'e.g., my_metric.get_tag("lower_is_better")',
-            DeprecationWarning
+            DeprecationWarning,
         )
         return not self.get_tag("lower_is_better", False)
 
