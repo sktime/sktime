@@ -7,12 +7,12 @@ from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
+
 __author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
 class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
-
     """MultiplexForecaster for selecting among different models.
 
     MultiplexForecaster facilitates a framework for performing
@@ -90,9 +90,8 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
     }
 
-
-    # attribute, name of the attribute storing the forecaster to delegate most methods to
-    #     all non-overridden methods to those of same name in self.forecaster_
+    # attribute, name of the attribute storing the forecaster to delegate most methods
+    #     to all non-overridden methods to those of same name in self.forecaster_
     _delegate_name = "forecaster_"
 
     def __init__(
@@ -169,7 +168,6 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         if isinstance(other, MultiplexForecaster):
             new_tuples = self._get_estimator_tuples(
                 self.forecasters + other.forecasters
-
             )
             new_multiplex_forecaster = MultiplexForecaster(new_tuples)
             return new_multiplex_forecaster
@@ -188,7 +186,6 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
 
-
     def __setattr__(self, key, value):
         """Handle special case where selected_forecaster is changed."""
         super(MultiplexForecaster, self).__setattr__(key, value)
@@ -201,7 +198,6 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self._set_forecaster()
             # self.clone_tags(self.forecaster_)
             # self.set_tags(**{"fit_is_empty": False})
-
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

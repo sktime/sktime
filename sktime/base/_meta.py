@@ -270,6 +270,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         estimators : list of estimators, or list of (str, estimator tuples)
         clone_ests : bool, optional, default=False.
             whether estimators of the return are cloned (True) or references (False)
+
         Returns
         -------
         est_tuples : list of (str, estimator) tuples
