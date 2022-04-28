@@ -669,7 +669,16 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 class FitInTransform(BaseTransformer):
     """Transformer composition to always fit a given transformer on the transform data only.
 
-    Some transformers like Imputer(method="mean") might be more accurate for some use
+    In panel settings, e.g., time series classification, it can be preferable
+    (or, necessary) to fit and transform on the test set, e.g., interpolate within the
+    same series that interpolation parameters are being fitted on. `FitInTransform` can
+    be used to wrap any transformer to ensure that `fit` and `transform` happen always
+    on the same series, by delaying the `fit` to the `transform` batch.
+
+    Warning
+    -------
+    The use of `FitInTransform` will typically not be useful, or can constitute a
+    mistake (data leakage) when naively used in a forecasting setting.
     cases if they are fitted only on the transform/predict data. The FitInTransform
     transformer can be best used in a pipeline context where train data is different to
     the transform/predict data.
