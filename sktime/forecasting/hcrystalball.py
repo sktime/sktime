@@ -5,6 +5,8 @@
 
 import pandas as pd
 
+from sklearn.base import clone
+
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -132,7 +134,7 @@ class HCrystalBallForecaster(BaseForecaster):
         self : returns an instance of self.
         """
         y, X = _adapt_y_X(y, X)
-        self.model_ = self.model.clone()
+        self.model_ = clone(self.model)
         self.model_.fit(X, y)
 
         return self
