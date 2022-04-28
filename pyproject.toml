@@ -73,9 +73,11 @@ all_extras = [
 ]
 
 dev = [
+    "httpx",
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "pytest-timeout",
     "pytest-xdist",
     "wheel",
 ]
