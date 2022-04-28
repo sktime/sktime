@@ -109,7 +109,7 @@ class BaseTimeSeriesForest(BaseForest):
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.estimator_.clone)
+        estimator = clone(self.estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         if random_state is not None:
