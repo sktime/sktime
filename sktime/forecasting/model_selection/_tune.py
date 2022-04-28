@@ -17,6 +17,8 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
 
+test = "will delete this"
+
 
 class BaseGridSearch(BaseForecaster):
 
