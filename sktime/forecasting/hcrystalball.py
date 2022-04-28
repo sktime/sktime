@@ -4,7 +4,6 @@
 """Implements wrapper for using HCrystalBall forecastsers in sktime."""
 
 import pandas as pd
-
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
