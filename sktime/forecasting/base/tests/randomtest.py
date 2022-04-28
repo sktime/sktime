@@ -4,7 +4,7 @@
 
 __author__ = ["Ris-Bali"]
 import numpy as np
-from pandas.testing import assert_frame_equal, assert_series_equal
+import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.ets import AutoETS
@@ -20,25 +20,21 @@ y = load_airline()
 y_1 = make_forecasting_problem(n_columns=3)
 
 
-def test_random_state():
-    """Function for testing models with random_state parameter."""
-    models = []
-    models.append(AutoETS)
-    models.append(ExponentialSmoothing)
-    models.append(SARIMAX)
-    models.append(UnobservedComponents)
-
-    for model in models:
-        forecaster = model(random_state=0)
-        forecaster.fit(y=y, fh=fh)
-        y_pred = forecaster.predict()
-        forecaster.fit(y=y, fh=fh)
-        y_pred_1 = forecaster.predict()
-        assert_series_equal(y_pred, y_pred_1)
-
-    forecaster = VAR(random_state=0)
-    forecaster.fit(y=y_1, fh=fh)
-    y_pred = forecaster.predict()
-    forecaster.fit(y=y_1, fh=fh)
-    y_pred_1 = forecaster.predict()
-    assert_frame_equal(y_pred, y_pred_1)
+@pytest.mark.parametrize(
+    "model",
+    [(AutoETS), (ExponentialSmoothing), (SARIMAX), (UnobservedComponents), (VAR)],
+)
+def test_random_state(model):
+    """Function to test random_state parameter."""
+    obj = model()
+    if model == VAR:
+        obj.fit(y=y_1, fh=fh)
+        y = obj.predict()
+        obj.fit(y=y_1, fh=fh)
+        y1 = obj.predict()
+    else:
+        obj.fit(y=y, fh=fh)
+        y = obj.predict()
+        obj.fit(y=y, fh=fh)
+        y1 = obj.predict()
+    assert y == y1
