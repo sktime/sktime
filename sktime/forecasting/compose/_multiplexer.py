@@ -49,7 +49,12 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     ----------
     forecaster_ : sktime forecaster
         clone of the selected forecaster used for fitting and forecasting.
-    forecasters_ :
+    forecasters_ : list of (str, forecaster) tuples
+        str are identical to those passed, if passed strings are unique
+        otherwise unique strings are generated from class name; if not unique,
+        the string `_[i]` is appended where `[i]` is count of occurrence up until then
+        forecasters in `forecasters_`are reference to forecasters in arg `forecasters`
+        i-th forecaster in `forecasters_` is clone of i-th in `forecasters`
 
     Examples
     --------
@@ -86,6 +91,9 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
     }
 
+    # attribute for _DelegatedForecaster, which then delegates
+    #     all non-overridden methods to those of same name in self.forecaster_
+    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     def __init__(
@@ -169,49 +177,12 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             # if None, simply clone the first forecaster to self.forecaster_
             self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self._set_forecaster()
-        self.clone_tags(self.forecaster_)
-        self.set_tags(**{"fit_is_empty": False})
-
-        super()._fit(y=y, X=X, fh=fh)
-
-        return self
-
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -220,7 +191,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("forecasters", deep=deep)
+        return self._get_params("forecasters_", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -231,7 +202,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("forecasters", **kwargs)
+        self._set_params("forecasters_", **kwargs)
         return self
 
     @classmethod
@@ -260,9 +231,9 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         }
         params2 = {
             "forecasters": [
-                ("Naive_mean", NaiveForecaster(strategy="mean")),
-                ("Naive_last", NaiveForecaster(strategy="last")),
-                ("Naive_drift", NaiveForecaster(strategy="drift")),
+                NaiveForecaster(strategy="mean"),
+                NaiveForecaster(strategy="last"),
+                NaiveForecaster(strategy="drift"),
             ],
         }
         return [params1, params2]
