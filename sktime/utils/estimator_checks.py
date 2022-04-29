@@ -23,6 +23,8 @@ def delegate_if_needed(func):
     """
     from copy import deepcopy
 
+    copy_attr = ["is_fitted", "_is_fitted"]
+
     def inner(*args, **kwargs):
         self = args[0]
         estimator = self._get_delegate()
@@ -32,7 +34,8 @@ def delegate_if_needed(func):
             new_args[0] = estimator
             if func.__name__ in ["fit", "_fit"]:
                 func(*tuple(new_args), **kwargs)
-                self._is_fitted = estimator._is_fitted
+                for attr in copy_attr:
+                    setattr(self, attr, getattr(estimator, attr))
                 return self
             return func(*tuple(new_args), **kwargs)
         else:
