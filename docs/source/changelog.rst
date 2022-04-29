@@ -102,6 +102,7 @@ Forecasting
 * [ENH] ``Aggregator``: remove index naming requirement (:pr:`2479`) :user:`ciaran-g`
 * [ENH] ``MultiplexForecaster`` compatibility with multivariate, probabilistic and hierarchical forecasting (:pr:`2458`) :user:`fkiraly`
 * [ENH] ``Differencer`` NA handling - "fill zero" parameter (:pr:`2487`) :user:`fkiraly`
+* [ENH] Add ``random_state`` to ``statsmodels`` adapter and estimators (:pr:`2440`) :user:`ris-bali`
 * [ENH] Added tests for ``MultiplexForecaster`` (:pr:`2520`) :user:`miraep8`
 * [ENH] Added ``|`` dunder method for ``MultiplexForecaster`` (:pr:`2540`) :user:`miraep8`
 
@@ -224,6 +225,7 @@ Contributors
 :user:`ltsaprounis`,
 :user:`MatthewMiddlehurst`,
 :user:`miraep8`,
+ :user:`ris-bali`,
 :user:`Samuel-Oyeneye`,
 :user:`tarpas`,
 :user:`Tomiiwa`
