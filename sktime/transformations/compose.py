@@ -497,7 +497,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         Returns
         -------
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+            not nested, contains only non-FeatureUnion `sktime` transformers
         """
         return self._dunder_concat(
             other=other,
@@ -505,6 +505,29 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
             composite_class=FeatureUnion,
             attr_name="transformer_list",
             concat_order="left",
+        )
+
+    def __radd__(self, other):
+        """Magic + method, return (left) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (last) with `other` (first).
+            not nested, contains only non-FeatureUnion `sktime` transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=FeatureUnion,
+            attr_name="transformer_list",
+            concat_order="right",
         )
 
     def _fit(self, X, y=None):
