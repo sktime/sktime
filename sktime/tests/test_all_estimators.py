@@ -778,12 +778,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 estimator, attr
             ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
 
-        fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
+        _ = scenario.run(estimator_instance, method_sequence=["fit"])
 
         # Check 0s_fitted attribute is updated correctly to False after calling fit
         for attr in attrs:
             assert getattr(
-                fitted_estimator, attr
+                estimator, attr
             ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
     def test_fit_returns_self(self, estimator_instance, scenario):
