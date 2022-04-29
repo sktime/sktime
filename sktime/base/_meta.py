@@ -344,7 +344,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         #   because potential clashes are lexicographically increasing
         return self._make_strings_unique(uniquestr)
 
-    def _dunder_concate(
+    def _dunder_concat(
         self, other, base_class, composite_class, attr_name="steps", concat_order="left"
     ):
         """Concatenate pipelines for dunder parsing, helper function.
