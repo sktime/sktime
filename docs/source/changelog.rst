@@ -24,6 +24,7 @@ Highlights
 * dunder method for forecasting pipelines: write ``trafo * forecaster * my_postproc`` for ``TransformedTargetForecaster`` pipeline (:pr:`2404`) :user:`fkiraly`
 * dunder method for multiplexing/autoML: write ``forecaster1 | forecaster2 | forecaster3`` for ``MultiplexForecaster``, used in tuning over forecasters (:pr:`2540`) :user:`miraep8`
 * dunders combine with existing transformer pipeline and feature union, e.g., ``trafo1 * trafo2 * forecaster`` or ``(trafo1 + trafo2) * forecaster``
+* prediction intervals for ``UnobservedComponets`` forecaster (:pr:`2454`) :user:`juanitorduz`
 * new argument ``return_tags`` of ``all_estimators`` allows listing estimators together with selected tags (:pr:`2410`) :user:`miraep8`
 
 Dependency changes
@@ -66,7 +67,7 @@ Deprecations
 Forecasting
 ^^^^^^^^^^^
 
-Forecaster ``update_predict`` default behaviour will change from ``reset_forecaster = True`` to ``reset_forecaster = False`` (see above).
+Forecaster ``update_predict`` default behaviour will change from ``reset_forecaster = True`` to ``reset_forecaster = False``, from 0.13.0 (see above).
 
 Transformations
 ^^^^^^^^^^^^^^^
