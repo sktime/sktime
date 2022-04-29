@@ -16,7 +16,7 @@ import numpy as np
 # data
 import pandas as pd
 
-# internal
+# sktime parent class
 from sktime.transformations.base import BaseTransformer
 
 
@@ -285,16 +285,27 @@ class Discretizer(BaseTransformer):
         elif parameter_set == "airline_round_to_list":
             return {"round_to_list": [450, 500, 550]}
         elif parameter_set == "airline_round_to_multiple_and_dp":
+            # raises UserWarning
             # will only round to DP
             return {"round_to_multiple": 10, "round_to_dp": 2}
         elif parameter_set == "airline_round_to_list_and_multiple":
+            # Raises UserWarning
             # will only round to multiple
             return {"round_to_list": [450, 500, 550], "round_to_multiple": 10}
         elif parameter_set == "raise_ValueError_on_invalid_parameter_round_to_dp":
+            # valueError 1
             return {"round_to_dp": ["dfndjn", 1000]}
         elif parameter_set == "raise_ValueError_on_invalid_parameter_round_to_multiple":
+            # valueError 2
             return {"round_to_multiple": "tree"}
         elif parameter_set == "raise_ValueError_on_invalid_parameter_round_to_list":
+            # valueError 3
+            return {"round_to_list": "tree"}
+        elif (
+            parameter_set
+            == "raise_ValueError_on_invalid_parameter_round_to_list_not_list"
+        ):
+            # valueError 4
             return {"round_to_list": [1, 2, 3, "tree"]}
 
 
