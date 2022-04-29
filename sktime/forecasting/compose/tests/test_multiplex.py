@@ -127,7 +127,7 @@ def test_multiplex_or_dunder():
     assert isinstance(multiplex_same_name_three_test, MultiplexForecaster)
     assert len(multiplex_same_name_three_test.forecasters) == 3
     forecaster_param_names = multiplex_same_name_three_test._get_estimator_names(
-         multiplex_same_name_three_test.forecasters_
+        multiplex_same_name_three_test.forecasters_
     )
     assert len(set(forecaster_param_names)) == 3
 
