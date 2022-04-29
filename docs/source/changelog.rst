@@ -225,7 +225,7 @@ Contributors
 :user:`ltsaprounis`,
 :user:`MatthewMiddlehurst`,
 :user:`miraep8`,
- :user:`ris-bali`,
+:user:`ris-bali`,
 :user:`Samuel-Oyeneye`,
 :user:`tarpas`,
 :user:`Tomiiwa`
