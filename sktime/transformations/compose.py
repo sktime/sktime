@@ -169,6 +169,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return NotImplemented
 
         return self._dunder_concat(
+            other=other,
             base_class=BaseTransformer,
             composite_class=TransformerPipeline,
             attr_name="steps",
@@ -199,6 +200,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return NotImplemented
 
         return self._dunder_concat(
+            other=other,
             base_class=BaseTransformer,
             composite_class=TransformerPipeline,
             attr_name="steps",
@@ -497,31 +499,13 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
-        # we don't use names but _get_estimator_names to get the *original* names
-        #   to avoid multiple "make unique" calls which may grow strings too much
-        _, trafos = zip(*self.transformer_list_)
-        names = tuple(self._get_estimator_names(self.transformer_list))
-        if isinstance(other, FeatureUnion):
-            _, trafos_o = zip(*other.transformer_list_)
-            names_o = tuple(other._get_estimator_names(other.transformer_list))
-            new_names = names + names_o
-            new_trafos = trafos + trafos_o
-        elif isinstance(other, BaseTransformer):
-            new_names = names + (type(other).__name__,)
-            new_trafos = trafos + (other,)
-        elif self._is_name_and_est(other, BaseTransformer):
-            other_name = other[0]
-            other_trafo = other[1]
-            new_names = names + (other_name,)
-            new_trafos = trafos + (other_trafo,)
-        else:
-            return NotImplemented
-
-        # if all the names are equal to class names, we eat them away
-        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return FeatureUnion(transformer_list=list(new_trafos))
-        else:
-            return FeatureUnion(transformer_list=list(zip(new_names, new_trafos)))
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=FeatureUnion,
+            attr_name="transformer_list",
+            concat_order="left",
+        )
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
