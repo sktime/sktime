@@ -355,7 +355,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        self : `sktime` estimator, assumed to be of composite_class when invoked
+        self : `sktime` estimator, instance of composite_class (when this is invoked)
         other : `sktime` estimator, should inherit from composite_class or base_class
             otherwise, `NotImplemented` is returned
         base_class : estimator base class assumed as base class for self, other,
