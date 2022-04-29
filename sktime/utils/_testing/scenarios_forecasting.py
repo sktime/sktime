@@ -15,6 +15,7 @@ __all__ = [
 
 from copy import deepcopy
 from inspect import isclass
+
 import pandas as pd
 
 from sktime.base import BaseObject
