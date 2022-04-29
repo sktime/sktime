@@ -15,6 +15,7 @@ __all__ = [
 
 from copy import deepcopy
 from inspect import isclass
+import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
@@ -163,7 +164,7 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "y": pd.DataFrame(_make_series(n_timepoints=20, random_state=RAND_SEED)),
             "X": X.copy(),
             "fh": 1,
         },
