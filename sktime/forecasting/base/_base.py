@@ -33,7 +33,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 
 __all__ = ["BaseForecaster"]
 
@@ -170,6 +170,27 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
+    def __or__(self, other):
+        """Magic | method, return MultiplexForecaster.
+
+        Implemented for `other` being either a MultiplexForecaster or a forecaster.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster or sktime MultiplexForecaster
+
+        Returns
+        -------
+        MultiplexForecaster object
+        """
+        from sktime.forecasting.compose import MultiplexForecaster
+
+        if isinstance(other, MultiplexForecaster) or isinstance(other, BaseForecaster):
+            multiplex_self = MultiplexForecaster([self])
+            return multiplex_self | other
+        else:
+            return NotImplemented
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -220,6 +241,8 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
+        # if fit is called, object is reset
+        self.reset()
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -1550,7 +1573,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -2029,28 +2052,6 @@ class BaseForecaster(BaseEstimator):
                         store_behaviour="freeze",
                     )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
-    # TODO: remove in v0.11.0
-    def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
-        name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha, name="alpha")
-        alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-        pred_int_old_format = [
-            pd.DataFrame(
-                {
-                    "lower": pred_int_new[(name, a, "lower")],
-                    "upper": pred_int_new[(name, a, "upper")],
-                }
-            )
-            for a in alphas
-        ]
-
-        # for a single alpha, return single pd.DataFrame
-        if len(alphas) == 1:
-            return pred_int_old_format[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int_old_format
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

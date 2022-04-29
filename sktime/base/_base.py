@@ -14,9 +14,9 @@ Interface specifications below.
 
     class name: BaseObject
 
-Hyper-parameter inspection and setter methods:
-    inspect hyper-parameters     - get_params()
-    setting hyper-parameters     - set_params(**params)
+Hyper-parameter inspection and setter methods
+    inspect hyper-parameters      - get_params()
+    setting hyper-parameters      - set_params(**params)
 
 Tag inspection and setter methods
     inspect tags (all)            - get_tags()
@@ -25,6 +25,9 @@ Tag inspection and setter methods
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags          - set_tag(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+
+Re-initialize object to post-init state with same hyper-parameters
+    reset estimator to post-init  - reset()
 
 Testing with default parameters methods
     getting default parameters (all sets)         - get_test_params()
@@ -68,6 +71,36 @@ class BaseObject(_BaseEstimator):
     def __init__(self):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
+
+    def reset(self):
+        """Reset the object to a clean post-init state.
+
+        Equivalent to sklearn.clone but overwrites self.
+        After self.reset() call, self is equal in value to
+        `type(self)(**self.get_params(deep=False))`
+
+        Detail behaviour:
+        removes any object attributes, except:
+            hyper-parameters = arguments of __init__
+            object attributes containing double-underscores, i.e., the string "__"
+        runs __init__ with current values of hyper-parameters (result of get_params)
+
+        Not affected by the reset are:
+        object attributes containing double-underscores
+        class and object methods, class attributes
+        """
+        # retrieve parameters to copy them later
+        params = self.get_params(deep=False)
+
+        # delete all object attributes in self
+        attrs = [attr for attr in dir(self) if "__" not in attr]
+        cls_attrs = [attr for attr in dir(type(self))]
+        self_attrs = set(attrs).difference(cls_attrs)
+        for attr in self_attrs:
+            delattr(self, attr)
+
+        # run init with a copy of parameters self had at the start
+        self.__init__(**params)
 
     @classmethod
     def get_class_tags(cls):
