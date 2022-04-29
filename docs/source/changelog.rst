@@ -55,7 +55,7 @@ Forecasters have two new dunder methods. Invoke dunders for easy creation of a p
 
 Dunder methods are compatible with existing transformer dunders ``*`` (pipeline) and ``+`` (feature union).
 
-Forecaster ``update_predict`` now accepts an additional boolean argument ``reset_forecaster``. 
+Forecaster ``update_predict`` now accepts an additional boolean argument ``reset_forecaster``.
 If ``reset_forecaster = True`` (default and current intended behaviour), forecaster state does not change.
 If ``reset_forecaster = False``, then ``update``, ``predict`` sequence updates state.
 
