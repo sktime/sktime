@@ -24,7 +24,7 @@ Highlights
 * dunder method for forecasting pipelines: write ``trafo * forecaster * my_postproc`` for ``TransformedTargetForecaster`` pipeline (:pr:`2404`) :user:`fkiraly`
 * dunder method for multiplexing/autoML: write ``forecaster1 | forecaster2 | forecaster3`` for ``MultiplexForecaster``, used in tuning over forecasters (:pr:`2540`) :user:`miraep8`
 * dunders combine with existing transformer pipeline and feature union, e.g., ``trafo1 * trafo2 * forecaster`` or ``(trafo1 + trafo2) * forecaster``
-* prediction intervals for ``UnobservedComponets`` forecaster (:pr:`2454`) :user:`juanitorduz`
+* prediction intervals for ``UnobservedComponents`` forecaster (:pr:`2454`) :user:`juanitorduz`
 * new argument ``return_tags`` of ``all_estimators`` allows listing estimators together with selected tags (:pr:`2410`) :user:`miraep8`
 
 Dependency changes
@@ -95,7 +95,7 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] prediction intervals for ``UnobservedComponets`` forecaster (:pr:`2454`) :user:`juanitorduz`
+* [ENH] prediction intervals for ``UnobservedComponents`` forecaster (:pr:`2454`) :user:`juanitorduz`
 * [ENH] remove error message on exogeneous ``X`` from DirRec reducer (:pr:`2463`) :user:`fkiraly`
 * [ENH] replace ``np.arange`` by ``np.arghwere`` in splitters to enable time based indexing and selection (:pr:`2394`) :user:`khrapovs`
 * [ENH] Test ``SingleWindowSplitter`` with Timedelta forecasting horizon (:pr:`2392`) :user:`khrapovs`
