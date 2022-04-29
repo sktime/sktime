@@ -44,6 +44,11 @@ class VAR(_StatsModelsAdapter):
         fpe : Final prediction error
         hqic : Hannan-Quinn
         bic : Bayesian a.k.a. Schwarz
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     References
     ----------
@@ -82,6 +87,7 @@ class VAR(_StatsModelsAdapter):
         dates=None,
         freq=None,
         ic=None,
+        random_state=None,
     ):
         # Model params
         self.trend = trend
@@ -93,7 +99,7 @@ class VAR(_StatsModelsAdapter):
         self.freq = freq
         self.ic = ic
 
-        super(VAR, self).__init__()
+        super(VAR, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
