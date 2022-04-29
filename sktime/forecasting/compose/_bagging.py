@@ -20,9 +20,9 @@ from sktime.transformations.bootstrap import STLBootstrapTransformer
 
 
 class BaggingForecaster(BaseForecaster):
-    """Bagged "Bootrstrap Aggregating" Forecasts.
+    """Bagged "Bootstrap Aggregating" Forecasts.
 
-    Bagged Forecasts are obtained by forecasting bootsrapped time series and then
+    Bagged Forecasts are obtained by forecasting bootstrapped time series and then
     aggregating the resulting forecasts. For the point forecast, the different forecasts
     are aggregated using the mean function [1]. Prediction intervals and quantiles are
     calculated for each time point in the forecasting horizon by calculating the sampled
@@ -148,7 +148,7 @@ class BaggingForecaster(BaseForecaster):
         ):
             raise TypeError(
                 "bootstrap_transformer in BaggingForecaster should be a Transformer "
-                "that take as input a Series and output a Panel."
+                "that takes as input a Series and output a Panel."
             )
 
         if not isinstance(self.forecaster, BaseForecaster):
