@@ -799,7 +799,7 @@ class BaseForecaster(BaseEstimator):
             there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
             whether model parameters should be updated in each update step
-        reset_forecaster : bool, optionel (default=True)
+        reset_forecaster : bool, optional (default=True)
             if True, will not change the state of the forecaster,
                 i.e., update/predict sequence is run with a copy,
                 and cutoff, model parameters, data memory of self do not change
@@ -2012,7 +2012,7 @@ class BaseForecaster(BaseEstimator):
             there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
             whether model parameters should be updated in each update step
-        reset_forecaster : bool, optionel (default=True)
+        reset_forecaster : bool, optional (default=True)
             if True, will not change the state of the forecaster,
                 i.e., update/predict sequence is run with a copy,
                 and cutoff, model parameters, data memory of self do not change
