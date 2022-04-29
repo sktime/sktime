@@ -72,9 +72,11 @@ class BaseObject(_BaseEstimator):
     _delegate_name = None
 
     def _get_delegate(self):
-        est = self
+        from copy import deepcopy
+
+        est = deepcopy(self)
         while est._delegate_name:
-            est = getattr(self, self._delegate_name)
+            est = getattr(est, est._delegate_name)
         return est
 
     def __init__(self):

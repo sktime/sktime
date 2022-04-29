@@ -30,6 +30,10 @@ def delegate_if_needed(func):
         if func.__name__ in valid_calls:
             new_args = list(deepcopy(args))
             new_args[0] = estimator
+            if func.__name__ in ["fit", "_fit"]:
+                func(*tuple(new_args), **kwargs)
+                self._is_fitted = estimator._is_fitted
+                return self
             return func(*tuple(new_args), **kwargs)
         else:
             raise TypeError(
