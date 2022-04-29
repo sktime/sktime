@@ -16,15 +16,7 @@ from numpy.linalg import inv
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 
-# Done
-# test: check preds are actually hierarchical
-
-# TODO:
-# remove the unique naming rest. on the botton level (multiindex in column s_matrix)?
-# check that the fitted_g/s matrice matches X during transform
-# test: check that the transformer works for named and unnamed indexes
-# check _check_bl_good(X) for 2 level hier, i.e. simple
-# failing test which are escaped?
+# TODO: failing test which are escaped
 
 
 class Reconciler(BaseTransformer):
@@ -115,9 +107,6 @@ class Reconciler(BaseTransformer):
             )
             X = self._add_totals(X)
 
-        # this checks that the bottom level indexes for unique names
-        _check_bl_good(X)
-
         if self.method == "bu":
             self.g_matrix = _get_g_matrix_bu(X)
         elif self.method == "ols":
@@ -163,7 +152,14 @@ class Reconciler(BaseTransformer):
             )
             X = self._add_totals(X)
 
-        # check here that index of X matches the self.s_matrix?
+        # check here that index of X matches the self.s_matrix
+        al_inds = X.droplevel(level=-1).index.unique()
+        chk_newindx = np.all(self.s_matrix.index == al_inds)
+        if not chk_newindx:
+            raise ValueError(
+                "Check unique indexes of X.droplevel(level=-1) matches "
+                "the data used in Reconciler().fit(X)."
+            )
 
         # include index between matrices here as in df.dot()?
         X = X.groupby(level=-1)
@@ -201,13 +197,7 @@ def _get_s_matrix(X):
     Returns
     -------
     s_matrix : pd.DataFrame
-        Summation matrix with multiindex on rows, where each row is a level in
-        the hierarchy. Single index on columns for each bottom level of the
-        hierarchy.
     """
-    # need to make this robust to naming
-    # multiindex on the columns as well!
-
     # get bottom level indexes
     bl_inds = (
         X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
@@ -217,37 +207,28 @@ def _get_s_matrix(X):
     # get all level indexes
     al_inds = X.droplevel(level=-1).index.unique()
 
+    # set up matrix
     s_matrix = pd.DataFrame(
         [[0.0 for i in range(len(bl_inds))] for i in range(len(al_inds))],
         index=al_inds,
     )
-
-    #
-    s_matrix.columns = list(bl_inds.get_level_values(level=-1))
+    s_matrix.columns = bl_inds
 
     # now insert indicator for bottom level
     for i in s_matrix.columns:
-        s_matrix.loc[s_matrix.index.get_level_values(-1) == i, i] = 1.0
+        s_matrix.loc[s_matrix.index == i, i] = 1.0
 
-    # now for each unique column
-    for j in s_matrix.columns:
-
-        # find bottom index id
-        inds = list(s_matrix.index[s_matrix.index.get_level_values(level=-1).isin([j])])
-
-        # generate new tuples for the aggregate levels
-        # if multiindex
+    # now for each unique column add aggregate indicator
+    for i in s_matrix.columns:
         if s_matrix.index.nlevels > 1:
-            for i in range(len(inds[0])):
-                tmp = list(inds[i])
-                tmp[-(i + 1)] = "__total"
-                inds.append(tuple(tmp))
-
-            # insert indicator for aggregates
-            for i in inds:
-                s_matrix.loc[i, j] = 1.0
+            # replace index with totals -> ("nodeA", "__total")
+            agg_ind = list(i)[::-1]
+            for j in range(len(agg_ind)):
+                agg_ind[j] = "__total"
+                # insert indicator
+                s_matrix.loc[tuple(agg_ind[::-1]), i] = 1.0
         else:
-            s_matrix.loc["__total", j] = 1.0
+            s_matrix.loc["__total", i] = 1.0
 
     # drop new levels not present in orginal matrix
     s_matrix.dropna(inplace=True)
@@ -260,8 +241,7 @@ def _get_g_matrix_bu(X):
 
     Returns
     -------
-    g_matrix : pd.DataFrame
-        Summation matrix with single index on rows and multiindex on columns.
+    g_matrix : pd.DataFrame.
     """
     # get bottom level indexes
     bl_inds = (
@@ -277,13 +257,11 @@ def _get_g_matrix_bu(X):
         [[0.0 for i in range(len(bl_inds))] for i in range(len(al_inds))],
         index=al_inds,
     )
-
-    #
-    g_matrix.columns = list(bl_inds.get_level_values(level=-1))
+    g_matrix.columns = bl_inds
 
     # now insert indicator for bottom level
     for i in g_matrix.columns:
-        g_matrix.loc[g_matrix.index.get_level_values(-1) == i, i] = 1.0
+        g_matrix.loc[g_matrix.index == i, i] = 1.0
 
     return g_matrix.transpose()
 
@@ -294,7 +272,6 @@ def _get_g_matrix_ols(X):
     Returns
     -------
     g_ols : pd.DataFrame
-        Summation matrix with single index on rows and multiindex on columns.
     """
     # get s matrix
     smat = _get_s_matrix(X)
@@ -317,7 +294,6 @@ def _get_g_matrix_wls_str(X):
     Returns
     -------
     g_wls_str : pd.DataFrame
-        Summation matrix with single index on rows and multiindex on columns.
     """
     # this is similar to the ols except we have a new matrix W
     smat = _get_s_matrix(X)
@@ -338,26 +314,3 @@ def _get_g_matrix_wls_str(X):
     g_wls_str = g_wls_str.transpose()
 
     return g_wls_str
-
-
-def _check_bl_good(X):
-    """Check bottom level indexes are unique."""
-    bl_inds = list(
-        X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
-        .index.droplevel(level=-1)
-        .unique()
-    )
-    bl_inds = ["__".join(str(x)) for x in bl_inds]
-
-    agg_inds = list(X.index.get_level_values(level=-2).unique())
-    agg_inds.remove("__total")
-    bl_chk = len(agg_inds) == len(bl_inds)
-
-    if not bl_chk:
-        raise ValueError(
-            """Please check the bottom level nodes of the hierarchy have unique
-            names.
-            """
-        )
-    else:
-        pass
