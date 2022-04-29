@@ -5,14 +5,13 @@
 
 import numpy as np
 
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.utils.validation.series import check_series
+from sktime.transformations.base import BaseTransformer
 
-__author__ = ["Afzal Ansari"]
+__author__ = ["afzal442"]
 __all__ = ["CosineTransformer"]
 
 
-class CosineTransformer(_SeriesToSeriesTransformer):
+class CosineTransformer(BaseTransformer):
     """Cosine transformation.
 
     This is a wrapper around numpy's cosine function (see :func:`numpy.cos`).
@@ -30,29 +29,57 @@ class CosineTransformer(_SeriesToSeriesTransformer):
     >>> y_hat = transformer.fit_transform(y)
     """
 
-    _tags = {"transform-returns-same-time-index": True, "fit-in-transform": True}
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "univariate-only": False,
+        "fit_is_empty": True,
+        "transform-returns-same-time-index": True,
+        "capability:inverse_transform": False,
+        # switching off, since cos is not invertible outside [-pi, pi], fails test
+    }
 
-    def transform(self, Z, X=None):
-        """Transform data.
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing the core logic, called from transform
 
         Parameters
         ----------
-        Z : pd.Series
-            Series to transform.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous data used in transformation.
+        X : 2D np.ndarray
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Zt : pd.Series
-            Transformed series.
+        Xt : 2D np.ndarray
+            transformed version of X
         """
-        self.check_is_fitted()
-        Z = check_series(Z)
-        return np.cos(Z)
+        Xt = np.cos(X)
+        return Xt
 
-    # def inverse_transform(self, Z, X=None):
-    # only defined for inputs in (-1, 1) range, requires adding extra input check
-    # self.check_is_fitted()
-    # Z = check_series(Z)
-    # return np.arccos(Z)
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform X and return an inverse transformed version.
+
+        core logic
+
+        Parameters
+        ----------
+        X : 2D np.ndarray
+            Data to be transformed
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        Xt : 2D np.ndarray
+            inverse transformed version of X
+        """
+        Xt = np.arccos(X)
+        return Xt

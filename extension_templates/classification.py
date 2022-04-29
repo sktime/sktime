@@ -14,8 +14,9 @@ How to use this implementation template to implement a new estimator:
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-- ensure interface compatibility by testing test/test_all_estimators
+- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting                 - _fit(self, X, y)
@@ -26,14 +27,8 @@ Optional implements:
     fitted parameter inspection           - get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
 
-State:
-    fitted model/strategy   - by convention, any attributes ending in "_"
-    fitted state flag       - is_fitted (property)
-    fitted state inspection - check_is_fitted()
-
-Testing:
+Testing - implement if sktime classifier (not needed locally):
     get default parameters for test instance(s) - get_test_params()
-    create a test instance of estimator class   - create_test_instance()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
@@ -69,9 +64,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
     """
 
     # optional todo: override base class estimator default tags here if necessary
+    # these are the default values, only add if different to these.
     _tags = {
-        "coerce-X-to-numpy": True,
-        "coerce-X-to-pandas": False,
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "capability:missing_values": False,
@@ -119,10 +116,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+        X : Training data of type self.get_tag("X_inner_mtype")
         y : array-like, shape = [n_instances] - the class labels
 
         Returns
@@ -136,23 +130,26 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         # implement here
         # IMPORTANT: avoid side effects to X, y
+        #
+        # Note: when interfacing a model that has fit, with parameters
+        #   that are not data (X, y) or data-like,
+        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
+        #   1. pass to constructor,  2. write to self in constructor,
+        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, X) -> np.array:
+    def _predict(self, X) -> np.ndarray:
         """Predict labels for sequences in X.
 
         core logic
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or single-column pd.DataFrame with pd.Series entries
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
-        y : array-like, shape =  [n_instances] - predicted class labels
+        y : predictions of labels for X, np.ndarray
         """
 
         # implement here
@@ -170,15 +167,11 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.array, array-like or sparse matrix
-                of shape = [n_instances,n_dimensions,series_length]
-                or shape = [n_instances,series_length]
-            or pd.DataFrame with each column a dimension, each cell a pd.Series
+        X : data to predict y with, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
-        y : array-like, shape =  [n_instances, n_classes] - estimated probabilities
-        of class membership.
+        y : predictions of probabilities for class values of X, np.ndarray
         """
 
         # implement here
@@ -196,9 +189,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # implement here
 
     # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
         -------
@@ -212,6 +215,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
         #
+        # this can, if required, use:
+        #   class properties (e.g., inherited); parent class test case
+        #   imported objects such as estimators from sktime or sklearn
+        # important: all such imports should be *inside get_test_params*, not at the top
+        #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for most automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        #   For classification, this is also used in tests for reference settings,
+        #       such as published in benchmarking studies, or for identity testing.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
+        #
         # example 1: specify params as dictionary
         # any number of params can be specified
         # params = {"est": value0, "parama": value1, "paramb": value2}
@@ -221,4 +237,12 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
         #
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
+        #     params = {"est": value1, "parama": value2}
+        #     return params
+        #
+        # # "default" params
+        # params = {"est": value3, "parama": value4}
         # return params

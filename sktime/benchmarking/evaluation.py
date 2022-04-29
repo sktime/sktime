@@ -8,8 +8,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.stats import ranksums
-from scipy.stats import ttest_ind
+from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
@@ -676,7 +675,7 @@ class Evaluator:
         clique = clique[n > 1, :]
         n = np.size(clique, 0)
 
-        for i in range(np.int(np.ceil(n_strategies / 2))):
+        for i in range(int(np.ceil(n_strategies / 2))):
             plt.plot(
                 [
                     (n_strategies - r[i]) / (n_strategies - 1),
@@ -707,7 +706,7 @@ class Evaluator:
             )
 
         # labels displayed on the left
-        for i in range(np.int(np.ceil(n_strategies / 2)), n_strategies):
+        for i in range(int(np.ceil(n_strategies / 2)), n_strategies):
             plt.plot(
                 [
                     (n_strategies - r[i]) / (n_strategies - 1),

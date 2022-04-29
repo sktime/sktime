@@ -22,9 +22,9 @@ __all__ = [
     "test_set_tags",
 ]
 
-import pytest
-
 from copy import deepcopy
+
+import pytest
 
 from sktime.base import BaseObject
 
@@ -158,9 +158,74 @@ def test_set_tags():
 
     Raises
     ------
-    AssertError if override logic in set_tags is incorrect
+    AssertionError if override logic in set_tags is incorrect
     """
     msg = "Setter/override logic in BaseObject.set_tags is incorrect"
 
     assert FIXTURE_OBJECT_SET._tags_dynamic == FIXTURE_OBJECT_SET_DYN, msg
     assert FIXTURE_OBJECT_SET.get_tags() == FIXTURE_OBJECT_SET_TAGS, msg
+
+
+class CompositionDummy(BaseObject):
+    """Potentially composite object, for testing."""
+
+    def __init__(self, foo, bar=84):
+        self.foo = foo
+        self.bar = bar
+
+
+def test_is_composite():
+    """Tests is_composite tag for correctness.
+
+    Raises
+    ------
+    AssertionError if logic behind is_composite is incorrect
+    """
+    non_composite = CompositionDummy(foo=42)
+    composite = CompositionDummy(foo=non_composite)
+
+    assert not non_composite.is_composite()
+    assert composite.is_composite()
+
+
+class ResetTester(BaseObject):
+
+    clsvar = 210
+
+    def __init__(self, a, b=42):
+        self.a = a
+        self.b = b
+        self.c = 84
+
+    def foo(self):
+        self.d = 126
+        self._d = 126
+        self.d_ = 126
+        self.f__o__o = 252
+
+
+def test_reset():
+    """Tests reset method for correct behaviour.
+
+    Raises
+    ------
+    AssertionError if logic behind reset is incorrect, logic tested:
+        reset should remove any object attributes that are not hyper-parameters,
+        with the exception of attributes containing double-underscore "__"
+        reset should not remove class attributes or methods
+        reset should set hyper-parameters as in pre-reset state
+    """
+    x = ResetTester(168)
+    x.foo()
+
+    x.reset()
+
+    assert hasattr(x, "a") and x.a == 168
+    assert hasattr(x, "b") and x.b == 42
+    assert hasattr(x, "c") and x.c == 84
+    assert hasattr(x, "clsvar") and x.clsvar == 210
+    assert not hasattr(x, "d")
+    assert not hasattr(x, "_d")
+    assert not hasattr(x, "d_")
+    assert hasattr(x, "f__o__o") and x.f__o__o == 252
+    assert hasattr(x, "foo")

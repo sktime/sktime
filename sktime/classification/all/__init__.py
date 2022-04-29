@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """All time series classifiers."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = [
     "ShapeletTransformClassifier",
-    "MrSEQLClassifier",
     "RocketClassifier",
     "BOSSEnsemble",
     "IndividualBOSS",
@@ -15,8 +14,8 @@ __all__ = [
     "ProximityTree",
     "ProximityForest",
     "ElasticEnsemble",
-    "TimeSeriesForestClassifier",
     "RandomIntervalSpectralEnsemble",
+    "TimeSeriesForestClassifier",
     "SupervisedTimeSeriesForest",
     "ComposableTimeSeriesForestClassifier",
     "ColumnEnsembleClassifier",
@@ -54,10 +53,7 @@ from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
 )
 from sktime.classification.kernel_based import RocketClassifier
-from sktime.classification.shapelet_based import (
-    MrSEQLClassifier,
-    ShapeletTransformClassifier,
-)
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.datasets import (
     load_arrow_head,
     load_basic_motions,

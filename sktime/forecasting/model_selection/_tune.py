@@ -15,7 +15,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.utils.validation.forecasting import check_scoring
 
@@ -27,6 +26,7 @@ class BaseGridSearch(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -36,6 +36,7 @@ class BaseGridSearch(BaseForecaster):
         strategy="refit",
         n_jobs=None,
         pre_dispatch=None,
+        backend="loky",
         refit=False,
         scoring=None,
         verbose=0,
@@ -47,6 +48,7 @@ class BaseGridSearch(BaseForecaster):
         self.strategy = strategy
         self.n_jobs = n_jobs
         self.pre_dispatch = pre_dispatch
+        self.backend = backend
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
@@ -67,18 +69,40 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
-        """Call predict on the forecaster with the best found parameters."""
+        """Call _update on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
         self.best_forecaster_._update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Call predict on the forecaster with the best found parameters."""
+    def _predict(self, fh=None, X=None):
+        """Call _predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
-        return self.best_forecaster_._predict(
-            fh, X, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.best_forecaster_._predict(fh=fh, X=X)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_interval(self, fh=None, X=None, coverage=None):
+        """Call _predict_interval on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_interval(fh=fh, X=X, coverage=coverage)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_quantiles(self, fh=None, X=None, alpha=None):
+        """Call _predict_quantiles on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Call _predict_var on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_var(fh=fh, X=X, cov=cov)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_proba(self, fh=None, X=None, marginal=True):
+        """Call _predict_proba on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_proba(fh=fh, X=X, marginal=marginal)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -173,7 +197,7 @@ class BaseGridSearch(BaseForecaster):
             else:
                 self.best_forecaster_.check_is_fitted()
 
-    def _fit(self, y, X=None, fh=None, **fit_params):
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -194,7 +218,9 @@ class BaseGridSearch(BaseForecaster):
         scoring = check_scoring(self.scoring)
         scoring_name = f"test_{scoring.name}"
 
-        parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
+        parallel = Parallel(
+            n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch, backend=self.backend
+        )
 
         def _fit_and_score(params):
             # Clone forecaster.
@@ -211,7 +237,6 @@ class BaseGridSearch(BaseForecaster):
                 X,
                 strategy=self.strategy,
                 scoring=scoring,
-                fit_params=fit_params,
             )
 
             # Filter columns.
@@ -336,6 +361,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
     error_score: numeric value or the str 'raise', optional (default=np.nan)
         The test score returned when a forecaster fails to be fitted.
     return_train_score: bool, optional (default=False)
+    backend: str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
 
     Attributes
     ----------
@@ -362,14 +390,13 @@ class ForecastingGridSearchCV(BaseGridSearch):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import (
     ...     ExpandingWindowSplitter,
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
     >>> from sktime.forecasting.naive import NaiveForecaster
-
-    >>> y = load_airline()
+    >>> y = load_shampoo_sales()
     >>> fh = [1,2,3]
     >>> cv = ExpandingWindowSplitter(
     ...     start_with_window=True,
@@ -383,6 +410,47 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> gscv.fit(y)
     ForecastingGridSearchCV(...)
     >>> y_pred = gscv.predict(fh)
+
+        Advanced model meta-tuning (model selection) with multiple forecasters
+        together with hyper-parametertuning at same time using sklearn notation:
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.theta import ThetaForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> y = load_shampoo_sales()
+    >>> pipe = TransformedTargetForecaster(steps=[
+    ...     ("imputer", Imputer()),
+    ...     ("forecaster", NaiveForecaster())])
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=24,
+    ...     step_length=12,
+    ...     start_with_window=True,
+    ...     fh=[1,2,3])
+    >>> gscv = ForecastingGridSearchCV(
+    ...     forecaster=pipe,
+    ...     param_grid=[{
+    ...         "forecaster": [NaiveForecaster(sp=12)],
+    ...         "forecaster__strategy": ["drift", "last", "mean"],
+    ...     },
+    ...     {
+    ...         "imputer__method": ["mean", "drift"],
+    ...         "forecaster": [ThetaForecaster(sp=12)],
+    ...     },
+    ...     {
+    ...         "imputer__method": ["mean", "last"],
+    ...         "forecaster": [ExponentialSmoothing(sp=12)],
+    ...         "forecaster__trend": ["add", "mul"],
+    ...     },
+    ...     ],
+    ...     cv=cv,
+    ...     n_jobs=-1)
+    >>> gscv.fit(y)
+    ForecastingGridSearchCV(...)
+    >>> y_pred = gscv.predict(fh=[1,2,3])
     """
 
     _required_parameters = ["forecaster", "cv", "param_grid"]
@@ -399,6 +467,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         verbose=0,
         return_n_best_forecasters=1,
         pre_dispatch="2*n_jobs",
+        backend="loky",
     ):
         super(ForecastingGridSearchCV, self).__init__(
             forecaster=forecaster,
@@ -410,6 +479,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
+            backend=backend,
         )
         self.param_grid = param_grid
 
@@ -417,6 +487,32 @@ class ForecastingGridSearchCV(BaseGridSearch):
         """Search all candidates in param_grid."""
         _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_grid": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return params
 
 
 class ForecastingRandomizedSearchCV(BaseGridSearch):
@@ -469,6 +565,9 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         Pass an int for reproducible output across multiple
         function calls.
     pre_dispatch: str, optional (default='2*n_jobs')
+    backend: str, optional (default="loky")
+        Specify the parallelisation backend implementation in joblib, where
+        "loky" is used by default.
 
     Attributes
     ----------
@@ -504,6 +603,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         return_n_best_forecasters=1,
         random_state=None,
         pre_dispatch="2*n_jobs",
+        backend="loky",
     ):
         super(ForecastingRandomizedSearchCV, self).__init__(
             forecaster=forecaster,
@@ -515,6 +615,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
             verbose=verbose,
             return_n_best_forecasters=return_n_best_forecasters,
             pre_dispatch=pre_dispatch,
+            backend=backend,
         )
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -527,3 +628,29 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
                 self.param_distributions, self.n_iter, random_state=self.random_state
             )
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.model_selection._split import SingleWindowSplitter
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError
+
+        params = {
+            "forecaster": NaiveForecaster(strategy="mean"),
+            "cv": SingleWindowSplitter(fh=1),
+            "param_distributions": {"window_length": [2, 5]},
+            "scoring": MeanAbsolutePercentageError(symmetric=True),
+        }
+        return params

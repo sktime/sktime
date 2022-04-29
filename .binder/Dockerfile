@@ -17,10 +17,8 @@ USER root
 RUN chown -R ${NB_UID} ${HOME}
 
 # Switch user and directory
-USER ${USERR}
+USER ${USER}
 WORKDIR ${HOME}
 
 # Install extra requirements and sktime based on master branch
-RUN pip install --upgrade pip --no-cache-dir -r .binder/prelim_requirements.txt
-RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
-RUN pip install --no-cache-dir .
+RUN pip install --upgrade pip --no-cache-dir && pip install .[binder]

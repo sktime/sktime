@@ -18,7 +18,7 @@ BAD_INPUT_ARGS = [
     np.empty((3, 2, 3, 2)),  # 4d np.array
     pd.DataFrame(np.empty((2, 3))),  # non-nested pd.DataFrame
 ]
-y = pd.Series(dtype=np.int)
+y = pd.Series(dtype=int)
 
 
 @pytest.mark.parametrize("X", BAD_INPUT_ARGS)

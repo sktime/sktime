@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
+"""Benchmarking orchestration module."""
 __all__ = ["Orchestrator"]
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+__author__ = ["viktorkaz", "mloning"]
 
-from sklearn.base import clone
-from sktime.benchmarking.tasks import TSCTask
-from sktime.benchmarking.tasks import TSRTask
-import pandas as pd
 import logging
+
+import pandas as pd
+from sklearn.base import clone
+
+from sktime.benchmarking.tasks import TSCTask, TSRTask
 
 log = logging.getLogger()
 console = logging.StreamHandler()
@@ -14,9 +16,7 @@ log.addHandler(console)
 
 
 class Orchestrator:
-    """
-    Fit and predict one or more estimators on one or more datasets
-    """
+    """Fit and predict one or more estimators on one or more datasets."""
 
     def __init__(self, tasks, datasets, strategies, cv, results):
         # validate datasets and tasks
@@ -41,7 +41,7 @@ class Orchestrator:
         self._dataset_counter = 0
 
     def _iter(self):
-        """Iterator for orchestration"""
+        """Orchestration iterator."""
         # TODO: check if datasets are skipped entirely because predictions
         #  already exists before loading data,
         #  maybe do a dry-run first to find out which datasets to skip?
@@ -67,8 +67,7 @@ class Orchestrator:
                     yield (task, dataset, data, strategy, cv_fold, train_idx, test_idx)
 
     def fit(self, overwrite_fitted_strategies=False, verbose=False):
-        """Fit strategies on datasets"""
-
+        """Fit strategies on datasets."""
         for (
             task,
             dataset,
@@ -107,7 +106,7 @@ class Orchestrator:
     def predict(
         self, overwrite_predictions=False, predict_on_train=False, verbose=False
     ):
-        """Predict from saved fitted strategies"""
+        """Predict from saved fitted strategies."""
         raise NotImplementedError(
             "Predicting from saved fitted strategies is not implemented yet"
         )
@@ -120,8 +119,7 @@ class Orchestrator:
         overwrite_fitted_strategies=False,
         verbose=False,
     ):
-        """Fit and predict"""
-
+        """Fit and predict."""
         # check that for fitted strategies overwrite option is only set when
         # save option is set
         if overwrite_fitted_strategies and not save_fitted_strategies:
@@ -239,7 +237,7 @@ class Orchestrator:
 
     @staticmethod
     def _predict_proba_one(strategy, task, data, y_true, y_pred):
-        """Predict strategy on one dataset"""
+        """Predict strategy on one dataset."""
         # TODO always try to get probabilistic predictions first, compute
         #  deterministic predictions using
         #  argmax to avoid rerunning predictions, only if no predict_proba
@@ -259,15 +257,14 @@ class Orchestrator:
             #     n_predictions = len(y_pred)
             #     y_proba = (n_predictions, n_classes)
             #     y_proba = np.zeros(y_proba)
-            #     y_proba[:, np.array(y_pred, dtype=np.int)] = 1
+            #     y_proba[:, np.array(y_pred, dtype=int)] = 1
 
         else:
             return None
 
     @staticmethod
     def _validate_strategy_names(strategies):
-        """Validate strategy names"""
-
+        """Validate strategy names."""
         # Check uniqueness of strategy names
         names = [strategy.name for strategy in strategies]
         if not len(names) == len(set(names)):
@@ -297,7 +294,7 @@ class Orchestrator:
 
     @staticmethod
     def _validate_tasks_and_datasets(tasks, datasets):
-        """Validate tasks"""
+        """Validate tasks."""
         # check input types
         if not isinstance(datasets, list):
             raise ValueError(f"datasets must be a list, but found: {type(datasets)}")
@@ -332,8 +329,7 @@ class Orchestrator:
         fit_or_predict,
         verbose,
     ):
-        """Helper function to print progress"""
-
+        """Print progress."""
         if verbose:
             fit_or_predict = fit_or_predict.capitalize()
             if train_or_test == "train" and fit_or_predict == "predict":

@@ -51,8 +51,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        self.aligner_ = clone(self.aligner)
-        aligner = self.aligner_
+        aligner = clone(self.aligner)
 
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
@@ -78,7 +77,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         return distmat
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
         from sktime.alignment.dtw_python import AlignerDTW

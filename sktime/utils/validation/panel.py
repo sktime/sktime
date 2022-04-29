@@ -18,7 +18,7 @@ from sktime.datatypes._panel._convert import (
     from_nested_to_3d_numpy,
 )
 
-VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
+VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame, 2d or 3d np.array
 VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
 
 

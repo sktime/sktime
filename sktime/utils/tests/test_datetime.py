@@ -3,9 +3,10 @@
 
 __author__ = ["xiaobenbenecho"]
 
-import pandas as pd
-import numpy as np
 import datetime
+
+import numpy as np
+import pandas as pd
 
 from sktime.utils.datetime import _get_freq
 
@@ -22,7 +23,8 @@ def test_get_freq():
         index=[
             datetime.datetime(2017, 1, 1) + datetime.timedelta(days=int(i))
             for i in np.arange(1, 100, 7)
-        ]
+        ],
+        dtype=float,
     ).index
     x4 = [
         datetime.datetime(2017, 1, 1) + datetime.timedelta(days=int(i))

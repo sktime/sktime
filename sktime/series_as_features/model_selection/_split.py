@@ -65,14 +65,22 @@ class PresplitFilesCV:
                 yield train, test
 
     def get_n_splits(self):
+        """
+        Return the number of splits.
+
+        Returns
+        -------
+        n_splits : int
+        """
         n_splits = 1 if self.cv is None else 1 + self.cv.get_n_splits()
         return n_splits
 
 
 class SingleSplit:
     """
-    Helper class for orchestration that uses a single split for training and
-    testing. Wrapper for sklearn.model_selection.train_test_split
+    Helper class for orchestration that uses a single split for training and testing.
+
+    Wrapper for sklearn.model_selection.train_test_split
 
     Parameters
     ----------
@@ -103,7 +111,7 @@ class SingleSplit:
     stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
-    """
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -121,8 +129,10 @@ class SingleSplit:
 
     def split(self, data, y=None, groups=None):
         """
+        Split the data into training and testing data.
+
         Parameters
-        ---------
+        ----------
         data : pandas dataframe
             data used for cross validation
 
@@ -147,4 +157,5 @@ class SingleSplit:
 
     @staticmethod
     def get_n_splits():
+        """Return the number of splits (1)."""
         return 1

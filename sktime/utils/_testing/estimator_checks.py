@@ -6,7 +6,7 @@ copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["mloning", "fkiraly"]
 
-from inspect import signature
+from inspect import isclass, signature
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
-from sktime.clustering.base.base import BaseClusterer
+from sktime.clustering.base import BaseClusterer
 from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.dists_kernels import BasePairwiseTransformer, BasePairwiseTransformerPanel
 from sktime.forecasting.base import BaseForecaster
@@ -49,12 +49,6 @@ def _get_err_msg(estimator):
         f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
         f"{VALID_ESTIMATOR_TYPES}"
     )
-
-
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    # return the instance of the class with default parameters
-    return Estimator.create_test_instance()
 
 
 def _list_required_methods(estimator):
@@ -151,6 +145,11 @@ def _make_fit_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer) and estimator.get_tag("requires_y"):
+        return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
     elif isinstance(estimator, BaseClusterer):
         return (make_clustering_problem(**kwargs),)
     elif isinstance(estimator, BasePairwiseTransformer):
@@ -168,14 +167,11 @@ def _make_predict_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         fh = 1
         return (fh,)
-    elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+    elif isinstance(estimator, (BaseClassifier, BaseRegressor, BaseClusterer)):
         X = _make_panel_X(**kwargs)
         return (X,)
     elif isinstance(estimator, BaseSeriesAnnotator):
         X = make_annotation_problem(n_timepoints=10, **kwargs)
-        return (X,)
-    elif isinstance(estimator, BaseClusterer):
-        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -195,6 +191,9 @@ def _make_transform_args(estimator, **kwargs):
         ),
     ):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
         return (X,)
     elif isinstance(estimator, BasePairwiseTransformer):
         d = {"col1": [1, 2], "col2": [3, 4]}
@@ -219,6 +218,9 @@ def _make_inverse_transform_args(estimator, **kwargs):
         return (X,)
     elif isinstance(estimator, _PanelToPanelTransformer):
         X = _make_panel_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, BaseTransformer):
+        X = _make_series(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -325,3 +327,35 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
+
+
+def _has_capability(est, method: str) -> bool:
+    """Check whether estimator has capability of method."""
+
+    def get_tag(est, tag_name, tag_value_default=None):
+        if isclass(est):
+            return est.get_class_tag(
+                tag_name=tag_name, tag_value_default=tag_value_default
+            )
+        else:
+            return est.get_tag(tag_name=tag_name, tag_value_default=tag_value_default)
+
+    if not hasattr(est, method):
+        return False
+    if method == "inverse_transform":
+        return get_tag(est, "capability:inverse_transform", False)
+    if method in [
+        "predict_proba",
+        "predict_interval",
+        "predict_quantiles",
+        "predict_var",
+    ]:
+        ALWAYS_HAVE_PREDICT_PROBA = (BaseClassifier, BaseClusterer)
+        # all classifiers and clusterers implement predict_proba
+        if method == "predict_proba" and isinstance(est, ALWAYS_HAVE_PREDICT_PROBA):
+            return True
+        return get_tag(est, "capability:pred_int", False)
+    # skip transform for forecasters that have it - pipelines
+    if method == "transform" and isinstance(est, BaseForecaster):
+        return False
+    return True

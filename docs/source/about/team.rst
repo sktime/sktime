@@ -19,8 +19,6 @@ Community Council
      - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
-   * - Markus Löning
-     - :user:`mloning`
    * - Martin Walter
      - :user:`aiwalter`
 
@@ -37,8 +35,6 @@ Code of Conduct Committee
      - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
-   * - Markus Löning
-     - :user:`mloning`
    * - Martina Vilas
      - :user:`martinagvilas`
 
@@ -56,26 +52,32 @@ Core Developers
      - :user:`TonyBagnall`
    * - Chris Holder
      - :user:`chrisholder`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
+   * - Daniel Bartling
+     - :user:`danbartl`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
    * - George Oastler
      - :user:`goastler`
-   * - Markus Löning
-     - :user:`mloning`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - James Large
      - :user:`james-large`
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
    * - Lovkush Agarwal
      - :user:`lovkush-a`
-   * - Martin Walter
-     - :user:`aiwalter`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
+   * - Markus Löning
+     - :user:`mloning`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
+   * - Martin Walter
+     - :user:`aiwalter`
+   * - Patrick Schäfer
+     - :user:`patrickzib`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 
@@ -97,5 +99,7 @@ Former Core Developers (inactive)
      - :user:`matteogales`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
    * -
      - :user:`big-o`

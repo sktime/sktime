@@ -6,11 +6,6 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-.. automodule:: sktime.forecasting
-    :no-members:
-    :no-inherited-members:
-
-
 Base
 ----
 
@@ -32,6 +27,7 @@ Naive
     :template: class.rst
 
     NaiveForecaster
+    NaiveVariance
 
 Trend
 -----
@@ -44,6 +40,7 @@ Trend
 
     TrendForecaster
     PolynomialTrendForecaster
+    STLForecaster
 
 Exponential Smoothing
 ---------------------
@@ -75,6 +72,17 @@ ARIMA
 
     AutoARIMA
     ARIMA
+
+StatsForecast
+-------------
+
+.. currentmodule:: sktime.forecasting.statsforecast
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    StatsForecastAutoARIMA
 
 Theta
 -----
@@ -215,3 +223,25 @@ Model Evaluation (Backtesting)
     :template: function.rst
 
     evaluate
+
+VAR (Vector Autoregression)
+---------------------------
+
+.. currentmodule:: sktime.forecasting.var
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VAR
+
+SARIMAX
+----------
+
+.. currentmodule:: sktime.forecasting.sarimax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SARIMAX

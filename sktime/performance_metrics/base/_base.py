@@ -15,7 +15,11 @@ class BaseMetric(BaseObject):
     Extends sktime BaseObject.
     """
 
-    def __init__(self, func, name=None):
+    def __init__(
+        self,
+        func,
+        name=None,
+    ):
         self.func = func
         self.name = name if name is not None else func.__name__
 

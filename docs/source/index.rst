@@ -6,6 +6,7 @@ Welcome to sktime
 
   A unified framework for machine learning with time series
 
+
 Mission
 =======
 
@@ -16,8 +17,8 @@ Scope
 =====
 
 sktime features a unified interface for multiple time series learning tasks.
-Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>` and :ref:`time series regression <regression_ref>`.
-We have experimental support for time series clustering and time series annotation.
+Currently, we support :ref:`forecasting <forecasting_ref>`, :ref:`time series classification <classification_ref>`, :ref:`time series regression <regression_ref>` and :ref:`time series clustering <clustering_ref>`.
+We have experimental support for time series annotation.
 
 Features:
 
@@ -40,6 +41,7 @@ Contents
 
    get_started
    users
+   installation
    api_reference
    get_involved
    developers
@@ -64,7 +66,7 @@ Contents
 
     ---
 
-    Users
+    User Guide
     ^^^^^
 
     Find user documentation.
@@ -73,7 +75,21 @@ Contents
 
     .. link-button:: users
             :type: ref
-            :text: Users
+            :text: User Guide
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+
+    Installation
+    ^^^^^
+
+    Installation Guide.
+
+    +++
+
+    .. link-button:: installation
+            :type: ref
+            :text: Installation
             :classes: btn-block btn-secondary stretched-link
 
     ---

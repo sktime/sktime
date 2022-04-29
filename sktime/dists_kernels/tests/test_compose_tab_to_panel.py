@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Testes for tabular-to-panel distance aggregation/reduction."""
 import numpy as np
+
+from sktime.datatypes import convert_to
 from sktime.dists_kernels.compose_tab_to_panel import AggrDist
 from sktime.dists_kernels.scipy_dist import ScipyDist
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.registry import all_estimators
+from sktime.utils._testing.panel import make_transformer_problem
 
 PAIRWISE_TRANSFORMERS_TAB = all_estimators(
     estimator_types="transformer-pairwise", return_names=False
@@ -23,37 +26,28 @@ AGGFUNCS = [
 ]
 
 
-X1_num_pan = make_transformer_problem(
-    n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=True
-)
-X2_num_pan = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=True
-)
-
 X1_list_df = make_transformer_problem(
     n_instances=4, n_columns=4, n_timepoints=5, random_state=1, return_numpy=False
 )
 X2_list_df = make_transformer_problem(
-    n_instances=5, n_columns=5, n_timepoints=5, random_state=2, return_numpy=False
+    n_instances=5, n_columns=4, n_timepoints=5, random_state=2, return_numpy=False
 )
 
-X1_num_df = np.array(X1_list_df)
-X2_num_df = np.array(X2_list_df)
+X1_num_pan = convert_to(X1_list_df, to_type="numpy3D")
+X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
 
 
 def test_aggr():
+    """Test that AggrDist produces expected pre-computed result on fixtures."""
     # test 3d numpy
     _run_aggr_dist_test(X1_num_pan, X2_num_pan)
 
     # test list of df
     _run_aggr_dist_test(X1_list_df, X2_list_df)
 
-    # test numpy of df
-    _run_aggr_dist_test(X1_num_df, X2_num_df)
-
 
 def _run_aggr_dist_test(x, y):
-    # default parameters
+    # default parametersc
     default_params = AggrDist(transformer=ScipyDist())
     default_params_transformation = np.around(
         (default_params.transform(x, y)), decimals=3
@@ -62,10 +56,10 @@ def _run_aggr_dist_test(x, y):
     assert np.array_equal(
         np.array(
             [
-                [1.649, 1.525, 1.518, 1.934, 1.636],
-                [1.39, 1.395, 1.313, 1.617, 1.418],
-                [1.492, 1.489, 1.323, 1.561, 1.437],
-                [1.559, 1.721, 1.544, 1.589, 1.642],
+                [1.714, 1.49, 1.53, 1.699, 1.849],
+                [1.479, 1.36, 1.358, 1.476, 1.471],
+                [1.553, 1.476, 1.354, 1.523, 1.425],
+                [1.641, 1.704, 1.603, 1.698, 1.37],
             ]
         ),
         default_params_transformation,
