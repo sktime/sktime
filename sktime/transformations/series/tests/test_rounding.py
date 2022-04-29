@@ -20,10 +20,17 @@ y_ = make_forecasting_problem()
         "raise_ValueError_on_invalid_parameter_round_to_multiple",
         "raise_ValueError_on_invalid_parameter_round_to_list",
         "raise_ValueError_on_invalid_parameter_round_to_dp",
+        "raise_ValueError_on_invalid_parameter_round_to_list_not_list",
     ],
 )
 def test_discretiser_raises_error(parameter_set):
+    """Test that Discretizer raises ValueError on invalid parameters.
 
+    Parameters
+    ----------
+    parameter_set : str
+        string defining set of parameters in class's `get_test_params` method.
+    """
     # get params
     testparams = Discretizer.get_test_params(parameter_set)
 
@@ -36,7 +43,13 @@ def test_discretiser_raises_error(parameter_set):
     ["airline_round_to_multiple_and_dp", "airline_round_to_list_and_multiple"],
 )
 def test_discretiser_raises_warning(parameter_set):
+    """Test the warning raised when multiple args passed.
 
+    Parameters
+    ----------
+    parameter_set : str
+        string defining set of parameters in class's `get_test_params` method.
+    """
     # get params
     testparams = Discretizer.get_test_params(parameter_set)
 
