@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
+from typing import Tuple
+
 import numpy as np
 from numba import njit
 
@@ -88,7 +90,7 @@ def dba(
 @njit(fastmath=True)
 def _dba_update(
     center: np.ndarray, X: np.ndarray, path_callable: DistanceAlignmentPathCallable
-) -> tuple[np.ndarray, float]:
+) -> Tuple[np.ndarray, float]:
     """Perform an update iteration for dba.
 
     Parameters
