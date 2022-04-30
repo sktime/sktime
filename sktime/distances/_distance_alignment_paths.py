@@ -7,7 +7,7 @@ import numpy as np
 from numba import njit
 
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True)
 def compute_min_return_path(
     cost_matrix: np.ndarray, bounding_matrix: np.ndarray
 ) -> List[Tuple]:
