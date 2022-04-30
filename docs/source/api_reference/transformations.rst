@@ -318,6 +318,16 @@ Outlier detection
 Composition
 ~~~~~~~~~~~
 
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TransformerPipeline
+    FeatureUnion
+    FitInTransform
+
 .. currentmodule:: sktime.transformations.series.compose
 
 .. autosummary::
