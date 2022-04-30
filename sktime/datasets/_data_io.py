@@ -430,10 +430,8 @@ def load_from_tsfile_to_dataframe(
     class_val_list = []
     line_num = 0
 
-    if not full_file_path_and_name.endswith(".ts"):
-        full_file_path_and_name += ".ts"
+    full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".ts")
 
-    print(full_file_path_and_name)
 
     # Parse the file
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
@@ -1830,6 +1828,15 @@ def load_tsf_to_dataframe(
 
         return loaded_data, metadata
 
+def ensure_file_has_extension(
+    path: str,
+    suffix: str
+    ) -> str:
+
+    if not path.endswith(suffix):
+        path += suffix
+
+    return path
 
 def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
