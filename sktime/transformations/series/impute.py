@@ -70,9 +70,14 @@ class Imputer(BaseTransformer):
     --------
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = Imputer(method="drift")
-    >>> y_hat = transformer.fit_transform(y)
+    >>> transformer.fit(y_train)
+    Imputer(..)
+    >>> y_test.iloc[3] = np.nan
+    >>> y_hat = transformer.transform(y_test)
     """
 
     _tags = {
