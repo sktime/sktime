@@ -1,109 +1,142 @@
 # -*- coding: utf-8 -*-
 """Tests for DBA."""
-
-import time
-
-from tslearn.barycenters import (
-    dtw_barycenter_averaging,
-    dtw_barycenter_averaging_petitjean,
-)
+import numpy as np
 
 from sktime.clustering.metrics.averaging import dba
 from sktime.distances.tests._utils import create_test_distance_numpy
 
-
-def _tslearn_time(X_train, callable):
-    X = X_train.copy()
-    X = X.reshape((X.shape[0], X.shape[2], X.shape[1]))
-    start = time.time()
-    callable(X, max_iter=10)
-    total = time.time() - start
-    return total
-
-
-def _timing_exper(X_train):
-
-    start = time.time()
-    dba(X_train)
-    sktime_dba = time.time() - start
-
-    tslearn_paj = _tslearn_time(X_train, dtw_barycenter_averaging_petitjean)
-    tslearn_reg = _tslearn_time(X_train, dtw_barycenter_averaging)
-
-    return sktime_dba, tslearn_paj, tslearn_reg
+expected_dba = np.array(
+    [
+        [
+            0.01351105,
+            -0.08112161,
+            0.04063662,
+            -0.06867308,
+            -0.13887883,
+            -0.34044035,
+            0.22315302,
+            -0.16004842,
+            0.20959644,
+            0.16023767,
+        ],
+        [
+            -0.030493,
+            0.16787085,
+            -0.01794528,
+            -0.15615568,
+            0.18888089,
+            0.02650418,
+            0.03522746,
+            -0.02563329,
+            0.09055917,
+            -0.11046538,
+        ],
+        [
+            0.12595717,
+            -0.03616803,
+            0.28522336,
+            0.1962002,
+            -0.05161538,
+            0.27548387,
+            0.10042834,
+            -0.01536394,
+            -0.13741457,
+            0.07508204,
+        ],
+        [
+            0.23330467,
+            0.23283218,
+            -0.17851012,
+            0.07599822,
+            0.0644743,
+            -0.22862958,
+            -0.05794768,
+            -0.16609387,
+            -0.1236426,
+            -0.10906081,
+        ],
+        [
+            0.16857703,
+            -0.24448901,
+            0.08663198,
+            0.00258875,
+            0.01033525,
+            -0.29918156,
+            -0.05027093,
+            0.14333835,
+            0.21959808,
+            -0.07099129,
+        ],
+        [
+            0.11509088,
+            0.12175909,
+            -0.15255715,
+            0.37132895,
+            -0.03063229,
+            -0.00922786,
+            0.2053414,
+            0.10990122,
+            -0.10940058,
+            -0.11656546,
+        ],
+        [
+            -0.06796261,
+            -0.09069732,
+            -0.01097365,
+            -0.14447324,
+            -0.2444549,
+            0.32982661,
+            0.32280882,
+            -0.04148224,
+            0.30133403,
+            -0.32354776,
+        ],
+        [
+            -0.10985453,
+            0.20238667,
+            0.47766167,
+            -0.0645197,
+            0.16300204,
+            -0.18033383,
+            -0.18312481,
+            0.01220449,
+            -0.03722065,
+            0.11640757,
+        ],
+        [
+            0.07424704,
+            -0.2824533,
+            0.15604098,
+            0.35578053,
+            -0.06797368,
+            -0.01689053,
+            0.29127062,
+            0.14293372,
+            -0.02831629,
+            -0.17414547,
+        ],
+        [
+            -0.09329966,
+            -0.0284073,
+            0.23789267,
+            -0.06377485,
+            -0.01545654,
+            0.09896634,
+            -0.29903917,
+            0.0294299,
+            -0.13441741,
+            0.18484228,
+        ],
+    ]
+)
 
 
 def test_dba():
-    """Test dba."""
-    X_train = create_test_distance_numpy(100, 100, 100, random_state=2)
+    """Test dba functionality."""
+    X_train = create_test_distance_numpy(10, 10, 10)
 
-    # time_path(X_train)
+    average_ts = dba(X_train)
 
-    result = _timing_exper(X_train)
-    print("\n")  # noqa: T001
-    print(f"sktime: {result[0]}")  # noqa: T001
-    print(f"tslearn paj: {result[1]}")  # noqa: T001
-    print(f"tslearn reg: {result[2]}")  # noqa: T001
-
-
-def test_plot():
-    """Plot dba."""
-    import matplotlib.pyplot as plt
-    import numpy
-    from tslearn.datasets import CachedDatasets
-
-    # fetch the example data set
-    numpy.random.seed(0)
-    X_train, y_train, _, _ = CachedDatasets().load_dataset("Trace")
-    # tslearn_X = X_train[y_train == 2]
-
-    tslearn_X = X_train
-    length_of_sequence = tslearn_X.shape[1]
-
-    sktime_X = tslearn_X.copy()
-    sktime_X = sktime_X.reshape(
-        (sktime_X.shape[0], sktime_X.shape[2], sktime_X.shape[1])
-    )
-
-    def plot_helper(barycenter):
-        # plot all points of the data set
-        for series in sktime_X:
-            plt.plot(series.ravel(), "k-", alpha=0.2)
-        # plot the given barycenter of them
-        plt.plot(barycenter.ravel(), "r-", linewidth=2)
-
-    # plot the four variants with the same number of iterations and a tolerance of
-    # 1e-3 where applicable
-    ax1 = plt.subplot()
-
-    plt.subplot(4, 1, 1, sharex=ax1)
-    plt.title("Sktime DBA (using dtw)")
-    plot_helper(dba(sktime_X, distance_metric="dtw", medoids_distance_metric="dtw"))
-
-    plt.subplot(4, 1, 2, sharex=ax1)
-    plt.title("Sktime DBA (using wdtw)")
-    plot_helper(dba(sktime_X, distance_metric="wdtw", medoids_distance_metric="wdtw"))
-
-    plt.subplot(4, 1, 3, sharex=ax1)
-    plt.title("Sktime DBA (using lcss)")
-    plot_helper(dba(sktime_X, distance_metric="lcss", medoids_distance_metric="lcss"))
-
-    plt.subplot(4, 1, 4, sharex=ax1)
-    plt.title("Sktime DBA (using msm)")
-    plot_helper(dba(sktime_X, distance_metric="msm"))
-
-    # test = medoids(sktime_X)
-    # plt.subplot(4, 1, 2, sharex=ax1)
-    # plt.title("Medoids algo")
-    # plot_helper(medoids(sktime_X.copy(0)))
-    #
-    # plt.subplot(4, 1, 4, sharex=ax1)
-    # plt.title("Tslearn DBA")
-    # plot_helper(dtw_barycenter_averaging_petitjean(tslearn_X))
-
-    # clip the axes for better readability
-    ax1.set_xlim([0, length_of_sequence])
-
-    # show the plot(s)
-    plt.tight_layout()
-    plt.show()
+    assert isinstance(average_ts, np.ndarray)
+    assert average_ts.shape == X_train[0].shape
+    assert np.allclose(average_ts, expected_dba)
