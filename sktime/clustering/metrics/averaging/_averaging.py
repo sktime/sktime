@@ -5,7 +5,6 @@ __author__ = ["chrisholder", "TonyBagnall"]
 from typing import Callable
 
 import numpy as np
-from numba import njit
 
 from sktime.clustering.metrics.averaging._dba import dba
 
