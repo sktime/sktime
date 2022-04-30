@@ -819,12 +819,12 @@ def twe_distance(
     >>> x_1d = np.array([1, 2, 3, 4])  # 1d array
     >>> y_1d = np.array([5, 6, 7, 8])  # 1d array
     >>> twe_distance(x_1d, y_1d)
-    58.0
+    16.006
 
     >>> x_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])  # 2d array
     >>> y_2d = np.array([[9, 10, 11, 12], [13, 14, 15, 16]])  # 2d array
     >>> twe_distance(x_2d, y_2d)
-    512.0
+    25.80598987322334
 
     References
     ----------
