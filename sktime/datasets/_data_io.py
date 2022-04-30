@@ -429,6 +429,12 @@ def load_from_tsfile_to_dataframe(
     instance_list = []
     class_val_list = []
     line_num = 0
+
+    if not full_file_path_and_name.endswith(".ts"):
+        full_file_path_and_name += ".ts"
+
+    print(full_file_path_and_name)
+
     # Parse the file
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         for line in file:
