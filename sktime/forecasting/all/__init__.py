@@ -90,7 +90,6 @@ from sktime.forecasting.compose import (
 )
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
     CutoffSplitter,
