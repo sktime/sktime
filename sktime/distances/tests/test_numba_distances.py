@@ -38,7 +38,7 @@ def _validate_distance_result(
     x: np.ndarray
         First time series.
     y: np.ndarray
-        Second time series.
+        Second timeseries.
     metric_str: str
         Metric string name.
     distance_factory: Callable
