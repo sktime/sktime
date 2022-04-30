@@ -51,8 +51,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        self.aligner_ = clone(self.aligner)
-        aligner = self.aligner_
+        aligner = clone(self.aligner)
 
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,

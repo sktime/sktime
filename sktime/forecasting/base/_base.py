@@ -33,11 +33,11 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 
 __all__ = ["BaseForecaster"]
 
-from contextlib import contextmanager
+from copy import deepcopy
 from warnings import warn
 
 import numpy as np
@@ -170,6 +170,27 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
+    def __or__(self, other):
+        """Magic | method, return MultiplexForecaster.
+
+        Implemented for `other` being either a MultiplexForecaster or a forecaster.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster or sktime MultiplexForecaster
+
+        Returns
+        -------
+        MultiplexForecaster object
+        """
+        from sktime.forecasting.compose import MultiplexForecaster
+
+        if isinstance(other, MultiplexForecaster) or isinstance(other, BaseForecaster):
+            multiplex_self = MultiplexForecaster([self])
+            return multiplex_self | other
+        else:
+            return NotImplemented
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -220,6 +241,8 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
+        # if fit is called, object is reset
+        self.reset()
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -748,6 +771,7 @@ class BaseForecaster(BaseEstimator):
         cv=None,
         X=None,
         update_params=True,
+        reset_forecaster=True,
     ):
         """Make predictions and update model iteratively over the test set.
 
@@ -760,11 +784,13 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
-        Writes to self:
+        Writes to self, if reset_forecaster=False:
             Update self._y and self._X with `y` and `X`, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
+
+        Does not update state if reset_forecaster=True.
 
         Parameters
         ----------
@@ -795,6 +821,13 @@ class BaseForecaster(BaseEstimator):
                 X.index must contain y.index and fh.index both
             there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optional (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
@@ -815,6 +848,7 @@ class BaseForecaster(BaseEstimator):
             cv=cv,
             X=X_inner,
             update_params=update_params,
+            reset_forecaster=reset_forecaster,
         )
 
     def update_predict_single(
@@ -1382,24 +1416,6 @@ class BaseForecaster(BaseEstimator):
         cutoff_idx = get_cutoff(y, self.cutoff)
         self._cutoff = cutoff_idx
 
-    @contextmanager
-    def _detached_cutoff(self):
-        """Detached cutoff mode.
-
-        When in detached cutoff mode, the cutoff can be updated but will
-        be reset to the initial value after leaving the detached cutoff mode.
-
-        This is useful during rolling-cutoff forecasts when the cutoff needs
-        to be repeatedly reset, but afterwards should be restored to the
-        original value.
-        """
-        cutoff = self.cutoff  # keep initial cutoff
-        try:
-            yield
-        finally:
-            # re-set cutoff to initial value
-            self._set_cutoff(cutoff)
-
     @property
     def fh(self):
         """Forecasting horizon that was passed."""
@@ -1550,7 +1566,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -1917,7 +1933,7 @@ class BaseForecaster(BaseEstimator):
             pred_var = pd.DataFrame(vars_dict)
 
             # check whether column format was "nameless", set it to RangeIndex then
-            if pred_var.columns == "Coverage":
+            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
                 pred_var.columns = pd.RangeIndex(1)
 
         return pred_var
@@ -1984,15 +2000,47 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    def _predict_moving_cutoff(self, y, cv, X=None, update_params=True):
+    def _predict_moving_cutoff(
+        self, y, cv, X=None, update_params=True, reset_forecaster=True
+    ):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        cv : temporal cross-validation generator, optional (default=None)
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain y.index and fh.index both
+            there are no restrictions on number of columns (unlike for y)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optional (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
@@ -2002,55 +2050,38 @@ class BaseForecaster(BaseEstimator):
         y_preds = []
         cutoffs = []
 
-        # enter into a detached cutoff mode
-        with self._detached_cutoff():
-            # set cutoff to time point before data
-            self._set_cutoff(_shift(y.index[0], by=-1))
-            # iterate over data
-            for new_window, _ in cv.split(y):
-                y_new = y.iloc[new_window]
+        # enter into a detached cutoff mode, if reset_forecaster is True
+        if reset_forecaster:
+            self_copy = deepcopy(self)
+        # otherwise just work with a reference to self
+        else:
+            self_copy = self
 
-                # we use `update_predict_single` here
-                #  this updates the forecasting horizon
-                y_pred = self.update_predict_single(
-                    y=y_new,
-                    fh=fh,
-                    X=X,
-                    update_params=update_params,
-                )
-                y_preds.append(y_pred)
-                cutoffs.append(self.cutoff)
+        # set cutoff to time point before data
+        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        # iterate over data
+        for new_window, _ in cv.split(y):
+            y_new = y.iloc[new_window]
 
-                for i in range(len(y_preds)):
-                    y_preds[i] = convert_to(
-                        y_preds[i],
-                        self._y_mtype_last_seen,
-                        store=self._converter_store_y,
-                        store_behaviour="freeze",
-                    )
-        return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
-    # TODO: remove in v0.11.0
-    def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
-        name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha, name="alpha")
-        alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-        pred_int_old_format = [
-            pd.DataFrame(
-                {
-                    "lower": pred_int_new[(name, a, "lower")],
-                    "upper": pred_int_new[(name, a, "upper")],
-                }
+            # we use `update_predict_single` here
+            #  this updates the forecasting horizon
+            y_pred = self_copy.update_predict_single(
+                y=y_new,
+                fh=fh,
+                X=X,
+                update_params=update_params,
             )
-            for a in alphas
-        ]
+            y_preds.append(y_pred)
+            cutoffs.append(self_copy.cutoff)
 
-        # for a single alpha, return single pd.DataFrame
-        if len(alphas) == 1:
-            return pred_int_old_format[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int_old_format
+            for i in range(len(y_preds)):
+                y_preds[i] = convert_to(
+                    y_preds[i],
+                    self._y_mtype_last_seen,
+                    store=self._converter_store_y,
+                    store_behaviour="freeze",
+                )
+        return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
