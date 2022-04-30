@@ -25,7 +25,7 @@ Mandatory implements:
 
 Optional implements:
     updating                    - _update(self, y, X=None, update_params=True).
-                                - Madatory to for compositions, see e.g. STLForecaster
+                                - Mandatory to for compositions, see e.g. STLForecaster
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
