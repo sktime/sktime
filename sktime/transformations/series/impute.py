@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Utilities to impute series with missing values."""
+"""Transformer to impute missing values in series."""
 
 __author__ = ["aiwalter"]
 __all__ = ["Imputer"]
@@ -30,25 +30,39 @@ class Imputer(BaseTransformer):
         Method to fill the missing values values.
 
         * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
-        * "linear" : linear interpolation, by pd.Series.interpolate()
-        * "nearest" : use nearest value, by pd.Series.interpolate()
+            first, X in transform() is filled with ffill then bfill
+            then PolynomialTrendForecaster is fitted to filled X, and
+            predict values are queried at indices which had missing values
+        * "linear" : linear interpolation, uses pd.Series.interpolate()
+        * "nearest" : use nearest value, uses pd.Series.interpolate()
         * "constant" : same constant value (given in arg value) for all NaN
-        * "mean" : pd.Series.mean() of fit data
-        * "median" : pd.Series.median() of fit data
+        * "mean" : pd.Series.mean() of *fit* data
+        * "median" : pd.Series.median() of *fit* data
         * "backfill" ot "bfill" : adapted from pd.Series.fillna()
         * "pad" or "ffill" : adapted from pd.Series.fillna()
-        * "random" : random values between pd.Series.min() and .max() of fit data
-        * "forecaster" : use an sktime Forecaster, given in param forecaster
+        * "random" : random values between pd.Series.min() and .max() of *fit* data
+            if pd.Series dtype is int, sample is uniform discrete
+            if pd.Series dtype is float, sample is uniform continuous
+        * "forecaster" : use an sktime Forecaster, given in param forecaster.
+            First, X in *fit* is filled with ffill then bfill
+            then forecaster is fitted to filled X, and *predict* values are queried
+            at indices of X data in *transform* which had missing values
+        For the following methods, the train data is used to fit them:
+        "drift", "mean", "median", "random". For all other methods, the
+        transform data is sufficient to compute the impute values.
 
     missing_values : int/float/str, default=None
         The placeholder for the missing values. All occurrences of
-        missing_values will be imputed. If None then np.nan is used.
+        missing_values will be imputed, in addition to np.nan.
+        If None, then only np.nan values are imputed.
     value : int/float, default=None
         Value to use to fill missing values when method="constant".
     forecaster : Any Forecaster based on sktime.BaseForecaster, default=None
         Use a given Forecaster to impute by insample predictions when
         method="forecaster". Before fitting, missing data is imputed with
-        method="ffill" or "bfill" as heuristic.
+        method="ffill" or "bfill" as heuristic. in case of multivariate X,
+        the forecaster is applied separete to each column like a
+        ColumnEnsembleForecaster.
     random_state : int/float/str, optional
         Value to set random.seed() if method="random", default None
 
@@ -194,10 +208,26 @@ class Imputer(BaseTransformer):
         return X
 
     def _check_method(self):
+        method = self.method
+        if method not in [
+            "mean",
+            "drift",
+            "linear",
+            "nearest",
+            "constant",
+            "median",
+            "backfill",
+            "bfill",
+            "pad",
+            "ffill",
+            "random",
+            "forecaster",
+        ]:
+            raise ValueError(f"Given method {method} is not an allowed method.")
         if (
             self.value is not None
-            and self.method != "constant"
-            or self.method == "constant"
+            and method != "constant"
+            or method == "constant"
             and self.value is None
         ):
             raise ValueError(
@@ -206,8 +236,8 @@ class Imputer(BaseTransformer):
             )
         elif (
             self.forecaster is not None
-            and self.method != "forecaster"
-            or self.method == "forecaster"
+            and method != "forecaster"
+            or method == "forecaster"
             and self.forecaster is None
         ):
             raise ValueError(
@@ -290,8 +320,19 @@ class Imputer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
         return [
+            {"method": "drift"},
+            {"method": "linear"},
+            {"method": "nearest"},
             {"method": "constant", "value": 1},
+            {"method": "median"},
+            {"method": "backfill"},
+            {"method": "bfill"},
+            {"method": "pad"},
+            {"method": "random"},
+            {"method": "forecaster", "forecaster": ExponentialSmoothing()},
         ]
 
 
