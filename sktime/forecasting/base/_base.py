@@ -813,7 +813,8 @@ class BaseForecaster(BaseEstimator):
             For further details:
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
-        cv : temporal cross-validation generator
+        cv : temporal cross-validation generator, e.g. a splitter like
+                SlidingWindowSplitter or ExpandingWindowSplitter
         X : time series in sktime compatible format, optional (default=None)
                 Exogeneous time series for updating and forecasting
             Should be of same scitype (Series, Panel, or Hierarchical) as y
