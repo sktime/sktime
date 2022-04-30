@@ -69,12 +69,6 @@ jobs:
       - name: Install conda libpython
         run: conda install -c anaconda libpython
 
-      - name: Install conda dependencies
-        run: |
-          conda install -c anaconda "pystan==2.19.1.1"
-          conda install -c conda-forge "prophet>=1.0"
-          conda install -c anaconda scipy matplotlib
-
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
 
