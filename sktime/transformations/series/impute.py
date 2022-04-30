@@ -75,7 +75,7 @@ class Imputer(BaseTransformer):
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> transformer = Imputer(method="drift")
     >>> transformer.fit(y_train)
-    Imputer(..)
+    Imputer(...)
     >>> y_test.iloc[3] = np.nan
     >>> y_hat = transformer.transform(y_test)
     """
