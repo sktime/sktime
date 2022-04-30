@@ -10,6 +10,6 @@ __all__ = [
     "_PmdArimaAdapter",
 ]
 
+from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
 from sktime.forecasting.base.adapters._statsmodels import _StatsModelsAdapter
 from sktime.forecasting.base.adapters._tbats import _TbatsAdapter
-from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
