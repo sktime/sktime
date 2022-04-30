@@ -137,8 +137,8 @@ def test_kmeans():
         assert np.count_nonzero(val == 1.0) == 1
 
 
-def test_kmeans_t():
-    """Test implementation of Kmeans."""
+def test_kmeans_dba():
+    """Test implementation of Kmeans using dba."""
     X_train, y_train = load_basic_motions(split="train")
     X_test, y_test = load_basic_motions(split="test")
 
