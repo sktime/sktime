@@ -22,10 +22,12 @@ How to use this implementation template to implement a new estimator:
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
+    updating        - _update(self, y, X=None, update_params=True).
+                    - Only mandatory to for compositions, see e.g.  STLForecaster
 
 Optional implements:
     updating                    - _update(self, y, X=None, update_params=True).
-                                - Mandatory to for compositions, see e.g. STLForecaster
+                                - Only optional for non-compositions
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
