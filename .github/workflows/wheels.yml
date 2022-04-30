@@ -100,7 +100,6 @@ jobs:
           conda install -c anaconda "pystan==2.19.1.1"
           conda install -c conda-forge "prophet>=1.0"
           conda install -c anaconda scipy
-          conda install -c conda-forge matplotlib
 
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
