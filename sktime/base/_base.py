@@ -442,6 +442,9 @@ class BaseObject(_BaseEstimator):
 
         This *excludes* the blue-print-like components passed in the __init__.
 
+        Caution: this method returns *references* and not *copies*.
+            Writing to the reference will change the respective attribute of self.
+
         Parameters
         ----------
         base_class : class, optional, default=None, must be subclass of BaseObject
