@@ -14,7 +14,6 @@ __author__ = ["mloning", "kkoralturk", "khrapovs"]
 
 import inspect
 import numbers
-from sys import meta_path
 import warnings
 from inspect import signature
 from typing import Generator, Optional, Tuple, Union
