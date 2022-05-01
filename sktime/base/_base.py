@@ -437,18 +437,30 @@ class BaseObject(_BaseEstimator):
 
         return composite
 
-    def _components(self):
+    def _components(self, base_class=None):
         """Retirn references to all state changing BaseObject type attributes.
 
         This *excludes* the blue-print-like components passed in the __init__.
 
+        Parameters
+        ----------
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if not None, sub-sets return dict to only descendants of base_class
+
         Returns
         -------
-        list of references to BaseObject descendants
-        list contains all attributes of self that inherit from BaseObjects, and:
+        dict with key = attribute name, value = reference to that BaseObject attribute
+        dict contains all attributes of self that inherit from BaseObjects, and:
             whose names do not contain the string "__", e.g., hidden attributes
             are not class attributes, and are not hyper-parameters (__init__ args)
         """
+        if base_class is None:
+            base_class = BaseObject
+        if base_class is not None and not inspect.isclass(base_class):
+            raise TypeError(f"base_class must be a class, but found {type(base_class)}")
+        if base_class is not None and not issubclass(base_class, BaseObject):
+            raise TypeError("base_class must be a subclass of BaseObject")
+
         # retrieve parameter names to exclude them later
         param_names = self.get_params(deep=False).keys()
 
@@ -459,7 +471,7 @@ class BaseObject(_BaseEstimator):
 
         comp_dict = {x: getattr(self, x) for x in self_attrs}
         comp_dict = {
-            x : y for (x, y) in comp_dict.items() if isinstance(y, BaseObject)
+            x: y for (x, y) in comp_dict.items() if isinstance(y, base_class)
         }
 
         return comp_dict
