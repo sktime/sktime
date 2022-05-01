@@ -643,12 +643,12 @@ class BaseEstimator(TagAliaserMixin, BaseObject):
         super(BaseEstimator, self).__init__()
 
     @property
-    @delegate_if_needed
+    @delegate_if_needed()
     def is_fitted(self):
         """Whether `fit` has been called."""
         return self._is_fitted
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def check_is_fitted(self):
         """Check if the estimator has been fitted.
 

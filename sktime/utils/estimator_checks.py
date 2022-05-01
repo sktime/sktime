@@ -5,7 +5,7 @@ __author__ = ["fkiraly", "miraep8"]
 __all__ = ["check_estimator", "delegate_if_needed"]
 
 
-def delegate_if_needed(func):
+def delegate_if_needed(return_self=False):
     """Check that func is supported by the delegated estimator type.
 
     Intended to be used as a decorator.
@@ -21,23 +21,38 @@ def delegate_if_needed(func):
     TypeError if the func is not included in the list of methods supported by
         self._delegate_name
     """
-    from copy import deepcopy
 
-    def inner(*args, **kwargs):
-        self = args[0]
-        estimator = self._get_delegate()
-        valid_calls = dir(estimator)
-        if func.__name__ in valid_calls:
-            new_args = list(deepcopy(args))
-            new_args[0] = estimator
-            return func(*tuple(new_args), **kwargs)
-        else:
-            raise TypeError(
-                f"{func.__name__} is not supported for estimators of type"
-                f" {type(self._delegate_name)}"
-            )
+    def decorator(func):
+        from copy import deepcopy
 
-    return inner
+        attributes_to_copy = ["_is_fitted", "_y", "_cutoff"]
+
+        def inner(*args, **kwargs):
+            self = args[0]
+            if self._delegate_name:
+                estimator = self
+                while estimator._delegate_name:
+                    estimator = estimator._get_delegate()
+                valid_calls = dir(estimator)
+                if func.__name__ not in valid_calls:
+                    raise TypeError(
+                        f"{func.__name__} is not supported for estimators of type"
+                        f" {type(self._delegate_name)}"
+                    )
+                new_args = list(deepcopy(args))
+                new_args[0] = estimator
+                func_return = func(*tuple(new_args), **kwargs)
+                for attr in attributes_to_copy:
+                    if hasattr(estimator, attr):
+                        setattr(self, attr, getattr(estimator, attr))
+                if return_self:
+                    return self
+                return func_return
+            return func(*args, **kwargs)
+
+        return inner
+
+    return decorator
 
 
 def check_estimator(

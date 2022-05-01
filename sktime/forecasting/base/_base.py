@@ -192,7 +192,7 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
-    @delegate_if_needed
+    @delegate_if_needed(return_self=True)
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -273,7 +273,7 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def predict(
         self,
         fh=None,
@@ -334,7 +334,7 @@ class BaseForecaster(BaseEstimator):
 
         return y_out
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def fit_predict(self, y, X=None, fh=None):
         """Fit and forecast time series at future horizon.
 
@@ -412,7 +412,7 @@ class BaseForecaster(BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 
@@ -484,7 +484,7 @@ class BaseForecaster(BaseEstimator):
 
         return quantiles
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def predict_interval(
         self,
         fh=None,
@@ -562,7 +562,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def predict_var(self, fh=None, X=None, cov=False):
         """Compute/return variance forecasts.
 
@@ -633,7 +633,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_var
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
@@ -699,7 +699,7 @@ class BaseForecaster(BaseEstimator):
 
         return pred_dist
 
-    @delegate_if_needed
+    @delegate_if_needed(return_self=True)
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
 
@@ -774,7 +774,7 @@ class BaseForecaster(BaseEstimator):
 
         return self
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def update_predict(
         self,
         y,
@@ -861,7 +861,7 @@ class BaseForecaster(BaseEstimator):
             reset_forecaster=reset_forecaster,
         )
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def update_predict_single(
         self,
         y=None,
@@ -950,7 +950,7 @@ class BaseForecaster(BaseEstimator):
             update_params=update_params,
         )
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def predict_residuals(self, y=None, X=None):
         """Return residuals of time series forecasts.
 
@@ -1025,7 +1025,7 @@ class BaseForecaster(BaseEstimator):
 
         return y_res
 
-    @delegate_if_needed
+    @delegate_if_needed()
     def score(self, y, X=None, fh=None):
         """Scores forecast against ground truth, using MAPE.
 
@@ -1390,7 +1390,6 @@ class BaseForecaster(BaseEstimator):
         return y_pred
 
     @property
-    @delegate_if_needed
     def cutoff(self):
         """Cut-off = "present time" state of forecaster.
 
@@ -1431,13 +1430,6 @@ class BaseForecaster(BaseEstimator):
         self._cutoff = cutoff_idx
 
     @property
-    @delegate_if_needed
-    def y(self):
-        """Return y that was passed."""
-        return self._y
-
-    @property
-    @delegate_if_needed
     def fh(self):
         """Forecasting horizon that was passed."""
         # raise error if some method tries to accessed it before it has been set

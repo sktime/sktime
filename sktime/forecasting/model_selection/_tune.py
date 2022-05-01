@@ -54,7 +54,6 @@ class BaseGridSearch(BaseForecaster):
         self.scoring = scoring
         self.verbose = verbose
         self.return_n_best_forecasters = return_n_best_forecasters
-        self.best_forecaster_ = forecaster
         super(BaseGridSearch, self).__init__()
         tags_to_clone = [
             "requires-fh-in-fit",
@@ -66,6 +65,7 @@ class BaseGridSearch(BaseForecaster):
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
+        self.best_forecaster_ = forecaster
         self.clone_tags(forecaster, tags_to_clone)
 
     def score(self, y, X=None, fh=None):
@@ -249,6 +249,7 @@ class BaseGridSearch(BaseForecaster):
             # Save score
             score = results[f"mean_{scoring_name}"].iloc[i]
             self.n_best_scores_.append(score)
+        self._is_fitted = True
 
         return self
 
