@@ -15,6 +15,7 @@ __all__ = [
     "erp_distance",
     "msm_distance",
     "lcss_distance",
+    "twe_distance",
     "LowerBounding",
     "dtw_alignment_path",
     "ddtw_alignment_path",
@@ -26,6 +27,7 @@ __all__ = [
     "edr_alignment_path",
     "distance_alignment_path_factory",
     "distance_alignment_path",
+    "twe_alignment_path",
 ]
 
 from sktime.distances._distance import (
@@ -48,6 +50,8 @@ from sktime.distances._distance import (
     msm_distance,
     pairwise_distance,
     squared_distance,
+    twe_alignment_path,
+    twe_distance,
     wddtw_alignment_path,
     wddtw_distance,
     wdtw_alignment_path,
