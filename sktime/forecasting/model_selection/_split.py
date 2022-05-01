@@ -14,6 +14,7 @@ __author__ = ["mloning", "kkoralturk", "khrapovs"]
 
 import inspect
 import numbers
+from sys import meta_path
 import warnings
 from inspect import signature
 from typing import Generator, Optional, Tuple, Union
@@ -24,7 +25,7 @@ from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
-from sktime.datatypes import check_is_scitype, convert, convert_to
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.datatypes._utilities import get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
@@ -612,9 +613,10 @@ class BaseSplitter(BaseObject):
             )
         if not y_valid:
             raise TypeError(msg)
-        mtype = y_metadata["mtype"]
 
-        y_inner = convert(y, from_type=mtype, to_type=PANDAS_MTYPES)
+        y_inner = convert_to(y, to_type=PANDAS_MTYPES)
+
+        mtype = y_metadata["mtype"]
 
         return y_inner, mtype
 
