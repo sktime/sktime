@@ -75,6 +75,11 @@ class CNNClassifier(BaseDeepClassifier):
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
+        In sktime, time series are stored in numpy arrays of shape (d,m), where d
+        is the number of dimensions, m is the series length. Keras/tensorflow assume
+        data is in shape (m,d). This method also assumes (m,d). Transpose should
+        happen in fit.
+
         Parameters
         ----------
         input_shape : tuple
@@ -111,20 +116,10 @@ class CNNClassifier(BaseDeepClassifier):
 
         Parameters
         ----------
-        X : np.ndarray of shape = (n_instances, n_dimensions, series_length)
+        X : np.ndarray of shape = (n_instances (n), n_dimensions (d), series_length (m))
             The training input samples.
-        y : np.ndarray of shape = [n_instances]
+        y : np.ndarray of shape n
             The training data class labels.
-        input_checks : boolean
-            whether to check the X and y parameters
-        validation_X : np.ndarray of shape = (n_instances, n_dimensions, series_length)
-            The validation samples.
-            Unless strictly defined by the user via callbacks (such as
-            EarlyStopping), the presence or state of the validation
-            data does not alter training in any way. Predictions at each epoch
-            are stored in the model's fit history.
-        validation_y : np.ndarray of shape = [n_instances]
-            The validation class labels.
 
         Returns
         -------
