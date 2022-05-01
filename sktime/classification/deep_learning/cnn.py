@@ -68,8 +68,8 @@ class CNNClassifier(BaseDeepClassifier):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.verbose = verbose
-        self.loss = (loss,)
-        self.metrics = (metrics,)
+        self.loss = loss
+        self.metrics = metrics
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
