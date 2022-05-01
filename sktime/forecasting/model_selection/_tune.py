@@ -20,7 +20,7 @@ from sktime.utils.validation.forecasting import check_scoring
 
 class BaseGridSearch(BaseForecaster):
 
-    _delegate_name = "best_forecaster_"
+    _delegate_name = "forecaster"
 
     _tags = {
         "scitype:y": "both",
@@ -65,7 +65,6 @@ class BaseGridSearch(BaseForecaster):
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
-        self.best_forecaster_ = forecaster
         self.clone_tags(forecaster, tags_to_clone)
 
     def score(self, y, X=None, fh=None):
