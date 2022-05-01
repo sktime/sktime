@@ -174,7 +174,6 @@ if __name__ == "__main__":
         )
     else:
         clst = TimeSeriesKMedoids(
-            average_params={"averaging_distance_metric": distance},
             metric=distance,
             distance_params=parameters,
             n_clusters=len(set(train_Y)),
