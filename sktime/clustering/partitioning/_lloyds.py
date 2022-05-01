@@ -402,18 +402,6 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
                         f"Converged at iteration {i}: strict convergence."
                     )
                 break
-            elif old_labels is not None:
-                # No strict convergence, check for tol based convergence.
-                center_shift = pairwise_distance(
-                    labels, old_labels, metric=self._distance_metric
-                ).sum()
-                if center_shift <= self.tol:
-                    if self.verbose:
-                        print(  # noqa: T001
-                            f"Converged at iteration {i}: inertia "
-                            f"{inertia} within tolerance {self.tol}."
-                        )
-                    break
             old_labels = labels
 
             cluster_centres = self._compute_new_cluster_centers(X, labels)
