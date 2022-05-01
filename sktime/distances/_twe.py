@@ -10,54 +10,27 @@ from numba.core.errors import NumbaWarning
 
 from sktime.distances._distance_alignment_paths import compute_min_return_path
 from sktime.distances.base import DistanceCallable, NumbaDistance
-from sktime.distances.base._types import DistanceAlignmentPathCallable
 from sktime.distances.lower_bounding import resolve_bounding_matrix
 
 # Warning occurs when using large time series (i.e. 1000x1000)
 warnings.simplefilter("ignore", category=NumbaWarning)
 
 
-class _DtwDistance(NumbaDistance):
-    r"""Dynamic time warping (dtw) between two time series.
+class _TweDistance(NumbaDistance):
+    """Time Warp Edit (TWE) distance between two time series.
 
-    DTW is the most widely researched and used elastic distance measure. It mitigates
-    distortions in the time axis by realligning (warping) the series to best match
-    each other. A good background into DTW can be found in [1]. For two series
-    :math:'\mathbf{a}=\{a_1,a_2,\ldots,a_m\}' and :math:'\mathbf{b}=\{b_1,b_2,\ldots,
-    b_m\}',  (assumed equal length for simplicity), DTW first calculates  :math:'M(
-    \mathbf{a},\mathbf{b})', the :math:'m \times m'
-    pointwise distance matrix between series :math:'\mathbf{a}' and :math:'\mathbf{b}',
-    where :math:'M_{i,j}=   (a_i-b_j)^2'. A warping path
-    .. math::  P=<(e_1,f_1),(e_2,f_2),\ldots, (e_s,f_s)>
-    is a set of pairs of indices that  define a traversal of matrix :math:'M'. A
-    valid warping path must start at location :math:'(1,1)' and end at point :math:'(
-    m,m)' and not backtrack, i.e. :math:'0 \leq e_{i+1}-e_{i} \leq 1' and :math:'0
-    \leq f_{i+1}- f_i \leq 1' for all :math:'1< i < m'. The DTW distance between
-    series is the path through :math:'M' that minimizes the total distance. The
-    distance for any path :math:'P' of length :math:'s' is
-    .. math::  D_P(\mathbf{a},\mathbf{b}, M) =\sum_{i=1}^s M_{e_i,f_i}.
-    If :math:'\mathcal{P}' is the space of all possible paths, the DTW path :math:'P^*'
-    is the path that has the minimum distance, hence the DTW distance between series is
-    .. math::  d_{dtw}(\mathbf{a}, \mathbf{b}) =D_{P*}(\mathbf{a},\mathbf{b}, M).
-    The optimal warping path $P^*$ can be found exactly through a dynamic programming
-    formulation. This can be a time consuming operation, and it is common to put a
-    restriction on the amount of warping allowed. This is implemented through
-    the bounding_matrix structure, that supplies a mask for allowable warpings.
-    Common bounding strategies include the Sakoe-Chiba band [2] and the Itakura
-    parallelogram [3]. The Sakoe-Chiba band creates a warping path window that has
-    the same width along the diagonal of :math:'M'. The Itakura paralleogram allows
-    for less warping at the start or end of the series than in the middle.
+    The Time Warp Edit (TWE) distance is a distance measure for discrete time series
+    matching with time 'elasticity'. In comparison to other distance measures, (e.g.
+    DTW (Dynamic Time Warping) or LCS (Longest Common Subsequence Problem)), TWE is a
+    metric. Its computational time complexity is O(n^2), but can be drastically reduced
+    in some specific situation by using a corridor to reduce the search space. Its
+    memory space complexity can be reduced to O(n). It was first proposed in [1].
 
     References
     ----------
-    ..[1] Ratanamahatana C and Keogh E.: Three myths about dynamic time warping data
-    mining Proceedings of 5th SIAM International Conference on Data Mining, 2005
-    ..[2] Sakoe H. and Chiba S.: Dynamic programming algorithm optimization for
-    spoken word recognition. IEEE Transactions on Acoustics, Speech, and Signal
-    Processing 26(1):43–49, 1978
-    ..[3] Itakura F: Minimum prediction residual principle applied to speech
-    recognition. IEEE Transactions on Acoustics, Speech, and Signal Processing 23(
-    1):67–72, 1975
+    ..[1] Marteau, P.; F. (2009). "Time Warp Edit Distance with Stiffness Adjustment
+    for Time Series Matching". IEEE Transactions on Pattern Analysis and Machine
+    Intelligence. 31 (2): 306–318.
     """
 
     def _distance_alignment_path_factory(
@@ -68,12 +41,15 @@ class _DtwDistance(NumbaDistance):
         window: float = None,
         itakura_max_slope: float = None,
         bounding_matrix: np.ndarray = None,
+        lmbda: float = 1.0,
+        nu: float = 0.001,
+        p: int = 2,
         **kwargs: Any
-    ) -> DistanceAlignmentPathCallable:
-        """Create a no_python compiled dtw path distance callable.
+    ) -> DistanceCallable:
+        """Create a no_python compiled twe distance callable.
 
         Series should be shape (d, m), where d is the number of dimensions, m the series
-        length. Series can be different lengths.
+        length.
 
         Parameters
         ----------
@@ -94,81 +70,13 @@ class _DtwDistance(NumbaDistance):
             are ignored. The matrix should be structure so that indexes considered in
             bound should be the value 0. and indexes outside the bounding matrix should
             be infinity.
-        kwargs: any
-            extra kwargs.
-
-        Returns
-        -------
-        Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, float]]
-            No_python compiled Dtw distance path callable.
-
-        Raises
-        ------
-        ValueError
-            If the input time series are not numpy array.
-            If the input time series do not have exactly 2 dimensions.
-            If the sakoe_chiba_window_radius is not an integer.
-            If the itakura_max_slope is not a float or int.
-        """
-        _bounding_matrix = resolve_bounding_matrix(
-            x, y, window, itakura_max_slope, bounding_matrix
-        )
-
-        if return_cost_matrix is True:
-
-            @njit(cache=True)
-            def numba_dtw_distance_alignment_path(
-                _x: np.ndarray,
-                _y: np.ndarray,
-            ) -> Tuple[List, float, np.ndarray]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                return path, cost_matrix[-1, -1], cost_matrix
-
-        else:
-
-            @njit(cache=True)
-            def numba_dtw_distance_alignment_path(
-                _x: np.ndarray,
-                _y: np.ndarray,
-            ) -> Tuple[List, float]:
-                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
-                path = compute_min_return_path(cost_matrix, _bounding_matrix)
-                return path, cost_matrix[-1, -1]
-
-        return numba_dtw_distance_alignment_path
-
-    def _distance_factory(
-        self,
-        x: np.ndarray,
-        y: np.ndarray,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        **kwargs: Any
-    ) -> DistanceCallable:
-        """Create a no_python compiled dtw distance callable.
-
-        Series should be shape (d, m), where d is the number of dimensions, m the series
-        length. Series can be different lengths.
-
-        Parameters
-        ----------
-        x: np.ndarray (2d array of shape (d,m1)).
-            First time series.
-        y: np.ndarray (2d array of shape (d,m2)).
-            Second time series.
-        window: Float, defaults = None
-            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
-            lower bounding). Must be between 0 and 1.
-        itakura_max_slope: float, defaults = None
-            Gradient of the slope for itakura parallelogram (if using Itakura
-            Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
-            Custom bounding matrix to use. If defined then other lower_bounding params
-            are ignored. The matrix should be structure so that indexes considered in
-            bound should be the value 0. and indexes outside the bounding matrix should
-            be infinity.
+        lmbda: float, defaults = 1.0
+            A constant penalty that punishes the editing efforts. Must be >= 1.0.
+        nu: float, defaults = 0.001
+            A non-negative constant which characterizes the stiffness of the elastic
+            twe measure. Must be > 0.
+        p: int, defaults = 2
+            Order of the p-norm for local cost.
         kwargs: any
             extra kwargs.
 
@@ -189,24 +97,157 @@ class _DtwDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
+        if return_cost_matrix is True:
+
+            @njit(cache=True)
+            def numba_twe_distance_alignment_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+            ) -> Tuple[List, float, np.ndarray]:
+                cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
+                return path, cost_matrix[-1, -1], cost_matrix
+
+        else:
+
+            @njit(cache=True)
+            def numba_twe_distance_alignment_path(
+                _x: np.ndarray,
+                _y: np.ndarray,
+            ) -> Tuple[List, float]:
+                cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
+                path = compute_min_return_path(cost_matrix, _bounding_matrix)
+                return path, cost_matrix[-1, -1]
+
+        return numba_twe_distance_alignment_path
+
+    def _distance_factory(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        window: float = None,
+        itakura_max_slope: float = None,
+        bounding_matrix: np.ndarray = None,
+        lmbda: float = 1.0,
+        nu: float = 0.001,
+        p: int = 2,
+        **kwargs: Any
+    ) -> DistanceCallable:
+        """Create a no_python compiled twe distance callable.
+
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length.
+
+        Parameters
+        ----------
+        x: np.ndarray (2d array of shape (d,m1)).
+            First time series.
+        y: np.ndarray (2d array of shape (d,m2)).
+            Second time series.
+        window: Float, defaults = None
+            Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+            lower bounding). Must be between 0 and 1.
+        itakura_max_slope: float, defaults = None
+            Gradient of the slope for itakura parallelogram (if using Itakura
+            Parallelogram lower bounding). Must be between 0 and 1.
+        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+            Custom bounding matrix to use. If defined then other lower_bounding params
+            are ignored. The matrix should be structure so that indexes considered in
+            bound should be the value 0. and indexes outside the bounding matrix should
+            be infinity.
+        lmbda: float, defaults = 1.0
+            A constant penalty that punishes the editing efforts. Must be >= 1.0.
+        nu: float, defaults = 0.001
+            A non-negative constant which characterizes the stiffness of the elastic
+            twe measure. Must be > 0.
+        p: int, defaults = 2
+            Order of the p-norm for local cost.
+        kwargs: any
+            extra kwargs.
+
+        Returns
+        -------
+        Callable[[np.ndarray, np.ndarray], float]
+            No_python compiled Dtw distance callable.
+
+        Raises
+        ------
+        ValueError
+            If the input time series are not numpy array.
+            If the input time series do not have exactly 2 dimensions.
+            If the sakoe_chiba_window_radius is not an integer.
+            If the itakura_max_slope is not a float or int.
+        """
+        x = pad_ts(x)
+        y = pad_ts(y)
+        _bounding_matrix = resolve_bounding_matrix(
+            x, y, window, itakura_max_slope, bounding_matrix
+        )
+
         @njit(cache=True)
-        def numba_dtw_distance(
+        def numba_twe_distance(
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix)
+            cost_matrix = _twe_cost_matrix(_x, _y, _bounding_matrix, lmbda, nu, p)
             return cost_matrix[-1, -1]
 
-        return numba_dtw_distance
+        return numba_twe_distance
 
 
 @njit(cache=True)
-def _cost_matrix(
+def pow_minkowski(x: np.ndarray, y: np.ndarray, p: int):
+    """Compute the powered Minkowski distance.
+
+    Parameters
+    ----------
+    x: np.ndarray (2d array of shape dxm1).
+        First time series.
+    y: np.ndarray (2d array of shape dxm1).
+        Second time series.
+    p: int
+        Order of the p-norm for local cost.
+
+    Returns
+    -------
+    float
+        Powered minkowski distance.
+    """
+    cost = np.sum(np.power(np.abs(x - y), p))
+    return np.power(cost, 1.0 / p)
+
+
+@njit(cache=True)
+def pad_ts(x: np.ndarray) -> np.ndarray:
+    """Pad the time with a 0.0 at the start.
+
+    Parameters
+    ----------
+    x: np.ndarray (of shape (d, m))
+        A time series.
+
+    Returns
+    -------
+    np.ndarray
+        A padded time series of shape (d, m + 1)
+    """
+    padded_x = np.zeros((x.shape[0], x.shape[1] + 1))
+    zero_arr = np.array([0.0])
+    for i in range(x.shape[0]):
+        padded_x[i, :] = np.concatenate((zero_arr, x[i, :]))
+    return padded_x
+
+
+@njit(cache=True)
+def _twe_cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
     bounding_matrix: np.ndarray,
+    lmbda: float,
+    nu: float,
+    p: int,
 ) -> np.ndarray:
-    """Dtw distance compiled to no_python.
+    """Twe distance compiled to no_python.
 
     Series should be shape (d, m), where d is the number of dimensions, m the series
     length. Series can be different lengths.
@@ -220,27 +261,55 @@ def _cost_matrix(
     bounding_matrix: np.ndarray (2d array of shape m1xm2)
         Bounding matrix where the index in bound finite values (0.) and indexes
         outside bound points are infinite values (non finite).
+    lmbda: float
+        A constant penalty that punishes the editing efforts. Must be >= 1.0.
+    nu: float
+        A non-negative constant which characterizes the stiffness of the elastic
+        TWE measure. Must be > 0.
+    p: int
+        Order of the p-norm for local cost.
 
     Returns
     -------
     cost_matrix: np.ndarray (of shape (n, m) where n is the len(x) and m is len(y))
         The dtw cost matrix.
     """
-    dimensions = x.shape[0]
+    x = pad_ts(x)
+    y = pad_ts(y)
     x_size = x.shape[1]
     y_size = y.shape[1]
-    cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
-    cost_matrix[0, 0] = 0.0
 
-    for i in range(x_size):
-        for j in range(y_size):
+    cost_matrix = np.zeros((x_size, y_size))
+    cost_matrix[0, 1:] = np.inf
+    cost_matrix[1:, 0] = np.inf
+
+    delete_addition = nu + lmbda
+
+    for i in range(1, x_size):
+        for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                sum = 0
-                for k in range(dimensions):
-                    sum += (x[k][i] - y[k][j]) ** 2
-                cost_matrix[i + 1, j + 1] = sum
-                cost_matrix[i + 1, j + 1] += min(
-                    cost_matrix[i, j + 1], cost_matrix[i + 1, j], cost_matrix[i, j]
+                # Deletion in x
+                del_x = (
+                    cost_matrix[i - 1, j]
+                    + pow_minkowski(x[:, i - 1], x[:, i], p=p)
+                    + delete_addition
                 )
 
-    return cost_matrix[1:, 1:]
+                # Deletion in y
+                del_y = (
+                    cost_matrix[i, j - 1]
+                    + pow_minkowski(y[:, j - 1], y[:, j], p=p)
+                    + delete_addition
+                )
+
+                # Keep data points in both time series
+                match = (
+                    cost_matrix[i - 1, j - 1]
+                    + pow_minkowski(x[:, i], y[:, j], p=p)
+                    + pow_minkowski(x[:, i - 1], y[:, j - 1], p=p)
+                    + nu
+                )
+
+                # Choose the operation with the minimal cost and update DP Matrix
+                cost_matrix[i, j] = min(del_x, del_y, match)
+    return cost_matrix
