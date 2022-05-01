@@ -2118,7 +2118,7 @@ def distance_alignment_path_factory(
     """Produce a distance alignment path factory numba callable.
 
     First the distance metric is 'resolved'. This means the metric that is passed
-    is resolved to a callable. The callable is then called with x and y and the
+    is resolved to callable. The callable is then called with x and y and the
     value is then returned.
 
     Parameters
