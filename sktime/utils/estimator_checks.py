@@ -25,11 +25,10 @@ def delegate_if_needed(return_self=False):
     def decorator(func):
         from copy import deepcopy
 
-        attributes_to_copy = ["_is_fitted", "_y", "_cutoff"]
-
         def inner(*args, **kwargs):
             self = args[0]
             if self._delegate_name:
+                attributes_to_copy = self.attr_to_copy
                 estimator = self
                 while estimator._delegate_name:
                     estimator = estimator._get_delegate()

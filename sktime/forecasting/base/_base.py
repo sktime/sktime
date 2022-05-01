@@ -95,6 +95,8 @@ class BaseForecaster(BaseEstimator):
         "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
+    attr_to_copy = ["_is_fitted", "_y", "_cutoff", "_fh"]
+
     def __init__(self):
         self._is_fitted = False
 

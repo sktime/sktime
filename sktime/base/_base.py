@@ -631,6 +631,7 @@ class BaseEstimator(TagAliaserMixin, BaseObject):
     """
 
     _delegate_name = None
+    _attr_to_copy = []
 
     def _get_delegate(self):
         est = self
