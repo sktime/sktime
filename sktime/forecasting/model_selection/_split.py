@@ -441,7 +441,8 @@ class BaseSplitter(BaseObject):
             train_test_res = dict()
             train_iloc = dict()
             test_iloc = dict()
-            y_index_df = y.drop(y.columns, axis=1).reset_index(-1)
+            y = pd.DataFrame(index=y_index)
+            y_index_df = y.reset_index(-1)
             y_index_df["__index"] = range(len(y_index_df))
             y_index_inst = y_index_df.index.unique()
             for idx in y_index_inst:
