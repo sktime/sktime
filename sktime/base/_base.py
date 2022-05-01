@@ -470,9 +470,7 @@ class BaseObject(_BaseEstimator):
         self_attrs = set(attrs).difference(cls_attrs).difference(param_names)
 
         comp_dict = {x: getattr(self, x) for x in self_attrs}
-        comp_dict = {
-            x: y for (x, y) in comp_dict.items() if isinstance(y, base_class)
-        }
+        comp_dict = {x: y for (x, y) in comp_dict.items() if isinstance(y, base_class)}
 
         return comp_dict
 
