@@ -69,14 +69,6 @@ class BaseObject(_BaseEstimator):
     Extends scikit-learn's BaseEstimator to include sktime interface for tags.
     """
 
-    _delegate_name = None
-
-    def _get_delegate(self):
-        est = self
-        while est._delegate_name:
-            est = getattr(est, est._delegate_name)
-        return est
-
     def __init__(self):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
@@ -637,6 +629,14 @@ class BaseEstimator(TagAliaserMixin, BaseObject):
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.
     """
+
+    _delegate_name = None
+
+    def _get_delegate(self):
+        est = self
+        while est._delegate_name:
+            est = getattr(est, est._delegate_name)
+        return est
 
     def __init__(self):
         self._is_fitted = False
