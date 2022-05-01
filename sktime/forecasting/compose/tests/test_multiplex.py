@@ -93,7 +93,6 @@ def test_multiplex_with_grid_search():
         forecaster=multiplex_forecaster,
     )
     gscv.fit(y)
-    gscv.predict([1, 2, 3])
     gscv_best_name = gscv.best_forecaster_.selected_forecaster
     best_name = _score_forecasters(forecasters, cv, y)
     assert gscv_best_name == best_name
