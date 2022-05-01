@@ -109,18 +109,6 @@ class MultiplexForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             cls_type=BaseForecaster,
             clone_ests=False,
         )
-
-        self._set_forecaster()
-        # self.clone_tags(self.forecaster_)
-        # self.set_tags(**{"fit_is_empty": False})
-
-        self.forecasters = forecasters
-        self.forecasters_ = self._check_estimators(
-            forecasters,
-            attr_name="forecasters",
-            cls_type=BaseForecaster,
-            clone_ests=False,
-        )
         self._set_forecaster()
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
