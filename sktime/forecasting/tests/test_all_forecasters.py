@@ -555,7 +555,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check that _y and cutoff is updated during fit
         f.fit(y_train, fh=FH0)
-        # assert isinstance(f.y, pd.Series)
+        # assert isinstance(f._y, pd.Series)
         # action:uncomments the line above
         # why: fails for multivariates cause they are DataFrames
         # solution: look for a general solution for Series and DataFrames
