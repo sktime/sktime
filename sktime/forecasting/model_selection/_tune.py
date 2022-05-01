@@ -154,7 +154,6 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        super(ForecastingGridSearchCV, self).fit(y, X, fh)
         cv = check_cv(self.cv)
 
         scoring = check_scoring(self.scoring)
