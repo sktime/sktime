@@ -437,6 +437,33 @@ class BaseObject(_BaseEstimator):
 
         return composite
 
+    def _components(self):
+        """Retirn references to all state changing BaseObject type attributes.
+
+        This *excludes* the blue-print-like components passed in the __init__.
+
+        Returns
+        -------
+        list of references to BaseObject descendants
+        list contains all attributes of self that inherit from BaseObjects, and:
+            whose names do not contain the string "__", e.g., hidden attributes
+            are not class attributes, and are not hyper-parameters (__init__ args)
+        """
+        # retrieve parameter names to exclude them later
+        param_names = self.get_params(deep=False).keys()
+
+        # retrieve all attributes that are BaseObject descendants
+        attrs = [attr for attr in dir(self) if "__" not in attr]
+        cls_attrs = [attr for attr in dir(type(self))]
+        self_attrs = set(attrs).difference(cls_attrs).difference(param_names)
+
+        comp_dict = {x: getattr(self, x) for x in self_attrs}
+        comp_dict = {
+            x : y for (x, y) in comp_dict.items() if isinstance(y, BaseObject)
+        }
+
+        return comp_dict
+
 
 class TagAliaserMixin:
     """Mixin class for tag aliasing and deprecation of old tags.
