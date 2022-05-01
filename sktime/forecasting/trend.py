@@ -463,7 +463,7 @@ class STLForecaster(BaseForecaster):
             self._y_mtype_last_seen = mtype_last_seen
         else:
             self._stl = _STL(
-                y.values,
+                self._y.values,
                 period=self.sp,
                 seasonal=self.seasonal,
                 trend=self.trend,
@@ -477,17 +477,13 @@ class STLForecaster(BaseForecaster):
                 low_pass_jump=self.low_pass_jump,
             ).fit(inner_iter=self.inner_iter, outer_iter=self.outer_iter)
 
-            self.seasonal_ = pd.Series(self._stl.seasonal, index=y.index)
-            self.resid_ = pd.Series(self._stl.resid, index=y.index)
-            self.trend_ = pd.Series(self._stl.trend, index=y.index)
+            self.seasonal_ = pd.Series(self._stl.seasonal, index=self._y.index)
+            self.resid_ = pd.Series(self._stl.resid, index=self._y.index)
+            self.trend_ = pd.Series(self._stl.trend, index=self._y.index)
 
             self.forecaster_seasonal_.update(
-                y=self.seasonal_, X=X, update_params=update_params
+                y=self.seasonal_, X=self._X, update_params=False
             )
-            self.forecaster_trend_.update(
-                y=self.trend_, X=X, update_params=update_params
-            )
-            self.forecaster_resid_.update(
-                y=self.resid_, X=X, update_params=update_params
-            )
+            self.forecaster_trend_.update(y=self.trend_, X=self._X, update_params=False)
+            self.forecaster_resid_.update(y=self.resid_, X=self._X, update_params=False)
         return self

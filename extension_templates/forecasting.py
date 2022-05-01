@@ -22,12 +22,9 @@ How to use this implementation template to implement a new estimator:
 Mandatory implements:
     fitting         - _fit(self, y, X=None, fh=None)
     forecasting     - _predict(self, fh=None, X=None)
-    updating        - _update(self, y, X=None, update_params=True).
-                    - Only mandatory to for compositions, see e.g.  STLForecaster
 
 Optional implements:
-    updating                    - _update(self, y, X=None, update_params=True).
-                                - Only optional for non-compositions
+    updating                    - _update(self, y, X=None, update_params=True)
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
     predicting variance         - _predict_var(self, fh, X=None, cov=False)
@@ -206,7 +203,10 @@ class MyForecaster(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
-        private _update containing the core logic, called from update
+        Private _update() containing the core logic, called from update().
+        This method is mandatory for compositions (forecasters that use
+        internally other forecaster(s) to create predictions), see
+        e.g. STLForecaster.
 
         State required:
             Requires state to be "fitted".
@@ -238,9 +238,22 @@ class MyForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-
         # implement here
         # IMPORTANT: avoid side effects to X, fh
+
+        # for compositions, implement a case distinction for update_params:
+        if update_params:
+            # we need to overwrite the mtype last seen, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
+            # refit with updated data, not only passed data
+            self.fit(y=self._y, X=self._X, fh=self._fh)
+            self._y_mtype_last_seen = mtype_last_seen
+        else:
+            # call update() of the inner forecaster(s) here
+            # and set update_params=False (see e.g. STLForecaster)
+            # IMPORTANT: Give self._y and self._X to inner forecaster(s)
+            self.my_inner_forecaster_.update(y=self._y, X=self._X, update_params=False)
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update_predict_single method
