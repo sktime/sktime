@@ -420,7 +420,9 @@ class BaseSplitter(BaseObject):
         Parameters
         ----------
         y : pd.Index or time series in sktime compatible time series format (any)
-            Time series to split, or index of time series to split
+            Index of time series to split, or time series to split
+            If time series, considered as index of equivalent pandas type container:
+                pd.DataFrame, pd.Series, pd-multiindex, or pd_multiindex_hier mtype
 
         Yields
         ------
@@ -507,16 +509,24 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Series or pd.Index
-            Time series to split
+        y : pd.Index or time series in sktime compatible time series format (any)
+            Time series to split, or index of time series to split
 
         Yields
         ------
-        train : np.ndarray
-            Training window indices, iloc references to training indices in y
-        test : np.ndarray
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
             Test window indices, iloc references to test indices in y
         """
+        if not isinstance(y, pd.Index):
+            y = convert_to(y, to_type=PANDAS_MTYPES)
+            y_index = y.index
+        else:
+            y_index = y
+
+        for train, test in self.split(y_index):
+            yield y_index[train], y_index[test]
 
     def split_series(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Split `y` into training and test windows.
