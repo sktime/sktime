@@ -401,6 +401,8 @@ class TimeSeriesLloyds(BaseClusterer, ABC):
                         f"Converged at iteration {i}: strict convergence."
                     )
                 break
+            old_labels = labels
+
             cluster_centres = self._compute_new_cluster_centers(X, labels)
 
             if self.verbose is True:
