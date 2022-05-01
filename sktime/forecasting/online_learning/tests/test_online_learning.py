@@ -6,19 +6,20 @@
 __author__ = ["magittan"]
 
 import numpy as np
-from sktime.datasets import load_airline
-from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
-    NormalHedgeEnsemble,
-    NNLSEnsemble,
-)
-from sktime.forecasting.online_learning._online_ensemble import (
-    OnlineEnsembleForecaster,
-)
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.naive import NaiveForecaster
 from sklearn.metrics import mean_squared_error
+
+from sktime.datasets import load_airline
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.model_selection import (
+    SlidingWindowSplitter,
+    temporal_train_test_split,
+)
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.online_learning._online_ensemble import OnlineEnsembleForecaster
+from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
+    NNLSEnsemble,
+    NormalHedgeEnsemble,
+)
 
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 
@@ -69,7 +70,7 @@ def test_weights_for_airline_normal_hedge():
     )
 
     forecaster.fit(y_train)
-    forecaster.update_predict(y=y_test, cv=cv)
+    forecaster.update_predict(y=y_test, cv=cv, reset_forecaster=False)
 
     expected = np.array([0.17077154, 0.48156709, 0.34766137])
     np.testing.assert_allclose(forecaster.weights, expected, atol=1e-8)
@@ -92,7 +93,7 @@ def test_weights_for_airline_nnls():
     )
 
     forecaster.fit(y_train)
-    forecaster.update_predict(y=y_test, cv=cv)
+    forecaster.update_predict(y=y_test, cv=cv, reset_forecaster=False)
 
     expected = np.array([0.04720766, 0, 1.03410876])
     np.testing.assert_allclose(forecaster.weights, expected, atol=1e-8)
