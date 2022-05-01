@@ -778,12 +778,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 estimator, attr
             ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
 
-        _ = scenario.run(estimator_instance, method_sequence=["fit"])
+        fitted_estimator = scenario.run(estimator_instance, method_sequence=["fit"])
 
         # Check 0s_fitted attribute is updated correctly to False after calling fit
         for attr in attrs:
             assert getattr(
-                estimator, attr
+                fitted_estimator, attr
             ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
     def test_fit_returns_self(self, estimator_instance, scenario):
@@ -856,13 +856,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         original_params = deepcopy(params)
 
         # Fit the model
-        assert not estimator.is_fitted
-        _ = scenario.run(estimator_instance, method_sequence=["fit"])
-        assert estimator.is_fitted
+        fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
         # Compare the state of the model parameters with the original parameters
-        new_params = estimator.get_params()
+        new_params = fitted_est.get_params()
         for param_name, original_value in original_params.items():
-            assert param_name in new_params
             new_value = new_params[param_name]
 
             # We should never change or mutate the internal state of input
