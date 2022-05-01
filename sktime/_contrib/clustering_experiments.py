@@ -101,7 +101,7 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    clusterer = "kmeans"
+    clusterer = "kmedoids"
     chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
 
@@ -163,14 +163,23 @@ if __name__ == "__main__":
         parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
     else:
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
-    clst = TimeSeriesKMeans(
-        averaging_method="mean",
-        average_params={"averaging_distance_metric": distance},
-        metric=distance,
-        distance_params=parameters,
-        n_clusters=len(set(train_Y)),
-        random_state=resample + 1,
-    )
+    if clusterer == "kmeans":
+        clst = TimeSeriesKMeans(
+            averaging_method="mean",
+            average_params={"averaging_distance_metric": distance},
+            metric=distance,
+            distance_params=parameters,
+            n_clusters=len(set(train_Y)),
+            random_state=resample + 1,
+        )
+    else:
+        clst = TimeSeriesKMedoids(
+            average_params={"averaging_distance_metric": distance},
+            metric=distance,
+            distance_params=parameters,
+            n_clusters=len(set(train_Y)),
+            random_state=resample + 1,
+        )
     run_clustering_experiment(
         train_X,
         clst,
