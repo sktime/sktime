@@ -102,7 +102,7 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     clusterer = "kmeans"
-    chris_config = True  # This is so chris doesn't have to change config each time
+    chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
@@ -130,12 +130,12 @@ if __name__ == "__main__":
         distance = "msm"
     else:  # Local run
         print(" Local Run")
-        dataset = "ElectricDevices"
+        dataset = "UnitTest"
         data_dir = f"../datasets/data/"
         results_dir = "./temp"
         resample = 0
         tf = True
-        distance = "msm"
+        distance = "euclidean"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
