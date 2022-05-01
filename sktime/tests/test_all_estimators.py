@@ -857,6 +857,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # Fit the model
         fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
+
         # Compare the state of the model parameters with the original parameters
         new_params = fitted_est.get_params()
         for param_name, original_value in original_params.items():
