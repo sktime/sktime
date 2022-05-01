@@ -24,7 +24,7 @@ from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
-from sktime.datatypes import convert_to
+from sktime.datatypes import check_is_scitype, convert, convert_to
 from sktime.datatypes._utilities import get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
@@ -431,11 +431,7 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        if not isinstance(y, pd.Index):
-            y = convert_to(y, to_type=PANDAS_MTYPES)
-            y_index = y.index
-        else:
-            y_index = y
+        y_index = self._coerce_to_index(y)
 
         if not isinstance(y_index, pd.MultiIndex):
             for train, test in self._split(y_index):
@@ -519,11 +515,7 @@ class BaseSplitter(BaseObject):
         test : pd.Index
             Test window indices, iloc references to test indices in y
         """
-        if not isinstance(y, pd.Index):
-            y = convert_to(y, to_type=PANDAS_MTYPES)
-            y_index = y.index
-        else:
-            y_index = y
+        y_index = self._coerce_to_index(y)
 
         for train, test in self.split(y_index):
             yield y_index[train], y_index[test]
@@ -533,16 +525,98 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Series or pd.Index
-            Time series to split
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
+            Time series to split, must conform with one of the sktime type conventions.
 
         Yields
         ------
-        train : np.ndarray
-            Training window indices, iloc references to training indices in y
-        test : np.ndarray
-            Test window indices, iloc references to test indices in y
+        train : time series of same sktime mtype as `y`
+            training series in the split
+        test : time series of same sktime mtype as `y`
+            test series in the split
         """
+        y, y_orig_mtype = self._check_y(y)
+
+        for train, test in self.split(y.index):
+            y_train = y.iloc[train]
+            y_test = y.iloc[test]
+            y_train = convert_to(y_train, y_orig_mtype)
+            y_test = convert_to(y_test, y_orig_mtype)
+            yield y_train, y_test
+
+    def _coerce_to_index(self, y):
+        """Check and coerce y to pandas index.
+
+        Parameters
+        ----------
+        y : pd.Index or time series in sktime compatible time series format (any)
+            Index of time series to split, or time series to split
+            If time series, considered as index of equivalent pandas type container:
+                pd.DataFrame, pd.Series, pd-multiindex, or pd_multiindex_hier mtype
+
+        Returns
+        -------
+        y_index : y, if y was pd.Index; otherwise _check_y(y).index
+        """
+        if not isinstance(y, pd.Index):
+            y, _ = self._check_y(y, allow_index=True)
+            y_index = y.index
+        else:
+            y_index = y
+        return y_index
+
+    def _check_y(self, y, allow_index=False):
+        """Check and coerce y to a pandas based mtype.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
+            Time series to check, must conform with one of the sktime type conventions.
+
+        Returns
+        -------
+        y_inner : time series y coerced to one of the sktime pandas based mtypes:
+            pd.DataFrame, pd.Series, pd-multiindex, pd_multiindex_hier
+            returns pd.Series only if y was pd.Series, otherwise a pandas.DataFrame
+        y_mtype : original mtype of y
+
+        Raises
+        ------
+        TypeError if y is not one of the permissible mtypes
+        """
+        if allow_index and isinstance(y, pd.Index):
+            return y, "pd.Index"
+
+        ALLOWED_SCITYPES = ("Series", "Panel", "Hierarchical")
+
+        y_valid, _, y_metadata = check_is_scitype(
+            y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+        )
+        if allow_index:
+            msg = (
+                "y must be a pandas.Index, or a time series in an sktime compatible "
+                "format, of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+        else:
+            msg = (
+                "y must be in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+        if not y_valid:
+            raise TypeError(msg)
+        mtype = y_metadata["mtype"]
+
+        y_inner = convert(y, from_type=mtype, to_type=PANDAS_MTYPES)
+
+        return y_inner, mtype
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
