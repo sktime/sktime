@@ -489,15 +489,15 @@ class BaseSplitter(BaseObject):
 
         Parameters
         ----------
-        y : pd.Index or time series in sktime compatible time series format (any)
+        y : pd.Index or time series in sktime compatible time series format
             Time series to split, or index of time series to split
 
         Yields
         ------
-        training_window : np.ndarray
-            Training window indices
-        test_window : np.ndarray
-            Test window indices
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
         """
         raise NotImplementedError("abstract method")
 
@@ -514,7 +514,7 @@ class BaseSplitter(BaseObject):
         train : pd.Index
             Training window indices, loc references to training indices in y
         test : pd.Index
-            Test window indices, iloc references to test indices in y
+            Test window indices, loc references to test indices in y
         """
         y_index = self._coerce_to_index(y)
 
