@@ -99,7 +99,6 @@ jobs:
         run: |
           conda install -c anaconda -n test -y "pystan==2.19.1.1"
           conda install -c conda-forge -n test -y "prophet>=1.0.0"
-          conda install -c conda-forge -n test -y scipy matplotlib
 
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
