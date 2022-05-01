@@ -252,8 +252,7 @@ class MyForecaster(BaseForecaster):
         else:
             # call update() of the inner forecaster(s) here
             # and set update_params=False (see e.g. STLForecaster)
-            # IMPORTANT: Give self._y and self._X to inner forecaster(s)
-            self.my_inner_forecaster_.update(y=self._y, X=self._X, update_params=False)
+            self.my_inner_forecaster_.update(y=y, X=X, update_params=False)
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _update_predict_single method
