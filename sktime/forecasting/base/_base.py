@@ -1690,11 +1690,8 @@ class BaseForecaster(BaseEstimator):
                 f"{self.__class__.__name__} will update all component cutoffs each time"
                 f" `update` is called with update_params=False."
             )
-            components = self._components()
-            comp_forecasters = [
-                x for x in components.values() if isinstance(x, BaseForecaster)
-            ]
-            for comp in comp_forecasters:
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
                 comp.update(y=y, X=X, update_params=False)
 
         return self
