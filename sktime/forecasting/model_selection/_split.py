@@ -587,7 +587,7 @@ class BaseSplitter(BaseObject):
         if allow_index and isinstance(y, pd.Index):
             return y, "pd.Index"
 
-        ALLOWED_SCITYPES = ("Series", "Panel", "Hierarchical")
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
         y_valid, _, y_metadata = check_is_scitype(
             y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
