@@ -129,6 +129,16 @@ class BaseGridSearch(BaseForecaster):
                 self._get_delegate().check_is_fitted()
 
     def fit(self, y, X=None, fh=None):
+        """Stop the code from delegating fit.
+
+        Will allow all other functions to the delegated forecaster.
+        """
+        self._delegate_name = None
+        super_fit = super(BaseGridSearch, self).fit(y, X=X, fh=fh)
+        self._delegate_name = "best_forecaster_"
+        return super_fit
+
+    def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
@@ -144,6 +154,7 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        super(ForecastingGridSearchCV, self).fit(y, X, fh)
         cv = check_cv(self.cv)
 
         scoring = check_scoring(self.scoring)
@@ -249,7 +260,6 @@ class BaseGridSearch(BaseForecaster):
             # Save score
             score = results[f"mean_{scoring_name}"].iloc[i]
             self.n_best_scores_.append(score)
-        self._is_fitted = True
 
         return self
 
