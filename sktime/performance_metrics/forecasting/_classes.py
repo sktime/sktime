@@ -194,8 +194,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
-        y_true_inner, y_pred_inner, multioutput, multilevel = self._check_ys(
-            y_true, y_pred, multioutput, multilevel
+        y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
+            y_true, y_pred, multioutput, multilevel, **kwargs
         )
         # pass to inner function
         out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
@@ -272,8 +272,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
-        y_true_inner, y_pred_inner, multioutput, multilevel = self._check_ys(
-            y_true, y_pred, multioutput, multilevel
+        y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
+            y_true, y_pred, multioutput, multilevel, **kwargs
         )
         # pass to inner function
         out_df = self._evaluate_by_index(y_true_inner, y_pred_inner, **kwargs)
@@ -397,31 +397,34 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return y_true, y_pred, multioutput, multilevel
 
-    def _check_ys(self, y_true, y_pred, multioutput, multilevel):
+    def _check_ys(self, y_true, y_pred, multioutput, multilevel, **kwargs):
 
         SCITYPES = ["Series", "Panel", "Hierarchical"]
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
-        valid, msg, metadata = check_is_scitype(
-            y_pred, scitype=SCITYPES, return_metadata=True, var_name="y_pred"
-        )
+        def _coerce_to_df(y, var_name="y"):
+            valid, msg, metadata = check_is_scitype(
+                y, scitype=SCITYPES, return_metadata=True, var_name=var_name
+            )
+            if not valid:
+                raise TypeError(msg)
+            y_inner = convert_to(y, to_type=INNER_MTYPES)
 
-        if not valid:
-            raise TypeError(msg)
+            scitype = metadata["scitype"]
+            if scitype in ["Panel", "Hierarchical"]:
+                y_inner = VectorizedDF(y_inner, is_scitype=scitype)
+            return y_inner
 
-        y_pred_inner = convert_to(y_pred, to_type=INNER_MTYPES)
-        y_true_inner = convert_to(y_true, to_type=INNER_MTYPES)
+        y_true_inner = _coerce_to_df(y_true, var_name="y_true")
+        y_pred_inner = _coerce_to_df(y_pred, var_name="y_pred")
+        if "y_train" in kwargs.keys():
+            kwargs["y_train"] = _coerce_to_df(kwargs["y_train"], var_name="y_train")
 
         y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
             y_true_inner, y_pred_inner, multioutput, multilevel
         )
 
-        scitype = metadata["scitype"]
-        if scitype in ["Panel", "Hierarchical"]:
-            y_true_inner = VectorizedDF(y_true_inner, is_scitype=scitype)
-            y_pred_inner = VectorizedDF(y_pred_inner, is_scitype=scitype)
-
-        return y_true_inner, y_pred_inner, multioutput, multilevel
+        return y_true_inner, y_pred_inner, multioutput, multilevel, kwargs
 
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
