@@ -199,7 +199,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
 
-        requires_vectorization = isinstance(y_true, VectorizedDF)
+        requires_vectorization = isinstance(y_true_inner, VectorizedDF)
         if not requires_vectorization:
             # pass to inner function
             out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
@@ -207,7 +207,6 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
-
         return out_df
 
     def _evaluate(self, y_true, y_pred, **kwargs):
@@ -267,6 +266,7 @@ class BaseForecastingErrorMetric(BaseMetric):
                 kwargsi["y_train"] = kwargs["y_train"][i]
             res += self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
         out_df = y_true.reconstruct(res)
+
         return out_df
 
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
