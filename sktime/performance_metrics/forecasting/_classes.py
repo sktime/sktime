@@ -399,13 +399,13 @@ class BaseForecastingErrorMetric(BaseMetric):
         SCITYPES = ["Series", "Panel", "Hierarchical"]
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
-        def _coerce_to_df(self, y, var_name="y"):
+        def _coerce_to_df(y, var_name="y"):
             valid, msg, _ = check_is_scitype(
-                y_true, scitype=SCITYPES, return_metadata=True, var_name=var_name
+                y, scitype=SCITYPES, return_metadata=True, var_name=var_name
             )
             if not valid:
                 raise TypeError(msg)
-            y_inner = convert_to(y_true, to_type=INNER_MTYPES)
+            y_inner = convert_to(y, to_type=INNER_MTYPES)
             return y_inner
 
         y_true_inner = _coerce_to_df(y_true, var_name="y_true")
