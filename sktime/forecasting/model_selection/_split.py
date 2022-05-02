@@ -403,7 +403,6 @@ class BaseSplitter(BaseObject):
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
-
     """
 
     def __init__(
@@ -434,63 +433,17 @@ class BaseSplitter(BaseObject):
         y_index = self._coerce_to_index(y)
 
         if not isinstance(y_index, pd.MultiIndex):
-            for train, test in self._split(y_index):
-                yield train[train >= 0], test[test >= 0]
-
-        # if pd.MultiIndex: apply _split by instance, combine the results
-        # this entire block of code is dedicated to doing that
-        # challenge is obtaining iloc references for *the original data frame*
-        #   todo: try to shorten this, there must be a quicker way
-        # "if isinstance(y_index, pd.MultiIndex):"
+            split = self._split
         else:
-            train_test_res = dict()
-            train_iloc = dict()
-            test_iloc = dict()
-            y = pd.DataFrame(index=y_index)
-            y_index_df = y.reset_index(-1)
-            y_index_df["__index"] = range(len(y_index_df))
-            y_index_inst = y_index_df.index.unique()
-            for idx in y_index_inst:
-                train_iloc[idx] = dict()
-                test_iloc[idx] = dict()
-            for idx in y_index_inst:
-                y_inst = y_index_df.loc[idx]
-                y_inst = y_inst.reset_index(drop=True).set_index(y_inst.columns[0])
-                y_inst_index = y_inst.index
-                train_test_res[idx] = list(self._split(y_inst_index))
-                for i, tt in enumerate(train_test_res[idx]):
-                    train_iloc[idx][i] = tt[0]
-                    test_iloc[idx][i] = tt[1]
-                for i, train in train_iloc[idx].items():
-                    train_iloc[idx][i] = y_inst["__index"].iloc[train].values
-                for i, test in test_iloc[idx].items():
-                    test_iloc[idx][i] = y_inst["__index"].iloc[test].values
+            split = self._split_vectorized
 
-            train_multi = dict()
-            test_multi = dict()
-            for idx in y_index_inst:
-                for i in train_iloc[idx].keys():
-                    if i not in train_multi.keys():
-                        train_multi[i] = train_iloc[idx][i]
-                        test_multi[i] = test_iloc[idx][i]
-                    else:
-                        train_multi[i] = np.concatenate(
-                            (train_iloc[idx][i], train_multi[i])
-                        )
-                        test_multi[i] = np.concatenate(
-                            (test_iloc[idx][i], test_multi[i])
-                        )
-            for i in train_multi.keys():
-                train_multi[i] = np.sort(train_multi[i])
-                test_multi[i] = np.sort(test_multi[i])
-
-            for i in train_multi.keys():
-                train = train_multi[i]
-                test = test_multi[i]
-                yield train[train >= 0], test[test >= 0]
+        for train, test in split(y_index):
+            yield train[train >= 0], test[test >= 0]
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
-        """Get loc references to train/test slits of `y`.
+        """Get iloc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split
 
         Parameters
         ----------
@@ -506,8 +459,74 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
+    def _split_vectorized(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
+
+        This applies _split per time series instance in the multiindex.
+        Instances in this context are defined by levels except last level.
+
+        Parameters
+        ----------
+        y : pd.MultiIndex, with last level time-like
+            as used in pd_multiindex and pd_multiindex_hier sktime mtypes
+
+        Yields
+        ------
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
+        """
+        # challenge is obtaining iloc references for *the original data frame*
+        #   todo: try to shorten this, there must be a quicker way
+        train_test_res = dict()
+        train_iloc = dict()
+        test_iloc = dict()
+        y = pd.DataFrame(index=y)
+        y_index_df = y.reset_index(-1)
+        y_index_df["__index"] = range(len(y_index_df))
+        y_index_inst = y_index_df.index.unique()
+        for idx in y_index_inst:
+            train_iloc[idx] = dict()
+            test_iloc[idx] = dict()
+        for idx in y_index_inst:
+            y_inst = y_index_df.loc[idx]
+            y_inst = y_inst.reset_index(drop=True).set_index(y_inst.columns[0])
+            y_inst_index = y_inst.index
+            train_test_res[idx] = list(self._split(y_inst_index))
+            for i, tt in enumerate(train_test_res[idx]):
+                train_iloc[idx][i] = tt[0]
+                test_iloc[idx][i] = tt[1]
+            for i, train in train_iloc[idx].items():
+                train_iloc[idx][i] = y_inst["__index"].iloc[train].values
+            for i, test in test_iloc[idx].items():
+                test_iloc[idx][i] = y_inst["__index"].iloc[test].values
+
+        train_multi = dict()
+        test_multi = dict()
+        for idx in y_index_inst:
+            for i in train_iloc[idx].keys():
+                if i not in train_multi.keys():
+                    train_multi[i] = train_iloc[idx][i]
+                    test_multi[i] = test_iloc[idx][i]
+                else:
+                    train_multi[i] = np.concatenate(
+                        (train_iloc[idx][i], train_multi[i])
+                    )
+                    test_multi[i] = np.concatenate(
+                        (test_iloc[idx][i], test_multi[i])
+                    )
+        for i in train_multi.keys():
+            train_multi[i] = np.sort(train_multi[i])
+            test_multi[i] = np.sort(test_multi[i])
+
+        for i in train_multi.keys():
+            train = train_multi[i]
+            test = test_multi[i]
+            yield train, test
+
     def split_loc(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Split `y` into training and test windows.
+        """Get loc references to train/test splits of `y`.
 
         Parameters
         ----------
