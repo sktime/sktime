@@ -362,6 +362,9 @@ class BaseForecastingErrorMetric(BaseMetric):
 
     def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
 
+        y_true_orig = y_true
+        y_pred_orig = y_pred
+
         # unwrap y_true, y_pred, if wrapped in VectorizedDF
         if isinstance(y_true, VectorizedDF):
             y_true = y_true.X
@@ -428,7 +431,7 @@ class BaseForecastingErrorMetric(BaseMetric):
                 f"but found multilevel={multilevel}"
             )
 
-        return y_true, y_pred, multioutput, multilevel
+        return y_true_orig, y_pred_orig, multioutput, multilevel
 
     def _check_ys(self, y_true, y_pred, multioutput, multilevel, **kwargs):
 
