@@ -8,7 +8,6 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from copy import deepcopy
-from multiprocessing.sharedctypes import Value
 from warnings import warn
 
 import numpy as np
