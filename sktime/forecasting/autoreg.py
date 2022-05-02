@@ -54,6 +54,7 @@ class AutoReg(_StatsModelsAdapter):
 
     Examples
     --------
+    (1) Example with No Exogenous Variable
     >>> from sktime.forecasting.autoreg import AutoReg
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
@@ -61,6 +62,29 @@ class AutoReg(_StatsModelsAdapter):
     >>> forecaster.fit(y)
     AutoReg(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
+
+    (2) In Sample Forecasting Example with Exogenous Variable
+    >>> from sktime.forecasting.autoreg import AutoReg
+    >>> from sktime.datasets import load_airline
+    >>> import numpy as np
+    >>> y = load_airline()
+    >>> exogExample = y*1.4
+    >>> forecaster = AutoReg(exog=exogExample)
+    >>> forecaster.fit(y)
+    AutoReg(...)
+    >>> y_pred = forecaster.predict(fh=np.arange(-6,1))
+
+    (3) Out of Sample Forecasting Example with Exogenous Variable
+    >>> from sktime.forecasting.autoreg import AutoReg
+    >>> from sktime.datasets import load_airline
+    >>> import numpy as np
+    >>> y = load_airline()
+    >>> exogExample = y*1.4
+    >>> exogOOSExample = y * 2.3
+    >>> forecaster = AutoReg(exog=exogExample)
+    >>> forecaster.fit(y)
+    AutoReg(...)
+    >>> y_pred = forecaster.predict(fh=np.arange(1,9), X = exogOOSExample)
     """
 
     _tags = {
@@ -77,12 +101,14 @@ class AutoReg(_StatsModelsAdapter):
         trend="c",
         missing="none",
         seasonal=False,
+        exog=None,
     ):
         # Model params
         self.trend = trend
         self.lags = lags
         self.missing = missing
         self.seasonal = seasonal
+        self.exog = exog
 
         super(AutoReg, self).__init__()
 
@@ -105,7 +131,7 @@ class AutoReg(_StatsModelsAdapter):
         """
         self._forecaster = _AutoReg(
             endog=y,
-            exog=X,
+            exog=self.exog,
             lags=self.lags,
             missing=self.missing,
             trend=self.trend,
@@ -115,7 +141,8 @@ class AutoReg(_StatsModelsAdapter):
         return self
 
     def _predict(self, fh, X=None):
-        """Make forecasts.
+        """
+        Wrap Statmodel's AutoReg forecast method.
 
         Parameters
         ----------
@@ -124,22 +151,41 @@ class AutoReg(_StatsModelsAdapter):
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored.
+            Exogenous variable.
+            X = exog_oos if out of sample forecast
+            or
+            X = exog if sample forecast (optional and only required if a
+            replacement exog is needed)
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : np.ndarray
             Returns series of predicted values.
         """
-        # statsmodels requires zero-based indexing starting at the
-        # beginning of the training series when passing integers
+        fh_int = fh.to_relative(self.cutoff)
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        y_pred = self._fitted_forecaster.predict(start=start, end=end)
+        # out-sample predictions
+        if fh_int.max() > 0:
+            exog_oos = X.values if X is not None else None
+            if exog_oos is not None:
+                y_pred = self._fitted_forecaster.predict(
+                    start=start, end=end, exog=self.exog, exog_oos=exog_oos
+                )
+            else:
+                y_pred = self._fitted_forecaster.predict(start=start, end=end)
 
-        # statsmodels forecasts all periods from start to end of forecasting
-        # horizon, but only return given time points in forecasting horizon
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        # in-sample predictions
+        if fh_int.min() <= 0:
+            exog = X.values if X is not None else None
+            if exog is not None:
+                y_pred = self._fitted_forecaster.predict(
+                    start=start, end=end, exog=exog
+                )
+            else:
+                y_pred = self._fitted_forecaster.predict(start=start, end=end)
+
+        return y_pred
 
     def summary(self):
         """Get a summary of the fitted forecaster.
