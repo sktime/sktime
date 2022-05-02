@@ -102,53 +102,70 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     clusterer = "kmeans"
-    chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    chris_config = True  # This is so chris doesn't have to change config each time
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
-        print(sys.argv)
-        data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/post_1_3_22/tuned/kmeans/"
-        dataset = sys.argv[1]
-        resample = int(sys.argv[2]) - 1
-        tf = True
+        data_dir = sys.argv[1]
+        results_dir = sys.argv[2]
         distance = sys.argv[3]
+        dataset = sys.argv[4]
+        resample = int(sys.argv[5]) - 1
+        tf = True
+    # kraken run, needs sorting out
+    #        print(sys.argv)
+    #        data_dir = "/home/ajb/data/Univariate_ts/"
+    #        results_dir = "/home/ajb/results/kmeans/"
+    #        dataset = sys.argv[1]
+    #        resample = int(sys.argv[2]) - 1
+    #        tf = True
+    #        distance = sys.argv[3]
     elif chris_config is True:
-        path = "/home/chris/Documents/masters-results/"
-        data_dir = os.path.abspath(f"{path}/datasets/")
+        path = "C:/Users/chris/Documents/Masters"
+        data_dir = os.path.abspath(f"{path}/datasets/Univariate_ts/")
         results_dir = os.path.abspath(f"{path}/results/")
-        dataset = "GunPoint"
+        dataset = "ElectricDevices"
         resample = 2
         tf = True
-        distance = "ddtw"
+        distance = "msm"
     else:  # Local run
         print(" Local Run")
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        dataset = "ElectricDevices"
+        data_dir = f"../datasets/data/"
         results_dir = "./temp"
-        dataset = "Chinatown"
         resample = 0
         tf = True
-        distance = "dtw"
+        distance = "msm"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    normalize(train_X, norm="l1", copy=False)
-    normalize(test_X, norm="l1", copy=False)
-    epsilon = 0.5
+    from sklearn.preprocessing import StandardScaler
+
+    s = StandardScaler()
+    train_X = s.fit_transform(train_X.T)
+    train_X = train_X.T
+    test_X = s.fit_transform(test_X.T)
+    test_X = test_X.T
     if tune:
         window = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
     else:
-        window = 0.2
         name = clusterer + "-" + distance
-    parameters = {"window": window, "epsilon": epsilon}
-
-    clst = config_clusterer(
-        averaging_method="mean",
-        clusterer=clusterer,
+    if (
+        distance == "wdtw"
+        or distance == "dwdtw"
+        or distance == "dtw"
+        or distance == "wdtw"
+    ):
+        parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
+    else:
+        parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
+    clst = TimeSeriesKMeans(
+        averaging_method="dba",
+        average_params={"averaging_distance_metric": distance},
         metric=distance,
         distance_params=parameters,
         n_clusters=len(set(train_Y)),
@@ -164,5 +181,6 @@ if __name__ == "__main__":
         cls_name=name,
         dataset_name=dataset,
         resample_id=resample,
+        overwrite=True,
     )
     print("done")
