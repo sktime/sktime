@@ -344,7 +344,7 @@ class QuickTester:
             return [estimator_class], [estimator_class.__name__]
 
         def _generate_estimator_instance(test_name, **kwargs):
-            return [estimator], [estimator_class.__name__]
+            return [clone(estimator)], [estimator_class.__name__]
 
         def _generate_estimator_instance_cls(test_name, **kwargs):
             return estimator_class.create_test_instances_and_names()
@@ -896,20 +896,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 _ = scenario.run(estimator, method_sequence=[method])
                 dict_after = estimator.__dict__
 
-                if method == "transform" and estimator.get_class_tag("fit_is_empty"):
-                    # Some transformations fit during transform, as they apply
-                    # some transformation to each series passed to transform,
-                    # so transform will actually change the state of these estimator.
-                    continue
-
-                if method == "predict" and estimator.get_class_tag("fit_is_empty"):
-                    # Some annotators fit during predict, as they apply
-                    # some apply annotation to each series passed to predict,
-                    # so predict will actually change the state of these annotators.
-                    continue
-
-                # old logic uses equality without auto-msg, keep comment until refactor
-                # is_equal = dict_after == dict_before
                 is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)
                 assert is_equal, (
                     f"Estimator: {type(estimator).__name__} changes __dict__ "
