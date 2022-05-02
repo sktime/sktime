@@ -7,6 +7,7 @@ Classes named as ``*Score`` return a value to maximize: the higher the better.
 Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
+from copy import deepcopy
 from warnings import warn
 
 import pandas as pd
@@ -197,13 +198,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
-        # pass to inner function
-        out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
+
+        requires_vectorization = isinstance(y_true, VectorizedDF)
+        if not requires_vectorization:
+            # pass to inner function
+            out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
+        else:
+            out_df = self._evaluate_vectorized(
+                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            )
 
         return out_df
-
-#    def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
-
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
@@ -241,6 +246,28 @@ class BaseForecastingErrorMetric(BaseMetric):
             return index_df.mean(axis=0)
         except RecursionError:
             RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+
+    def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
+        """Vectorized version of _evaluate.
+
+        Runs _evaluate for all instances in y_true, y_pred,
+        and returns results in a hierarchical pandas.DataFrame.
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with MultiIndex, last level time-like
+        y_pred : pandas.DataFrame with MultiIndex, last level time-like
+        non-time-like instanceso of y_true, y_pred must be identical
+        """
+        kwargsi = deepcopy(kwargs)
+        n_batches = len(y_true)
+        res = []
+        for i in range(n_batches):
+            if "y_train" in kwargs:
+                kwargsi["y_train"] = kwargs["y_train"][i]
+            res += self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
+        out_df = y_true.reconstruct(res)
+        return out_df
 
     def evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
