@@ -265,11 +265,21 @@ class BaseForecastingErrorMetric(BaseMetric):
         for i in range(n_batches):
             if "y_train" in kwargs:
                 kwargsi["y_train"] = kwargs["y_train"][i]
+            if "y_pred_benchmark" in kwargs:
+                kwargsi["y_pred_benchmark"] = kwargs["y_pred_benchmark"][i]
             resi = self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
-            if not isinstance(resi, (pd.DataFrame, pd.Series, np.ndarray)):
+            if isinstance(resi, float):
                 resi = pd.Series(resi)
+            if self.multioutput == "raw_values":
+                assert isinstance(resi, np.ndarray)
+                df = pd.DataFrame(columns=y_true.X.columns)
+                df.loc[0] = resi
+                resi = df
             res += [resi]
         out_df = y_true.reconstruct(res)
+        if self.multilevel == "uniform_average":
+            if out_df.index.nlevels == y_true.X.index.nlevels:
+                out_df.index = out_df.index.droplevel(-1)
 
         return out_df
 
@@ -459,6 +469,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred = _coerce_to_df(y_pred, var_name="y_pred")
         if "y_train" in kwargs.keys():
             kwargs["y_train"] = _coerce_to_df(kwargs["y_train"], var_name="y_train")
+        if "y_pred_benchmark" in kwargs.keys():
+            kwargs["y_pred_benchmark"] = _coerce_to_df(
+                kwargs["y_pred_benchmark"], var_name="y_pred_benchmark"
+            )
 
         y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
             y_true, y_pred, multioutput, multilevel
