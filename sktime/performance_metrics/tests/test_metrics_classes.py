@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.forecasting import _classes
+from sktime.performance_metrics.forecasting import _classes, MeanSquaredError
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 
 metric_classes = getmembers(_classes, isclass)
@@ -59,3 +60,23 @@ def test_metric_output_direct(metric, multioutput, n_columns):
 
     # assert results from all options are equal
     assert np.allclose(res[1], res[2])
+
+
+def test_metric_hierarchical():
+    """Test hierarchical input for metrics."""
+    y_pred = _make_hierarchical(random_state=21)
+    y_true = _make_hierarchical(random_state=42)
+
+    metric = MeanSquaredError()
+
+    res = metric(
+        y_true=y_true,
+        y_pred=y_pred,
+    )
+
+    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res.index, pd.MultiIndex)
+
+    expected_index = y_true.index.droplevel(-1).unique()
+    found_index = res.index.droplevel(-1).unique()
+    assert expected_index == found_index
