@@ -202,6 +202,9 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return out_df
 
+#    def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
+
+
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
 
@@ -415,8 +418,8 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         scitype = metadata["scitype"]
         if scitype in ["Panel", "Hierarchical"]:
-            y_true_inner = VectorizedDF(y_true, is_scitype=scitype)
-            y_pred_inner = VectorizedDF(y_true, is_scitype=scitype)
+            y_true_inner = VectorizedDF(y_true_inner, is_scitype=scitype)
+            y_pred_inner = VectorizedDF(y_pred_inner, is_scitype=scitype)
 
         return y_true_inner, y_pred_inner, multioutput, multilevel
 
