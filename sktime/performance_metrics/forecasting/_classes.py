@@ -405,16 +405,16 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_inner = convert_to(y, to_type=INNER_MTYPES)
             return y_inner
 
-        y_true_inner = _coerce_to_df(y_true, var_name="y_true")
-        y_pred_inner = _coerce_to_df(y_pred, var_name="y_pred")
+        y_true = _coerce_to_df(y_true, var_name="y_true")
+        y_pred = _coerce_to_df(y_pred, var_name="y_pred")
         if "y_train" in kwargs.keys():
             kwargs["y_train"] = _coerce_to_df(kwargs["y_train"], var_name="y_train")
 
         y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
-            y_true_inner, y_pred_inner, multioutput, multilevel
+            y_true, y_pred, multioutput, multilevel
         )
 
-        return y_true_inner, y_pred_inner, multioutput, multilevel, kwargs
+        return y_true, y_pred, multioutput, multilevel, kwargs
 
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
