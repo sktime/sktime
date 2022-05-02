@@ -12,7 +12,7 @@ from sktime.utils._testing.series import _make_series
 
 metric_classes = getmembers(_classes, isclass)
 
-exclude_starts_with = ("_", "Base")
+exclude_starts_with = ("_", "Base", "Vectorized")
 metric_classes = [x for x in metric_classes if not x[0].startswith(exclude_starts_with)]
 
 names, metrics = zip(*metric_classes)
@@ -78,5 +78,5 @@ def test_metric_hierarchical():
     assert isinstance(res.index, pd.MultiIndex)
 
     expected_index = y_true.index.droplevel(-1).unique()
-    found_index = res.index.droplevel(-1).unique()
+    found_index = res.index.unique()
     assert set(expected_index) == set(found_index)
