@@ -74,9 +74,9 @@ def test_metric_hierarchical():
         y_pred=y_pred,
     )
 
-    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res, (pd.DataFrame, pd.Series))
     assert isinstance(res.index, pd.MultiIndex)
 
     expected_index = y_true.index.droplevel(-1).unique()
     found_index = res.index.droplevel(-1).unique()
-    assert expected_index == found_index
+    assert set(expected_index) == set(found_index)

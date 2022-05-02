@@ -10,6 +10,7 @@ the lower the better.
 from copy import deepcopy
 from warnings import warn
 
+import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
@@ -264,7 +265,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         for i in range(n_batches):
             if "y_train" in kwargs:
                 kwargsi["y_train"] = kwargs["y_train"][i]
-            res += self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
+            resi = self._evaluate(y_true=y_true[i], y_pred=y_pred[i], **kwargsi)
+            if not isinstance(resi, (pd.DataFrame, pd.Series, np.ndarray)):
+                resi = pd.Series(resi)
+            res += [resi]
         out_df = y_true.reconstruct(res)
 
         return out_df
