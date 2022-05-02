@@ -12,7 +12,7 @@ from warnings import warn
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.datatypes import check_is_scitype, convert_to
+from sktime.datatypes import check_is_scitype, convert_to, VectorizedDF
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
@@ -396,7 +396,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         SCITYPES = ["Series", "Panel", "Hierarchical"]
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
-        valid, msg, _ = check_is_scitype(
+        valid, msg, metadata = check_is_scitype(
             y_pred, scitype=SCITYPES, return_metadata=True, var_name="y_pred"
         )
 
@@ -410,7 +410,12 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_true_inner, y_pred_inner, multioutput, multilevel
         )
 
-        return y_true, y_pred_inner, multioutput, multilevel
+        scitype = metadata["scitype"]
+        if scitype in ["Panel", "Hierarchical"]:
+            y_true_inner = VectorizedDF(y_true, is_scitype=scitype)
+            y_pred_inner = VectorizedDF(y_true, is_scitype=scitype)
+
+        return y_true_inner, y_pred_inner, multioutput, multilevel
 
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
