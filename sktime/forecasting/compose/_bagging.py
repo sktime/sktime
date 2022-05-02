@@ -5,6 +5,7 @@
 
 __author__ = ["ltsaprounis"]
 
+from copy import deepcopy
 from typing import List, Union
 
 import numpy as np
@@ -231,6 +232,37 @@ class BaggingForecaster(BaseForecaster):
         y_pred = self.forecaster_.predict(fh=fh, X=None)
 
         return _calculate_data_quantiles(y_pred, alpha)
+
+    def _update(self, y, X=None, update_params=True):
+        """Update cutoff value and, optionally, fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # Need to construct a completely new y out of ol self._y and y and then
+        # fit_treansform the transformer and re-fit the foreaster.
+        # print("update - input:")
+        # print(y)
+        # print("old y")
+        # print(self._y)
+        _y = deepcopy(self._y)
+        _y = y.combine_first(_y)
+
+        self.bootstrap_transformer_.fit(X=_y)
+        y_bootstraps = self.bootstrap_transformer_.transform(X=_y)
+        self.forecaster_.fit(y=y_bootstraps, fh=self.fh, X=None)
+
+        return self
 
     @classmethod
     def get_test_params(cls):
