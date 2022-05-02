@@ -391,26 +391,30 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         return y_true, y_pred, multioutput, multilevel
 
-    def _check_ys(self, y_true, y_pred, multioutput, multilevel):
+    def _check_ys(self, y_true, y_pred, multioutput, multilevel, **kwargs):
 
         SCITYPES = ["Series", "Panel", "Hierarchical"]
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
-        valid, msg, _ = check_is_scitype(
-            y_pred, scitype=SCITYPES, return_metadata=True, var_name="y_pred"
-        )
+        def _coerce_to_df(self, y, var_name="y"):
+            valid, _, _ = check_is_scitype(
+                y_true, scitype=SCITYPES, return_metadata=True, var_name=var_name
+            )
+            if not valid:
+                raise TypeError(msg)
+            y_inner = convert_to(y_true, to_type=INNER_MTYPES)
+            return y_inner
 
-        if not valid:
-            raise TypeError(msg)
-
-        y_pred_inner = convert_to(y_pred, to_type=INNER_MTYPES)
-        y_true_inner = convert_to(y_true, to_type=INNER_MTYPES)
+        y_true_inner = _coerce_to_df(y_true, var_name="y_true")
+        y_pred_inner = _coerce_to_df(y_pred, var_name="y_pred")
+        if "y_train" in kwargs.keys():
+            kwargs["y_train"] = _coerce_to_df(kwargs["y_train"], var_name="y_train")
 
         y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
             y_true_inner, y_pred_inner, multioutput, multilevel
         )
 
-        return y_true_inner, y_pred_inner, multioutput, multilevel
+        return y_true_inner, y_pred_inner, multioutput, multilevel, kwargs
 
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
