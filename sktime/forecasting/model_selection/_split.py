@@ -441,7 +441,8 @@ class BaseSplitter(BaseObject):
         # this entire block of code is dedicated to doing that
         # challenge is obtaining iloc references for *the original data frame*
         #   todo: try to shorten this, there must be a quicker way
-        if isinstance(y_index, pd.MultiIndex):
+        # "if isinstance(y_index, pd.MultiIndex):"
+        else:
             train_test_res = dict()
             train_iloc = dict()
             test_iloc = dict()
