@@ -437,6 +437,10 @@ class BaseSplitter(BaseObject):
             for train, test in self._split(y_index):
                 yield train[train >= 0], test[test >= 0]
 
+        # if pd.MultiIndex: apply _split by instance, combine the results
+        # this entire block of code is dedicated to doing that
+        # challenge is obtaining iloc references for *the original data frame*
+        #   todo: try to shorten this, there must be a quicker way
         if isinstance(y_index, pd.MultiIndex):
             train_test_res = dict()
             train_iloc = dict()
