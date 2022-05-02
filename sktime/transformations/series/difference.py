@@ -6,6 +6,7 @@ __author__ = ["RNKuhns"]
 __all__ = ["Differencer"]
 
 from typing import Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -60,14 +61,16 @@ def _inverse_diff(Z, lag):
     return Z
 
 
+# todo: deprecation in 0.13.0
+#   remove the drop_na *argument* and its handling
+#   change the default behaviour form "drop_na" to "fill_zero"
 class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
     The transformation works for univariate and multivariate timeseries. However,
     the multivariate case applies the same differencing to every series.
 
-    Difference transformations are applied at the specified lags in the order
-    provided.
+    Difference transformations are applied at the specified lags in the order provided.
 
     For example, given a timeseries with monthly periodicity, using lags=[1, 12]
     corresponds to applying a standard first difference to handle trend, and
@@ -85,17 +88,19 @@ class Differencer(BaseTransformer):
         If a single `int` value is
 
     drop_na : bool, default = True
+        deprecated from 0.12.0, to be removed in 0.13.0
         Whether the differencer should drop the initial observations that
         contain missing values as a result of the differencing operation(s).
 
-    Attributes
-    ----------
-    lags : int or array-like
-        Lags used to perform the differencing of the input series.
-
-    drop_na : bool
-        Stores whether the Differencer drops the initial observations that contain
-        missing values as a result of the differencing operation(s).
+    na_handling : str, default = "drop_na"
+        default will change to "fill_zero" from 0.13.0
+        How to handle the NaNs that appear at the start of the series from differencing
+        Example: there are only 3 differences in a series of length 4,
+            differencing [a, b, c, d] gives [?, b-a, c-b, d-c]
+            so we need to determine what happens with the "?" (= unknown value)
+        "drop_na" - unknown value(s) are dropped, the series is shortened
+        "keep_na" - unknown value(s) is/are replaced by NaN
+        "fill_zero" - unknown value(s) is/are replaced by zero
 
     Examples
     --------
@@ -121,15 +126,51 @@ class Differencer(BaseTransformer):
         "capability:inverse_transform": True,
     }
 
-    def __init__(self, lags=1, drop_na=True):
+    VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
+
+    def __init__(self, lags=1, drop_na=None, na_handling="drop_na"):
         self.lags = lags
         self.drop_na = drop_na
+        self.na_handling = self._check_na_handling(na_handling)
+        # note: internally, we will use self._na_handling
+        #   because we must never change input param saves for sklearn compatibility
+        #   and because we need to "translate" the old "drop_na" arg
+        #   this could, in certain cases, overwrite the self. parameter
+        #   and cause sklearn compatibility issues due to the point mentioned
+
+        translate_arg = {True: "drop_na", False: "keep_na"}
+
+        if drop_na is not None:
+            warn(
+                f"the drop_na parameter is deprecated and will be removed in 0.13.0, "
+                f'use na_handling="{translate_arg[drop_na]}" instead',
+                DeprecationWarning,
+            )
+            self._na_handling = translate_arg[drop_na]
+        else:
+            self._na_handling = na_handling
+
         self._Z = None
         self._lags = None
         self._cumulative_lags = None
         self._prior_cum_lags = None
         self._prior_lags = None
         super(Differencer, self).__init__()
+
+        # if the na_handling is "fill_zero" or "keep_na"
+        #   then the returned indices are same to the passed indices
+        if self._na_handling in ["fill_zero", "keep_na"]:
+            self.set_tags(**{"transform-returns-same-time-index": True})
+
+    def _check_na_handling(self, na_handling):
+        """Check na_handling parameter, should be a valid string as per docstring."""
+        if na_handling not in self.VALID_NA_HANDLING_STR:
+            raise ValueError(
+                f'invalid na_handling parameter value encountered: "{na_handling}", '
+                f"na_handling must be one of: {self.VALID_NA_HANDLING_STR}"
+            )
+
+        return na_handling
 
     def _check_inverse_transform_index(self, Z):
         """Check fitted series contains indices needed in inverse_transform."""
@@ -152,7 +193,7 @@ class Differencer(BaseTransformer):
         elif first_idx > orig_last_idx:
             is_future = True
 
-        pad_z_inv = self.drop_na or is_future
+        pad_z_inv = self.na_handling == "drop_na" or is_future
 
         cutoff = Z.index[0] if pad_z_inv else Z.index[self._cumulative_lags[-1]]
         fh = ForecastingHorizon(np.arange(-1, -(self._cumulative_lags[-1] + 1), -1))
@@ -213,8 +254,19 @@ class Differencer(BaseTransformer):
             transformed version of X
         """
         Xt = _diff_transform(X, self._lags)
-        if self.drop_na:
+
+        na_handling = self._na_handling
+        if na_handling == "drop_na":
             Xt = Xt.iloc[self._cumulative_lags[-1] :]
+        elif na_handling == "fill_zero":
+            Xt.iloc[: self._cumulative_lags[-1]] = 0
+        elif na_handling == "keep_na":
+            pass
+        else:
+            raise RuntimeError(
+                "unreachable condition, invalid na_handling value encountered: "
+                f"{na_handling}"
+            )
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -289,7 +341,11 @@ class Differencer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        params = [{"na_handling": x} for x in cls.VALID_NA_HANDLING_STR]
         # we're testing that inverse_transform is inverse to transform
         #   and that is only correct if the first observation is not dropped
-        params = {"drop_na": False}
+        # todo: ensure that we have proper tests or escapes for "incomplete inverses"
+        params = params[1:]
+        #   this removes "drop_na" setting where the inverse has problems
+        #   need to deal with this in a better way in testing
         return params

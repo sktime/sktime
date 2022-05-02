@@ -9,7 +9,7 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
-__author__ = ["kkoralturk", "aiwalter", "fkiraly"]
+__author__ = ["kkoralturk", "aiwalter", "fkiraly", "miraep8"]
 __all__ = ["MultiplexForecaster"]
 
 
@@ -58,14 +58,15 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.forecasting.all import (
-    ...     MultiplexForecaster,
-    ...     AutoETS,
-    ...     AutoARIMA,
-    ...     NaiveForecaster,
-    ...     ForecastingGridSearchCV,
-    ...     ExpandingWindowSplitter,
-    ...     load_shampoo_sales)
+    >>> from sktime.forecasting.ets import AutoETS
+    >>> from sktime.forecasting.model_selection import (
+    ...    ForecastingGridSearchCV,
+    ...    ExpandingWindowSplitter)
+    >>> from sktime.forecasting.compose import MultiplexForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.arima import AutoARIMA
+    >>> from sktime.forecasting.model_evaluation import evaluate
+    >>> from sktime.datasets import load_shampoo_sales
     >>> y = load_shampoo_sales()
     >>> forecaster = MultiplexForecaster(forecasters=[
     ...     ("ets", AutoETS()),
@@ -123,6 +124,47 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
                 f" found: {self.selected_forecaster}. Must be one of these"
                 f" valid selected_forecaster parameter values: {component_names}."
             )
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexForecaster.
+
+        Parameters
+        ----------
+        other : either a forecaster object or a MultiplexForecaster.
+            if forecaster object:
+                add the forecaster to self's list of forecasters.
+            if MultiplexForecaster:
+                create a new MultiplexForecaster with forecasters from both
+                self and other. (Note selected_forecaster of the new
+                MultiplexForecaster will be None, even if it is not None for
+                either self or other)
+
+        Returns
+        -------
+        self : returns an instance of self.
+
+        Raises
+        ------
+        ValueError if other is not of type MultiplexForecaster or BaseForecaster.
+        """
+        from sktime.forecasting.base._base import BaseForecaster
+
+        # if other was a BaseForecaster - lets make it a MultiplexForecaster:
+        # if already a MultiplexForecaster make new MultiplexForecaster
+        # with forecasters from both MultiplexForecasters:
+        if isinstance(other, BaseForecaster) and not isinstance(
+            other, MultiplexForecaster
+        ):
+            other = MultiplexForecaster([other])
+        if isinstance(other, MultiplexForecaster):
+            new_tuples = self._get_estimator_tuples(
+                self.forecasters + other.forecasters
+            )
+            new_multiplex_forecaster = MultiplexForecaster(new_tuples)
+            return new_multiplex_forecaster
+        # If is anyother type of forecaster, simply add it to forecasters:
+        else:
+            return NotImplemented
 
     def _set_forecaster(self):
         self._check_selected_forecaster()

@@ -6,8 +6,10 @@ from typing import Callable
 
 import numpy as np
 
+from sktime.clustering.metrics.averaging._dba import dba
 
-def mean_average(X: np.ndarray) -> np.ndarray:
+
+def mean_average(X: np.ndarray, **kwargs) -> np.ndarray:
     """Compute the mean average of time series.
 
     Parameters
@@ -23,24 +25,6 @@ def mean_average(X: np.ndarray) -> np.ndarray:
     if X.shape[0] <= 1:
         return X
     return X.mean(axis=0)
-
-
-def dba(X: np.ndarray) -> np.ndarray:
-    """Compute the dtw barycenter average of time series.
-
-    Parameters
-    ----------
-    X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
-        Time series instances compute average from.
-
-    Returns
-    -------
-    np.ndarray (2d array of shape (n_dimensions, series_length)
-        The time series that is the computed average series.
-    """
-    from tslearn.barycenters import dtw_barycenter_averaging
-
-    return dtw_barycenter_averaging(X)
 
 
 _AVERAGE_DICT = {"mean": mean_average, "dba": dba}
