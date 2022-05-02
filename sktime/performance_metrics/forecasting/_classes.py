@@ -8,6 +8,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 from copy import deepcopy
+from multiprocessing.sharedctypes import Value
 from warnings import warn
 
 import numpy as np
@@ -100,9 +101,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         If array-like, errors are weighted averaged across variables, values as weights.
         If 'raw_values', does not average errors across variables, columns are retained.
 
-    multilevel : {'raw_values', 'uniform_average'}
+    multilevel : {'raw_values', 'uniform_average', 'uniform_average_time'}
         Defines how to aggregate metric for hierarchical data (with levels).
         If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'uniform_average_time', errors are mean-averaged across rows.
         If 'raw_values', does not average errors across levels, hierarchy is retained.
     """
 
@@ -208,6 +210,11 @@ class BaseForecastingErrorMetric(BaseMetric):
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
+            if multilevel == "uniform_average":
+                out_df = out_df.mean(axis=0)
+                # if level is averaged, but not variables, return numpy
+                if multioutput == "raw_values":
+                    out_df = out_df.values
         return out_df
 
     def _evaluate(self, y_true, y_pred, **kwargs):
@@ -277,9 +284,8 @@ class BaseForecastingErrorMetric(BaseMetric):
                 resi = df
             res += [resi]
         out_df = y_true.reconstruct(res)
-        if self.multilevel == "uniform_average":
-            if out_df.index.nlevels == y_true.X.index.nlevels:
-                out_df.index = out_df.index.droplevel(-1)
+        if out_df.index.nlevels == y_true.X.index.nlevels:
+            out_df.index = out_df.index.droplevel(-1)
 
         return out_df
 
@@ -435,7 +441,9 @@ class BaseForecastingErrorMetric(BaseMetric):
                 )
 
         # check multilevel arg
-        allowed_multilevel_str = ("raw_values", "uniform_average")
+        allowed_multilevel_str = (
+            "raw_values", "uniform_average", "uniform_average_time"
+        )
 
         if not isinstance(multilevel, str):
             raise ValueError(f"multilevel must be a str, but found {type(multilevel)}")
@@ -461,7 +469,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_inner = convert_to(y, to_type=INNER_MTYPES)
 
             scitype = metadata["scitype"]
-            if scitype in ["Panel", "Hierarchical"]:
+            ignore_index = multilevel == "uniform_average_time"
+            if scitype in ["Panel", "Hierarchical"] and not ignore_index:
                 y_inner = VectorizedDF(y_inner, is_scitype=scitype)
             return y_inner
 

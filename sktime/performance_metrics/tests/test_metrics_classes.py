@@ -61,22 +61,36 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     # assert results from all options are equal
     assert np.allclose(res[1], res[2])
 
-
-def test_metric_hierarchical():
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize(
+    "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]
+)
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+def test_metric_hierarchical(multioutput, multilevel, n_columns):
     """Test hierarchical input for metrics."""
-    y_pred = _make_hierarchical(random_state=21)
-    y_true = _make_hierarchical(random_state=42)
+    y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
+    y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
-    metric = MeanSquaredError()
+    metric = MeanSquaredError(multioutput=multioutput, multilevel="raw_values")
 
     res = metric(
         y_true=y_true,
         y_pred=y_pred,
     )
 
-    assert isinstance(res, (pd.DataFrame, pd.Series))
-    assert isinstance(res.index, pd.MultiIndex)
+    if multilevel == "raw_values":
+        assert isinstance(res, (pd.DataFrame, pd.Series))
+        assert isinstance(res.index, pd.MultiIndex)
 
-    expected_index = y_true.index.droplevel(-1).unique()
-    found_index = res.index.unique()
-    assert set(expected_index) == set(found_index)
+        expected_index = y_true.index.droplevel(-1).unique()
+        found_index = res.index.unique()
+        assert set(expected_index) == set(found_index)
+        assert y_true.columns == res.columns
+    # if multilevel == "uniform_average" or "uniform_average_time"
+    else:
+        if multioutput == "uniform_average":
+            assert isinstance(res, float)
+        elif multioutput == "raw_values":
+            assert isinstance(res, np.ndarray)
+            assert res.ndim == 1
+            assert len(res) == len(y_true.columns)
