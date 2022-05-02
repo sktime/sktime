@@ -420,7 +420,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             )
             if not valid:
                 raise TypeError(msg)
-            y_train_inner = convert_to(y_tain, to_type=INNER_MTYPES)
+            y_train_inner = convert_to(y_train, to_type=INNER_MTYPES)
             kwargs["y_train"] = y_train_inner
 
         y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
