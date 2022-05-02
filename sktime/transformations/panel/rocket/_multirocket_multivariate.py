@@ -4,6 +4,7 @@ import multiprocessing
 import numpy as np
 import pandas as pd
 from numba import get_num_threads, njit, prange, set_num_threads
+from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
 
@@ -185,6 +186,7 @@ class MultiRocketMultivariate(BaseTransformer):
         return pd.DataFrame(X)
 
     def _get_parameter(self, X):
+        rng = check_random_state(self.random_state)
         _, num_channels, input_length = X.shape
 
         num_kernels = 84
@@ -204,7 +206,7 @@ class MultiRocketMultivariate(BaseTransformer):
         max_exponent = np.log2(max_num_channels + 1)
 
         num_channels_per_combination = (
-            2 ** np.random.uniform(0, max_exponent, num_combinations)
+            2 ** rng.uniform(0, max_exponent, num_combinations)
         ).astype(np.int32)
 
         channel_indices = np.zeros(num_channels_per_combination.sum(), dtype=np.int32)
@@ -215,7 +217,7 @@ class MultiRocketMultivariate(BaseTransformer):
                 combination_index
             ]
             num_channels_end = num_channels_start + num_channels_this_combination
-            channel_indices[num_channels_start:num_channels_end] = np.random.choice(
+            channel_indices[num_channels_start:num_channels_end] = rng.choice(
                 num_channels, num_channels_this_combination, replace=False
             )
 
