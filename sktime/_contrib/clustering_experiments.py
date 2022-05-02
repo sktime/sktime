@@ -102,33 +102,40 @@ if __name__ == "__main__":
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     clusterer = "kmeans"
-    chris_config = False  # This is so chris doesn't have to change config each time
+    chris_config = True  # This is so chris doesn't have to change config each time
     tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
-        print(sys.argv)
-        data_dir = "/home/ajb/data/Univariate_ts/"
-        results_dir = "/home/ajb/results/kmeans/"
-        dataset = sys.argv[1]
-        resample = int(sys.argv[2]) - 1
-        tf = True
+        data_dir = sys.argv[1]
+        results_dir = sys.argv[2]
         distance = sys.argv[3]
+        dataset = sys.argv[4]
+        resample = int(sys.argv[5]) - 1
+        tf = True
+    # kraken run, needs sorting out
+    #        print(sys.argv)
+    #        data_dir = "/home/ajb/data/Univariate_ts/"
+    #        results_dir = "/home/ajb/results/kmeans/"
+    #        dataset = sys.argv[1]
+    #        resample = int(sys.argv[2]) - 1
+    #        tf = True
+    #        distance = sys.argv[3]
     elif chris_config is True:
-        path = "/home/chris/Documents/masters-results/"
-        data_dir = os.path.abspath(f"{path}/datasets/")
+        path = "C:/Users/chris/Documents/Masters"
+        data_dir = os.path.abspath(f"{path}/datasets/Univariate_ts/")
         results_dir = os.path.abspath(f"{path}/results/")
-        dataset = "GunPoint"
+        dataset = "ElectricDevices"
         resample = 2
         tf = True
-        distance = "ddtw"
+        distance = "msm"
     else:  # Local run
         print(" Local Run")
-        dataset = "UnitTest"
+        dataset = "ElectricDevices"
         data_dir = f"../datasets/data/"
         results_dir = "./temp"
         resample = 0
         tf = True
-        distance = "edr"
+        distance = "msm"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
@@ -147,14 +154,18 @@ if __name__ == "__main__":
         name = clusterer + "-" + distance + "-tuned"
     else:
         name = clusterer + "-" + distance
-    if distance == "wdtw" or distance == "dwdtw":
+    if (
+        distance == "wdtw"
+        or distance == "dwdtw"
+        or distance == "dtw"
+        or distance == "wdtw"
+    ):
         parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
     else:
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
-
-    clst = config_clusterer(
-        averaging_method="mean",
-        clusterer=clusterer,
+    clst = TimeSeriesKMeans(
+        averaging_method="dba",
+        average_params={"averaging_distance_metric": distance},
         metric=distance,
         distance_params=parameters,
         n_clusters=len(set(train_Y)),
