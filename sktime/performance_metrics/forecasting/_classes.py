@@ -410,7 +410,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_true_inner, y_pred_inner, multioutput, multilevel
         )
 
-        return y_true, y_pred_inner, multioutput, multilevel
+        return y_true_inner, y_pred_inner, multioutput, multilevel
 
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
