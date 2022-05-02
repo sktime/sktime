@@ -364,9 +364,9 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         # unwrap y_true, y_pred, if wrapped in VectorizedDF
         if isinstance(y_true, VectorizedDF):
-            y_true = VectorizedDF.X
+            y_true = y_true.X
         if isinstance(y_pred, VectorizedDF):
-            y_pred = VectorizedDF.X
+            y_pred = y_pred.X
 
         # check row and column indices if y_true vs y_pred
         same_rows = y_true.index.equals(y_pred.index)
