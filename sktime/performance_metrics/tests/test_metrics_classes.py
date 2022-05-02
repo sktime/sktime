@@ -61,6 +61,7 @@ def test_metric_output_direct(metric, multioutput, n_columns):
     # assert results from all options are equal
     assert np.allclose(res[1], res[2])
 
+
 @pytest.mark.parametrize("n_columns", [1, 2])
 @pytest.mark.parametrize(
     "multilevel", ["uniform_average", "uniform_average_time", "raw_values"]

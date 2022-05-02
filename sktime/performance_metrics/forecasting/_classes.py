@@ -442,7 +442,9 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         # check multilevel arg
         allowed_multilevel_str = (
-            "raw_values", "uniform_average", "uniform_average_time"
+            "raw_values",
+            "uniform_average",
+            "uniform_average_time",
         )
 
         if not isinstance(multilevel, str):
