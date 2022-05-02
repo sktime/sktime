@@ -513,9 +513,7 @@ class BaseSplitter(BaseObject):
                     train_multi[i] = np.concatenate(
                         (train_iloc[idx][i], train_multi[i])
                     )
-                    test_multi[i] = np.concatenate(
-                        (test_iloc[idx][i], test_multi[i])
-                    )
+                    test_multi[i] = np.concatenate((test_iloc[idx][i], test_multi[i]))
         for i in train_multi.keys():
             train_multi[i] = np.sort(train_multi[i])
             test_multi[i] = np.sort(test_multi[i])
