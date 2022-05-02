@@ -9,10 +9,12 @@ from sktime.classification.base import BaseClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.datasets import load_airline
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.naive import NaiveForecaster
+
+# from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.utils.estimators import make_mock_estimator
+
+# from sktime.transformations.series.boxcox import BoxCoxTransformer
+# from sktime.utils.estimators import make_mock_estimator
 from sktime.utils.estimators._base import _method_logger, _MockEstimatorMixin
 
 y_series = load_airline().iloc[:-5]
@@ -143,19 +145,19 @@ def test_method_logger():
     ]
 
 
-@pytest.mark.parametrize(
-    "estimator_class, method_regex, logged_methods",
-    [
-        (NaiveForecaster, r"(?!^_\w+)", ["fit"]),
-        (NaiveForecaster, ".*", ["fit", "_fit"]),
-        (BoxCoxTransformer, r"(?!^_\w+)", ["fit"]),
-        (BoxCoxTransformer, ".*", ["fit", "_fit"]),
-    ],
-)
-def test_make_mock_estimator(estimator_class, method_regex, logged_methods):
-    """Test that make_mock_estimator output logs the right methods."""
-    estimator = make_mock_estimator(estimator_class, method_regex)()
-    estimator.fit(y_series)
-    methods_called = [entry[0] for entry in estimator.log]
-
-    assert set(methods_called) >= set(logged_methods)
+# @pytest.mark.parametrize(
+#    "estimator_class, method_regex, logged_methods",
+#    [
+#        (NaiveForecaster, r"(?!^_\w+)", ["fit"]),
+#        (NaiveForecaster, ".*", ["fit", "_fit"]),
+#        (BoxCoxTransformer, r"(?!^_\w+)", ["fit"]),
+#        (BoxCoxTransformer, ".*", ["fit", "_fit"]),
+#    ],
+# )
+# def test_make_mock_estimator(estimator_class, method_regex, logged_methods):
+#    """Test that make_mock_estimator output logs the right methods."""
+#    estimator = make_mock_estimator(estimator_class, method_regex)()
+#    estimator.fit(y_series)
+#    methods_called = [entry[0] for entry in estimator.log]
+#
+#    assert set(methods_called) >= set(logged_methods)
