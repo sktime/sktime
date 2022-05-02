@@ -89,6 +89,11 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     use_brute : bool, optional
         Search for good starting values using a brute force (grid)
         optimizer. If False, a naive set of starting values is used.
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     References
     ----------
@@ -136,6 +141,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         method=None,
         minimize_kwargs=None,
         use_brute=True,
+        random_state=None,
     ):
         # Model params
         self.trend = trend
@@ -158,7 +164,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         self.minimize_kwargs = minimize_kwargs
         self.use_brute = use_brute
 
-        super().__init__()
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         self._forecaster = _ExponentialSmoothing(

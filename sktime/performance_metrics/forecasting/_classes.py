@@ -120,7 +120,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         warn(
             "The greater_is_better attribute is deprecated from 0.12.0 "
             "and will be removed in 0.13.0. Use the lower_is_better tag instead, "
-            'e.g., my_metric.get_tag("lower_is_better")'
+            'e.g., my_metric.get_tag("lower_is_better")',
+            DeprecationWarning,
         )
         return not self.get_tag("lower_is_better", False)
 
@@ -362,7 +363,9 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_pred.columns = y_true.columns
 
         # check multioutput arg
-        allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
+        # todo: add this back when variance_weighted is supported
+        # ("raw_values", "uniform_average", "variance_weighted")
+        allowed_multioutput_str = ("raw_values", "uniform_average")
 
         if isinstance(multioutput, str):
             if multioutput not in allowed_multioutput_str:

@@ -104,9 +104,9 @@ def is_iloc_like(x) -> bool:
 def is_time_like(x) -> bool:
     """Check if input is time-like (pd.Timedelta, pd.DateOffset, etc.)."""
     if is_iterable(x):
-        return array_is_timedelta_or_date_offset(x)
+        return array_is_timedelta_or_date_offset(x) or array_is_datetime64(x)
     else:
-        return is_timedelta_or_date_offset(x)
+        return is_timedelta_or_date_offset(x) or is_datetime(x)
 
 
 def all_inputs_are_iloc_like(args: list) -> bool:

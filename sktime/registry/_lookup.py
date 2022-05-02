@@ -129,7 +129,7 @@ def all_estimators(
     import sys
     import warnings
 
-    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking")
+    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils")
 
     all_estimators = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
