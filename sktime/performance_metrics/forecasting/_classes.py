@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.datatypes import check_is_scitype, convert_to, VectorizedDF
+from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,

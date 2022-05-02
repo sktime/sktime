@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.performance_metrics.forecasting import _classes, MeanSquaredError
+from sktime.performance_metrics.forecasting import MeanSquaredError, _classes
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 
