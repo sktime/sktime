@@ -191,8 +191,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
-        y_true_inner, y_pred_inner, multioutput, multilevel = self._check_ys(
-            y_true, y_pred, multioutput, multilevel
+        y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
+            y_true, y_pred, multioutput, multilevel, **kwargs
         )
         # pass to inner function
         out_df = self._evaluate(y_true_inner, y_pred_inner, **kwargs)
@@ -266,8 +266,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
         # Input checks and conversions
-        y_true_inner, y_pred_inner, multioutput, multilevel = self._check_ys(
-            y_true, y_pred, multioutput, multilevel
+        y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
+            y_true, y_pred, multioutput, multilevel, **kwargs
         )
         # pass to inner function
         out_df = self._evaluate_by_index(y_true_inner, y_pred_inner, **kwargs)
@@ -397,7 +397,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
         def _coerce_to_df(self, y, var_name="y"):
-            valid, _, _ = check_is_scitype(
+            valid, msg, _ = check_is_scitype(
                 y_true, scitype=SCITYPES, return_metadata=True, var_name=var_name
             )
             if not valid:
