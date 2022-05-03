@@ -72,7 +72,7 @@ def test_metric_hierarchical(multioutput, multilevel, n_columns):
     y_pred = _make_hierarchical(random_state=21, n_columns=n_columns)
     y_true = _make_hierarchical(random_state=42, n_columns=n_columns)
 
-    metric = MeanSquaredError(multioutput=multioutput, multilevel="raw_values")
+    metric = MeanSquaredError(multioutput=multioutput, multilevel=multilevel)
 
     res = metric(
         y_true=y_true,
