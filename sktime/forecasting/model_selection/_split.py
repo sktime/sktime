@@ -523,7 +523,7 @@ class BaseSplitter(BaseObject):
             test = test_multi[i]
             yield train, test
 
-    def split_loc(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Generator[Tuple[pd.Index, pd.Index], None, None]:
         """Get loc references to train/test splits of `y`.
 
         Parameters
