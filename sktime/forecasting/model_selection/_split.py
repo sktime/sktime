@@ -543,7 +543,7 @@ class BaseSplitter(BaseObject):
         for train, test in self.split(y_index):
             yield y_index[train], y_index[test]
 
-    def split_series(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+    def split_series(self, y: ACCEPTED_Y_TYPES) -> Generator[Tuple[ACCEPTED_Y_TYPES, ACCEPTED_Y_TYPES], None, None]:
         """Split `y` into training and test windows.
 
         Parameters
