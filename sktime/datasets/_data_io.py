@@ -1266,14 +1266,14 @@ def write_results_to_uea_format(
     # the second line of the output is free form and estimator-specific; usually this
     # will record info such as build time, paramater options used, any constituent model
     # names for ensembles, etc.
-    file.write(str(second_line) + "\n")
+    file.write(second_line + "\n")
     # the third line of the file is the accuracy (should be between 0 and 1
     # inclusive). If this is a train output file then it will be a training estimate
     # of the classifier on the training data only (e.g. 10-fold cv, leave-one-out cv,
     # etc.). If this is a test output file, it should be the output of the estimator
     # on the test data (likely trained on the training data for a-priori parameter
     # optimisation)
-    file.write(str(third_line) + "\n")
+    file.write(third_line + "\n")
     # from line 4 onwards each line should include the actual and predicted class
     # labels (comma-separated). If present, for each case, the probabilities of
     # predicting every class value for this case should also be appended to the line (

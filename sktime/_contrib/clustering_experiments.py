@@ -130,12 +130,12 @@ if __name__ == "__main__":
         distance = "msm"
     else:  # Local run
         print(" Local Run")
-        dataset = "UnitTest"
-        data_dir = f"../datasets/data/"
+        dataset = "ChinaTown"
+        data_dir = f"c:/temp/"
         results_dir = "./temp"
         resample = 0
         tf = True
-        distance = "euclidean"
+        distance = "dtw"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )

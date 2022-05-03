@@ -107,8 +107,7 @@ def run_clustering_experiment(
     test_time = int(round(time.time() * 1000)) - start
     test_probs = clusterer.predict_proba(testX)
     second = str(clusterer.get_params())
-    second.replace("\n", " ")
-    second.replace("\r", " ")
+    second = "".join(second.split())
     third = "0," + str(build_time) + "," + str(test_time) + ",-1,-1," "" + str(
         len(np.unique(trainY))
     ) + "," + str(len(np.unique(trainY)))
@@ -129,13 +128,6 @@ def run_clustering_experiment(
         timing_type="MILLISECONDS",
     )
 
-    #        preds = form_cluster_list(clusters, len(testY))
-    if "Composite" in cls_name:
-        second = "Para info too long!"
-    else:
-        second = str(clusterer.get_params())
-        second.replace("\n", " ")
-        second.replace("\r", " ")
     third = "0," + str(build_time) + "," + str(test_time) + ",-1,-1," "" + str(
         len(np.unique(trainY))
     ) + "," + str(len(np.unique(trainY)))
