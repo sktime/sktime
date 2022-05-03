@@ -16,7 +16,7 @@ import inspect
 import numbers
 import warnings
 from inspect import signature
-from typing import Generator, Optional, Tuple, Union
+from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -61,7 +61,7 @@ SPLIT_TYPE = Union[
     Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
 ]
 SPLIT_ARRAY_TYPE = Tuple[np.ndarray, np.ndarray]
-SPLIT_GENERATOR_TYPE = Generator[SPLIT_ARRAY_TYPE, None, None]
+SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
@@ -523,7 +523,7 @@ class BaseSplitter(BaseObject):
             test = test_multi[i]
             yield train, test
 
-    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Generator[Tuple[pd.Index, pd.Index], None, None]:
+    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
         """Get loc references to train/test splits of `y`.
 
         Parameters
@@ -543,7 +543,7 @@ class BaseSplitter(BaseObject):
         for train, test in self.split(y_index):
             yield y_index[train], y_index[test]
 
-    def split_series(self, y: ACCEPTED_Y_TYPES) -> Generator[Tuple[ACCEPTED_Y_TYPES, ACCEPTED_Y_TYPES], None, None]:
+    def split_series(self, y: ACCEPTED_Y_TYPES) -> Iterator[SPLIT_TYPE]:
         """Split `y` into training and test windows.
 
         Parameters
@@ -567,7 +567,7 @@ class BaseSplitter(BaseObject):
             y_test = convert_to(y_test, y_orig_mtype)
             yield y_train, y_test
 
-    def _coerce_to_index(self, y):
+    def _coerce_to_index(self, y: ACCEPTED_Y_TYPES) -> pd.Index:
         """Check and coerce y to pandas index.
 
         Parameters
