@@ -96,7 +96,7 @@ class BaseDeepClassifier(BaseClassifier, ABC):
         if probs.shape[1] == 1:
             # first column is probability of class 0 and second is of class 1
             probs = np.hstack([1 - probs, probs])
-
+        probs = probs / probs.sum(axis=1, keepdims=1)
         return probs
 
     def convert_y_to_keras(self, y, label_encoder=None, onehot_encoder=None):
