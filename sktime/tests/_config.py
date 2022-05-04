@@ -64,6 +64,19 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
         "test_persistence_via_pickle",
     ],
+    # pickling problem with local method see #2490
+    "ProximityStump": [
+        "test_persistence_via_pickle",
+        "test_fit_does_not_overwrite_hyper_params",
+    ],
+    "ProximityTree": [
+        "test_persistence_via_pickle",
+        "test_fit_does_not_overwrite_hyper_params",
+    ],
+    "ProximityForest": [
+        "test_persistence_via_pickle",
+        "test_fit_does_not_overwrite_hyper_params",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of
