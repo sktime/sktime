@@ -101,7 +101,7 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    clusterer = "kmeans"
+    clusterer = "kmedoids"
     chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
 
