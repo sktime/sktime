@@ -171,6 +171,7 @@ class CompositionDummy(BaseObject):
 
     def __init__(self, foo, bar=84):
         self.foo = foo
+        self.foo_ = deepcopy(foo)
         self.bar = bar
 
 
@@ -229,3 +230,28 @@ def test_reset():
     assert not hasattr(x, "d_")
     assert hasattr(x, "f__o__o") and x.f__o__o == 252
     assert hasattr(x, "foo")
+
+
+def test_components():
+    """Tests component retrieval.
+
+    Raises
+    ------
+    AssertionError if logic behind _components is incorrect, logic tested:
+        calling _components on a non-composite returns an empty dict
+        calling _components on a composite returns name/BaseObject pair in dict,
+        and BaseObject returned is identical with attribute of the same name
+    """
+    non_composite = CompositionDummy(foo=42)
+    composite = CompositionDummy(foo=non_composite)
+
+    non_comp_comps = non_composite._components()
+    comp_comps = composite._components()
+
+    assert isinstance(non_comp_comps, dict)
+    assert set(non_comp_comps.keys()) == set()
+
+    assert isinstance(comp_comps, dict)
+    assert set(comp_comps.keys()) == set(["foo_"])
+    assert comp_comps["foo_"] == composite.foo_
+    assert comp_comps["foo_"] != composite.foo
