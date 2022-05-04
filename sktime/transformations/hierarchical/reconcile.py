@@ -37,6 +37,7 @@ class Reconciler(BaseTransformer):
             "bu" - bottom-up
             "ols" - ordinary least squares
             "wls_str" - weighted least squares (structural)
+            "td_fcst" - top down based on forecast proportions
 
     References
     ----------
