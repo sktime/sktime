@@ -22,11 +22,11 @@ y_1 = make_forecasting_problem(n_columns=3)
 
 @pytest.mark.parametrize(
     "model",
-    [(AutoETS), (ExponentialSmoothing), (SARIMAX), (UnobservedComponents), (VAR)],
+    [AutoETS, ExponentialSmoothing, SARIMAX, UnobservedComponents, VAR],
 )
 def test_random_state(model):
     """Function to test random_state parameter."""
-    obj = model()
+    obj = model.create_test_instance()
     if model == VAR:
         obj.fit(y=y_1, fh=fh)
         y = obj.predict()
