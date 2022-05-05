@@ -1669,7 +1669,7 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called."
+                f"`update` is called with update_params=True."
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
@@ -1679,6 +1679,20 @@ class BaseForecaster(BaseEstimator):
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
+
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
+            # default to calling component _updates if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will update all component cutoffs each time"
+                f" `update` is called with update_params=False."
+            )
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
+                comp.update(y=y, X=X, update_params=False)
 
         return self
 

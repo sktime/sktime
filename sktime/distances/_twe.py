@@ -195,7 +195,7 @@ class _TweDistance(NumbaDistance):
         return numba_twe_distance
 
 
-@njit(cache=True)
+@njit(cache=True, fastmath=True)
 def pow_minkowski(x: np.ndarray, y: np.ndarray, p: int):
     """Compute the powered Minkowski distance.
 
@@ -213,8 +213,11 @@ def pow_minkowski(x: np.ndarray, y: np.ndarray, p: int):
     float
         Powered minkowski distance.
     """
-    cost = np.sum(np.power(np.abs(x - y), p))
-    return np.power(cost, 1.0 / p)
+    result = 0.0
+    for i in range(x.shape[0]):
+        result += (np.abs(x[i] - y[i])) ** p
+
+    return result ** (1.0 / p)
 
 
 @njit(cache=True)
