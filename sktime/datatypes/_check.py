@@ -329,8 +329,8 @@ def mtype(
         for mtype, error in mtypes_negative:
             msg += f"{mtype}: {error}\r\n"
         msg = (
-            "No valid mtype could be identified. "
-            "Errors returned are as follows, in format [mtype]: [error message] \r\n"
+            f"No valid mtype could be identified for object of type {type(obj)}. "
+            f"Errors returned are as follows, in format [mtype]: [error message] \r\n"
         ) + msg
         raise TypeError(msg)
 
