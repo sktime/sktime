@@ -86,6 +86,11 @@ class SARIMAX(_StatsModelsAdapter):
         Whether or not to use exact diffuse initialization for non-stationary
         states. Default is False (in which case approximate diffuse
         initialization is used).
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     See Also
     --------
@@ -132,6 +137,7 @@ class SARIMAX(_StatsModelsAdapter):
         freq=None,
         missing="none",
         validate_specification=True,
+        random_state=None,
     ):
 
         self.order = order
@@ -152,7 +158,7 @@ class SARIMAX(_StatsModelsAdapter):
         self.missing = missing
         self.validate_specification = validate_specification
 
-        super().__init__()
+        super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         self._forecaster = _SARIMAX(
