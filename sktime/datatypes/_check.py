@@ -304,13 +304,35 @@ def mtype(
         if check_is_mtype(obj, mtype=m_plus_scitype[0], scitype=m_plus_scitype[1])
     ]
 
+    # collects mtypes that are tested as valid for obj
+    mtypes_postive = []
+
+    # collects error messages from mtypes that are tested as invalid for obj
+    mtypes_negative = dict()
+
+    for m_plus_scitype in m_plus_scitypes:
+        valid, msg, _ = check_is_mtype(
+            obj, mtype=m_plus_scitype[0], scitype=m_plus_scitype[1]
+        )
+        if valid:
+            mtypes_postive += [m_plus_scitype[0]]
+        else:
+            mtypes_negative[m_plus_scitype[0]] = msg
+
     if len(res) > 1:
         raise TypeError(
-            f"Error in check_is_mtype, more than one mtype identified: {res}"
+            f"Error in check_is_mtype, more than one mtype identified: {mtypes_postive}"
         )
 
     if len(res) < 1:
-        raise TypeError("No valid mtype could be identified")
+        msg = ""
+        for mtype, error in mtypes_negative:
+            msg += f"{mtype}: {error}\r\n"
+        msg = (
+            "No valid mtype could be identified. "
+            "Errors returned are as follows, in format [mtype]: [error message] \r\n"
+        ) + msg
+        raise TypeError(msg)
 
     return res[0]
 
