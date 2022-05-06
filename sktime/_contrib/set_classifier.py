@@ -186,7 +186,7 @@ def set_classifier(cls, resample_id=None, train_file=False):
             random_state=resample_id,
             save_transformed_data=train_file,
         )
-    elif name == "CNN" or name == "CNNClassifier":
+    elif name == "CNN" or name == "cnnclassifier":
         return CNNClassifier()
     else:
         raise Exception("UNKNOWN CLASSIFIER")
