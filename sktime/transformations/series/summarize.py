@@ -181,7 +181,7 @@ class WindowSummarizer(BaseTransformer):
     >>> kwargs = {
     ...     "lag_config": {
     ...         "lag": ["lag", [[1, 0],['60D', 0]]],
-    ...         "mean": ["mean", [[3, 0], ['30D', '90D']]],
+    ...         "mean": ["mean", [[3, 0], ['30D', '60D']]],
     ...         "std": ["std", [[4, 0],['30D','120D']]],
     ...     }
     ... }
