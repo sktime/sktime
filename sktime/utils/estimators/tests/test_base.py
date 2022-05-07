@@ -41,7 +41,18 @@ def test_mixin(base):
             pass
 
     dummy_instance = _DummyClass()
-    assert hasattr(dummy_instance, "_log") & hasattr(dummy_instance, "log")
+    assert hasattr(dummy_instance, "log")
+    dummy_instance.add_log_item(42)
+    assert hasattr(dummy_instance, "_MockEstimatorMixin__log")
+
+
+def test_add_log_item():
+    """Test _MockEstimatorMixin.add_log_item behaviour."""
+    mixin = _MockEstimatorMixin()
+    mixin.add_log_item(1)
+    mixin.add_log_item(2)
+    assert mixin.log[0] == 1
+    assert mixin.log[1] == 2
 
 
 def test_log_is_property():

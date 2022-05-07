@@ -355,4 +355,7 @@ def _has_capability(est, method: str) -> bool:
         if method == "predict_proba" and isinstance(est, ALWAYS_HAVE_PREDICT_PROBA):
             return True
         return get_tag(est, "capability:pred_int", False)
+    # skip transform for forecasters that have it - pipelines
+    if method == "transform" and isinstance(est, BaseForecaster):
+        return False
     return True

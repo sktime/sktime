@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = "Angus Dempster"
+"""Multivariate MiniRocket transformer."""
+
+__author__ = "angus924"
 __all__ = ["MiniRocketMultivariate"]
 
 import multiprocessing
@@ -62,9 +64,17 @@ class MiniRocketMultivariate(BaseTransformer):
         self.max_dilations_per_kernel = max_dilations_per_kernel
 
         self.n_jobs = n_jobs
-        self.random_state = (
-            np.int32(random_state) if isinstance(random_state, int) else None
-        )
+        self.random_state = random_state
+
+        if random_state is not None and not isinstance(random_state, int):
+            raise ValueError(
+                f"random_state in MiniRocketMultivariate must be int or None, "
+                f"but found {type(random_state)}"
+            )
+        if isinstance(random_state, int):
+            self.random_state_ = np.int32(random_state)
+        else:
+            self.random_state_ = random_state
 
         super(MiniRocketMultivariate, self).__init__()
 
@@ -91,7 +101,7 @@ class MiniRocketMultivariate(BaseTransformer):
                 )
             )
         self.parameters = _fit_multi(
-            X, self.num_kernels, self.max_dilations_per_kernel, self.random_state
+            X, self.num_kernels, self.max_dilations_per_kernel, self.random_state_
         )
         return self
 
