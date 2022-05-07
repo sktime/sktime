@@ -169,7 +169,7 @@ def test_int_windows(X, lag_feature):
 list_X = [_make_series()]  # not applicable: , _make_panel_X(), _make_hierarchical()]
 
 lag_features_time = [
-    {"lag": [1, "30D"], "mean": [[3, "30D"]]},
+    {"lag": [1, "30D"], "mean": [[3, "31D"]]},
     {"lag": ["1D", "30D"], "mean": [["3D", "60D"]]},
 ]
 
