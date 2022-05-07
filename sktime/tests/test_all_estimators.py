@@ -125,7 +125,10 @@ class BaseFixtureGenerator:
         )
 
         metafunc.parametrize(
-            fixture_param_str, fixture_prod, ids=fixture_names, indirect=True
+            fixture_param_str,
+            fixture_prod,
+            ids=fixture_names,
+            indirect=["estimator_instance"],
         )
 
     def _all_estimators(self):
