@@ -234,6 +234,7 @@ class WindowSummarizer(BaseTransformer):
         "X_inner_mtype": [
             "pd-multiindex",
             "pd.DataFrame",
+            "pd_multiindex_hier",
         ],  # which mtypes do _fit/_predict support for X?
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "univariate-only": False,  # can the transformer handle multivariate X?
@@ -396,9 +397,10 @@ class WindowSummarizer(BaseTransformer):
             bfill = False
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = X.groupby("instances")[cols]
-                df = [
-                    _window_feature(X_grouped, **kwargs, bfill=bfill)
+                hier_levels = list(range(X.index.nlevels - 1))
+                X_grouped = X.groupby(level=hier_levels)[cols]
+                df = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
                 ]
             else:

@@ -55,7 +55,7 @@ class ClustererTestScenario(TestScenario, BaseObject):
 class ClustererFitPredict(ClustererTestScenario):
     """Fit/predict with panel Xmake_clustering_problem."""
 
-    _tags = {"X_univariate": True, "pre-refactor": True}
+    _tags = {"X_univariate": True, "is_enabled": True}
 
     args = {
         "fit": {"X": make_clustering_problem(random_state=RAND_SEED)},
