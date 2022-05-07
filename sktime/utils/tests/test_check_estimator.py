@@ -6,11 +6,11 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.classification.feature_based import Catch22Classifier
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import check_estimator
+from sktime.utils.estimators import MockForecaster
 
-EXAMPLE_CLASSES = [Catch22Classifier, NaiveForecaster, ExponentTransformer]
+EXAMPLE_CLASSES = [Catch22Classifier, MockForecaster, ExponentTransformer]
 
 
 @pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
