@@ -6,7 +6,6 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
-import re
 import warnings
 
 import numpy as np
@@ -45,7 +44,8 @@ class WindowSummarizer(BaseTransformer):
         For ease of notation, for the key "lag", only a single integer or offset
         specifying the `lag` argument will be provided.
 
-        The offsets are expected to have a format of 'NUMBER'+'UNIT',
+        The offsets work only with datasets with time index (either pd.DateimeIndex
+        or pd.RangeIndex) are expected to have a format of 'NUMBER'+'UNIT',
         where NUMBER is an integer and UNIT is one of the following:
         * D - day,
         * H - hour,
@@ -260,6 +260,25 @@ class WindowSummarizer(BaseTransformer):
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
+
+        # if lag config has input other than ints,
+        # pd-multiindex is disabled
+        lag_conf = None
+        if lag_config is not None:
+            lag_conf = [x[1:] for x in lag_config.values()]
+        if lag_feature is not None:
+            lag_conf = lag_feature.values()
+        if lag_conf is not None:
+            if len([x for x in lag_conf if not isinstance(x, int)]) > 0:
+                WindowSummarizer._tags["X_inner_mtype"] = [
+                    # pd-multiindex", not compatible with panels
+                    "pd.DataFrame"
+                ]
+
+                WindowSummarizer._tags["enforce_index_type"] = [
+                    "pd.DatetimeIndex",
+                    "pd.RangeIndex",
+                ]
 
         super(WindowSummarizer, self).__init__()
 
@@ -483,38 +502,24 @@ def get_name_list(Z):
     return Z_name
 
 
-def find_numbers_letters(string):
-    letters = re.findall(r"[a-zA-Z]+", string)
-    digits = re.findall(r"\d+", string)
+def find_timedelta_unit_value(timedelta):
+    """Extract the number of time units and the time unit itself.
 
-    length_letters = len(letters)
-    length_digits = len(digits)
+    Parameters
+    ----------
+    timedelta : pd.Timedelta
 
-    if length_letters == 1 and length_digits == 1:
-        return letters[0], int(digits[0])
-    else:
-        raise ValueError("passed incompatible time span")
+    Returns
+    -------
+    value : int
+        Number of time units.
+    unit : str
+        Character describing the timedelta unit.
+    """
+    unit = timedelta.resolution_string
+    value = round(timedelta.asm8 / np.timedelta64(1, unit))
 
-
-time_units = ["D", "H", "T", "S", "L", "U", "N"]
-
-
-def calc_freq_data(shift_val, shift_freq, data):
-    components_shift = (
-        np.abs(data.shift(shift_val, shift_freq).index - data.index).min().components
-    )
-    components_shift = [i for i, x in enumerate(components_shift) if x != 0]
-
-    components_data = pd.Series(data.index).diff().min().components
-    components_data = [i for i, x in enumerate(components_data) if x != 0]
-
-    min_timedelta = max(components_shift + components_data)
-
-    freq = {0: "D", 1: "H", 2: "T", 3: "S", 4: "L", 5: "U", 6: "N"}[min_timedelta]
-
-    new_data = data.asfreq(freq)
-
-    return new_data
+    return value, unit
 
 
 def _window_feature(Z, summarizer=None, window=None, bfill=False):
@@ -542,22 +547,30 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        List containg window_length and lag parameters, see WindowSummarizer
+        List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
     lag = window[0]
     window_length = window[1]
 
+    # this could be moved to _fit in WindowSummarizer
     if isinstance(lag, str):
         lag = pd.Timedelta(lag)
 
+    # this could be moved to _fit in WindowSummarizer
     if isinstance(window_length, str):
         window_length = pd.Timedelta(window_length)
 
+    # this could be moved to _fit in WindowSummarizer
     timedelta_flag = isinstance(lag, pd.Timedelta)
 
     if timedelta_flag:
-        Z_index = Z.index
+        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
+            raise TypeError(
+                "Timedelta lags are not compatible with SeriesGroupBy objects."
+            )
+        else:
+            Z_index = Z.index
 
         # this could be moved to _fit in WindowSummarizer
         period_index_flag = isinstance(Z_index, pd.PeriodIndex)
@@ -567,22 +580,20 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 Z_index = Z_index.to_timestamp()
                 Z.index = Z_index
             except Exception:
-                raise TypeError("index has to be transformable to DatetimeIndex")
+                raise TypeError("Index has to be transformable to DatetimeIndex.")
 
-        Z_index = pd.DataFrame([0] * len(Z), index=Z_index)
-        Z_index.rename(columns={0: "col_index"}, inplace=True)
+        Z_index = pd.DataFrame(index=Z_index)
+        lag_value, freq = find_timedelta_unit_value(lag)
 
-        freq, lag_value = find_numbers_letters(lag)
-        lag = lag_value + 1
-
-        if freq not in time_units:
-            raise ValueError(f"shift freq not in {time_units}")
-
-        Z = calc_freq_data(lag_value, freq, Z)
+        # should we have lag = lag_value +1
+        # to have similar behavior as for numerical lags?
+        lag = int(lag_value)
+        Z = Z_index.shift(-lag, freq).join(Z, how="outer")
 
     else:
+        # procedure for integer lags
         freq = None
-        lag = lag + 1
+        lag = int(lag) + 1
 
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
@@ -648,8 +659,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         )
 
     if timedelta_flag:
-        feat = Z_index.merge(feat, left_index=True, right_index=True, how="left")
-        feat.drop(columns=["col_index"], inplace=True)
+        feat = Z_index.join(feat, how="left")
         # returning initial PeriodIndex frequency
         if period_index_flag:
             feat = feat.to_period(org_freq)

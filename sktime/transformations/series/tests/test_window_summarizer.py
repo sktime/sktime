@@ -150,7 +150,6 @@ def test_wrong_column():
     return Xt
 
 
-
 list_X = [_make_series(), _make_panel_X(), _make_hierarchical()]
 
 lag_features_int = [
@@ -167,7 +166,7 @@ def test_int_windows(X, lag_feature):
     t.fit_transform(X)
 
 
-list_X = [_make_series(), _make_panel_X(), _make_hierarchical()]
+list_X = [_make_series()]  # not applicable: , _make_panel_X(), _make_hierarchical()]
 
 lag_features_time = [
     {"lag": [1, "30D"], "mean": [[3, "30D"]]},
@@ -175,7 +174,7 @@ lag_features_time = [
 ]
 
 
-@pytest.mark.parametrize("lag_feature", lag_features)
+@pytest.mark.parametrize("lag_feature", lag_features_time)
 @pytest.mark.parametrize("X", list_X)
 def test_time_like_windows(X, lag_feature):
     """Test WindowSummarizer with time-like lag-feature inputs."""
