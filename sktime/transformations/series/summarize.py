@@ -6,7 +6,6 @@
 __author__ = ["mloning", "RNKuhns", "danbartl", "grzegorzrut"]
 __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
-import re
 import warnings
 
 import numpy as np
@@ -34,21 +33,21 @@ class WindowSummarizer(BaseTransformer):
     lag_feature: dict of str and list, optional (default = dict containing first lag)
         Dictionary specifying as key the type of function to be used and as value
         the argument `window`.
-        
+
         For all keys other than `lag`, the argument `window` is a length 2 list.
-        The window elements can be either integers indicate the number of observations, 
-        or strings specifying a time period (an offset).
+        The window elements can be either integers indicate the number of
+        observations, or strings specifying a time period (an offset).
 
         The first element of the `window` is the `lag`, which specifies how far back
         in the past the window will start, and the integer `window length`,
         which will give the length of the window across which to apply the function.
 
         For ease of notation, for the key "lag", only a single integer or offset
-        specifying the `lag` argument will be provided.   
+        specifying the `lag` argument will be provided.
 
-        The offsets are expected to have a format of 'NUMBER'+'UNIT', 
-        where NUMBER 
-        is an integer and UNIT is one of the following: 
+        The offsets work only with datasets with time index (either pd.DateimeIndex
+        or pd.RangeIndex) are expected to have a format of 'NUMBER'+'UNIT',
+        where NUMBER is an integer and UNIT is one of the following:
         * D - day,
         * H - hour,
         * T - minute,
@@ -56,9 +55,9 @@ class WindowSummarizer(BaseTransformer):
         * L - milisecond,
         * U - microsecond,
         * N - nanosecond.
-        For instance, the following offesets would be acceptable: '1D', '2H', '30S'.        
+        For instance, the following offesets would be acceptable: '1D', '2H', '30S'.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
@@ -99,17 +98,16 @@ class WindowSummarizer(BaseTransformer):
         |-------------------------- |
         | x x x x x x x * x x * z x |
         |---------------------------|
-        
-        
-        If, for instance, the time series would have a daily frequency and the window 
-        function would be specified as  `window = ['1D','4D']`, the logic with the offsets 
-        would be exactly the same. Note that it is possible that the time difference 
-        between consecutive records is not constant or the offset is not equal 
-        to a multiple of a time series frequency. 
-        
 
-        key: either custom function call (to be
-                provided by user) or str corresponding to native pandas window function:
+
+        If, for instance, the time series would have a daily frequency and the window
+        function would be specified as  `window = ['1D','4D']`, the logic with
+        the offsets would be exactly the same. Note that it is possible that the time
+        difference between consecutive records is not constant or the offset is
+        not equal to a multiple of a time series frequency.
+
+        key: either custom function call (to be provided by user)
+        or str corresponding to native pandas window function:
                 * "sum",
                 * "mean",
                 * "median",
@@ -184,8 +182,8 @@ class WindowSummarizer(BaseTransformer):
     >>> kwargs = {
     ...     "lag_config": {
     ...         "lag": ["lag", [[1, 0],['60D', 0]]],
-    ...         "mean": ["mean", [[3, 0], ['30D', '90D']]],
-    ...         "std": ["std", [[4, 0],['30D','120D']]],
+    ...         "mean": ["mean", [[3, 0], ['30D', '60D']]],
+    ...         "std": ["std", [[4, 0],['30D','90D']]],
     ...     }
     ... }
     >>> transformer = WindowSummarizer(**kwargs)
@@ -249,12 +247,12 @@ class WindowSummarizer(BaseTransformer):
     }
 
     def __init__(
-            self,
-            lag_config=None,
-            lag_feature=None,
-            n_jobs=-1,
-            target_cols=None,
-            truncate=None,
+        self,
+        lag_config=None,
+        lag_feature=None,
+        n_jobs=-1,
+        target_cols=None,
+        truncate=None,
     ):
 
         # self._converter_store_X = dict()
@@ -263,6 +261,25 @@ class WindowSummarizer(BaseTransformer):
         self.n_jobs = n_jobs
         self.target_cols = target_cols
         self.truncate = truncate
+
+        # if lag config has input other than ints,
+        # pd-multiindex is disabled
+        lag_conf = None
+        if lag_config is not None:
+            lag_conf = [x[1:] for x in lag_config.values()]
+        if lag_feature is not None:
+            lag_conf = lag_feature.values()
+        if lag_conf is not None:
+            if len([x for x in lag_conf if not isinstance(x, int)]) > 0:
+                WindowSummarizer._tags["X_inner_mtype"] = [
+                    # pd-multiindex", not compatible with panels
+                    "pd.DataFrame"
+                ]
+
+                WindowSummarizer._tags["enforce_index_type"] = [
+                    "pd.DatetimeIndex",
+                    "pd.RangeIndex",
+                ]
 
         super(WindowSummarizer, self).__init__()
 
@@ -380,7 +397,8 @@ class WindowSummarizer(BaseTransformer):
             bfill = False
         for cols in target_cols:
             if isinstance(X.index, pd.MultiIndex):
-                X_grouped = X.groupby("instances")[cols]
+                hier_levels = list(range(X.index.nlevels - 1))
+                X_grouped = X.groupby(level=hier_levels)[cols]
                 df = Parallel(n_jobs=self.n_jobs)(
                     delayed(_window_feature)(X_grouped, **kwargs, bfill=bfill)
                     for index, kwargs in func_dict.iterrows()
@@ -486,38 +504,24 @@ def get_name_list(Z):
     return Z_name
 
 
-def find_numbers_letters(string):
-    letters = re.findall(r"[a-zA-Z]+", string)
-    digits = re.findall(r"\d+", string)
+def find_timedelta_unit_value(timedelta):
+    """Extract the number of time units and the time unit itself.
 
-    length_letters = len(letters)
-    length_digits = len(digits)
+    Parameters
+    ----------
+    timedelta : pd.Timedelta
 
-    if length_letters == 1 and length_digits == 1:
-        return letters[0], int(digits[0])
-    else:
-        raise ValueError("passed incompatible time span")
+    Returns
+    -------
+    value : int
+        Number of time units.
+    unit : str
+        Character describing the timedelta unit.
+    """
+    unit = timedelta.resolution_string
+    value = round(timedelta.asm8 / np.timedelta64(1, unit))
 
-
-time_units = ["D", "H", "T", "S", "L", "U", "N"]
-
-
-def calc_freq_data(shift_val, shift_freq, data):
-    components_shift = (
-        np.abs(data.shift(shift_val, shift_freq).index - data.index).min().components
-    )
-    components_shift = [i for i, x in enumerate(components_shift) if x != 0]
-
-    components_data = pd.Series(data.index).diff().min().components
-    components_data = [i for i, x in enumerate(components_data) if x != 0]
-
-    min_timedelta = max(components_shift + components_data)
-
-    freq = {0: "D", 1: "H", 2: "T", 3: "S", 4: "L", 5: "U", 6: "N"}[min_timedelta]
-
-    new_data = data.asfreq(freq)
-
-    return new_data
+    return value, unit
 
 
 def _window_feature(Z, summarizer=None, window=None, bfill=False):
@@ -545,15 +549,30 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
          or custom function call. See for the native window functions also
          https://pandas.pydata.org/docs/reference/window.html.
     window: list of integers
-        List containg window_length and lag parameters, see WindowSummarizer
+        List containing window_length and lag parameters, see WindowSummarizer
         class description for in-depth explanation.
     """
     lag = window[0]
     window_length = window[1]
-    timedelta_flag = isinstance(lag, str)
+
+    # this could be moved to _fit in WindowSummarizer
+    if isinstance(lag, str):
+        lag = pd.Timedelta(lag)
+
+    # this could be moved to _fit in WindowSummarizer
+    if isinstance(window_length, str):
+        window_length = pd.Timedelta(window_length)
+
+    # this could be moved to _fit in WindowSummarizer
+    timedelta_flag = isinstance(lag, pd.Timedelta)
 
     if timedelta_flag:
-        Z_index = Z.index
+        if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
+            raise TypeError(
+                "Timedelta lags are not compatible with SeriesGroupBy objects."
+            )
+        else:
+            Z_index = Z.index
 
         # this could be moved to _fit in WindowSummarizer
         period_index_flag = isinstance(Z_index, pd.PeriodIndex)
@@ -562,23 +581,21 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
             try:
                 Z_index = Z_index.to_timestamp()
                 Z.index = Z_index
-            except:
-                raise TypeError('index has to be transformable to DatetimeIndex')
+            except Exception:
+                raise TypeError("Index has to be transformable to DatetimeIndex.")
 
-        Z_index = pd.DataFrame([0] * len(Z), index=Z_index)
-        Z_index.rename(columns={0: "col_index"}, inplace=True)
+        Z_index = pd.DataFrame(index=Z_index)
+        lag_value, freq = find_timedelta_unit_value(lag)
 
-        freq, lag_value = find_numbers_letters(lag)
-        lag = lag_value + 1
-
-        if freq not in time_units:
-            raise ValueError(f"shift freq not in {time_units}")
-
-        Z = calc_freq_data(lag_value, freq, Z)
+        # should we have lag = lag_value +1
+        # to have similar behavior as for numerical lags?
+        lag = int(lag_value)
+        Z = Z_index.shift(-lag, freq).join(Z, how="outer")
 
     else:
+        # procedure for integer lags
         freq = None
-        lag = lag + 1
+        lag = int(lag) + 1
 
     if summarizer in pd_rolling:
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy):
@@ -601,8 +618,8 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
                 feat = Z.apply(
                     lambda x: getattr(
                         x.shift(lag, freq)
-                            .fillna(method="bfill")
-                            .rolling(window_length),
+                        .fillna(method="bfill")
+                        .rolling(window_length),
                         summarizer,
                     )()
                 )
@@ -612,11 +629,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         else:
             feat = Z.shift(lag, freq).fillna(method="bfill")
         if isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.rolling(window_length).apply(summarizer, raw=True)
         elif not isinstance(Z, pd.core.groupby.generic.SeriesGroupBy) and callable(
-                summarizer
+            summarizer
         ):
             feat = feat.apply(
                 lambda x: x.rolling(window_length).apply(summarizer, raw=True)
@@ -644,8 +661,7 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         )
 
     if timedelta_flag:
-        feat = Z_index.merge(feat, left_index=True, right_index=True, how="left")
-        feat.drop(columns=["col_index"], inplace=True)
+        feat = Z_index.join(feat, how="left")
         # returning initial PeriodIndex frequency
         if period_index_flag:
             feat = feat.to_period(org_freq)
@@ -726,7 +742,7 @@ def _check_quantiles(quantiles):
         quantiles = [quantiles]
     elif isinstance(quantiles, (list, tuple)):
         if len(quantiles) == 0 or not all(
-                [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
+            [isinstance(q, (int, float)) and 0.0 <= q <= 1.0 for q in quantiles]
         ):
             raise ValueError(msg)
     elif quantiles is not None:
@@ -787,9 +803,9 @@ class SummaryTransformer(BaseTransformer):
     }
 
     def __init__(
-            self,
-            summary_function=("mean", "std", "min", "max"),
-            quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+        self,
+        summary_function=("mean", "std", "min", "max"),
+        quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
     ):
         self.summary_function = summary_function
         self.quantiles = quantiles
