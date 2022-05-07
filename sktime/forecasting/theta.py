@@ -220,7 +220,7 @@ class ThetaForecaster(ExponentialSmoothing):
             self.fh.to_relative(self.cutoff) * self.initial_level_**2 + 1
         )
 
-        y_pred = super(ThetaForecaster, self)._predict(fh, X)
+        y_pred = self._predict(fh, X)
 
         # we assume normal additive noise with sem variance
         for a in alpha:

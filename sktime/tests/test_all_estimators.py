@@ -351,7 +351,7 @@ class QuickTester:
             return [estimator_class], [estimator_class.__name__]
 
         def _generate_estimator_instance(test_name, **kwargs):
-            return [estimator], [estimator_class.__name__]
+            return [clone(estimator)], [estimator_class.__name__]
 
         def _generate_estimator_instance_cls(test_name, **kwargs):
             return estimator_class.create_test_instances_and_names()
