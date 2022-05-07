@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
-Extension template for transformers, SIMPLE version.
+Kalman Filter Transformer.
 
 Contains only bare minimum of implementation requirements for a functional transformer.
 Also assumes *no composition*, i.e., no transformer or other estimator components.
@@ -39,29 +39,58 @@ Testing - implement if sktime transformer (not needed locally):
 # todo: uncomment the following line, enter authors' GitHub IDs
 # __author__ = [authorGitHubID, anotherAuthorGitHubID]
 
-# todo: add any necessary sktime external imports here
+import numpy as np
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+
+# todo: add any necessary sktime external imports here
+
+
+_check_soft_dependencies("pykalman", severity="warning")
+_check_soft_dependencies("filterpy", severity="warning")
+
 
 # todo: add any necessary sktime internal imports here
 
 
-class MyTransformer(BaseTransformer):
+class KalmanFilter(BaseTransformer):
     """Custom transformer. todo: write docstring.
 
     todo: describe your custom transformer here
         fill in sections appropriately
         docstring must be numpydoc compliant
-
     Parameters
     ----------
-    parama : int
+    state_dim : int
         descriptive explanation of parama
-    paramb : string, optional (default='default')
+    state_transition : numpy array, optional (default=None)
         descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
+    control_transition : numpy array, optional (default=None)
+        descriptive explanation of paramc and so on
+    process_noise : int
+        descriptive explanation of parama
+    measurement_noise : numpy array, optional (default=None)
+        descriptive explanation of paramb
+    measurement_function : numpy array, optional (default=None)
+        descriptive explanation of paramc and so on
+    initial_state : numpy array, optional (default=None)
+        descriptive explanation of paramc and so on
+    initial_state_covariance : numpy array
+        descriptive explanation of parama
+    smoothing_technic : string, optional (default=None)
+        This parameter affects transform. If `None`, then this kf will be inferring
+        hidden state (given u, z, produce x). Another option is 'rts' which uses
+        `FilterPy` Rauch-Tung-Striebal Kalman smoother for
+        denoising (given u, z, produce denoised z).
+    estimate_matrices : optional, subset of [‘state_transition’,
+        ‘measurement_function’, ‘process_noise’, ‘measurement_noise’,
+        ‘initial_state’, ‘initial_state_covariance’] or - ‘all’/'None'.
+        If estimate_matrices is an iterable of strings, only matrices in
+        estimate_matrices will be estimated using EM algorithm,
+        like described in `pykalman`. If estimate_matrices is ‘all’,
+        then all matrices will be estimated.
+        Note - ‘control_transition’ cannot be estimated.
     """
 
     # todo: fill out estimator tags here
@@ -94,12 +123,12 @@ class MyTransformer(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for X?
         # this can be a Panel mtype even if transform-input is Series, vectorized
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "y_inner_mtype": "np.ndarray",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
@@ -109,22 +138,65 @@ class MyTransformer(BaseTransformer):
         "capability:unequal_length:removes": False,
         # is transform result always guaranteed to be equal length (and series)?
         #   not relevant for transformers that return Primitives in transform-output
-        "handles-missing-data": False,  # can estimator handle missing data?
+        "handles-missing-data": True,  # can estimator handle missing data?
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
-        # todo: write any hyper-parameters to self
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
-        # important: no checking or other logic should happen here
 
+    # state_transition == A/F, numpy 2D or 3D ndarray
+    # control_transition == B/G, numpy 2D or 3D ndarray
+    # process_noise == Q, numpy 2D or 3D ndarray
+    # measurement_noise == R, numpy 2D or 3D ndarray
+    # measurement_function == H, numpy 2D or 3D ndarray
+    # initial_state == X0, numpy 1D array
+    # initial_state_covariance == P0, numpy 1D array
+
+    def __init__(
+        self,
+        state_dim,
+        state_transition=None,
+        control_transition=None,
+        process_noise=None,
+        measurement_noise=None,
+        measurement_function=None,
+        initial_state=None,
+        initial_state_covariance=None,
+        smoothing_technic=None,
+        estimate_matrices=None,
+    ):
+        _check_soft_dependencies("pykalman", severity="error", object=self)
+        _check_soft_dependencies("filterpy", severity="error", object=self)
+
+        # todo: write any hyper-parameters to self
+        # if estimate_matrices is None:
+        #     estimate_matrices =
+        #     ["process_noise", "initial_state", "initial_state_covariance"]
+        self.state_dim = state_dim
+
+        # F/A
+        self.state_transition = state_transition
+        # G/B
+        self.control_transition = control_transition
+        # Q
+        self.process_noise = process_noise
+        # R
+        self.measurement_noise = measurement_noise
+        # H/C
+        self.measurement_function = measurement_function
+        # X0
+        self.initial_state = initial_state
+        # P0
+        self.initial_state_covariance = initial_state_covariance
+
+        self.smoothing_technic = smoothing_technic
+        self.estimate_matrices = estimate_matrices
+
+        # important: no checking or other logic should happen here
         # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        super(KalmanFilter, self).__init__()
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
@@ -144,7 +216,6 @@ class MyTransformer(BaseTransformer):
         -------
         self: reference to self
         """
-
         # implement here
         # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
         # IMPORTANT: avoid side effects to X, y
@@ -161,6 +232,55 @@ class MyTransformer(BaseTransformer):
         #   but model parameters, *don't* add as arguments to fit, but treat as follows:
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
+
+        # state_transition == A/F
+        # control_transition == B/G
+        # process_noise == Q
+        # measurement_noise == R
+        # measurement_function == H
+        # initial_state == X0
+        # initial_state_covariance == P0
+
+        self.measurement_dim_ = X.shape[1]
+        estimate_matrices_ = self._get_estimate_matrices()
+
+        if estimate_matrices_ is None:
+            (
+                self.F_,
+                self.G_,
+                self.Q_,
+                self.R_,
+                self.H_,
+                self.X0_,
+                self.P0_,
+            ) = self._set_params(self.measurement_dim_)
+            return self
+
+        from pykalman import KalmanFilter
+
+        X_masked = np.ma.masked_invalid(X)
+
+        kf = KalmanFilter(
+            transition_matrices=self.state_transition,
+            observation_matrices=self.measurement_function,
+            transition_covariance=self.process_noise,
+            observation_covariance=self.measurement_noise,
+            initial_state_mean=self.initial_state,
+            initial_state_covariance=self.initial_state_covariance,
+            n_dim_obs=self.measurement_dim_,
+            n_dim_state=self.state_dim,
+        )
+
+        kf = kf.em(X=X_masked, em_vars=estimate_matrices_)
+
+        self.F_ = kf.transition_matrices
+        self.H_ = kf.observation_matrices
+        self.Q_ = kf.transition_covariance
+        self.R_ = kf.observation_covariance
+        self.X0_ = kf.initial_state_mean
+        self.P0_ = kf.initial_state_covariance
+
+        return self
 
     # todo: implement this, mandatory
     def _transform(self, X, y=None):
@@ -198,6 +318,160 @@ class MyTransformer(BaseTransformer):
         #  -------
         #  X_transformed : Series of mtype pd.DataFrame
         #       transformed version of X
+
+        # state_transition == A/F
+        # control_transition == B/G of size [n, state_dim, u_dim] or [state_dim, u_dim]
+        # process_noise == Q
+        # measurement_noise == R
+        # measurement_function == H
+        # initial_state == X0
+        # initial_state_covariance == P0
+
+        # X_ = np.array(X, copy=True)
+        # X_ = np.where(np.isnan(X_), None, X_)
+        from pykalman import KalmanFilter
+
+        X_masked = np.ma.masked_invalid(X)
+
+        b = self._get_offset(u=y)
+        kf = KalmanFilter(
+            transition_matrices=self.F_,
+            observation_matrices=self.H_,
+            transition_covariance=self.Q_,
+            observation_covariance=self.R_,
+            transition_offsets=b,
+            initial_state_mean=self.X0_,
+            initial_state_covariance=self.P0_,
+        )
+
+        if isinstance(self.smoothing_technic, str):
+            if self.smoothing_technic == "rts":
+                import filterpy.kalman.kalman_filter as filterpy_kf
+
+                (state_means, state_covariances) = kf.filter(X_masked)
+                time_steps = len(state_means)
+                Fs = [self.F_] * time_steps if self.F_.ndim == 2 else self.F_
+                Qs = [self.Q_] * time_steps if self.Q_.ndim == 2 else self.Q_
+                (Xs, Ps, _, _) = filterpy_kf.rts_smoother(
+                    Xs=state_means, Ps=state_covariances, Fs=Fs, Qs=Qs
+                )
+                return Xs
+
+            # give different name
+            if self.smoothing_technic == "pykalman_smoothing":
+                (smoothed_state_means, smoothed_state_covariances) = kf.smooth(X_masked)
+                return smoothed_state_means
+
+        return kf.filter(X_masked)[0]
+
+    def _set_params(self, measurement_dim, dim_u=0):
+        F = (
+            np.eye(self.state_dim)
+            if self.state_transition is None
+            else np.atleast_2d(self.state_transition)
+        )
+        G = self._get_G(dim_u=dim_u)
+        Q = (
+            np.eye(self.state_dim)
+            if self.process_noise is None
+            else np.atleast_2d(self.process_noise)
+        )
+        R = (
+            np.eye(measurement_dim)
+            if self.measurement_noise is None
+            else np.atleast_2d(self.measurement_noise)
+        )
+        H = (
+            np.eye(measurement_dim, self.state_dim)
+            if self.measurement_function is None
+            else np.atleast_2d(self.measurement_function)
+        )
+        X0 = (
+            np.zeros(self.state_dim)
+            if self.initial_state is None
+            else np.atleast_1d(self.initial_state)
+        )
+        P0 = (
+            np.eye(self.state_dim)
+            if self.initial_state_covariance is None
+            else np.atleast_2d(self.initial_state_covariance)
+        )
+
+        return F, G, Q, R, H, X0, P0
+
+    def _get_G(self, dim_u=0, must_3d=False):
+        if self.control_transition is not None:
+            G = np.atleast_2d(self.control_transition)
+        else:
+            G = np.eye(self.state_dim, dim_u) if dim_u > 0 else None
+        if must_3d and len(G.shape) == 2:
+            G = np.atleast_2d([G])
+        return G
+
+    def _get_estimate_matrices(self):
+        if self.estimate_matrices is None:
+            return None
+
+        params_mapping = {
+            "state_transition": "transition_matrices",
+            "control_transition": "transition_offsets",
+            "process_noise": "transition_covariance",
+            "measurement_noise": "observation_covariance",
+            "measurement_function": "observation_matrices",
+            "initial_state": "initial_state_mean",
+            "initial_state_covariance": "initial_state_covariance",
+        }
+
+        if isinstance(self.estimate_matrices, str):
+            if self.estimate_matrices == "all":
+                return list(params_mapping.values())
+            if self.estimate_matrices == "None" or self.estimate_matrices == "none":
+                return None
+            if self.estimate_matrices in params_mapping:
+                return list(params_mapping[self.estimate_matrices])
+
+            raise ValueError(
+                f"If `estimate_matrices` is passed as a "
+                f"string, "
+                f"it must be `all` / `None` / one of: "
+                f"{list(params_mapping.keys())}, but found: "
+                f"{self.estimate_matrices}"
+            )
+
+        else:
+            for _matrix in self.estimate_matrices:
+                if _matrix not in params_mapping:
+                    raise ValueError(
+                        f"Elements of `estimate_matrices` "
+                        f"must be a subset of "
+                        f"{list(params_mapping.keys())}, but found: "
+                        f"{_matrix}"
+                    )
+            return list(np.vectorize(params_mapping.get)(self.estimate_matrices))
+
+    def _get_offset(self, u=None):
+        # transition_offsets: [n_timesteps - 1, n_dim_state]
+        # or [n_dim_state] array - like.
+        # Also known as b.state. Offsets for times[0...n_timesteps - 2]
+        if u is None:
+            return None
+
+        u_ = np.atleast_2d(u)
+        time_steps_u, dim_u = u_.shape
+
+        G = self._get_G(dim_u=dim_u, must_3d=True)
+        time_steps_G, _, _ = G.shape
+
+        n = max(time_steps_u, time_steps_G)
+        offsets = np.zeros((n, self.state_dim))
+        for t in range(n):
+            ut = u_[0] if time_steps_u == 1 else u_[t]
+            Gt = G[0] if time_steps_G == 1 else G[t]
+            offsets[t] = np.dot(Gt, ut)
+
+        if n == 1:
+            return offsets[0]
+        return offsets
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
