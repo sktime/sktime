@@ -212,7 +212,7 @@ class BaseFixtureGenerator:
         return estimator_instances_to_test, estimator_instance_names
 
     @pytest.fixture(scope="function")
-    def estimator_instance(request):
+    def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
         return request.param.reset()
 
