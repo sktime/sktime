@@ -124,7 +124,9 @@ class BaseFixtureGenerator:
             raise_exceptions=True,
         )
 
-        metafunc.parametrize(fixture_param_str, fixture_prod, ids=fixture_names)
+        metafunc.parametrize(
+            fixture_param_str, fixture_prod, ids=fixture_names, indirect=True
+        )
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
@@ -208,6 +210,11 @@ class BaseFixtureGenerator:
             estimator_instance_names += instance_names
 
         return estimator_instances_to_test, estimator_instance_names
+
+    @pytest.fixture(scope="function")
+    def estimator_instance(request):
+        """estimator_instance fixture definition for indirect use."""
+        return request.param.reset()
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
