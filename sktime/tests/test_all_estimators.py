@@ -124,11 +124,16 @@ class BaseFixtureGenerator:
             raise_exceptions=True,
         )
 
+        if "estimator_instance" in fixture_vars:
+            indirect = ["estimator_instance"]
+        else:
+            indirect = []
+
         metafunc.parametrize(
             fixture_param_str,
             fixture_prod,
             ids=fixture_names,
-            indirect=["estimator_instance"],
+            indirect=indirect,
         )
 
     def _all_estimators(self):
@@ -217,7 +222,7 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
-        return request.param.reset()
+        return clone(request.param)
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
