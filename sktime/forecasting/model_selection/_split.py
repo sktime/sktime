@@ -23,6 +23,7 @@ import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
+from sktime.datatypes._utilities import get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.datetime import _coerce_duration_to_int
@@ -45,7 +46,7 @@ from sktime.utils.validation.forecasting import (
     check_fh,
     check_step_length,
 )
-from sktime.utils.validation.series import check_equal_time_index, check_time_index
+from sktime.utils.validation.series import check_equal_time_index
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -57,7 +58,8 @@ FORECASTING_HORIZON_TYPES = Union[
 SPLIT_TYPE = Union[
     Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
 ]
-SPLIT_GENERATOR_TYPE = Generator[Tuple[np.ndarray, np.ndarray], None, None]
+SPLIT_ARRAY_TYPE = Tuple[np.ndarray, np.ndarray]
+SPLIT_GENERATOR_TYPE = Generator[SPLIT_ARRAY_TYPE, None, None]
 
 
 def _repr(self) -> str:
@@ -122,81 +124,49 @@ def _repr(self) -> str:
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
 
 
-def _check_y(y: ACCEPTED_Y_TYPES) -> pd.Index:
-    """Coerce input to `split` function.
-
-    Parameters
-    ----------
-    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
-        coerced and checked version of input y
-
-    Returns
-    -------
-    check_time_index(y_index), where y_index is as follows:
-        if y is pd.Series, pd.DataFrame, y_index = y.index
-        if y is pd.Index, y_index = y itself
-        if y is np.ndarray, y_index =  pd.Index(y)
-
-    Raises
-    ------
-    TypeError
-        if y is not of one of the expected types
-    NotImplementedError
-        if y_index is not a supported sktime index type
-    ValueError
-        if y_index is not monotonous
-    """
-    if isinstance(y, (pd.Series, pd.DataFrame)):
-        y_index = y.index
-    elif isinstance(y, np.ndarray):
-        y_index = pd.Index(y.flatten())
-    elif isinstance(y, pd.Index):
-        y_index = y
-    else:
-        raise TypeError(
-            "Input to _check_y must be pd.Series, pd.DataFrame, np.ndarray, or pd.Index"
-        )
-    return check_time_index(index=y_index)
-
-
 def _check_fh(fh: VALID_FORECASTING_HORIZON_TYPES) -> ForecastingHorizon:
     """Check and convert fh to format expected by CV splitters."""
     return check_fh(fh, enforce_relative=True)
 
 
-def _get_end(y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
+def _get_end(y_index: pd.Index, fh: ForecastingHorizon) -> int:
     """Compute the end of the last training window for a forecasting horizon.
+
+    For a time series index `y_index`, `y_index[end]` will give
+    the index of the training window.
+    Correspondingly, for a time series `y` with index `y_index`,
+    `y.iloc[end]` or `y.loc[y_index[end]]`
+    will provide the last index of the training window.
 
     Parameters
     ----------
-    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
-        coerced and checked version of input y
-    fh : int, timedelta, list or np.array of ints or timedeltas
+    y_index : pd.Index
+        Index of time series
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas
 
     Returns
     -------
     end : int
-        end of the training window
+        0-indexed integer end of the training window
     """
     # `fh` is assumed to be ordered and checked by `_check_fh` and `window_length` by
     # `check_window_length`.
-    n_timepoints = y.shape[0]
+    n_timepoints = y_index.shape[0]
+    assert isinstance(y_index, pd.Index)
 
     # For purely in-sample forecasting horizons, the last split point is the end of the
     # training data.
-    if fh.is_all_in_sample():
-        end = n_timepoints + 1
-
     # Otherwise, the last point must ensure that the last horizon is within the data.
+    null = 0 if array_is_int(fh) else pd.Timedelta(0)
+    fh_offset = null if fh.is_all_in_sample() else fh[-1]
+    if array_is_int(fh):
+        return n_timepoints - fh_offset - 1
     else:
-        fh_max = fh[-1]
-        end = n_timepoints - fh_max + 1
-
-    return end
+        return y_index.get_loc(y_index[-1] - fh_offset)
 
 
 def _check_window_lengths(
-    y: ACCEPTED_Y_TYPES,
+    y: pd.Index,
     fh: ForecastingHorizon,
     window_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
     initial_window: NON_FLOAT_WINDOW_LENGTH_TYPES,
@@ -205,9 +175,9 @@ def _check_window_lengths(
 
     Parameters
     ----------
-    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
-        coerced and checked version of input y
-    fh : int, timedelta, list or np.array of ints or timedeltas
+    y : pd.Index
+        Index of time series
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas
     window_length : int or timedelta or pd.DateOffset
     initial_window : int or timedelta or pd.DateOffset
         Window length of first window
@@ -333,7 +303,7 @@ def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> No
 
 
 def _check_cutoffs_fh_y(
-    cutoffs: VALID_CUTOFF_TYPES, fh: FORECASTING_HORIZON_TYPES, y: ACCEPTED_Y_TYPES
+    cutoffs: VALID_CUTOFF_TYPES, fh: FORECASTING_HORIZON_TYPES, y: pd.Index
 ) -> None:
     """Check that combination of inputs is compatible.
 
@@ -345,10 +315,10 @@ def _check_cutoffs_fh_y(
     cutoffs : np.array or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
         Type should match the type of `fh` input.
-    fh : int, timedelta, list or np.array of ints or timedeltas
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas
         Type should match the type of `cutoffs` input.
-    y : pd.Series, pd.DataFrame, np.ndarray, or pd.Index
-        coerced and checked version of input y
+    y : pd.Index
+        Index of time series
 
     Raises
     ------
@@ -451,28 +421,28 @@ class BaseSplitter:
 
         Yields
         ------
-        train : np.array
+        train : np.ndarray
             Training window indices
-        test : np.array
+        test : np.ndarray
             Test window indices
         """
-        y = _check_y(y)
-        for train, test in self._split(y):
+        y_index = get_index_for_series(y)
+        for train, test in self._split(y_index):
             yield train[train >= 0], test[test >= 0]
 
-    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         """Split `y` into training and test windows.
 
         Parameters
         ----------
-        y : pd.Series or pd.Index
-            Time series to split
+        y : pd.Index
+            Index of time series to split
 
         Yields
         ------
-        training_window : np.array
+        training_window : np.ndarray
             Training window indices
-        test_window : np.array
+        test_window : np.ndarray
             Test window indices
         """
         raise NotImplementedError("abstract method")
@@ -520,6 +490,35 @@ class BaseSplitter:
     def __repr__(self) -> str:
         return _repr(self)
 
+    @staticmethod
+    def _get_train_window(
+        y: pd.Index, train_start: int, split_point: int
+    ) -> np.ndarray:
+        """Get train window.
+
+        For formal definition of the train window see docstring of the `BaseSplitter`
+
+        Parameters
+        ----------
+        y : pd.Index
+            Index of time series to split
+        train_start : int
+            Integer index of the training window start
+        split_point : int
+            Integer index of the train window end
+
+        Returns
+        -------
+        np.ndarray with integer indices of the train window
+
+        """
+        if split_point > max(0, train_start):
+            return np.argwhere(
+                (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
+            ).flatten()
+        else:
+            return np.array([], dtype=np.int)
+
 
 class CutoffSplitter(BaseSplitter):
     r"""Cutoff window splitter.
@@ -544,7 +543,7 @@ class CutoffSplitter(BaseSplitter):
     cutoffs : np.array or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
         Type should match the type of `fh` input.
-    fh : int, timedelta, list or np.array of ints or timedeltas
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas
         Type should match the type of `cutoffs` input.
     window_length : int or timedelta or pd.DateOffset
     """
@@ -559,7 +558,7 @@ class CutoffSplitter(BaseSplitter):
         self.cutoffs = cutoffs
         super(CutoffSplitter, self).__init__(fh, window_length)
 
-    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         cutoffs = check_cutoffs(cutoffs=self.cutoffs)
         fh = _check_fh(fh=self.fh)
@@ -583,10 +582,10 @@ class CutoffSplitter(BaseSplitter):
                     f"`cutoff`: {type(cutoff)}"
                 )
 
-            if is_int(x=cutoff):
-                training_window = np.arange(train_start, cutoff) + 1
-            else:
-                training_window = np.arange(train_start, y.get_loc(cutoff)) + 1
+            split_point = cutoff if is_int(x=cutoff) else y.get_loc(y[y <= cutoff][-1])
+            training_window = self._get_train_window(
+                y=y, train_start=train_start + 1, split_point=split_point + 1
+            )
 
             test_window = cutoff + fh.to_numpy()
             if is_datetime(x=max_cutoff) and is_timedelta(x=max_fh):
@@ -652,54 +651,81 @@ class BaseWindowSplitter(BaseSplitter):
         self.initial_window = initial_window
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
-    def _split(self, y: Optional[ACCEPTED_Y_TYPES]) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         step_length = check_step_length(self.step_length)
         window_length = check_window_length(
-            self.window_length, n_timepoints, "window_length"
+            window_length=self.window_length,
+            n_timepoints=n_timepoints,
+            name="window_length",
         )
         initial_window = check_window_length(
-            self.initial_window, n_timepoints, "initial_window"
+            window_length=self.initial_window,
+            n_timepoints=n_timepoints,
+            name="initial_window",
         )
         fh = _check_fh(self.fh)
-        _check_window_lengths(y, fh, window_length, initial_window)
+        _check_window_lengths(
+            y=y, fh=fh, window_length=window_length, initial_window=initial_window
+        )
 
         if self.initial_window is not None:
-            if not self.start_with_window:
-                raise ValueError(
-                    "`start_with_window` must be True if `initial_window` is given"
-                )
-
-            if self.initial_window <= self.window_length:
-                raise ValueError("`initial_window` must greater than `window_length`")
-
-            if is_timedelta_or_date_offset(x=self.initial_window):
-                initial_window_threshold = y.get_loc(y[0] + self.initial_window)
-            else:
-                initial_window_threshold = self.initial_window
-            # For in-sample forecasting horizons, the first split must ensure that
-            # in-sample test set is still within the data.
-            if not fh.is_all_out_of_sample() and abs(fh[0]) >= initial_window_threshold:
-                initial_start = abs(fh[0]) - self.initial_window + 1
-            else:
-                initial_start = 0
-
-            if is_timedelta_or_date_offset(x=initial_window):
-                initial_end = y.get_loc(y[initial_start] + initial_window)
-            else:
-                initial_end = initial_start + initial_window
-            train = np.arange(initial_start, initial_end)
-            test = initial_end + fh.to_numpy() - 1
-            yield train, test
+            yield self._split_for_initial_window(y)
 
         start = self._get_start(y=y, fh=fh)
-        end = _get_end(y=y, fh=fh)
+        end = _get_end(y_index=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
         for train, test in self._split_windows(
-            start, end, step_length, window_length, y, fh.to_numpy()
+            start=start,
+            end=end,
+            step_length=step_length,
+            window_length=window_length,
+            y=y,
+            fh=fh.to_numpy(),
         ):
             yield train, test
+
+    def _split_for_initial_window(self, y: pd.Index) -> SPLIT_ARRAY_TYPE:
+        """Get train/test splits for non-empty initial window.
+
+        Parameters
+        ----------
+        y : pd.Index
+            Index of the time series to split
+
+        Returns
+        -------
+        (np.ndarray, np.ndarray)
+            Integer indices of the train/test windows
+
+        """
+        fh = _check_fh(self.fh)
+        if not self.start_with_window:
+            raise ValueError(
+                "`start_with_window` must be True if `initial_window` is given"
+            )
+        if self.initial_window <= self.window_length:
+            raise ValueError("`initial_window` must greater than `window_length`")
+        if is_timedelta_or_date_offset(x=self.initial_window):
+            initial_window_threshold = y.get_loc(y[0] + self.initial_window)
+        else:
+            initial_window_threshold = self.initial_window
+        # For in-sample forecasting horizons, the first split must ensure that
+        # in-sample test set is still within the data.
+        if not fh.is_all_out_of_sample() and abs(fh[0]) >= initial_window_threshold:
+            initial_start = abs(fh[0]) - self.initial_window + 1
+        else:
+            initial_start = 0
+        if is_timedelta_or_date_offset(x=self.initial_window):
+            initial_end = y.get_loc(y[initial_start] + self.initial_window)
+        else:
+            initial_end = initial_start + self.initial_window
+        train = self._get_train_window(
+            y=y, train_start=initial_start, split_point=initial_end
+        )
+        test = initial_end + fh.to_numpy() - 1
+        return train, test
 
     def _split_windows(
         self,
@@ -707,7 +733,7 @@ class BaseWindowSplitter(BaseSplitter):
         end: int,
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        y: ACCEPTED_Y_TYPES,
+        y: pd.Index,
         fh: np.ndarray,
     ) -> SPLIT_GENERATOR_TYPE:
         """Abstract method for sliding/expanding windows."""
@@ -715,7 +741,7 @@ class BaseWindowSplitter(BaseSplitter):
 
     @staticmethod
     def _get_train_start(
-        start, window_length: ACCEPTED_WINDOW_LENGTH_TYPES, y: ACCEPTED_Y_TYPES
+        start, window_length: ACCEPTED_WINDOW_LENGTH_TYPES, y: pd.Index
     ) -> int:
         if is_timedelta_or_date_offset(x=window_length):
             train_start = y.get_loc(
@@ -727,7 +753,7 @@ class BaseWindowSplitter(BaseSplitter):
             train_start = start - window_length
         return train_start
 
-    def _get_start(self, y: ACCEPTED_Y_TYPES, fh: ForecastingHorizon) -> int:
+    def _get_start(self, y: pd.Index, fh: ForecastingHorizon) -> int:
         """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
@@ -805,7 +831,7 @@ class BaseWindowSplitter(BaseSplitter):
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
-        y = _check_y(y)
+        y = get_index_for_series(y)
         fh = _check_fh(self.fh)
         step_length = check_step_length(self.step_length)
 
@@ -817,7 +843,7 @@ class BaseWindowSplitter(BaseSplitter):
         else:
             start = self._get_start(y=y, fh=fh)
 
-        end = _get_end(y, fh)
+        end = _get_end(y_index=y, fh=fh) + 2
         step_length = self._get_step_length(x=step_length)
 
         return np.arange(start, end, step_length) - 1
@@ -879,14 +905,16 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         end: int,
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        y: ACCEPTED_Y_TYPES,
+        y: pd.Index,
         fh: np.ndarray,
     ) -> SPLIT_GENERATOR_TYPE:
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=split_point, window_length=window_length, y=y
             )
-            train = np.arange(train_start, split_point)
+            train = self._get_train_window(
+                y=y, train_start=train_start, split_point=split_point
+            )
             test = split_point + fh - 1
             yield train, test
 
@@ -947,14 +975,16 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         end: int,
         step_length: int,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        y: ACCEPTED_Y_TYPES,
+        y: pd.Index,
         fh: np.ndarray,
     ) -> SPLIT_GENERATOR_TYPE:
         for split_point in range(start, end, step_length):
             train_start = self._get_train_start(
                 start=start, window_length=window_length, y=y
             )
-            train = np.arange(train_start, split_point)
+            train = self._get_train_window(
+                y=y, train_start=train_start, split_point=split_point
+            )
             test = split_point + fh - 1
             yield train, test
 
@@ -981,20 +1011,26 @@ class SingleWindowSplitter(BaseSplitter):
         _check_inputs_for_compatibility(args=[fh, window_length])
         super(SingleWindowSplitter, self).__init__(fh, window_length)
 
-    def _split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
+        end = _get_end(y_index=y, fh=fh)
 
-        end = _get_end(y, fh) - 1
         if window_length is None:
             start = 0
-        elif is_timedelta_or_date_offset(x=window_length):
-            start = y.get_loc(y[end - 1] - window_length) + 1
+        elif is_int(window_length):
+            start = end - window_length + 1
         else:
-            start = end - window_length
-        train = np.arange(start, end)
-        test = end + fh.to_numpy() - 1
+            start = np.argwhere(y > y[end] - window_length).flatten()[0]
+
+        train = self._get_train_window(y=y, train_start=start, split_point=end + 1)
+
+        if array_is_int(fh):
+            test = end + fh.to_numpy()
+        else:
+            test = np.array([y.get_loc(y[end] + x) for x in fh.to_pandas()])
+
         yield train, test
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
@@ -1037,7 +1073,9 @@ class SingleWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         fh = _check_fh(self.fh)
-        cutoff = _get_end(y, fh) - 2
+        y = get_index_for_series(y)
+        end = _get_end(y_index=y, fh=fh)
+        cutoff = end if array_is_int(fh) else y[end].to_datetime64()
         return np.array([cutoff])
 
 
@@ -1092,14 +1130,48 @@ def temporal_train_test_split(
             )
         return _split_by_fh(y, fh, X=X)
     else:
-        series = (y,) if X is None else (y, X)
-        return _train_test_split(
-            *series,
-            shuffle=False,
-            stratify=None,
-            test_size=test_size,
-            train_size=train_size,
-        )
+        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
+        if pd_format is True and isinstance(y.index, pd.MultiIndex):
+            ys = get_time_index(y)
+            # Get index to group across (only indices other than timepoints index)
+            yi_name = y.index.names
+            yi_grp = yi_name[0:-1]
+
+            # Get split into test and train data for timeindex only
+            series = (ys,)
+            yret = _train_test_split(
+                *series,
+                shuffle=False,
+                stratify=None,
+                test_size=test_size,
+                train_size=train_size,
+            )
+
+            # Convert into list indices
+            ysl = ys.to_list()
+            yrl1 = yret[0].to_list()
+            yrl2 = yret[1].to_list()
+            p1 = [index for (index, item) in enumerate(ysl) if item in yrl1]
+            p2 = [index for (index, item) in enumerate(ysl) if item in yrl2]
+
+            # Subset by group based on identified indices
+            y_train = y.groupby(yi_grp, as_index=False).nth(p1)
+            y_test = y.groupby(yi_grp, as_index=False).nth(p2)
+            if X is not None:
+                X_train = X.groupby(yi_grp, as_index=False).nth(p1)
+                X_test = X.groupby(yi_grp, as_index=False).nth(p2)
+                return y_train, y_test, X_train, X_test
+            else:
+                return y_train, y_test
+        else:
+            series = (y,) if X is None else (y, X)
+            return _train_test_split(
+                *series,
+                shuffle=False,
+                stratify=None,
+                test_size=test_size,
+                train_size=train_size,
+            )
 
 
 def _split_by_fh(

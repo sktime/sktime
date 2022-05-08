@@ -33,11 +33,11 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 
 __all__ = ["BaseForecaster"]
 
-from contextlib import contextmanager
+from copy import deepcopy
 from warnings import warn
 
 import numpy as np
@@ -109,6 +109,89 @@ class BaseForecaster(BaseEstimator):
 
         super(BaseForecaster, self).__init__()
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformedTargetForecaster.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return self_as_pipeline * other
+        elif is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return other * self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexForecaster.
+
+        Implemented for `other` being either a MultiplexForecaster or a forecaster.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster or sktime MultiplexForecaster
+
+        Returns
+        -------
+        MultiplexForecaster object
+        """
+        from sktime.forecasting.compose import MultiplexForecaster
+
+        if isinstance(other, MultiplexForecaster) or isinstance(other, BaseForecaster):
+            multiplex_self = MultiplexForecaster([self])
+            return multiplex_self | other
+        else:
+            return NotImplemented
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -159,6 +242,8 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
+        # if fit is called, object is reset
+        self.reset()
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
@@ -687,6 +772,7 @@ class BaseForecaster(BaseEstimator):
         cv=None,
         X=None,
         update_params=True,
+        reset_forecaster=True,
     ):
         """Make predictions and update model iteratively over the test set.
 
@@ -699,11 +785,13 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
-        Writes to self:
+        Writes to self, if reset_forecaster=False:
             Update self._y and self._X with `y` and `X`, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
+
+        Does not update state if reset_forecaster=True.
 
         Parameters
         ----------
@@ -734,6 +822,13 @@ class BaseForecaster(BaseEstimator):
                 X.index must contain y.index and fh.index both
             there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optional (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
@@ -754,6 +849,7 @@ class BaseForecaster(BaseEstimator):
             cv=cv,
             X=X_inner,
             update_params=update_params,
+            reset_forecaster=reset_forecaster,
         )
 
     def update_predict_single(
@@ -1268,24 +1364,6 @@ class BaseForecaster(BaseEstimator):
         cutoff_idx = get_cutoff(y, self.cutoff)
         self._cutoff = cutoff_idx
 
-    @contextmanager
-    def _detached_cutoff(self):
-        """Detached cutoff mode.
-
-        When in detached cutoff mode, the cutoff can be updated but will
-        be reset to the initial value after leaving the detached cutoff mode.
-
-        This is useful during rolling-cutoff forecasts when the cutoff needs
-        to be repeatedly reset, but afterwards should be restored to the
-        original value.
-        """
-        cutoff = self.cutoff  # keep initial cutoff
-        try:
-            yield
-        finally:
-            # re-set cutoff to initial value
-            self._set_cutoff(cutoff)
-
     @property
     def fh(self):
         """Forecasting horizon that was passed."""
@@ -1436,7 +1514,7 @@ class BaseForecaster(BaseEstimator):
             for i in range(n):
                 method = getattr(self.forecasters_.iloc[i, 0], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -1539,7 +1617,7 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called."
+                f"`update` is called with update_params=True."
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
@@ -1549,6 +1627,20 @@ class BaseForecaster(BaseEstimator):
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
+
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
+            # default to calling component _updates if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will update all component cutoffs each time"
+                f" `update` is called with update_params=False."
+            )
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
+                comp.update(y=y, X=X, update_params=False)
 
         return self
 
@@ -1803,7 +1895,7 @@ class BaseForecaster(BaseEstimator):
             pred_var = pd.DataFrame(vars_dict)
 
             # check whether column format was "nameless", set it to RangeIndex then
-            if pred_var.columns == "Coverage":
+            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
                 pred_var.columns = pd.RangeIndex(1)
 
         return pred_var
@@ -1871,97 +1963,87 @@ class BaseForecaster(BaseEstimator):
         return pred_dist
 
     def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
+        self, y, cv, X=None, update_params=True, reset_forecaster=True
     ):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        cv : temporal cross-validation generator, optional (default=None)
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain y.index and fh.index both
+            there are no restrictions on number of columns (unlike for y)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optional (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
         y_pred = pd.Series
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
 
-        # enter into a detached cutoff mode
-        with self._detached_cutoff():
-            # set cutoff to time point before data
-            self._set_cutoff(_shift(y.index[0], by=-1))
-            # iterate over data
-            for new_window, _ in cv.split(y):
-                y_new = y.iloc[new_window]
+        # enter into a detached cutoff mode, if reset_forecaster is True
+        if reset_forecaster:
+            self_copy = deepcopy(self)
+        # otherwise just work with a reference to self
+        else:
+            self_copy = self
 
-                # we use `update_predict_single` here
-                #  this updates the forecasting horizon
-                y_pred = self._update_predict_single(
-                    y_new,
-                    fh,
-                    X,
-                    update_params=update_params,
-                )
-                if return_pred_int:
-                    y_pred_int = self.predict_interval(fh, X, alpha=alpha)
-                    y_pred_int = self._convert_new_to_old_pred_int(y_pred_int)
-                    y_pred = (y_pred, y_pred_int)
-                y_preds.append(y_pred)
-                cutoffs.append(self.cutoff)
+        # set cutoff to time point before data
+        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        # iterate over data
+        for new_window, _ in cv.split(y):
+            y_new = y.iloc[new_window]
 
-                for i in range(len(y_preds)):
-                    if not return_pred_int:
-                        y_preds[i] = convert_to(
-                            y_preds[i],
-                            self._y_mtype_last_seen,
-                            store=self._converter_store_y,
-                            store_behaviour="freeze",
-                        )
-                    else:
-                        y_preds[i][0] = convert_to(
-                            y_preds[i][0],
-                            self._y_mtype_last_seen,
-                            store=self._converter_store_y,
-                            store_behaviour="freeze",
-                        )
-        return _format_moving_cutoff_predictions(y_preds, cutoffs)
-
-    # TODO: remove in v0.11.0
-    def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
-        name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha, name="alpha")
-        alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-        pred_int_old_format = [
-            pd.DataFrame(
-                {
-                    "lower": pred_int_new[(name, a, "lower")],
-                    "upper": pred_int_new[(name, a, "upper")],
-                }
+            # we use `update_predict_single` here
+            #  this updates the forecasting horizon
+            y_pred = self_copy.update_predict_single(
+                y=y_new,
+                fh=fh,
+                X=X,
+                update_params=update_params,
             )
-            for a in alphas
-        ]
+            y_preds.append(y_pred)
+            cutoffs.append(self_copy.cutoff)
 
-        # for a single alpha, return single pd.DataFrame
-        if len(alphas) == 1:
-            return pred_int_old_format[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int_old_format
+            for i in range(len(y_preds)):
+                y_preds[i] = convert_to(
+                    y_preds[i],
+                    self._y_mtype_last_seen,
+                    store=self._converter_store_y,
+                    store_behaviour="freeze",
+                )
+        return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

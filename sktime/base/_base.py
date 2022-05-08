@@ -14,9 +14,9 @@ Interface specifications below.
 
     class name: BaseObject
 
-Hyper-parameter inspection and setter methods:
-    inspect hyper-parameters     - get_params()
-    setting hyper-parameters     - set_params(**params)
+Hyper-parameter inspection and setter methods
+    inspect hyper-parameters      - get_params()
+    setting hyper-parameters      - set_params(**params)
 
 Tag inspection and setter methods
     inspect tags (all)            - get_tags()
@@ -25,6 +25,9 @@ Tag inspection and setter methods
     inspect tags (one tag, class) - get_class_tag(tag_name:str, tag_value_default=None)
     setting dynamic tags          - set_tag(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
+
+Re-initialize object to post-init state with same hyper-parameters
+    reset estimator to post-init  - reset()
 
 Testing with default parameters methods
     getting default parameters (all sets)         - get_test_params()
@@ -68,6 +71,38 @@ class BaseObject(_BaseEstimator):
     def __init__(self):
         self._tags_dynamic = dict()
         super(BaseObject, self).__init__()
+
+    def reset(self):
+        """Reset the object to a clean post-init state.
+
+        Equivalent to sklearn.clone but overwrites self.
+        After self.reset() call, self is equal in value to
+        `type(self)(**self.get_params(deep=False))`
+
+        Detail behaviour:
+        removes any object attributes, except:
+            hyper-parameters = arguments of __init__
+            object attributes containing double-underscores, i.e., the string "__"
+        runs __init__ with current values of hyper-parameters (result of get_params)
+
+        Not affected by the reset are:
+        object attributes containing double-underscores
+        class and object methods, class attributes
+        """
+        # retrieve parameters to copy them later
+        params = self.get_params(deep=False)
+
+        # delete all object attributes in self
+        attrs = [attr for attr in dir(self) if "__" not in attr]
+        cls_attrs = [attr for attr in dir(type(self))]
+        self_attrs = set(attrs).difference(cls_attrs)
+        for attr in self_attrs:
+            delattr(self, attr)
+
+        # run init with a copy of parameters self had at the start
+        self.__init__(**params)
+
+        return self
 
     @classmethod
     def get_class_tags(cls):
@@ -403,6 +438,46 @@ class BaseObject(_BaseEstimator):
         composite = any(isinstance(x, BaseObject) for x in params.values())
 
         return composite
+
+    def _components(self, base_class=None):
+        """Retirn references to all state changing BaseObject type attributes.
+
+        This *excludes* the blue-print-like components passed in the __init__.
+
+        Caution: this method returns *references* and not *copies*.
+            Writing to the reference will change the respective attribute of self.
+
+        Parameters
+        ----------
+        base_class : class, optional, default=None, must be subclass of BaseObject
+            if not None, sub-sets return dict to only descendants of base_class
+
+        Returns
+        -------
+        dict with key = attribute name, value = reference to that BaseObject attribute
+        dict contains all attributes of self that inherit from BaseObjects, and:
+            whose names do not contain the string "__", e.g., hidden attributes
+            are not class attributes, and are not hyper-parameters (__init__ args)
+        """
+        if base_class is None:
+            base_class = BaseObject
+        if base_class is not None and not inspect.isclass(base_class):
+            raise TypeError(f"base_class must be a class, but found {type(base_class)}")
+        if base_class is not None and not issubclass(base_class, BaseObject):
+            raise TypeError("base_class must be a subclass of BaseObject")
+
+        # retrieve parameter names to exclude them later
+        param_names = self.get_params(deep=False).keys()
+
+        # retrieve all attributes that are BaseObject descendants
+        attrs = [attr for attr in dir(self) if "__" not in attr]
+        cls_attrs = [attr for attr in dir(type(self))]
+        self_attrs = set(attrs).difference(cls_attrs).difference(param_names)
+
+        comp_dict = {x: getattr(self, x) for x in self_attrs}
+        comp_dict = {x: y for (x, y) in comp_dict.items() if isinstance(y, base_class)}
+
+        return comp_dict
 
 
 class TagAliaserMixin:

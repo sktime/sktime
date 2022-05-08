@@ -1,31 +1,32 @@
 # -*- coding: utf-8 -*-
 """Euclidean distance."""
-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
 
 from typing import Any
 
 import numpy as np
 from numba import njit
 
-from sktime.distances._squared import _local_squared_distance, _numba_squared_distance
 from sktime.distances.base import DistanceCallable, NumbaDistance
 
 
 class _EuclideanDistance(NumbaDistance):
-    """Euclidean distance between two timeseries."""
+    """Euclidean distance between two time series."""
 
     def _distance_factory(
         self, x: np.ndarray, y: np.ndarray, **kwargs: Any
     ) -> DistanceCallable:
         """Create a no_python compiled euclidean distance callable.
 
+        Series should be shape (d, m), where d is the number of dimensions, m the series
+        length. Requires equal length series.
+
         Parameters
         ----------
         x: np.ndarray (1d or 2d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (1d or 2d array)
-            Second timeseries.
+            Second times eries.
         kwargs: Any
             Extra kwargs. For euclidean there are none however, this is kept for
             consistency.
@@ -54,7 +55,12 @@ def _local_euclidean_distance(x, y):
     float
         Euclidean distance between the two time series
     """
-    return np.sqrt(_local_squared_distance(x, y))
+    distance = 0.0
+    for i in range(x.shape[0]):
+        difference = x[i] - y[i]
+        distance += difference * difference
+
+    return np.sqrt(distance)
 
 
 @njit(cache=True, fastmath=True)
@@ -63,15 +69,19 @@ def _numba_euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    x: np.ndarray (2d array)
-        First timeseries.
-    y: np.ndarray (2d array)
-        Second timeseries.
+    x: np.ndarray (2d array shape (d,m))
+        First time series.
+    y: np.ndarray (2d array shape (d,m))
+        Second time series.
 
     Returns
     -------
     distance: float
         Euclidean distance between x and y.
     """
-    distance = _numba_squared_distance(x, y)
+    distance = 0.0
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            difference = x[i][j] - y[i][j]
+            distance += difference * difference
     return np.sqrt(distance)
