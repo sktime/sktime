@@ -324,7 +324,7 @@ class ForecastingPipeline(_Pipeline):
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
-        name, forecaster = self.steps[-1]
+        name, forecaster = self.steps_[-1]
         f = clone(forecaster)
         f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
