@@ -99,6 +99,11 @@ class BaseFixtureGenerator:
     # which sequence the conditional fixtures are generated in
     fixture_sequence = ["estimator_class", "estimator_instance", "scenario"]
 
+    # which fixtures are indirect, e.g., have an additional pytest.fixture block
+    #   to generate an indirect fixture at runtime. Example: estimator_instance
+    #   warning: direct fixtures retain state changes within the same test
+    indirect_fixtures = ["estimator_instance"]
+
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
 
@@ -124,16 +129,15 @@ class BaseFixtureGenerator:
             raise_exceptions=True,
         )
 
-        if "estimator_instance" in fixture_vars:
-            indirect = ["estimator_instance"]
-        else:
-            indirect = []
+        # determine indirect variables for the parametrization block
+        #   this is intersection of self.indirect_vixtures with args in fixture_vars
+        indirect_vars = list(set(fixture_vars).intersection(self.indirect_fixtures))
 
         metafunc.parametrize(
             fixture_param_str,
             fixture_prod,
             ids=fixture_names,
-            indirect=indirect,
+            indirect=indirect_vars,
         )
 
     def _all_estimators(self):
@@ -219,9 +223,13 @@ class BaseFixtureGenerator:
 
         return estimator_instances_to_test, estimator_instance_names
 
+    # this is executed before each test instance call
+    #   if this were not executed, estimator_instance would keep state changes
+    #   within executions of the same test with different parameters
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
+        # esetimator_instance is cloned at the start of every test
         return clone(request.param)
 
     def _generate_scenario(self, test_name, **kwargs):
