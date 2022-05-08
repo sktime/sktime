@@ -446,12 +446,12 @@ class QuickTester:
 
                 if return_exceptions:
                     try:
-                        test_fun(**args)
+                        test_fun(**deepcopy(args))
                         results[key] = "PASSED"
                     except Exception as err:
                         results[key] = err
                 else:
-                    test_fun(**args)
+                    test_fun(**deepcopy(args))
                     results[key] = "PASSED"
 
         return results
