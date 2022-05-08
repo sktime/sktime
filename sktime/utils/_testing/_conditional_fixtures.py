@@ -201,8 +201,11 @@ def create_conditional_fixtures_and_names(
     # we need to remove the tuple bracket from singleton
     #   in pytest convention, only multiple variables (2 or more) are tuples
     fixture_prod = [_remove_single(x) for x in fixture_prod]
+
+    # if deepcopy_fixtures = True:
     # we run deepcopy on every element of fixture_prod to make them independent
-    fixture_prod = [deepcopy(x) for x in fixture_prod]
+    if deepcopy_fixtures:
+        fixture_prod = [deepcopy(x) for x in fixture_prod]
 
     return fixture_param_str, fixture_prod, fixture_names
 
