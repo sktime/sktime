@@ -180,7 +180,7 @@ def update_data(X, X_new=None):
     from sktime.datatypes._convert import convert_to
     from sktime.datatypes._vectorize import VectorizedDF
 
-    # we only need to modify _y if y is not None
+    # we only need to modify _X if X is not None
     if X_new is None:
         return X
 
