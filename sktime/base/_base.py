@@ -102,8 +102,6 @@ class BaseObject(_BaseEstimator):
         # run init with a copy of parameters self had at the start
         self.__init__(**params)
 
-        return self
-
     @classmethod
     def get_class_tags(cls):
         """Get class tags from estimator class and all its parent classes.
