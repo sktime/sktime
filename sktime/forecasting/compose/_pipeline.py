@@ -555,12 +555,6 @@ class TransformedTargetForecaster(_Pipeline):
         then running `tp1.fit_transform`  with `X=y`, `y=X`,
         then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
         sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
-
-        t1.fit_transform, t2.fit_transform, f.fit
-
-        separately
-        tp1.fit_transform, tp2.fit_transform
-
     `predict(X, fh)` - result is of executing `f.predict`, with `X=X`, `fh=fh`,
         then running `tp1.inverse_transform` with `X=` the output of `f`, `y=X`,
         then `t2.inverse_transform` on `X=` the output of `t1.inverse_transform`, etc
@@ -568,9 +562,6 @@ class TransformedTargetForecaster(_Pipeline):
         then running `tp1.fit_transform` with `X=` the output of `t[N]s`, `y=X`,
         then `tp2.fit_transform` on `X=` the output of `tp1.fit_transform`, etc
         sequentially, with `tp[i]` receiving the output of `tp[i-1]`,
-
-        f.predict, tN.inv_transform, tN-1.inv_transform,..., t1.inv_transform, tp1.transform, tp2.transform, ..., tpM.transform
-
     `predict_interval(X, fh)`, `predict_quantiles(X, fh)` - as `predict(X, fh)`,
         with `predict_interval` or `predict_quantiles` substituted for `predict`
     `predict_var`, `predict_proba` - uses base class default to obtain
