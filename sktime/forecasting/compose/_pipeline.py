@@ -224,7 +224,9 @@ class _Pipeline(
         ]
         params2 = {"steps": STEPS2}
 
-        return [params1, params2]
+        params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+
+        return [params1, params2, params3]
 
 
 # we ensure that internally we convert to pd.DataFrame for now
