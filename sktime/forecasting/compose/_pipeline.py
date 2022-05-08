@@ -154,7 +154,15 @@ class _Pipeline(
     @property
     def named_steps(self):
         """Map the steps to a dictionary."""
-        return dict(self.steps)
+        return dict(self._steps)
+
+    @property
+    def _steps(self):
+        return self._get_estimator_tuples(self.steps, clone_ests=False)
+
+    @_steps.setter
+    def _steps(self, value):
+        self.steps = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -170,7 +178,7 @@ class _Pipeline(
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("steps_", deep=deep)
+        return self._get_params("_steps", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -181,7 +189,7 @@ class _Pipeline(
         -------
         self
         """
-        self._set_params("steps_", **kwargs)
+        self._set_params("_steps", **kwargs)
         return self
 
     # both children use the same step params for testing, so putting it here
