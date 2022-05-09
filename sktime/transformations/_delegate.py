@@ -36,14 +36,7 @@ class _DelegatedTransformer(BaseTransformer):
         return getattr(self, self._delegate_name)
 
     def _fit(self, X, y=None):
-        """Fit transformer to X, optionally to y.
-
-        State change:
-            Changes state to "fitted".
-
-        Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
+        """Fit wrapped transformer to X, optionally to y.
 
         Parameters
         ----------
@@ -66,14 +59,7 @@ class _DelegatedTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
+        """Use wrapped transformer to transform X and return a transformed version.
 
         Parameters
         ----------
@@ -118,21 +104,15 @@ class _DelegatedTransformer(BaseTransformer):
                 Example: i-th instance of the output is the i-th window running over `X`
         """
         estimator = self._get_delegate()
-        return estimator.transform(X, y=None)
+        return estimator.transform(X, y=y)
 
     def _inverse_transform(self, X, y=None):
-        """Inverse transform X and return an inverse transformed version.
+        """Use wrapped transformer to inverse transform X and return.
 
         Currently it is assumed that only transformers with tags
             "scitype:transform-input"="Series", "scitype:transform-output"="Series",
         have an inverse_transform.
 
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
 
         Parameters
         ----------
@@ -155,17 +135,14 @@ class _DelegatedTransformer(BaseTransformer):
         return estimator.inverse_transform(X=X, y=y)
 
     def _update(self, X, y=None, update_params=True):
-        """Update transformer with X, optionally y.
+        """Update wrapped transformer with X, optionally y.
 
         State required:
             Requires state to be "fitted".
 
-        Accesses in self:
-            Fitted model attributes ending in "_".
-            self._is_fitted
-
         Writes to self:
-            May update fitted model attributes ending in "_".
+            May update fitted model attributes ending in for the delegated
+            transformer "_" via update.
 
         Parameters
         ----------
