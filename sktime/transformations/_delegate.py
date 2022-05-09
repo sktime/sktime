@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Delegator mixin that delegates all methods to wrapped forecaster.
+"""Delegator mixin that delegates all methods to wrapped transformer.
 
 Useful for building estimators where all but one or a few methods are delegated.
 For that purpose, inherit from this estimator and then override only the methods
@@ -7,7 +7,7 @@ For that purpose, inherit from this estimator and then override only the methods
 """
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly", "miraep8"]
+__author__ = ["miraep8"]
 __all__ = ["_DelegatedTransformer"]
 
 from sktime.transformations.base import BaseTransformer
@@ -22,7 +22,7 @@ class _DelegatedTransformer(BaseTransformer):
         To override delegation, override _delegate_name attribute in child class.
 
     Delegates the following inner underscore methods:
-        _fit, _transform, _fit_transform, _inverse_transform, _update
+        _fit, _transform, _inverse_transform, _update
 
     Does NOT delegate get_params, set_params.
         get_params, set_params will hence use one additional nesting level by default.
@@ -118,69 +118,7 @@ class _DelegatedTransformer(BaseTransformer):
                 Example: i-th instance of the output is the i-th window running over `X`
         """
         estimator = self._get_delegate()
-        estimator.transform(X, y=None)
-        return self
-
-    def _fit_transform(self, X, y=None):
-        """Fit to data, then transform it.
-
-        Fits the transformer to X and y and returns a transformed version of X.
-
-        State change:
-            Changes state to "fitted".
-
-        Writes to self:
-            Sets is_fitted flag to True.
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        X : Series or Panel, any supported mtype
-            Data to be transformed, of python type as follows:
-                Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-                Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,
-                    nested pd.DataFrame, or pd.DataFrame in long/wide format
-                subject to sktime mtype format specifications, for further details see
-                    examples/AA_datatypes_and_datasets.ipynb
-        y : Series or Panel, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        transformed version of X
-        type depends on type of X and scitype:transform-output tag:
-            |   `X`    | `tf-output`  |     type of return     |
-            |----------|--------------|------------------------|
-            | `Series` | `Primitives` | `pd.DataFrame` (1-row) |
-            | `Panel`  | `Primitives` | `pd.DataFrame`         |
-            | `Series` | `Series`     | `Series`               |
-            | `Panel`  | `Series`     | `Panel`                |
-            | `Series` | `Panel`      | `Panel`                |
-        instances in return correspond to instances in `X`
-        combinations not in the table are currently not supported
-
-        Explicitly, with examples:
-            if `X` is `Series` (e.g., `pd.DataFrame`) and `transform-output` is `Series`
-                then the return is a single `Series` of the same mtype
-                Example: detrending a single series
-            if `X` is `Panel` (e.g., `pd-multiindex`) and `transform-output` is `Series`
-                then the return is `Panel` with same number of instances as `X`
-                    (the transformer is applied to each input Series instance)
-                Example: all series in the panel are detrended individually
-            if `X` is `Series` or `Panel` and `transform-output` is `Primitives`
-                then the return is `pd.DataFrame` with as many rows as instances in `X`
-                Example: i-th row of the return has mean and variance of the i-th series
-            if `X` is `Series` and `transform-output` is `Panel`
-                then the return is a `Panel` object of type `pd-multiindex`
-                Example: i-th instance of the output is the i-th window running over `X`
-
-        Returns
-        -------
-        self : a fitted instance of the estimator
-        """
-        estimator = self._get_delegate()
-        estimator.fit(X, y).transform(X, y)
-        return self
+        return estimator.transform(X, y=None)
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform X and return an inverse transformed version.
