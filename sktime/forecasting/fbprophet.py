@@ -38,6 +38,13 @@ class Prophet(_ProphetAdapter):
     growth: str, default="linear"
         String 'linear' or 'logistic' to specify a linear or logistic
         trend.
+    growth_floor: float, array like, default=0
+        Growth saturation minimum value. If float floor is constant.
+        If array like - Variable floor (must be same length as y).
+    growth_cap: float, array like
+        Growth saturation maximum aka carrying capacity. If float capacity is constant.
+        If array like - Variable capacity (must be same length as y).
+        Must be specified if `growth="logistic"`.
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
@@ -144,7 +151,7 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
-        interval_width=0,
+        interval_width=0.80,
     ):
         _check_soft_dependencies("prophet", severity="error", object=self)
 
