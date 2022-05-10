@@ -462,7 +462,7 @@ class BaseSplitter:
         raise NotImplementedError("abstract method")
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Return the cutoff points.
+        """Return the cutoff points in .iloc[] context.
 
         Parameters
         ----------
@@ -613,10 +613,13 @@ class CutoffSplitter(BaseSplitter):
         return len(self.cutoffs)
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Return the cutoff points.
+        """Return the cutoff points in .iloc[] context.
 
-        This method trivially returns the cutoffs given during instance initialization.
+        This method trivially returns the cutoffs given during instance initialization,
+        in case these cutoffs are integer .iloc[] friendly indices.
         The only change is that the set of cutoffs is sorted from smallest to largest.
+        When the given cutoffs are datetime-like,
+        then this method returns corresponding integer indices.
 
         Parameters
         ----------
@@ -838,7 +841,7 @@ class BaseWindowSplitter(BaseSplitter):
         return len(self.get_cutoffs(y))
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Return the cutoff points.
+        """Return the cutoff points in .iloc[] context.
 
         Parameters
         ----------
@@ -1052,7 +1055,7 @@ class SingleWindowSplitter(BaseSplitter):
         return 1
 
     def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
-        """Return the cutoff points.
+        """Return the cutoff points in .iloc[] context.
 
         Since this splitter returns a single train/test split,
         this method returns a single one-dimensional array
