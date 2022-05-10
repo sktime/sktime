@@ -471,8 +471,8 @@ class BaseSplitter:
 
         Returns
         -------
-        cutoffs : np.ndarray
-            The array of integer cutoff points.
+        cutoffs : 1D np.ndarray of int
+            iloc location indices, in reference to y, of cutoff indices
         """
         raise NotImplementedError("abstract method")
 
@@ -628,8 +628,8 @@ class CutoffSplitter(BaseSplitter):
 
         Returns
         -------
-        cutoffs : np.ndarray
-            The array of integer cutoff points.
+        cutoffs : 1D np.ndarray of int
+            iloc location indices, in reference to y, of cutoff indices
         """
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
@@ -1068,8 +1068,8 @@ class SingleWindowSplitter(BaseSplitter):
 
         Returns
         -------
-        cutoffs : np.ndarray
-            The array of integer cutoff points.
+        cutoffs : 1D np.ndarray of int
+            iloc location indices, in reference to y, of cutoff indices
         """
         if y is None:
             raise ValueError(
