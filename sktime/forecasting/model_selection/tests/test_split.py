@@ -88,9 +88,11 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     if is_int(fh[-1]):
         expected = np.array([window[-1] - fh[-1] for window in windows])
     elif array_is_timedelta_or_date_offset(fh):
-        expected = np.array(
-            [(y.index[window[-1]] - fh[-1]).to_datetime64() for window in windows]
-        )
+        expected = np.array([])
+        for window in windows:
+            arg = y.index[window[-1]] - fh[-1]
+            val = y.index.get_loc(arg) if arg >= y.index[0] else -1
+            expected = np.append(expected, val)
     else:
         raise ValueError(f"Provided `fh` type is not supported: {type(fh[-1])}")
     np.testing.assert_array_equal(cutoffs, expected)
@@ -98,32 +100,14 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
 
 def _check_cutoffs_against_train_windows(cutoffs, windows, y):
     # Cutoffs should always be the last values of the train windows.
-    if array_is_int(cutoffs):
-        actual = np.array([window[-1] for window in windows[1:]])
-    elif array_is_datetime64(cutoffs):
-        actual = np.array(
-            [y.index[window[-1]].to_datetime64() for window in windows[1:]],
-            dtype="datetime64",
-        )
-    else:
-        raise ValueError(
-            f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
-        )
+    assert array_is_int(cutoffs)
+    actual = np.array([window[-1] for window in windows[1:]])
     np.testing.assert_array_equal(actual, cutoffs[1:])
 
     # We treat the first window separately, since it may be empty when setting
     # `start_with_window=False`.
     if len(windows[0]) > 0:
-        if array_is_int(cutoffs):
-            np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
-        elif array_is_datetime64(cutoffs):
-            np.testing.assert_array_equal(
-                y.index[windows[0][-1]].to_datetime64(), cutoffs[0]
-            )
-        else:
-            raise ValueError(
-                f"Provided `cutoffs` type is not supported: {type(cutoffs[0])}"
-            )
+        np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
 
 
 def _check_cv(cv, y, allow_empty_window=False):
@@ -224,7 +208,7 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter(y, fh, window_length, step_length):
@@ -255,7 +239,7 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
@@ -303,7 +287,7 @@ def _get_n_incomplete_windows(window_length, step_length) -> int:
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter_start_with_empty_window(
@@ -380,7 +364,7 @@ def _check_expanding_windows(windows):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter_start_with_empty_window(
@@ -412,7 +396,7 @@ def test_expanding_window_splitter_start_with_empty_window(
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter(y, fh, initial_window, step_length):
