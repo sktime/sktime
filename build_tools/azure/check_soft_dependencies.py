@@ -26,6 +26,7 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["prophet"],
     "sktime.classification.feature_based": ["tsfresh", "esig"],
+    "sktime.networks": ["tensorflow"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
     "sktime.transformations.panel.signature_based": ["esig"],
