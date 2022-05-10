@@ -61,7 +61,6 @@ class BaseClassifier(BaseEstimator, ABC):
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
-        "capability:early_prediction": False,
         "capability:multithreading": False,
     }
 
