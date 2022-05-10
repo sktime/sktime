@@ -4,9 +4,9 @@
 __author__ = ["James-Large, Withington, TonyBagnall"]
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_soft_dependencies("tensorflow", severity="warning", suppress_import_stdout=True)
+_check_dl_dependencies("tensorflow", severity="warning", suppress_import_stdout=True)
 
 
 class CNNNetwork(BaseDeepNetwork):
@@ -47,7 +47,7 @@ class CNNNetwork(BaseDeepNetwork):
         activation="sigmoid",
         random_state=0,
     ):
-        _check_soft_dependencies("tensorflow", severity="error", object=self)
+        _check_dl_dependencies("tensorflow", severity="error", object=self)
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.avg_pool_size = avg_pool_size
