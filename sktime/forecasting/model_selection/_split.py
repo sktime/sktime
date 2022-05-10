@@ -724,6 +724,29 @@ class BaseWindowSplitter(BaseSplitter):
         fh: ForecastingHorizon,
         expanding: bool,
     ) -> SPLIT_GENERATOR_TYPE:
+        """Split `y` into training and test windows.
+
+        This function encapsulates common functionality
+        shared by concrete implementations of this abstract class.
+
+        Parameters
+        ----------
+        window_length : int or timedelta or pd.DateOffset
+            Length of training window
+        y : pd.Index
+            Index of time series to split
+        fh : ForecastingHorizon
+            Single step ahead or array of steps ahead to forecast.
+        expanding : bool
+            Expanding (True) or sliding window (False) splitter
+
+        Yields
+        ------
+        training_window : np.ndarray
+            Training window indices
+        test_window : np.ndarray
+            Test window indices
+        """
         start = self._get_start(y=y, fh=fh)
         split_points = self.get_cutoffs(pd.Series(index=y, dtype=float)) + 1
         split_points = split_points if self.initial_window is None else split_points[1:]
