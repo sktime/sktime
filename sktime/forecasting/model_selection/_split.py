@@ -745,10 +745,10 @@ class BaseWindowSplitter(BaseSplitter):
 
         Yields
         ------
-        training_window : np.ndarray
-            Training window indices
-        test_window : np.ndarray
-            Test window indices
+        train : 1D np.ndarray of int
+            Training window iloc indices, in reference to y
+        test : 1D np.ndarray of int
+            Test window iloc indices, in reference to y
         """
         start = self._get_start(y=y, fh=fh)
         split_points = self.get_cutoffs(pd.Series(index=y, dtype=float)) + 1
