@@ -41,7 +41,7 @@ class Prophet(_ProphetAdapter):
     growth_floor: float, array like, default=0
         Growth saturation minimum value. If float floor is constant.
         If array like - Variable floor (must be same length as y).
-    growth_cap: float, array like
+    growth_cap: float, array like, default=None
         Growth saturation maximum aka carrying capacity. If float capacity is constant.
         If array like - Variable capacity (must be same length as y).
         Must be specified if `growth="logistic"`.
