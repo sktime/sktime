@@ -32,7 +32,7 @@ class Reconciler(BaseTransformer):
 
     Parameters
     ----------
-    method : {"bu", "ols", "wls_str"}, default="ols"
+    method : {"bu", "ols", "wls_str"}, default="bu"
         The reconciliation approach applied to the forecasts
             "bu" - bottom-up
             "ols" - ordinary least squares
@@ -67,7 +67,7 @@ class Reconciler(BaseTransformer):
 
     METHOD_LIST = ["bu", "ols", "wls_str"]
 
-    def __init__(self, method="ols"):
+    def __init__(self, method="bu"):
 
         self.method = method
 
@@ -102,10 +102,6 @@ class Reconciler(BaseTransformer):
 
         # check index for no "__total", if not add totals to X
         if _check_index_no_total(X):
-            warn(
-                "No elements of the index of X named '__total' found. Adding "
-                "aggregate levels using the default Aggregator transformer."
-            )
             X = self._add_totals(X)
 
         if self.method == "bu":
@@ -202,9 +198,27 @@ class Reconciler(BaseTransformer):
 def _get_s_matrix(X):
     """Determine the summation "S" matrix.
 
+    Reconciliation methods require the S matrix, which is defined by the
+    structure of the hierarchy only. The S matrix is inferred from the input
+    multi-index of the forecasts and is used to sum bottom-level forecasts
+    appropriately.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
+
     Returns
     -------
-    s_matrix : pd.DataFrame
+    s_matrix : pd.DataFrame with rows equal to the number of unique nodes in
+        the hierarchy, and columns equal to the number of bottom level nodes only,
+        i.e. with no aggregate nodes. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # get bottom level indexes
     bl_inds = (
@@ -247,9 +261,26 @@ def _get_s_matrix(X):
 def _get_g_matrix_bu(X):
     """Determine the reconciliation "G" matrix for the bottom up method.
 
+    Reconciliation methods require the G matrix. The G matrix is used to redefine
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
+
     Returns
     -------
-    g_matrix : pd.DataFrame.
+    g_matrix : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # get bottom level indexes
     bl_inds = (
@@ -275,11 +306,28 @@ def _get_g_matrix_bu(X):
 
 
 def _get_g_matrix_ols(X):
-    """Determine the reconciliation "G" matrix for the ols method.
+    """Determine the reconciliation "G" matrix for the ordinary least squares method.
+
+    Reconciliation methods require the G matrix. The G matrix is used to redefine
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
 
     Returns
     -------
-    g_ols : pd.DataFrame
+    g_ols : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        summation matrix.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # get s matrix
     smat = _get_s_matrix(X)
@@ -297,11 +345,28 @@ def _get_g_matrix_ols(X):
 
 
 def _get_g_matrix_wls_str(X):
-    """Determine the reconciliation "G" matrix for the wls_str method.
+    """Reconciliation "G" matrix for the weighted least squares (structural) method.
+
+    Reconciliation methods require the G matrix. The G matrix is used to re-define
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
 
     Returns
     -------
-    g_wls_str : pd.DataFrame
+    g_wls_str : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        summation matrix.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # this is similar to the ols except we have a new matrix W
     smat = _get_s_matrix(X)
