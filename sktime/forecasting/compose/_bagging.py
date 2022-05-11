@@ -14,10 +14,11 @@ from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import set_random_state
 
+from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.ets import AutoETS
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.bootstrap import STLBootstrapTransformer
+from sktime.utils.estimators import MockForecaster
 
 
 class BaggingForecaster(BaseForecaster):
@@ -80,9 +81,7 @@ class BaggingForecaster(BaseForecaster):
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
     }
 
@@ -100,10 +99,8 @@ class BaggingForecaster(BaseForecaster):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
-            "enforce_index_type",  # index type that needs to be enforced in X/y
+            "enforce_index_type",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
@@ -251,12 +248,8 @@ class BaggingForecaster(BaseForecaster):
         """
         # Need to construct a completely new y out of ol self._y and y and then
         # fit_treansform the transformer and re-fit the foreaster.
-        # print("update - input:")
-        # print(y)
-        # print("old y")
-        # print(self._y)
         _y = deepcopy(self._y)
-        _y = y.combine_first(_y)
+        _y = update_data(_y, y)
 
         self.bootstrap_transformer_.fit(X=_y)
         y_bootstraps = self.bootstrap_transformer_.transform(X=_y)
@@ -278,7 +271,7 @@ class BaggingForecaster(BaseForecaster):
         """
         params = [
             {
-                "forecaster": AutoETS(sp=1),
+                "forecaster": MockForecaster(),
                 "bootstrap_transformer": STLBootstrapTransformer(sp=3),
             }
         ]
