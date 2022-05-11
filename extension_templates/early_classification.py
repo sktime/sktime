@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Extension template for time series classifiers.
+Extension template for early time series classifiers.
 
 Purpose of this implementation template:
     quick implementation of new estimators following the template
@@ -21,28 +21,33 @@ How to use this implementation template to implement a new estimator:
 Mandatory implements:
     fitting                 - _fit(self, X, y)
     predicting classes      - _predict(self, X)
+    updating predictions    - _update_predict(self, X)
+    performance metrics     - _score(X, y)
 
 Optional implements:
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
+    updating probability predictions      - _update_predict_proba(self, X)
 
-Testing - implement if sktime classifier (not needed locally):
+Testing - implement if sktime early classifier (not needed locally):
     get default parameters for test instance(s) - get_test_params()
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+from typing import Tuple
+
 import numpy as np
 
-from sktime.classification.base import BaseClassifier
+from sktime.classification.early_classification import BaseEarlyClassifier
 
 # todo: add any necessary imports here
 
 
-class MyTimeSeriesClassifier(BaseClassifier):
-    """Custom time series classifier. todo: write docstring.
+class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
+    """Custom early time series classifier. todo: write docstring.
 
-    todo: describe your custom time series classifier here
+    todo: describe your custom early time series classifier here
 
     Hyper-parameters
     ----------------
@@ -95,8 +100,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # if est2 is None:
         #     self.estimator = MyDefaultEstimator()
 
-        # todo: change "MyTimeSeriesClassifier" to the name of the class
-        super(MyTimeSeriesClassifier, self).__init__()
+        # todo: change "MyEarlyTimeSeriesClassifier" to the name of the class
+        super(MyEarlyTimeSeriesClassifier, self).__init__()
 
         # todo: if tags of estimator depend on component tags, set these here
         #  only needed if estimator is a composite
@@ -110,7 +115,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
 
     # todo: implement this, mandatory
     def _fit(self, X, y):
-        """Fit time series classifier to training data.
+        """Fit early time series classifier to training data.
 
         core logic
 
@@ -138,10 +143,15 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
     # todo: implement this, mandatory
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predict labels for sequences in X.
 
         core logic
+
+        This method should update state_info with any values necessary to make future
+        decisions. It is recommended that the previous time stamp used for each case
+        should be stored in the state_info. The number of rows in state_info after the
+        method has been called should match the number of input rows.
 
         Parameters
         ----------
@@ -150,16 +160,61 @@ class MyTimeSeriesClassifier(BaseClassifier):
         Returns
         -------
         y : predictions of labels for X, np.ndarray
+        decisions : decisions on whether the prediction is sage, np.ndarray
         """
 
         # implement here
         # IMPORTANT: avoid side effects to X
 
+        # At the end of the method, state_info should be updated to reflect the current
+        # state in the early classifiers decision-making process on the safety of
+        # predictions for cases in X.
+        # i.e. the number of consecutive 'safe' decisions required to return a final
+        # decision to use the returned predictions.
+
+    # todo: implement this, mandatory
+    def _update_predict(self, X) -> Tuple[np.ndarray, np.ndarray]:
+        """Update labels for sequences in X using a larger series length.
+
+        core logic
+
+        Uses information from previous decisions stored in state_info. This method
+        should update state_info with any values necessary to make future decisions.
+        It is recommended that the previous time stamp used for each case should be
+        stored in the state_info. The number of rows in state_info after the method has
+        been called should match the number of input rows.
+
+        Parameters
+        ----------
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
+
+        Returns
+        -------
+        y : predictions of labels for X, np.ndarray
+        decisions : decisions on whether the prediction is sage, np.ndarray
+        """
+
+        # implement here
+        # IMPORTANT: update the number of rows in state_info to math the cases in
+        #            X at the beginning of the method.
+        # IMPORTANT: avoid side effects to X
+
+        # At the end of the method, state_info should be updated to reflect the current
+        # state in the early classifiers decision-making process on the safety of
+        # predictions for cases in X.
+        # i.e. the number of consecutive 'safe' decisions required to return a final
+        # decision to use the returned predictions.
+
     # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be called.
+    # if you do not implement it, then the default _predict_proba will be  called.
     # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X) -> np.ndarray:
+    def _predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
         """Predicts labels probabilities for sequences in X.
+
+        This method should update state_info with any values necessary to make future
+        decisions. It is recommended that the previous time stamp used for each case
+        should be stored in the state_info. The number of rows in state_info after the
+        method has been called should match the number of input rows.
 
         Default behaviour is to call _predict and set the predicted class probability
         to 1, other class probabilities to 0. Override if better estimates are
@@ -172,10 +227,77 @@ class MyTimeSeriesClassifier(BaseClassifier):
         Returns
         -------
         y : predictions of probabilities for class values of X, np.ndarray
+        decisions : decisions on whether the prediction is sage, np.ndarray
         """
 
         # implement here
         # IMPORTANT: avoid side effects to X
+
+        # At the end of the method, state_info should be updated to reflect the current
+        # state in the early classifiers decision-making process on the safety of
+        # predictions for cases in X.
+        # i.e. the number of consecutive 'safe' decisions required to return a final
+        # decision to use the returned predictions.
+
+    # todo: consider implementing this, optional
+    # if you do not implement it, then the default _update_predict_proba will be called.
+    # the default simply calls predict and sets probas to 0 or 1.
+    def _update_predict_proba(self, X) -> Tuple[np.ndarray, np.ndarray]:
+        """Update labels probabilities for sequences in X using a larger series length.
+
+        Uses information from previous decisions stored in state_info. This method
+        should update state_info with any values necessary to make future decisions.
+        It is recommended that the previous time stamp used for each case should be
+        stored in the state_info. The number of rows in state_info after the method has
+        been called should match the number of input rows.
+
+        Default behaviour is to call _predict and set the predicted class probability
+        to 1, other class probabilities to 0. Override if better estimates are
+        obtainable.
+
+        Parameters
+        ----------
+        X : data to predict y with, of type self.get_tag("X_inner_mtype")
+
+        Returns
+        -------
+        y : predictions of probabilities for class values of X, np.ndarray
+        decisions : decisions on whether the prediction is sage, np.ndarray
+        """
+
+        # implement here
+        # IMPORTANT: update the number of rows in state_info to match the cases in
+        #            X at the beginning of the method.
+        # IMPORTANT: avoid side effects to X
+
+        # At the end of the method, state_info should be updated to reflect the current
+        # state in the early classifiers decision-making process on the safety of
+        # predictions for cases in X.
+        # i.e. the number of consecutive 'safe' decisions required to return a final
+        # decision to use the returned predictions.
+
+    # todo: implement this, mandatory
+    def _score(self, X, y) -> Tuple[float, float, float]:
+        """Scores predicted labels against ground truth labels on X.
+
+        Parameters
+        ----------
+        X : data not used in training, of type self.get_tag("X_inner_mtype")
+        y : array-like, shape = [n_instances] - the class labels
+
+        Returns
+        -------
+        accuracy: the accuracy of the predictions at the series length when a decision
+                  is made.
+        earliness: how much of the series length was required to make a prediction as a
+                   proportion of the full series length.
+        harmonic mean: score balancing accuracy and earliness.
+        """
+
+        # implement here
+        # IMPORTANT: avoid side effects to X, y
+
+        # HM: (2 * accuracy * (1 - earliness)) / (accuracy + (1 - earliness))
 
     # todo: consider implementing this, optional
     # if not implementing, delete the method
