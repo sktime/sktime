@@ -164,6 +164,13 @@ class Reconciler(BaseTransformer):
 
         # include index between matrices here as in df.dot()?
         X = X.groupby(level=-1)
+        # if method = "td_recon":
+        # else:
+
+        # private methods? one fit/transform for g-matrix, other for unusual
+        # two linked classes - dispatch.
+
+        # disctionary for dispatch
         recon_preds = X.transform(
             lambda y: np.dot(self.s_matrix, np.dot(self.g_matrix, y))
         )
