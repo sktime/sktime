@@ -693,11 +693,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             set_dict_m42[param_name] = -42
 
         # clone, with all parameters set to a non-default value
-        estimator.set_params(set_dict_42)
+        estimator.set_params(**set_dict_42)
         clone(estimator)
 
         # clone a second time, just in case one parameter has default 42
-        estimator.set_params(set_dict_m42)
+        estimator.set_params(**set_dict_m42)
         clone(estimator)
 
     def test_repr(self, estimator_instance):
