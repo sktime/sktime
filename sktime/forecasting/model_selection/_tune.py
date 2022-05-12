@@ -486,7 +486,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
         self.param_grid = param_grid
 
     def _check_param_grid(self, param_grid):
-        """Copied _check_param_grid from sklearn 1.0.2, before it was removed"""
+        """_check_param_grid from sklearn 1.0.2, before it was removed."""
         if hasattr(param_grid, "items"):
             param_grid = [param_grid]
 
