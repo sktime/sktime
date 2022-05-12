@@ -23,7 +23,7 @@ from sklearn.utils.estimator_checks import (
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 
-from sktime.base import BaseEstimator
+from sktime.base import BaseEstimator, BaseObject
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
@@ -689,8 +689,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         set_dict_42 = dict()
         set_dict_m42 = dict()
         for param_name in params.keys():
-            set_dict_42[param_name] = 42
-            set_dict_m42[param_name] = -42
+            if "__" not in param_name:
+                if not isinstance(params[param_name], BaseObject):
+                    set_dict_42[param_name] = 42
+                    set_dict_m42[param_name] = -42
 
         # clone, with all parameters set to a non-default value
         estimator.set_params(**set_dict_42)
