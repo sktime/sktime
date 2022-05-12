@@ -695,7 +695,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 return True
             if isinstance(obj, str):
                 return False
-            if hasattr(obj, '__iter__'):
+            if hasattr(obj, "__iter__"):
                 return any(contains_object(x) for x in obj)
             return False
 
