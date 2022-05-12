@@ -681,6 +681,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         clone(estimator)
 
+    def test_clone_all_params(self, estimator_instance):
+        """Check we can call clone from scikit-learn, with all params set."""
+        estimator = estimator_instance
+        params = estimator.get_params()
+        for param_name in params.keys():
+            setattr(estimator, param_name, 42)
+        clone(estimator)
+
     def test_repr(self, estimator_instance):
         """Check we can call repr."""
         estimator = estimator_instance
