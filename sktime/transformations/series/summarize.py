@@ -8,7 +8,6 @@ __all__ = ["SummaryTransformer", "WindowSummarizer"]
 
 import warnings
 
-import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
@@ -39,15 +38,15 @@ class WindowSummarizer(BaseTransformer):
         observations, or strings specifying a time period (an offset).
 
         The first element of the `window` is the `lag`, which specifies how far back
-        in the past the window will start, and the integer `window length`,
-        which will give the length of the window across which to apply the function.
+        in the past the window will start. The second element, `window length`,
+        is the length of the window across which to apply the function.
 
         For ease of notation, for the key "lag", only a single integer or offset
         specifying the `lag` argument will be provided.
 
-        The offsets work only with datasets with time index (either pd.DateimeIndex
-        or pd.RangeIndex) are expected to have a format of 'NUMBER'+'UNIT',
-        where NUMBER is an integer and UNIT is one of the following:
+        The offsets work only with datasets with time index (either pd.DateimeIndex,
+        pd.RangeIndex, or pd.TimedeltaIndex) are expected to have a format of
+        'NUMBER'+'UNIT', where NUMBER is an integer and UNIT is one of the following:
         * D - day,
         * H - hour,
         * T - minute,
@@ -280,6 +279,7 @@ class WindowSummarizer(BaseTransformer):
                 WindowSummarizer._tags["enforce_index_type"] = [
                     "pd.DatetimeIndex",
                     "pd.RangeIndex",
+                    "pd.TimedeltaIndex",
                 ]
 
         super(WindowSummarizer, self).__init__()
@@ -519,8 +519,13 @@ def find_timedelta_unit_value(timedelta):
     unit : str
         Character describing the timedelta unit.
     """
+    time_units = ["D", "H", "T", "S", "L", "U", "N"]
     unit = timedelta.resolution_string
-    value = round(timedelta.asm8 / np.timedelta64(1, unit))
+    if unit in time_units:
+        pass
+    else:
+        raise ValueError("passed incompatible time span")
+    value = round(timedelta.asm8 / pd.Timedelta(1, unit))
 
     return value, unit
 
