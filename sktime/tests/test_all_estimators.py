@@ -688,11 +688,21 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         params = estimator.get_params(deep=False)
         set_dict_42 = dict()
         set_dict_m42 = dict()
+
+        def contains_object(obj):
+            """Check whether obj contains a BaseObject, potentially iterable nested."""
+            if isinstance(obj, BaseObject):
+                return True
+            if isinstance(obj, str):
+                return False
+            if hasattr(obj, '__iter__'):
+                return any(contains_object(x) for x in obj)
+            return False
+
         for param_name in params.keys():
-            if "__" not in param_name:
-                if not isinstance(params[param_name], BaseObject):
-                    set_dict_42[param_name] = 42
-                    set_dict_m42[param_name] = -42
+            if "__" not in param_name and not contains_object(params[param_name]):
+                set_dict_42[param_name] = 42
+                set_dict_m42[param_name] = -42
 
         # clone, with all parameters set to a non-default value
         estimator.set_params(**set_dict_42)
