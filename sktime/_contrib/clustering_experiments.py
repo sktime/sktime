@@ -111,6 +111,10 @@ if __name__ == "__main__":
         distance = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
+        clusterer = sys.argv[6]
+        averaging = sys.argv[7]
+        if averaging == "dba":
+            results_dir = results_dir + "_dba"
         tf = True
     elif chris_config is True:
         path = "C:/Users/chris/Documents/Masters"
@@ -157,7 +161,7 @@ if __name__ == "__main__":
         parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
     if clusterer == "kmeans":
         clst = TimeSeriesKMeans(
-            averaging_method="dba",
+            averaging_method=averaging,
             average_params={"averaging_distance_metric": distance},
             metric=distance,
             distance_params=parameters,
