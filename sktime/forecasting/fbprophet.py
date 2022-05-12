@@ -142,7 +142,6 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
-        interval_width=0,
     ):
         _check_soft_dependencies("prophet", severity="error", object=self)
 
@@ -167,7 +166,6 @@ class Prophet(_ProphetAdapter):
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
         self.verbose = verbose
-        self.interval_width = interval_width
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
