@@ -6,10 +6,10 @@
 __author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
+from collections.abc import Sequence
+
 import numpy as np
 import pandas as pd
-
-from collections.abc import Sequence
 from joblib import Parallel, delayed
 from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
