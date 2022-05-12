@@ -685,7 +685,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """Check we can call clone from scikit-learn, with all params set."""
         estimator = estimator_instance
         # set all parameters manually to a likely non-default value
-        params = estimator.get_params()
+        params = estimator.get_params(deep=False)
         set_dict_42 = dict()
         set_dict_m42 = dict()
         for param_name in params.keys():
