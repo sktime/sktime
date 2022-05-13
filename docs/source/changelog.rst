@@ -20,7 +20,7 @@ Version 0.11.4 - 2022-05-13
 Highlights
 ~~~~~~~~~~
 
-* maintenance release for compatibility with ``scikit-learn 1.1.0``
+* maintenance update for compatibility with recent ``scikit-learn 1.1.0`` release
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~
