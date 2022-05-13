@@ -14,6 +14,64 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.11.4 - 2022-05-13
+---------------------------
+
+Dependency changes
+~~~~~~~~~~~~~~~~~
+
+* Add an upper bound to scikit-learn <1.1.0.
+
+Maintenance
+~~~~~~~~~~~
+
+* [ENH] clean-up of test_random_state (:pr:`2593`) :user:`Ris-Bali`
+* [ENH] fix side effects in `check_estimator` utility (:pr:`2597`) :user:`fkiraly`
+* [MNT] bound sklearn to <1.1.0 as a temporary fix for #2631 (:pr:`2632`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] Clustering lloyds algorithm early exit incorrectly (:pr:`2572`) :user:`chrisholder`
+* decrease ensemble size for DrCIF (:pr:`2595`) :user:`TonyBagnall`
+* [BUG] fixed bug where no average params passed (:pr:`2592`) :user:`chrisholder`
+* [BUG] Twe distance running slow due to numpy and numba interaction (:pr:`2605`) :user:`chrisholder`
+* [BUG] typo fix in tag deprecation message (:pr:`2616`) :user:`fkiraly`
+* [ENH] Removed interval_width parameter of Prophet (:pr:`2630`) :user:`phershbe`
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] Dynamic Time Warping Barycenter Averaging (DBA) (:pr:`2582`) :user:`chrisholder`
+* [ENH] Twe distance (:pr:`2553`) :user:`chrisholder`
+* [ENH] components retrieval utility and default `BaseForecaster._update(update_params=False)` for composites (:pr:`2596`) :user:`fkiraly`
+* [ENH] more informative error message from `mtype` if no mtype can be identified (:pr:`2606`) :user:`fkiraly`
+* [ENH] Created _DelegatedTransformer (:pr:`2612`) :user:`miraep8`
+* [ENH] transformer reconcilers - add tests and improve (:pr:`2577`) :user:`ciaran-g`
+
+Refactored
+~~~~~~~~~~
+
+* [ENH] Refactor sliding and expanding window splitters to allow timdelta forecasting horizon (:pr:`2551`) :user:`khrapovs`
+
+Other
+~~~~~
+
+* [ENH] `BaseObject.reset` to return `self` (:pr:`2613`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`chrisholder`,
+:user:`ciaran-g`,
+:user:`fkiraly`,
+:user:`khrapovs`,
+:user:`miraep8`,
+:user:`phershbe`,
+:user:`Ris-Bali`,
+:user:`TonyBagnall`
+
+
 Version 0.11.3 - 2022-04-29
 ---------------------------
 
