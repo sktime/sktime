@@ -663,7 +663,7 @@ class TagAliaserMixin:
             if tag_name in cls.alias_dict.keys():
                 version = cls.deprecate_dict[tag_name]
                 new_tag = cls.alias_dict[tag_name]
-                msg = f'tag "{tag_name}" is will be removed in sktime version {version}'
+                msg = f'tag "{tag_name}" will be removed in sktime version {version}'
                 if new_tag != "":
                     msg += (
                         f' and replaced by "{new_tag}", please use "{new_tag}" instead'
