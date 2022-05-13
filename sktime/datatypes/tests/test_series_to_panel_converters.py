@@ -5,10 +5,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._series_as_panel import (
-    convert_Series_to_Panel, convert_Panel_to_Series
+    convert_Panel_to_Series,
+    convert_Series_to_Panel,
 )
-from sktime.utils._testing.series import _make_series
 from sktime.utils._testing.panel import _make_panel
+from sktime.utils._testing.series import _make_series
 
 
 def test_convert_numpy_series_to_panel():
