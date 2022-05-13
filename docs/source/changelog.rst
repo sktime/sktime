@@ -17,47 +17,92 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.11.4 - 2022-05-13
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* maintenance release for compatibility with ``scikit-learn 1.1.0``
+
 Dependency changes
 ~~~~~~~~~~~~~~~~~
 
-* Add an upper bound to scikit-learn <1.1.0.
+* Added defensive upper bound ``scikit-learn<1.2.0``
 
 Maintenance
 ~~~~~~~~~~~
 
-* [ENH] clean-up of test_random_state (:pr:`2593`) :user:`Ris-Bali`
-* [ENH] fix side effects in `check_estimator` utility (:pr:`2597`) :user:`fkiraly`
-* [MNT] bound sklearn to <1.1.0 as a temporary fix for #2631 (:pr:`2632`) :user:`fkiraly`
+* [MNT] fix incompatibility with ``sklearn 1.1.0`` (:pr:`2632`, :pr:`2633`) :user:`fkiraly`
+* [MNT] clean-up of ``test_random_state`` (:pr:`2593`) :user:`Ris-Bali`
+* [MNT] fix side effects in ``check_estimator`` utility (:pr:`2597`) :user:`fkiraly`
+* [MNT] ``_check_dl_dependencies`` warning option (:pr:`2627`) :user:`fkiraly`
 
-Fixes
-~~~~~
-
-* [BUG] Clustering lloyds algorithm early exit incorrectly (:pr:`2572`) :user:`chrisholder`
-* decrease ensemble size for DrCIF (:pr:`2595`) :user:`TonyBagnall`
-* [BUG] fixed bug where no average params passed (:pr:`2592`) :user:`chrisholder`
-* [BUG] Twe distance running slow due to numpy and numba interaction (:pr:`2605`) :user:`chrisholder`
-* [BUG] typo fix in tag deprecation message (:pr:`2616`) :user:`fkiraly`
-* [ENH] Removed interval_width parameter of Prophet (:pr:`2630`) :user:`phershbe`
 
 Enhancements
 ~~~~~~~~~~~~
 
-* [ENH] Dynamic Time Warping Barycenter Averaging (DBA) (:pr:`2582`) :user:`chrisholder`
-* [ENH] Twe distance (:pr:`2553`) :user:`chrisholder`
+BaseObject
+^^^^^^^^^^
+
 * [ENH] components retrieval utility and default `BaseForecaster._update(update_params=False)` for composites (:pr:`2596`) :user:`fkiraly`
-* [ENH] more informative error message from `mtype` if no mtype can be identified (:pr:`2606`) :user:`fkiraly`
-* [ENH] Created _DelegatedTransformer (:pr:`2612`) :user:`miraep8`
+
+Clustering
+^^^^^^^^^^
+
+* [ENH] Dynamic Time Warping Barycenter Averaging (DBA) (:pr:`2582`) :user:`chrisholder`
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] more informative error message from ``mtype`` if no mtype can be identified (:pr:`2606`) :user:`fkiraly`
+
+Distances, kernels
+^^^^^^^^^^^^^^^^^^
+
+* [ENH] Twe distance (:pr:`2553`) :user:`chrisholder`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Extended sliding and expanding window splitters to allow timdelta forecasting horizon (:pr:`2551`) :user:`khrapovs`
+* [ENH] Removed ``interval_width`` parameter of Prophet (:pr:`2630`) :user:`phershbe`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* decrease ensemble size for DrCIF (:pr:`2595`) :user:`TonyBagnall`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Created ``_DelegatedTransformer`` (:pr:`2612`) :user:`miraep8`
 * [ENH] transformer reconcilers - add tests and improve (:pr:`2577`) :user:`ciaran-g`
 
-Refactored
-~~~~~~~~~~
 
-* [ENH] Refactor sliding and expanding window splitters to allow timdelta forecasting horizon (:pr:`2551`) :user:`khrapovs`
-
-Other
+Fixes
 ~~~~~
 
-* [ENH] `BaseObject.reset` to return `self` (:pr:`2613`) :user:`fkiraly`
+BaseObject
+^^^^^^^^^^
+
+* [BUG] ``BaseObject.reset`` to return ``self`` (:pr:`2613`) :user:`fkiraly`
+* [BUG] typo fix in tag deprecation message (:pr:`2616`) :user:`fkiraly`
+
+Clustering
+^^^^^^^^^^
+
+* [BUG] Clustering lloyds algorithm early exit incorrectly (:pr:`2572`) :user:`chrisholder`
+* [BUG] fixed bug where no average params passed (:pr:`2592`) :user:`chrisholder`
+* [BUG] Twe distance running slow due to numpy and numba interaction (:pr:`2605`) :user:`chrisholder`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] Forecasting pipeline get/set params fixed for dunder generated pipelines (:pr:`2619`) :user:`fkiraly`
+
+Testing framework
+^^^^^^^^^^^^^^^^^
+
+* [BUG] fixing side effects between test runs of the same test in the test suite (:pr:`2558`) :user:`fkiraly`
+
 
 Contributors
 ~~~~~~~~~~~~
