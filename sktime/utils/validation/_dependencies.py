@@ -65,17 +65,19 @@ def _check_soft_dependencies(
             else:
                 raise RuntimeError(
                     "Error in calling _check_soft_dependencies, severity "
-                    f'argument must bee "error" or "warning", found "{severity}".'
+                    f'argument must be "error" or "warning", found "{severity}".'
                 )
 
 
-def _check_dl_dependencies(msg=None):
+def _check_dl_dependencies(msg=None, severity="error"):
     """Check if deep learning dependencies are installed.
 
     Parameters
     ----------
     msg : str, optional, default= default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
+    severity : str, "error" (default) or "warning"
+        whether the check should raise an error, or only a warning
 
     Raises
     ------
@@ -92,4 +94,12 @@ def _check_dl_dependencies(msg=None):
         import_module("tensorflow")
         import_module("tensorflow_probability")
     except ModuleNotFoundError as e:
-        raise ModuleNotFoundError(msg) from e
+        if severity == "error":
+            raise ModuleNotFoundError(msg) from e
+        elif severity == "warning":
+            warnings.warn(msg)
+        else:
+            raise RuntimeError(
+                "Error in calling _check_dl_dependencies, severity "
+                f'argument must be "error" or "warning", found "{severity}".'
+            )
