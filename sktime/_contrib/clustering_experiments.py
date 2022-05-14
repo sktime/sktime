@@ -150,15 +150,22 @@ if __name__ == "__main__":
         name = clusterer + "-" + distance + "-tuned"
     else:
         name = clusterer + "-" + distance
+    w = 1.0
     if (
         distance == "wdtw"
         or distance == "dwdtw"
         or distance == "dtw"
         or distance == "wdtw"
     ):
-        parameters = {"window": 0.2, "epsilon": 0.05, "g": 0.05, "c": 1}
-    else:
-        parameters = {"window": 1.0, "epsilon": 0.05, "g": 0.05, "c": 1}
+        w = 0.2
+    parameters = {
+        "window": w,
+        "epsilon": 0.05,
+        "g": 0.05,
+        "c": 1,
+        "nu": 0.05,
+        "lmbda": 1.0,
+    }
     if clusterer == "kmeans":
         clst = TimeSeriesKMeans(
             averaging_method=averaging,
