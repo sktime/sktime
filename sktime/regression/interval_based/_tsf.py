@@ -14,7 +14,6 @@ from sktime.series_as_features.base.estimators.interval_based._tsf import (
     BaseTimeSeriesForest,
     _transform,
 )
-from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
@@ -67,19 +66,21 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
     .. [3] Arxiv paper: https://arxiv.org/abs/1302.2277
     """
 
-    _tags = {"capability:multivariate": False}
+    _tags = {
+        "capability:multivariate": False,
+        "X_inner_mtype": "numpy3D",
+    }
 
     _base_estimator = DecisionTreeRegressor()
 
-    def fit(self, X, y, **kwargs):
+    def _fit(self, X, y):
         """Wrap BaseForest._fit.
 
         This is a temporary measure prior to the BaseRegressor refactor.
         """
-        X, y = check_X_y(X, y, coerce_to_numpy=True, enforce_univariate=True)
-        return BaseTimeSeriesForest._fit(self, X, y, **kwargs)
+        return BaseTimeSeriesForest._fit(self, X, y)
 
-    def predict(self, X):
+    def _predict(self, X):
         """Predict.
 
         Parameters
@@ -92,8 +93,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         np.ndarray
             Predictions.
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
         _, series_length = X.shape
@@ -107,12 +106,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             for i in range(self.n_estimators)
         )
         return np.mean(y_pred, axis=0)
-
-    def _fit(self, X, y):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
-
-    def _predict(self, X):
-        """Empty method to satisfy abstract parent. Needs refactoring."""
 
 
 def _predict(X, estimator, intervals):
