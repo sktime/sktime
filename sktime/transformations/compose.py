@@ -111,7 +111,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             "numpy2D",
             "pd.Series",
             "pd-multiindex",
-            "pd-list",
+            "df-list",
             "nestesd_univ",
             "numpy3D",
             "pd_multiindex_hier",
