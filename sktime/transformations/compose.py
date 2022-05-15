@@ -112,7 +112,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             "pd.Series",
             "pd-multiindex",
             "df-list",
-            "nestesd_univ",
+            "nested_univ",
             "numpy3D",
             "pd_multiindex_hier",
         ]
