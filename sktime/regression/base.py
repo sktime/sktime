@@ -416,6 +416,8 @@ def _internal_convert(X, y=None):
     if y is not None and isinstance(y, pd.Series):
         # y should be a numpy array, although we allow Series for user convenience
         y = pd.Series.to_numpy(y)
+    if y is not None and isinstance(y, np.ndarray):
+        y = y.astype("float")
     if y is None:
         return X
     return X, y
