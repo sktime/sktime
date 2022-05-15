@@ -93,10 +93,20 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     _required_parameters = ["steps"]
 
     _tags = {
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        # we let all X inputs through to be handled by first transformer
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "numpy2D",
+            "pd.Series",
+            "pd-multiindex",
+            "pd-list",
+            "nestesd_univ",
+            "numpy3D",
+            "pd_multiindex_hier"
+        ]
     }
 
-    # no default tag values - these are set dynamically below
+    # no further default tag values - these are set dynamically below
 
     def __init__(self, steps):
 
