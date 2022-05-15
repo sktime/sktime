@@ -31,24 +31,23 @@ def make_pipeline(*steps):
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> y = load_airline()
     >>> pipe = make_pipeline(ExponentTransformer(), ARIMA())
-    >>> pipe
-    TransformedTargetForecaster(steps=[ExponentTransformer(), ARIMA()])
+    >>> type(pipe)
+    TransformedTargetForecaster
 
     Example 2: classifier pipeline
     >>> from sktime.classification.feature_based import Catch22Classifier
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> pipe = make_pipeline(ExponentTransformer(), Catch22Classifier())
-    >>> pipe
-    ClassifierPipeline(classifier=Catch22Classifier(),
-                       transformers=[ExponentTransformer()])
+    >>> type(pipe)
+    ClassifierPipeline
 
     Example 3: transformer pipeline
     >>> from sktime.pipeline import make_pipeline
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> pipe = make_pipeline(ExponentTransformer(), ExponentTransformer())
-    >>> pipe
-    TransformerPipeline(steps=[ExponentTransformer(), ExponentTransformer()])
+    >>> type(pipe)
+    TransformerPipeline
     """
     pipe = steps[0]
     for i in range(1, len(steps)):
