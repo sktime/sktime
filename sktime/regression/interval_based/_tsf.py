@@ -73,12 +73,20 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
 
     _base_estimator = DecisionTreeRegressor()
 
+    def fit(self, X, y):
+        """Override sklearn forest fit with BaseRegressor fit."""
+        return BaseRegressor.fit(self, X, y)
+
     def _fit(self, X, y):
         """Wrap BaseForest._fit.
 
         This is a temporary measure prior to the BaseRegressor refactor.
         """
         return BaseTimeSeriesForest._fit(self, X, y)
+
+    def predict(self, X):
+        """Override sklearn forest predict with BaseRegressor predict."""
+        return BaseRegressor.predict(self, X)
 
     def _predict(self, X):
         """Predict.
