@@ -39,7 +39,7 @@ class WindowSummarizer(BaseTransformer):
         For ease of notation, for the key "lag", only a single integer
         specifying the `lag` argument will be provided.
 
-        Please see blow a graphical representation of the logic using the following
+        Please see below a graphical representation of the logic using the following
         symbols:
 
         ``z`` = time stamp that the window is summarized *to*.
@@ -280,7 +280,7 @@ class WindowSummarizer(BaseTransformer):
                 inplace=True,
             )
             func_dict = func_dict.explode("window")
-            func_dict["window"] = func_dict["window"].apply(lambda x: [x[1] + 1, x[0]])
+            func_dict["window"] = func_dict["window"].apply(lambda x: [x[1], x[0]])
             func_dict.drop("name", inplace=True, axis=1)
             warnings.warn(
                 "Specifying lag features via lag_config is deprecated since 0.12.0,"
