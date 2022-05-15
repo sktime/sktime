@@ -4,5 +4,5 @@
 __all__ = ["KNeighborsTimeSeriesRegressor"]
 
 from sktime.regression.distance_based._time_series_neighbors import (
-    KNeighborsTimeSeriesRegressor
+    KNeighborsTimeSeriesRegressor,
 )
