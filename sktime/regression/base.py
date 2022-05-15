@@ -8,7 +8,6 @@ Abstract base class for time series regressors.
 Defining methods:
     fitting         - fit(self, X, y)
     predicting      - predict(self, X)
-                    - predict_proba(self, X)
 
 Inherited inspection methods:
     hyper-parameter inspection  - get_params()
