@@ -68,17 +68,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> # we'll construct a pipeline from 2 transformers below, in three different ways
-    >>> # preparing the transformers
+    We'll construct a pipeline from 2 transformers below, in three different ways
+    Preparing the transformers
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
 
-    >>> # Example 1: construct without strings
+    Example 1, option A: construct without strings
     >>> pipe = TransformerPipeline(steps = [t1, t2])
     >>> # unique names are generated for the two components t1 and t2
 
-    >>> # Example 2: construct with strings to give custom names to steps
+    Example 1, option B: construct with strings to give custom names to steps
     >>> pipe = TransformerPipeline(
     ...         steps = [
     ...             ("trafo1", t1),
@@ -86,8 +86,20 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     ...         ]
     ...     )
 
-    >>> # Example 3: for quick construction, the * dunder method can be used
+    Example 1, option C: for quick construction, the * dunder method can be used
     >>> pipe = t1 * t2
+
+    Example 2: sklearn transformers can be used in the pipeline.
+    If applied to Series, sklearn transformers are applied by series instance.
+    If applied to Table, sklearn transformers are applied to the table as a whole.
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    This applies the scaler per series, then summarizes
+    >>> pipe = StandardScaler() * SummaryTransformer()
+    This applies the sumamrization, then scales the full summary table:
+    >>> pipe = SummaryTransformer() * StandardScaler()
+    This scales the series, then summarizes, then scales the full summary table:
+    >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
 
     _required_parameters = ["steps"]
