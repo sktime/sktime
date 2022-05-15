@@ -108,6 +108,12 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         )
         return np.mean(y_pred, axis=0)
 
+    def _fit(self, X, y):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    def _predict(self, X):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
 
 def _predict(X, estimator, intervals):
     Xt = _transform(X, intervals)
