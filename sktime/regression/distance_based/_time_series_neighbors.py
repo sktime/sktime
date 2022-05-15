@@ -6,7 +6,7 @@ The class has hardcoded string references to numba based distances in sktime.dis
 It can also be used with callables, or sktime (pairwise transformer) estimators.
 
 This is a direct wrap or sklearn KNeighbors, with added functionality that allows
-time series distances to be passed, and the sktime time series classifier interface.
+time series distances to be passed, and the sktime time series regressor interface.
 """
 
 __author__ = ["fkiraly"]
@@ -38,7 +38,7 @@ class KNeighborsTimeSeriesRegressor(BaseRegressor):
 
     An adapted version of the scikit-learn KNeighborsRegressor for time series data.
 
-    This class is a KNN classifier which supports time series distance measures.
+    This class is a KNN regressor which supports time series distance measures.
     It has hardcoded string references to numba based distances in sktime.distances,
     and can also be used with callables, or sktime (pairwise transformer) estimators.
 
