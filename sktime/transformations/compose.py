@@ -108,7 +108,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": [
             "pd.DataFrame",
-            "numpy2D",
+            "np.ndarray",
             "pd.Series",
             "pd-multiindex",
             "df-list",
