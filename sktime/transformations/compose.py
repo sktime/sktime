@@ -94,10 +94,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     If applied to Table, sklearn transformers are applied to the table as a whole.
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sktime.transformations.series.summarize import SummaryTransformer
-    This applies the scaler per series, then summarizes
+
+    This applies the scaler per series, then summarizes:
     >>> pipe = StandardScaler() * SummaryTransformer()
+
     This applies the sumamrization, then scales the full summary table:
     >>> pipe = SummaryTransformer() * StandardScaler()
+
     This scales the series, then summarizes, then scales the full summary table:
     >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
