@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 """Implmenents Box-Cox and Log Transformations."""
 
-__author__ = ["mloning, aiwalter, fkiraly"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
