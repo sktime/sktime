@@ -92,6 +92,10 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     _required_parameters = ["steps"]
 
+    _tags = {
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+    }
+
     # no default tag values - these are set dynamically below
 
     def __init__(self, steps):
@@ -101,14 +105,21 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         super(TransformerPipeline, self).__init__()
 
-        first_trafo = self.steps_[0][1]
-        last_trafo = self.steps_[-1][1]
-
-        self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
-        self.clone_tags(last_trafo, "scitype:transform-output")
-
         # abbreviate for readability
         ests = self.steps_
+        first_trafo = ests[0][1]
+        last_trafo = ests[-1][1]
+
+        # input mtype and input type are as of the first estimator
+        self.clone_tags(first_trafo, ["scitype:transform-input"])
+        # output type is that of last estimator, if no "Primitives" occur in the middle
+        # if "Primitives" occur in the middle, then output is set to that too
+        # this is in a case where "Series-to-Series" is applied to primitive df
+        #   e.g., in a case of pipelining with scikit-learn transformers
+        last_out = last_trafo.get_tag("scitype:transform-output")
+        self._anytagis_then_set(
+            "scitype:transform-output", "Primitives", last_out, ests
+        )
 
         # set property tags based on tags of components
         self._anytag_notnone_set("y_inner_mtype", ests)
