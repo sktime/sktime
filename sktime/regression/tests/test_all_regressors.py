@@ -63,7 +63,7 @@ def test_multivariate_input(Estimator):
     # check if estimator can handle multivariate data
     try:
         estimator.fit(X_train, y_train)
-        for method in ("predict", "predict_proba"):
+        for method in ["predict"]:
             X = _make_args(estimator, method, n_columns=n_columns)[0]
             getattr(estimator, method)(X)
 
