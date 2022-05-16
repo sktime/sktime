@@ -161,7 +161,6 @@ class BaseTransformer(BaseEstimator):
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
