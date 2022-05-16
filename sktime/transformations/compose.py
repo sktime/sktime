@@ -9,6 +9,8 @@ from sklearn import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.sklearn import is_sklearn_transformer
+
 
 __author__ = ["fkiraly", "mloning"]
 __all__ = ["TransformerPipeline", "FeatureUnion"]
@@ -200,6 +202,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         #   this is because forecsting Pipelines are *also* transformers
         #   but they need to take precedence in parsing the expression
         from sktime.forecasting.base import BaseForecaster
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         if isinstance(other, BaseForecaster):
             return NotImplemented
@@ -221,6 +224,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             other_trafo = other[1]
             new_names = names + (other_name,)
             new_trafos = trafos + (other_trafo,)
+        # if sklearn transformer, adapt to sktime transformer first
+        elif is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
         else:
             return NotImplemented
 
@@ -249,6 +255,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         #   this is because forecsting Pipelines are *also* transformers
         #   but they need to take precedence in parsing the expression
         from sktime.forecasting.base import BaseForecaster
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         if isinstance(other, BaseForecaster):
             return NotImplemented
@@ -268,6 +275,9 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             other_trafo = other[1]
             new_names = (other_name,) + names
             new_trafos = (other_trafo,) + trafos
+        # if sklearn transformer, adapt to sktime transformer first
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
 
