@@ -11,7 +11,6 @@ from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.sklearn import is_sklearn_transformer
 
-
 __author__ = ["fkiraly", "mloning"]
 __all__ = ["TransformerPipeline", "FeatureUnion"]
 
