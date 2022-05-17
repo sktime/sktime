@@ -33,7 +33,6 @@ def silhouette_score(
         The distance metric to use.
         If a string is given, the value must be one of the following strings:
         'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
-        'twe'
     sample_size : int or None (default: None)
         The size of the sample to use when computing the Silhouette Coefficient
         on a random subset of the data.
