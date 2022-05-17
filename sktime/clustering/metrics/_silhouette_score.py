@@ -11,7 +11,7 @@ from sktime.distances import pairwise_distance
 def silhouette_score(
     X: np.ndarray,
     labels: List[int],
-    metric: str = "dtw",
+    metric: str = "euclidean",
     metric_params: dict = None,
     sample_size: int = None,
     random_state: Union[int, RandomState] = None,
@@ -25,35 +25,24 @@ def silhouette_score(
 
     Parameters
     ----------
-    X : array [n_ts, n_ts] if metric == "precomputed", or, \
-             [n_ts, sz, d] otherwise
-        Array of pairwise distances between time series, or a time series
-        dataset.
-    labels : array, shape = [n_ts]
+    X: np.ndarray (3d array of shape(n, d, m))
+        3d array of n time series of shape (d, m).
+    labels: np.ndarray (1d array of shape(n))
          Predicted labels for each time series.
-    metric : string, callable or None (default: None)
-        The metric to use when calculating distance between time series.
-        Should be one of {'dtw', 'softdtw', 'euclidean'} or a callable distance
-        function or None.
-        If 'softdtw' is passed, a normalized version of Soft-DTW is used that
-        is defined as `sdtw_(x,y) := sdtw(x,y) - 1/2(sdtw(x,x)+sdtw(y,y))`.
-        If X is the distance array itself, use ``metric="precomputed"``.
-        If None, dtw is used.
+    metric: str, defaults = 'euclidean'
+        The distance metric to use.
+        If a string is given, the value must be one of the following strings:
+        'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw', 'lcss', 'edr', 'erp',
+        'twe'
     sample_size : int or None (default: None)
         The size of the sample to use when computing the Silhouette Coefficient
         on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
     metric_params : dict or None (default: None)
-        Parameter values for the chosen metric.
-        For metrics that accept parallelization of the cross-distance matrix
-        computations, `n_jobs` key passed in `metric_params` is overridden by
-        the `n_jobs` argument.
-    random_state : int, RandomState instance or None, optional (default: None)
-        The generator used to randomly select a subset of samples.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`. Used when ``sample_size is not None``.
+        Additional parameters for the metric see docs for specific metric for potential
+        parameters.
+    random_state: int or np.random.RandomState instance or None, defaults = None
+        Determines random number generation for centroid initialization.
     kwargs: dict, default = None
         Additional kwargs.
 
