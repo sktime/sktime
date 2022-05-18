@@ -206,24 +206,36 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multivariate",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        "classifier",
+        ["classifier", "early_classifier", "transformer"],
         "bool",
-        "can the classifier handle unequal length time series?",
+        "can the estimator handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "capability:unequal_length:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to be equal length series (and series)?",
+    ),
+    (
+        "capability:missing_values:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to have no missing values?",
     ),
     (
         "capability:train_estimate",
@@ -247,7 +259,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multithreading",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),

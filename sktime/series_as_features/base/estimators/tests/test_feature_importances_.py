@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for feature importances."""
+"""Tests for feature importances in time series forests."""
 import numpy as np
 import pytest
 from sklearn.base import clone
@@ -18,10 +18,12 @@ from sktime.utils._testing.panel import make_classification_problem
 X_train, y_train = make_classification_problem()
 
 
-# Check results of a simple case of single estimator, single feature and
-# single interval from different but equivalent implementations
 def test_feature_importances_single_feature_interval_and_estimator():
-    """Test feature importances for single feature interval and estimator."""
+    """Test feature importances for single feature interval and estimator.
+
+    Check results of a simple case of single estimator, single feature and
+    single interval from different but equivalent implementations
+    """
     random_state = 1234
 
     # Compute using default method
@@ -69,15 +71,17 @@ def test_feature_importances_single_feature_interval_and_estimator():
     np.testing.assert_array_equal(fi_actual, fi_expected)
 
 
-# Check for 4 more complex cases with 3 features, with both numbers of
-# intervals and estimators varied from 1 to 2.
-# Feature importances from each estimator on each interval, and
-# normalised feature values of the time series are checked using
-# different but equivalent implementations
 @pytest.mark.parametrize("n_intervals", [1])
 @pytest.mark.parametrize("n_estimators", [1, 2])
 def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimators):
-    """Test feature importances for multiple feature intervals and estimators."""
+    """Test feature importances for multiple feature intervals and estimators.
+
+    Check for 4 more complex cases with 3 features, with both numbers of
+    intervals and estimators varied from 1 to 2.
+    Feature importances from each estimator on each interval, and
+    normalised feature values of the time series are checked using
+    different but equivalent implementations
+    """
     random_state = 1234
     n_features = 2
 

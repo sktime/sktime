@@ -11,7 +11,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -417,10 +416,17 @@ class NaiveVariance(BaseForecaster):
     - And for the covariance matrix prediction, the formula becomes
     :math:`Cov(y_k, y_l)=\frac{\sum_{i=1}^N \hat{r}_{k,k+i}*\hat{r}_{l,l+i}}{N}`.
 
+    The resulting forecaster will implement
+        `predict_interval`, `predict_quantiles`, `predict_var`, and `predict_proba`,
+        even if the wrapped forecaster `forecaster` did not have this capability;
+        for point forecasts (`predict`), behaves like the wrapped forecaster.
+
     Parameters
     ----------
     forecaster : estimator
-        Estimators to apply to the input series.
+        Estimator to which probabilistic forecasts are being added
+    verbose : bool, optional, default=False
+        whether to print warnings if windows with too few data points occur
 
     Examples
     --------
@@ -446,9 +452,10 @@ class NaiveVariance(BaseForecaster):
         # deprecated and likely to be removed in 0.12.0
     }
 
-    def __init__(self, forecaster):
+    def __init__(self, forecaster, verbose=False):
 
         self.forecaster = forecaster
+        self.verbose = verbose
         super(NaiveVariance, self).__init__()
 
         tags_to_clone = [
@@ -463,7 +470,7 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-        self.forecaster_ = clone(self.forecaster)
+        self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
         return self
 
@@ -502,7 +509,7 @@ class NaiveVariance(BaseForecaster):
         pred_var = self.predict_var(fh, X)
 
         z_scores = norm.ppf(alpha)
-        errors = [pred_var ** 0.5 * z for z in z_scores]
+        errors = [pred_var**0.5 * z for z in z_scores]
 
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
@@ -540,14 +547,16 @@ class NaiveVariance(BaseForecaster):
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
         for id in y_index:
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
             subset = self._y[:id]  # subset on which we fit
             try:
                 forecaster.fit(subset)
             except ValueError:
-                warn(
-                    f"Couldn't fit the model on time series of length {len(subset)}.\n"
-                )
+                if self.verbose:
+                    warn(
+                        f"Couldn't fit the model on "
+                        f"time series window length {len(subset)}.\n"
+                    )
                 continue
 
             y_true = self._y[id:]  # subset on which we predict

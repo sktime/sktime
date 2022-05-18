@@ -51,12 +51,7 @@ class _BaseWindowForecaster(BaseForecaster):
                 window_length=self.window_length_,
                 start_with_window=False,
             )
-        return self._predict_moving_cutoff(
-            y,
-            cv,
-            X,
-            update_params=update_params,
-        )
+        return self._predict_moving_cutoff(y, cv, X, update_params=update_params)
 
     def _predict(self, fh, X=None):
         """Predict core logic."""
@@ -124,20 +119,16 @@ class _BaseWindowForecaster(BaseForecaster):
         -------
         y_pred : pd.DataFrame or pd.Series
         """
+        if return_pred_int:
+            raise NotImplementedError()
+
         y_train = self._y
 
         # generate cutoffs from forecasting horizon, note that cutoffs are
         # still based on integer indexes, so that they can be used with .iloc
         cutoffs = fh.to_relative(self.cutoff) + len(y_train) - 2
         cv = CutoffSplitter(cutoffs, fh=1, window_length=self.window_length_)
-        return self._predict_moving_cutoff(
-            y_train,
-            cv,
-            X,
-            update_params=False,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
-        )
+        return self._predict_moving_cutoff(y_train, cv, X, update_params=False)
 
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -196,21 +187,3 @@ class _BaseWindowForecaster(BaseForecaster):
         """
         self.update(y=y, X=X, update_params=update_params)
         return self._predict(fh=fh, X=X)
-
-
-def _format_moving_cutoff_predictions(y_preds, cutoffs):
-    """Format moving-cutoff predictions."""
-    if not isinstance(y_preds, list):
-        raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
-
-    if len(y_preds[0]) == 1:
-        # return series for single step ahead predictions
-        return pd.concat(y_preds)
-
-    else:
-        # return data frame when we predict multiple steps ahead
-        y_pred = pd.DataFrame(y_preds).T
-        y_pred.columns = cutoffs
-        if y_pred.shape[1] == 1:
-            return y_pred.iloc[:, 0]
-        return y_pred

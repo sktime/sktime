@@ -42,6 +42,20 @@ y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
 y_grouped = pd.concat([y_group1, y_group2])
 
+mi = pd.MultiIndex.from_product([[0], [0], y.index], names=["h1", "h2", "time"])
+y_hier1 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+mi = pd.MultiIndex.from_product([[0], [1], y.index], names=["h1", "h2", "time"])
+y_hier2 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+mi = pd.MultiIndex.from_product([[1], [0], y.index], names=["h1", "h2", "time"])
+y_hier3 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+mi = pd.MultiIndex.from_product([[1], [1], y.index], names=["h1", "h2", "time"])
+y_hier4 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+y_hierarchical = pd.concat([y_hier1, y_hier2, y_hier3, y_hier4])
+
 y_ll, X_ll = load_longley()
 y_ll_train, _, X_ll_train, X_ll_test = temporal_train_test_split(y_ll, X_ll)
 
@@ -58,8 +72,8 @@ def count_gt100(x):
 
 # Cannot be pickled in get_test_params, therefore here explicit
 kwargs_custom = {
-    "lag_config": {
-        "cgt100": [count_gt100, [[3, 2]]],
+    "lag_feature": {
+        count_gt100: [[3, 2]],
     }
 }
 # Generate named and unnamed y
@@ -68,11 +82,9 @@ y_train_named = y_train.copy()
 y_train_named.name = "y"
 
 # Target for multivariate extraction
-Xtmvar = ["POP_lag_3_0", "POP_lag_6_0", "GNP_lag_3_0", "GNP_lag_6_0"]
+Xtmvar = ["POP_lag_3", "POP_lag_6", "GNP_lag_3", "GNP_lag_6"]
 Xtmvar = Xtmvar + ["GNPDEFL", "UNEMP", "ARMED"]
-Xtmvar_none = ["GNPDEFL_lag_3_0", "GNPDEFL_lag_6_0", "GNP", "UNEMP", "ARMED", "POP"]
-
-# Some tests are commented out until hierarchical PR works
+Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
 
 
 @pytest.mark.parametrize(
@@ -80,23 +92,48 @@ Xtmvar_none = ["GNPDEFL_lag_3_0", "GNPDEFL_lag_6_0", "GNP", "UNEMP", "ARMED", "P
     [
         (
             kwargs,
-            ["y_lag_1_0", "y_mean_3_0", "y_mean_12_0", "y_std_4_0"],
+            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
             y_train_named,
             None,
             None,
         ),
         (kwargs_alternames, Xtmvar, X_ll_train, ["POP", "GNP"], None),
         (kwargs_alternames, Xtmvar_none, X_ll_train, None, None),
-        # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_group1),
-        # (kwargs, ["lag_1_0", "mean_3_0", "mean_12_0", "std_4_0"], y_grouped),
-        # (None, ["lag_1_0"], y_multi),
+        (
+            kwargs,
+            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
+            y_group1,
+            None,
+            None,
+        ),
+        (
+            kwargs,
+            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
+            y_grouped,
+            None,
+            None,
+        ),
+        (
+            kwargs,
+            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
+            y_hierarchical,
+            None,
+            None,
+        ),
+        (
+            None,
+            ["var_0_lag_1", "var_1"],
+            y_multi,
+            None,
+            None,
+        ),
         (None, None, y_train, None, None),
-        (None, ["a_lag_1_0"], y_pd, None, None),
-        (kwargs_custom, ["a_cgt100_3_2"], y_pd, None, None),
-        (kwargs_alternames, ["0_lag_3_0", "0_lag_6_0"], y_train, None, "bfill"),
+        (None, ["a_lag_1"], y_pd, None, None),
+        (kwargs_custom, ["a_count_gt100_3_2"], y_pd, None, None),
+        (kwargs_alternames, ["0_lag_3", "0_lag_6"], y_train, None, "bfill"),
         (
             kwargs_variant,
-            ["0_mean_7_0", "0_mean_7_7", "0_covar_feature_28_0"],
+            ["0_mean_1_7", "0_mean_8_7", "0_cov_1_28"],
             y_train,
             None,
             None,
@@ -119,6 +156,9 @@ def test_windowsummarizer(kwargs, column_names, y, target_cols, truncate):
             Xt_columns = Xt.name
     else:
         Xt_columns = None
+
+    # check that the index names are preserved
+    assert y.index.names == Xt.index.names
 
     check_eval(Xt_columns, column_names)
 

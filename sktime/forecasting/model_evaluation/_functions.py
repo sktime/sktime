@@ -3,14 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["Martin Walter", "Markus Löning"]
+__author__ = ["aiwalter", "mloning"]
 __all__ = ["evaluate"]
 
 import time
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
@@ -102,16 +101,38 @@ def evaluate(
         # fit/update
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
-            forecaster = clone(forecaster)
+            forecaster = forecaster.clone()
             forecaster.fit(y_train, X_train, fh=fh)
 
         else:  # if strategy == "update":
             forecaster.update(y_train, X_train)
         fit_time = time.perf_counter() - start_fit
 
+        pred_type = {
+            "pred_quantiles": "forecaster.predict_quantiles",
+            "pred_intervals": "forecaster.predict_interval",
+            "pred_proba": "forecaster.predict_proba",
+            None: "forecaster.predict",
+        }
         # predict
         start_pred = time.perf_counter()
-        y_pred = forecaster.predict(fh, X=X_test)
+
+        if hasattr(scoring, "metric_args"):
+            metric_args = scoring.metric_args
+
+        try:
+            scitype = scoring.get_tag("scitype:y_pred")
+        except ValueError:
+            # If no scitype exists then metric is not proba and no args needed
+            scitype = None
+            metric_args = {}
+
+        y_pred = eval(pred_type[scitype])(
+            fh,
+            X_test,
+            **metric_args,
+        )
+
         pred_time = time.perf_counter() - start_pred
 
         # score

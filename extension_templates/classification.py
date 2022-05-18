@@ -14,8 +14,9 @@ How to use this implementation template to implement a new estimator:
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
-- ensure interface compatibility by testing test/test_all_estimators
+- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting                 - _fit(self, X, y)
@@ -155,7 +156,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be  called.
+    # if you do not implement it, then the default _predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
