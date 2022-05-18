@@ -52,6 +52,7 @@ from sktime.datatypes import (
     get_cutoff,
     mtype_to_scitype,
     scitype_to_mtype,
+    update_data,
 )
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
@@ -241,11 +242,10 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, object is reset
+        # if fit is called, estimator is reset, including fitted state
         self.reset()
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
         # check and convert X/y
@@ -1282,75 +1282,22 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
         """
-        # we only need to modify _y if y is not None
         if y is not None:
-            # if y is vectorized, unwrap it first
-            if isinstance(y, VectorizedDF):
-                y = y.X
-            # we want to ensure that y is either numpy (1D, 2D, 3D)
-            # or in one of the long pandas formats
-            y = convert_to(
-                y,
-                to_type=[
-                    "pd.DataFrame",
-                    "pd.Series",
-                    "np.ndarray",
-                    "pd-multiindex",
-                    "numpy3D",
-                    "pd_multiindex_hier",
-                ],
-            )
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
-            # otherwise, update _y with the new rows in y
-            #  if y is np.ndarray, we assume all rows are new
-            elif isinstance(y, np.ndarray):
-                # if 1D or 2D, axis 0 is "time"
-                if y.ndim in [1, 2]:
-                    self._y = np.concatenate(self._y, y, axis=0)
-                # if 3D, axis 2 is "time"
-                elif y.ndim == 3:
-                    self._y = np.concatenate(self._y, y, axis=2)
-            #  if y is pandas, we use combine_first to update
-            elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
-                self._y = y.combine_first(self._y)
+            else:
+                self._y = update_data(self._y, y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
-        # we only need to modify _X if X is not None
         if X is not None:
-            # if X is vectorized, unwrap it first
-            if isinstance(X, VectorizedDF):
-                X = X.X
-            # we want to ensure that X is either numpy (1D, 2D, 3D)
-            # or in one of the long pandas formats
-            X = convert_to(
-                X,
-                to_type=[
-                    "pd.DataFrame",
-                    "np.ndarray",
-                    "pd-multiindex",
-                    "numpy3D",
-                    "pd_multiindex_hier",
-                ],
-            )
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
-            # otherwise, update _X with the new rows in X
-            #  if X is np.ndarray, we assume all rows are new
-            elif isinstance(X, np.ndarray):
-                # if 1D or 2D, axis 0 is "time"
-                if X.ndim in [1, 2]:
-                    self._X = np.concatenate(self._X, X, axis=0)
-                # if 3D, axis 2 is "time"
-                elif X.ndim == 3:
-                    self._X = np.concatenate(self._X, X, axis=2)
-            #  if X is pandas, we use combine_first to update
-            elif isinstance(X, pd.DataFrame) and len(X) > 0:
-                self._X = X.combine_first(self._X)
+            else:
+                self._X = update_data(self._X, X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
@@ -1669,7 +1616,7 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called."
+                f"`update` is called with update_params=True."
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
@@ -1679,6 +1626,20 @@ class BaseForecaster(BaseEstimator):
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
+
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
+            # default to calling component _updates if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will update all component cutoffs each time"
+                f" `update` is called with update_params=False."
+            )
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
+                comp.update(y=y, X=X, update_params=False)
 
         return self
 

@@ -149,7 +149,7 @@ def _validate_pairwise_result(
     metric_str_result_to_self = pairwise_distance(
         x, x, metric=metric_str, **kwargs_dict
     )
-    if metric_str != "lcss":
+    if metric_str != "twe" or metric_str == "lcss":
         assert metric_str_result_to_self.trace() == 0, (
             f"The pairwise distance when given two of the same time series e.g."
             f"pairwise_distance(x, x, ...), diagonal should equal 0."
