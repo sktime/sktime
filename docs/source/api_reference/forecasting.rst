@@ -6,11 +6,6 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
-.. automodule:: sktime.forecasting
-    :no-members:
-    :no-inherited-members:
-
-
 Base
 ----
 

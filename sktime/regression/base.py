@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base class for time series regression estimators in sktime."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["BaseRegressor"]
 
 from sktime.base import BaseEstimator
@@ -12,7 +12,11 @@ from sktime.base import BaseEstimator
 class BaseRegressor(BaseEstimator):
     """Base class for regressors, for identification."""
 
-    _tags = {"capability:multivariate": False}
+    _tags = {
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+    }
 
     def fit(self, X, y):
         """Fit regressor to training data.
