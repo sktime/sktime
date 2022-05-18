@@ -2,7 +2,6 @@
 """Pipeline with a classifier."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
-from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
@@ -107,7 +106,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     def __init__(self, classifier, transformers):
 
         self.classifier = classifier
-        self.classifier_ = clone(classifier)
+        self.classifier_ = classifier.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 

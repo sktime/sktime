@@ -6,7 +6,6 @@
 __author__ = ["miraep8"]
 
 import pytest
-from sklearn.base import clone
 
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.arima import AutoARIMA
@@ -60,7 +59,7 @@ def test_multiplex_forecaster_alone():
     # agree with the unwrapped forecaster predictions!
     for ind, name in enumerate(forecaster_names):
         # make a copy to ensure we don't reference the same objectL
-        test_forecaster = clone(forecasters[ind])
+        test_forecaster = forecasters[ind].clone()
         test_forecaster.fit(y)
         multiplex_forecaster.selected_forecaster = name
         # Note- MultiplexForecaster will make a copy of the forecaster before fitting.

@@ -53,7 +53,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -887,7 +886,7 @@ class BaseTransformer(BaseEstimator):
             if methodname == "fit":
                 self.transformers_ = pd.DataFrame(index=idx, columns=["transformers"])
                 for i in range(n):
-                    self.transformers_.iloc[i, 0] = clone(self)
+                    self.transformers_.iloc[i, 0] = self.clone()
 
             # fit/update the i-th transformer with the i-th series/panel
             for i in range(n):
@@ -924,7 +923,7 @@ class BaseTransformer(BaseEstimator):
                 # fit/transform the i-th series/panel with a new clone of self
                 Xts = []
                 for i in range(n):
-                    transformer = clone(self).fit(X=Xs[i], y=ys[i], **kwargs)
+                    transformer = self.clone().fit(X=Xs[i], y=ys[i], **kwargs)
                     method = getattr(transformer, methodname)
                     Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)

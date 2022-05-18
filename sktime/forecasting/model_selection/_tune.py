@@ -11,7 +11,6 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.utils.metaestimators import if_delegate_has_method
 
@@ -226,7 +225,7 @@ class BaseGridSearch(BaseForecaster):
 
         def _fit_and_score(params):
             # Clone forecaster.
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
 
             # Set parameters.
             forecaster.set_params(**params)
@@ -295,7 +294,7 @@ class BaseGridSearch(BaseForecaster):
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = clone(self.forecaster).set_params(**self.best_params_)
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
         # Refit model with best parameters.
         if self.refit:
@@ -312,7 +311,7 @@ class BaseGridSearch(BaseForecaster):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = clone(self.forecaster).set_params(**params)
+            forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y, X, fh)
