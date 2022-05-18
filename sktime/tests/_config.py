@@ -5,7 +5,7 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 from pyod.models.knn import KNN
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.preprocessing import FunctionTransformer
 
 from sktime.annotation.adapters import PyODAnnotator
 from sktime.annotation.clasp import ClaSPSegmentation
@@ -24,6 +24,7 @@ from sktime.transformations.panel.compose import ColumnTransformer
 from sktime.transformations.panel.random_intervals import RandomIntervals
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.transformations.panel.summarize import FittedParamExtractor
+from sktime.transformations.series.exponent import ExponentTransformer
 
 # The following estimators currently do not pass all unit tests
 # https://github.com/alan-turing-institute/sktime/issues/1627
@@ -78,13 +79,12 @@ EXCLUDED_TESTS = {
 
 # We here configure estimators for basic unit testing, including setting of
 # required hyper-parameters and setting of hyper-parameters for faster training.
-SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
 SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
     np.mean, kw_args={"axis": 0}, check_inverse=False
 )
 TRANSFORMERS = [
-    ("transformer1", TabularToSeriesAdaptor(SERIES_TO_SERIES_TRANSFORMER)),
-    ("transformer2", TabularToSeriesAdaptor(SERIES_TO_SERIES_TRANSFORMER)),
+    ("transformer1", ExponentTransformer()),
+    ("transformer2", ExponentTransformer()),
 ]
 ANOMALY_DETECTOR = KNN()
 ESTIMATOR_TEST_PARAMS = {
