@@ -22,7 +22,7 @@ def test_silhouette_score():
 
     lcss_result = silhouette_score(X, labels, metric="lcss", random_state=1)
 
-    assert euclid_result == -0.007975440354970012
-    assert dtw_result == -0.03814483442539117
-    assert dtw_params_result == -0.03878205938492542
-    assert lcss_result == -0.02078215199625469
+    assert round(euclid_result, 5) == -0.00798
+    assert round(dtw_result, 5) == -0.03814
+    assert round(dtw_params_result, 5) == -0.03878
+    assert round(lcss_result, 5) == -0.02078
