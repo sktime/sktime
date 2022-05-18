@@ -173,13 +173,13 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         return None
 
     est_version = tuple(int(x) for x in est_upper_bound.split("."))
-    msg = (
+    msg_version = (
         f"wrong format for python_version_upper_bound tag, "
         f'must be string "A.B" or "A.B.C" with A, B, C integers, but found'
         f' "{est_upper_bound}"'
     )
-    assert len(est_version) > 1, msg
-    assert len(est_version) < 4, msg
+    assert len(est_version) > 1, msg_version
+    assert len(est_version) < 4, msg_version
 
     if sys_version >= est_version:
         return None
