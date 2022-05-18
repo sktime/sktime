@@ -42,7 +42,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sklearn import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -1498,7 +1497,7 @@ class BaseForecaster(BaseEstimator):
 
             self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
             for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = clone(self)
+                self.forecasters_.iloc[i, 0] = self.clone()
                 self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
 
             return self

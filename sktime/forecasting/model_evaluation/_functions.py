@@ -3,14 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["Martin Walter", "Markus Löning"]
+__author__ = ["aiwalter", "mloning"]
 __all__ = ["evaluate"]
 
 import time
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
@@ -102,7 +101,7 @@ def evaluate(
         # fit/update
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
-            forecaster = clone(forecaster)
+            forecaster = forecaster.clone()
             forecaster.fit(y_train, X_train, fh=fh)
 
         else:  # if strategy == "update":

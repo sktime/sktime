@@ -3,8 +3,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
-from sklearn.base import clone
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -139,6 +137,10 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         -------
         MultiplexForecaster object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-MultiplexForecaster `sktime` forecasters
+
+        Raises
+        ------
+        ValueError if other is not of type MultiplexForecaster or BaseForecaster.
         """
         return self._dunder_concat(
             other=other,
@@ -177,10 +179,10 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         if self.selected_forecaster is not None:
             for name, forecaster in self._get_estimator_tuples(self.forecasters):
                 if self.selected_forecaster == name:
-                    self.forecaster_ = clone(forecaster)
+                    self.forecaster_ = forecaster.clone()
         else:
             # if None, simply clone the first forecaster to self.forecaster_
-            self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
+            self.forecaster_ = self._get_estimator_list(self.forecasters)[0].clone()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

@@ -9,8 +9,6 @@ __all__ = ["_HeterogenousMetaEstimator"]
 from abc import ABCMeta
 from inspect import isclass
 
-from sklearn import clone
-
 from sktime.base import BaseEstimator
 
 
@@ -224,7 +222,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
             name = type(obj).__name__
 
         if clone_est:
-            return (name, clone(est))
+            return (name, est.clone())
         else:
             return (name, est)
 
@@ -279,7 +277,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
         """
         ests = self._get_estimator_list(estimators)
         if clone_ests:
-            ests = [clone(e) for e in ests]
+            ests = [e.clone() for e in ests]
         unique_names = self._get_estimator_names(estimators, make_unique=True)
         est_tuples = list(zip(unique_names, ests))
         return est_tuples
