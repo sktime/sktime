@@ -277,8 +277,8 @@ class BaseTransformer(BaseEstimator):
         -------
         self : a fitted instance of the estimator
         """
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
+        # if fit is called, estimator is reset, including fitted state
+        self.reset()
 
         # skip everything if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
