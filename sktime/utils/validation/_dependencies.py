@@ -188,12 +188,12 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
     if not isinstance(msg, str):
         msg = (
             f"{type(obj).__name__} requires python version to be strictly lower than"
-            f"{est_upper_bound}, but system version is {sys_version}."
+            f"{est_upper_bound}, but system version is {sys.version}."
         )
 
         if package is not None:
             msg += (
-                " This is due to python version requirements of the {package} package."
+                f" This is due to python version requirements of the {package} package."
             )
 
     if severity == "error":
@@ -202,6 +202,6 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         warnings.warn(msg)
     else:
         raise RuntimeError(
-            "Error in calling _check_dl_dependencies, severity "
+            "Error in calling _check_python_version, severity "
             f'argument must be "error" or "warning", found "{severity}".'
         )
