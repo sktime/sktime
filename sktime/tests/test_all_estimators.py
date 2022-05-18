@@ -179,8 +179,8 @@ class BaseFixtureGenerator:
     def is_version_compatible(est):
         """Shorthand to check whether an estimator is compatible with python version."""
         sys_version = sys.version_info
-        est_upper_bound = est.get_tag(
-            "python_version_upper_bound", tag_value_default="None", raise_error=False
+        est_upper_bound = est.get_class_tag(
+            "python_version_upper_bound", tag_value_default="None"
         )
         if est_upper_bound == "None":
             return True
