@@ -184,13 +184,17 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
     if sys_version >= est_version:
         return None
     # now we know that sys_version < est_version, i.e., error must be raised
-    msg = (
-        f"{type(obj).__name__} requires python version to be strictly lower than"
-        f"{est_upper_bound}, but system version is {sys_version}."
-    )
 
-    if package is not None:
-        msg += " This is due to python version requirements of the {package} package."
+    if not isinstance(msg, str):
+        msg = (
+            f"{type(obj).__name__} requires python version to be strictly lower than"
+            f"{est_upper_bound}, but system version is {sys_version}."
+        )
+
+        if package is not None:
+            msg += (
+                " This is due to python version requirements of the {package} package."
+            )
 
     if severity == "error":
         raise ModuleNotFoundError(msg)
