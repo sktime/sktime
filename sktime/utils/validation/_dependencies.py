@@ -181,9 +181,9 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
     assert len(est_version) > 1, msg_version
     assert len(est_version) < 4, msg_version
 
-    if sys_version >= est_version:
+    if sys_version < est_version:
         return None
-    # now we know that sys_version < est_version, i.e., error must be raised
+    # now we know that sys_version >= est_version, i.e., error must be raised
 
     if not isinstance(msg, str):
         msg = (
