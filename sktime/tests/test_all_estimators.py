@@ -187,7 +187,7 @@ class BaseFixtureGenerator:
 
         est_version = tuple(est_upper_bound.split("."))
         msg = (
-            f'wrong format for python_version_upper_bound tag, '
+            f"wrong format for python_version_upper_bound tag, "
             f'must be string "A.B" or "A.B.C" with A, B, C integers, but found'
             f' "{est_upper_bound}"'
         )
