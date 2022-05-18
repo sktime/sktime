@@ -64,10 +64,10 @@ def silhouette_score(
     >>> np.random.seed(0)
     >>> X = create_test_distance_numpy(20, 10, 10)
     >>> labels = np.random.randint(2, size=20)
-    >>> silhouette_score(X, labels, metric="dtw")
-    -0.002578790325016581
-    >>> silhouette_score(X, labels, metric="euclidean")
-    -7.52631215894764e-05
+    >>> silhouette_score(X, labels, metric="dtw") # doctest: +ELLIPSIS
+    -0.0025787...
+    >>> silhouette_score(X, labels, metric="euclidean") # doctest: +ELLIPSIS
+    -7.5263121...
     """
     if metric_params is None:
         metric_params = {}
