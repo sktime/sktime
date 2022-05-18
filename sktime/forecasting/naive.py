@@ -11,7 +11,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -471,7 +470,7 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-        self.forecaster_ = clone(self.forecaster)
+        self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
         return self
 
@@ -548,7 +547,7 @@ class NaiveVariance(BaseForecaster):
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
         for id in y_index:
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
             subset = self._y[:id]  # subset on which we fit
             try:
                 forecaster.fit(subset)

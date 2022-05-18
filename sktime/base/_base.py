@@ -26,8 +26,9 @@ Tag inspection and setter methods
     setting dynamic tags          - set_tag(**tag_dict: dict)
     set/clone dynamic tags        - clone_tags(estimator, tag_names=None)
 
-Re-initialize object to post-init state with same hyper-parameters
+Blueprinting: resetting and cloning, post-init state with same hyper-parameters
     reset estimator to post-init  - reset()
+    cloneestimator (copy&reset)   - clone()
 
 Testing with default parameters methods
     getting default parameters (all sets)         - get_test_params()
@@ -101,6 +102,17 @@ class BaseObject(_BaseEstimator):
 
         # run init with a copy of parameters self had at the start
         self.__init__(**params)
+
+        return self
+
+    def clone(self):
+        """Obtain a clone of the object with same hyper-parameters.
+
+        A clone is a different object without shared references, in post-init state.
+        This function is equivalent to returning sklearn.clone of self.
+        Equal in value to `type(self)(**self.get_params(deep=False))`.
+        """
+        return clone(self)
 
     @classmethod
     def get_class_tags(cls):
@@ -500,11 +512,19 @@ class TagAliaserMixin:
 
     # dictionary of aliases
     # key = old tag; value = new tag, aliased by old tag
-    alias_dict = {"fit-in-transform": "fit_is_empty", "fit-in-predict": "fit_is_empty"}
+    alias_dict = {
+        "fit-in-transform": "fit_is_empty",
+        "fit-in-predict": "fit_is_empty",
+        "capability:early_prediction": "",
+    }
 
     # dictionary of removal version
     # key = old tag; value = version in which tag will be removed, as string
-    deprecate_dict = {"fit-in-transform": "0.12.0", "fit-in-predict": "0.12.0"}
+    deprecate_dict = {
+        "fit-in-transform": "0.12.0",
+        "fit-in-predict": "0.12.0",
+        "capability:early_prediction": "0.13.0",
+    }
 
     def __init__(self):
         super(TagAliaserMixin, self).__init__()
@@ -653,7 +673,7 @@ class TagAliaserMixin:
             if tag_name in cls.alias_dict.keys():
                 version = cls.deprecate_dict[tag_name]
                 new_tag = cls.alias_dict[tag_name]
-                msg = f'tag "{tag_name}" is will be removed in sktime version {version}'
+                msg = f'tag "{tag_name}" will be removed in sktime version {version}'
                 if new_tag != "":
                     msg += (
                         f' and replaced by "{new_tag}", please use "{new_tag}" instead'
