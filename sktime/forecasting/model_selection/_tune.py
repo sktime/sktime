@@ -6,10 +6,12 @@
 __author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
+from collections.abc import Sequence
+
+import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
-from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
@@ -482,9 +484,33 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
+    def _check_param_grid(self, param_grid):
+        """_check_param_grid from sklearn 1.0.2, before it was removed."""
+        if hasattr(param_grid, "items"):
+            param_grid = [param_grid]
+
+        for p in param_grid:
+            for name, v in p.items():
+                if isinstance(v, np.ndarray) and v.ndim > 1:
+                    raise ValueError("Parameter array should be one-dimensional.")
+
+                if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
+                    raise ValueError(
+                        "Parameter grid for parameter ({0}) needs to"
+                        " be a list or numpy array, but got ({1})."
+                        " Single values need to be wrapped in a list"
+                        " with one element.".format(name, type(v))
+                    )
+
+                if len(v) == 0:
+                    raise ValueError(
+                        "Parameter values for parameter ({0}) need "
+                        "to be a non-empty sequence.".format(name)
+                    )
+
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
-        _check_param_grid(self.param_grid)
+        self._check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
     @classmethod

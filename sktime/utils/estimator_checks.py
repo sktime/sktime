@@ -60,6 +60,9 @@ def check_estimator(
     All tests PASSED!
     {'test_score[ARIMA-fh=1]': 'PASSED'}
     """
+    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
+        TestAllEarlyClassifiers,
+    )
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.registry import scitype
@@ -68,6 +71,7 @@ def check_estimator(
 
     testclass_dict = dict()
     testclass_dict["classifier"] = TestAllClassifiers
+    testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
     testclass_dict["transformer"] = TestAllTransformers
 
