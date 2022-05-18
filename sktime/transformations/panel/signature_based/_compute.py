@@ -8,7 +8,10 @@ from sktime.transformations.panel.signature_based._rescaling import (
     _rescale_signature,
 )
 from sktime.transformations.panel.signature_based._window import _window_getter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_python_version,
+    _check_soft_dependencies,
+)
 
 _check_soft_dependencies("esig", severity="warning")
 
@@ -49,6 +52,7 @@ class _WindowSignatureTransform(BaseTransformer):
         sig_depth=None,
         rescaling=None,
     ):
+        _check_python_version(self, "esig", severity="error")
         _check_soft_dependencies("esig", severity="error", object=self)
         super().__init__()
         self.window_name = window_name

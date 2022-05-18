@@ -10,6 +10,7 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
+from sktime.utils.validation._dependencies import _check_python_version
 
 
 class SignatureTransformer(BaseTransformer):
@@ -63,6 +64,8 @@ class SignatureTransformer(BaseTransformer):
         sig_tfm="signature",
         depth=4,
     ):
+
+        _check_python_version(self, "esig", severity="error")
         super(SignatureTransformer, self).__init__()
         self.augmentation_list = augmentation_list
         self.window_name = window_name
