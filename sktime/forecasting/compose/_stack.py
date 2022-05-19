@@ -107,15 +107,15 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_fcst = y.iloc[train_window]
         y_meta = y.iloc[test_window].values
         if X is not None:
-            X_meta = X.iloc[test_window]
+            X_test = X.iloc[test_window]
             X_train = X.iloc[train_window]
         else:
-            X_meta = None
+            X_test = None
             X_train = None
 
         # fit forecasters on training window
         self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X_train)
-        X_meta = np.column_stack(self._predict_forecasters(fh=fh, X=X_meta))
+        X_meta = np.column_stack(self._predict_forecasters(fh=fh, X=X_test))
 
         # fit final regressor on on validation window
         self.regressor_.fit(X_meta, y_meta)
