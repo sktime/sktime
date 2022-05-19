@@ -28,6 +28,7 @@ class TslearnKmeans(BaseClusterer):
         verbose: bool = False,
         random_state=None,
         init_algorithm: str = "random",
+        **kwargs
     ):
         _check_soft_dependencies("tslearn", severity="error", object=self)
 

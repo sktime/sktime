@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Tests for time series k-means."""
-import numpy as np
 from sklearn import metrics
 
 from sktime.clustering.tslearn_kmeans import TslearnKmeans
