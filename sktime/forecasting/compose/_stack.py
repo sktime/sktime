@@ -67,6 +67,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "requires-fh-in-fit": True,
         "handles-missing-data": True,
         "scitype:y": "univariate",
+        "X-y-must-have-same-index": True,
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
@@ -76,7 +77,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
-        self._anytagis_then_set("X-y-must-have-same-index", True, False, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
     def _fit(self, y, X=None, fh=None):
