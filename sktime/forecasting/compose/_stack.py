@@ -104,8 +104,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         # validation set to fit meta-learner
         cv = SingleWindowSplitter(fh=fh.to_relative(self.cutoff))
         train_window, test_window = next(cv.split(y))
-        y_fcst = y.iloc[train_window]
-        y_meta = y.iloc[test_window].values
+        y_train = y.iloc[train_window]
+        y_test = y.iloc[test_window]
+        inner_fh = y_test.index
         if X is not None:
             X_test = X.iloc[test_window]
             X_train = X.iloc[train_window]
@@ -114,14 +115,17 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             X_train = None
 
         # fit forecasters on training window
-        self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X_train)
-        X_meta = np.column_stack(self._predict_forecasters(fh=fh, X=X_test))
+        self._fit_forecasters(forecasters, y_train, fh=inner_fh, X=X_train)
+        y_preds = self._predict_forecasters(fh=inner_fh, X=X_test)
+
+        y_meta = y_test.values
+        X_meta = np.column_stack(y_preds)
 
         # fit final regressor on on validation window
         self.regressor_.fit(X_meta, y_meta)
 
         # refit forecasters on entire training series
-        self._fit_forecasters(forecasters, y, fh=self.fh, X=X)
+        self._fit_forecasters(forecasters, y, fh=fh, X=X)
 
         return self
 
@@ -180,11 +184,11 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sktime.forecasting.arima import ARIMA
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.forecasting.structural import UnobservedComponents
 
         f1 = NaiveForecaster()
-        f2 = UnobservedComponents()
+        f2 = ARIMA()
         params = {"forecasters": [("f1", f1), ("f2", f2)]}
 
         return params
