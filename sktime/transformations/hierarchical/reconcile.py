@@ -17,7 +17,6 @@ from sktime.transformations.base import BaseTransformer
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 
 # TODO: failing test which are escaped
-# TODO: another look at update function
 
 
 class Reconciler(BaseTransformer):
@@ -42,7 +41,7 @@ class Reconciler(BaseTransformer):
             "bu" - bottom-up
             "ols" - ordinary least squares
             "wls_str" - weighted least squares (structural)
-            "td_fcst" - top down based on forecast proportions
+            "td_fcst" - top down based on (forecast) proportions
 
     References
     ----------
