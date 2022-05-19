@@ -146,7 +146,7 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
-        _check_python_version(self, "esig", severity="error")
+        _check_python_version(self, "prophet", severity="error")
         _check_soft_dependencies("prophet", severity="error", object=self)
 
         self.freq = freq
