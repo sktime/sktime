@@ -7,7 +7,6 @@ __author__ = ["mloning", "aiwalter"]
 __all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
 
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
@@ -154,7 +153,15 @@ class _Pipeline(
     @property
     def named_steps(self):
         """Map the steps to a dictionary."""
-        return dict(self.steps)
+        return dict(self._steps)
+
+    @property
+    def _steps(self):
+        return self._get_estimator_tuples(self.steps, clone_ests=False)
+
+    @_steps.setter
+    def _steps(self, value):
+        self.steps = value
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -170,7 +177,7 @@ class _Pipeline(
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("steps", deep=deep)
+        return self._get_params("_steps", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -181,7 +188,7 @@ class _Pipeline(
         -------
         self
         """
-        self._set_params("steps", **kwargs)
+        self._set_params("_steps", **kwargs)
         return self
 
     # both children use the same step params for testing, so putting it here
@@ -224,7 +231,9 @@ class _Pipeline(
         ]
         params2 = {"steps": STEPS2}
 
-        return [params1, params2]
+        params3 = {"steps": [ExponentTransformer(), ARIMA()]}
+
+        return [params1, params2, params3]
 
 
 # we ensure that internally we convert to pd.DataFrame for now
@@ -317,13 +326,13 @@ class ForecastingPipeline(_Pipeline):
         if self._X is not None and not self.get_tag("ignores-exogeneous-X"):
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
-                t = clone(transformer)
+                t = transformer.clone()
                 X = t.fit_transform(X=X, y=y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
-        name, forecaster = self.steps[-1]
-        f = clone(forecaster)
+        name, forecaster = self.steps_[-1]
+        f = forecaster.clone()
         f.fit(y, X, fh)
         self.steps_[-1] = (name, f)
 

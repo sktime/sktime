@@ -5,11 +5,14 @@ Tests for BaseObject universal base class.
 
 tests in this module:
 
-    test_get_class_tags - tests get_class_tags inheritance logic
-    test_get_class_tag  - tests get_class_tag logic, incl default value
-    test_get_tags       - tests get_tags inheritance logic
-    test_get_tag        - tests get_tag logic, incl default value
-    test_set_tags       - tests set_tags logic and related get_tags inheritance
+    test_get_class_tags  - tests get_class_tags inheritance logic
+    test_get_class_tag   - tests get_class_tag logic, incl default value
+    test_get_tags        - tests get_tags inheritance logic
+    test_get_tag         - tests get_tag logic, incl default value
+    test_set_tags        - tests set_tags logic and related get_tags inheritance
+
+    test_reset           - tests reset logic on a simple, non-composite estimator
+    test_reset_composite - tests reset logic on a composite estimator
 """
 
 __author__ = ["fkiraly"]
@@ -20,6 +23,8 @@ __all__ = [
     "test_get_tags",
     "test_get_tag",
     "test_set_tags",
+    "test_reset",
+    "test_reset_composite",
 ]
 
 from copy import deepcopy
@@ -198,15 +203,15 @@ class ResetTester(BaseObject):
         self.b = b
         self.c = 84
 
-    def foo(self):
-        self.d = 126
-        self._d = 126
-        self.d_ = 126
+    def foo(self, d=126):
+        self.d = deepcopy(d)
+        self._d = deepcopy(d)
+        self.d_ = deepcopy(d)
         self.f__o__o = 252
 
 
 def test_reset():
-    """Tests reset method for correct behaviour.
+    """Tests reset method for correct behaviour, on a simple estimator.
 
     Raises
     ------
@@ -230,6 +235,21 @@ def test_reset():
     assert not hasattr(x, "d_")
     assert hasattr(x, "f__o__o") and x.f__o__o == 252
     assert hasattr(x, "foo")
+
+
+def test_reset_composite():
+    """Test reset method for correct behaviour, on a composite estimator."""
+    y = ResetTester(42)
+    x = ResetTester(a=y)
+
+    x.foo(y)
+    x.d.foo()
+
+    x.reset()
+
+    assert hasattr(x, "a")
+    assert not hasattr(x, "d")
+    assert not hasattr(x.a, "d")
 
 
 def test_components():
