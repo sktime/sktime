@@ -472,31 +472,28 @@ def _update_td_fcst(g_matrix, x_sf, conn_df):
     .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     for i in g_matrix.index:
+        # start from each bottom index
         child = i
-        parent = conn_df.loc[conn_df["child"] == child, "parent"].values[0]
         props = []
-
-        # if the bottom level are single integers or characters
+        # if the bottom level are single strings, integers, or whatever
         if not isinstance(child, tuple):
             child_chk = (child,)
         else:
             child_chk = child
 
         while sum([j == "__total" for j in list(child_chk)]) < len(child_chk):
+            # find the parent of the child
+            parent = conn_df.loc[conn_df["child"] == child, "parent"].values[0]
             # now need to find nodes directly connected to the parent
             children = conn_df.loc[conn_df["parent"] == parent, "child"].unique()
             # calculate proportions
             props.append((x_sf.loc[child] / x_sf.loc[children].sum()).values[0])
             # move up the chain
             child = parent
-            # child can be a tuple or string, or int., break if we're at the top
-            # multiple levels and aggregate levelslways tuple
-            if sum([j == "__total" for j in list(child)]) == len(child):
-                break
-            elif child == "__total":
-                break
+            if not isinstance(child, tuple):
+                child_chk = (child,)
             else:
-                parent = conn_df.loc[conn_df["child"] == child, "parent"].values[0]
+                child_chk = child
 
         g_matrix.loc[i, "__total"] = np.prod(props)
 
