@@ -103,7 +103,7 @@ if __name__ == "__main__":
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = False
+    tune = True
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         data_dir = sys.argv[1]
@@ -147,18 +147,18 @@ if __name__ == "__main__":
     test_X = s.fit_transform(test_X.T)
     test_X = test_X.T
     if tune:
-        window = tune_window(distance, train_X)
+        w = tune_window(distance, train_X)
         name = clusterer + "-" + distance + "-tuned"
     else:
         name = clusterer + "-" + distance
-    w = 1.0
-    if (
-        distance == "wdtw"
-        or distance == "dwdtw"
-        or distance == "dtw"
-        or distance == "wdtw"
-    ):
-        w = 0.2
+        w = 1.0
+        if (
+            distance == "wdtw"
+            or distance == "dwdtw"
+            or distance == "dtw"
+            or distance == "wdtw"
+        ):
+            w = 0.2
     parameters = {
         "window": w,
         "epsilon": 0.05,
