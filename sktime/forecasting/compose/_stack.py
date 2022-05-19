@@ -102,11 +102,11 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
-        cv = SingleWindowSplitter(fh=fh.to_relative(self.cutoff))
+        inner_fh = fh.to_relative(self.cutoff)
+        cv = SingleWindowSplitter(fh=inner_fh)
         train_window, test_window = next(cv.split(y))
         y_train = y.iloc[train_window]
         y_test = y.iloc[test_window]
-        inner_fh = y_test.index
         if X is not None:
             X_test = X.iloc[test_window]
             X_train = X.iloc[train_window]
