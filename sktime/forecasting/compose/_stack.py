@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecasters for combining forecasts via stacking."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "indinewton"]
 __all__ = ["StackingForecaster"]
 
 from warnings import warn
@@ -63,9 +63,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "scitype:y": "univariate",
     }
 
@@ -73,6 +73,12 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
         self.random_state = random_state
+
+        self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
+        self._anytagis_then_set("handles-missing-data", False, True, forecasters)
+        self._anytagis_then_set("requires-fh-in-fit", True, False, forecasters)
+        self._anytagis_then_set("X-y-must-have-same-index", True, False, forecasters)
+        self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -103,11 +109,12 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_meta = y.iloc[test_window].values
         if X is not None:
             X_meta = X.iloc[test_window]
+            X_train = X.iloc[train_window]
         else:
             X_meta = None
 
         # fit forecasters on training window
-        self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X)
+        self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X_train)
         X_meta = np.column_stack(self._predict_forecasters(fh=fh, X=X_meta))
 
         # fit final regressor on on validation window
@@ -174,7 +181,10 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         params : dict or list of dict
         """
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.forecasting.structural import UnobservedComponents
 
-        FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        f1 = NaiveForecaster()
+        f2 = UnobservedComponents()
+        params = {"forecasters": [("f1", f1), ("f2", f2)]}
+
         return params
