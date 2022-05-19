@@ -42,7 +42,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sklearn import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -242,11 +241,10 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, object is reset
+        # if fit is called, estimator is reset, including fitted state
         self.reset()
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
         # check and convert X/y
@@ -1499,7 +1497,7 @@ class BaseForecaster(BaseEstimator):
 
             self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
             for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = clone(self)
+                self.forecasters_.iloc[i, 0] = self.clone()
                 self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
 
             return self
