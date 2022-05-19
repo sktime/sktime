@@ -76,7 +76,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
         self._anytagis_then_set("handles-missing-data", False, True, forecasters)
-        self._anytagis_then_set("requires-fh-in-fit", True, False, forecasters)
         self._anytagis_then_set("X-y-must-have-same-index", True, False, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
@@ -112,6 +111,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
             X_train = X.iloc[train_window]
         else:
             X_meta = None
+            X_train = None
 
         # fit forecasters on training window
         self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X_train)
