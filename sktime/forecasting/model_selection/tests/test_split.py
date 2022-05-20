@@ -1,10 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for splitters."""
 
-"""Test splitters."""
-
-__author__ = ["Markus Löning", "Kutay Koralturk", "khrapovs"]
+__author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import numpy as np
 import pandas as pd
@@ -534,10 +532,10 @@ def test_split_series_hier():
     for train, test in cv.split_loc(y):
         assert isinstance(train, pd.MultiIndex)
         assert len(train) == 10 * n_instances
-        y.loc[train]
+        assert train.isin(y.index).all()
         assert isinstance(test, pd.MultiIndex)
         assert len(test) == 1 * n_instances
-        y.loc[test]
+        assert test.isin(y.index).all()
 
     def inst_index(y):
         return set(y.index.droplevel(-1).unique())
