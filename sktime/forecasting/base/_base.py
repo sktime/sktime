@@ -915,6 +915,7 @@ class BaseForecaster(BaseEstimator):
         -------
         y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
+            if fh was relative, index is relative to cutoff after update with y
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
