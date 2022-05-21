@@ -108,39 +108,95 @@ class BaseKalmanFilter:
         # important: no checking or other logic should happen here
         super(BaseKalmanFilter, self).__init__()
 
-    def _get_init_values(self, measurement_dim):
-        F = (
-            np.eye(self.state_dim)
-            if self.state_transition is None
-            else np.atleast_2d(self.state_transition)
+    def _init_matrix(self, matrices, transform_func, default_val):
+        if matrices is None:
+            return default_val
+        return transform_func(matrices)
+
+    def _get_init_values(self, measurement_dim, state_dim):
+        F = self._init_matrix(
+            matrices=self.state_transition,
+            transform_func=np.atleast_2d,
+            default_val=np.eye(state_dim),
         )
-        Q = (
-            np.eye(self.state_dim)
-            if self.process_noise is None
-            else np.atleast_2d(self.process_noise)
+        Q = self._init_matrix(
+            matrices=self.process_noise,
+            transform_func=np.atleast_2d,
+            default_val=np.eye(state_dim),
         )
-        R = (
-            np.eye(measurement_dim)
-            if self.measurement_noise is None
-            else np.atleast_2d(self.measurement_noise)
+        R = self._init_matrix(
+            matrices=self.measurement_noise,
+            transform_func=np.atleast_2d,
+            default_val=np.eye(measurement_dim),
         )
-        H = (
-            np.eye(measurement_dim, self.state_dim)
-            if self.measurement_function is None
-            else np.atleast_2d(self.measurement_function)
+        H = self._init_matrix(
+            matrices=self.measurement_function,
+            transform_func=np.atleast_2d,
+            default_val=np.eye(measurement_dim, state_dim),
         )
-        X0 = (
-            np.zeros(self.state_dim)
-            if self.initial_state is None
-            else np.atleast_1d(self.initial_state)
+        X0 = self._init_matrix(
+            matrices=self.initial_state,
+            transform_func=np.atleast_1d,
+            default_val=np.zeros(state_dim),
         )
-        P0 = (
-            np.eye(self.state_dim)
-            if self.initial_state_covariance is None
-            else np.atleast_2d(self.initial_state_covariance)
+        P0 = self._init_matrix(
+            matrices=self.initial_state_covariance,
+            transform_func=np.atleast_2d,
+            default_val=np.eye(state_dim),
         )
 
         return F, Q, R, H, X0, P0
+
+    def _state_dim(self, t):
+        dim_list = []
+        for (matrices, transform_func, dim_index) in t:
+            if matrices is not None:
+                dim_list.append(transform_func(matrices).shape[dim_index])
+
+        if len(dim_list) == 0:
+            return self.state_dim
+
+        if not (dim_list.count(dim_list[0]) == len(dim_list)):
+            raise ValueError(
+                "There's an inconsistency in the dimensions of input matrices. "
+            )
+
+        return dim_list[0]
+
+    def _infer_state_dim(self):
+        t = [
+            (self.state_transition, np.atleast_2d, 1),
+            (self.process_noise, np.atleast_2d, 1),
+            (self.initial_state, np.asarray, 0),
+            (self.initial_state_covariance, np.atleast_2d, 1),
+            (self.measurement_function, np.atleast_2d, 1),
+        ]
+
+        return self._state_dim(t)
+
+    def _get_t_matrix(self, time, matrices, matrices_dims):
+        """Extract matrix to be used at time step t.
+
+        Parameters
+        ----------
+        time : int, The required time step.
+        matrices : np.array
+        matrices_dims : int
+
+        Returns
+        -------
+        matrix or vector to be used at time step t
+        """
+        matrices = np.asarray(matrices)
+        if matrices.ndim == matrices_dims:
+            return matrices[time]
+        elif matrices.ndim == matrices_dims - 1:
+            return matrices
+        else:
+            raise ValueError(
+                "dimensions of `matrices` does not match "
+                "dimensions of a single object or a list of objects."
+            )
 
 
 class KalmanFilterPykalmanAdapter(BaseKalmanFilter, BaseTransformer):
@@ -298,15 +354,8 @@ class KalmanFilterPykalmanAdapter(BaseKalmanFilter, BaseTransformer):
         #   1. pass to constructor,  2. write to self in constructor,
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
-        # state_transition == A/F
-        # control_transition == B/G
-        # process_noise == Q
-        # measurement_noise == R
-        # measurement_function == H
-        # initial_state == X0
-        # initial_state_covariance == P0
-
         measurement_dim = X.shape[1]
+        state_dim_ = self._infer_state_dim()
 
         if self.estimate_matrices is None:
             (
@@ -316,37 +365,37 @@ class KalmanFilterPykalmanAdapter(BaseKalmanFilter, BaseTransformer):
                 self.H_,
                 self.X0_,
                 self.P0_,
-            ) = self._get_init_values(measurement_dim)
+            ) = self._get_init_values(measurement_dim, state_dim_)
 
-            self.transition_offsets_ = (
-                np.zeros(self.state_dim)
-                if self.transition_offsets is None
-                else np.atleast_1d(self.transition_offsets)
+            self.transition_offsets_ = self._init_matrix(
+                matrices=self.transition_offsets,
+                transform_func=np.atleast_1d,
+                default_val=np.zeros(state_dim_),
             )
-            self.measurement_offsets_ = (
-                np.zeros(measurement_dim)
-                if self.measurement_offsets is None
-                else np.atleast_1d(self.measurement_offsets)
+            self.measurement_offsets_ = self._init_matrix(
+                matrices=self.measurement_offsets,
+                transform_func=np.atleast_1d,
+                default_val=np.zeros(measurement_dim),
             )
 
             return self
 
         (F, H, Q, R, transition_offsets, measurement_offsets, X0, P0) = self._em(
-            X=X, measurement_dim=measurement_dim
+            X=X, measurement_dim=measurement_dim, state_dim=state_dim_
         )
 
-        self.F_ = F
-        self.H_ = H
-        self.Q_ = Q
-        self.R_ = R
-        self.transition_offsets_ = transition_offsets
-        self.measurement_offsets_ = measurement_offsets
-        self.X0_ = X0
-        self.P0_ = P0
+        self.F_ = np.copy(F)
+        self.H_ = np.copy(H)
+        self.Q_ = np.copy(Q)
+        self.R_ = np.copy(R)
+        self.transition_offsets_ = np.copy(transition_offsets)
+        self.measurement_offsets_ = np.copy(measurement_offsets)
+        self.X0_ = np.copy(X0)
+        self.P0_ = np.copy(P0)
 
         return self
 
-    def _em(self, X, measurement_dim):
+    def _em(self, X, measurement_dim, state_dim):
         from pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
@@ -362,7 +411,7 @@ class KalmanFilterPykalmanAdapter(BaseKalmanFilter, BaseTransformer):
             initial_state_mean=self.initial_state,
             initial_state_covariance=self.initial_state_covariance,
             n_dim_obs=measurement_dim,
-            n_dim_state=self.state_dim,
+            n_dim_state=state_dim,
         )
 
         kf = kf.em(X=X_masked, em_vars=estimate_matrices_)
@@ -415,13 +464,6 @@ class KalmanFilterPykalmanAdapter(BaseKalmanFilter, BaseTransformer):
         #  X_transformed : Series of mtype pd.DataFrame
         #       transformed version of X
 
-        # state_transition == A/F
-        # control_transition == B/G of size [n, state_dim, u_dim] or [state_dim, u_dim]
-        # process_noise == Q
-        # measurement_noise == R
-        # measurement_function == H
-        # initial_state == X0
-        # initial_state_covariance == P0
         from pykalman import KalmanFilter
 
         X_masked = np.ma.masked_invalid(X)
@@ -442,50 +484,83 @@ class KalmanFilterPykalmanAdapter(BaseKalmanFilter, BaseTransformer):
             (state_means, state_covariances) = kf.filter(X_masked)
         return state_means
 
+    # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries.
+        # Testing parameter choice should cover internal cases well.
+        #   for "simple" extension, ignore the parameter_set argument.
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params
+        params = {"state_dim": 2}
+        return params
+
     def _get_estimate_matrices(self):
         params_mapping = {
             "state_transition": "transition_matrices",
             "process_noise": "transition_covariance",
             "measurement_offsets": "observation_offsets",
+            "transition_offsets": "transition_offsets",
             "measurement_noise": "observation_covariance",
             "measurement_function": "observation_matrices",
             "initial_state": "initial_state_mean",
+            "initial_state_covariance": "initial_state_covariance",
         }
 
         if isinstance(self.estimate_matrices, str):
             if self.estimate_matrices == "all":
-                return "all"  # list(params_mapping.values())
+                return list(params_mapping.values())
             if self.estimate_matrices in params_mapping:
                 return list(params_mapping[self.estimate_matrices])
-            if hasattr(self, self.estimate_matrices):
-                return [self.estimate_matrices]
 
             raise ValueError(
                 f"If `estimate_matrices` is passed as a "
                 f"string, "
-                f"it must be `all` / `None` / one of: "
+                f"it must be `all` / one of: "
                 f"{list(params_mapping.keys())}, but found: "
                 f"{self.estimate_matrices}"
             )
 
-        else:
-            em_vars = []
-            for _matrix in self.estimate_matrices:
-                if not hasattr(self, _matrix):
-                    raise ValueError(
-                        f"Elements of `estimate_matrices` "
-                        f"must be a subset of "
-                        f"{list(params_mapping.keys())}, but found: "
-                        f"{_matrix}"
-                    )
-                var = (
-                    _matrix
-                    if _matrix not in params_mapping
-                    else params_mapping[_matrix]
+        em_vars = []
+        for _matrix in self.estimate_matrices:
+            if _matrix not in params_mapping:
+                raise ValueError(
+                    f"Elements of `estimate_matrices` "
+                    f"must be a subset of "
+                    f"{list(params_mapping.keys())}, but found: "
+                    f"{_matrix}"
                 )
-                em_vars.append(var)
+            em_vars.append(params_mapping[_matrix])
 
-            return em_vars
+        return em_vars
 
 
 class KalmanFilterFilterPyAdapter(BaseKalmanFilter, BaseTransformer):
@@ -644,6 +719,7 @@ class KalmanFilterFilterPyAdapter(BaseKalmanFilter, BaseTransformer):
         #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
 
         measurement_dim = X.shape[1]
+        self.state_dim_ = self._infer_state_dim()
 
         if self.estimate_matrices is None:
             (
@@ -653,7 +729,7 @@ class KalmanFilterFilterPyAdapter(BaseKalmanFilter, BaseTransformer):
                 self.H_,
                 self.X0_,
                 self.P0_,
-            ) = self._get_init_values(measurement_dim)
+            ) = self._get_init_values(measurement_dim, self.state_dim_)
             return self
 
         if isinstance(self.estimate_matrices, str) and self.estimate_matrices == "all":
@@ -730,19 +806,19 @@ class KalmanFilterFilterPyAdapter(BaseKalmanFilter, BaseTransformer):
 
         time_steps = X.shape[0]
 
-        x_priori = np.zeros((time_steps, self.state_dim))
-        p_priori = np.zeros((time_steps, self.state_dim, self.state_dim))
+        x_priori = np.zeros((time_steps, self.state_dim_))
+        p_priori = np.zeros((time_steps, self.state_dim_, self.state_dim_))
 
-        x_posteriori = np.zeros((time_steps, self.state_dim))
-        p_posteriori = np.zeros((time_steps, self.state_dim, self.state_dim))
+        x_posteriori = np.zeros((time_steps, self.state_dim_))
+        p_posteriori = np.zeros((time_steps, self.state_dim_, self.state_dim_))
 
         if y is not None:
             u = np.atleast_1d(y)
             dim_u = u.shape[1] if u.ndim == 2 else u.shape[0]
-            G = (
-                np.eye(self.state_dim, dim_u)
-                if self.control_transition is None
-                else np.atleast_2d(self.control_transition)
+            G = self._init_matrix(
+                matrices=self.control_transition,
+                transform_func=np.atleast_2d,
+                default_val=np.eye(self.state_dim_, dim_u),
             )
         else:
             u = [0.0]
@@ -770,30 +846,44 @@ class KalmanFilterFilterPyAdapter(BaseKalmanFilter, BaseTransformer):
             )[0]
         return x_posteriori
 
-    def _get_t_matrix(self, time, matrices, matrices_dims):
-        """Extract matrix to be used at time step t.
+    # todo: return default parameters, so that a test instance can be created
+    #   required for automated unit and integration testing of estimator
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
-        time : int, The required time step.
-        matrices : np.array
-        matrices_dims : int
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
 
         Returns
         -------
-        matrix or vector to be used at time step t
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        matrices = np.asarray(matrices)
-        if matrices.ndim == matrices_dims:
-            return matrices[time]
-        elif matrices.ndim == matrices_dims - 1:
-            return matrices
-        else:
-            # change error description
-            raise ValueError(
-                "dimensions of `matrices` does not match "
-                "dimensions of a single object or list of objects. "
-            )
+        # todo: set the testing parameters for the estimators
+        # Testing parameters can be dictionary or list of dictionaries.
+        # Testing parameter choice should cover internal cases well.
+        #   for "simple" extension, ignore the parameter_set argument.
+        #
+        # example 1: specify params as dictionary
+        # any number of params can be specified
+        # params = {"est": value0, "parama": value1, "paramb": value2}
+        #
+        # example 2: specify params as list of dictionary
+        # note: Only first dictionary will be used by create_test_instance
+        # params = [{"est": value1, "parama": value2},
+        #           {"est": value3, "parama": value4}]
+        #
+        # return params
+        params = {"state_dim": 2}
+        return params
 
     def _get_iter_t_matrices(self, X, G, u, t):
         zt = None if any(np.isnan(X[t])) else X[t]
