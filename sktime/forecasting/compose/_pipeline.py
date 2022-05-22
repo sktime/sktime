@@ -1007,8 +1007,8 @@ class ForecastX(BaseForecaster):
     In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
     Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
 
-    The two forecasters and forecasting horizons can be selected independently,
-    but default to the same.
+    The two forecasters and forecasting horizons (for forecasting `y` resp `X`)
+    can be selected independently, but default to the same.
 
     The typical use case is extending exogeneous data available only up until the cutoff
     into the future, for use by an exogeneous forecaster that requires such future data.
