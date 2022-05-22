@@ -1357,13 +1357,11 @@ class ForecastX(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sklearn.linear_model import LinearRegression
-
+        from sktime.forecasting.compose import DirectTabularRegressionForecaster
         from sktime.forecasting.var import VAR
-        from sktime.forecasting.compose import make_reduction
 
         fx = VAR()
-        fy = make_reduction(LinearRegression(), strategy="direct")
+        fy = DirectTabularRegressionForecaster.create_test_instance()
 
         params = {"forecaster_X": fx, "forecaster_y": fy}
 
