@@ -1002,7 +1002,7 @@ class TransformedTargetForecaster(_Pipeline):
 
 
 class ForecastX(BaseForecaster):
-    """Forecaster that forecasts exogeneous data before an exogeneous forecast.
+    """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
 
     In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
     Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
