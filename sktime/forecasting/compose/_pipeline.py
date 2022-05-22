@@ -1015,10 +1015,10 @@ class ForecastX(BaseForecaster):
 
     Parameters
     ----------
-    forecaster_X : BaseForecaster
-        sktime forecaster to use for exogeneous data `X`
-    forecaster_y : BaseForecaster, optional, default = forecaster_X
+    forecaster_y : BaseForecaster
         sktime forecaster to use for endogeneous data `y`
+    forecaster_X : BaseForecaster, optional, default = forecaster_y
+        sktime forecaster to use for exogeneous data `X`
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
         optional, default = None = same as used for `y` in any instance.
         valid inputs to construct ForecastingHorizon are:
@@ -1065,7 +1065,7 @@ class ForecastX(BaseForecaster):
         "ignores-exogeneous-X": False,
     }
 
-    def __init__(self, forecaster_X, forecaster_y, fh_X=None, behaviour="update"):
+    def __init__(self, forecaster_y, forecaster_X, fh_X=None, behaviour="update"):
 
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
