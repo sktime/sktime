@@ -1026,7 +1026,7 @@ class ForecastX(BaseForecaster):
     behaviour : str, one of "update" or "refit", optional, default = "update"
         if "update", forecaster_X is fit to the data batch seen in `fit`,
             and updated with any `X` seen in calls of `update`.
-            Forecast added to `X` in `predict is obtained from this state.
+            Forecast added to `X` in `predict` is obtained from this state.
         if "refit", then forecaster_X is fit to `X` in `predict` only,
             Forecast added to `X` in `predict` is obtained from this state.
 
