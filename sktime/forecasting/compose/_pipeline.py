@@ -1013,6 +1013,9 @@ class ForecastX(BaseForecaster):
     The typical use case is extending exogeneous data available only up until the cutoff
     into the future, for use by an exogeneous forecaster that requires such future data.
 
+    If no X is passed in `fit`, behaves like `forecaster_y`.
+    In such a case (no exogeneous data), there is no benefit in using this compositor.
+
     Parameters
     ----------
     forecaster_y : BaseForecaster
@@ -1034,7 +1037,7 @@ class ForecastX(BaseForecaster):
     ----------
     forecaster_X_ : BaseForecaster
         clone of forecaster_X, state updates with `fit` and `update`
-        created only if behaviour="update"
+        created only if behaviour="update" and `X` passed is not None
     forecaster_y_ : BaseForecaster
         clone of forecaster_y, state updates with `fit` and `update`
 
@@ -1043,7 +1046,7 @@ class ForecastX(BaseForecaster):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.compose import ForecastingPipeline, ForecastX
+    >>> from sktime.forecasting.compose import ForecastX
     >>> from sktime.forecasting.var import VAR
 
     >>> y, X = load_longley()
@@ -1063,6 +1066,7 @@ class ForecastX(BaseForecaster):
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "ignores-exogeneous-X": False,
+        "capability:pred_int": True,
     }
 
     def __init__(self, forecaster_y, forecaster_X, fh_X=None, behaviour="update"):
@@ -1081,6 +1085,8 @@ class ForecastX(BaseForecaster):
         self.fh_X = fh_X
         self.behaviour = behaviour
         super(ForecastX, self).__init__()
+
+        self.clone_tags(forecaster_y, "capability:pred_int")
 
         # tag_translate_dict = {
         #    "handles-missing-data": forecaster.get_tag("handles-missing-data")
@@ -1109,7 +1115,10 @@ class ForecastX(BaseForecaster):
             fh_X = self.fh_X
         self.fh_X_ = fh_X
 
-        if self.behaviour == "update":
+        # remember if X seen was None
+        self.X_was_None_ = X is None
+
+        if self.behaviour == "update" and X is not None:
             self.forecaster_X_ = self.forecaster_X_c.clone()
             self.forecaster_X_.fit(y=X, fh=fh_X)
 
@@ -1118,13 +1127,26 @@ class ForecastX(BaseForecaster):
 
         return self
 
-    def _get_forecaster_X(self, fh=None):
-        """Shorthand to obtain a fitted forecaster_X, depending on behaviour.
+    def _get_forecaster_X_prediction(self, fh=None, method="predict"):
+        """Shorthand to obtain a prediction from forecaster_X, depending on behaviour.
 
-        If behaviour = "update": returns self.forecaster_X_, this is already fitted.
-        If behaviour = "refitted", returns a clone of self.forecaster_X,
+        If behaviour = "update": uses self.forecaster_X_, this is already fitted.
+        If behaviour = "refitted", uses a local clone of self.forecaster_X,
             after fitting it to self._X, i.e., all exogeneous data seen so far.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon, should be the input of the predict method
+        method : str, optional, default="predict"
+            method of forecaster to call to obtain prediction
+
+        Returns
+        -------
+        X : sktime time series container
+            a forecast obtained using a clone of forecaster_X, state as above
         """
+        if self.X_was_None_:
+            return None
         if self.behaviour == "update":
             forecaster = self.forecaster_X_
         elif self.behaviour == "refit":
@@ -1132,7 +1154,9 @@ class ForecastX(BaseForecaster):
                 fh = self.fh_X_
             forecaster = self.forecaster_X_c.clone()
             forecaster.fit(y=self._X, fh=fh)
-        return forecaster
+
+        X = getattr(forecaster, method)()
+        return X
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -1149,9 +1173,7 @@ class ForecastX(BaseForecaster):
         y_pred : time series in sktime compatible format
             Point forecasts
         """
-        forecaster_X = self._get_forecaster_X(fh)
-        X = forecaster_X.predict()
-
+        X = self._get_forecaster_X_prediction()
         y_pred = self.forecaster_y_.predict(fh=fh, X=X)
         return y_pred
 
@@ -1170,7 +1192,7 @@ class ForecastX(BaseForecaster):
         -------
         self : an instance of self
         """
-        if self.behaviour == "update":
+        if self.behaviour == "update" and X is not None:
             self.forecaster_X_.update(y=X, update_params=update_params)
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
@@ -1207,9 +1229,7 @@ class ForecastX(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        forecaster_X = self._get_forecaster_X(fh)
-        X = forecaster_X.predict()
-
+        X = self._get_forecaster_X_prediction()
         y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
         return y_pred
 
@@ -1239,9 +1259,7 @@ class ForecastX(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        forecaster_X = self._get_forecaster_X(fh)
-        X = forecaster_X.predict()
-
+        X = self._get_forecaster_X_prediction()
         y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
         return y_pred
 
@@ -1281,9 +1299,7 @@ class ForecastX(BaseForecaster):
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
         """
-        forecaster_X = self._get_forecaster_X(fh)
-        X = forecaster_X.predict()
-
+        X = self._get_forecaster_X_prediction()
         y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
         return y_pred
 
@@ -1318,9 +1334,7 @@ class ForecastX(BaseForecaster):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        forecaster_X = self._get_forecaster_X(fh)
-        X = forecaster_X.predict()
-
+        X = self._get_forecaster_X_prediction()
         y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
         return y_pred
 
