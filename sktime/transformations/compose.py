@@ -774,9 +774,16 @@ class FitInTransform(BaseTransformer):
 
 
 class ForecasterTransform(BaseTransformer):
-    """Transformer that uses a forecaster to interpolate, denoise, or extrapolate.
+    """Transformer that uses a forecaster to interpolate or extrapolate.
 
     Wraps a forecaster and a forecasting horizon specification, but acts as transformer.
+
+    In `transform`, the wrapped forecaster carries out a `predict` step.
+    The result from that prediction is added to the input of `transform`.
+    In case of index clashes, the prediction overwrites the input.
+
+    The typical use case is extending exogeneous data available only up until the cutoff
+    into the future, for use by an exogeneous forecaster that requires such future data.
 
     Parameters
     ----------
@@ -802,26 +809,24 @@ class ForecasterTransform(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
-    >>> from sktime.transformations.compose import FitInTransform
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.forecasting.var import VAR
+    >>> from sktime.transformations.compose import ForecasterTransform
+
     >>> y, X = load_longley()
-    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
-    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
-    >>> # we want to fit the Imputer only on the predict (=transform) data.
-    >>> # note that NaiveForecaster cant use X data, this is just a show case.
+    >>> fh = ForecastingHorizon([1, 2, 3])
     >>> pipe = ForecastingPipeline(
     ...     steps=[
-    ...         ("imputer", FitInTransform(Imputer(method="mean"))),
-    ...         ("forecaster", NaiveForecaster()),
+    ...         ("exogeneous-forecast", ForecasterTransform(VAR(), fh=fh)),
+    ...         ("forecaster", ARIMA()),
     ...     ]
     ... )
-    >>> pipe.fit(y_train, X_train)
+    >>> pipe.fit(y, X)
     ForecastingPipeline(...)
-    >>> y_pred = pipe.predict(fh=fh, X=X_test)
+    >>> # this works without X from the future of y
+    >>> y_pred = pipe.predict(fh=fh)
     """
 
     _tags = {
@@ -898,7 +903,8 @@ class ForecasterTransform(BaseTransformer):
             self.forecaster_.update(y=X)
             X_pred = forecaster_.predict()
 
-        return X.combine_first(X_pred)
+        # return X_pred
+        return X_pred.combine_first(X)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
