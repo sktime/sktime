@@ -1072,6 +1072,12 @@ class ForecastX(BaseForecaster):
 
         self.forecaster_y = forecaster_y
         self.forecaster_X = forecaster_X
+
+        # forecaster_X_c handles the "if forecaster_X is None, use forecaster_y"
+        if forecaster_X is None:
+            self.forecaster_X_c = forecaster_y
+        else:
+            self.forecaster_X_c = forecaster_X
         self.fh_X = fh_X
         self.behaviour = behaviour
         super(ForecastX, self).__init__()
@@ -1104,7 +1110,7 @@ class ForecastX(BaseForecaster):
         self.fh_X_ = fh_X
 
         if self.behaviour == "update":
-            self.forecaster_X_ = self.forecaster_X.clone()
+            self.forecaster_X_ = self.forecaster_X_c.clone()
             self.forecaster_X_.fit(y=X, fh=fh_X)
 
         self.forecaster_y_ = self.forecaster_y.clone()
@@ -1124,7 +1130,7 @@ class ForecastX(BaseForecaster):
         elif self.behaviour == "refit":
             if self.fh_X_ is not None:
                 fh = self.fh_X_
-            forecaster = self.forecaster_X.clone()
+            forecaster = self.forecaster_X_c.clone()
             forecaster.fit(y=self._X, fh=fh)
         return forecaster
 
