@@ -38,6 +38,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from curses import window
 from warnings import warn
 
 import numpy as np
@@ -814,9 +815,9 @@ class BaseForecaster(BaseEstimator):
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         cv : temporal cross-validation generator inheriting from BaseSplitter, optional
             for example, SlidingWindowSplitter or ExpandingWindowSplitter
-            default = ExpandingWindowSplitter with default parameters
+            default = ExpandingWindowSplitter with `initial_window=1` and defaults
                 = individual data points in y/X are added and forecast one-by-one,
-                `window_length = 10`, `step_length = 1` and `fh = 1`
+                `initial_window = 1`, `step_length = 1` and `fh = 1`
         X : time series in sktime compatible format, optional (default=None)
             Exogeneous time series for updating and forecasting
             Should be of same scitype (Series, Panel, or Hierarchical) as y
@@ -842,7 +843,7 @@ class BaseForecaster(BaseEstimator):
         from sktime.forecasting.model_selection import ExpandingWindowSplitter
 
         if cv is None:
-            cv = ExpandingWindowSplitter()
+            cv = ExpandingWindowSplitter(initial_window=1)
 
         self.check_is_fitted()
 
