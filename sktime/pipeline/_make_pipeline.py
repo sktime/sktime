@@ -6,7 +6,7 @@ __author__ = ["fkiraly"]
 
 
 def make_pipeline(*steps):
-    """Approximations of uniform order statistic medians.
+    """Create a pipeline from estimators of any type.
 
     Parameters
     ----------
