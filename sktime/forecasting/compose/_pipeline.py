@@ -1357,9 +1357,14 @@ class ForecastX(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.forecasting.arima import ARIMA
-        from sktime.forecasting.var import VAR
+        from sklearn.linear_model import LinearRegression
 
-        params = {"forecaster_X": VAR(), "forecaster_y": ARIMA()}
+        from sktime.forecasting.var import VAR
+        from sktime.forecasting.compose import make_reduction
+
+        fx = VAR()
+        fy = make_reduction(LinearRegression(), strategy="direct")
+
+        params = {"forecaster_X": fx, "forecaster_y": fy}
 
         return params
