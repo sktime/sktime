@@ -1052,14 +1052,17 @@ class ForecastX(BaseForecaster):
     ...     forecaster_X=VAR(),
     ...     forecaster_y=ARIMA(),
     ... )
-    >>> pipe.fit(y, X)
+    >>> pipe.fit(y, X=X, fh=fh)
     >>> # this works without X from the future of y
     >>> y_pred = pipe.predict(fh=fh)
     """
 
     _tags = {
         "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "X-y-must-have-same-index": False,
         "fit_is_empty": False,
+        "ignores-exogeneous-X": False,
     }
 
     def __init__(self, forecaster_X, forecaster_y, fh_X=None, behaviour="update"):
