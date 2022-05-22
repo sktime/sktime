@@ -1,10 +1,9 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements pipelines for forecasting."""
 
 __author__ = ["mloning", "aiwalter"]
-__all__ = ["TransformedTargetForecaster", "ForecastingPipeline"]
+__all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 
 import pandas as pd
 
@@ -1020,15 +1019,22 @@ class ForecastX(BaseForecaster):
         sktime forecaster to use for exogeneous data `X`
     forecaster_y : BaseForecaster, optional, default = forecaster_X
         sktime forecaster to use for endogeneous data `y`
-    fh : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
+    fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
         optional, default = None = same as used for `y` in any instance.
         valid inputs to construct ForecastingHorizon are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+    behaviour : str, one of "update" or "refit", optional, default = "update"
+        if "update", forecaster_X is fit to the data batch seen in `fit`,
+            and updated with any `X` seen in calls of `update`.
+            Forecast added to `X` in `predict is obtained from this state.
+        if "refit", then forecaster_X is fit to `X` in `predict` only,
+            Forecast added to `X` in `predict` is obtained from this state.
 
     Attributes
     ----------
     forecaster_X_ : BaseForecaster
         clone of forecaster_X, state updates with `fit` and `update`
+        created only if behaviour="update"
     forecaster_y_ : BaseForecaster
         clone of forecaster_y, state updates with `fit` and `update`
 
@@ -1056,38 +1062,68 @@ class ForecastX(BaseForecaster):
         "fit_is_empty": False,
     }
 
-    def __init__(self, forecaster_X, forecaster_y, fh=None):
+    def __init__(self, forecaster_X, forecaster_y, fh_X=None, behaviour="update"):
+
+        if behaviour not in ["update", "refit"]:
+            raise ValueError('behaviour must be one of "update", "refit"')
 
         self.forecaster_y = forecaster_y
         self.forecaster_X = forecaster_X
-        self.fh = fh
+        self.fh_X = fh_X
+        self.behaviour = behaviour
         super(ForecastX, self).__init__()
 
-        tag_translate_dict = {
-            "handles-missing-data": forecaster.get_tag("handles-missing-data")
-        }
-        self.set_tags(**tag_translate_dict)
+        # tag_translate_dict = {
+        #    "handles-missing-data": forecaster.get_tag("handles-missing-data")
+        # }
+        # self.set_tags(**tag_translate_dict)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
+        y : time series in sktime compatible format
+            Target time series to which to fit the forecaster
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+        X : time series in sktime compatible format, optional, default=None
+            Exogenous time series to which to fit the forecaster
 
         Returns
         -------
         self : returns an instance of self.
         """
-        self.forecaster_X_ = self.forecaster_X.clone()
+        if self.fh_X is None:
+            fh_X = fh
+        else:
+            fh_X = self.fh_X
+        self.fh_X_ = fh_X
+
+        if self.behaviour == "update":
+            self.forecaster_X_ = self.forecaster_X.clone()
+            self.forecaster_X_.fit(y=X, fh=fh_X)
+
         self.forecaster_y_ = self.forecaster_y.clone()
+        self.forecaster_y_.fit(y=y, X=X, fh=fh)
 
         return self
+
+    def _get_forecaster_X(self, fh=None):
+        """Shorthand to obtain a fitted forecaster_X, depending on behaviour.
+
+        If behaviour = "update": returns self.forecaster_X_, this is already fitted.
+        If behaviour = "refitted", returns a clone of self.forecaster_X,
+            after fitting it to self._X, i.e., all exogeneous data seen so far.
+        """
+        if self.behaviour == "update":
+            forecaster = self.forecaster_X_
+        elif self.behaviour == "refit":
+            if self.fh_X_ is not None:
+                fh = self.fh_X_
+            forecaster = self.forecaster_X.clone()
+            forecaster.fit(y=self._X, fh=fh)
+        return forecaster
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -1096,22 +1132,18 @@ class ForecastX(BaseForecaster):
         ----------
         fh : int, list, np.array or ForecastingHorizon
             Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        X : time series in sktime compatible format, optional, default=None
+            Exogenous time series to use in prediction
 
         Returns
         -------
-        y_pred : pd.Series
-            Point predictions
+        y_pred : time series in sktime compatible format
+            Point forecasts
         """
-        y_pred = self.forecaster_.predict(fh=fh, X=X)
-        # inverse transform y_pred
-        y_pred = self._get_inverse_transform(self.transformers_pre_, y_pred, X)
+        forecaster_X = self._get_forecaster_X(fh)
+        X = forecaster_X.predict()
 
-        # transform post
-        for _, t in self.transformers_post_:
-            y_pred = t.transform(X=y_pred, y=X)
-
+        y_pred = self.forecaster_y_.predict(fh=fh, X=X)
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -1119,28 +1151,169 @@ class ForecastX(BaseForecaster):
 
         Parameters
         ----------
-        y : pd.Series
-        X : pd.DataFrame, optional (default=None)
+        y : time series in sktime compatible format
+            Target time series to which to fit the forecaster
+        X : time series in sktime compatible format, optional, default=None
+            Exogenous time series to which to fit the forecaster
         update_params : bool, optional (default=True)
 
         Returns
         -------
         self : an instance of self
         """
-        # transform pre
-        for _, t in self.transformers_pre_:
-            if hasattr(t, "update"):
-                t.update(X=y, y=X, update_params=update_params)
-                y = t.transform(X=y, y=X)
-
-        self.forecaster_.update(y=y, X=X, update_params=update_params)
-
-        # transform post
-        for _, t in self.transformers_post_:
-            t.update(X=y, y=X, update_params=update_params)
-            y = t.transform(X=y, y=X)
+        if self.behaviour == "update":
+            self.forecaster_X_.update(y=X, update_params=update_params)
+        self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
+
+    def _predict_interval(self, fh, X=None, coverage=0.90):
+        """Compute/return prediction interval forecasts.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and default _predict_quantiles
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        coverage : float or list, optional (default=0.95)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        forecaster_X = self._get_forecaster_X(fh)
+        X = forecaster_X.predict()
+
+        y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
+        return y_pred
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and default _predict_interval
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        alpha : list of float, optional (default=[0.5])
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        forecaster_X = self._get_forecaster_X(fh)
+        X = forecaster_X.predict()
+
+        y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
+        return y_pred
+
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Compute/return variance forecasts.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        forecaster_X = self._get_forecaster_X(fh)
+        X = forecaster_X.predict()
+
+        y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
+        return y_pred
+
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        forecaster_X = self._get_forecaster_X(fh)
+        X = forecaster_X.predict()
+
+        y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -1161,10 +1334,9 @@ class ForecastX(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.forecasting.arima import ARIMA
+        from sktime.forecasting.var import VAR
 
-        params = [
-            {"transformer": BoxCoxTransformer()},
-            {"transformer": BoxCoxTransformer(), "skip_inverse_transform": False},
-        ]
+        params = {"forecaster_X": VAR(), "forecaster_y": ARIMA()}
+
         return params
