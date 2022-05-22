@@ -1037,100 +1037,110 @@ class ForecastX(BaseForecaster):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.compose import ForecastingPipeline, ForecastX
     >>> from sktime.forecasting.var import VAR
-    >>> from sktime.transformations.compose import ForecasterTransform
 
     >>> y, X = load_longley()
     >>> fh = ForecastingHorizon([1, 2, 3])
-    >>> pipe = ForecastingPipeline(
-    ...     steps=[
-    ...         ("exogeneous-forecast", ForecasterTransform(VAR(), fh=fh)),
-    ...         ("forecaster", ARIMA()),
-    ...     ]
+    >>> pipe = ForecastX(
+    ...     forecaster_X=VAR(),
+    ...     forecaster_y=ARIMA(),
     ... )
     >>> pipe.fit(y, X)
-    ForecastingPipeline(...)
     >>> # this works without X from the future of y
     >>> y_pred = pipe.predict(fh=fh)
     """
 
     _tags = {
-        "skip-inverse-transform": True,
-        "scitype:transform-input": "Series",
-        "scitype:transform-output": "Series",
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
     }
 
-    def __init__(self, forecaster, fh=None, behaviour="refit"):
+    def __init__(self, forecaster_X, forecaster_y, fh=None):
 
-        if behaviour not in ["update", "refit"]:
-            raise ValueError('behaviour must be one of "update", "refit"')
-
-        self.forecaster = forecaster
+        self.forecaster_y = forecaster_y
+        self.forecaster_X = forecaster_X
         self.fh = fh
-        self.behaviour = behaviour
-        super(ForecasterTransform, self).__init__()
+        super(ForecastX, self).__init__()
 
         tag_translate_dict = {
             "handles-missing-data": forecaster.get_tag("handles-missing-data")
         }
         self.set_tags(**tag_translate_dict)
 
-        if behaviour == "refit":
-            self.set_tags(**{"fit_is_empty": True})
-
-    def _fit(self, X, y=None):
-        """Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Data to fit transform to
-        y : ignored argument, present for interface compatibility
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
 
         Returns
         -------
-        self: a fitted instance of the estimator
+        self : returns an instance of self.
         """
-        if self.behaviour == "update":
-            self.forecaster_ = self.forecaster.clone()
-            self.forecaster_.fit(y=X, fh=self.fh)
+        self.forecaster_X_ = self.forecaster_X.clone()
+        self.forecaster_y_ = self.forecaster_y.clone()
+
         return self
 
-    def _transform(self, X, y=None):
-        """Transform X and return a transformed version.
-
-        private _transform containing core logic, called from transform
+    def _predict(self, fh=None, X=None):
+        """Forecast time series at future horizon.
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Data to be transformed
-        y : ignored argument, present for interface compatibility
+        fh : int, list, np.array or ForecastingHorizon
+            Forecasting horizon
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
-        transformed version of X
+        y_pred : pd.Series
+            Point predictions
         """
-        if self.fh is None:
-            fh = X.index
-        else:
-            fh = self.fh
+        y_pred = self.forecaster_.predict(fh=fh, X=X)
+        # inverse transform y_pred
+        y_pred = self._get_inverse_transform(self.transformers_pre_, y_pred, X)
 
-        if self.behaviour == "refit":
-            forecaster_ = self.forecaster.clone()
-            forecaster_.fit(y=X, fh=fh)
-            X_pred = forecaster_.predict()
-        elif self.behavivour == "update":
-            self.forecaster_.update(y=X)
-            X_pred = forecaster_.predict()
+        # transform post
+        for _, t in self.transformers_post_:
+            y_pred = t.transform(X=y_pred, y=X)
 
-        # return X_pred
-        return X_pred.combine_first(X)
+        return y_pred
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame, optional (default=None)
+        update_params : bool, optional (default=True)
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        # transform pre
+        for _, t in self.transformers_pre_:
+            if hasattr(t, "update"):
+                t.update(X=y, y=X, update_params=update_params)
+                y = t.transform(X=y, y=X)
+
+        self.forecaster_.update(y=y, X=X, update_params=update_params)
+
+        # transform post
+        for _, t in self.transformers_post_:
+            t.update(X=y, y=X, update_params=update_params)
+            y = t.transform(X=y, y=X)
+
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
