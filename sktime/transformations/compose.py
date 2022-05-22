@@ -783,9 +783,21 @@ class ForecasterTransform(BaseTransformer):
     forecaster : BaseForecaster
         sktime forecaster to use for transformation
     fh : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
-        optional, default = None = in-sample, i.e., fh are indices of series seen in fit
+        optional, default = None = in-sample, fh are indices of series seen in transform
         valid inputs to construct ForecastingHorizon are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+    behaviour : str, one of "update" or "refit", optional, default = "refit"
+        if "refit", `fit` is empty, and forecaster is fit to data in `transform` only,
+            Forecast added to `X` in `transform` is obtained from this state.
+        if "update", forecaster is fit to the data batch seen in `fit`, then updated
+            with any data seen in applications of `transform`.
+            Forecast added to `X` in `transform` is obtained from this state.
+
+    Attributes
+    ----------
+    forecaster_ : BaseForecaster
+        clone of forecaster, only created if behaviour = "update".
+        state is after being fitted to data in `fit` or updated with data in `transform`
 
     Examples
     --------
@@ -812,17 +824,51 @@ class ForecasterTransform(BaseTransformer):
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
-    def __init__(self, transformer, skip_inverse_transform=True):
-        self.transformer = transformer
-        self.skip_inverse_transform = skip_inverse_transform
-        super(FitInTransform, self).__init__()
-        self.clone_tags(transformer, None)
-        self.set_tags(
-            **{
-                "fit_is_empty": True,
-                "skip-inverse-transform": self.skip_inverse_transform,
-            }
-        )
+    _tags = {
+        "skip-inverse-transform": True,
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
+    }
+
+    def __init__(self, forecaster, fh=None, behaviour="refit"):
+
+        if behaviour not in ["update", "refit"]:
+            raise ValueError('behaviour must be one of "update", "refit"')
+
+        self.forecaster = forecaster
+        self.fh = fh
+        self.behaviour = behaviour
+        super(ForecasterTransform, self).__init__()
+
+        tag_translate_dict = {
+            "handles-missing-data": forecaster.get_tag("handles-missing-data")
+        }
+        self.set_tags(**tag_translate_dict)
+
+        if behaviour == "refit":
+            self.set_tags(**{"fit_is_empty": True})
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit transform to
+        y : ignored argument, present for interface compatibility
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        if self.behaviour == "update":
+            self.forecaster_ = self.forecaster.clone()
+            self.forecaster_.fit(y=X, fh=self.fh)
+        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -831,45 +877,28 @@ class ForecasterTransform(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
+        X : pd.DataFrame
             Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        y : ignored argument, present for interface compatibility
 
         Returns
         -------
         transformed version of X
         """
-        return clone(self.transformer).fit_transform(X=X, y=y)
+        if self.fh is None:
+            fh = X.index
+        else:
+            fh = self.fh
 
-    def _inverse_transform(self, X, y=None):
-        """Inverse transform, inverse operation to transform.
+        if self.behaviour == "refit":
+            forecaster_ = self.forecaster.clone()
+            forecaster_.fit(y=X, fh=fh)
+            X_pred = forecaster_.predict()
+        elif self.behavivour == "update":
+            self.forecaster_.update(y=X)
+            X_pred = forecaster_.predict()
 
-        private _inverse_transform containing core logic, called from inverse_transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _inverse_transform must support all types in it
-            Data to be inverse transformed
-        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        inverse transformed version of X
-        """
-        return clone(self.transformer).fit(X=X, y=y).inverse_transform(X=X, y=y)
-
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        return self.transformer_.get_fitted_params()
+        return X.combine_first(X_pred)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
