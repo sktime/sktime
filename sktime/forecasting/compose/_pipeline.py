@@ -1000,3 +1000,161 @@ class TransformedTargetForecaster(_Pipeline):
             self.transformers_pre_, pred_int, mode="proba"
         )
         return pred_int_transformed
+
+
+class ForecastX(BaseForecaster):
+    """Forecaster that forecasts exogeneous data before an exogeneous forecast.
+
+    In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
+    Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
+
+    The two forecasters and forecasting horizons can be selected independently,
+    but default to the same.
+
+    The typical use case is extending exogeneous data available only up until the cutoff
+    into the future, for use by an exogeneous forecaster that requires such future data.
+
+    Parameters
+    ----------
+    forecaster_X : BaseForecaster
+        sktime forecaster to use for exogeneous data `X`
+    forecaster_y : BaseForecaster, optional, default = forecaster_X
+        sktime forecaster to use for endogeneous data `y`
+    fh : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
+        optional, default = None = same as used for `y` in any instance.
+        valid inputs to construct ForecastingHorizon are:
+        int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
+
+    Attributes
+    ----------
+    forecaster_X_ : BaseForecaster
+        clone of forecaster_X, state updates with `fit` and `update`
+    forecaster_y_ : BaseForecaster
+        clone of forecaster_y, state updates with `fit` and `update`
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.var import VAR
+    >>> from sktime.transformations.compose import ForecasterTransform
+
+    >>> y, X = load_longley()
+    >>> fh = ForecastingHorizon([1, 2, 3])
+    >>> pipe = ForecastingPipeline(
+    ...     steps=[
+    ...         ("exogeneous-forecast", ForecasterTransform(VAR(), fh=fh)),
+    ...         ("forecaster", ARIMA()),
+    ...     ]
+    ... )
+    >>> pipe.fit(y, X)
+    ForecastingPipeline(...)
+    >>> # this works without X from the future of y
+    >>> y_pred = pipe.predict(fh=fh)
+    """
+
+    _tags = {
+        "skip-inverse-transform": True,
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "fit_is_empty": False,
+    }
+
+    def __init__(self, forecaster, fh=None, behaviour="refit"):
+
+        if behaviour not in ["update", "refit"]:
+            raise ValueError('behaviour must be one of "update", "refit"')
+
+        self.forecaster = forecaster
+        self.fh = fh
+        self.behaviour = behaviour
+        super(ForecasterTransform, self).__init__()
+
+        tag_translate_dict = {
+            "handles-missing-data": forecaster.get_tag("handles-missing-data")
+        }
+        self.set_tags(**tag_translate_dict)
+
+        if behaviour == "refit":
+            self.set_tags(**{"fit_is_empty": True})
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit transform to
+        y : ignored argument, present for interface compatibility
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        if self.behaviour == "update":
+            self.forecaster_ = self.forecaster.clone()
+            self.forecaster_.fit(y=X, fh=self.fh)
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to be transformed
+        y : ignored argument, present for interface compatibility
+
+        Returns
+        -------
+        transformed version of X
+        """
+        if self.fh is None:
+            fh = X.index
+        else:
+            fh = self.fh
+
+        if self.behaviour == "refit":
+            forecaster_ = self.forecaster.clone()
+            forecaster_.fit(y=X, fh=fh)
+            X_pred = forecaster_.predict()
+        elif self.behavivour == "update":
+            self.forecaster_.update(y=X)
+            X_pred = forecaster_.predict()
+
+        # return X_pred
+        return X_pred.combine_first(X)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+
+        params = [
+            {"transformer": BoxCoxTransformer()},
+            {"transformer": BoxCoxTransformer(), "skip_inverse_transform": False},
+        ]
+        return params
