@@ -1055,8 +1055,8 @@ class ForecastX(BaseForecaster):
     ...     forecaster_X=VAR(),
     ...     forecaster_y=ARIMA(),
     ... )
-    >>> pipe.fit(y, X=X, fh=fh)
-    >>> # this works without X from the future of y
+    >>> pipe = pipe.fit(y, X=X, fh=fh)
+    >>> # this now works without X from the future of y!
     >>> y_pred = pipe.predict(fh=fh)
     """
 
