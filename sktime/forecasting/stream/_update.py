@@ -5,7 +5,6 @@
 __author__ = ["fkiraly"]
 
 import pandas as pd
-from sklearn import clone
 
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -46,7 +45,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self, forecaster, refit_interval=0, refit_window_size=None, refit_window_lag=0
     ):
         self.forecaster = forecaster
-        self.forecaster_ = clone(forecaster)
+        self.forecaster_ = forecaster.clone()
 
         self.refit_interval = refit_interval
         self.refit_window_size = refit_window_size
