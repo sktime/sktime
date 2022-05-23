@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+from logging import warning
 from pickle import FALSE, TRUE
 
 import numpy as np
@@ -61,13 +62,12 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             Ground truth (correct) target values.
 
         y_pred : return object of probabilistic predictition method scitype:y_pred
-            must be at fh and for variables equal to those in y_true
+            must be at fh and for variables equal to those in y_true.
 
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
             metric is always averaged (arithmetic) over fh values
-            if multioutput = "raw_values",
             if multioutput = "raw_values",
                 will have a column level corresponding to variables in y_true
             if multioutput = multioutput = "uniform_average" or or array-like
@@ -111,6 +111,15 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
         )
+
+        # Don't want to include scores for 0 width intervals, makes no sense
+        if 0 in y_pred_inner.columns.get_level_values(1):
+            y_pred_inner = y_pred_inner.drop(0, axis=1, level=1)
+            warning(
+                "Dropping 0 width interval, don't include 0.5 quantile\
+            for interval metrics."
+            )
+
         # pass to inner function
         out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
@@ -189,6 +198,15 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
         )
+
+        # Don't want to include scores for 0 width intervals, makes no sense
+        if 0 in y_pred_inner.columns.get_level_values(1):
+            y_pred_inner = y_pred_inner.drop(0, axis=1, level=1)
+            warning(
+                "Dropping 0 width interval, don't include 0.5 quantile\
+            for interval metrics."
+            )
+
         # pass to inner function
         out = self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
@@ -501,14 +519,17 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
             y_true_np = y_true
         if y_true_np.ndim == 1:
             y_true_np = y_true.reshape(-1, 1)
-        y_true_np = np.tile(
-            y_true_np, len(np.unique(y_pred.columns.get_level_values(1)))
-        )
+
+        scores = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
+        no_scores = len(scores)
+        vars = np.unique(y_pred.columns.get_level_values(0))
+
+        y_true_np = np.tile(y_true_np, no_scores)
 
         truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
 
         out_df = pd.DataFrame(
-            truth_array, columns=y_pred.columns.droplevel(level=2).unique()
+            truth_array, columns=pd.MultiIndex.from_product([vars, scores])
         )
 
         return out_df
@@ -570,16 +591,18 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         if y_true_np.ndim == 1:
             y_true_np = y_true.reshape(-1, 1)
 
-        y_true_np = np.tile(
-            y_true_np, len(np.unique(y_pred.columns.get_level_values(1)))
-        )
+        scores = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
+        no_scores = len(scores)
+        vars = np.unique(y_pred.columns.get_level_values(0))
+
+        y_true_np = np.tile(y_true_np, no_scores)
 
         int_distance = ((y_true_np < lower).astype(int) * abs(lower - y_true_np)) + (
             (y_true_np > upper).astype(int) * abs(y_true_np - upper)
         )
 
         out_df = pd.DataFrame(
-            int_distance, columns=y_pred.columns.droplevel(level=2).unique()
+            int_distance, columns=pd.MultiIndex.from_product([vars, scores])
         )
 
         return out_df

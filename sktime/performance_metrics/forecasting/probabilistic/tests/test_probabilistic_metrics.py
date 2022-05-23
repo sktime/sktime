@@ -80,18 +80,11 @@ multi_data = [
     INTERVAL_PRED_MULTI_M,
 ]
 
-# Drop second level of each dataframe (inconsitency in ColumnEnsembleForecastern)
-for df in uni_data:
-    df.columns = df.columns.droplevel(level=1)
-
-for df in multi_data:
-    df.columns = df.columns.droplevel(level=1)
-
 
 @pytest.mark.parametrize(
     "y_true, y_pred",
-    [(y_test_uni, QUANTILE_PRED_UNI_S), (y_test_uni, INTERVAL_PRED_UNI_S)]
-    # list(zip([y_test_uni] * 4, uni_data)) + list(zip([y_test_multi] * 4, multi_data))
+    # list(zip([y_test_uni] * 4, uni_data))
+    list(zip([y_test_uni] * 4, uni_data)) + list(zip([y_test_multi] * 4, multi_data)),
 )
 @pytest.mark.parametrize("metric", all_metrics)
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
@@ -103,6 +96,19 @@ def test_output(metric, score_average, multioutput, y_true, y_pred):
 
     eval_loss = loss(y_true, y_pred)
     index_loss = loss.evaluate_by_index(y_true, y_pred)
+
+    no_vars = len(y_pred.columns.get_level_values(0).unique())
+    no_scores = len(y_pred.columns.get_level_values(1).unique())
+
+    if (
+        0.5 in y_pred.columns.get_level_values(1)
+        and loss.get_tag("scitype:y_pred") == "pred_interval"
+        and y_pred.columns.nlevels == 2
+    ):
+        no_scores = no_scores - 1
+        no_scores = no_scores / 2  # one interval loss per two quantiles given
+        if no_scores == 0:  # if only 0.5 quant, no output to interval loss
+            no_vars = 0
 
     if score_average and multioutput == "uniform_average":
         assert isinstance(eval_loss, float)
@@ -116,15 +122,30 @@ def test_output(metric, score_average, multioutput, y_true, y_pred):
 
         # get two quantiles from each interval so if not score averaging
         # get twice number of unique coverages
-        score_number = len(y_pred.columns.get_level_values(1).unique())
         if (
             loss.get_tag("scitype:y_pred") == "pred_quantiles"
             and y_pred.columns.nlevels == 3
         ):
-            assert len(eval_loss) == 2 * score_number
+            assert len(eval_loss) == 2 * no_scores
         else:
-            assert len(eval_loss) == score_number
+            assert len(eval_loss) == no_scores
 
     if not score_average and multioutput == "raw_values":
         assert isinstance(eval_loss, pd.Series)
         assert isinstance(index_loss, pd.DataFrame)
+
+        true_len = no_vars * no_scores
+
+        if (
+            loss.get_tag("scitype:y_pred") == "pred_quantiles"
+            and y_pred.columns.nlevels == 3
+        ):
+            assert len(eval_loss) == 2 * true_len
+        else:
+            assert len(eval_loss) == true_len
+
+    if score_average and multioutput == "raw_values":
+        assert isinstance(eval_loss, pd.Series)
+        assert isinstance(index_loss, pd.DataFrame)
+
+        assert len(eval_loss) == no_vars
