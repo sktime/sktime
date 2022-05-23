@@ -40,9 +40,12 @@ class Prophet(_ProphetAdapter):
         trend. If 'logistic' specified float for 'growth_cap' must be provided.
     growth_floor: float, default=0
         Growth saturation minimum value.
+        Used only if  `growth="logistic"`, has no effect otherwise
+        (if `growth` is not `"logistic"`).
     growth_cap: float, default=None
         Growth saturation maximum aka carrying capacity.
-        Conditionally optional: must be float if 'growth="logistic"'.
+        Mandatory (float) iff `growth="logistic"`, has no effect and is optional,
+        otherwise (if `growth` is not `"logistic"`).
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
