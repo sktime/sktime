@@ -1555,7 +1555,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/55965636?v=4",
       "profile": "https://github.com/TNTran92",
       "contributions": [
-        "code",
+        "code"
+      ]
+    },
+    {
+      "login": "niekvanderlaan",
+      "name": "Niek van der Laan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9962825?v=4",
+      "profile": "https://github.com/niekvanderlaan",
+      "contributions": [
+        "code"
       ]
     }
   ],
