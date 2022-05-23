@@ -7,16 +7,16 @@ These reconcilers only depend on the structure of the hierarchy.
 
 __author__ = ["ciaran-g", "eenticott-shell", "k1m190r"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 from numpy.linalg import inv
 
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 
-# TODO: test predictions for each method to guarantee coherency for single example?
-# TODO: why should this run for single level index?
-# TODO: failing tests
-# TODO: rename with convention
+# TODO: failing test which are escaped
 
 
 class Reconciler(BaseTransformer):
@@ -32,7 +32,7 @@ class Reconciler(BaseTransformer):
 
     Parameters
     ----------
-    method : {"bu", "ols", "wls_str"}, default="ols"
+    method : {"bu", "ols", "wls_str"}, default="bu"
         The reconciliation approach applied to the forecasts
             "bu" - bottom-up
             "ols" - ordinary least squares
@@ -48,7 +48,12 @@ class Reconciler(BaseTransformer):
         "scitype:transform-output": "Series",
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "X_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
@@ -94,12 +99,9 @@ class Reconciler(BaseTransformer):
         if X.index.nlevels < 2:
             return self
 
-        # check index and bottom level of hierarchy are named correctly
-        #   if not, add totals to X
-        if not _check_index_good(X):
+        # check index for no "__total", if not add totals to X
+        if _check_index_no_total(X):
             X = self._add_totals(X)
-
-        _check_bl_good(X)
 
         if self.method == "bu":
             self.g_matrix = _get_g_matrix_bu(X)
@@ -131,12 +133,29 @@ class Reconciler(BaseTransformer):
         """
         # check the length of index
         if X.index.nlevels < 2:
+            warn(
+                "Reconciler is intended for use with X.index.nlevels > 1. "
+                "Returning X unchanged."
+            )
             return X
 
-        # check index and bottom level of hierarchy are named correctly
-        #   if not, add totals to X
-        if not _check_index_good(X):
+        # check index for no "__total", if not add totals to X
+        if _check_index_no_total(X):
+            warn(
+                "No elements of the index of X named '__total' found. Adding "
+                "aggregate levels using the default Aggregator transformer "
+                "before reconciliation."
+            )
             X = self._add_totals(X)
+
+        # check here that index of X matches the self.s_matrix
+        al_inds = X.droplevel(level=-1).index.unique()
+        chk_newindx = np.all(self.s_matrix.index == al_inds)
+        if not chk_newindx:
+            raise ValueError(
+                "Check unique indexes of X.droplevel(level=-1) matches "
+                "the data used in Reconciler().fit(X)."
+            )
 
         # include index between matrices here as in df.dot()?
         X = X.groupby(level=-1)
@@ -171,12 +190,27 @@ class Reconciler(BaseTransformer):
 def _get_s_matrix(X):
     """Determine the summation "S" matrix.
 
+    Reconciliation methods require the S matrix, which is defined by the
+    structure of the hierarchy only. The S matrix is inferred from the input
+    multi-index of the forecasts and is used to sum bottom-level forecasts
+    appropriately.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
+
     Returns
     -------
-    s_matrix : pd.DataFrame
-        Summation matrix with multiindex on rows, where each row is a level in
-        the hierarchy. Single index on columns for each bottom level of the
-        hierarchy.
+    s_matrix : pd.DataFrame with rows equal to the number of unique nodes in
+        the hierarchy, and columns equal to the number of bottom level nodes only,
+        i.e. with no aggregate nodes. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # get bottom level indexes
     bl_inds = (
@@ -187,37 +221,28 @@ def _get_s_matrix(X):
     # get all level indexes
     al_inds = X.droplevel(level=-1).index.unique()
 
+    # set up matrix
     s_matrix = pd.DataFrame(
         [[0.0 for i in range(len(bl_inds))] for i in range(len(al_inds))],
         index=al_inds,
     )
-
-    #
-    s_matrix.columns = list(bl_inds.get_level_values(level=-1))
+    s_matrix.columns = bl_inds
 
     # now insert indicator for bottom level
     for i in s_matrix.columns:
-        s_matrix.loc[s_matrix.index.get_level_values(-1) == i, i] = 1.0
+        s_matrix.loc[s_matrix.index == i, i] = 1.0
 
-    # now for each unique column
-    for j in s_matrix.columns:
-
-        # find bottom index id
-        inds = list(s_matrix.index[s_matrix.index.get_level_values(level=-1).isin([j])])
-
-        # generate new tuples for the aggregate levels
-        # if multiindex
+    # now for each unique column add aggregate indicator
+    for i in s_matrix.columns:
         if s_matrix.index.nlevels > 1:
-            for i in range(len(inds[0])):
-                tmp = list(inds[i])
-                tmp[-(i + 1)] = "__total"
-                inds.append(tuple(tmp))
-
-            # insert indicator for aggregates
-            for i in inds:
-                s_matrix.loc[i, j] = 1.0
+            # replace index with totals -> ("nodeA", "__total")
+            agg_ind = list(i)[::-1]
+            for j in range(len(agg_ind)):
+                agg_ind[j] = "__total"
+                # insert indicator
+                s_matrix.loc[tuple(agg_ind[::-1]), i] = 1.0
         else:
-            s_matrix.loc["__total", j] = 1.0
+            s_matrix.loc["__total", i] = 1.0
 
     # drop new levels not present in orginal matrix
     s_matrix.dropna(inplace=True)
@@ -228,10 +253,26 @@ def _get_s_matrix(X):
 def _get_g_matrix_bu(X):
     """Determine the reconciliation "G" matrix for the bottom up method.
 
+    Reconciliation methods require the G matrix. The G matrix is used to redefine
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
+
     Returns
     -------
-    g_matrix : pd.DataFrame
-        Summation matrix with single index on rows and multiindex on columns.
+    g_matrix : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # get bottom level indexes
     bl_inds = (
@@ -247,24 +288,38 @@ def _get_g_matrix_bu(X):
         [[0.0 for i in range(len(bl_inds))] for i in range(len(al_inds))],
         index=al_inds,
     )
-
-    #
-    g_matrix.columns = list(bl_inds.get_level_values(level=-1))
+    g_matrix.columns = bl_inds
 
     # now insert indicator for bottom level
     for i in g_matrix.columns:
-        g_matrix.loc[g_matrix.index.get_level_values(-1) == i, i] = 1.0
+        g_matrix.loc[g_matrix.index == i, i] = 1.0
 
     return g_matrix.transpose()
 
 
 def _get_g_matrix_ols(X):
-    """Determine the reconciliation "G" matrix for the ols method.
+    """Determine the reconciliation "G" matrix for the ordinary least squares method.
+
+    Reconciliation methods require the G matrix. The G matrix is used to redefine
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
 
     Returns
     -------
-    g_ols : pd.DataFrame
-        Summation matrix with single index on rows and multiindex on columns.
+    g_ols : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        summation matrix.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # get s matrix
     smat = _get_s_matrix(X)
@@ -282,12 +337,28 @@ def _get_g_matrix_ols(X):
 
 
 def _get_g_matrix_wls_str(X):
-    """Determine the reconciliation "G" matrix for the wls_str method.
+    """Reconciliation "G" matrix for the weighted least squares (structural) method.
+
+    Reconciliation methods require the G matrix. The G matrix is used to re-define
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
 
     Returns
     -------
-    g_wls_str : pd.DataFrame
-        Summation matrix with single index on rows and multiindex on columns.
+    g_wls_str : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        summation matrix.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
     # this is similar to the ols except we have a new matrix W
     smat = _get_s_matrix(X)
@@ -308,35 +379,3 @@ def _get_g_matrix_wls_str(X):
     g_wls_str = g_wls_str.transpose()
 
     return g_wls_str
-
-
-# TODO: check for any missing timepoint indexes?
-def _check_index_good(X):
-    """Check the index of X and return boolean."""
-    # check the first index elements for "__total"
-    tot_chk = np.any(X.index.get_level_values(level=0).isin(["__total"]))
-
-    return tot_chk
-
-
-def _check_bl_good(X):
-    """Check bottom level indexes are unique."""
-    bl_inds = list(
-        X.loc[~(X.index.get_level_values(level=-2).isin(["__total"]))]
-        .index.droplevel(level=-1)
-        .unique()
-    )
-    bl_inds = ["__".join(str(x)) for x in bl_inds]
-
-    agg_inds = list(X.index.get_level_values(level=-2).unique())
-    agg_inds.remove("__total")
-    bl_chk = len(agg_inds) == len(bl_inds)
-
-    if not bl_chk:
-        raise ValueError(
-            """Please check the bottom level nodes of the hierarchy have unique
-            names.
-            """
-        )
-    else:
-        pass

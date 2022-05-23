@@ -168,31 +168,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         if isinstance(other, BaseForecaster):
             return NotImplemented
 
-        # we don't use names but _get_estimator_names to get the *original* names
-        #   to avoid multiple "make unique" calls which may grow strings too much
-        _, trafos = zip(*self.steps_)
-        names = tuple(self._get_estimator_names(self.steps))
-        if isinstance(other, TransformerPipeline):
-            _, trafos_o = zip(*other.steps_)
-            names_o = tuple(other._get_estimator_names(other.steps))
-            new_names = names + names_o
-            new_trafos = trafos + trafos_o
-        elif isinstance(other, BaseTransformer):
-            new_names = names + (type(other).__name__,)
-            new_trafos = trafos + (other,)
-        elif self._is_name_and_est(other, BaseTransformer):
-            other_name = other[0]
-            other_trafo = other[1]
-            new_names = names + (other_name,)
-            new_trafos = trafos + (other_trafo,)
-        else:
-            return NotImplemented
-
-        # if all the names are equal to class names, we eat them away
-        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return TransformerPipeline(steps=list(new_trafos))
-        else:
-            return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=TransformerPipeline,
+            attr_name="steps",
+            concat_order="left",
+        )
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline.
@@ -217,29 +199,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         if isinstance(other, BaseForecaster):
             return NotImplemented
 
-        _, trafos = zip(*self.steps_)
-        names = tuple(self._get_estimator_names(self.steps))
-        if isinstance(other, TransformerPipeline):
-            _, trafos_o = zip(*other.steps_)
-            names_o = tuple(other._get_estimator_names(other.steps))
-            new_names = names_o + names
-            new_trafos = trafos_o + trafos
-        elif isinstance(other, BaseTransformer):
-            new_names = (type(other).__name__,) + names
-            new_trafos = (other,) + trafos
-        elif self._is_name_and_est(other, BaseTransformer):
-            other_name = other[0]
-            other_trafo = other[1]
-            new_names = (other_name,) + names
-            new_trafos = (other_trafo,) + trafos
-        else:
-            return NotImplemented
-
-        # if all the names are equal to class names, we eat them away
-        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return TransformerPipeline(steps=list(new_trafos))
-        else:
-            return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=TransformerPipeline,
+            attr_name="steps",
+            concat_order="right",
+        )
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -531,33 +497,38 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         Returns
         -------
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
-            not nested, contains only non-TransformerPipeline `sktime` transformers
+            not nested, contains only non-FeatureUnion `sktime` transformers
         """
-        # we don't use names but _get_estimator_names to get the *original* names
-        #   to avoid multiple "make unique" calls which may grow strings too much
-        _, trafos = zip(*self.transformer_list_)
-        names = tuple(self._get_estimator_names(self.transformer_list))
-        if isinstance(other, FeatureUnion):
-            _, trafos_o = zip(*other.transformer_list_)
-            names_o = tuple(other._get_estimator_names(other.transformer_list))
-            new_names = names + names_o
-            new_trafos = trafos + trafos_o
-        elif isinstance(other, BaseTransformer):
-            new_names = names + (type(other).__name__,)
-            new_trafos = trafos + (other,)
-        elif self._is_name_and_est(other, BaseTransformer):
-            other_name = other[0]
-            other_trafo = other[1]
-            new_names = names + (other_name,)
-            new_trafos = trafos + (other_trafo,)
-        else:
-            return NotImplemented
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=FeatureUnion,
+            attr_name="transformer_list",
+            concat_order="left",
+        )
 
-        # if all the names are equal to class names, we eat them away
-        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return FeatureUnion(transformer_list=list(new_trafos))
-        else:
-            return FeatureUnion(transformer_list=list(zip(new_names, new_trafos)))
+    def __radd__(self, other):
+        """Magic + method, return (left) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (last) with `other` (first).
+            not nested, contains only non-FeatureUnion `sktime` transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=FeatureUnion,
+            attr_name="transformer_list",
+            concat_order="right",
+        )
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
