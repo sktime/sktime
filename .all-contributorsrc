@@ -756,7 +756,13 @@
         "code",
         "bug",
         "projectManagement",
-        "fundingFinding"
+        "fundingFinding",
+        "mentoring",
+        "ideas",
+        "design",
+        "review",
+        "doc",
+        "talk"
       ]
     },
     {
