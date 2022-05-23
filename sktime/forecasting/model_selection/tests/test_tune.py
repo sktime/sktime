@@ -1,15 +1,13 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Test grid search CV."""
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning"]
 __all__ = ["test_gscv", "test_rscv"]
 
 import numpy as np
 import pytest
-from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_longley
@@ -42,7 +40,7 @@ TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
     scores = np.zeros(len(param_grid))
     for i, params in enumerate(param_grid):
-        f = clone(forecaster)
+        f = forecaster.clone()
         f.set_params(**params)
         out = evaluate(f, cv, y, X=X, scoring=scoring)
         scores[i] = out.loc[:, f"test_{scoring.name}"].mean()

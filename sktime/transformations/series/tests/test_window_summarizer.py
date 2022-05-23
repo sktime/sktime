@@ -42,6 +42,20 @@ y_group2 = pd.DataFrame(y.values, index=mi, columns=["y"])
 
 y_grouped = pd.concat([y_group1, y_group2])
 
+mi = pd.MultiIndex.from_product([[0], [0], y.index], names=["h1", "h2", "time"])
+y_hier1 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+mi = pd.MultiIndex.from_product([[0], [1], y.index], names=["h1", "h2", "time"])
+y_hier2 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+mi = pd.MultiIndex.from_product([[1], [0], y.index], names=["h1", "h2", "time"])
+y_hier3 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+mi = pd.MultiIndex.from_product([[1], [1], y.index], names=["h1", "h2", "time"])
+y_hier4 = pd.DataFrame(y.values, index=mi, columns=["y"])
+
+y_hierarchical = pd.concat([y_hier1, y_hier2, y_hier3, y_hier4])
+
 y_ll, X_ll = load_longley()
 y_ll_train, _, X_ll_train, X_ll_test = temporal_train_test_split(y_ll, X_ll)
 
@@ -100,6 +114,13 @@ Xtmvar_none = ["GNPDEFL_lag_3", "GNPDEFL_lag_6", "GNP", "UNEMP", "ARMED", "POP"]
             None,
         ),
         (
+            kwargs,
+            ["y_lag_1", "y_mean_1_3", "y_mean_1_12", "y_std_1_4"],
+            y_hierarchical,
+            None,
+            None,
+        ),
+        (
             None,
             ["var_0_lag_1", "var_1"],
             y_multi,
@@ -135,6 +156,9 @@ def test_windowsummarizer(kwargs, column_names, y, target_cols, truncate):
             Xt_columns = Xt.name
     else:
         Xt_columns = None
+
+    # check that the index names are preserved
+    assert y.index.names == Xt.index.names
 
     check_eval(Xt_columns, column_names)
 

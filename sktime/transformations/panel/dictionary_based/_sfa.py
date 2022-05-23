@@ -475,7 +475,7 @@ class SFA(_PanelToPanelTransformer):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
-            max_depth=np.log2(self.alphabet_size),
+            max_depth=int(np.floor(np.log2(self.alphabet_size))),
             max_leaf_nodes=self.alphabet_size,
             random_state=1,
         )
