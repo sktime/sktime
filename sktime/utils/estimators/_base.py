@@ -75,8 +75,9 @@ def make_mock_estimator(
     dunder_methods_regex = r"^__\w+__$"
 
     class _MockEstimator(estimator_class, _MockEstimatorMixin):
-        def __init__(self):
-            super().__init__()
+        def __init__(self, estimator_kwargs):
+            self.estimator_kwargs = estimator_kwargs
+            super().__init__(**estimator_kwargs)
 
     for attr_name in dir(estimator_class):
         attr = getattr(_MockEstimator, attr_name)
