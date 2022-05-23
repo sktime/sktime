@@ -72,7 +72,7 @@ class _ProphetAdapter(BaseForecaster):
             if self.growth_cap is None:
                 raise ValueError(
                     "Since `growth` param is set to 'logistic', expecting `growth_cap`"
-                    " to be non `None`: a float or array like of floats."
+                    " to be non `None`: a float."
                 )
 
             df["cap"] = self.growth_cap
