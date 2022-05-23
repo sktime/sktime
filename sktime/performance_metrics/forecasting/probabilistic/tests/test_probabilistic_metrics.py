@@ -20,8 +20,6 @@ f_uni.fit(y_train_uni)
 
 QUANTILE_PRED_UNI = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
 INTERVAL_PRED_UNI = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
-QUANTILE_PRED_UNI.columns = QUANTILE_PRED_UNI.columns.droplevel(level=1)
-INTERVAL_PRED_UNI.columns = INTERVAL_PRED_UNI.columns.droplevel(level=1)
 
 
 @pytest.mark.parametrize("score_average", [True, False])
