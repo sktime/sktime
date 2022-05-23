@@ -37,12 +37,12 @@ class Prophet(_ProphetAdapter):
             country_name: Name of the country, like 'UnitedStates' or 'US'
     growth: str, default="linear"
         String 'linear' or 'logistic' to specify a linear or logistic
-        trend.
+        trend. If 'logistic' specified float for 'growth_cap' must be provided.
     growth_floor: float, default=0
         Growth saturation minimum value.
     growth_cap: float, default=None
         Growth saturation maximum aka carrying capacity.
-        Conditionally optional: must be specified if `growth="logistic"`.
+        Conditionally optional: must be float if 'growth="logistic"'.
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
