@@ -9,7 +9,6 @@ __all__ = ["Imputer"]
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -136,7 +135,7 @@ class Imputer(BaseTransformer):
             forecaster = PolynomialTrendForecaster(degree=1)
             Z = _impute_with_forecaster(forecaster, Z)
         elif self.method == "forecaster":
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
             Z = _impute_with_forecaster(forecaster, Z)
         elif self.method == "mean":
             Z = Z.fillna(value=Z.mean())
