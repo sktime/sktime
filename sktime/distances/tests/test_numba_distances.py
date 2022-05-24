@@ -36,7 +36,7 @@ def _validate_distance_result(
     Parameters
     ----------
     x: np.ndarray
-        First timeseries.
+        First time series.
     y: np.ndarray
         Second timeseries.
     metric_str: str
@@ -52,6 +52,8 @@ def _validate_distance_result(
     expected_result:
         float that is the expected result of tests.
     """
+    if expected_result is None:
+        return
     if kwargs_dict is None:
         kwargs_dict = {}
     metric_str_result = distance(x, y, metric=metric_str, **kwargs_dict)
@@ -133,11 +135,13 @@ def _validate_distance_result(
         )
 
     metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)
-    assert metric_str_result_to_self == 0, (
-        f"The distance when given two of the same timeseries e.g."
-        f"distance(x, x, ...), result should equal 0. This criteria is not met for "
-        f"the metric {metric_str}. The result was {metric_str_result_to_self}"
-    )
+
+    if metric_str != "twe":
+        assert metric_str_result_to_self == 0, (
+            f"The distance when given two of the same time series e.g."
+            f"distance(x, x, ...), result should equal 0. This criteria is not met for "
+            f"the metric {metric_str}. The result was {metric_str_result_to_self}"
+        )
 
     if expected_result is not None:
         assert_almost_equal(metric_str_result, expected_result, 5)
@@ -170,16 +174,6 @@ def test_distance(dist: MetricInfo) -> None:
     _validate_distance_result(
         x=create_test_distance_numpy(10),
         y=create_test_distance_numpy(10, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][1],
-    )
-
-    _validate_distance_result(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
         metric_str=name,
         distance_factory=distance_factory,
         distance_function=distance_function,

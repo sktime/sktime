@@ -2,7 +2,6 @@
 """Pipeline with a classifier."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 import numpy as np
-from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
@@ -76,6 +75,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     >>> from sktime.transformations.panel.pca import PCATransformer
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
+    >>> from sktime.classification.compose import ClassifierPipeline
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> pipeline = ClassifierPipeline(
@@ -106,7 +106,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
     def __init__(self, classifier, transformers):
 
         self.classifier = classifier
-        self.classifier_ = clone(classifier)
+        self.classifier_ = classifier.clone()
         self.transformers = transformers
         self.transformers_ = TransformerPipeline(transformers)
 
@@ -274,7 +274,7 @@ class ClassifierPipeline(BaseClassifier, _HeterogenousMetaEstimator):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
 

@@ -62,7 +62,6 @@ class BaseClassifier(BaseEstimator, ABC):
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
-        "capability:early_prediction": False,
         "capability:multithreading": False,
     }
 
@@ -142,6 +141,9 @@ class BaseClassifier(BaseEstimator, ABC):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        # reset estimator at the start of fit
+        self.reset()
+
         start = int(round(time.time() * 1000))
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy

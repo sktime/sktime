@@ -9,9 +9,10 @@ distance_functions = [
     "euclidean",
     "dtw",
     "wdtw",
-    # "msm",
+    "msm",
     "erp",
     "lcss",
+    "edr",
 ]
 
 # expected correct on test set using default parameters.
@@ -20,7 +21,8 @@ expected_correct = {
     "dtw": 21,
     "wdtw": 21,
     "msm": 20,
-    "erp": 12,
+    "erp": 19,
+    "edr": 20,
     "lcss": 12,
 }
 
@@ -28,8 +30,8 @@ expected_correct = {
 def test_knn_on_unit_test():
     """Test function for elastic knn, to be reinstated soon."""
     # load arrowhead data for unit tests
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train", return_type="numpy3D")
+    X_test, y_test = load_unit_test(split="test", return_type="numpy3D")
     for i in range(0, len(distance_functions)):
         knn = KNeighborsTimeSeriesClassifier(
             distance=distance_functions[i],
@@ -45,8 +47,8 @@ def test_knn_on_unit_test():
 
 def test_knn_bounding_matrix():
     """Test knn with custom bounding parameters."""
-    X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    X_train, y_train = load_unit_test(split="train")
+    X_test, y_test = load_unit_test(split="test")
     for i in range(0, len(distance_functions)):
         knn = KNeighborsTimeSeriesClassifier(
             distance=distance_functions[i], distance_params={"window": 0.5}

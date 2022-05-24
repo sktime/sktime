@@ -12,7 +12,8 @@ import pytest
 from sktime.datatypes import check_is_mtype, convert
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.panel import _make_panel
+from sktime.utils._testing.series import _make_series
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
@@ -27,8 +28,7 @@ def test_vectorization_series_to_panel(mtype):
     """
     n_instances = 10
 
-    y = _make_panel_X(n_instances=n_instances, random_state=42)
-    y = convert(y, from_type="nested_univ", to_type=mtype)
+    y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     y_pred = ARIMA().fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
@@ -108,8 +108,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     """
     n_instances = 10
 
-    y = _make_panel_X(n_instances=n_instances, random_state=42)
-    y = convert(y, from_type="nested_univ", to_type=mtype)
+    y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
     est = ARIMA().fit(y)
     y_pred = getattr(est, method)([1, 2, 3])
@@ -161,3 +160,36 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     )
 
     assert valid, msg
+
+
+@pytest.mark.parametrize("method", PROBA_DF_METHODS)
+def test_vectorization_preserves_row_index_names(method):
+    """Test that forecaster vectorization preserves row index names in forecast."""
+    hierarchy_levels = (2, 4)
+    y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
+
+    est = ARIMA().fit(y, fh=[1, 2, 3])
+    y_pred = getattr(est, method)()
+
+    msg = (
+        f"vectorization of forecaster method {method} changes row index names, "
+        f"but it shouldn't. Tested using the ARIMA forecaster."
+    )
+
+    assert y_pred.index.names == y.index.names, msg
+
+
+def test_dynamic_tags_reset_properly():
+    """Test that dynamic tags are being reset properly."""
+    from sktime.forecasting.compose import MultiplexForecaster
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.forecasting.var import VAR
+
+    # this forecaster will have the scitype:y tag set to "univariate"
+    f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
+    f.set_params(selected_forecaster="var")
+
+    X_multivariate = _make_series(n_columns=2)
+    # fit should reset the estimator, and set scitype:y tag to "multivariate"
+    # the fit will cause an error if this is not happening properly
+    f.fit(X_multivariate)

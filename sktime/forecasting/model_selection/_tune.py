@@ -6,11 +6,12 @@
 __author__ = ["mloning"]
 __all__ = ["ForecastingGridSearchCV", "ForecastingRandomizedSearchCV"]
 
+from collections.abc import Sequence
+
+import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
-from sklearn.model_selection._search import _check_param_grid
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import NotFittedError
@@ -26,6 +27,7 @@ class BaseGridSearch(BaseForecaster):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "ignores-exogeneous-X": True,
+        "capability:pred_int": True,
     }
 
     def __init__(
@@ -68,16 +70,40 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _update(self, y, X=None, update_params=False):
-        """Call predict on the forecaster with the best found parameters."""
+        """Call _update on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
         self.best_forecaster_._update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def _predict(self, fh=None, X=None):
-        """Call predict on the forecaster with the best found parameters."""
+        """Call _predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
         return self.best_forecaster_._predict(fh=fh, X=X)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_interval(self, fh=None, X=None, coverage=None):
+        """Call _predict_interval on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_interval(fh=fh, X=X, coverage=coverage)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_quantiles(self, fh=None, X=None, alpha=None):
+        """Call _predict_quantiles on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_quantiles(fh=fh, X=X, alpha=alpha)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Call _predict_var on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_var(fh=fh, X=X, cov=cov)
+
+    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
+    def _predict_proba(self, fh=None, X=None, marginal=True):
+        """Call _predict_proba on the forecaster with the best found parameters."""
+        self.check_is_fitted("predict")
+        return self.best_forecaster_._predict_proba(fh=fh, X=X, marginal=marginal)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, X=None):
@@ -199,7 +225,7 @@ class BaseGridSearch(BaseForecaster):
 
         def _fit_and_score(params):
             # Clone forecaster.
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
 
             # Set parameters.
             forecaster.set_params(**params)
@@ -268,7 +294,7 @@ class BaseGridSearch(BaseForecaster):
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = clone(self.forecaster).set_params(**self.best_params_)
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
         # Refit model with best parameters.
         if self.refit:
@@ -285,7 +311,7 @@ class BaseGridSearch(BaseForecaster):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = clone(self.forecaster).set_params(**params)
+            forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y, X, fh)
@@ -458,9 +484,33 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
+    def _check_param_grid(self, param_grid):
+        """_check_param_grid from sklearn 1.0.2, before it was removed."""
+        if hasattr(param_grid, "items"):
+            param_grid = [param_grid]
+
+        for p in param_grid:
+            for name, v in p.items():
+                if isinstance(v, np.ndarray) and v.ndim > 1:
+                    raise ValueError("Parameter array should be one-dimensional.")
+
+                if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
+                    raise ValueError(
+                        "Parameter grid for parameter ({0}) needs to"
+                        " be a list or numpy array, but got ({1})."
+                        " Single values need to be wrapped in a list"
+                        " with one element.".format(name, type(v))
+                    )
+
+                if len(v) == 0:
+                    raise ValueError(
+                        "Parameter values for parameter ({0}) need "
+                        "to be a non-empty sequence.".format(name)
+                    )
+
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
-        _check_param_grid(self.param_grid)
+        self._check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
     @classmethod
