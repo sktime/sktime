@@ -1,8 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
-from pickle import FALSE, TRUE
+from logging import warning
 
 import numpy as np
 import pandas as pd
@@ -49,7 +48,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
     ):
         self.multioutput = multioutput
         self.score_average = score_average
-        super().__init__(func, name=name)
+        super().__init__(func, name=name, multioutput=multioutput)
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.
@@ -61,13 +60,12 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
             Ground truth (correct) target values.
 
         y_pred : return object of probabilistic predictition method scitype:y_pred
-            must be at fh and for variables equal to those in y_true
+            must be at fh and for variables equal to those in y_true.
 
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
             metric is always averaged (arithmetic) over fh values
-            if multioutput = "raw_values",
             if multioutput = "raw_values",
                 will have a column level corresponding to variables in y_true
             if multioutput = multioutput = "uniform_average" or or array-like
@@ -111,6 +109,15 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
         )
+
+        # Don't want to include scores for 0 width intervals, makes no sense
+        if 0 in y_pred_inner.columns.get_level_values(1):
+            y_pred_inner = y_pred_inner.drop(0, axis=1, level=1)
+            warning(
+                "Dropping 0 width interval, don't include 0.5 quantile\
+            for interval metrics."
+            )
+
         # pass to inner function
         out = self._evaluate(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
@@ -121,7 +128,7 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         if not self.score_average and multioutput == "uniform_average":
             out = out.mean(axis=1, level=1)  # average over variables
         if not self.score_average and multioutput == "raw_values":
-            out = out  # don't averageW
+            out = out  # don't average
 
         if isinstance(out, pd.DataFrame):
             out = out.squeeze(axis=0)
@@ -189,6 +196,15 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         y_true_inner, y_pred_inner, multioutput = self._check_ys(
             y_true, y_pred, multioutput
         )
+
+        # Don't want to include scores for 0 width intervals, makes no sense
+        if 0 in y_pred_inner.columns.get_level_values(1):
+            y_pred_inner = y_pred_inner.drop(0, axis=1, level=1)
+            warning(
+                "Dropping 0 width interval, don't include 0.5 quantile\
+            for interval metrics."
+            )
+
         # pass to inner function
         out = self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
@@ -285,12 +301,20 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
 
         y_pred_mtype = metadata["mtype"]
         inner_y_pred_mtype = self.get_tag("scitype:y_pred")
+
         y_pred_inner = convert(
             y_pred,
             from_type=y_pred_mtype,
             to_type=inner_y_pred_mtype,
             as_scitype="Proba",
         )
+
+        if inner_y_pred_mtype == "pred_interval":
+            if 0.0 in y_pred_inner.columns.get_level_values(1):
+                for var in y_pred_inner.columns.get_level_values(0):
+                    y_pred_inner[var, 0.0, "upper"] = y_pred_inner[var, 0.0, "lower"]
+
+        y_pred_inner.sort_index(axis=1, level=[0, 1], inplace=True)
 
         y_true, y_pred, multioutput = self._check_consistent_input(
             y_true, y_pred, multioutput
@@ -459,12 +483,13 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
     _tags = {
         "scitype:y_pred": "pred_interval",
-        "lower_is_better": FALSE,
+        "lower_is_better": False,
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
         name = "EmpiricalCoverage"
         self.score_average = score_average
+        self.multioutput = multioutput
         super().__init__(
             name=name, score_average=score_average, multioutput=multioutput
         )
@@ -488,16 +513,21 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
         if not isinstance(y_true, np.ndarray):
             y_true_np = y_true.to_numpy()
+        else:
+            y_true_np = y_true
         if y_true_np.ndim == 1:
             y_true_np = y_true.reshape(-1, 1)
-        y_true_np = np.tile(
-            y_true_np, len(np.unique(y_pred.columns.get_level_values(1)))
-        )
+
+        scores = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
+        no_scores = len(scores)
+        vars = np.unique(y_pred.columns.get_level_values(0))
+
+        y_true_np = np.tile(y_true_np, no_scores)
 
         truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
 
         out_df = pd.DataFrame(
-            truth_array, columns=y_pred.columns.droplevel(level=2).unique()
+            truth_array, columns=pd.MultiIndex.from_product([vars, scores])
         )
 
         return out_df
@@ -523,12 +553,13 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
     _tags = {
         "scitype:y_pred": "pred_interval",
-        "lower_is_better": TRUE,
+        "lower_is_better": True,
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
         name = "ConstraintViolation"
         self.score_average = score_average
+        self.multioutput = multioutput
         super().__init__(
             name=name, score_average=score_average, multioutput=multioutput
         )
@@ -552,20 +583,24 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
         if not isinstance(y_true, np.ndarray):
             y_true_np = y_true.to_numpy()
+        else:
+            y_true_np = y_true
 
         if y_true_np.ndim == 1:
             y_true_np = y_true.reshape(-1, 1)
 
-        y_true_np = np.tile(
-            y_true_np, len(np.unique(y_pred.columns.get_level_values(1)))
-        )
+        scores = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
+        no_scores = len(scores)
+        vars = np.unique(y_pred.columns.get_level_values(0))
+
+        y_true_np = np.tile(y_true_np, no_scores)
 
         int_distance = ((y_true_np < lower).astype(int) * abs(lower - y_true_np)) + (
             (y_true_np > upper).astype(int) * abs(y_true_np - upper)
         )
 
         out_df = pd.DataFrame(
-            int_distance, columns=y_pred.columns.droplevel(level=2).unique()
+            int_distance, columns=pd.MultiIndex.from_product([vars, scores])
         )
 
         return out_df
