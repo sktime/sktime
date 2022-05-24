@@ -25,6 +25,9 @@ from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_from_tsfile as load_ts
+from sktime.datasets import load_gunpoint
+
+trainX, trainY = load_gunpoint
 
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
@@ -79,12 +82,14 @@ def config_clusterer(clusterer: str, **kwargs):
     return cls
 
 
-def tune_window(metric: str, train_X):
+def tune_window(metric: str, train_X, n_clusters):
     """Tune window."""
     best_w = 0
     best_score = 0
     for w in np.arange(0, 1, 0.1):
-        cls = TimeSeriesKMeans(metric=metric, distance_params={"window": w})
+        cls = TimeSeriesKMeans(
+            metric=metric, distance_params={"window": w}, n_clusters=n_clusters
+        )
         cls.fit(train_X)
         preds = cls.predict(train_X)
         print(" Preds type = ", type(preds))
@@ -147,7 +152,7 @@ if __name__ == "__main__":
     test_X = s.fit_transform(test_X.T)
     test_X = test_X.T
     if tune:
-        w = tune_window(distance, train_X)
+        w = tune_window(distance, train_X, len(set(train_Y)))
         name = clusterer + "-" + distance + "-tuned"
     else:
         name = clusterer + "-" + distance
