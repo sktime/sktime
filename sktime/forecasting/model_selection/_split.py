@@ -1178,11 +1178,16 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         super(ExpandingWindowSplitter, self).__init__(
             fh=fh,
             window_length=initial_window,
-            initial_window=None,
+            initial_window=initial_window,
             step_length=step_length,
             start_with_window=start_with_window,
         )
-
+        if not self.start_with_window:
+            warnings.warn(
+                    "Please use initial_window=0 instead of start_with_window=False as the"
+                    + "start_with_window parameter is going to be deprecated in the future.",
+                    FutureWarning
+                )
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
         return self._split_windows_generic(expanding=True, **kwargs)
 
