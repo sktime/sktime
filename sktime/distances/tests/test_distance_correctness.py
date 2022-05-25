@@ -62,13 +62,13 @@ basic_motions_distances = {
     "euclidean": 27.51835240,
     "dtw": [757.259719, 330.834497, 330.834497],
     "wdtw": [165.41724, 3.308425, 0],
-    "msm": [70.014828, 89.814828, 268.014828],
     "erp": [0.2086269, 2.9942540, 102.097904],
     "edr": [1.0, 0.26, 0.07],
     "lcss": [1.0, 0.26, 0.05],
     "ddtw": [297.18771, 160.48649, 160.29823],
     "wddtw": [80.149117, 1.458858, 0.0],
     "twe": [1.325876246546281, 14.759114523578294, 218.21301289250758],
+    "msm": [14.616577, 21.551273000000002, 30.814880000000002],
 }
 
 
@@ -79,7 +79,7 @@ def test_multivariate_correctness():
     case2 = trainX[1]
     d = euclidean_distance(case1, case2)
     assert_almost_equal(d, basic_motions_distances["euclidean"], 4)
-    twe_mult = []
+    msm_dist = []
     for j in range(0, 3):
         d = dtw_distance(case1, case2, window=distance_parameters["dtw"][j])
         assert_almost_equal(d, basic_motions_distances["dtw"][j], 4)
@@ -96,8 +96,9 @@ def test_multivariate_correctness():
         d = wddtw_distance(case1, case2, g=distance_parameters["wddtw"][j])
         assert_almost_equal(d, basic_motions_distances["wddtw"][j], 4)
         d = twe_distance(case1, case2, window=distance_parameters["twe"][j])
-        twe_mult.append(d)
         assert_almost_equal(d, basic_motions_distances["twe"][j], 4)
+        d = msm_distance(case1, case2, c=distance_parameters["msm"][j])
+        msm_dist.append(d)
 
 
 def test_univariate_correctness():
