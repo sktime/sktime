@@ -65,6 +65,9 @@ class BaseAligner(BaseEstimator):
         Z : pd.DataFrame with n rows, optional
             metadata, i-th row of Z corresponds to i-th element of X
         """
+        # if fit is called, estimator is reset, including fitted state
+        self.reset()
+
         self._fit(X=X, Z=Z)
 
         self._X = X

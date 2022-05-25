@@ -1,10 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+"""Tests for splitters."""
 
-"""Test splitters."""
-
-__author__ = ["Markus Löning", "Kutay Koralturk", "khrapovs"]
+__author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import numpy as np
 import pandas as pd
@@ -31,6 +29,7 @@ from sktime.forecasting.tests._config import (
     VALID_INDEX_FH_COMBINATIONS,
 )
 from sktime.utils._testing.forecasting import _make_fh
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
@@ -482,3 +481,69 @@ def _check_train_test_split_y(fh, split):
 
     cutoff = train.index[-1]
     np.testing.assert_array_equal(test.index, fh.to_absolute(cutoff).to_numpy())
+
+
+def test_split_series():
+    """Tests that split_series produces series in the split."""
+    y = _make_series()
+    cv = SlidingWindowSplitter()
+
+    for train, test in cv.split_series(y):
+        assert isinstance(train, pd.Series)
+        assert len(train) == 10
+        assert isinstance(test, pd.Series)
+        assert len(test) == 1
+
+
+def test_split_loc():
+    """Tests that split_loc produces loc indices for train and test."""
+    y = _make_series()
+    cv = SlidingWindowSplitter()
+
+    for train, test in cv.split_loc(y):
+        assert isinstance(train, pd.DatetimeIndex)
+        assert len(train) == 10
+        y.loc[train]
+        assert isinstance(test, pd.DatetimeIndex)
+        assert len(test) == 1
+        y.loc[test]
+
+
+def test_split_series_hier():
+    """Tests that split works with hierarchical data."""
+    hierarchy_levels = (2, 4)
+    n_instances = np.prod(hierarchy_levels)
+    n = 12
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels, max_timepoints=n, min_timepoints=n
+    )
+    cv = SlidingWindowSplitter()
+
+    for train, test in cv.split(y):
+        assert isinstance(train, np.ndarray)
+        assert train.ndim == 1
+        assert train.dtype == np.int64
+        assert len(train) == 10 * n_instances
+        assert isinstance(test, np.ndarray)
+        assert test.ndim == 1
+        assert test.dtype == np.int64
+        assert len(test) == 1 * n_instances
+
+    for train, test in cv.split_loc(y):
+        assert isinstance(train, pd.MultiIndex)
+        assert len(train) == 10 * n_instances
+        assert train.isin(y.index).all()
+        assert isinstance(test, pd.MultiIndex)
+        assert len(test) == 1 * n_instances
+        assert test.isin(y.index).all()
+
+    def inst_index(y):
+        return set(y.index.droplevel(-1).unique())
+
+    for train, test in cv.split_series(y):
+        assert isinstance(train, pd.DataFrame)
+        assert len(train) == 10 * n_instances
+        assert isinstance(test, pd.DataFrame)
+        assert len(test) == 1 * n_instances
+        assert inst_index(train) == inst_index(y)
+        assert inst_index(test) == inst_index(y)
