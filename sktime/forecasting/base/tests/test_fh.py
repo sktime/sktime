@@ -4,6 +4,8 @@
 
 __author__ = ["mloning", "khrapovs"]
 
+from typing import Union
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -46,7 +48,12 @@ def _assert_index_equal(a, b):
     "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
 @pytest.mark.parametrize("steps", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
-def test_fh(index_type, fh_type, is_relative, steps):
+def test_fh(
+    index_type: str,
+    fh_type: str,
+    is_relative: bool,
+    steps: Union[int, pd.Timedelta, list[Union[int, pd.Timedelta]]],
+) -> None:
     """Testing ForecastingHorizon conversions."""
     int_types = ["int64", "int32"]
     steps_is_int = (
@@ -74,7 +81,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
     cutoff = y_train.index[-1]
 
     # generate fh
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    fh = _make_fh(cutoff=cutoff, steps=steps, fh_type=fh_type, is_relative=is_relative)
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
     else:
@@ -205,7 +212,7 @@ def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
 
 TIMEPOINTS = [
     pd.Period("2000", freq="M"),
-    pd.Timestamp("2000-01-01", freq="D"),
+    pd.Period("2000-01-01", freq="D"),
     int(1),
     3,
 ]
@@ -213,7 +220,7 @@ TIMEPOINTS = [
 
 @pytest.mark.parametrize("timepoint", TIMEPOINTS)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
-def test_shift(timepoint, by):
+def test_shift(timepoint: Union[pd.Period, int], by: int) -> None:
     """Test shifting of ForecastingHorizon."""
     ret = _shift(timepoint, by=by)
 
@@ -293,19 +300,19 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_to_absolute_freq(freqstr):
+def test_to_absolute_freq(freqstr: str) -> None:
     """Test conversion when anchorings included in frequency."""
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
     assert abs_fh._values.freqstr == freqstr
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_absolute_to_absolute_with_integer_horizon(freqstr):
+def test_absolute_to_absolute_with_integer_horizon(freqstr: str) -> None:
     """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
 
@@ -315,10 +322,10 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
-def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
+def test_absolute_to_absolute_with_timedelta_horizon(freqstr: str) -> None:
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
@@ -331,10 +338,10 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_relative_to_relative_with_integer_horizon(freqstr):
+def test_relative_to_relative_with_integer_horizon(freqstr: str) -> None:
     """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
 
@@ -343,10 +350,10 @@ def test_relative_to_relative_with_integer_horizon(freqstr):
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
-def test_relative_to_relative_with_timedelta_horizon(freqstr):
+def test_relative_to_relative_with_timedelta_horizon(freqstr: str) -> None:
     """Test converting between relative and absolute with timedelta horizons."""
     # Converts from relative to absolute and back to relative
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
@@ -358,14 +365,13 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
 
 
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
-def test_to_relative(freq: str):
+def test_to_relative(freq: str) -> None:
     """Test conversion to relative.
 
     Fixes bug in
     https://github.com/alan-turing-institute/sktime/issues/1935#issue-1114814142
     """
-    freq = "2H"
-    t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
+    t = pd.period_range(start="2021-01-01", freq=freq, periods=5)
     fh_abs = ForecastingHorizon(t, is_relative=False)
     fh_rel = fh_abs.to_relative(cutoff=t.min())
     assert_array_equal(fh_rel, np.arange(5))
@@ -373,21 +379,21 @@ def test_to_relative(freq: str):
 
 @pytest.mark.parametrize("idx", range(5))
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
-def test_to_absolute_int(idx: int, freq: str):
+def test_to_absolute_int(idx: int, freq: str) -> None:
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
+    train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3])
     absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[idx])
     assert_array_equal(fh + idx, absolute_int)
 
 
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
-def test_estimator_fh(freqstr):
+def test_estimator_fh(freqstr: str) -> None:
     """Test model fitting with anchored frequency."""
     train = pd.Series(
         np.random.uniform(low=2000, high=7000, size=(104,)),
-        index=pd.date_range("2019-01-02", freq=freqstr, periods=104),
+        index=pd.period_range("2019-01-02", freq=freqstr, periods=104),
     )
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, restrict=True)
     forecaster.fit(train)
@@ -397,7 +403,7 @@ def test_estimator_fh(freqstr):
 
 
 # TODO: Replace this long running test with fast unit test
-def test_auto_ets():
+def test_auto_ets() -> None:
     """Fix bug in 1435.
 
     https://github.com/alan-turing-institute/sktime/issues/1435#issue-1000175469
@@ -417,7 +423,7 @@ def test_auto_ets():
 
 
 # TODO: Replace this long running test with fast unit test
-def test_exponential_smoothing():
+def test_exponential_smoothing() -> None:
     """Test bug in 1876.
 
     https://github.com/alan-turing-institute/sktime/issues/1876#issue-1103752402.
@@ -442,12 +448,12 @@ def test_exponential_smoothing():
 
 
 # TODO: Replace this long running test with fast unit test
-def test_auto_arima():
+def test_auto_arima() -> None:
     """Test bug in 805.
 
     https://github.com/alan-turing-institute/sktime/issues/805#issuecomment-891848228.
     """
-    time_index = pd.date_range("January 1, 2021", periods=8, freq="1D")
+    time_index = pd.period_range("January 1, 2021", periods=8, freq="1D")
     X = pd.DataFrame(
         np.random.randint(0, 4, 24).reshape(8, 3),
         columns=["First", "Second", "Third"],
@@ -462,10 +468,10 @@ def test_auto_arima():
     y_pred_sk = clf.predict(fh=fh_, X=X[5:])
 
     pd.testing.assert_index_equal(
-        y_pred_sk.index, pd.date_range("January 6, 2021", periods=3, freq="1D")
+        y_pred_sk.index, pd.period_range("January 6, 2021", periods=3, freq="1D")
     )
 
-    time_index = pd.date_range("January 1, 2021", periods=8, freq="2D")
+    time_index = pd.period_range("January 1, 2021", periods=8, freq="2D")
     X = pd.DataFrame(
         np.random.randint(0, 4, 24).reshape(8, 3),
         columns=["First", "Second", "Third"],
@@ -480,5 +486,5 @@ def test_auto_arima():
     y_pred_sk = clf.predict(fh=fh, X=X[5:])
 
     pd.testing.assert_index_equal(
-        y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq="2D")
+        y_pred_sk.index, pd.period_range("January 11, 2021", periods=3, freq="2D")
     )

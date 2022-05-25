@@ -6,7 +6,7 @@ __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 import re
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -85,12 +85,12 @@ def _get_freq(x):
         return None
 
 
-def _shift(x, by=1):
+def _shift(x: Union[pd.Period, int], by: int = 1) -> Union[pd.Period, int]:
     """Shift time point `x` by a step (`by`) given frequency of `x`.
 
     Parameters
     ----------
-    x : pd.Period, pd.Timestamp, int
+    x : pd.Period, int
         Time point
     by : int
 
@@ -99,12 +99,8 @@ def _shift(x, by=1):
     ret : pd.Period, pd.Timestamp, int
         Shifted time point
     """
-    assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
+    assert isinstance(x, (pd.Period, int, np.integer)), type(x)
     assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
-    if isinstance(x, pd.Timestamp):
-        if not hasattr(x, "freq") or x.freq is None:
-            raise ValueError("No `freq` information available")
-        by *= x.freq
     return x + by
 
 

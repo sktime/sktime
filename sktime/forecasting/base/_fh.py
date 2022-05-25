@@ -536,13 +536,15 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
 # See more here: https://github.com/alan-turing-institute/sktime/issues/2338
 @lru_cache(typed=True)
-def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
+def _to_absolute(
+    fh: ForecastingHorizon, cutoff: Union[pd.Period, int]
+) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
 
     Parameters
     ----------
     fh : ForecastingHorizon
-    cutoff : pd.Period, pd.Timestamp, int
+    cutoff : pd.Period, int
         Cutoff value is required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
 
@@ -556,24 +558,15 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
 
     else:
         relative = fh.to_pandas()
-        _check_cutoff(cutoff, relative)
-        is_timestamp = isinstance(cutoff, pd.Timestamp)
-
-        if is_timestamp:
-            # coerce to pd.Period for reliable arithmetic operations and
-            # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=cutoff.freqstr)
-
+        _check_cutoff(cutoff=cutoff, index=relative)
         absolute = cutoff + relative
-
-        if is_timestamp:
-            # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(cutoff.freqstr)
-
         return fh._new(absolute, is_relative=False)
 
 
-def _check_cutoff(cutoff, index):
+def _check_cutoff(
+    cutoff: Optional[Union[pd.Period, int]],
+    index: Union[pd.Index, pd.PeriodIndex, pd.DatetimeIndex],
+) -> None:
     """Check if the cutoff is valid based on time index of forecasting horizon.
 
     Validates that the cutoff contains necessary information and is
@@ -581,7 +574,7 @@ def _check_cutoff(cutoff, index):
 
     Parameters
     ----------
-    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+    cutoff : pd.Period, int, optional (default=None)
         Cutoff value is required to convert a relative forecasting
         horizon to an absolute one and vice versa.
     index : pd.PeriodIndex or pd.DataTimeIndex
@@ -591,24 +584,9 @@ def _check_cutoff(cutoff, index):
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
 
-    if isinstance(index, pd.PeriodIndex):
+    if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
         assert isinstance(cutoff, pd.Period)
         assert index.freqstr == cutoff.freqstr
-
-    if isinstance(index, pd.DatetimeIndex):
-        assert isinstance(cutoff, pd.Timestamp)
-
-        if not hasattr(cutoff, "freqstr") or cutoff.freqstr is None:
-            raise AttributeError(
-                "The `freq` attribute of the time index is required, "
-                "but found: None. Please specify the `freq` argument "
-                "when setting the time index."
-            )
-
-        # For indices of type DatetimeIndex with irregular steps, frequency will be
-        # None
-        if index.freqstr is not None:
-            assert cutoff.freqstr == index.freqstr
 
 
 def _check_start(start, index):
