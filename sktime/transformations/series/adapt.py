@@ -212,6 +212,8 @@ class PandasTransformAdaptor(BaseTransformer):
     "call" = for `X` seen in `transform`, "all"/"all_subset" = all data seen so far.
     See below for details.
 
+    For hierarchical series, operation is applied by instance.
+
     Parameters
     ----------
     method : str, optional, default = None = identity transform
