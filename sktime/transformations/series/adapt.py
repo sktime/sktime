@@ -224,6 +224,7 @@ class PandasTransformAdaptor(BaseTransformer):
             more precisely, the application to `self._X` is returned
         "all_subset" = method is applied to all `X` like for "all" value,
             but before returning, result is sub-set to indices of `X` in `transform`
+        in "all", "all_subset", `X` seen in `transform` do not update `self._X`
 
     Examples
     --------
@@ -249,7 +250,7 @@ class PandasTransformAdaptor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "univariate-only": False,
         "transform-returns-same-time-index": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "capability:inverse_transform": False,
     }
 
@@ -272,6 +273,29 @@ class PandasTransformAdaptor(BaseTransformer):
 
         if apply_to == "all_subset":
             self.set_tags(**{"transform-returns-same-time-index": True})
+
+        if apply_to == "call":
+            self.set_tags(**{"fit_is_empty": True})
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        if self.apply_to in ["all", "all_subset"]:
+            self._X = X
+        return self
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -309,6 +333,26 @@ class PandasTransformAdaptor(BaseTransformer):
 
         return Xt
 
+    def _update(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to fit transform to
+        y : ignored argument for interface compatibility
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: a fitted instance of the estimator
+        """
+        if self.apply_to in ["all", "all_subset"]:
+            self._X = X.combine_first(self._X)
+        return self
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -328,10 +372,14 @@ class PandasTransformAdaptor(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params1 = {"method": "diff"}
-        params2 = {"method": "diff", "kwargs": {"period": 2}, "apply_to": "all_subset"}
+        params2 = {"method": "diff", "kwargs": {"periods": 2}, "apply_to": "all_subset"}
+
+        def add1(x):
+            return x + 1
+
         params3 = {
-            "method": "transform",
-            "kwargs": {"func": lambda x: x + 1},
+            "method": "shift",
+            "kwargs": {"periods": 12},
             "apply_to": "all",
         }
 
