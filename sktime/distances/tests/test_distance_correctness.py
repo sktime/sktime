@@ -79,7 +79,6 @@ def test_multivariate_correctness():
     case2 = trainX[1]
     d = euclidean_distance(case1, case2)
     assert_almost_equal(d, basic_motions_distances["euclidean"], 4)
-    msm_dist = []
     for j in range(0, 3):
         d = dtw_distance(case1, case2, window=distance_parameters["dtw"][j])
         assert_almost_equal(d, basic_motions_distances["dtw"][j], 4)
@@ -98,7 +97,7 @@ def test_multivariate_correctness():
         d = twe_distance(case1, case2, window=distance_parameters["twe"][j])
         assert_almost_equal(d, basic_motions_distances["twe"][j], 4)
         d = msm_distance(case1, case2, c=distance_parameters["msm"][j])
-        msm_dist.append(d)
+        assert_almost_equal(d, basic_motions_distances["msm"][j], 4)
 
 
 def test_univariate_correctness():
@@ -113,7 +112,6 @@ def test_univariate_correctness():
     d2 = euclidean_distance(cases1[1], cases2[1])
     assert_almost_equal(d, unit_test_distances["euclidean"], 4)
     assert d == d2
-    twe_uni = []
     for j in range(0, 3):
         d = dtw_distance(cases1[0], cases2[0], window=distance_parameters["dtw"][j])
         d2 = dtw_distance(cases1[1], cases2[1], window=distance_parameters["dtw"][j])
@@ -149,6 +147,5 @@ def test_univariate_correctness():
         assert d == d2
         d = twe_distance(cases1[0], cases2[1], window=distance_parameters["twe"][j])
         d2 = twe_distance(cases1[1], cases2[1], window=distance_parameters["twe"][j])
-        twe_uni.append(d)
         assert_almost_equal(d, unit_test_distances["twe"][j], 4)
         assert d == d2
