@@ -124,45 +124,54 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             )
 
     def __or__(self, other):
-        """Magic | method, return MultiplexForecaster.
+        """Magic | (or) method, return (right) concatenated MultiplexForecaster.
+
+        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
 
         Parameters
         ----------
-        other : either a forecaster object or a MultiplexForecaster.
-            if forecaster object:
-                add the forecaster to self's list of forecasters.
-            if MultiplexForecaster:
-                create a new MultiplexForecaster with forecasters from both
-                self and other. (Note selected_forecaster of the new
-                MultiplexForecaster will be None, even if it is not None for
-                either self or other)
+        other: `sktime` forecaster, must inherit from BaseForecaster
+            otherwise, `NotImplemented` is returned
 
         Returns
         -------
-        MultiplexForecaster, result of multiplexing self with other
+        MultiplexForecaster object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-MultiplexForecaster `sktime` forecasters
 
         Raises
         ------
         ValueError if other is not of type MultiplexForecaster or BaseForecaster.
         """
-        from sktime.forecasting.base._base import BaseForecaster
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseForecaster,
+            composite_class=MultiplexForecaster,
+            attr_name="forecasters",
+            concat_order="left",
+        )
 
-        # if other was a BaseForecaster - lets make it a MultiplexForecaster:
-        # if already a MultiplexForecaster make new MultiplexForecaster
-        # with forecasters from both MultiplexForecasters:
-        if isinstance(other, BaseForecaster) and not isinstance(
-            other, MultiplexForecaster
-        ):
-            other = MultiplexForecaster([other])
-        if isinstance(other, MultiplexForecaster):
-            new_tuples = self._get_estimator_tuples(
-                self.forecasters + other.forecasters
-            )
-            new_multiplex_forecaster = MultiplexForecaster(new_tuples)
-            return new_multiplex_forecaster
-        # If is anyother type of forecaster, simply add it to forecasters:
-        else:
-            return NotImplemented
+    def __ror__(self, other):
+        """Magic | (or) method, return (left) concatenated MultiplexForecaster.
+
+        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster, must inherit from BaseForecaster
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        MultiplexForecaster object, concatenation of `self` (last) with `other` (first).
+            not nested, contains only non-MultiplexForecaster `sktime` forecasters
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseForecaster,
+            composite_class=MultiplexForecaster,
+            attr_name="forecasters",
+            concat_order="right",
+        )
 
     def _set_forecaster(self):
         self._check_selected_forecaster()

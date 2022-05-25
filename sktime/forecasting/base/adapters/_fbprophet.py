@@ -66,6 +66,18 @@ class _ProphetAdapter(BaseForecaster):
             for col in X.columns:
                 self._forecaster.add_regressor(col)
 
+        # Add floor and bottom when growth is logistic
+        if self.growth == "logistic":
+
+            if self.growth_cap is None:
+                raise ValueError(
+                    "Since `growth` param is set to 'logistic', expecting `growth_cap`"
+                    " to be non `None`: a float."
+                )
+
+            df["cap"] = self.growth_cap
+            df["floor"] = self.growth_floor
+
         if self.verbose:
             self._forecaster.fit(df=df)
         else:
@@ -107,6 +119,10 @@ class _ProphetAdapter(BaseForecaster):
         if X is not None:
             X = X.copy()
             df, X = _merge_X(df, X)
+
+        if self.growth == "logistic":
+            df["cap"] = self.growth_cap
+            df["floor"] = self.growth_floor
 
         out = self._forecaster.predict(df)
 
@@ -233,7 +249,7 @@ def _merge_X(df, X):
     ----------
     fh : sktime.ForecastingHorizon
     X : pd.DataFrame
-        Exog data
+        Exogeneous data
     df : pd.DataFrame
         Contains a DatetimeIndex column "ds"
 
