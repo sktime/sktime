@@ -24,6 +24,7 @@ import sktime.datasets.tsc_dataset_names as dataset_lists
 from sktime.benchmarking.experiments import run_clustering_experiment
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.clustering.k_medoids import TimeSeriesKMedoids
+from sktime.clustering.tslearn_kmeans import TslearnKmeans
 from sktime.datasets import load_from_tsfile as load_ts
 from sktime.datasets import load_gunpoint
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
-    clusterer = "kmeans"
+    clusterer = "tslearn"
     chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
 
@@ -150,27 +151,27 @@ if __name__ == "__main__":
         data_dir = f"c:/temp/"
         results_dir = "./temp"
         resample = 0
-        averaging = "dba"
+        averaging = "mean"
         tf = True
-        distance = "msm"
+        distance = "euclidean"
     train_X, train_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TRAIN.ts", return_data_type="numpy2d"
     )
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    train_X = np.concatenate((train_X, test_X), axis=0)
-    train_Y = np.concatenate((train_Y, test_Y), axis=0)
-    _recreate_results(train_X, train_Y)
-    import sys
+    #    train_X = np.concatenate((train_X, test_X), axis=0)
+    #    train_Y = np.concatenate((train_Y, test_Y), axis=0)
+    #    _recreate_results(train_X, train_Y)
+    #    import sys
 
-    sys.exit()
-    #    from sklearn.preprocessing import StandardScaler
-    #    s = StandardScaler()
-    #    train_X = s.fit_transform(train_X.T)
-    #    train_X = train_X.T
-    #    test_X = s.fit_transform(test_X.T)
-    #    test_X = test_X.T
+    from sklearn.preprocessing import StandardScaler
+
+    s = StandardScaler()
+    train_X = s.fit_transform(train_X.T)
+    train_X = train_X.T
+    test_X = s.fit_transform(test_X.T)
+    test_X = test_X.T
     if tune:
         w = tune_window(distance, train_X, len(set(train_Y)))
         name = clusterer + "-" + distance + "-tuned"
@@ -201,13 +202,19 @@ if __name__ == "__main__":
             n_clusters=len(set(train_Y)),
             random_state=resample + 1,
         )
-    else:
+    elif clusterer == "kmedoids":
         clst = TimeSeriesKMedoids(
             metric=distance,
             distance_params=parameters,
             n_clusters=len(set(train_Y)),
             random_state=resample + 1,
         )
+    elif clusterer == "tslearn":
+        clst = TslearnKmeans(
+            metric=distance,
+            n_clusters=len(set(train_Y)),
+        )
+
     run_clustering_experiment(
         train_X,
         clst,
