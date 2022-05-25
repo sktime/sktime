@@ -27,8 +27,6 @@ from sktime.clustering.k_medoids import TimeSeriesKMedoids
 from sktime.datasets import load_from_tsfile as load_ts
 from sktime.datasets import load_gunpoint
 
-trainX, trainY = load_gunpoint
-
 """Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
@@ -102,13 +100,30 @@ def tune_window(metric: str, train_X, n_clusters):
     return best_w
 
 
+from sklearn.metrics import adjusted_rand_score
+
+
+def _recreate_results(trainX, trainY):
+    clst = TimeSeriesKMeans(
+        averaging_method="mean",
+        metric="dtw",
+        distance_params={"window": 0.2},
+        n_clusters=len(set(train_Y)),
+        random_state=1,
+    )
+    clst.fit(trainX)
+    preds = clst.predict(trainY)
+    score = adjusted_rand_score(trainY, preds)
+    print("Score = ", score)
+
+
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing.
     """
     clusterer = "kmeans"
     chris_config = False  # This is so chris doesn't have to change config each time
-    tune = True
+    tune = False
 
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         data_dir = sys.argv[1]
@@ -131,7 +146,7 @@ if __name__ == "__main__":
         distance = "msm"
     else:  # Local run
         print(" Local Run")
-        dataset = "Strawberry"
+        dataset = "Chinatown"
         data_dir = f"c:/temp/"
         results_dir = "./temp"
         resample = 0
@@ -144,13 +159,18 @@ if __name__ == "__main__":
     test_X, test_Y = load_ts(
         f"{data_dir}/{dataset}/{dataset}_TEST.ts", return_data_type="numpy2d"
     )
-    from sklearn.preprocessing import StandardScaler
+    train_X = np.concatenate((train_X, test_X), axis=0)
+    train_Y = np.concatenate((train_Y, test_Y), axis=0)
+    _recreate_results(train_X, train_Y)
+    import sys
 
-    s = StandardScaler()
-    train_X = s.fit_transform(train_X.T)
-    train_X = train_X.T
-    test_X = s.fit_transform(test_X.T)
-    test_X = test_X.T
+    sys.exit()
+    #    from sklearn.preprocessing import StandardScaler
+    #    s = StandardScaler()
+    #    train_X = s.fit_transform(train_X.T)
+    #    train_X = train_X.T
+    #    test_X = s.fit_transform(test_X.T)
+    #    test_X = test_X.T
     if tune:
         w = tune_window(distance, train_X, len(set(train_Y)))
         name = clusterer + "-" + distance + "-tuned"
