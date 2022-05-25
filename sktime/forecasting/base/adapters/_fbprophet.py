@@ -110,7 +110,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._update_X(X, enforce_index_type=pd.DatetimeIndex)
 
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas().to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
             raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
         df = pd.DataFrame({"ds": fh}, index=fh)
