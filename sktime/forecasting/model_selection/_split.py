@@ -1071,9 +1071,11 @@ class BaseWindowSplitter(BaseSplitter):
             start_date = y[y < y[start] + offset][-1]
             end_date = y[end - 1] - step_length if end <= len(y) else y[-1]
             date_cutoffs = pd.date_range(
-                start=start_date, end=end_date, freq=step_length
+                start=start_date.to_timestamp(),
+                end=end_date.to_timestamp(),
+                freq=step_length,
             )
-            cutoffs = np.argwhere(y.isin(date_cutoffs)).flatten()
+            cutoffs = np.argwhere(y.to_timestamp().isin(date_cutoffs)).flatten()
             if start <= 0:
                 cutoffs = np.hstack((-1, cutoffs))
             return cutoffs

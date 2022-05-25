@@ -501,10 +501,10 @@ def test_split_loc():
     cv = SlidingWindowSplitter()
 
     for train, test in cv.split_loc(y):
-        assert isinstance(train, pd.DatetimeIndex)
+        assert isinstance(train, pd.PeriodIndex)
         assert len(train) == 10
         y.loc[train]
-        assert isinstance(test, pd.DatetimeIndex)
+        assert isinstance(test, pd.PeriodIndex)
         assert len(test) == 1
         y.loc[test]
 
