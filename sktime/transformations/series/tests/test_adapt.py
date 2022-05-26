@@ -12,7 +12,7 @@ params_list = PandasTransformAdaptor.get_test_params
 apply_to_str = ["call", "all", "all_subset"]
 
 
-@pytest.mark.parametrize("param", apply_to_str)
+@pytest.mark.parametrize("apply_to", apply_to_str)
 @pytest.mark.parametrize("param", params_list)
 def test_pandastransformadaptor_consistency(param, apply_to):
     """Test that pandas.method and PandasTransformAdaptor.fit.transform is the same."""
