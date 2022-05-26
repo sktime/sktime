@@ -21,11 +21,11 @@ def test_pandastransformadaptor_consistency(param, apply_to):
     X_fit = X[:12]
     X_trafo = X[12:]
 
-    kwargs = param["kwargs"]
+    kwargs = param.get("kwargs")
     if kwargs is None:
         kwargs = {}
 
-    method = param["method"]
+    method = param.get("method")
 
     trafo = PandasTransformAdaptor(method=method, kwargs=kwargs)
 
