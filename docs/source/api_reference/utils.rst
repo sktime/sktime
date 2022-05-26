@@ -9,20 +9,15 @@ Utility functions
 * :mod:`sktime.registry`, which contains utilities for estimator and tag search.
 * :mod:`sktime.utils`, which contains generic utility functions.
 
-.. automodule:: sktime.datatypes
-    :no-members:
-    :no-inherited-members:
-
-.. automodule:: sktime.registry
-    :no-members:
-    :no-inherited-members:
-
-.. automodule:: sktime.utils
-    :no-members:
-    :no-inherited-members:
 
 Data Format Checking and Conversion
 -----------------------------------
+
+:mod:`sktime.datatypes`
+
+.. automodule:: sktime.datatypes
+    :no-members:
+    :no-inherited-members:
 
 .. currentmodule:: sktime.datatypes
 
@@ -43,6 +38,10 @@ Data Format Checking and Conversion
 Estimator Search and Retrieval, Estimator Tags
 ----------------------------------------------
 
+.. automodule:: sktime.registry
+    :no-members:
+    :no-inherited-members:
+
 .. currentmodule:: sktime.registry
 
 .. autosummary::
@@ -56,6 +55,12 @@ Estimator Search and Retrieval, Estimator Tags
 Plotting
 --------
 
+``sktime.utils.plotting``
+
+.. automodule:: sktime.utils.plotting
+    :no-members:
+    :no-inherited-members:
+
 .. currentmodule:: sktime.utils.plotting
 
 .. autosummary::
@@ -68,6 +73,12 @@ Plotting
 
 Estimator Validity Checking
 ---------------------------
+
+``sktime.utils.estimator_checks``
+
+.. automodule:: sktime.utils.estimator_checks
+    :no-members:
+    :no-inherited-members:
 
 .. currentmodule:: sktime.utils.estimator_checks
 
