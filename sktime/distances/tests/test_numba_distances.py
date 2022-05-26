@@ -217,3 +217,19 @@ def test_distance_factory_1d():
 
     assert first == 14.906015491572047
     assert second == 422.81946268212846
+
+def test_sbd():
+    from sktime.distances._sbd import _SBDistance
+    x = create_test_distance_numpy(10, 5)
+    y = create_test_distance_numpy(10, 5)
+    # x = np.array([[2, 2, 3]])
+    # y = np.array([[5, 6, 7]])
+
+    # x = create_test_distance_numpy(10, 10)
+    # y = create_test_distance_numpy(10, 10, random_state=2)
+
+    _SBDistance = _SBDistance()
+
+    test, test1 = _SBDistance.distance(x, y)
+
+    joe = ''
