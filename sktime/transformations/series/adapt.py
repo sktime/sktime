@@ -330,7 +330,7 @@ class PandasTransformAdaptor(BaseTransformer):
 
         Xt = getattr(_X, method)(**kwargs)
 
-        if apply_to in "all_subset":
+        if apply_to in ["all_subset"]:
             Xt = Xt.loc[X.index]
 
         return Xt

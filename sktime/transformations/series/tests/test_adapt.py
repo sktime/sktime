@@ -27,7 +27,7 @@ def test_pandastransformadaptor_consistency(param, apply_to):
 
     method = param.get("method")
 
-    trafo = PandasTransformAdaptor(method=method, kwargs=kwargs)
+    trafo = PandasTransformAdaptor(method=method, kwargs=kwargs, apply_to=apply_to)
 
     trafo_result = trafo.fit(X_fit).transform(X_trafo)
 
