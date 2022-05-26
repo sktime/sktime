@@ -7,7 +7,7 @@ Utility functions
 
 * :mod:`sktime.datatypes`, which contains utilities for data format checks and conversion.
 * :mod:`sktime.registry`, which contains utilities for estimator and tag search.
-* :mod:`sktime.utils`, which contains genneric utility functions.
+* :mod:`sktime.utils`, which contains generic utility functions.
 
 .. automodule:: sktime.datatypes
     :no-members:
