@@ -38,6 +38,8 @@ Data Format Checking and Conversion
 Estimator Search and Retrieval, Estimator Tags
 ----------------------------------------------
 
+:mod:`sktime.registry`
+
 .. automodule:: sktime.registry
     :no-members:
     :no-inherited-members:
@@ -55,7 +57,7 @@ Estimator Search and Retrieval, Estimator Tags
 Plotting
 --------
 
-``sktime.utils.plotting``
+:mod:`sktime.utils.plotting`
 
 .. automodule:: sktime.utils.plotting
     :no-members:
@@ -74,7 +76,7 @@ Plotting
 Estimator Validity Checking
 ---------------------------
 
-``sktime.utils.estimator_checks``
+:mod:`sktime.utils.estimator_checks`
 
 .. automodule:: sktime.utils.estimator_checks
     :no-members:
