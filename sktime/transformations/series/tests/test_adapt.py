@@ -7,7 +7,7 @@ import pytest
 from sktime.transformations.series.adapt import PandasTransformAdaptor
 from sktime.utils._testing.series import _make_series
 
-params_list = PandasTransformAdaptor.get_test_params
+params_list = PandasTransformAdaptor.get_test_params()
 
 apply_to_str = ["call", "all", "all_subset"]
 
