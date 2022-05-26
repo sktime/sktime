@@ -31,11 +31,11 @@ def test_pandastransformadaptor_consistency(param, apply_to):
 
     trafo_result = trafo.fit(X_fit).transform(X_trafo)
 
-    if apply_to_str == "call":
+    if apply_to == "call":
         expected_result = getattr(X_trafo, method)(**kwargs)
-    elif apply_to_str == "all":
+    elif apply_to == "all":
         expected_result = getattr(X, method)(**kwargs)
-    elif apply_to_str == "all_subset":
+    elif apply_to == "all_subset":
         expected_result = getattr(X, method)(**kwargs)[12:]
 
-    assert expected_result == trafo_result
+    assert expected_result.equals(trafo_result)
