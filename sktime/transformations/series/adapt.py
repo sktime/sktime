@@ -375,10 +375,6 @@ class PandasTransformAdaptor(BaseTransformer):
         """
         params1 = {"method": "diff"}
         params2 = {"method": "diff", "kwargs": {"periods": 2}, "apply_to": "all_subset"}
-
-        def add1(x):
-            return x + 1
-
         params3 = {
             "method": "shift",
             "kwargs": {"periods": 12},
