@@ -296,28 +296,25 @@ def get_slice(obj, start=None, end=None):
     """Slice obj with start (inclusive) and end (exclusive) indices.
 
     Returns time series or time series panel with time indices
-        strictly greater than cutoff - lag - window_length, and
-        equal or less than cutoff - lag.
-    Cutoff if of obj, as determined by get_cutoff.
+        strictly greater and equal to start index and less than
+        end index.
 
     Parameters
     ----------
-    obj : sktime compatible time series data container or None
+    obj : sktime compatible time series Series type or None
         if not None, must be of one of the following mtypes:
             pd.Series, pd.DataFrame, np.ndarray, of Series scitype
-            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
-            pd_multiindex_hier, of Hierarchical scitype
     start : int or timestamp, optional, default = None
         must be int if obj is int indexed, timestamp if datetime indexed
-        Inclusive start of slice. Default = None
+        Inclusive start of slice. Default = None.
+        If None, then no slice at the start
     end : int or timestamp, optional, default = None
         must be int if obj is int indexed, timestamp if datetime indexed
         Exclusive end of slice. Default = None
-
+        If None, then no slice at the end
     Returns
     -------
-    obj sub-set to time indices in the semi-open interval
-        (cutoff - window_length - lag, cutoff - lag)
+    obj sub-set sliced for `start` (inclusive) and `end` (exclusive) indices
         None if obj was None
     """
     from sktime.datatypes import check_is_scitype, convert_to
