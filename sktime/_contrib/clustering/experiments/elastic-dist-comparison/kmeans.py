@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import multiprocessing
+
 
 import numpy as np
 import pandas as pd
@@ -14,13 +16,16 @@ ignore_dataset = []
 
 
 class KmeansExperiment(BaseExperiment):
+
+    @staticmethod
     def _run_experiment_for_dataset(
-        self,
         X_train: pd.DataFrame,
         y_train: np.ndarray,
         X_test: pd.DataFrame,
         y_test: np.ndarray,
         dataset_name: str,
+        result_path: str,
+        experiment_name: str
     ):
         if dataset_name.lower() not in EQUAL_LENGTH_LOWER:
             return
@@ -42,7 +47,7 @@ class KmeansExperiment(BaseExperiment):
         run_clustering_experiment(
             X_train,
             k_means_clusterer,
-            results_path=f"{self.result_path}/{self.experiment_name}",
+            results_path=f"{result_path}/{experiment_name}",
             trainY=y_train,
             testX=X_test,
             testY=y_test,
@@ -52,31 +57,30 @@ class KmeansExperiment(BaseExperiment):
             overwrite=False,
         )
 
-
 if __name__ == "__main__":
 
-    server = False
+    server = True
     log_file = None
     if server is False:
-        kmeans_experiment = KmeansExperiment(
-            experiment_name="msm_dba",
-            dataset_path=os.path.abspath(
+        dataset_path = os.path.abspath(
                 "C:/Users/chris/Documents/Masters/datasets/Univariate_ts/"
-            ),
-            result_path=os.path.abspath("C:/Users/chris/Documents/Masters/results/"),
         )
+        result_path=os.path.abspath("C:/Users/chris/Documents/Masters/results/")
     else:
         old_stdout = sys.stdout
         log_file = open("./message.log", "w")
         sys.stdout = log_file
-
-        kmeans_experiment = KmeansExperiment(
-            experiment_name="msm_dba",
-            dataset_path=os.path.abspath(
-                "/root/datasets/Univariate_ts/"
-            ),
-            result_path=os.path.abspath("/root/results/"),
+        dataset_path=os.path.abspath(
+            "/root/datasets/Univariate_ts/"
         )
+        result_path=os.path.abspath("/root/results/")
+
+    kmeans_experiment = KmeansExperiment(
+        experiment_name="msm_dba",
+        dataset_path=dataset_path,
+        result_path=result_path,
+        n_threads=multiprocessing.cpu_count()
+    )
     kmeans_experiment.run_experiment()
 
     if log_file is not None:
