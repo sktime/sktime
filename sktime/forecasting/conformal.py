@@ -111,6 +111,7 @@ class ConformalIntervals(BaseForecaster):
         self.verbose = verbose
         self.initial_window = initial_window
         self.sample_frac = sample_frac
+
         super(ConformalIntervals, self).__init__()
 
         tags_to_clone = [
@@ -137,6 +138,7 @@ class ConformalIntervals(BaseForecaster):
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,
             )
+
         return self
 
     def _predict(self, fh, X=None):
