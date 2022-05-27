@@ -90,7 +90,7 @@ class BaseExperiment(ABC):
         return datasets
 
 
-def threaded_experiment(dataset_paths, experiment: BaseExperiments):
+def threaded_experiment(dataset_paths, experiment: BaseExperiment):
 
     result_path = experiment.result_path
     experiment_name = experiment.experiment_name
