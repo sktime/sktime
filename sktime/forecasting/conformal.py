@@ -6,7 +6,7 @@ Code based partially on NaiveVariance by ilyasmoutawwakil.
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["ConformalIntervals"]
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "bethrice44"]
 
 from warnings import warn
 
