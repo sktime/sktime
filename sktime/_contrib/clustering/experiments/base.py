@@ -7,7 +7,7 @@ from threading import Thread, Lock
 from sktime.datasets import load_from_tsfile
 
 class BaseExperiment(ABC):
-    def __init__(self, *, experiment_name: str, dataset_path: str, result_path: str, n_threads=1):
+    def __init__(self, experiment_name: str, dataset_path: str, result_path: str, n_threads=1):
         self.experiment_name = experiment_name
         self.dataset_path = dataset_path
         self.result_path = result_path
