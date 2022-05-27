@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
+from sktime.datatypes import get_slice
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -261,15 +262,12 @@ class ConformalIntervals(BaseForecaster):
 
         for id in y_index:
             forecaster = clone(forecaster)
-            y_train = y[:id]  # subset on which we fit
-            X_train = X[:id]
-            y_test = y[id:]  # subset on which we predict
-            X_test = X[id:]
-            # Check whether train and test are overlapping due to pandas
-            # slicing logic for timestamps. Shift test forward in this case
-            if y_train.index.max() == y_test.index.min():
-                y_test = y_test[1:]
-                X_test = X_test[1:]
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
+
+            X_train = get_slice(X, start=None, end=id)
+            X_test = get_slice(X, start=id, end=None)
+
             try:
                 forecaster.fit(y_train, X=X_train, fh=y_test.index)
             except ValueError:

@@ -236,3 +236,65 @@ def get_window(obj, window_length=None, lag=0):
     raise ValueError(
         "bug in get_latest_window, unreachable condition, ifs should be exhaustive"
     )
+
+
+def get_slice(obj, start=None, end=None):
+    """Slice obj with start (inclusive) and end (exclusive) indices.
+
+    Returns time series or time series panel with time indices
+        strictly greater than cutoff - lag - window_length, and
+        equal or less than cutoff - lag.
+    Cutoff if of obj, as determined by get_cutoff.
+
+    Parameters
+    ----------
+    obj : sktime compatible time series data container or None
+        if not None, must be of one of the following mtypes:
+            pd.Series, pd.DataFrame, np.ndarray, of Series scitype
+            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
+            pd_multiindex_hier, of Hierarchical scitype
+    start : int or timestamp, optional, default = None
+        must be int if obj is int indexed, timestamp if datetime indexed
+        Inclusive start of slice. Default = None
+    end : int or timestamp, optional, default = None
+        must be int if obj is int indexed, timestamp if datetime indexed
+        Exclusive end of slice. Default = None
+
+    Returns
+    -------
+    obj sub-set to time indices in the semi-open interval
+        (cutoff - window_length - lag, cutoff - lag)
+        None if obj was None
+    """
+    from sktime.datatypes import check_is_scitype, convert_to
+
+    if (start is None and end is None) or obj is None:
+        return obj
+
+    valid, _, metadata = check_is_scitype(
+        obj, scitype=["Series", "Panel", "Hierarchical"], return_metadata=True
+    )
+    if not valid:
+        raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
+
+    obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
+
+    if isinstance(start, int):
+        if start and end:
+            return obj[start:end]
+        elif end:
+            return obj[:end]
+        else:
+            return obj[start:]
+
+    elif isinstance(start, pd.Timestamp):
+        if start and end:
+            return obj[start:end][:-1]
+        elif end:
+            return obj[:end][:-1]
+        else:
+            return obj[start:]
+
+    raise ValueError(
+        "bug in get_slice, unreachable condition, ifs should be exhaustive"
+    )
