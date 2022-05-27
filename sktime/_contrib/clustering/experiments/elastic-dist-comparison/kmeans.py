@@ -60,16 +60,12 @@ class KmeansExperiment(BaseExperiment):
 if __name__ == "__main__":
 
     server = True
-    log_file = None
     if server is False:
         dataset_path = os.path.abspath(
                 "C:/Users/chris/Documents/Masters/datasets/Univariate_ts/"
         )
         result_path=os.path.abspath("C:/Users/chris/Documents/Masters/results/")
     else:
-        old_stdout = sys.stdout
-        log_file = open("./message.log", "w")
-        sys.stdout = log_file
         dataset_path=os.path.abspath(
             "/root/datasets/Univariate_ts/"
         )
@@ -82,6 +78,3 @@ if __name__ == "__main__":
         n_threads=multiprocessing.cpu_count()
     )
     kmeans_experiment.run_experiment()
-
-    if log_file is not None:
-        log_file.close()
