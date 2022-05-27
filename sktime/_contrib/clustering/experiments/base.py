@@ -29,7 +29,7 @@ class BaseExperiment:
         split = num_datasets / self.n_threads
 
         if (num_datasets % self.n_threads) != 0:
-            split = math.floor(split)
+            split = int(math.floor(split))
 
         print(f"Beginning running experiment {self.experiment_name}")
         print(f"Result directory will be {self.result_path}")
