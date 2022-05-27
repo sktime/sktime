@@ -26,7 +26,7 @@ class BaseExperiment:
 
         num_datasets = len(datasets)
 
-        split = num_datasets / self.n_threads
+        split = int(num_datasets / self.n_threads)
 
         if (num_datasets % self.n_threads) != 0:
             split = int(math.floor(split))
