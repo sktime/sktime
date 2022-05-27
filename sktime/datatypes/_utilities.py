@@ -333,19 +333,23 @@ def get_slice(obj, start=None, end=None):
 
     obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
 
-    if isinstance(start, int) or isinstance(end, int):
-        if start and end:
-            return obj[start:end]
-        elif end:
-            return obj[:end]
-        else:
-            return obj[start:]
-
-    elif isinstance(start, pd.Timestamp) or isinstance(end, pd.Timestamp):
+    if (
+        isinstance(start, pd.Timestamp)
+        or isinstance(end, pd.Timestamp)
+        or isinstance(start, pd.Period)
+        or isinstance(end, pd.Period)
+    ):
         if start and end:
             return obj[start:end][:-1]
         elif end:
             return obj[:end][:-1]
+        else:
+            return obj[start:]
+    else:
+        if start and end:
+            return obj[start:end]
+        elif end:
+            return obj[:end]
         else:
             return obj[start:]
 
