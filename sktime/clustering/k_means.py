@@ -84,7 +84,10 @@ class TimeSeriesKMeans(TimeSeriesLloyds):
         if averaging_method == "dba":
             self._dba_medoids_distance_metric = "dtw"
             self._precomputed_pairwise = None
-            if "medoids_distance_metric" in average_params:
+            if (
+                average_params is not None
+                and "medoids_distance_metric" in average_params
+            ):
                 self._dba_medoids_distance_metric = average_params[
                     "medoids_distance_metric"
                 ]

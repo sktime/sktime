@@ -36,9 +36,7 @@ def _test_distance_params(
             results.append(distance_func(x, y, **param_dict))
             results.append(distance(x, y, metric=distance_str, **param_dict))
             results.append(curr_dist_fact(x, y))
-
             if distance_str in _expected_distance_results_params:
-
                 if _expected_distance_results_params[distance_str][i][j] is not None:
                     for result in results:
                         assert result == pytest.approx(
@@ -80,8 +78,6 @@ DIST_PARAMS = {
 def test_distance_params(dist: MetricInfo):
     """Test parametisation of distance callables."""
     if dist.canonical_name in DIST_PARAMS:
-        if dist.canonical_name != "twe":
-            return
         _test_distance_params(
             DIST_PARAMS[dist.canonical_name],
             dist.dist_func,

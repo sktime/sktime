@@ -2,7 +2,7 @@
 
 """sktime."""
 
-__version__ = "0.11.3"
+__version__ = "0.11.4"
 
 __all__ = ["show_versions"]
 

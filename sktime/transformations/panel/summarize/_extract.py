@@ -7,7 +7,6 @@ __author__ = ["mloning"]
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import clone
 
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
@@ -397,7 +396,7 @@ class FittedParamExtractor(BaseTransformer):
         # iterate over rows
         extracted_params = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_extract)(
-                clone(self.forecaster), _get_instance(X, i), param_names
+                self.forecaster.clone(), _get_instance(X, i), param_names
             )
             for i in range(n_instances)
         )
