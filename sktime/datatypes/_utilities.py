@@ -156,6 +156,60 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         return max(idxs)
 
 
+def update_data(X, X_new=None):
+    """Update time series container with another one.
+
+    Parameters
+    ----------
+    X : sktime data container, in one of the following mtype formats
+        pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
+        pd_multiindex_hier
+    X_new : None, or sktime data container, should be same mtype as X,
+        or convert to same format when converting to format list via convert_to
+
+    Returns
+    -------
+    X updated with X_new, with rows/indices in X_new added
+        entries in X_new overwrite X if at same index
+        numpy based containers will always be interpreted as having new row index
+    """
+    from sktime.datatypes._convert import convert_to
+    from sktime.datatypes._vectorize import VectorizedDF
+
+    # we only need to modify _X if X is not None
+    if X_new is None:
+        return X
+
+    # if X is vectorized, unwrap it first
+    if isinstance(X, VectorizedDF):
+        X = X.X
+    # we want to ensure that X is either numpy (1D, 2D, 3D)
+    # or in one of the long pandas formats
+    X = convert_to(
+        X,
+        to_type=[
+            "pd.DataFrame",
+            "pd.Series",
+            "np.ndarray",
+            "pd-multiindex",
+            "numpy3D",
+            "pd_multiindex_hier",
+        ],
+    )
+    # update X with the new rows in X_new
+    #  if X is np.ndarray, we assume all rows are new
+    if isinstance(X, np.ndarray):
+        # if 1D or 2D, axis 0 is "time"
+        if X_new.ndim in [1, 2]:
+            return np.concatenate(X, X_new, axis=0)
+        # if 3D, axis 2 is "time"
+        elif X_new.ndim == 3:
+            return np.concatenate(X, X_new, axis=2)
+    #  if y is pandas, we use combine_first to update
+    elif isinstance(X_new, (pd.Series, pd.DataFrame)) and len(X_new) > 0:
+        return X_new.combine_first(X)
+
+
 GET_LATEST_WINDOW_SUPPORTED_MTYPES = [
     "pd.DataFrame",
     "pd-multiindex",

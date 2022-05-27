@@ -98,6 +98,8 @@ class ConformalIntervals(BaseForecaster):
         verbose=False,
     ):
 
+    def __init__(self, forecaster, method="empirical", verbose=False):
+
         if not isinstance(method, str):
             raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
 
@@ -111,6 +113,7 @@ class ConformalIntervals(BaseForecaster):
         self.verbose = verbose
         self.initial_window = initial_window
         self.sample_frac = sample_frac
+
         super(ConformalIntervals, self).__init__()
 
         tags_to_clone = [
@@ -137,6 +140,7 @@ class ConformalIntervals(BaseForecaster):
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,
             )
+
         return self
 
     def _predict(self, fh, X=None):
