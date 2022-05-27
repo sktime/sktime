@@ -44,17 +44,17 @@ class KmeansExperiment(BaseExperiment):
 
         n_classes = len(set(y_train))
 
-        # k_means_clusterer = TimeSeriesKMeans(
-        #     n_clusters=n_classes,
-        #     metric="msm",
-        #     averaging_method='dba',
-        #     average_params={'averaging_distance_metric': 'msm', 'medoids_distance_metric': 'msm'}
-        # )
-
         k_means_clusterer = TimeSeriesKMeans(
             n_clusters=n_classes,
-            metric="euclidean",
+            metric="msm",
+            averaging_method='dba',
+            average_params={'averaging_distance_metric': 'msm', 'medoids_distance_metric': 'msm'}
         )
+
+        # k_means_clusterer = TimeSeriesKMeans(
+        #     n_clusters=n_classes,
+        #     metric="euclidean",
+        # )
 
         run_clustering_experiment(
             X_train,
@@ -87,6 +87,6 @@ if __name__ == "__main__":
         experiment_name="msm_dba",
         dataset_path=dataset_path,
         result_path=result_path,
-        n_threads = multiprocessing.cpu_count()
+        n_threads = (multiprocessing.cpu_count() * 2)
     )
     kmeans_experiment.run_experiment()
