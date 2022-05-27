@@ -52,6 +52,11 @@ class ConformalIntervals(BaseForecaster):
             Caveat: this does not give frequentist but conformal predictive intervals
         "conformal": as in Stankeviciute et al, but with H=1,
             i.e., no Bonferroni correction under number of indices in the horizon
+    initial_window : int, optional, default=1
+        number of minimum initial indices to use for fitting when computing residuals
+    sample_frac : float, optional, default=None
+        value in range (0,1) corresponding to fraction of y index to calculate
+        residuals matrix values for (for speeding up calculation)
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
 
