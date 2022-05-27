@@ -75,7 +75,6 @@ if __name__ == "__main__":
     kmeans_experiment = KmeansExperiment(
         experiment_name="msm_dba",
         dataset_path=dataset_path,
-        result_path=result_path,
-        n_threads=multiprocessing.cpu_count()
+        result_path=result_path
     )
     kmeans_experiment.run_experiment()

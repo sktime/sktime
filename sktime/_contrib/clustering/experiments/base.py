@@ -6,18 +6,18 @@ from threading import Thread, Lock
 
 from sktime.datasets import load_from_tsfile
 
-class BaseExperiment(ABC):
+
+class BaseExperiment:
     def __init__(
             self,
             experiment_name: str,
             dataset_path: str,
             result_path: str,
-            n_threads: int = 1
     ):
         self.experiment_name = experiment_name
         self.dataset_path = dataset_path
         self.result_path = result_path
-        self.n_threads = n_threads
+        self.n_threads = multiprocessing.cpu_count()
 
     def run_experiment(self):
         global lock
@@ -97,10 +97,8 @@ class BaseExperiment(ABC):
 
 
 def threaded_experiment(dataset_paths, experiment: BaseExperiment):
-
     result_path = experiment.result_path
     experiment_name = experiment.experiment_name
-
 
     for i in range(0, len(dataset_paths)):
         dataset = dataset_paths[i]
@@ -115,5 +113,7 @@ def threaded_experiment(dataset_paths, experiment: BaseExperiment):
         else:
             dataset_name = dataset_path.split("/")
         dataset_name = dataset_name[-2]
-        experiment._run_experiment_for_dataset(X_train, y_train, X_test, y_test, dataset_name, result_path, experiment_name)
+        experiment._run_experiment_for_dataset(X_train, y_train, X_test, y_test,
+                                               dataset_name, result_path,
+                                               experiment_name)
         print(f"finished running {dataset_name}")
