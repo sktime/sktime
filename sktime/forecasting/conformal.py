@@ -249,11 +249,17 @@ class ConformalIntervals(BaseForecaster):
             forecaster to use in computing the sliding residuals
         initial_window : int
             minimum length of initial window to use in fitting
+        sample_frac : float
+            for speeding up computing of residuals matrix.
+            sample value in range (0, 1) to obtain a fraction of y indices to
+            compute residuals matrix for
         Returns
         -------
         residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
             [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
-            using a clone of the forecaster passed through the forecaster arg
+            using a clone of the forecaster passed through the forecaster arg.
+            if sample_frac is passed this will have NaN values for 1 - sample_frac
+            fraction of the matrix
         """
         y_index = y.index[initial_window:]
 
