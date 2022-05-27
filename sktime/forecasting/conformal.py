@@ -88,7 +88,14 @@ class ConformalIntervals(BaseForecaster):
         "conformal_bonferroni",
     ]
 
-    def __init__(self, forecaster, method="empirical", sample_frac=None, verbose=False):
+    def __init__(
+        self,
+        forecaster,
+        method="empirical",
+        initial_window=1,
+        sample_frac=None,
+        verbose=False,
+    ):
 
         if not isinstance(method, str):
             raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
@@ -101,6 +108,7 @@ class ConformalIntervals(BaseForecaster):
         self.forecaster = forecaster
         self.method = method
         self.verbose = verbose
+        self.initial_window = initial_window
         self.sample_frac = sample_frac
         super(ConformalIntervals, self).__init__()
 
@@ -122,8 +130,11 @@ class ConformalIntervals(BaseForecaster):
 
         if self.fh_early_:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=y, X=X, forecaster=self.forecaster, initial_window=self.initial_window,
-                sample_frac=self.sample_frac
+                y=y,
+                X=X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+                sample_frac=self.sample_frac,
             )
         return self
 
@@ -224,6 +235,7 @@ class ConformalIntervals(BaseForecaster):
 
     def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
         """Compute sliding residuals used in uncertainty estimates.
+
         Parameters
         ----------
         y : pd.Series or pd.DataFrame
@@ -251,15 +263,15 @@ class ConformalIntervals(BaseForecaster):
             forecaster = clone(forecaster)
             y_train = y[:id]  # subset on which we fit
             X_train = X[:id]
-            y_test = y[id:]   # subset on which we predict
+            y_test = y[id:]  # subset on which we predict
             X_test = X[id:]
-            # Check whether train and test are overlapping due to pandas slicing logic for timestamps
-            # Shift test forward in this case
-            if y_train.max() == y_test.min():
+            # Check whether train and test are overlapping due to pandas
+            # slicing logic for timestamps. Shift test forward in this case
+            if y_train.index.max() == y_test.index.min():
                 y_test = y_test[1:]
                 X_test = X_test[1:]
             try:
-                forecaster.fit(y_train,  X=X_train, fh=y_test.index)
+                forecaster.fit(y_train, X=X_train, fh=y_test.index)
             except ValueError:
                 warn(
                     f"Couldn't fit the model on "
@@ -267,7 +279,9 @@ class ConformalIntervals(BaseForecaster):
                 )
                 continue
             try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X_test).iloc[:, 0]
+                residuals_matrix.loc[id] = forecaster.predict_residuals(
+                    y_test, X_test
+                ).iloc[:, 0]
             except IndexError:
                 warn(
                     f"Couldn't predict after fitting on time series of length \
