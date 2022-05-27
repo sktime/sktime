@@ -1217,6 +1217,7 @@ def geometric_mean_absolute_error(
     y_pred,
     horizon_weight=None,
     multioutput="uniform_average",
+    **kwargs,
 ):
     """Geometric mean absolute error (GMAE).
 
@@ -1325,6 +1326,7 @@ def geometric_mean_squared_error(
     horizon_weight=None,
     multioutput="uniform_average",
     square_root=False,
+    **kwargs,
 ):
     """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
 

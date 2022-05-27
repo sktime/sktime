@@ -72,6 +72,12 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_fit_does_not_overwrite_hyper_params",
     ],
+    # sth is not quite right with the RowTransformer-s changing state,
+    #   but these are anyway on their path to deprecation, see #2370
+    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
+    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
+    # ColumnTransformer still needs to be refactored, see #2537
+    "ColumnTransformer": ["test_methods_do_not_change_state"],
 }
 
 # We here configure estimators for basic unit testing, including setting of
