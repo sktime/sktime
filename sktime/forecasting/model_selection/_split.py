@@ -16,13 +16,15 @@ import inspect
 import numbers
 import warnings
 from inspect import signature
-from typing import Generator, Optional, Tuple, Union
+from typing import Iterator, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 from sklearn.model_selection import train_test_split as _train_test_split
 
+from sktime.base import BaseObject
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.datatypes._utilities import get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
@@ -58,7 +60,8 @@ SPLIT_TYPE = Union[
     Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
 ]
 SPLIT_ARRAY_TYPE = Tuple[np.ndarray, np.ndarray]
-SPLIT_GENERATOR_TYPE = Generator[SPLIT_ARRAY_TYPE, None, None]
+SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
+PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
 def _repr(self) -> str:
@@ -340,7 +343,7 @@ def _check_cutoffs_fh_y(
         raise TypeError("Unsupported type of `cutoffs` and `fh`")
 
 
-class BaseSplitter:
+class BaseSplitter(BaseObject):
     r"""Base class for temporal cross-validation splitters.
 
     The purpose of this implementation is to fill the gap relative to
@@ -399,7 +402,6 @@ class BaseSplitter:
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
-
     """
 
     def __init__(
@@ -411,40 +413,233 @@ class BaseSplitter:
         self.fh = fh
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
-        """Split `y` into training and test windows.
+        """Get iloc references to train/test slits of `y`.
 
         Parameters
         ----------
-        y : pd.Series or pd.Index
-            Time series to split
+        y : pd.Index or time series in sktime compatible time series format (any)
+            Index of time series to split, or time series to split
+            If time series, considered as index of equivalent pandas type container:
+                pd.DataFrame, pd.Series, pd-multiindex, or pd_multiindex_hier mtype
 
         Yields
         ------
-        train : np.ndarray
-            Training window indices
-        test : np.ndarray
-            Test window indices
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
         """
-        y_index = get_index_for_series(y)
-        for train, test in self._split(y_index):
+        y_index = self._coerce_to_index(y)
+
+        if not isinstance(y_index, pd.MultiIndex):
+            split = self._split
+        else:
+            split = self._split_vectorized
+
+        for train, test in split(y_index):
             yield train[train >= 0], test[test >= 0]
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get iloc references to train/test splits of `y`.
+
+        private _split containing the core logic, called from split
+
+        Parameters
+        ----------
+        y : pd.Index or time series in sktime compatible time series format
+            Time series to split, or index of time series to split
+
+        Yields
+        ------
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
+        """
+        raise NotImplementedError("abstract method")
+
+    def _split_vectorized(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
+
+        This applies _split per time series instance in the multiindex.
+        Instances in this context are defined by levels except last level.
+
+        Parameters
+        ----------
+        y : pd.MultiIndex, with last level time-like
+            as used in pd_multiindex and pd_multiindex_hier sktime mtypes
+
+        Yields
+        ------
+        train : 1D np.ndarray of dtype int
+            Training window indices, iloc references to training indices in y
+        test : 1D np.ndarray of dtype int
+            Test window indices, iloc references to test indices in y
+        """
+        # challenge is obtaining iloc references for *the original data frame*
+        #   todo: try to shorten this, there must be a quicker way
+        train_test_res = dict()
+        train_iloc = dict()
+        test_iloc = dict()
+        y = pd.DataFrame(index=y)
+        y_index_df = y.reset_index(-1)
+        y_index_df["__index"] = range(len(y_index_df))
+        y_index_inst = y_index_df.index.unique()
+        for idx in y_index_inst:
+            train_iloc[idx] = dict()
+            test_iloc[idx] = dict()
+        for idx in y_index_inst:
+            y_inst = y_index_df.loc[idx]
+            y_inst = y_inst.reset_index(drop=True).set_index(y_inst.columns[0])
+            y_inst_index = y_inst.index
+            train_test_res[idx] = list(self._split(y_inst_index))
+            for i, tt in enumerate(train_test_res[idx]):
+                train_iloc[idx][i] = tt[0]
+                test_iloc[idx][i] = tt[1]
+            for i, train in train_iloc[idx].items():
+                train_iloc[idx][i] = y_inst["__index"].iloc[train].values
+            for i, test in test_iloc[idx].items():
+                test_iloc[idx][i] = y_inst["__index"].iloc[test].values
+
+        train_multi = dict()
+        test_multi = dict()
+        for idx in y_index_inst:
+            for i in train_iloc[idx].keys():
+                if i not in train_multi.keys():
+                    train_multi[i] = train_iloc[idx][i]
+                    test_multi[i] = test_iloc[idx][i]
+                else:
+                    train_multi[i] = np.concatenate(
+                        (train_iloc[idx][i], train_multi[i])
+                    )
+                    test_multi[i] = np.concatenate((test_iloc[idx][i], test_multi[i]))
+        for i in train_multi.keys():
+            train_multi[i] = np.sort(train_multi[i])
+            test_multi[i] = np.sort(test_multi[i])
+
+        for i in train_multi.keys():
+            train = train_multi[i]
+            test = test_multi[i]
+            yield train, test
+
+    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[Tuple[pd.Index, pd.Index]]:
+        """Get loc references to train/test splits of `y`.
+
+        Parameters
+        ----------
+        y : pd.Index or time series in sktime compatible time series format (any)
+            Time series to split, or index of time series to split
+
+        Yields
+        ------
+        train : pd.Index
+            Training window indices, loc references to training indices in y
+        test : pd.Index
+            Test window indices, loc references to test indices in y
+        """
+        y_index = self._coerce_to_index(y)
+
+        for train, test in self.split(y_index):
+            yield y_index[train], y_index[test]
+
+    def split_series(self, y: ACCEPTED_Y_TYPES) -> Iterator[SPLIT_TYPE]:
         """Split `y` into training and test windows.
 
         Parameters
         ----------
-        y : pd.Index
-            Index of time series to split
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
+            Time series to split, must conform with one of the sktime type conventions.
 
         Yields
         ------
-        training_window : np.ndarray
-            Training window indices
-        test_window : np.ndarray
-            Test window indices
+        train : time series of same sktime mtype as `y`
+            training series in the split
+        test : time series of same sktime mtype as `y`
+            test series in the split
         """
-        raise NotImplementedError("abstract method")
+        y, y_orig_mtype = self._check_y(y)
+
+        for train, test in self.split(y.index):
+            y_train = y.iloc[train]
+            y_test = y.iloc[test]
+            y_train = convert_to(y_train, y_orig_mtype)
+            y_test = convert_to(y_test, y_orig_mtype)
+            yield y_train, y_test
+
+    def _coerce_to_index(self, y: ACCEPTED_Y_TYPES) -> pd.Index:
+        """Check and coerce y to pandas index.
+
+        Parameters
+        ----------
+        y : pd.Index or time series in sktime compatible time series format (any)
+            Index of time series to split, or time series to split
+            If time series, considered as index of equivalent pandas type container:
+                pd.DataFrame, pd.Series, pd-multiindex, or pd_multiindex_hier mtype
+
+        Returns
+        -------
+        y_index : y, if y was pd.Index; otherwise _check_y(y).index
+        """
+        if not isinstance(y, pd.Index):
+            y, _ = self._check_y(y, allow_index=True)
+            y_index = y.index
+        else:
+            y_index = y
+        return y_index
+
+    def _check_y(self, y, allow_index=False):
+        """Check and coerce y to a pandas based mtype.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D), optional (default=None)
+            Time series to check, must conform with one of the sktime type conventions.
+
+        Returns
+        -------
+        y_inner : time series y coerced to one of the sktime pandas based mtypes:
+            pd.DataFrame, pd.Series, pd-multiindex, pd_multiindex_hier
+            returns pd.Series only if y was pd.Series, otherwise a pandas.DataFrame
+        y_mtype : original mtype of y
+
+        Raises
+        ------
+        TypeError if y is not one of the permissible mtypes
+        """
+        if allow_index and isinstance(y, pd.Index):
+            return y, "pd.Index"
+
+        ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+
+        y_valid, _, y_metadata = check_is_scitype(
+            y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
+        )
+        if allow_index:
+            msg = (
+                "y must be a pandas.Index, or a time series in an sktime compatible "
+                "format, of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+        else:
+            msg = (
+                "y must be in an sktime compatible format, "
+                "of scitype Series, Panel or Hierarchical, "
+                "for instance a pandas.DataFrame with sktime compatible time indices, "
+                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            )
+        if not y_valid:
+            raise TypeError(msg)
+
+        y_inner = convert_to(y, to_type=PANDAS_MTYPES)
+
+        mtype = y_metadata["mtype"]
+
+        return y_inner, mtype
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
@@ -943,7 +1138,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     Split time series repeatedly into an growing training set and a fixed-size test set.
 
-    For example for `window_length = 5`, `step_length = 1` and `fh = 3`
+    For example for `initial_window = 5`, `step_length = 1` and `fh = 3`
     here is a representation of the folds::
 
     |-----------------------|
@@ -965,7 +1160,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         Window length
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
-    start_with_window : bool, optional (default=False)
+    start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
     """

@@ -42,7 +42,6 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sklearn import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -242,11 +241,10 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, object is reset
+        # if fit is called, estimator is reset, including fitted state
         self.reset()
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
         # check and convert X/y
@@ -769,7 +767,7 @@ class BaseForecaster(BaseEstimator):
     def update_predict(
         self,
         y,
-        cv=None,
+        cv,
         X=None,
         update_params=True,
         reset_forecaster=True,
@@ -814,7 +812,8 @@ class BaseForecaster(BaseEstimator):
             For further details:
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
-        cv : temporal cross-validation generator, optional (default=None)
+        cv : temporal cross-validation generator, e.g. a splitter like
+                SlidingWindowSplitter or ExpandingWindowSplitter
         X : time series in sktime compatible format, optional (default=None)
                 Exogeneous time series for updating and forecasting
             Should be of same scitype (Series, Panel, or Hierarchical) as y
@@ -1499,7 +1498,7 @@ class BaseForecaster(BaseEstimator):
 
             self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
             for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = clone(self)
+                self.forecasters_.iloc[i, 0] = self.clone()
                 self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
 
             return self
