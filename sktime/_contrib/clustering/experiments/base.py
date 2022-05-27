@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import glob
 import math
-from abc import ABC
 from threading import Thread, Lock
+from sktime.benchmarking.experiments import run_clustering_experiment
 
 from sktime.datasets import load_from_tsfile
 
@@ -13,11 +13,12 @@ class BaseExperiment:
             experiment_name: str,
             dataset_path: str,
             result_path: str,
+            n_threads: int = 1
     ):
         self.experiment_name = experiment_name
         self.dataset_path = dataset_path
         self.result_path = result_path
-        self.n_threads = multiprocessing.cpu_count()
+        self.n_threads = n_threads
 
     def run_experiment(self):
         global lock

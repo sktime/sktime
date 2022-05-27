@@ -17,6 +17,17 @@ ignore_dataset = []
 
 
 class KmeansExperiment(BaseExperiment):
+    
+    def __init__(
+            self,
+            experiment_name: str,
+            dataset_path: str,
+            result_path: str,
+            n_threads: int = 1
+    ):
+        super(KmeansExperiment, self).__init__(experiment_name, dataset_path, result_path, n_threads)
+
+    
 
     @staticmethod
     def _run_experiment_for_dataset(
@@ -75,6 +86,7 @@ if __name__ == "__main__":
     kmeans_experiment = KmeansExperiment(
         experiment_name="msm_dba",
         dataset_path=dataset_path,
-        result_path=result_path
+        result_path=result_path,
+        n_threads = multiprocessing.cpu_count()
     )
     kmeans_experiment.run_experiment()
