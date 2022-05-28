@@ -1833,10 +1833,8 @@ def load_tsf_to_dataframe(
 
         return loaded_data, metadata
 
-def ensure_file_has_extension(
-    path,
-    suffix
-):
+
+def ensure_file_has_extension(path, suffix):
     """
     Checks if the filename contains an file extension
 
@@ -1856,6 +1854,7 @@ def ensure_file_has_extension(
         path += suffix
 
     return path
+
 
 def ensure_file_has_extension(path, suffix):
     """
