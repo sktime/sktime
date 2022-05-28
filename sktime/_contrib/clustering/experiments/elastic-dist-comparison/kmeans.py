@@ -87,6 +87,6 @@ if __name__ == "__main__":
         experiment_name="msm_dba",
         dataset_path=dataset_path,
         result_path=result_path,
-        n_threads = (multiprocessing.cpu_count() * 2)
+        n_threads = (multiprocessing.cpu_count())
     )
     kmeans_experiment.run_experiment()
