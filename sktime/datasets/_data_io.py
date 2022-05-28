@@ -434,7 +434,6 @@ def load_from_tsfile_to_dataframe(
 
     full_file_path_and_name = ensure_file_has_extension(full_file_path_and_name, ".ts")
 
-
     # Parse the file
     with open(full_file_path_and_name, "r", encoding="utf-8") as file:
         for line in file:
@@ -1834,10 +1833,8 @@ def load_tsf_to_dataframe(
 
         return loaded_data, metadata
 
-def ensure_file_has_extension(
-    path,
-    suffix
-):
+
+def ensure_file_has_extension(path, suffix):
     """
     Checks if the filename contains an file extension
 
@@ -1857,6 +1854,7 @@ def ensure_file_has_extension(
         path += suffix
 
     return path
+
 
 def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
