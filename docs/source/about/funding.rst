@@ -70,8 +70,6 @@ The `Wellcome Trust <https://wellcome.org>`_ sponsored one sktime internship as 
   :width: 32 %
   :target: https://summerofcode.withgoogle.com
 
-Interns
--------
 
 .. list-table::
    :header-rows: 1
