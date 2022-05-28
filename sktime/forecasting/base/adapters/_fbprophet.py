@@ -26,7 +26,7 @@ class _ProphetAdapter(BaseForecaster):
     def _convert_int_to_date(self, y):
         """Convert int to date, for use by prophet."""
         y = y.copy()
-        idx_max = y.index[-1]
+        idx_max = y.index[-1] + 1
         int_idx = pd.date_range(start="2000-01-01", periods=idx_max, freq="D")
         int_idx = int_idx[y.index]
         y.index = int_idx
