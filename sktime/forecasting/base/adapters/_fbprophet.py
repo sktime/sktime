@@ -51,6 +51,12 @@ class _ProphetAdapter(BaseForecaster):
         self._instantiate_model()
         self._check_changepoints()
 
+        if type(y.index) is pd.PeriodIndex:
+            raise NotImplementedError(
+                "pd.PeriodIndex is not supported for y, use "
+                f"pd.DatetimeIndex or integer pd.Index instead."
+            )
+
         # integer type indices are converted to datetime
         # since facebook prophet can only deal with dates
         if y.index.dtype == "int64":
