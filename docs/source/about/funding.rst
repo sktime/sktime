@@ -90,11 +90,11 @@ The `Wellcome Trust <https://wellcome.org>`_ sponsored one sktime internship as 
      - :user:`AurumnPegasus`
      - Google Summer of Code
      - 2022
-   * - Svea Marie Meyer
-     - :user:`SveaMeyer13`
-     - Google Summer of Code via `INCF <https://www.incf.org>`_
-     - 2021
    * - Guzal Bulatova
      - :user:`GuzalBulatova`
      - Outreachy
+     - 2021
+   * - Svea Marie Meyer
+     - :user:`SveaMeyer13`
+     - Google Summer of Code via `INCF <https://www.incf.org>`_
      - 2021
