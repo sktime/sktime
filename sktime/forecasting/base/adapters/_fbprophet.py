@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapter for Facebook prophet to be used in sktime framework."""
 
-__author__ = ["mloning", "aiwalter"]
+__author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["_ProphetAdapter"]
 
 import os
@@ -11,7 +11,6 @@ import os
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation.forecasting import check_y_X
 
 
 class _ProphetAdapter(BaseForecaster):
@@ -42,7 +41,19 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._instantiate_model()
         self._check_changepoints()
-        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
+
+        # integer type indices are converted to datetime
+        # since facebook prophet can only deal with dates
+        if y.index.dtype == "int64":
+            self.y_index_was_int_ = True
+            y = y.copy()
+            y.index = pd.date_range(start="2000-01-01", periods=len(y), freq="D")
+        else:
+            self.y_index_was_int_ = False
+        if X is not None and X.index.dtype == "int64":
+            y_start = y.index[0]
+            X = X.copy()
+            X.index = pd.date_range(start=y_start, periods=len(X), freq="D")
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
@@ -86,6 +97,15 @@ class _ProphetAdapter(BaseForecaster):
 
         return self
 
+    def _get_prophet_fh(self):
+        """Get a prophet compatible fh, in datetime, even if fh was int."""
+        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        if not isinstance(fh, pd.DatetimeIndex):
+            max_int = fh[-1] + 1
+            fh_date = pd.date_range(start="2000-01-01", periods=max_int, freq="D")
+            fh = fh_date[fh]
+        return fh
+
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -108,11 +128,11 @@ class _ProphetAdapter(BaseForecaster):
         Exception
             Error when merging data
         """
-        self._update_X(X, enforce_index_type=pd.DatetimeIndex)
+        if X is not None and X.index.dtype == "int64":
+            X = X.copy()
+            X.index = pd.date_range(start=self.cutoff, periods=len(X), freq="D")
 
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
-        if not isinstance(fh, pd.DatetimeIndex):
-            raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
+        fh = self._get_prophet_fh()
         df = pd.DataFrame({"ds": fh}, index=fh)
 
         # Merge X with df (of created future DatetimeIndex values)
@@ -133,6 +153,10 @@ class _ProphetAdapter(BaseForecaster):
         y_pred.reset_index(inplace=True)
         y_pred.index = y_pred["ds"].values
         y_pred.drop("ds", axis=1, inplace=True)
+
+        if self.y_index_was_int_:
+            y_pred.index = self.fh.to_absolute(cutoff=self.cutoff)
+
         return y_pred
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
@@ -170,9 +194,7 @@ class _ProphetAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        fh = fh.to_absolute(cutoff=self.cutoff).to_pandas()
-        if not isinstance(fh, pd.DatetimeIndex):
-            raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
+        fh = self._get_prophet_fh()
 
         # prepare the return DataFrame - empty with correct cols
         var_names = ["Coverage"]
@@ -204,6 +226,9 @@ class _ProphetAdapter(BaseForecaster):
             #  so if coverage is small, it can happen that upper < lower in prophet
             pred_int[("Coverage", c, "lower")] = out_prophet.min(axis=1)
             pred_int[("Coverage", c, "upper")] = out_prophet.max(axis=1)
+
+        if self.y_index_was_int_:
+            pred_int.index = self.fh.to_absolute(cutoff=self.cutoff)
 
         return pred_int
 
