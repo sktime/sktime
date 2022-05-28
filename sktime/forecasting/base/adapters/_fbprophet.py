@@ -145,6 +145,7 @@ class _ProphetAdapter(BaseForecaster):
 
         if X is not None and X.index.dtype == "int64":
             X = X.copy()
+            X = X.loc[self.fh.to_absolute(self.cutoff).to_numpy()]
             X.index = fh
 
         # Merge X with df (of created future DatetimeIndex values)
