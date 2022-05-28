@@ -66,6 +66,7 @@ def check_estimator(
     from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
     from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
     from sktime.registry import scitype
+    from sktime.regression.tests.test_all_regressors import TestAllRegressors
     from sktime.tests.test_all_estimators import TestAllEstimators
     from sktime.transformations.tests.test_all_transformers import TestAllTransformers
 
@@ -73,6 +74,7 @@ def check_estimator(
     testclass_dict["classifier"] = TestAllClassifiers
     testclass_dict["early_classifier"] = TestAllEarlyClassifiers
     testclass_dict["forecaster"] = TestAllForecasters
+    testclass_dict["regressor"] = TestAllRegressors
     testclass_dict["transformer"] = TestAllTransformers
 
     results = TestAllEstimators().run_tests(
