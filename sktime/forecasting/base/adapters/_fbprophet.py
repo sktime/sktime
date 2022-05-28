@@ -54,7 +54,7 @@ class _ProphetAdapter(BaseForecaster):
         if type(y.index) is pd.PeriodIndex:
             raise NotImplementedError(
                 "pd.PeriodIndex is not supported for y, use "
-                f"pd.DatetimeIndex or integer pd.Index instead."
+                "pd.DatetimeIndex or integer pd.Index instead."
             )
 
         # integer type indices are converted to datetime
