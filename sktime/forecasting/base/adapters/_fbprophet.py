@@ -23,6 +23,15 @@ class _ProphetAdapter(BaseForecaster):
         "handles-missing-data": False,
     }
 
+    def _convert_int_to_date(self, y):
+        """Convert int to date, for use by prophet."""
+        y = y.copy()
+        idx_max = y.index[-1]
+        int_idx = pd.date_range(start="2000-01-01", periods=idx_max, freq="D")
+        int_idx = int_idx[y.index]
+        y.index = int_idx
+        return y
+
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -46,14 +55,11 @@ class _ProphetAdapter(BaseForecaster):
         # since facebook prophet can only deal with dates
         if y.index.dtype == "int64":
             self.y_index_was_int_ = True
-            y = y.copy()
-            y.index = pd.date_range(start="2000-01-01", periods=len(y), freq="D")
+            y = self._convert_int_to_date(y)
         else:
             self.y_index_was_int_ = False
         if X is not None and X.index.dtype == "int64":
-            y_start = y.index[0]
-            X = X.copy()
-            X.index = pd.date_range(start=y_start, periods=len(X), freq="D")
+            X = self._convert_int_to_date(X)
 
         # We have to bring the data into the required format for fbprophet:
         df = pd.DataFrame({"y": y, "ds": y.index})
@@ -128,12 +134,12 @@ class _ProphetAdapter(BaseForecaster):
         Exception
             Error when merging data
         """
-        if X is not None and X.index.dtype == "int64":
-            X = X.copy()
-            X.index = pd.date_range(start=self.cutoff, periods=len(X), freq="D")
-
         fh = self._get_prophet_fh()
         df = pd.DataFrame({"ds": fh}, index=fh)
+
+        if X is not None and X.index.dtype == "int64":
+            X = X.copy()
+            X.index = fh
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
@@ -195,6 +201,10 @@ class _ProphetAdapter(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         fh = self._get_prophet_fh()
+
+        if X is not None and X.index.dtype == "int64":
+            X = X.copy()
+            X.index = fh
 
         # prepare the return DataFrame - empty with correct cols
         var_names = ["Coverage"]
