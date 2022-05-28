@@ -30,8 +30,9 @@ For example, the scitype of an estimator that solves the forecasting task is "fo
 The scitype of an estimator that solves the time series classification task is "time series classifier".
 
 Estimators for a given scitype should be located in the respective module.
-The estimator scitypes also map onto the different extension templates found in the
-`extension_templates <https://github.com/alan-turing-institute/sktime/tree/main/extension_templates>`__ directory of ``sktime``.
+The estimator scitypes also map onto the different extension templates found in
+the `extension_templates <https://github.com/alan-turing-institute/sktime/tree/main/extension_templates>`__
+directory of ``sktime``.
 
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
 This is also, often, explicitly signposted in publications related to the estimator.
