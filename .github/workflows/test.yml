@@ -119,7 +119,7 @@ jobs:
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
 
-  test-softdeps:
+  test-nosoftdeps:
     needs: code-quality
     runs-on: ubuntu-20.04
     steps:
