@@ -8,6 +8,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert_to
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.compose import TransformerPipeline
+from sktime.utils.sklearn import is_sklearn_classifier
 
 __author__ = ["fkiraly"]
 __all__ = ["ClassifierPipeline", "SklearnClassifierPipeline"]
@@ -465,12 +466,9 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
-        # can handle unequal length iff: transformers can,
-        #   *or* transformer chain renders the series equal length
-        unequal = self.transformers_.get_tag("capability:unequal_length", False)
-        unequal = unequal or self.transformers_.get_tag(
-            "capability:unequal_length:removes", False
-        )
+        # can handle unequal length iff transformer chain renders series equal length
+        # because sklearn classifiers require equal length (number of variables) input
+        unequal = self.transformers_.get_tag("capability:unequal_length:removes", False)
         # last three tags are always False, since not supported by transformers
         tags_to_set = {
             "capability:multivariate": multivariate,
@@ -510,7 +508,7 @@ class SklearnClassifierPipeline(ClassifierPipeline):
 
     def _convert_X_to_sklearn(self, X):
         """Convert a Table or Panel X to 2D numpy required by sklearn."""
-        X_scitype = self.classifier.get_tag("scitype:transform-output")
+        X_scitype = self.transformers_.get_tag("scitype:transform-output")
         # if X_scitype is Primitives, output is Table, convert to 2D numpy array
         if X_scitype == "Primitives":
             Xt = convert_to(X, to_type="numpy2D", as_scitype="Table")
@@ -585,6 +583,28 @@ class SklearnClassifierPipeline(ClassifierPipeline):
         Xt = self.transformers_.transform(X)
         Xt_sklearn = self._convert_X_to_sklearn(Xt)
         return self.classifier_.predict_proba(Xt_sklearn)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `transformers`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if "classifier" in kwargs.keys():
+            if not is_sklearn_classifier(kwargs["classifier"]):
+                raise TypeError('"classifier" arg must be an sklearn classifier')
+        trafo_keys = self._get_params("_transformers", deep=True).keys()
+        classif_keys = self.classifier.get_params(deep=True).keys()
+        trafo_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=trafo_keys)
+        classif_args = self._subset_dict_keys(dict_to_subset=kwargs, keys=classif_keys)
+        if len(classif_args) > 0:
+            self.classifier.set_params(**classif_args)
+        if len(trafo_args) > 0:
+            self._set_params("_transformers", **trafo_args)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
