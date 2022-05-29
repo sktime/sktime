@@ -30,6 +30,7 @@ metadata: dict - metadata about obj if valid, otherwise None
         "is_univariate": bool, True iff table has one variable
         "is_empty": bool, True iff table has no variables or no instances
         "has_nans": bool, True iff the panel contains NaN values
+        "n_instances": int, number of instances/rows in the table
 """
 
 __author__ = ["fkiraly"]
@@ -64,6 +65,7 @@ def check_pddataframe_table(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1 or len(obj.columns) < 1
     metadata["is_univariate"] = len(obj.columns) < 2
+    metadata["n_instances"] = len(index)
 
     # check whether there are any nans
     #   compute only if needed
