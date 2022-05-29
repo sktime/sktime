@@ -412,21 +412,22 @@ class SklearnClassifierPipeline(ClassifierPipeline):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
-    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.series.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
-    >>> from sktime.classification.compose import ClassifierPipeline
+    >>> from sktime.classification.compose import SklearnClassifierPipeline
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> pipeline = ClassifierPipeline(
-    ...     TimeSeriesForestClassifier(n_estimators=5), [PCATransformer()]
-    ... )
+    >>> t1 = ExponentTransformer()
+    >>> t2 = SummaryTransformer()
+    >>> pipeline = SklearnClassifierPipeline(KNeighborsClassifier(), [t1, t2])
     >>> pipeline.fit(X_train, y_train)
-    ClassifierPipeline(...)
+    Sklearn ClassifierPipeline(...)
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
-    >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
+    >>> pipeline = t1 * t2 * KNeighborsClassifier()
     """
 
     _tags = {
