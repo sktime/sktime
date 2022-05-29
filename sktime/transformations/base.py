@@ -159,16 +159,17 @@ class BaseTransformer(BaseEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
-        from sktime.classification.compose import SklearnClassifierPipeline
         from sktime.transformations.compose import TransformerPipeline
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
+        if (
+            isinstance(other, BaseTransformer) or
+            is_sklearn_classifier(other) or
+            is_sklearn_transformer(other)
+        ):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
-        elif is_sklearn_classifier(other):
-            return SklearnClassifierPipeline(classifier=other, transformers=[self])
         else:
             return NotImplemented
 

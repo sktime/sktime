@@ -10,7 +10,7 @@ from sklearn import clone
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.multiindex import flatten_multiindex
-from sktime.utils.sklearn import is_sklearn_transformer
+from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 
 __author__ = ["fkiraly", "mloning"]
 __all__ = ["TransformerPipeline", "FeatureUnion"]
@@ -198,18 +198,25 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
-        # need to escape if other is BaseForecaster
-        #   this is because forecsting Pipelines are *also* transformers
-        #   but they need to take precedence in parsing the expression
+        from sktime.classification.compose import SklearnClassifierPipeline
         from sktime.forecasting.base import BaseForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
+        # need to escape if other is BaseForecaster
+        #   this is because forecsting Pipelines are *also* transformers
+        #   but they need to take precedence in parsing the expression
         if isinstance(other, BaseForecaster):
             return NotImplemented
 
         # if sklearn transformer, adapt to sktime transformer first
         if is_sklearn_transformer(other):
             return self * TabularToSeriesAdaptor(other)
+
+        # if sklearn classifier, use sklearn classifier pipeline
+        if is_sklearn_classifier(other):
+            return SklearnClassifierPipeline(
+                classifier=other, transformers=[self.steps]
+            )
 
         return self._dunder_concat(
             other=other,
