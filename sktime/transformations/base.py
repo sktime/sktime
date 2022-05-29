@@ -164,9 +164,9 @@ class BaseTransformer(BaseEstimator):
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
         if (
-            isinstance(other, BaseTransformer) or
-            is_sklearn_classifier(other) or
-            is_sklearn_transformer(other)
+            isinstance(other, BaseTransformer)
+            or is_sklearn_classifier(other)
+            or is_sklearn_transformer(other)
         ):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
