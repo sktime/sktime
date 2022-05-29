@@ -28,9 +28,9 @@ class Imputer(BaseTransformer):
     method : str, default="drift"
         Method to fill the missing values values.
 
-        * "drift" : drift/trend values by sktime.PolynomialTrendForecaster()
+        * "drift" : drift/trend values by sktime.PolynomialTrendForecaster(degree=1)
             first, X in transform() is filled with ffill then bfill
-            then PolynomialTrendForecaster is fitted to filled X, and
+            then PolynomialTrendForecaster(degree=1) is fitted to filled X, and
             predict values are queried at indices which had missing values
         * "linear" : linear interpolation, uses pd.Series.interpolate()
         * "nearest" : use nearest value, uses pd.Series.interpolate()
