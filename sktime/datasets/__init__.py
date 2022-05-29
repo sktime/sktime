@@ -35,6 +35,8 @@ __all__ = [
     "write_tabular_transformation_to_arff",
     "load_tsf_to_dataframe",
     "load_unit_test_tsf",
+    "read_results_from_uea_format",
+    "read_clusterer_result_from_uea_format"
 ]
 
 from sktime.datasets._data_io import (
@@ -50,6 +52,8 @@ from sktime.datasets._data_io import (
     write_ndarray_to_tsfile,
     write_results_to_uea_format,
     write_tabular_transformation_to_arff,
+    read_results_from_uea_format,
+    read_clusterer_result_from_uea_format
 )
 from sktime.datasets._single_problem_loaders import (
     load_acsf1,
