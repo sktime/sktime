@@ -95,6 +95,7 @@ def check_pdseries_table(obj, return_metadata=False, var_name="obj"):
     index = obj.index
     metadata["is_empty"] = len(index) < 1
     metadata["is_univariate"] = True
+    metadata["n_instances"] = len(index)
 
     # check that dtype is not object
     if "object" == obj.dtypes:
@@ -126,6 +127,7 @@ def check_numpy1d_table(obj, return_metadata=False, var_name="obj"):
 
     # we now know obj is a 1D np.ndarray
     metadata["is_empty"] = len(obj) < 1
+    metadata["n_instances"] = len(obj)
     # 1D numpy arrays are considered univariate
     metadata["is_univariate"] = True
     # check whether there any nans; compute only if requested
@@ -153,6 +155,7 @@ def check_numpy2d_table(obj, return_metadata=False, var_name="obj"):
     # we now know obj is a 2D np.ndarray
     metadata["is_empty"] = len(obj) < 1 or obj.shape[1] < 1
     metadata["is_univariate"] = obj.shape[1] < 2
+    metadata["n_instances"] = obj.shape[0]
     # check whether there any nans; compute only if requested
     if return_metadata:
         metadata["has_nans"] = pd.isnull(obj).any()
@@ -201,6 +204,7 @@ def check_list_of_dict_table(obj, return_metadata=False, var_name="obj"):
             [pd.isnull(d[key]) for d in obj for key in d.keys()]
         )
         metadata["is_empty"] = len(obj) < 1 or np.all([len(x) < 1 for x in obj])
+        metadata["n_instances"] = len(obj)
 
     return _ret(True, None, metadata, return_metadata)
 
