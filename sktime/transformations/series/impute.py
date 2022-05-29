@@ -33,6 +33,8 @@ class Imputer(BaseTransformer):
             then PolynomialTrendForecaster(degree=1) is fitted to filled X, and
             predict values are queried at indices which had missing values
         * "linear" : linear interpolation, uses pd.Series.interpolate()
+            WARNING: This method can not extrapolate, so it is fitted always on the
+            data given to transform().
         * "nearest" : use nearest value, uses pd.Series.interpolate()
         * "constant" : same constant value (given in arg value) for all NaN
         * "mean" : pd.Series.mean() of *fit* data
