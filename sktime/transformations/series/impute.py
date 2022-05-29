@@ -10,7 +10,6 @@ __all__ = ["Imputer"]
 from warnings import warn
 
 import numpy as np
-from sklearn.base import clone
 from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -141,7 +140,7 @@ class Imputer(BaseTransformer):
             if self.method == "drift":
                 self._forecaster = PolynomialTrendForecaster(degree=1)
             elif self.method == "forecaster":
-                self._forecaster = clone(self.forecaster)
+                self._forecaster = self.forecaster.clone()
         elif self.method == "mean":
             self._mean = X.mean()
         elif self.method == "median":

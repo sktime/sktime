@@ -84,9 +84,9 @@ def _validate_bounding(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d)
-        First timeseries
+        First time series
     y: np.ndarray (1d, 2d, or 3d)
-        Second timeseries
+        Second time series
     """
     no_bounding = LowerBounding.NO_BOUNDING
     no_bounding_result = no_bounding.create_bounding_matrix(x, y)
