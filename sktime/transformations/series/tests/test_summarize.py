@@ -70,8 +70,8 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
     expected_features = expected_sum_features + expected_q_features
 
     # for multivariate series, columns = no variables * no feature types
-    if isinstance(yt, pd.DataFrame):
-        expected_features = len(yt.columns) * expected_features
+    if isinstance(y, pd.DataFrame):
+        expected_features = len(y.columns) * expected_features
 
     assert yt.shape == (expected_instances, expected_features)
 
