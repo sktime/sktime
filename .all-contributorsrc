@@ -45,7 +45,7 @@
         "ideas",
         "test",
         "tutorial"
-	]
+      ]
     },
     {
       "login": "Tomiiwa",
@@ -170,7 +170,7 @@
       "contributions": [
         "code",
         "test"
-        ]
+      ]
     },
     {
       "login": "jesellier",
@@ -1519,7 +1519,7 @@
       "profile": "https://github.com/RishiKumarRay",
       "contributions": [
         "infra"
-     ]
+      ]
     },
     {
       "login": "cdahlin",
@@ -1528,7 +1528,7 @@
       "profile": "https://github.com/cdahlin",
       "contributions": [
         "code"
-     ]
+      ]
     },
     {
       "login": "iljamaurer",
@@ -1546,7 +1546,7 @@
       "profile": "https://github.com/FedericoGarza",
       "contributions": [
         "code",
-	"example"
+        "example"
       ]
     },
     {
@@ -1563,6 +1563,15 @@
       "name": "Aleksandr Grekov",
       "avatar_url": "https://avatars.githubusercontent.com/u/44262176?v=4",
       "profile": "https://github.com/keepersas",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "dougollerenshaw",
+      "name": "Doug Ollerenshaw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19944442?v=4",
+      "profile": "https://github.com/dougollerenshaw",
       "contributions": [
         "doc"
       ]
