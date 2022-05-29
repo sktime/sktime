@@ -423,8 +423,7 @@ class SklearnClassifierPipeline(ClassifierPipeline):
     >>> t1 = ExponentTransformer()
     >>> t2 = SummaryTransformer()
     >>> pipeline = SklearnClassifierPipeline(KNeighborsClassifier(), [t1, t2])
-    >>> pipeline.fit(X_train, y_train)
-    Sklearn ClassifierPipeline(...)
+    >>> pipeline = pipeline.fit(X_train, y_train)
     >>> y_pred = pipeline.predict(X_test)
 
     Alternative construction via dunder method:
