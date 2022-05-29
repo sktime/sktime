@@ -8,10 +8,12 @@ __all__ = []
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+from sktime.datatypes import get_examples
 from sktime.transformations.compose import FeatureUnion, TransformerPipeline
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -138,3 +140,18 @@ def test_featureunion_transform_cols():
     )
 
     assert deep_equals(Xt.columns, expected_cols), msg
+
+
+def test_sklearn_after_primitives():
+    """Test that sklearn transformer after primitives is correctly applied."""
+    t = SummaryTransformer() * StandardScaler()
+    assert t.get_tag("scitype:transform-output") == "Primitives"
+
+    X = get_examples("pd-multiindex")[0]
+    X_out = t.fit_transform(X)
+    X_summary = SummaryTransformer().fit_transform(X)
+
+    assert deep_equals(X_out.index, X_summary.index)
+    assert deep_equals(X_out.columns, X_summary.columns)
+    assert X_out.iloc[0, 0] > -0.79
+    assert X_out.iloc[0, 0] < -0.78

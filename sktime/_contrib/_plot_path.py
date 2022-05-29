@@ -190,6 +190,7 @@ if __name__ == "__main__":
         "wdtw",
         "wddtw",
         "msm",
+        "twe",
     ]
     # metrics = ['lcss']
     for metric in metrics:
@@ -197,7 +198,7 @@ if __name__ == "__main__":
         if not os.path.exists(metric_path):
             os.makedirs(metric_path)
 
-        save_plt(
+        _save_plt(
             (
                 _plot_path(x, y, metric, {"epsilon": 1.0}),
                 f"{metric}_path_through_cost_matrix",
