@@ -166,15 +166,19 @@ def to_numba_timeseries(x: np.ndarray) -> np.ndarray:
 
 @njit(cache=True)
 def _numba_to_timeseries(x: np.ndarray) -> np.ndarray:
-    _x = x.copy()
-    num_dims = _x.ndim
-    shape = _x.shape
-    if num_dims == 1:
-        _x = np.reshape(_x, (1, shape[0]))
-    elif num_dims > 2:
+    num_dims = x.ndim
+    shape = x.shape
+
+    if num_dims > 2:
         raise ValueError(
             "The matrix provided has more than 2 dimensions. This is not"
             "supported. Please provide a matrix with less than "
             "2 dimensions"
         )
+
+    if num_dims == 1:
+        _x = np.reshape(x, (1, shape[0]))
+    else:
+        _x = x
+
     return _x
