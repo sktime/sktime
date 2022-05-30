@@ -121,7 +121,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --pyargs sktime --timeout=600
+          python -m pytest
 
   upload_wheels:
     name: Upload wheels to PyPI

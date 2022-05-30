@@ -1138,7 +1138,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
 
     Split time series repeatedly into an growing training set and a fixed-size test set.
 
-    For example for `window_length = 5`, `step_length = 1` and `fh = 3`
+    For example for `initial_window = 5`, `step_length = 1` and `fh = 3`
     here is a representation of the folds::
 
     |-----------------------|
@@ -1160,7 +1160,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         Window length
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
-    start_with_window : bool, optional (default=False)
+    start_with_window : bool, optional (default=True)
         - If True, starts with full window.
         - If False, starts with empty window.
     """
