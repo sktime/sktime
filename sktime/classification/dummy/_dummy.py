@@ -18,17 +18,17 @@ class DummyClassifier(BaseClassifier):
     """
 
     _tags = {
-        "capability:unequal_length": True,
         "capability:missing_values": True,
     }
 
-    def __init__(self, *, strategy="prior", random_state=None, constant=None):
+    def __init__(self, strategy="prior", random_state=None, constant=None):
         self.strategy = strategy
         self.random_state = random_state
         self.constant = constant
         self.sklearn_dummy_classifier = SklearnDummyClassifier(
             strategy=strategy, random_state=random_state, constant=constant
         )
+        super(DummyClassifier, self).__init__()
 
     def _fit(self, X, y):
         """Fit the dummy classifier.
