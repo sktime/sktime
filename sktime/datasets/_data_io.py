@@ -1856,28 +1856,6 @@ def ensure_file_has_extension(path, suffix):
     return path
 
 
-def ensure_file_has_extension(path, suffix):
-    """
-    Checks if the filename contains an file extension
-
-    Parameters
-    ----------
-    path: str
-        path of the file.
-    suffix: str
-        the expected file extension.
-
-    Returns
-    -------
-    Filename with extension
-    """
-
-    if not path.endswith(suffix):
-        path += suffix
-
-    return path
-
-
 def _convert_tsf_to_hierarchical(
     data: pd.DataFrame,
     metadata: Dict,
