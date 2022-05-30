@@ -139,18 +139,18 @@ def evaluate(
         score = scoring(y_test, y_pred, y_train=y_train)
 
         # save results
-        results = results.append(
-            {
-                score_name: score,
-                "fit_time": fit_time,
-                "pred_time": pred_time,
-                "len_train_window": len(y_train),
-                "cutoff": forecaster.cutoff,
-                "y_train": y_train if return_data else np.nan,
-                "y_test": y_test if return_data else np.nan,
-                "y_pred": y_pred if return_data else np.nan,
-            },
-            ignore_index=True,
+        record = {
+            score_name: score,
+            "fit_time": fit_time,
+            "pred_time": pred_time,
+            "len_train_window": len(y_train),
+            "cutoff": forecaster.cutoff,
+            "y_train": y_train if return_data else np.nan,
+            "y_test": y_test if return_data else np.nan,
+            "y_pred": y_pred if return_data else np.nan,
+        }
+        results = pd.concat(
+            [results, pd.DataFrame(record, index=[0])], ignore_index=True
         )
 
     # post-processing of results
