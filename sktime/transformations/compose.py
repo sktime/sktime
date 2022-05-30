@@ -946,7 +946,7 @@ class ForecasterTransform(BaseTransformer):
             forecaster_ = self.forecaster.clone()
             forecaster_.fit(y=X, fh=fh)
             X_pred = forecaster_.predict()
-        elif self.behavivour == "update":
+        elif self.behaviour == "update":
             self.forecaster_.update(y=X)
             X_pred = forecaster_.predict()
 
