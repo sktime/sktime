@@ -779,7 +779,8 @@ class ForecasterTransform(BaseTransformer):
     Wraps a forecaster and a forecasting horizon specification, but acts as transformer.
 
     In `transform`, the wrapped forecaster carries out a `predict` step.
-    The result from that prediction is added to the input of `transform`.
+    The result from that prediction is added to (default, `combine` behaviour),
+    or replaces (`replace` behaviour), the input of `transform`.
     In case of index clashes, the prediction overwrites the input.
 
     The typical use case is extending exogeneous data available only up until the cutoff
@@ -793,8 +794,8 @@ class ForecasterTransform(BaseTransformer):
         optional, default = None = in-sample, fh are indices of series seen in transform
         valid inputs to construct ForecastingHorizon are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
-    behaviour : str, one of "update" or "refit", optional, default = "refit"
-        if "refit", `fit` is empty, and forecaster is fit to data in `transform` only,
+    behaviour : str, one of "combine" or "replace", optional, default = "combine"
+        if "combine", `fit` is empty, and forecaster is fit to data in `transform` only,
             Forecast added to `X` in `transform` is obtained from this state.
         if "update", forecaster is fit to the data batch seen in `fit`, then updated
             with any data seen in applications of `transform`.
@@ -837,10 +838,10 @@ class ForecasterTransform(BaseTransformer):
         "fit_is_empty": False,
     }
 
-    def __init__(self, forecaster, fh=None, behaviour="refit"):
+    def __init__(self, forecaster, fh=None, behaviour="combine"):
 
-        if behaviour not in ["update", "refit"]:
-            raise ValueError('behaviour must be one of "update", "refit"')
+        if behaviour not in ["combine", "replace"]:
+            raise ValueError('behaviour must be one of "combine", "replace"')
 
         self.forecaster = forecaster
         self.fh = fh
@@ -851,9 +852,6 @@ class ForecasterTransform(BaseTransformer):
             "handles-missing-data": forecaster.get_tag("handles-missing-data")
         }
         self.set_tags(**tag_translate_dict)
-
-        if behaviour == "refit":
-            self.set_tags(**{"fit_is_empty": True})
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -870,9 +868,8 @@ class ForecasterTransform(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        if self.behaviour == "update":
-            self.forecaster_ = self.forecaster.clone()
-            self.forecaster_.fit(y=X, fh=self.fh)
+        self.forecaster_ = self.forecaster.clone()
+        self.forecaster_.fit(y=X, fh=self.fh)
         return self
 
     def _transform(self, X, y=None):
@@ -895,16 +892,13 @@ class ForecasterTransform(BaseTransformer):
         else:
             fh = self.fh
 
-        if self.behaviour == "refit":
-            forecaster_ = self.forecaster.clone()
-            forecaster_.fit(y=X, fh=fh)
-            X_pred = forecaster_.predict()
-        elif self.behavivour == "update":
-            self.forecaster_.update(y=X)
-            X_pred = forecaster_.predict()
+        X_pred = self.forecaster_.predict(fh=fh)
+        if X is not None:
+            Xt = X.combine_first(X_pred)
+        else:
+            Xt = X
 
-        # return X_pred
-        return X_pred.combine_first(X)
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
