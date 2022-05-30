@@ -1129,14 +1129,14 @@ class ForecastX(BaseForecaster):
 
         if self.behaviour == "update" and X is not None:
             self.forecaster_X_ = self.forecaster_X_c.clone()
-            self.forecaster_X_.fit(y=self._get_X(X), fh=fh_X)
+            self.forecaster_X_.fit(y=self._get_Xcols(X), fh=fh_X)
 
         self.forecaster_y_ = self.forecaster_y.clone()
         self.forecaster_y_.fit(y=y, X=X, fh=fh)
 
         return self
 
-    def _get_X(self, X):
+    def _get_Xcols(self, X):
         """Shorthand to obtain X at self.columns."""
         if self.columns is not None:
             return X[self.columns]
@@ -1171,7 +1171,7 @@ class ForecastX(BaseForecaster):
             if self.fh_X_ is not None:
                 fh = self.fh_X_
             forecaster = self.forecaster_X_c.clone()
-            forecaster.fit(y=self._get_X(self._X), fh=fh)
+            forecaster.fit(y=self._get_Xcols(self._X), fh=fh)
 
         X_pred = getattr(forecaster, method)()
         if X is not None:
@@ -1214,7 +1214,7 @@ class ForecastX(BaseForecaster):
         self : an instance of self
         """
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_.update(y=self._get_X(X), update_params=update_params)
+            self.forecaster_X_.update(y=self._get_Xcols(X), update_params=update_params)
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
