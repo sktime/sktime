@@ -358,10 +358,8 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        df = df.append(
-            pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
-            ignore_index=True,
-        )
+        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
+        df = pd.concat([df, record], ignore_index=True)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 
