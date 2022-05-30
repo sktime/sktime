@@ -1,9 +1,11 @@
-from typing import List
-from abc import ABC, abstractmethod
-from sktime.datasets import read_clusterer_result_from_uea_format
-
+# -*- coding: utf-8 -*-
 import os
+from abc import ABC, abstractmethod
+from typing import List
+
 import pandas as pd
+
+from sktime.datasets import read_clusterer_result_from_uea_format
 
 
 class BaseEstimatorEvaluator(ABC):
@@ -21,10 +23,10 @@ class BaseEstimatorEvaluator(ABC):
     """
 
     def __init__(
-            self,
-            results_path: str,
-            evaluation_out_path: str,
-            experiment_name: str,
+        self,
+        results_path: str,
+        evaluation_out_path: str,
+        experiment_name: str,
     ):
         self.results_path = results_path
         self.evaluation_out_path = evaluation_out_path
@@ -66,5 +68,3 @@ class BaseEstimatorEvaluator(ABC):
                                 if file.endswith(".csv"):
                                     file_path = os.path.abspath(f"{dataset_dir}/{file}")
                                     self.evaluate_csv_data(file_path)
-
-
