@@ -120,10 +120,12 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         else:
             return cutoff_ind
 
+    if hasattr(obj, "index"):
+        if isinstance(obj.index, pd.DatetimeIndex):
+            obj.index = obj.index.to_period()
+
     if isinstance(obj, pd.Series):
-        return (
-            obj.index.to_period()[[-1]] if return_index else obj.index.to_period()[-1]
-        )
+        return obj.index[[-1]] if return_index else obj.index[-1]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
