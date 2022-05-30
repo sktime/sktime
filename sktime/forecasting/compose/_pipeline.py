@@ -1006,6 +1006,8 @@ class ForecastX(BaseForecaster):
 
     In `predict`, this forecaster carries out a `predict` step on exogeneous `X`.
     Then, a forecast is made for `y`, using exogeneous data plus its forecasts as `X`.
+    If `columns` argument is provided, will carry `predict` out only for the columns
+    in `columns`, and will use other columns in `X` unchanged.
 
     The two forecasters and forecasting horizons (for forecasting `y` resp `X`)
     can be selected independently, but default to the same.
@@ -1032,6 +1034,9 @@ class ForecastX(BaseForecaster):
             Forecast added to `X` in `predict` is obtained from this state.
         if "refit", then forecaster_X is fit to `X` in `predict` only,
             Forecast added to `X` in `predict` is obtained from this state.
+    columns : None, or pandas compatible index iterator (e.g., list of str), optional
+        default = None = all columns in X are used for forecast
+        columns to which `forecaster_X` is applied
 
     Attributes
     ----------
@@ -1069,7 +1074,9 @@ class ForecastX(BaseForecaster):
         "capability:pred_int": True,
     }
 
-    def __init__(self, forecaster_y, forecaster_X, fh_X=None, behaviour="update"):
+    def __init__(
+        self, forecaster_y, forecaster_X, fh_X=None, behaviour="update", columns=None
+    ):
 
         if behaviour not in ["update", "refit"]:
             raise ValueError('behaviour must be one of "update", "refit"')
@@ -1084,6 +1091,8 @@ class ForecastX(BaseForecaster):
             self.forecaster_X_c = forecaster_X
         self.fh_X = fh_X
         self.behaviour = behaviour
+        self.columns = columns
+
         super(ForecastX, self).__init__()
 
         self.clone_tags(forecaster_y, "capability:pred_int")
@@ -1120,14 +1129,21 @@ class ForecastX(BaseForecaster):
 
         if self.behaviour == "update" and X is not None:
             self.forecaster_X_ = self.forecaster_X_c.clone()
-            self.forecaster_X_.fit(y=X, fh=fh_X)
+            self.forecaster_X_.fit(y=self._get_X(X), fh=fh_X)
 
         self.forecaster_y_ = self.forecaster_y.clone()
         self.forecaster_y_.fit(y=y, X=X, fh=fh)
 
         return self
 
-    def _get_forecaster_X_prediction(self, fh=None, method="predict"):
+    def _get_X(self, X):
+        """Shorthand to obtain X at self.columns."""
+        if self.columns is not None:
+            return X[self.columns]
+        else:
+            return X
+
+    def _get_forecaster_X_prediction(self, X=None, fh=None, method="predict"):
         """Shorthand to obtain a prediction from forecaster_X, depending on behaviour.
 
         If behaviour = "update": uses self.forecaster_X_, this is already fitted.
@@ -1136,7 +1152,9 @@ class ForecastX(BaseForecaster):
 
         Parameters
         ----------
-        fh : ForecastingHorizon, should be the input of the predict method
+        X : pandas.DataFrame, optional, default=None
+            exogeneous data seen in predict
+        fh : ForecastingHorizon, should be the input of the predict method, optional
         method : str, optional, default="predict"
             method of forecaster to call to obtain prediction
 
@@ -1153,10 +1171,13 @@ class ForecastX(BaseForecaster):
             if self.fh_X_ is not None:
                 fh = self.fh_X_
             forecaster = self.forecaster_X_c.clone()
-            forecaster.fit(y=self._X, fh=fh)
+            forecaster.fit(y=self._get_X(self._X), fh=fh)
 
-        X = getattr(forecaster, method)()
-        return X
+        X_pred = getattr(forecaster, method)()
+        if X is not None:
+            X_pred = X_pred.combine_first(X)
+
+        return X_pred
 
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
@@ -1173,7 +1194,7 @@ class ForecastX(BaseForecaster):
         y_pred : time series in sktime compatible format
             Point forecasts
         """
-        X = self._get_forecaster_X_prediction()
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict(fh=fh, X=X)
         return y_pred
 
@@ -1193,7 +1214,7 @@ class ForecastX(BaseForecaster):
         self : an instance of self
         """
         if self.behaviour == "update" and X is not None:
-            self.forecaster_X_.update(y=X, update_params=update_params)
+            self.forecaster_X_.update(y=self._get_X(X), update_params=update_params)
         self.forecaster_y_.update(y=y, X=X, update_params=update_params)
 
         return self
@@ -1229,7 +1250,7 @@ class ForecastX(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        X = self._get_forecaster_X_prediction()
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_interval(fh=fh, X=X)
         return y_pred
 
@@ -1259,7 +1280,7 @@ class ForecastX(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        X = self._get_forecaster_X_prediction()
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X)
         return y_pred
 
@@ -1299,7 +1320,7 @@ class ForecastX(BaseForecaster):
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
         """
-        X = self._get_forecaster_X_prediction()
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_var(fh=fh, X=X)
         return y_pred
 
@@ -1334,7 +1355,7 @@ class ForecastX(BaseForecaster):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        X = self._get_forecaster_X_prediction()
+        X = self._get_forecaster_X_prediction(fh=fh, X=X)
         y_pred = self.forecaster_y_.predict_proba(fh=fh, X=X)
         return y_pred
 
