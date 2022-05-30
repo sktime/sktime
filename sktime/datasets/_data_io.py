@@ -1836,7 +1836,7 @@ def load_tsf_to_dataframe(
 
 def ensure_file_has_extension(path, suffix):
     """
-    Checks if the filename contains an file extension
+    Check if the filename contains an file extension.
 
     Parameters
     ----------
@@ -1849,7 +1849,6 @@ def ensure_file_has_extension(path, suffix):
     -------
     Filename with extension
     """
-
     if not path.endswith(suffix):
         path += suffix
 
