@@ -373,7 +373,7 @@ def setup(app):
     """
 
     def adds(pth):
-        print("Adding stylesheet: %s" % pth)  # noqa: T001
+        print("Adding stylesheet: %s" % pth)  # noqa: T201, T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.
