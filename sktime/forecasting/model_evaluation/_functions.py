@@ -149,9 +149,7 @@ def evaluate(
             "y_test": y_test if return_data else np.nan,
             "y_pred": y_pred if return_data else np.nan,
         }
-        results = pd.concat(
-            [results, pd.DataFrame(record, index=[0])], ignore_index=True
-        )
+        results = pd.concat([results, pd.DataFrame(record)], ignore_index=True)
 
     # post-processing of results
     if not return_data:
