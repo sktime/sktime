@@ -939,7 +939,7 @@ class ForecasterTransform(BaseTransformer):
         if X is not None:
             Xt = X.combine_first(X_pred)
         else:
-            Xt = X
+            Xt = X_pred
 
         return Xt
 
