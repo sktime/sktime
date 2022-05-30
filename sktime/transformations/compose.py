@@ -795,17 +795,13 @@ class ForecasterTransform(BaseTransformer):
         valid inputs to construct ForecastingHorizon are:
         int, list of int, 1D np.ndarray, pandas.Index (see ForecastingHorizon)
     behaviour : str, one of "combine" or "replace", optional, default = "combine"
-        if "combine", `fit` is empty, and forecaster is fit to data in `transform` only,
-            Forecast added to `X` in `transform` is obtained from this state.
-        if "update", forecaster is fit to the data batch seen in `fit`, then updated
-            with any data seen in applications of `transform`.
-            Forecast added to `X` in `transform` is obtained from this state.
+        if "combine", `transform` updates input `X` with forecasts from `forecaster_`
+        if "replace", `transform` replaces input `X` by forecasts from `forecaster_`
 
     Attributes
     ----------
     forecaster_ : BaseForecaster
-        clone of forecaster, only created if behaviour = "update".
-        state is after being fitted to data in `fit` or updated with data in `transform`
+        clone of forecaster, state is after being fitted to data in `fit`
 
     Examples
     --------
