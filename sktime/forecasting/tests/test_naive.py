@@ -201,7 +201,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     freq = pd.Timedelta("1H")
     data = pd.Series(
         index=pd.date_range(
-            "2021-06-01 00:00", periods=n * window_length, freq=freq, closed="left"
+            "2021-06-01 00:00", periods=n * window_length, freq=freq, inclusive="left"
         ),
         data=([float(i) for i in range(1, sp + 1)] * n * window_length)[
             : n * window_length
