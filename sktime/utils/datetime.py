@@ -35,7 +35,7 @@ def _coerce_duration_to_int(
     if isinstance(duration, int):
         return duration
     elif isinstance(duration, pd.tseries.offsets.BaseOffset):
-        return duration.n / _get_intervals_count_and_unit(freq)[0]
+        return int(duration.n / _get_intervals_count_and_unit(freq)[0])
     elif isinstance(duration, pd.Index) and isinstance(
         duration[0], pd.tseries.offsets.BaseOffset
     ):
