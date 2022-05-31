@@ -1314,7 +1314,9 @@ class BaseForecaster(BaseEstimator):
         pd.Series
             y_pred, sliced by fh
         """
-        y_pred = y_in_sample.append(y_out_sample, ignore_index=True).rename("y_pred")
+        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
+            "y_pred"
+        )
         y_pred = pd.DataFrame(y_pred)
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
