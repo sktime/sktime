@@ -406,6 +406,8 @@ class AutoETS(_StatsModelsAdapter):
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(valid_indices, pd.PeriodIndex):
+            valid_indices = valid_indices.to_timestamp()
 
         y_pred = self._fitted_forecaster.predict(start=start, end=end)
         return y_pred.loc[valid_indices]
