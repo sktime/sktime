@@ -506,7 +506,6 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
             absolute = _coerce_to_period(absolute, freq)
-            cutoff = _coerce_to_period(cutoff, freq)
 
         # TODO: Replace when we upgrade our lower pandas bound
         #  to a version where this is fixed
@@ -556,7 +555,10 @@ def _to_absolute(
         Absolute representation of forecasting horizon.
     """
     if not fh.is_relative:
-        return fh._new()
+        absolute = fh._values
+        if isinstance(absolute, pd.DatetimeIndex):
+            absolute = absolute.to_period(freq=cutoff.freq)
+        return fh._new(absolute, is_relative=False)
 
     else:
         relative = fh.to_pandas()
@@ -588,7 +590,7 @@ def _check_cutoff(
 
     if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
         assert isinstance(cutoff, pd.Period)
-        assert index.freqstr == cutoff.freqstr
+        # assert index.freqstr == cutoff.freqstr
 
 
 def _check_start(start, index):

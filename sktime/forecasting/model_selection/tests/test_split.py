@@ -462,7 +462,9 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
         # )
     y = _make_series(20, index_type=index_type)
     cutoff = y.index[10]
-    fh = _make_fh(cutoff, values, fh_type, is_relative)
+    if isinstance(cutoff, pd.Timestamp):
+        cutoff = cutoff.to_period(freq=y.index.freq)
+    fh = _make_fh(cutoff=cutoff, steps=values, fh_type=fh_type, is_relative=is_relative)
     split = temporal_train_test_split(y, fh=fh)
     _check_train_test_split_y(fh, split)
 
@@ -480,7 +482,13 @@ def _check_train_test_split_y(fh, split):
     assert len(train) > 0
 
     cutoff = train.index[-1]
-    np.testing.assert_array_equal(test.index, fh.to_absolute(cutoff).to_numpy())
+
+    if isinstance(cutoff, pd.Timestamp):
+        cutoff = cutoff.to_period(freq=train.index.freq)
+        expected = fh.to_absolute(cutoff).to_pandas().to_timestamp()
+    else:
+        expected = fh.to_absolute(cutoff).to_pandas()
+    np.testing.assert_array_equal(test.index, expected)
 
 
 def test_split_series():
@@ -501,12 +509,12 @@ def test_split_loc():
     cv = SlidingWindowSplitter()
 
     for train, test in cv.split_loc(y):
-        assert isinstance(train, pd.PeriodIndex)
+        assert isinstance(train, type(y.index))
         assert len(train) == 10
-        y.loc[train]
-        assert isinstance(test, pd.PeriodIndex)
+        assert train.isin(y.index).all()
+        assert isinstance(test, type(y.index))
         assert len(test) == 1
-        y.loc[test]
+        assert test.isin(y.index).all()
 
 
 def test_split_series_hier():

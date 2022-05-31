@@ -138,10 +138,13 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     y_pred_index.equals(expected)
 
 
-def _make_fh(cutoff, steps, fh_type, is_relative):
+def _make_fh(
+    cutoff: pd.Period, steps, fh_type: str, is_relative: bool
+) -> ForecastingHorizon:
     """Construct forecasting horizons for testing."""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
 
+    assert not isinstance(cutoff, pd.Timestamp)
     fh_class = INDEX_TYPE_LOOKUP[fh_type]
 
     if isinstance(steps, (int, np.integer)):
@@ -158,9 +161,8 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
 
         if fh_type == "datetime":
             steps *= cutoff.freq
-
-        if fh_type == "period":
-            kwargs = {"freq": cutoff.freq}
+            # kwargs = {"freq": cutoff.freq}
+            cutoff = cutoff.to_timestamp()
 
         values = cutoff + steps
         return ForecastingHorizon(fh_class(values, **kwargs), is_relative)

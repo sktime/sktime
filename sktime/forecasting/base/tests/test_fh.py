@@ -79,6 +79,8 @@ def test_fh(
 
     # choose cutoff point
     cutoff = y_train.index[-1]
+    if isinstance(cutoff, pd.Timestamp):
+        cutoff = cutoff.to_period(freq=y_train.index.freq)
 
     # generate fh
     fh = _make_fh(cutoff=cutoff, steps=steps, fh_type=fh_type, is_relative=is_relative)
@@ -97,12 +99,17 @@ def test_fh(
 
     if steps.dtype in int_types:
         fh_relative = pd.Index(steps, dtype="int64").sort_values()
-        fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
+        fh_absolute = y.index[
+            np.where(y.index == y_train.index[-1])[0] + steps
+        ].sort_values()
         fh_indexer = fh_relative - 1
     else:
         fh_relative = steps.sort_values()
         fh_absolute = (cutoff + steps).sort_values()
         fh_indexer = None
+
+    if isinstance(fh_absolute, pd.DatetimeIndex):
+        fh_absolute = fh_absolute.to_period(freq=y_train.index.freq)
 
     if steps.dtype in int_types:
         null = 0
