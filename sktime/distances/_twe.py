@@ -195,31 +195,6 @@ class _TweDistance(NumbaDistance):
         return numba_twe_distance
 
 
-@njit(cache=True, fastmath=True)
-def pow_minkowski(x: np.ndarray, y: np.ndarray, p: int):
-    """Compute the powered Minkowski distance.
-
-    Parameters
-    ----------
-    x: np.ndarray (2d array of shape dxm1).
-        First time series.
-    y: np.ndarray (2d array of shape dxm1).
-        Second time series.
-    p: int
-        Order of the p-norm for local cost.
-
-    Returns
-    -------
-    float
-        Powered minkowski distance.
-    """
-    result = 0.0
-    for i in range(x.shape[0]):
-        result += (np.abs(x[i] - y[i])) ** p
-
-    return result ** (1.0 / p)
-
-
 @njit(cache=True)
 def pad_ts(x: np.ndarray) -> np.ndarray:
     """Pad the time with a 0.0 at the start.
@@ -281,6 +256,7 @@ def _twe_cost_matrix(
     y = pad_ts(y)
     x_size = x.shape[1]
     y_size = y.shape[1]
+    dimensions = x.shape[0]
 
     cost_matrix = np.zeros((x_size, y_size))
     cost_matrix[0, 1:] = np.inf
@@ -292,25 +268,41 @@ def _twe_cost_matrix(
         for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
                 # Deletion in x
-                del_x = (
-                    cost_matrix[i - 1, j]
-                    + pow_minkowski(x[:, i - 1], x[:, i], p=p)
-                    + delete_addition
-                )
+                # Euclidean distance to x[:, i - 1] and y[:, i]
+                deletion_x_euclid_dist = 0
+                for k in range(dimensions):
+                    deletion_x_euclid_dist += (x[k][i - 1] - y[k][i]) ** 2
+                deletion_x_euclid_dist = np.sqrt(deletion_x_euclid_dist)
+
+                del_x = cost_matrix[i - 1, j] + deletion_x_euclid_dist + delete_addition
 
                 # Deletion in y
-                del_y = (
-                    cost_matrix[i, j - 1]
-                    + pow_minkowski(y[:, j - 1], y[:, j], p=p)
-                    + delete_addition
-                )
+                # Euclidean distance to x[:, j - 1] and y[:, j]
+                deletion_y_euclid_dist = 0
+                for k in range(dimensions):
+                    deletion_y_euclid_dist += (x[k][j - 1] - y[k][j]) ** 2
+                deletion_y_euclid_dist = np.sqrt(deletion_y_euclid_dist)
+
+                del_y = cost_matrix[i, j - 1] + deletion_y_euclid_dist + delete_addition
 
                 # Keep data points in both time series
+                # Euclidean distance to x[:, i] and y[:, j]
+                match_same_euclid_dist = 0
+                for k in range(dimensions):
+                    match_same_euclid_dist += (x[k][i] - y[k][j]) ** 2
+                match_same_euclid_dist = np.sqrt(match_same_euclid_dist)
+
+                # Euclidean distance to x[:, i - 1] and y[:, j - 1]
+                match_previous_euclid_dist = 0
+                for k in range(dimensions):
+                    match_previous_euclid_dist += (x[k][i - 1] - y[k][j - 1]) ** 2
+                match_previous_euclid_dist = np.sqrt(match_previous_euclid_dist)
+
                 match = (
                     cost_matrix[i - 1, j - 1]
-                    + pow_minkowski(x[:, i], y[:, j], p=p)
-                    + pow_minkowski(x[:, i - 1], y[:, j - 1], p=p)
-                    + nu
+                    + match_same_euclid_dist
+                    + match_previous_euclid_dist
+                    + (nu * (2 * abs(i - j)))
                 )
 
                 # Choose the operation with the minimal cost and update DP Matrix

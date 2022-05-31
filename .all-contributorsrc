@@ -1557,6 +1557,15 @@
       "contributions": [
         "code",
       ]
+    },
+    {
+      "login": "keepersas",
+      "name": "Aleksandr Grekov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44262176?v=4",
+      "profile": "https://github.com/keepersas",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",

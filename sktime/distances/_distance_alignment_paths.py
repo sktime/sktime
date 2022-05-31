@@ -33,9 +33,14 @@ def compute_min_return_path(
         List containing tuples that is the path through the cost matrix.
     """
     x_size, y_size = cost_matrix.shape
+
+    start = 0
+    # Means the cost matrix is padded (i.e. for twe)
+    if cost_matrix.shape != bounding_matrix.shape:
+        start = 1
     for i in range(x_size):
         for j in range(y_size):
-            if not np.isfinite(bounding_matrix[i, j]):
+            if not np.isfinite(bounding_matrix[i - start, j - start]):
                 cost_matrix[i, j] = np.inf
 
     alignment = [(x_size - 1, y_size - 1)]
