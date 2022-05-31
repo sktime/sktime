@@ -109,42 +109,50 @@ def get_cutoff(obj, cutoff=0, return_index=False):
     if len(obj) == 0:
         return cutoff
 
+    obj_copy = obj.copy()
     # numpy3D (Panel) or np.npdarray (Series)
-    if isinstance(obj, np.ndarray):
-        if obj.ndim == 3:
-            cutoff_ind = obj.shape[-1] + cutoff
-        if obj.ndim < 3 and obj.ndim > 0:
-            cutoff_ind = obj.shape[0] + cutoff
+    if isinstance(obj_copy, np.ndarray):
+        if obj_copy.ndim == 3:
+            cutoff_ind = obj_copy.shape[-1] + cutoff
+        if obj_copy.ndim < 3 and obj_copy.ndim > 0:
+            cutoff_ind = obj_copy.shape[0] + cutoff
         if return_index:
             return pd.RangeIndex(cutoff_ind - 1, cutoff_ind)
         else:
             return cutoff_ind
 
     if hasattr(obj, "index"):
-        if isinstance(obj.index, pd.DatetimeIndex):
-            obj.index = obj.index.to_period()
+        obj_copy.index = (
+            obj_copy.index.to_period()
+            if isinstance(obj_copy.index, pd.DatetimeIndex)
+            else obj_copy.index
+        )
 
-    if isinstance(obj, pd.Series):
-        return obj.index[[-1]] if return_index else obj.index[-1]
+    if isinstance(obj_copy, pd.Series):
+        return obj_copy.index[[-1]] if return_index else obj_copy.index[-1]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
-    if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
-        objcols = [x for x in obj.columns if obj.dtypes[x] == "object"]
+    if isinstance(obj_copy, pd.DataFrame) and not isinstance(
+        obj_copy.index, pd.MultiIndex
+    ):
+        objcols = [x for x in obj_copy.columns if obj_copy.dtypes[x] == "object"]
         # pd.DataFrame
         if len(objcols) == 0:
-            return obj.index[[-1]] if return_index else obj.index[-1]
+            return obj_copy.index[[-1]] if return_index else obj_copy.index[-1]
         # nested_univ
         else:
             if return_index:
-                idxx = [x.index[[-1]] for col in objcols for x in obj[col]]
+                idxx = [x.index[[-1]] for col in objcols for x in obj_copy[col]]
             else:
-                idxx = [x.index[-1] for col in objcols for x in obj[col]]
+                idxx = [x.index[-1] for col in objcols for x in obj_copy[col]]
             return max(idxx)
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
-    if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
-        idx = obj.index
-        series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
+    if isinstance(obj_copy, pd.DataFrame) and isinstance(obj_copy.index, pd.MultiIndex):
+        idx = obj_copy.index
+        series_idx = [
+            obj_copy.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)
+        ]
         if return_index:
             cutoffs = [x[[-1]] for x in series_idx]
         else:
@@ -152,11 +160,11 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         return max(cutoffs)
 
     # df-list (Panel)
-    if isinstance(obj, list):
+    if isinstance(obj_copy, list):
         if return_index:
-            idxs = [x.index[[-1]] for x in obj]
+            idxs = [x.index[[-1]] for x in obj_copy]
         else:
-            idxs = [x.index[-1] for x in obj]
+            idxs = [x.index[-1] for x in obj_copy]
         return max(idxs)
 
 

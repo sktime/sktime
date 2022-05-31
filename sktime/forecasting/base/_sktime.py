@@ -153,6 +153,9 @@ class _BaseWindowForecaster(BaseForecaster):
         # Get the start and end points of the last window.
         cutoff = self.cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
+        if isinstance(cutoff, pd.Period):
+            cutoff = cutoff.to_timestamp()
+            start = start.to_timestamp()
 
         # Get the last window of the endogenous variable.
         y = self._y.loc[start:cutoff].to_numpy()
