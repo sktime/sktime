@@ -4,6 +4,7 @@
 """Implements wrapper for using HCrystalBall forecastsers in sktime."""
 
 import pandas as pd
+from deprecated.sphinx import deprecated
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
@@ -96,6 +97,9 @@ def _adapt_y_pred(y_pred):
     return y_pred.iloc[:, 0]
 
 
+@deprecated(
+    version="v0.12.0", reason="Class HCrystalBallForecaster will be removed in v0.13.0"
+)
 class HCrystalBallForecaster(BaseForecaster):
     """Implement wrapper to allow use of HCrystalBall forecasters in sktime.
 
