@@ -45,6 +45,8 @@ class _PmdArimaAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        if X is not None:
+            X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X)
         return self
