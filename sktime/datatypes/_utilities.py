@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Eclectic utilities for the datatypes module."""
+from copy import copy
 
 import numpy as np
 import pandas as pd
@@ -109,7 +110,7 @@ def get_cutoff(obj, cutoff=0, return_index=False):
     if len(obj) == 0:
         return cutoff
 
-    obj_copy = obj.copy()
+    obj_copy = copy(obj)
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj_copy, np.ndarray):
         if obj_copy.ndim == 3:
