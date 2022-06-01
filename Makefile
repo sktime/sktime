@@ -28,7 +28,7 @@ test: ## Run unit tests
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	cd ${TEST_DIR}; python -m pytest -v -n auto --showlocals --durations=20 $(PYTESTOPTIONS) --pyargs $(PACKAGE)
+	cd ${TEST_DIR}; python -m pytest
 
 tests: test
 
