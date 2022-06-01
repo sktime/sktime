@@ -722,7 +722,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         repr(estimator)
 
-    def check_constructor(self, estimator_class):
+    def test_constructor(self, estimator_class):
         """Check that the constructor has correct signature and behaves correctly."""
         assert getfullargspec(estimator_class.__init__).varkw is None
 
