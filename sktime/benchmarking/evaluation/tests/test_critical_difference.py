@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.evaluation.utils._critical_difference_diagram import (
+from sktime.benchmarking.evaluation.diagrams._critical_difference_diagram import (
     _plot_critical_difference_diagram,
     create_critical_difference_diagram,
 )
