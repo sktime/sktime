@@ -209,11 +209,11 @@ class _BaseProbaForecastingErrorMetric(_BaseForecastingErrorMetric):
         out = self._evaluate_by_index(y_true_inner, y_pred_inner, multioutput, **kwargs)
 
         if self.score_average and multioutput == "uniform_average":
-            out = out.mean(axis=1, level=None)  # average over all
+            out = out.groupby(level=None, axis=1).mean()  # average over all
         if self.score_average and multioutput == "raw_values":
-            out = out.mean(axis=1, level=0)  # average over scores
+            out = out.groupby(level=0, axis=1).mean()  # average over scores
         if not self.score_average and multioutput == "uniform_average":
-            out = out.mean(axis=1, level=1)  # average over variables
+            out = out.groupby(level=1, axis=1).mean()  # average over variables
         if not self.score_average and multioutput == "raw_values":
             out = out  # don't average
 
