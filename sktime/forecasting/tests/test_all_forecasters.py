@@ -219,13 +219,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
-        cutoff = y_train.index[-1]
-        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
+        cutoff = (
+            y_train.index.to_period()[-1]
+            if isinstance(y_train.index, pd.DatetimeIndex)
+            else y_train.index[-1]
+        )
+        fh = _make_fh(
+            cutoff=cutoff, steps=fh_int, fh_type=fh_type, is_relative=is_relative
+        )
 
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh=fh_int)
+            _assert_correct_pred_time_index(
+                y_pred_index=y_pred.index, cutoff=cutoff, fh=fh_int
+            )
         except NotImplementedError:
             pass
 
@@ -249,8 +257,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
-        cutoff = y_train.index[-1]
-        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
+        cutoff = (
+            y_train.index.to_period()[-1]
+            if isinstance(y_train.index, pd.DatetimeIndex)
+            else y_train.index[-1]
+        )
+        fh = _make_fh(
+            cutoff=cutoff, steps=fh_int, fh_type=fh_type, is_relative=is_relative
+        )
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
@@ -260,7 +274,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             )
             y_test.index = y_pred.index
             y_res = estimator_instance.predict_residuals(y_test)
-            _assert_correct_pred_time_index(y_res.index, y_train.index[-1], fh=fh)
+            _assert_correct_pred_time_index(
+                y_pred_index=y_res.index, cutoff=cutoff, fh=fh
+            )
         except NotImplementedError:
             pass
 
@@ -287,15 +303,23 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y.index[len(y) // 2]
-        fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
+        cutoff = (
+            y.index.to_period()[len(y) // 2]
+            if isinstance(y.index, pd.DatetimeIndex)
+            else y.index[len(y) // 2]
+        )
+        fh = _make_fh(
+            cutoff=cutoff, steps=fh_int_oos, fh_type=fh_type, is_relative=is_relative
+        )
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
         try:
             estimator_instance.fit(y_train, X_train, fh=fh)
             y_pred = estimator_instance.predict(X=X_test)
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+            _assert_correct_pred_time_index(
+                y_pred_index=y_pred.index, cutoff=cutoff, fh=fh
+            )
         except NotImplementedError:
             pass
 
@@ -315,14 +339,22 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             #     "is currently experimental and not supported everywhere"
             # )
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y_train.index[-1]
+        cutoff = (
+            y_train.index.to_period()[-1]
+            if isinstance(y_train.index, pd.DatetimeIndex)
+            else y_train.index[-1]
+        )
         steps = -np.arange(len(y_train))
-        fh = _make_fh(cutoff, steps, fh_type, is_relative)
+        fh = _make_fh(
+            cutoff=cutoff, steps=steps, fh_type=fh_type, is_relative=is_relative
+        )
 
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
-            _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+            _assert_correct_pred_time_index(
+                y_pred_index=y_pred.index, cutoff=cutoff, fh=fh
+            )
         except NotImplementedError:
             pass
 
@@ -338,7 +370,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             assert list(pred_int.columns) == ["lower", "upper"]
 
             # check time index
-            _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh_int)
+            _assert_correct_pred_time_index(
+                y_pred_index=pred_int.index, cutoff=y_train.index[-1], fh=fh_int
+            )
             # check values
             assert np.all(pred_int["upper"] >= pred_int["lower"])
 
