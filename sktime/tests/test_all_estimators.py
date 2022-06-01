@@ -723,8 +723,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         repr(estimator)
 
     def check_constructor(self, estimator_class):
-        """Check that the constructor behaves correctly."""
+        """Check that the constructor has correct signature and behaves correctly."""
+        assert getfullargspec(estimator_class.__init__).varkw is None
+
         estimator = estimator_class.create_test_instance()
+        assert isinstance(estimator, estimator_class)
 
         # Ensure that each parameter is set in init
         init_params = _get_args(type(estimator).__init__)
