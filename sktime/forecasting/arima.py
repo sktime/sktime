@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements autoregressive integrated moving average (ARIMA) models."""
 
-__author__ = ["Markus Löning", "Hongyi Yang"]
+__author__ = ["mloning", "hyang1996", "fkiraly", "ilkersigirci"]
 __all__ = ["AutoARIMA", "ARIMA"]
 
 from sktime.forecasting.base.adapters._pmdarima import _PmdArimaAdapter
@@ -13,11 +13,15 @@ _check_soft_dependencies("pmdarima", severity="warning")
 
 
 class AutoARIMA(_PmdArimaAdapter):
-    """Automatically discover the optimal order for an ARIMA model.
+    """Wrapper of the pmdarima implementation of fitting Auto-(S)ARIMA(X) models.
 
-    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
+    Includes automated fitting of (S)ARIMA(X) hyper-parameters (p, d, q, P, D, Q).
 
-    The auto-ARIMA process seeks to identify the most optimal parameters
+    Exposes `pmdarima.arima.AutoARIMA` [1]_ under the `sktime` interface.
+    Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
+    capable of fitting auto-SARIMA, auto-ARIMAX, and auto-SARIMAX.
+
+    The auto-ARIMA algorithm seeks to identify the most optimal parameters
     for an ARIMA model, settling on a single fitted ARIMA model. This
     process is based on the commonly-used R function,
     forecast::auto.arima.
@@ -384,12 +388,15 @@ class AutoARIMA(_PmdArimaAdapter):
 
 
 class ARIMA(_PmdArimaAdapter):
-    """An ARIMA estimator.
+    """Wrapper of the pmdarima implementation of fitting (S)ARIMA(X) models.
 
-    Wrapper of the pmdarima implementation of the auto-ARIMA process. [1]_
+    Exposes `pmdarima.arima.ARIMA` [1]_ under the `sktime` interface.
+    Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
+    capable of fitting SARIMA, ARIMAX, and SARIMAX.
+    To additionally fit (S)ARIMA(X) hyper-parameters, use the `AutoARIMA` estimator.
 
-    An ARIMA, or autoregressive integrated moving average, is a
-    generalization of an autoregressive moving average (ARMA) and is fitted to
+    An ARIMA, or autoregressive integrated moving average model, is a
+    generalization of an autoregressive moving average (ARMA) model, and is fitted to
     time-series data in an effort to forecast future points. ARIMA models can
     be especially efficacious in cases where data shows evidence of
     non-stationarity.
