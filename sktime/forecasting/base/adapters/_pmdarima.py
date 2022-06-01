@@ -107,7 +107,11 @@ class _PmdArimaAdapter(BaseForecaster):
             diff_order = self._forecaster.model_.order[1]
 
         # Initialize return objects
-        fh_abs = fh.to_absolute(self.cutoff).to_numpy()
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            fh_abs, pd.PeriodIndex
+        ):
+            fh_abs = fh_abs.to_timestamp()
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs)
 

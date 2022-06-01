@@ -175,12 +175,14 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
-            y_pred[fh.to_indexer(self.cutoff), :],
-            index=fh.to_absolute(self.cutoff),
-            columns=self._y.columns,
+            y_pred[fh.to_indexer(self.cutoff), :], index=index, columns=self._y.columns
         )
         return y_pred
 

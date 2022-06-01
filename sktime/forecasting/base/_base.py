@@ -1321,7 +1321,12 @@ class BaseForecaster(BaseEstimator):
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
         y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        y_pred.index = self.fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
+        y_pred.index = index
         y_pred = y_pred["y_pred"].rename(None)
         return y_pred
 
@@ -1868,7 +1873,12 @@ class BaseForecaster(BaseEstimator):
             # ensure index and columns are as expected
             if fh.is_relative:
                 fh = fh.to_absolute(self.cutoff)
-            pred_var.index = fh.to_pandas()
+            index = fh.to_pandas()
+            if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+                index, pd.PeriodIndex
+            ):
+                index = index.to_timestamp()
+            pred_var.index = index
             if isinstance(self._y, pd.DataFrame):
                 pred_var.columns = self._y.columns
 

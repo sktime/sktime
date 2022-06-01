@@ -577,7 +577,11 @@ class NaiveVariance(BaseForecaster):
             )
 
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            fh_absolute, pd.PeriodIndex
+        ):
+            fh_absolute = fh_absolute.to_timestamp()
 
         if cov:
             fh_size = len(fh)

@@ -104,7 +104,11 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
         return pd.Series(self.prediction_constant, index=index)
 
     @_method_logger
@@ -176,13 +180,17 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        fh_index = fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
         col_index = pd.MultiIndex.from_product([["Quantiles"], alpha])
-        pred_quantiles = pd.DataFrame(columns=col_index, index=fh_index)
+        pred_quantiles = pd.DataFrame(columns=col_index, index=index)
 
         for a in alpha:
             pred_quantiles[("Quantiles", a)] = pd.Series(
-                self.prediction_constant * 2 * a, index=fh_index
+                self.prediction_constant * 2 * a, index=index
             )
 
         return pred_quantiles
@@ -282,7 +290,11 @@ class MockForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
-        index = fh.to_absolute(self.cutoff)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
         return pd.DataFrame(
             self.prediction_constant, index=index, columns=self._y.columns
         )
@@ -360,12 +372,16 @@ class MockForecaster(BaseForecaster):
             cols = ["Quantiles"]
 
         col_index = pd.MultiIndex.from_product([cols, alpha])
-        fh_index = fh.to_absolute(self.cutoff)
-        pred_quantiles = pd.DataFrame(index=fh_index, columns=col_index)
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
+        pred_quantiles = pd.DataFrame(index=index, columns=col_index)
 
         for col, a in col_index:
             pred_quantiles[col, a] = pd.Series(
-                self.prediction_constant * 2 * a, index=fh_index
+                self.prediction_constant * 2 * a, index=index
             )
 
         return pred_quantiles

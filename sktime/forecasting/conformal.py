@@ -166,7 +166,11 @@ class ConformalIntervals(BaseForecaster):
         """
         y_index = self._y.index
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff)
+        fh_absolute = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            fh_absolute, pd.PeriodIndex
+        ):
+            fh_absolute = fh_absolute.to_timestamp()
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
         for id in y_index:

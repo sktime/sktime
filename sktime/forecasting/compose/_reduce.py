@@ -539,18 +539,17 @@ class _RecursiveReducer(_Reducer):
         if self.transformers_ is not None:
             fh_max = fh.to_relative(self.cutoff)[-1]
 
+            index = fh.to_absolute(self.cutoff).to_pandas()
+            if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+                index, pd.PeriodIndex
+            ):
+                index = index.to_timestamp()
             if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
-                dateline = pd.period_range(
-                    end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
-                )
+                dateline = pd.period_range(end=index[-1], periods=fh_max)
             elif isinstance(self.cutoff, np.int64) or isinstance(self.cutoff, int):
-                dateline = list(
-                    range(self.cutoff + 1, fh.to_absolute(self.cutoff)[-1] + 1)
-                )
+                dateline = list(range(self.cutoff + 1, index[-1] + 1))
             else:
-                dateline = pd.date_range(
-                    end=fh.to_absolute(self.cutoff)[-1], periods=fh_max
-                )
+                dateline = pd.date_range(end=index[-1], periods=fh_max)
             y_pred = _create_multiindex(dateline, self._y)
 
             for i in range(fh_max):

@@ -173,6 +173,11 @@ class _TbatsAdapter(BaseForecaster):
         fh = fh.to_relative(cutoff=self.cutoff)
         len_fh = len(fh)
 
+        index = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            index, pd.PeriodIndex
+        ):
+            index = index.to_timestamp()
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             steps = fh_out.to_pandas().max()
@@ -189,7 +194,7 @@ class _TbatsAdapter(BaseForecaster):
 
             if len(fh) != len(fh_out):
                 epred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-                epred_int.index = fh.to_absolute(self.cutoff)
+                epred_int.index = index
 
                 in_pred_int = epred_int.index.isin(pred_int.index)
                 epred_int[in_pred_int] = pred_int
@@ -198,7 +203,7 @@ class _TbatsAdapter(BaseForecaster):
         else:
             y_out = nans(len_fh)
             pred_int = pd.DataFrame({"lower": nans(len_fh), "upper": nans(len_fh)})
-            pred_int.index = fh.to_absolute(self.cutoff)
+            pred_int.index = index
 
         # y_pred
         y_in_sample = pd.Series(self._forecaster.y_hat)
