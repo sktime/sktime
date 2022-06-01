@@ -503,45 +503,42 @@ class ARIMA(_PmdArimaAdapter):
         a default.
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term. Default is True.
-    **sarimax_kwargs : keyword args, optional
-        Optional arguments to pass to the SARIMAX constructor.
-        Examples of potentially valuable kwargs:
-
-        - time_varying_regression : boolean
-            Whether or not coefficients on the exogenous regressors are allowed
-            to vary over time.
-        - enforce_stationarity : boolean
-            Whether or not to transform the AR parameters to enforce
-            stationarity in the auto-regressive component of the model.
-         - enforce_invertibility : boolean
-            Whether or not to transform the MA parameters to enforce
-            invertibility in the moving average component of the model.
-        - simple_differencing : boolean
-            Whether or not to use partially conditional maximum likelihood
-            estimation for seasonal ARIMA models. If True, differencing is
-            performed prior to estimation, which discards the first
-            :math:`s D + d` initial rows but results in a smaller
-            state-space formulation. If False, the full SARIMAX model is
-            put in state-space form so that all datapoints can be used in
-            estimation. Default is False.
-         - measurement_error: boolean
-            Whether or not to assume the endogenous observations endog were
-            measured with error. Default is False.
-        - mle_regression : boolean
-            Whether or not to use estimate the regression coefficients for the
-            exogenous variables as part of maximum likelihood estimation or
-            through the Kalman filter (i.e. recursive least squares). If
-            time_varying_regression is True, this must be set to False.
-            Default is True.
-        - hamilton_representation : boolean
-            Whether or not to use the Hamilton representation of an ARMA
-            process (if True) or the Harvey representation (if False).
-            Default is False.
-        - concentrate_scale : boolean
-            Whether or not to concentrate the scale (variance of the error
-            term) out of the likelihood. This reduces the number of parameters
-            estimated by maximum likelihood by one, but standard errors will
-            then not be available for the scale parameter.
+    Further arguments to pass to the SARIMAX constructor:
+    - time_varying_regression : boolean
+        Whether or not coefficients on the exogenous regressors are allowed
+        to vary over time.
+    - enforce_stationarity : boolean
+        Whether or not to transform the AR parameters to enforce
+        stationarity in the auto-regressive component of the model.
+        - enforce_invertibility : boolean
+        Whether or not to transform the MA parameters to enforce
+        invertibility in the moving average component of the model.
+    - simple_differencing : boolean
+        Whether or not to use partially conditional maximum likelihood
+        estimation for seasonal ARIMA models. If True, differencing is
+        performed prior to estimation, which discards the first
+        :math:`s D + d` initial rows but results in a smaller
+        state-space formulation. If False, the full SARIMAX model is
+        put in state-space form so that all datapoints can be used in
+        estimation. Default is False.
+        - measurement_error: boolean
+        Whether or not to assume the endogenous observations endog were
+        measured with error. Default is False.
+    - mle_regression : boolean
+        Whether or not to use estimate the regression coefficients for the
+        exogenous variables as part of maximum likelihood estimation or
+        through the Kalman filter (i.e. recursive least squares). If
+        time_varying_regression is True, this must be set to False.
+        Default is True.
+    - hamilton_representation : boolean
+        Whether or not to use the Hamilton representation of an ARMA
+        process (if True) or the Harvey representation (if False).
+        Default is False.
+    - concentrate_scale : boolean
+        Whether or not to concentrate the scale (variance of the error
+        term) out of the likelihood. This reduces the number of parameters
+        estimated by maximum likelihood by one, but standard errors will
+        then not be available for the scale parameter.
 
     See Also
     --------
@@ -569,6 +566,17 @@ class ARIMA(_PmdArimaAdapter):
 
     _tags = {"handles-missing-data": True}
 
+    SARIMAX_KWARGS_KEYS = [
+        "time_varying_regression",
+        "enforce_stationarity",
+        "enforce_invertibility",
+        "simple_differencing",
+        "measurement_error",
+        "mle_regression",
+        "hamilton_representation",
+        "concentrate_scale",
+    ]
+
     def __init__(
         self,
         order=(1, 0, 0),
@@ -582,7 +590,14 @@ class ARIMA(_PmdArimaAdapter):
         scoring_args=None,
         trend=None,
         with_intercept=True,
-        **sarimax_kwargs
+        time_varying_regression=False,
+        enforce_stationarity=False,
+        enforce_invertibility=False,
+        simple_differencing=False,
+        measurement_error=False,
+        mle_regression=True,
+        hamilton_representation=False,
+        concentrate_scale=False,
     ):
 
         _check_soft_dependencies("pmdarima", severity="error", object=self)
@@ -598,13 +613,16 @@ class ARIMA(_PmdArimaAdapter):
         self.scoring_args = scoring_args
         self.trend = trend
         self.with_intercept = with_intercept
-        self.sarimax_kwargs = sarimax_kwargs
+        for key in self.SARIMAX_KWARGS_KEYS:
+            self.setattr(key, eval(key))
 
         super(ARIMA, self).__init__()
 
     def _instantiate_model(self):
         # import inside method to avoid hard dependency
         from pmdarima.arima.arima import ARIMA as _ARIMA
+
+        sarimax_kwargs = {key: getattr(self, key) for key in self.SARIMAX_KWARGS_KEYS}
 
         return _ARIMA(
             order=self.order,
@@ -618,5 +636,5 @@ class ARIMA(_PmdArimaAdapter):
             scoring_args=self.scoring_args,
             trend=self.trend,
             with_intercept=self.with_intercept,
-            sarimax_kwargs=self.sarimax_kwargs,
+            sarimax_kwargs=sarimax_kwargs,
         )
