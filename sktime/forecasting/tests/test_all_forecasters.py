@@ -586,7 +586,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         assert isinstance(y_pred, (pd.Series, pd.DataFrame))
         expected = _get_expected_index_for_update_predict(
-            y_test, fh_int_oos, step_length, initial_window
+            y=y_test,
+            fh=fh_int_oos,
+            step_length=step_length,
+            initial_window=initial_window,
         )
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)

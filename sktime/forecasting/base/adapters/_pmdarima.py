@@ -181,7 +181,11 @@ class _PmdArimaAdapter(BaseForecaster):
             alpha=DEFAULT_ALPHA,
         )
 
-        fh_abs = fh.to_absolute(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
+            fh_abs, pd.PeriodIndex
+        ):
+            fh_abs = fh_abs.to_timestamp()
         fh_idx = fh.to_indexer(self.cutoff)
         if return_pred_int:
             pred_ints = []

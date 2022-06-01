@@ -47,7 +47,7 @@ class _BaseWindowForecaster(BaseForecaster):
             cv = check_cv(cv)
         else:
             cv = SlidingWindowSplitter(
-                self.fh.to_relative(self.cutoff),
+                fh=self.fh.to_relative(self.cutoff),
                 window_length=self.window_length_,
                 start_with_window=False,
             )
