@@ -2021,7 +2021,12 @@ class BaseForecaster(BaseEstimator):
             self_copy = self
 
         # set cutoff to time point before data
-        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        cutoff = (
+            y.index.to_period()[0]
+            if isinstance(y.index, pd.DatetimeIndex)
+            else y.index[0]
+        )
+        self_copy._set_cutoff(_shift(cutoff, by=-1))
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]

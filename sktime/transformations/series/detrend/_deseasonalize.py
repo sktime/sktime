@@ -12,7 +12,7 @@ from statsmodels.tsa.seasonal import STL as _STL
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformations.base import BaseTransformer, _SeriesToSeriesTransformer
-from sktime.utils.datetime import _get_duration
+from sktime.utils.datetime import _get_duration, _get_freq
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
@@ -95,7 +95,13 @@ class Deseasonalizer(BaseTransformer):
     def _align_seasonal(self, y):
         """Align seasonal components with y's time index."""
         shift = (
-            -_get_duration(y.index[0], self._y_index[0], coerce_to_int=True) % self.sp
+            -_get_duration(
+                y.index[0],
+                self._y_index[0],
+                coerce_to_int=True,
+                unit=_get_freq(self._y_index),
+            )
+            % self.sp
         )
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 

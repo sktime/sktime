@@ -388,7 +388,11 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # check if the input is a dataframe
         assert isinstance(pred_quantiles, pd.DataFrame)
         # check time index (also checks forecasting horizon is more than one element)
-        _assert_correct_pred_time_index(pred_quantiles.index, y_train.index[-1], fh)
+        _assert_correct_pred_time_index(
+            y_pred_index=pred_quantiles.index,
+            cutoff=y_train.index.to_period()[-1],
+            fh=fh,
+        )
         # Forecasters where name of variables do not exist
         # In this cases y_train is series - the upper level in dataframe == 'Quantiles'
         if isinstance(y_train, pd.Series):

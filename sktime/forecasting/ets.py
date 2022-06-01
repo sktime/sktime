@@ -451,6 +451,10 @@ class AutoETS(_StatsModelsAdapter):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(valid_indices, pd.PeriodIndex) and isinstance(
+            self._y.index, pd.DatetimeIndex
+        ):
+            valid_indices = valid_indices.to_timestamp()
 
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(

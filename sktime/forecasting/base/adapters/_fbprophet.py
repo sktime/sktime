@@ -171,6 +171,8 @@ class _ProphetAdapter(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         fh = fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        if isinstance(fh, pd.PeriodIndex):
+            fh = fh.to_timestamp()
         if not isinstance(fh, pd.DatetimeIndex):
             raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
 
