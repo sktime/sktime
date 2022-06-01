@@ -85,7 +85,12 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
+        horizons = fh.to_absolute(self.cutoff).to_pandas()
+        if isinstance(horizons, pd.PeriodIndex) and isinstance(
+            y_pred.index, pd.DatetimeIndex
+        ):
+            horizons = horizons.to_timestamp()
+        return y_pred.loc[horizons]
 
     def get_fitted_params(self):
         """Get fitted parameters.

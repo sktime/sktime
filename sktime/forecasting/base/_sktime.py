@@ -99,7 +99,9 @@ class _BaseWindowForecaster(BaseForecaster):
         if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             return y_pred
         else:
-            index = fh.to_absolute(self.cutoff)
+            index = fh.to_absolute(self.cutoff).to_pandas()
+            if isinstance(self._y.index, pd.DatetimeIndex):
+                index = index.to_timestamp()
             return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(

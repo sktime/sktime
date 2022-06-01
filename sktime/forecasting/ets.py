@@ -403,13 +403,15 @@ class AutoETS(_StatsModelsAdapter):
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
+        y_pred = self._fitted_forecaster.predict(start=start, end=end)
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
         valid_indices = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(valid_indices, pd.PeriodIndex):
+        if isinstance(valid_indices, pd.PeriodIndex) and isinstance(
+            y_pred.index, pd.DatetimeIndex
+        ):
             valid_indices = valid_indices.to_timestamp()
 
-        y_pred = self._fitted_forecaster.predict(start=start, end=end)
         return y_pred.loc[valid_indices]
 
     def _predict_interval(self, fh, X=None, coverage=None):
