@@ -16,9 +16,11 @@ __all__ = ["MultiplexTransformer"]
 class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     """Facilitate an AutoML based selection of the best transformer.
 
-    When used in combination with GridSearchCV, MultiplexTransformer provides
-    a framework for transformer selection.  It can be used with exogenous transformers
-    (ie data to be applied to exogenous X variables) or transformers on the y data.
+    When used in combination with either TransformedTargetForecaster or
+    ForecastingPipeline in combination with ForecastingGridSearchCV MultiplexTransformer
+    provides a framework for transformer selection.  It can be used with exogenous
+    transformers (ie data to be applied to exogenous X variables) or transformers on
+    the y data, simply select the appropriate pipeline.
 
     MultiplexTransformer has 2 parameters:
     transformers, which is a list of (optionally named) transformers.  If names are not
@@ -60,20 +62,37 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     Examples
     --------
     >>> from sktime.datasets import load_shampoo_sales
-    >>> from sklearn.model_selection import train_test_split
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.multiplexer import MultiplexTransformer
     >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.model_selection import (
     ...     ForecastingGridSearchCV,
     ...     ExpandingWindowSplitter)
-    >>> from sklearn.preprocessing import StandardScaler
     >>> # create MultiplexTransformer:
     >>> multiplexer = MultiplexTransformer(transformers=[
-    ...     ("impute_mean", Imputer(method="mean")),
-    ...     ("impute_near", Imputer(method="nearest")),
-    ...     ("impute_rand", Imputer(method="random"))])
+    ...     ("impute_mean", Imputer(method="mean", missing_values = -1)),
+    ...     ("impute_near", Imputer(method="nearest", missing_values = -1)),
+    ...     ("impute_rand", Imputer(method="random", missing_values = -1))])
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=24,
+    ...     step_length=12,
+    ...     start_with_window=True,
+    ...     fh=[1,2,3])
+    >>> pipe = TransformedTargetForecaster(steps = [
+    ...     ("multiplex", multiplexer),
+    ...     ("forecaster", NaiveForecaster())
+    ...     ])
+    >>> gscv = ForecastingGridSearchCV(
+    ...     cv=cv,
+    ...     param_grid={"multiplex__selected_transformer":
+    ...     ["impute_mean", "impute_near", "impute_rand"]},
+    ...     forecaster=pipe,
+    ...     )
+    >>> y = load_shampoo_sales()
+    >>> # randomly make some of the values nans:
+    >>> y.loc[y.sample(frac=0.1).index] = -1
+    >>> gscv = gscv.fit(y)
     """
 
     _tags = {}
