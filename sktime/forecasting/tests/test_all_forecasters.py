@@ -550,7 +550,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_pred = estimator_instance.update_predict_single(
             y_test, update_params=update_params
         )
-        _assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh_int_oos)
+        cutoff = (
+            y_train.index.to_period()[-1]
+            if isinstance(y_train.index, pd.DatetimeIndex)
+            else y_train.index[-1]
+        )
+        _assert_correct_pred_time_index(
+            y_pred_index=y_pred.index, cutoff=cutoff, fh=fh_int_oos
+        )
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
@@ -603,7 +610,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # why: fails for multivariates cause they are DataFrames
         # solution: look for a general solution for Series and DataFrames
         assert len(f._y) > 0
-        assert f.cutoff == y_train.index[-1]
+        assert f.cutoff == y_train.index.to_period()[-1]
 
         # check data pointers
         np.testing.assert_array_equal(f._y.index, y_train.index)
@@ -613,7 +620,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         np.testing.assert_array_equal(
             f._y.index, np.append(y_train.index, y_test.index)
         )
-        assert f.cutoff == y_test.index[-1]
+        assert f.cutoff == y_test.index.to_period()[-1]
 
     def test__y_when_refitting(self, estimator_instance, n_columns):
         """Test that _y is updated when forecaster is refitted."""
