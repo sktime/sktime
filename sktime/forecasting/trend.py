@@ -99,12 +99,12 @@ class TrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
         X_pred = fh.to_numpy().reshape(-1, 1)
         y_pred = self.regressor_.predict(X_pred)
-        fh_absolute = fh.to_absolute(self.cutoff).to_pandas()
+        index = self.fh.to_absolute(self.cutoff).to_pandas()
         if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            fh_absolute, pd.PeriodIndex
+            index, pd.PeriodIndex
         ):
-            fh_absolute = fh_absolute.to_timestamp()
-        return pd.Series(y_pred, index=fh_absolute)
+            index = index.to_timestamp()
+        return pd.Series(y_pred, index=index)
 
 
 class PolynomialTrendForecaster(BaseForecaster):
