@@ -204,37 +204,7 @@ class AutoETS(_StatsModelsAdapter):
         ignore_inf_ic=True,
         n_jobs=None,
         random_state=None,
-        **kwargs
     ):
-        # Model params
-        self.error = error
-        self.trend = trend
-        self.damped_trend = damped_trend
-        self.seasonal = seasonal
-        self.sp = sp
-        self.initialization_method = initialization_method
-        self.initial_level = initial_level
-        self.initial_trend = initial_trend
-        self.initial_seasonal = initial_seasonal
-        self.bounds = bounds
-        self.dates = dates
-        self.freq = freq
-        self.missing = missing
-
-        # Fit params
-        self.start_params = start_params
-        self.maxiter = maxiter
-        self.full_output = full_output
-        self.disp = disp
-        self.callback = callback
-        self.return_params = return_params
-        self.information_criterion = information_criterion
-        self.auto = auto
-        self.allow_multiplicative_trend = allow_multiplicative_trend
-        self.restrict = restrict
-        self.additive_only = additive_only
-        self.ignore_inf_ic = ignore_inf_ic
-        self.n_jobs = n_jobs
 
         super(AutoETS, self).__init__(random_state=random_state)
 
