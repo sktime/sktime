@@ -59,38 +59,21 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sklearn.model_selection import train_test_split
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.multiplexer import MultiplexTransformer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
-    >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.forecasting.compose import ForecastingPipeline
     >>> from sktime.forecasting.model_selection import (
     ...     ForecastingGridSearchCV,
-    ...     SlidingWindowSplitter)
+    ...     ExpandingWindowSplitter)
     >>> from sklearn.preprocessing import StandardScaler
     >>> # create MultiplexTransformer:
     >>> multiplexer = MultiplexTransformer(transformers=[
-    ...     ("deseasonalize", Deseasonalizer()),
-    ...     ("detrended", Detrender())])
-    >>> # create pipeline
-    >>> pipe = TransformedTargetForecaster(steps=[
-    ...     ("multiplexer", multiplexer,
-    ...     ("forecaster", NaiveForecaster())])
-    >>> # putting it all together in a grid search
-    >>> cv = SlidingWindowSplitter(
-    ...     initial_window=60,
-    ...     window_length=24,
-    ...     start_with_window=True,
-    ...     step_length=48)
-    >>> param_grid = {
-    ...     "multiplexer___delegate_name" : ["deseasonalize", "detrended"]}
-    >>> gscv = ForecastingGridSearchCV(
-    ...     forecaster=pipe,
-    ...     param_grid=param_grid,
-    ...     cv=cv,
-    ...     n_jobs=-1)
-    >>> gscv_fitted = gscv.fit(load_airline())
+    ...     ("impute_mean", Imputer(method="mean")),
+    ...     ("impute_near", Imputer(method="nearest")),
+    ...     ("impute_rand", Imputer(method="random"))])
     """
 
     _tags = {}

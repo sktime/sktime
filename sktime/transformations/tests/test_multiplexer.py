@@ -1,96 +1,42 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Tests for MultiplexForecaster and associated dunders."""
+"""Tests for MultiplexTransformer and associated dunders."""
 
 __author__ = ["miraep8"]
 
 from sklearn.base import clone
 
 from sktime.datasets import load_shampoo_sales
-from sktime.forecasting.compose import MultiplexForecaster
-from sktime.forecasting.ets import AutoETS
-from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import (
-    ExpandingWindowSplitter,
-    ForecastingGridSearchCV,
-)
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.theta import ThetaForecaster
-from sktime.utils.validation.forecasting import check_scoring
+from sktime.transformations.multiplexer import MultiplexTransformer
+from sktime.transformations.series.impute import Imputer
 
 
-def _score_forecasters(forecasters, cv, y):
-    """Will evaluate all the forecasters on y and return the name of best."""
-    scoring = check_scoring(None)
-    scoring_name = f"test_{scoring.name}"
-    score = None
-    for name, forecaster in forecasters:
-        results = evaluate(forecaster, cv, y)
-        results = results.mean()
-        new_score = float(results[scoring_name])
-        if not score or new_score < score:
-            score = new_score
-            best_name = name
-    return best_name
+def test_multiplex_transformer_alone():
+    """Test behavior of MultiplexTransformer.
 
-
-def test_multiplex_forecaster_alone():
-    """Test results of MultiplexForecaster.
-
-    Because MultiplexForecaster is in many ways a wrapper for an underlying
-    forecaster - we can confirm that if the selected_forecaster is set that the
-    MultiplexForecaster performs as expected.
+    Because MultiplexTransformer is in many ways a wrapper for an underlying
+    transformer - we can confirm that if the selected_transformer is set that the
+    MultiplexTransformer delegates all its transformation responsibilities as expected.
     """
     from numpy.testing import assert_array_equal
 
     y = load_shampoo_sales()
     # Note - we select two forecasters which are deterministic.
-    forecaster_tuples = [
-        ("naive", NaiveForecaster()),
-        ("theta", ThetaForecaster()),
+    transformer_tuples = [
+        ("mean", Imputer(method="mean")),
+        ("nearest", Imputer(method="nearest")),
     ]
-    forecaster_names = [name for name, _ in forecaster_tuples]
-    forecasters = [forecaster for _, forecaster in forecaster_tuples]
-    multiplex_forecaster = MultiplexForecaster(forecasters=forecaster_tuples)
-    fh_test = [1, 2, 3]
+    transformer_names = [name for name, _ in transformer_tuples]
+    transformers = [transformer for _, transformer in transformer_tuples]
+    multiplex_transformer = MultiplexTransformer(transformers=transformer_tuples)
     # for each of the forecasters - check that the wrapped forecaster predictions
     # agree with the unwrapped forecaster predictions!
-    for ind, name in enumerate(forecaster_names):
+    for ind, name in enumerate(transformer_names):
         # make a copy to ensure we don't reference the same objectL
-        test_forecaster = clone(forecasters[ind])
-        test_forecaster.fit(y)
-        multiplex_forecaster.selected_forecaster = name
+        test_transformer = clone(transformers[ind])
+        y_transform_indiv = test_transformer.fit_transform(y)
+        multiplex_transformer.selected_transformer = name
         # Note- MultiplexForecaster will make a copy of the forecaster before fitting.
-        multiplex_forecaster.fit(y)
-        y_pred_indiv = test_forecaster.predict(fh=fh_test)
-        y_pred_multi = multiplex_forecaster.predict(fh=fh_test)
-        assert_array_equal(y_pred_indiv, y_pred_multi)
-
-
-def test_multiplex_with_grid_search():
-    """Test MultiplexForecaster perfromas as expected with ForecastingGridSearchCV.
-
-    Because the typical use case of MultiplexForecaster is to use it with the
-    ForecastingGridSearchCV forecaster - here we simply test that the best
-    "selected_forecaster" for MultiplexForecaster found using ForecastingGridSearchCV
-    is the same forecaster we would find if we evaluated all the forecasters in
-    MultiplexForecaster independently.
-    """
-    y = load_shampoo_sales()
-    forecasters = [
-        ("ets", AutoETS()),
-        ("naive", NaiveForecaster()),
-    ]
-    multiplex_forecaster = MultiplexForecaster(forecasters=forecasters)
-    forecaster_names = [name for name, _ in forecasters]
-    cv = ExpandingWindowSplitter(start_with_window=True, step_length=12)
-    gscv = ForecastingGridSearchCV(
-        cv=cv,
-        param_grid={"selected_forecaster": forecaster_names},
-        forecaster=multiplex_forecaster,
-    )
-    gscv.fit(y)
-    gscv_best_name = gscv.best_forecaster_.selected_forecaster
-    best_name = _score_forecasters(forecasters, cv, y)
-    assert gscv_best_name == best_name
+        y_transform_multi = multiplex_transformer.fit_transform(y)
+        assert_array_equal(y_transform_indiv, y_transform_multi)
