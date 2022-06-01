@@ -122,12 +122,8 @@ def get_cutoff(obj, cutoff=0, return_index=False):
         else:
             return cutoff_ind
 
-    if hasattr(obj, "index"):
-        obj_copy.index = (
-            obj_copy.index.to_period()
-            if isinstance(obj_copy.index, pd.DatetimeIndex)
-            else obj_copy.index
-        )
+    if hasattr(obj_copy, "index") and isinstance(obj_copy.index, pd.DatetimeIndex):
+        obj_copy.index = obj_copy.index.to_period()
 
     if isinstance(obj_copy, pd.Series):
         return obj_copy.index[[-1]] if return_index else obj_copy.index[-1]
