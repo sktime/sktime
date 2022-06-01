@@ -100,6 +100,8 @@ class BaseForecaster(BaseEstimator):
         self._y = None
         self._X = None
 
+        self.default_vectorized = True
+
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
@@ -256,7 +258,9 @@ class BaseForecaster(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        vectorization_needed = isinstance(y_inner, VectorizedDF)
+        vectorization_needed = (isinstance(y_inner, VectorizedDF)) & (
+            self.default_vectorized
+        )
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
@@ -393,7 +397,9 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # apply fit and then predict
-        vectorization_needed = isinstance(y_inner, VectorizedDF)
+        vectorization_needed = (isinstance(y_inner, VectorizedDF)) & (
+            self.default_vectorized
+        )
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
