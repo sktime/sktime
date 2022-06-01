@@ -614,7 +614,7 @@ class ARIMA(_PmdArimaAdapter):
         self.trend = trend
         self.with_intercept = with_intercept
         for key in self.SARIMAX_KWARGS_KEYS:
-            self.setattr(key, eval(key))
+            setattr(self, key, eval(key))
 
         super(ARIMA, self).__init__()
 
