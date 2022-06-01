@@ -5,6 +5,7 @@
 
 __author__ = ["miraep8"]
 
+import pandas as pd
 from sklearn.base import clone
 
 from sktime.datasets import load_shampoo_sales
@@ -22,6 +23,8 @@ def test_multiplex_transformer_alone():
     from numpy.testing import assert_array_equal
 
     y = load_shampoo_sales()
+    # randomly make some of the values nans:
+    y.loc[y.sample(frac=0.1).index] = pd.np.nan
     # Note - we select two forecasters which are deterministic.
     transformer_tuples = [
         ("mean", Imputer(method="mean")),
@@ -35,8 +38,8 @@ def test_multiplex_transformer_alone():
     for ind, name in enumerate(transformer_names):
         # make a copy to ensure we don't reference the same objectL
         test_transformer = clone(transformers[ind])
-        y_transform_indiv = test_transformer.fit_transform(y)
+        y_transform_indiv = test_transformer.fit_transform(X=y)
         multiplex_transformer.selected_transformer = name
         # Note- MultiplexForecaster will make a copy of the forecaster before fitting.
-        y_transform_multi = multiplex_transformer.fit_transform(y)
+        y_transform_multi = multiplex_transformer.fit_transform(X=y)
         assert_array_equal(y_transform_indiv, y_transform_multi)
