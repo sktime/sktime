@@ -2,6 +2,7 @@
 """Test for critical difference diagram."""
 import random
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -9,6 +10,8 @@ from sktime.benchmarking.evaluation.utils._critical_difference_diagram import (
     _plot_critical_difference_diagram,
     create_critical_difference_diagram,
 )
+
+DEBUG = False
 
 
 def test_critical_difference():
@@ -34,7 +37,9 @@ def test_critical_difference():
         figures.append(_plot_critical_difference_diagram(estimators, list(sorted_rank)))
 
     for fig in figures:
-        fig.show()
+        assert isinstance(fig, plt.Figure)
+        if DEBUG is True:
+            fig.show()
 
 
 def test_crit():
@@ -63,11 +68,10 @@ def test_crit():
             )
 
     df = pd.DataFrame(data)
-    create_critical_difference_diagram(
-        df,
-        title="test",
-        alpha=100.0,
-    )
 
     df = pd.read_csv("./test.csv", index_col=False)
-    create_critical_difference_diagram(df, output_path="./", title="Accuracy")
+    figure = create_critical_difference_diagram(df, title="Accuracy")
+    assert isinstance(figure, plt.Figure)
+
+    if DEBUG is True:
+        figure.show()

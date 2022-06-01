@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Generate critical difference diagrams."""
 import math
-import operator
+from itertools import combinations
 from operator import itemgetter
-from typing import List, Tuple
+from typing import Generator, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-import networkx
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare, wilcoxon
@@ -22,7 +22,7 @@ def create_critical_difference_diagram(
     title_fontsize: float = 20,
     figure_width: float = None,
     figure_height: float = None,
-) -> List[plt.Figure]:
+) -> Union[plt.Figure, List[plt.Figure]]:
     """Create a critical difference diagram.
 
     Parameters
@@ -63,8 +63,9 @@ def create_critical_difference_diagram(
 
     Returns
     -------
-    List[plt.Figures]
-        List of critical difference diagram figures.
+    plt.Figure or List[plt.Figure]
+        If more than one metric passed then a list of critical difference diagram
+        figures is return else plt.Figure is returned.
     """
     num_metrics = len(df.columns) - 2
     figures = []
@@ -103,7 +104,97 @@ def create_critical_difference_diagram(
             figure.savefig(curr_path)
         figures.append(figure)
 
+    if len(figures) == 1:
+        return figures[0]
     return figures
+
+
+def _find_edges(graph: List[List[int]]) -> List[Tuple]:
+    """Find edges of a graph.
+
+    Parameters
+    ----------
+    graph: List[List[int]]
+        A 2d list containing the graph.
+
+    Returns
+    -------
+    List[Tuple]
+        List of tuples containing edges of graph.
+    """
+    edges = []
+    for i in range(len(graph)):
+        curr_node = graph[i]
+        for j in range(len(curr_node)):
+            curr_edge = curr_node[j]
+            if curr_edge == 1:
+                edges.append((i, j))
+    return edges
+
+
+def _k_cliques_generator(graph: List[List[int]]) -> Generator:
+    """Create a generator for cliques in graph.
+
+    Parameters
+    ----------
+    graph: List[List[int]]
+        A 2d list containing the graph.
+
+    Returns
+    -------
+    Generator
+        Generator that yields each clique.
+    """
+    edges = _find_edges(graph)
+    cliques = [{i, j} for i, j in edges if i != j]
+    k = 2
+
+    while cliques:
+        yield k, cliques
+        cliques_1 = set()
+        for u, v in combinations(cliques, 2):
+            w = u ^ v
+            if len(w) == 2 and tuple(w) in edges:
+                cliques_1.add(tuple(u | w))
+
+        cliques = list(map(set, cliques_1))
+        k += 1
+
+    return cliques
+
+
+def _k_cliques(graph: List[List[int]]) -> List[List[int]]:
+    """Find cliques in graph.
+
+    Parameters
+    ----------
+    graph: List[List[int]]
+        A 2d list containing the graph.
+
+    Returns
+    -------
+    List[List[int]]
+        List containing the valid cliques for graph.
+    """
+    cliques = list(_k_cliques_generator(graph))
+    valid_cliques = []
+    checked_off = []
+
+    for clique in reversed(cliques):
+        for curr_clique in clique[1]:
+            curr = list(curr_clique)
+            found = False
+            curr_checked = []
+            for val in curr:
+                if val in checked_off:
+                    found = True
+                curr_checked.append(val)
+
+            if found is False:
+                checked_off = checked_off + curr_checked
+                valid_cliques.append(curr)
+
+    return valid_cliques
 
 
 def form_cliques(p_values, estimators) -> List[List[int]]:
@@ -138,9 +229,7 @@ def form_cliques(p_values, estimators) -> List[List[int]]:
             max_j = max(i, j)
             graph[min_i, max_j] = 1
 
-    return list(
-        networkx.find_cliques(networkx.Graph(graph))
-    )  # TODO: rewrite this function nativly in sktime.
+    return _k_cliques(graph)
 
 
 def _compute_wilcoxon_signed_rank(
@@ -208,7 +297,7 @@ def _compute_wilcoxon_signed_rank(
 
             p_values.append((curr_estimator, curr_compare_estimator, p_value, False))
 
-    p_values.sort(key=operator.itemgetter(2))
+    p_values.sort(key=itemgetter(2))
 
     for i in range(len(p_values)):
         new_alpha = float(alpha / (len(p_values) - i))
