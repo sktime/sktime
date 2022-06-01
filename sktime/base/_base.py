@@ -70,7 +70,12 @@ class BaseObject(_BaseEstimator):
     """
 
     def __init__(self):
+        # initializing dynamic tag dictionary
         self._tags_dynamic = dict()
+        # this writes all __init__ args to self
+        for key in inspect.getfullargspec(self.__init__).args:
+            setattr(self, key, eval(key))
+
         super(BaseObject, self).__init__()
 
     def reset(self):
