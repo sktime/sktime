@@ -4,7 +4,6 @@
 __author__ = ["fkiraly"]
 
 import numpy as np
-from sklearn import clone
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
 
@@ -51,7 +50,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         distmat: np.array of shape [n, m]
             (i,j)-th entry contains distance/kernel between X.iloc[i] and X2.iloc[j]
         """
-        aligner = clone(self.aligner)
+        aligner = self.aligner.clone()
 
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,

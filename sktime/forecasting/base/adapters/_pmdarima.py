@@ -45,6 +45,8 @@ class _PmdArimaAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        if X is not None:
+            X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
         self._forecaster.fit(y, X=X)
         return self
@@ -80,7 +82,7 @@ class _PmdArimaAdapter(BaseForecaster):
         else:
             y_ins = self._predict_in_sample(fh_ins, X=X)
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X)
-            return y_ins.append(y_oos)
+            return pd.concat([y_ins, y_oos])
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -269,8 +271,8 @@ class _PmdArimaAdapter(BaseForecaster):
         _, y_ins_pred_int = self._predict_in_sample(fh_ins, **kwargs)
         _, y_oos_pred_int = self._predict_fixed_cutoff(fh_oos, **kwargs)
         for ins_int, oos_int, a in zip(y_ins_pred_int, y_oos_pred_int, coverage):
-            pred_int[("Coverage", a, "lower")] = ins_int.append(oos_int)["lower"]
-            pred_int[("Coverage", a, "upper")] = ins_int.append(oos_int)["upper"]
+            pred_int[("Coverage", a, "lower")] = pd.concat([ins_int, oos_int])["lower"]
+            pred_int[("Coverage", a, "upper")] = pd.concat([ins_int, oos_int])["upper"]
 
         return pred_int
 

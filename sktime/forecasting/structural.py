@@ -204,6 +204,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     _tags = {
         "capability:pred_int": True,
         "handles-missing-data": False,
+        "ignores-exogeneous-X": False,
     }
 
     def __init__(
