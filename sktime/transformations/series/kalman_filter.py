@@ -356,54 +356,52 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from sktime.transformations.series.kalman_filter import (
-    >>>     KalmanFilterTransformerPK
-    >>> )
-    >>> time_steps = 10
-    >>> state_dim = 2
-    >>> measurement_dim = 2
-
         Basic example:
-    >>> X = np.random.rand(time_steps, measurement_dim)
-    >>> transformer = KalmanFilterTransformerPK(state_dim=state_dim)
+    >>> import numpy as np
+    >>> import sktime.transformations.series.kalman_filter as kf
+    >>> time_steps, state_dim, measurement_dim = 10, 2, 3
+    >>>
+    >>> X = np.random.rand(time_steps, measurement_dim) * 10
+    >>> transformer = kf.KalmanFilterTransformerPK(state_dim=state_dim)
     >>> X_transformed = transformer.fit_transform(X=X)
 
-        Example of - denoising, estimate_matrices and missing values:
+        Example of - denoising, matrix estimation and missing values:
+    >>> import numpy as np
+    >>> import sktime.transformations.series.kalman_filter as kf
+    >>> time_steps, state_dim, measurement_dim = 10, 2, 2
+    >>>
     >>> X = np.random.rand(time_steps, measurement_dim)
     >>> # missing value
     >>> X[0][0] = np.nan
     >>>
-    >>> # Note - if `estimate_matrices` is not None, then assume matrix parameters
-    >>> # given as elements of `estimate_matrices` are constants
-    >>> # (not lists of matrices).
-    >>> transformer = KalmanFilterTransformerPK(state_dim=state_dim,
-    >>>                               state_transition=np.eye(state_dim),
-    >>>                               measurement_offsets=np.zeros(measurement_dim),
-    >>>                               denoising=True,
-    >>>                               estimate_matrices=['state_transition',
-    >>>                                                  'measurement_offsets',
-    >>>                                                  'process_noise'])
+    >>> # If matrices estimation is required, elements of `estimate_matrices`
+    >>> # are assumed to be constants.
+    >>> transformer = kf.KalmanFilterTransformerPK(
+    ...     state_dim=state_dim,
+    ...     measurement_noise=np.eye(measurement_dim),
+    ...     denoising=True,
+    ...     estimate_matrices=['measurement_noise']
+    ...     )
+    >>>
     >>> X_transformed = transformer.fit_transform(X=X)
 
-        Example of - matrix for each time_step, denoising and missing values:
-    >>> X = np.random.rand(time_steps, measurement_dim) * 10
+        Example of - dynamic inputs (matrix per time-step) and missing values:
+    >>> import numpy as np
+    >>> import sktime.transformations.series.kalman_filter as kf
+    >>> time_steps, state_dim, measurement_dim = 10, 4, 4
+    >>>
+    >>> X = np.random.rand(time_steps, measurement_dim)
     >>> # missing values
-    >>> X[0] = [np.NaN, np.NaN]
+    >>> X[0] = [np.NaN for i in range(measurement_dim)]
     >>>
-    >>> # matrix for each time_step
-    >>> state_transition = [np.eye(state_dim)] * time_steps
-    >>> measurement_noise = np.asarray(([np.eye(measurement_dim)] * time_steps))
+    >>> # Dynamic input -
+    >>> # `state_transition` provide different matrix for each time step.
+    >>> transformer = kf.KalmanFilterTransformerPK(
+    ...     state_dim=state_dim,
+    ...     state_transition=np.random.rand(time_steps, state_dim, state_dim),
+    ...     estimate_matrices=['initial_state', 'initial_state_covariance']
+    ...     )
     >>>
-    >>> # Note - if `estimate_matrices` is not None, then assume matrix parameters
-    >>> # given as elements of `estimate_matrices` are constants
-    >>> # (not lists of matrices).
-    >>> transformer = KalmanFilterTransformerPK(state_dim=state_dim,
-    >>>                                  state_transition=state_transition,
-    >>>                                  measurement_noise=measurement_noise,
-    >>>                                  denoising=True,
-    >>>                                  estimate_matrices=['initial_state',
-    >>>                                                     'initial_state_covariance'])
     >>> X_transformed = transformer.fit_transform(X=X)
     """
 
@@ -832,21 +830,21 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from sktime.transformations.series.kalman_filter import (
-    >>>     KalmanFilterTransformerFP
-    >>> )
-    >>> time_steps = 10
-    >>> state_dim = 2
-    >>> measurement_dim = 2
-    >>> control_variable_dim = 1
-
         Basic example:
-    >>> X = np.random.rand(time_steps, measurement_dim)
-    >>> transformer = KalmanFilterTransformerFP(state_dim=state_dim)
+    >>> import numpy as np
+    >>> import sktime.transformations.series.kalman_filter as kf
+    >>> time_steps, state_dim, measurement_dim = 10, 2, 3
+    >>>
+    >>> X = np.random.rand(time_steps, measurement_dim) * 10
+    >>> transformer = kf.KalmanFilterTransformerFP(state_dim=state_dim)
     >>> X_transformed = transformer.fit_transform(X=X)
 
-        Example of - denoising, estimate_matrices, missing values and transform with y:
+        Example of - denoising, matrix estimation, missing values and transform with y:
+    >>> import numpy as np
+    >>> import sktime.transformations.series.kalman_filter as kf
+    >>> time_steps, state_dim, measurement_dim = 10, 3, 3
+    >>> control_variable_dim = 2
+    >>>
     >>> X = np.random.rand(time_steps, measurement_dim)
     >>> # missing value
     >>> X[0][0] = np.nan
@@ -854,39 +852,38 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>> # y
     >>> control_variable = np.random.rand(time_steps, control_variable_dim)
     >>>
-    >>> # Note - if `estimate_matrices` is not None, then assume matrix parameters
-    >>> # given as elements of `estimate_matrices` are constants
-    >>> # (not lists of matrices).
-    >>> transformer = KalmanFilterTransformerFP(
-    >>>                    state_dim=state_dim,
-    >>>                    state_transition=np.eye(state_dim),
-    >>>                    control_transition=np.eye(state_dim, control_variable_dim),
-    >>>                    denoising=True,
-    >>>                    estimate_matrices='all')
+    >>> # If matrices estimation is required, elements of `estimate_matrices`
+    >>> # are assumed to be constants.
+    >>> transformer = kf.KalmanFilterTransformerFP(
+    ...     state_dim=state_dim,
+    ...     measurement_noise=np.eye(measurement_dim),
+    ...     denoising=True,
+    ...     estimate_matrices='measurement_noise'
+    ...     )
+    >>>
     >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
 
-        Example of - matrix for each time_step, denoising, missing values and
-                     transform with y.
-    >>> X = np.random.rand(time_steps, measurement_dim) * 10
+        Example of - dynamic inputs (matrix per time-step), missing values:
+    >>> import numpy as np
+    >>> import sktime.transformations.series.kalman_filter as kf
+    >>> time_steps, state_dim, measurement_dim = 10, 4, 4
+    >>> control_variable_dim = 4
+    >>>
+    >>> X = np.random.rand(time_steps, measurement_dim)
     >>> # missing values
-    >>> X[0] = [np.NaN, np.NaN]
+    >>> X[0] = [np.NaN for i in range(measurement_dim)]
     >>>
     >>> # y
     >>> control_variable = np.random.rand(control_variable_dim)
     >>>
-    >>> # matrix for each time_step
-    >>> state_transition = [np.eye(state_dim)] * time_steps
-    >>> measurement_noise = np.asarray(([np.eye(measurement_dim)] * time_steps))
+    >>> # Dynamic input -
+    >>> # `state_transition` provide different matrix for each time step.
+    >>> transformer = kf.KalmanFilterTransformerFP(
+    ...     state_dim=state_dim,
+    ...     state_transition=np.random.rand(time_steps, state_dim, state_dim),
+    ...     estimate_matrices=['initial_state', 'initial_state_covariance']
+    ...     )
     >>>
-    >>> # Note - if `estimate_matrices` is not None, then assume matrix parameters
-    >>> # given as elements of `estimate_matrices` are constants
-    >>> # (not lists of matrices).
-    >>> transformer = KalmanFilterTransformerFP(state_dim=state_dim,
-    >>>                                  state_transition=state_transition,
-    >>>                                  measurement_noise=measurement_noise,
-    >>>                                  denoising=True,
-    >>>                                  estimate_matrices=['initial_state',
-    >>>                                                     'initial_state_covariance'])
     >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
     """
 
@@ -1073,7 +1070,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
 
         Returns
         -------
-            X_transformed : 2D np.ndarray
+            X_transformed : np.ndarray
                 transformed version of X
         """
         import filterpy.kalman.kalman_filter as filterpy_kf
@@ -1211,7 +1208,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
 
         Returns
         -------
-            Dictionary with default shape of each matrix parameter
+            shapes : dict
+                Dictionary with default shape of each matrix parameter
         """
         shapes = super()._get_shapes(state_dim, measurement_dim)
         shapes["u"] = (u_dim,)
