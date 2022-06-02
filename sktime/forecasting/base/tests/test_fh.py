@@ -4,7 +4,7 @@
 
 __author__ = ["mloning", "khrapovs"]
 
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -52,7 +52,7 @@ def test_fh(
     index_type: str,
     fh_type: str,
     is_relative: bool,
-    steps: Union[int, pd.Timedelta, list[Union[int, pd.Timedelta]]],
+    steps: Union[int, pd.Timedelta, List[Union[int, pd.Timedelta]]],
 ) -> None:
     """Testing ForecastingHorizon conversions."""
     int_types = ["int64", "int32"]
