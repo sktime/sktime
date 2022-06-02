@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import itertools
 import os
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 
-from sktime.datasets import read_clusterer_result_from_uea_format
+from sktime.benchmarking.evaluation.diagrams import create_critical_difference_diagram
 
 
 class BaseEstimatorEvaluator(ABC):
@@ -27,10 +28,13 @@ class BaseEstimatorEvaluator(ABC):
         results_path: str,
         evaluation_out_path: str,
         experiment_name: str,
+        draw_critical_difference_diagrams: bool = True
+
     ):
         self.results_path = results_path
         self.evaluation_out_path = evaluation_out_path
         self.experiment_name = experiment_name
+        self.draw_critical_difference_diagrams = draw_critical_difference_diagrams
 
     def run_evaluation(self, estimators: List[str]):
         """Method to evaluate results
@@ -40,12 +44,99 @@ class BaseEstimatorEvaluator(ABC):
         estimators: List[str]
             List of strings to evaluate estimators.
         """
-        test_results = []
-        train_results = []
-        self._load_folds_for_dataset(estimators)
+        test_results, train_results = self._load_folds_for_dataset(estimators)
+
+        def eval_results(results, split):
+            col_headers = ['dataset', 'estimator', 'estimator_name']
+            metric_dict = results[0][3]
+            for key in metric_dict:
+                col_headers.append(key)
+
+            result_format = []
+            for result in results:
+                dataset = result[0]
+                estimator = result[1]
+                estimator_name = result[2]
+                metrics = result[3]
+                result_format.append([dataset, estimator, estimator_name] + list(metrics.values()))
+
+            result_df = pd.DataFrame(result_format, columns=col_headers)
+
+            self._output_evaluation_results(result_df, split)
+
+        if len(test_results) > 0:
+            eval_results(test_results, 'test')
+
+        if len(train_results) > 0:
+            eval_results(train_results,  'train')
+
+        joe = ''
+
+        # self.create_crit_difference(
+        #     result_df.loc[:, result_df.columns != 'estimator']
+        # )
+
+
+    def _output_evaluation_results(self, df: pd.DataFrame, split: str):
+        if not os.path.exists(self.evaluation_out_path):
+            os.mkdir(self.evaluation_out_path)
+        split_path = f"{self.evaluation_out_path}/{split}"
+        if not os.path.exists(split_path):
+            os.mkdir(split_path)
+        datasets = list(set(df['dataset']))
+        estimators = list(set(df['estimator']))
+
+        # Add combinations of results
+        estimator_combinations = []
+        for estimator in estimators:
+            estimator_combinations.append([estimator])
+        estimator_combinations.append(estimators)
+
+        for combination in estimator_combinations:
+            curr_df = df.loc[df['estimator'].isin(combination)]
+            curr_df = curr_df.loc[:, curr_df.columns != 'estimator']
+
+            if len(combination) <= 1:
+                curr_df["estimator_name"] = curr_df['estimator_name'].apply(lambda x: (x.split('-')[1]))
+
+            estimator_name = combination[0]
+            if len(combination) > 1:
+                estimator_name = 'all'
+            curr_output_path = \
+                os.path.abspath(f"{split_path}/{estimator_name}")
+
+            if not os.path.exists(curr_output_path):
+                os.mkdir(curr_output_path)
+
+            curr_df.to_csv(f"{curr_output_path}/all.csv", index=False)
+
+            metrics = curr_df.columns[2:]
+            datasets = list(set(curr_df['dataset']))
+            for metric in metrics:
+                curr_df_cols = [f'{split}{metric}'.upper()]
+                curr_df_cols += list(set(curr_df['estimator_name']))
+                curr_metric_df = []
+                for dataset in datasets:
+                    curr_row = [dataset]
+                    for i in range(1, len(curr_df_cols)):
+                        col = curr_df_cols[i]
+                        df_metric = curr_df.loc[
+                            (curr_df['estimator_name'] == col) &
+                            (curr_df['dataset'] == dataset)
+                        ]
+                        curr_row.append(float(df_metric[metric]))
+                    curr_metric_df.append(curr_row)
+
+                metric_df = pd.DataFrame(curr_metric_df, columns=curr_df_cols)
+                metric_df.to_csv(f"{curr_output_path}/{curr_df_cols[0]}.csv", index=False)
+
+    def create_crit_difference(self, df: pd.DataFrame):
+        figures = []
+        figures += create_critical_difference_diagram(df)
+
 
     @abstractmethod
-    def evaluate_csv_data(self, csv_path: str):
+    def evaluate_csv_data(self, csv_path: str) -> Tuple:
         """Method to evaluate results
 
         Parameters
@@ -55,8 +146,9 @@ class BaseEstimatorEvaluator(ABC):
         """
         ...
 
-    def _load_folds_for_dataset(self, estimators: List[str]):
-        dataset_results = {}
+    def _load_folds_for_dataset(self, estimators: List[str]) -> Tuple[List[Tuple], List[Tuple]]:
+        train_results = []
+        test_results = []
         for estimator in estimators:
             path = os.path.abspath(f"{self.results_path}/{estimator}/Predictions")
             for _, dirs, _ in os.walk(path):
@@ -67,4 +159,9 @@ class BaseEstimatorEvaluator(ABC):
                             for file in files:
                                 if file.endswith(".csv"):
                                     file_path = os.path.abspath(f"{dataset_dir}/{file}")
-                                    self.evaluate_csv_data(file_path)
+                                    res = self.evaluate_csv_data(file_path)
+                                    if 'test' in file:
+                                        test_results.append(res)
+                                    else:
+                                        train_results.append(res)
+        return test_results, train_results
