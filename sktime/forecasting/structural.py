@@ -11,6 +11,7 @@ from statsmodels.tsa.statespace.structural import (
     UnobservedComponents as _UnobservedComponents,
 )
 
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -364,11 +365,10 @@ class UnobservedComponents(_StatsModelsAdapter):
         --------
         statsmodels.tsa.statespace.mlemodel.PredictionResults.summary_frame
         """
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(valid_indices, pd.PeriodIndex) and isinstance(
-            self._y.index, pd.DatetimeIndex
-        ):
-            valid_indices = valid_indices.to_timestamp()
+        valid_indices = convert_fh_to_datetime_index(
+            fh=fh, cutoff=self.cutoff, y=self._y
+        )
+
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
             start=start, end=end, exog=X

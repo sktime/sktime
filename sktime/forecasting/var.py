@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.api import VAR as _VAR
 
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -175,11 +176,7 @@ class VAR(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         index.name = self._y.index.name
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :], index=index, columns=self._y.columns

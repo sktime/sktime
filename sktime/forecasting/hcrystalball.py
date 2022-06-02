@@ -8,6 +8,7 @@ from deprecated.sphinx import deprecated
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("hcrystalball", severity="warning")
@@ -157,11 +158,7 @@ class HCrystalBallForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions for the forecast
         """
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            self.cutoff, pd.Period
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         X_pred = _get_X_pred(X, index=index)
         y_pred = self.model_.predict(X=X_pred)
         return _adapt_y_pred(y_pred)

@@ -11,6 +11,7 @@ import os
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.utils.validation.forecasting import check_y_X
 
 
@@ -110,7 +111,7 @@ class _ProphetAdapter(BaseForecaster):
         """
         self._update_X(X, enforce_index_type=pd.DatetimeIndex)
 
-        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas().to_timestamp()
+        fh = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         if not isinstance(fh, pd.DatetimeIndex):
             raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
         df = pd.DataFrame({"ds": fh}, index=fh)
@@ -170,9 +171,7 @@ class _ProphetAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        fh = fh.to_absolute(cutoff=self.cutoff).to_pandas()
-        if isinstance(fh, pd.PeriodIndex):
-            fh = fh.to_timestamp()
+        fh = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
         if not isinstance(fh, pd.DatetimeIndex):
             raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
 

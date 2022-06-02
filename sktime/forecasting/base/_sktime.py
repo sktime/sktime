@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.model_selection import CutoffSplitter, SlidingWindowSplitter
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_cv
@@ -47,7 +48,7 @@ class _BaseWindowForecaster(BaseForecaster):
             cv = check_cv(cv)
         else:
             cv = SlidingWindowSplitter(
-                fh=self.fh.to_relative(self.cutoff),
+                self.fh.to_relative(self.cutoff),
                 window_length=self.window_length_,
                 start_with_window=False,
             )
@@ -99,9 +100,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             return y_pred
         else:
-            index = fh.to_absolute(self.cutoff).to_pandas()
-            if isinstance(self._y.index, pd.DatetimeIndex):
-                index = index.to_timestamp()
+            index = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
             return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp
@@ -173,11 +174,8 @@ class _TbatsAdapter(BaseForecaster):
         fh = fh.to_relative(cutoff=self.cutoff)
         len_fh = len(fh)
 
-        index = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
+
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             steps = fh_out.to_pandas().max()

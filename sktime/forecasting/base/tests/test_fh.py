@@ -227,7 +227,7 @@ TIMEPOINTS = [
 
 @pytest.mark.parametrize("timepoint", TIMEPOINTS)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
-def test_shift(timepoint: Union[pd.Period, int], by: int) -> None:
+def test_shift(timepoint, by):
     """Test shifting of ForecastingHorizon."""
     ret = _shift(timepoint, by=by)
 
@@ -307,7 +307,7 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_to_absolute_freq(freqstr: str) -> None:
+def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
     train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
     fh = ForecastingHorizon([1, 2, 3])
@@ -316,7 +316,7 @@ def test_to_absolute_freq(freqstr: str) -> None:
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_absolute_to_absolute_with_integer_horizon(freqstr: str) -> None:
+def test_absolute_to_absolute_with_integer_horizon(freqstr):
     """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
@@ -329,7 +329,7 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr: str) -> None:
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
-def test_absolute_to_absolute_with_timedelta_horizon(freqstr: str) -> None:
+def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
@@ -345,7 +345,7 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr: str) -> None:
 
 
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
-def test_relative_to_relative_with_integer_horizon(freqstr: str) -> None:
+def test_relative_to_relative_with_integer_horizon(freqstr):
     """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
@@ -357,7 +357,7 @@ def test_relative_to_relative_with_integer_horizon(freqstr: str) -> None:
 
 
 @pytest.mark.parametrize("freqstr", FIXED_FREQUENCY_STRINGS)
-def test_relative_to_relative_with_timedelta_horizon(freqstr: str) -> None:
+def test_relative_to_relative_with_timedelta_horizon(freqstr):
     """Test converting between relative and absolute with timedelta horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freqstr, periods=3))
@@ -372,7 +372,7 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr: str) -> None:
 
 
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
-def test_to_relative(freq: str) -> None:
+def test_to_relative(freq: str):
     """Test conversion to relative.
 
     Fixes bug in
@@ -386,7 +386,7 @@ def test_to_relative(freq: str) -> None:
 
 @pytest.mark.parametrize("idx", range(5))
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
-def test_to_absolute_int(idx: int, freq: str) -> None:
+def test_to_absolute_int(idx: int, freq: str):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.period_range("2021-10-06", freq=freq, periods=5))
@@ -396,7 +396,7 @@ def test_to_absolute_int(idx: int, freq: str) -> None:
 
 
 @pytest.mark.parametrize("freqstr", ["W-WED", "W-SUN", "W-SAT"])
-def test_estimator_fh(freqstr: str) -> None:
+def test_estimator_fh(freqstr):
     """Test model fitting with anchored frequency."""
     train = pd.Series(
         np.random.uniform(low=2000, high=7000, size=(104,)),
@@ -410,7 +410,7 @@ def test_estimator_fh(freqstr: str) -> None:
 
 
 # TODO: Replace this long running test with fast unit test
-def test_auto_ets() -> None:
+def test_auto_ets():
     """Fix bug in 1435.
 
     https://github.com/alan-turing-institute/sktime/issues/1435#issue-1000175469
@@ -430,7 +430,7 @@ def test_auto_ets() -> None:
 
 
 # TODO: Replace this long running test with fast unit test
-def test_exponential_smoothing() -> None:
+def test_exponential_smoothing():
     """Test bug in 1876.
 
     https://github.com/alan-turing-institute/sktime/issues/1876#issue-1103752402.
@@ -455,7 +455,7 @@ def test_exponential_smoothing() -> None:
 
 
 # TODO: Replace this long running test with fast unit test
-def test_auto_arima() -> None:
+def test_auto_arima():
     """Test bug in 805.
 
     https://github.com/alan-turing-institute/sktime/issues/805#issuecomment-891848228.

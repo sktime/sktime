@@ -54,6 +54,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.utils.datetime import _shift
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
@@ -1321,12 +1322,9 @@ class BaseForecaster(BaseEstimator):
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
         y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
-        y_pred.index = index
+        y_pred.index = convert_fh_to_datetime_index(
+            fh=self.fh, cutoff=self.cutoff, y=self._y
+        )
         y_pred = y_pred["y_pred"].rename(None)
         return y_pred
 
@@ -1871,14 +1869,11 @@ class BaseForecaster(BaseEstimator):
             pred_var = pd.DataFrame(pred_var)
 
             # ensure index and columns are as expected
-            if fh.is_relative:
-                fh = fh.to_absolute(self.cutoff)
-            index = fh.to_pandas()
-            if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-                index, pd.PeriodIndex
-            ):
-                index = index.to_timestamp()
-            pred_var.index = index
+            if not fh.is_relative:
+                fh = fh.to_relative(self.cutoff)
+            pred_var.index = convert_fh_to_datetime_index(
+                fh=fh, cutoff=self.cutoff, y=self._y
+            )
             if isinstance(self._y, pd.DataFrame):
                 pred_var.columns = self._y.columns
 

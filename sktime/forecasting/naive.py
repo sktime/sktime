@@ -20,6 +20,7 @@ import pandas as pd
 from scipy.stats import norm
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.utils.validation import check_window_length
@@ -577,11 +578,7 @@ class NaiveVariance(BaseForecaster):
             )
 
         fh_relative = fh.to_relative(self.cutoff)
-        fh_absolute = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            fh_absolute, pd.PeriodIndex
-        ):
-            fh_absolute = fh_absolute.to_timestamp()
+        fh_absolute = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
 
         if cov:
             fh_size = len(fh)

@@ -555,16 +555,15 @@ def _to_absolute(
         Absolute representation of forecasting horizon.
     """
     if not fh.is_relative:
-        absolute = fh._values
-        if isinstance(absolute, pd.DatetimeIndex):
-            absolute = absolute.to_period(freq=cutoff.freq)
-        return fh._new(absolute, is_relative=False)
-
+        if isinstance(fh._values, pd.DatetimeIndex):
+            absolute = fh._values.to_period(freq=cutoff.freq)
+        else:
+            absolute = fh._values
     else:
         relative = fh.to_pandas()
         _check_cutoff(cutoff=cutoff, index=relative)
         absolute = cutoff + relative
-        return fh._new(absolute, is_relative=False)
+    return fh._new(absolute, is_relative=False)
 
 
 def _check_cutoff(
@@ -590,7 +589,6 @@ def _check_cutoff(
 
     if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
         assert isinstance(cutoff, pd.Period)
-        # assert index.freqstr == cutoff.freqstr
 
 
 def _check_start(start, index):

@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 
 
 class _PmdArimaAdapter(BaseForecaster):
@@ -107,11 +108,7 @@ class _PmdArimaAdapter(BaseForecaster):
             diff_order = self._forecaster.model_.order[1]
 
         # Initialize return objects
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            fh_abs, pd.PeriodIndex
-        ):
-            fh_abs = fh_abs.to_timestamp()
+        fh_abs = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs)
 
@@ -184,12 +181,7 @@ class _PmdArimaAdapter(BaseForecaster):
             return_conf_int=False,
             alpha=DEFAULT_ALPHA,
         )
-
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            fh_abs, pd.PeriodIndex
-        ):
-            fh_abs = fh_abs.to_timestamp()
+        fh_abs = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
         fh_idx = fh.to_indexer(self.cutoff)
         if return_pred_int:
             pred_ints = []

@@ -15,6 +15,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.datetime import _get_duration
 
@@ -99,11 +100,7 @@ class TrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
         X_pred = fh.to_numpy().reshape(-1, 1)
         y_pred = self.regressor_.predict(X_pred)
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         return pd.Series(y_pred, index=index)
 
 
@@ -205,9 +202,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
         X_pred = fh.to_numpy().reshape(-1, 1)
         y_pred = self.regressor_.predict(X_pred)
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         return pd.Series(y_pred, index=index)
 
 

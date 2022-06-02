@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 
 
 class _StatsForecastAdapter(BaseForecaster):
@@ -130,11 +131,7 @@ class _StatsForecastAdapter(BaseForecaster):
             Returns series of predicted values.
         """
         # initialize return objects
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            fh_abs, pd.PeriodIndex
-        ):
-            fh_abs = fh_abs.to_timestamp()
+        fh_abs = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
         y_pred = pd.Series(index=fh_abs)
 

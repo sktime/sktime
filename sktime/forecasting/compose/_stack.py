@@ -11,6 +11,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.utils.validation.forecasting import check_regressor
@@ -154,11 +155,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         """
         y_preds = np.column_stack(self._predict_forecasters(fh=fh, X=X))
         y_pred = self.regressor_.predict(y_preds)
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            self.cutoff, pd.Period
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         return pd.Series(y_pred, index=index)
 
     @classmethod

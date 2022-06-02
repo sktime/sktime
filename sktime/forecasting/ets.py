@@ -15,6 +15,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -403,15 +404,13 @@ class AutoETS(_StatsModelsAdapter):
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        y_pred = self._fitted_forecaster.predict(start=start, end=end)
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(valid_indices, pd.PeriodIndex) and isinstance(
-            y_pred.index, pd.DatetimeIndex
-        ):
-            valid_indices = valid_indices.to_timestamp()
+        valid_indices = convert_fh_to_datetime_index(
+            fh=fh, cutoff=self.cutoff, y=self._y
+        )
 
+        y_pred = self._fitted_forecaster.predict(start=start, end=end)
         return y_pred.loc[valid_indices]
 
     def _predict_interval(self, fh, X=None, coverage=None):
@@ -450,11 +449,9 @@ class AutoETS(_StatsModelsAdapter):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        valid_indices = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(valid_indices, pd.PeriodIndex) and isinstance(
-            self._y.index, pd.DatetimeIndex
-        ):
-            valid_indices = valid_indices.to_timestamp()
+        valid_indices = convert_fh_to_datetime_index(
+            fh=fh, cutoff=self.cutoff, y=self._y
+        )
 
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(

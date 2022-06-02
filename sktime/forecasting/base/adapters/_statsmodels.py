@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 
 
 class _StatsModelsAdapter(BaseForecaster):
@@ -85,11 +86,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
-        horizons = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(horizons, pd.PeriodIndex) and isinstance(
-            y_pred.index, pd.DatetimeIndex
-        ):
-            horizons = horizons.to_timestamp()
+        horizons = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
         return y_pred.loc[horizons]
 
     def get_fitted_params(self):

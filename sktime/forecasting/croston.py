@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 
 
 class Croston(BaseForecaster):
@@ -151,9 +152,5 @@ class Croston(BaseForecaster):
         # Predicting future forecasts:to_numpy()
         y_pred = np.full(len_fh, f[-1])
 
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         return pd.Series(y_pred, index=index)

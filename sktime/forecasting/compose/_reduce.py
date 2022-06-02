@@ -31,6 +31,7 @@ from sklearn.base import RegressorMixin, clone
 from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.utils.datetime import _shift
@@ -539,11 +540,7 @@ class _RecursiveReducer(_Reducer):
         if self.transformers_ is not None:
             fh_max = fh.to_relative(self.cutoff)[-1]
 
-            index = fh.to_absolute(self.cutoff).to_pandas()
-            if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-                index, pd.PeriodIndex
-            ):
-                index = index.to_timestamp()
+            index = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
             if isinstance(self.cutoff, pd._libs.tslibs.period.Period):
                 dateline = pd.period_range(end=index[-1], periods=fh_max)
             elif isinstance(self.cutoff, np.int64) or isinstance(self.cutoff, int):
