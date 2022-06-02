@@ -172,11 +172,7 @@ class _StatsForecastAdapter(BaseForecaster):
             X=X.values if X is not None else X,
         )
 
-        fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            fh_abs, pd.PeriodIndex
-        ):
-            fh_abs = fh_abs.to_timestamp()
+        fh_abs = convert_fh_to_datetime_index(fh=fh, cutoff=self.cutoff, y=self._y)
         fh_idx = fh.to_indexer(self.cutoff)
         mean = pd.Series(result["mean"].values[fh_idx], index=fh_abs)
         if return_pred_int:
