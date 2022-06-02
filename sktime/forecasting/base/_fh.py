@@ -635,3 +635,34 @@ def _coerce_to_period(x, freq=None):
             )
         else:
             raise
+
+
+def convert_fh_to_datetime_index(
+    fh: ForecastingHorizon, cutoff: Union[pd.Period, int], y
+) -> pd.DatetimeIndex:
+    """Convert forecasting horizons to DatetimeIndex.
+
+    If `cutoff` is `pd.Period`, then absolute forecasting horizons
+    would be of `pd.PeriodIndex` type, although index of `y`
+    has `pd.DatetimeIndex` type. This function makes the correction,
+    so that both index of `y` and absolute forecasting horizons have the same type.
+
+    Parameters
+    ----------
+    fh : ForecastingHorizon
+        ForecastingHorizon object
+    cutoff : pd.Period, int
+        Cutoff to convert forecasting horizons to absolute
+    y : time series in sktime compatible data container format
+        Required only to check its index type
+
+    Returns
+    -------
+    index : pd.DatetimeIndex
+        Index coerced to pd.DatetimeIndex format
+    """
+    index = fh.to_absolute(cutoff).to_pandas()
+    if isinstance(y.index, pd.DatetimeIndex) and isinstance(index, pd.PeriodIndex):
+        return index.to_timestamp()
+    else:
+        return index

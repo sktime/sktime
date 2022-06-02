@@ -5,6 +5,7 @@ __author__ = ["ltsaprounis"]
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base._fh import convert_fh_to_datetime_index
 from sktime.utils.estimators._base import _method_logger, _MockEstimatorMixin
 
 
@@ -104,11 +105,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
         y_pred : pd.Series
             Point predictions
         """
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
+        index = convert_fh_to_datetime_index(fh=self.fh, cutoff=self.cutoff, y=self._y)
         return pd.Series(self.prediction_constant, index=index)
 
     @_method_logger
@@ -180,17 +177,15 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
             Row index is fh. Entries are quantile forecasts, for var in col index,
                 at quantile probability in second-level col index, for each row index.
         """
-        index = self.fh.to_absolute(self.cutoff).to_pandas()
-        if isinstance(self._y.index, pd.DatetimeIndex) and isinstance(
-            index, pd.PeriodIndex
-        ):
-            index = index.to_timestamp()
+        fh_index = convert_fh_to_datetime_index(
+            fh=self.fh, cutoff=self.cutoff, y=self._y
+        )
         col_index = pd.MultiIndex.from_product([["Quantiles"], alpha])
-        pred_quantiles = pd.DataFrame(columns=col_index, index=index)
+        pred_quantiles = pd.DataFrame(columns=col_index, index=fh_index)
 
         for a in alpha:
             pred_quantiles[("Quantiles", a)] = pd.Series(
-                self.prediction_constant * 2 * a, index=index
+                self.prediction_constant * 2 * a, index=fh_index
             )
 
         return pred_quantiles
