@@ -99,7 +99,7 @@ def _shift(x: Union[pd.Period, int], by: int = 1) -> Union[pd.Period, int]:
 
     Returns
     -------
-    ret : pd.Period, pd.Timestamp, int
+    ret : pd.Period, int
         Shifted time point
     """
     assert isinstance(x, (pd.Period, int, np.integer)), type(x)
