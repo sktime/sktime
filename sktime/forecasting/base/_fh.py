@@ -262,12 +262,12 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy(**kwargs)
 
-    def to_relative(self, cutoff=None):
+    def to_relative(self, cutoff: Union[pd.Period, int] = None):
         """Return forecasting horizon values relative to a cutoff.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, int, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
 
@@ -278,7 +278,7 @@ class ForecastingHorizon:
         """
         return _to_relative(fh=self, cutoff=cutoff)
 
-    def to_absolute(self, cutoff):
+    def to_absolute(self, cutoff: Union[pd.Period, int]):
         """Return absolute version of forecasting horizon values.
 
         Parameters
@@ -294,7 +294,7 @@ class ForecastingHorizon:
         """
         return _to_absolute(fh=self, cutoff=cutoff)
 
-    def to_absolute_int(self, start, cutoff=None):
+    def to_absolute_int(self, start, cutoff: Union[pd.Period, int] = None):
         """Return absolute values as zero-based integer index starting from `start`.
 
         Parameters
@@ -374,18 +374,18 @@ class ForecastingHorizon:
         out_of_sample = self.to_pandas()[is_out_of_sample]
         return self._new(out_of_sample)
 
-    def _is_in_sample(self, cutoff=None) -> np.ndarray:
+    def _is_in_sample(self, cutoff: Union[pd.Period, int] = None) -> np.ndarray:
         """Get index location of in-sample values."""
         relative = self.to_relative(cutoff).to_pandas()
         null = 0 if is_integer_index(relative) else pd.Timedelta(0)
         return relative <= null
 
-    def is_all_in_sample(self, cutoff=None) -> bool:
+    def is_all_in_sample(self, cutoff: Union[pd.Period, int] = None) -> bool:
         """Whether the forecasting horizon is purely in-sample for given cutoff.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, default=None
+        cutoff : pd.Period, int, default=None
             Cutoff value used to check if forecasting horizon is purely in-sample.
 
         Returns
@@ -395,16 +395,16 @@ class ForecastingHorizon:
         """
         return sum(self._is_in_sample(cutoff)) == len(self)
 
-    def _is_out_of_sample(self, cutoff=None) -> np.ndarray:
+    def _is_out_of_sample(self, cutoff: Union[pd.Period, int] = None) -> np.ndarray:
         """Get index location of out-of-sample values."""
         return np.logical_not(self._is_in_sample(cutoff))
 
-    def is_all_out_of_sample(self, cutoff=None) -> bool:
+    def is_all_out_of_sample(self, cutoff: Union[pd.Period, int] = None) -> bool:
         """Whether the forecasting horizon is purely out-of-sample for given cutoff.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, int, optional (default=None)
             Cutoff value used to check if forecasting horizon is purely
             out-of-sample.
 
@@ -416,12 +416,14 @@ class ForecastingHorizon:
         """
         return sum(self._is_out_of_sample(cutoff)) == len(self)
 
-    def to_indexer(self, cutoff=None, from_cutoff=True):
+    def to_indexer(
+        self, cutoff: Union[pd.Period, int] = None, from_cutoff: bool = True
+    ):
         """Return zero-based indexer values for easy indexing into arrays.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, int, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one and vice versa.
         from_cutoff : bool, optional (default=True)
@@ -464,13 +466,15 @@ class ForecastingHorizon:
 # computations, as these are the basic methods and often required internally when
 # calling different methods.
 @lru_cache(typed=True)
-def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
+def _to_relative(
+    fh: ForecastingHorizon, cutoff: Union[pd.Period, int] = None
+) -> ForecastingHorizon:
     """Return forecasting horizon values relative to a cutoff.
 
     Parameters
     ----------
     fh : ForecastingHorizon
-    cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+    cutoff : pd.Period, int, optional (default=None)
         Cutoff value required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
 
@@ -544,6 +548,7 @@ def _to_absolute(
     fh : ForecastingHorizon
         Absolute representation of forecasting horizon.
     """
+    _check_cutoff(x=cutoff)
     if not fh.is_relative:
         if isinstance(fh._values, pd.DatetimeIndex):
             absolute = fh._values.to_period(freq=cutoff.freq)
@@ -556,15 +561,15 @@ def _to_absolute(
     return fh._new(absolute, is_relative=False)
 
 
-def _check_cutoff(x: Optional[Union[int, pd.Period]]) -> None:
+def _check_cutoff(x: Union[int, pd.Period] = None) -> None:
     """Check cutoff."""
     if x is not None:
         assert is_int(x) or isinstance(x, pd.Period)
 
 
 def _check_cutoff_vs_index(
-    cutoff: Optional[Union[pd.Period, int]],
     index: Union[pd.Index, pd.PeriodIndex, pd.DatetimeIndex],
+    cutoff: Union[pd.Period, int] = None,
 ) -> None:
     """Check if the cutoff is valid based on time index of forecasting horizon.
 
@@ -573,12 +578,12 @@ def _check_cutoff_vs_index(
 
     Parameters
     ----------
-    cutoff : pd.Period, int, optional (default=None)
-        Cutoff value is required to convert a relative forecasting
-        horizon to an absolute one and vice versa.
     index : pd.Index, pd.PeriodIndex or pd.DataTimeIndex
         Forecasting horizon time index that the cutoff value will be checked
         against.
+    cutoff : pd.Period, int, optional (default=None)
+        Cutoff value is required to convert a relative forecasting
+        horizon to an absolute one and vice versa.
     """
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
