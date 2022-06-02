@@ -144,7 +144,8 @@ def _make_fh(
     """Construct forecasting horizons for testing."""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
 
-    assert not isinstance(cutoff, pd.Timestamp)
+    assert not isinstance(cutoff, pd.Timestamp), type(cutoff)
+
     fh_class = INDEX_TYPE_LOOKUP[fh_type]
 
     if isinstance(steps, (int, np.integer)):
@@ -157,12 +158,9 @@ def _make_fh(
         return ForecastingHorizon(fh_class(steps), is_relative=is_relative)
 
     else:
-        kwargs = {}
-
         if fh_type == "datetime":
             steps *= cutoff.freq
-            # kwargs = {"freq": cutoff.freq}
             cutoff = cutoff.to_timestamp()
 
         values = cutoff + steps
-        return ForecastingHorizon(fh_class(values, **kwargs), is_relative)
+        return ForecastingHorizon(fh_class(values), is_relative)
