@@ -485,9 +485,9 @@ def _check_train_test_split_y(fh, split):
 
     if isinstance(cutoff, pd.Timestamp):
         cutoff = cutoff.to_period(freq=train.index.freq)
-    expected = fh.to_absolute(cutoff).to_pandas()
-    if isinstance(expected, pd.PeriodIndex):
-        expected = expected.to_timestamp()
+        expected = fh.to_absolute(cutoff).to_pandas().to_timestamp()
+    else:
+        expected = fh.to_absolute(cutoff).to_pandas()
     np.testing.assert_array_equal(test.index, expected)
 
 
