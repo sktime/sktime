@@ -6,7 +6,7 @@ __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 import re
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -75,7 +75,7 @@ def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
     return count, unit
 
 
-def _get_freq(x) -> Optional[str]:
+def _get_freq(x):
     """Get unit for conversion of time deltas to integer."""
     if hasattr(x, "freqstr"):
         if x.freqstr is None:
