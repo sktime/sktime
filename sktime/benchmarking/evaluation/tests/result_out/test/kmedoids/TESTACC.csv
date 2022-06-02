@@ -1,2 +1,4 @@
-TESTACC,euclidean
-acsf1,0.06
+TESTACC,dtw,euclidean,wdtw
+arrowhead,0.5,0.45,0.4
+acsf1,0.0,0.45,0.0
+osuleaf,0.3,0.25,0.1

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Generate critical difference diagrams."""
 import math
+import warnings
 from itertools import combinations
 from operator import itemgetter
 from typing import Generator, List, Tuple, Union
@@ -9,6 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare, wilcoxon
+
+warnings.filterwarnings(
+    "ignore"
+)  # Hide warnings that can generate and clutter notebook
 
 
 def create_critical_difference_diagram(
@@ -270,12 +275,13 @@ def _compute_wilcoxon_signed_rank(
             (df.loc[df[df.columns[0]] == estimator][df.columns[-1]]).to_numpy()
         )
 
-    friedman_p_value = friedmanchisquare(*acc_arr)[1]
+    if len(acc_arr) >= 3:
+        friedman_p_value = friedmanchisquare(*acc_arr)[1]
 
-    if friedman_p_value >= alpha:
-        raise ValueError(
-            "The estimators results provided cannot reject the null" "hypothesis."
-        )
+        if friedman_p_value >= alpha:
+            raise ValueError(
+                "The estimators results provided cannot reject the null" "hypothesis."
+            )
     p_values = []
 
     for i in range(len(estimators)):
@@ -460,8 +466,20 @@ def _plot_critical_difference_diagram(
     CONNECTION_LINE = "angle,angleA=360,angleB=90,rad=0"
     for i in range(len(estimators)):
         estimator = estimators[i]
+
+        if i > num_labels_left or (
+            num_labels_left == num_labels_right and i >= num_labels_left
+        ):
+            ha = "right"
+            estimator_name_ha = "left"
+            x_pos_modifier = -20
+        else:
+            ha = "left"
+            estimator_name_ha = "right"
+            x_pos_modifier = 20
+
         ax.annotate(
-            estimator,
+            "",
             xy=(x_point_on_line[i], y_point_on_line[i]),
             xytext=(labels_x_positions[i], labels_y_positions[i]),
             fontsize=fontsize,
@@ -474,26 +492,31 @@ def _plot_critical_difference_diagram(
                 patchB=None,
                 connectionstyle=CONNECTION_LINE,
             ),
+            ha=estimator_name_ha,
         )
 
-        if i > num_labels_left or (
-            num_labels_left == num_labels_right and i >= num_labels_left
-        ):
-            ha = "right"
-            x_pos_modifier = -20
-        else:
-            ha = "left"
-            x_pos_modifier = 50
-
         x_pos = x_pos_modifier
-        y_pos = 5
+        y_pos = -5
+
+        ax.annotate(
+            estimator,
+            xy=(labels_x_positions[i], labels_y_positions[i]),
+            xytext=(x_pos, y_pos),
+            textcoords="offset points",
+            fontsize=fontsize,
+            ha=estimator_name_ha,
+        )
+
+        if x_pos > 0:
+            rank_x_pos = x_pos + 5
+        else:
+            rank_x_pos = x_pos - 5
 
         ax.annotate(
             str(round(ranks[i], 3)),
             xy=(labels_x_positions[i], labels_y_positions[i]),
-            xytext=(x_pos, y_pos),
+            xytext=(rank_x_pos, 1),
             textcoords="offset points",
-            # horizontalalignment='left', verticalalignment='bottom',
             fontsize=fontsize,
             ha=ha,
         )

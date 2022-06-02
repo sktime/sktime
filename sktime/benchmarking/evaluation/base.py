@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import itertools
+"""Base for benchmark evaluation."""
 import os
 from abc import ABC, abstractmethod
 from typing import List, Tuple
@@ -21,6 +21,12 @@ class BaseEstimatorEvaluator(ABC):
     experiment_name: str
         The name of the experiment (the directory that stores the results will be called
         this).
+    draw_critical_difference_diagrams: bool, defaults = True
+        Boolean that when true will also output critical difference diagrams. When
+        False no diagrams will be outputted.
+    critical_diff_params: dict, defaults = None
+        Parameters for critical difference call. See create_critical_difference_diagram
+        method for list of valid parameters.
     """
 
     def __init__(
@@ -28,26 +34,30 @@ class BaseEstimatorEvaluator(ABC):
         results_path: str,
         evaluation_out_path: str,
         experiment_name: str,
-        draw_critical_difference_diagrams: bool = True
-
+        draw_critical_difference_diagrams: bool = True,
+        critical_diff_params: dict = None,
     ):
         self.results_path = results_path
         self.evaluation_out_path = evaluation_out_path
         self.experiment_name = experiment_name
         self.draw_critical_difference_diagrams = draw_critical_difference_diagrams
 
+        self.critical_diff_params = critical_diff_params
+        if critical_diff_params is None:
+            self.critical_diff_params = {}
+
     def run_evaluation(self, estimators: List[str]):
-        """Method to evaluate results
+        """Perform evaluation of results.
 
         Parameters
         ----------
         estimators: List[str]
             List of strings to evaluate estimators.
         """
-        test_results, train_results = self._load_folds_for_dataset(estimators)
+        test_results, train_results = self._load_resamples_for_dataset(estimators)
 
-        def eval_results(results, split):
-            col_headers = ['dataset', 'estimator', 'estimator_name']
+        def _eval_results(results, split):
+            col_headers = ["dataset", "estimator", "estimator_name"]
             metric_dict = results[0][3]
             for key in metric_dict:
                 col_headers.append(key)
@@ -58,24 +68,19 @@ class BaseEstimatorEvaluator(ABC):
                 estimator = result[1]
                 estimator_name = result[2]
                 metrics = result[3]
-                result_format.append([dataset, estimator, estimator_name] + list(metrics.values()))
+                result_format.append(
+                    [dataset, estimator, estimator_name] + list(metrics.values())
+                )
 
             result_df = pd.DataFrame(result_format, columns=col_headers)
 
             self._output_evaluation_results(result_df, split)
 
         if len(test_results) > 0:
-            eval_results(test_results, 'test')
+            _eval_results(test_results, "test")
 
         if len(train_results) > 0:
-            eval_results(train_results,  'train')
-
-        joe = ''
-
-        # self.create_crit_difference(
-        #     result_df.loc[:, result_df.columns != 'estimator']
-        # )
-
+            _eval_results(train_results, "train")
 
     def _output_evaluation_results(self, df: pd.DataFrame, split: str):
         if not os.path.exists(self.evaluation_out_path):
@@ -83,8 +88,8 @@ class BaseEstimatorEvaluator(ABC):
         split_path = f"{self.evaluation_out_path}/{split}"
         if not os.path.exists(split_path):
             os.mkdir(split_path)
-        datasets = list(set(df['dataset']))
-        estimators = list(set(df['estimator']))
+        datasets = list(set(df["dataset"]))
+        estimators = list(set(df["estimator"]))
 
         # Add combinations of results
         estimator_combinations = []
@@ -93,17 +98,18 @@ class BaseEstimatorEvaluator(ABC):
         estimator_combinations.append(estimators)
 
         for combination in estimator_combinations:
-            curr_df = df.loc[df['estimator'].isin(combination)]
-            curr_df = curr_df.loc[:, curr_df.columns != 'estimator']
+            curr_df = df.loc[df["estimator"].isin(combination)]
+            curr_df = curr_df.loc[:, curr_df.columns != "estimator"]
 
             if len(combination) <= 1:
-                curr_df["estimator_name"] = curr_df['estimator_name'].apply(lambda x: (x.split('-')[1]))
+                curr_df["estimator_name"] = curr_df["estimator_name"].apply(
+                    lambda x: (x.split("-")[1])
+                )
 
             estimator_name = combination[0]
             if len(combination) > 1:
-                estimator_name = 'all'
-            curr_output_path = \
-                os.path.abspath(f"{split_path}/{estimator_name}")
+                estimator_name = "all"
+            curr_output_path = os.path.abspath(f"{split_path}/{estimator_name}")
 
             if not os.path.exists(curr_output_path):
                 os.mkdir(curr_output_path)
@@ -111,42 +117,60 @@ class BaseEstimatorEvaluator(ABC):
             curr_df.to_csv(f"{curr_output_path}/all.csv", index=False)
 
             metrics = curr_df.columns[2:]
-            datasets = list(set(curr_df['dataset']))
+            datasets = list(set(curr_df["dataset"]))
             for metric in metrics:
-                curr_df_cols = [f'{split}{metric}'.upper()]
-                curr_df_cols += list(set(curr_df['estimator_name']))
+                curr_df_cols = [f"{split}{metric}".upper()]
+                curr_df_cols += list(set(curr_df["estimator_name"]))
                 curr_metric_df = []
                 for dataset in datasets:
                     curr_row = [dataset]
                     for i in range(1, len(curr_df_cols)):
                         col = curr_df_cols[i]
                         df_metric = curr_df.loc[
-                            (curr_df['estimator_name'] == col) &
-                            (curr_df['dataset'] == dataset)
+                            (curr_df["estimator_name"] == col)
+                            & (curr_df["dataset"] == dataset)
                         ]
-                        curr_row.append(float(df_metric[metric]))
+                        curr_row += list(df_metric[metric])
                     curr_metric_df.append(curr_row)
 
                 metric_df = pd.DataFrame(curr_metric_df, columns=curr_df_cols)
-                metric_df.to_csv(f"{curr_output_path}/{curr_df_cols[0]}.csv", index=False)
+                metric_df.to_csv(
+                    f"{curr_output_path}/{curr_df_cols[0]}.csv", index=False
+                )
 
-    def create_crit_difference(self, df: pd.DataFrame):
-        figures = []
-        figures += create_critical_difference_diagram(df)
+            metric_order = ["estimator_name", "dataset"] + list(curr_df.columns[2:])
+            crit_diff_df = curr_df[metric_order]
 
+            create_critical_difference_diagram(
+                crit_diff_df, output_path=curr_output_path, **self.critical_diff_params
+            )
 
     @abstractmethod
     def evaluate_csv_data(self, csv_path: str) -> Tuple:
-        """Method to evaluate results
+        """Evaluate data from csv file.
 
         Parameters
         ----------
         csv_path: str
             Path to csv containing the results to analyse.
+
+        Returns
+        -------
+        str
+            Dataset for the experiment.
+        str
+            Estimator name.
+        str
+            Name for experiment (maybe the same as the estimator name).
+        dict
+            Dict where the key is the metric and the value is the score.
         """
         ...
 
-    def _load_folds_for_dataset(self, estimators: List[str]) -> Tuple[List[Tuple], List[Tuple]]:
+    def _load_resamples_for_dataset(
+        self, estimators: List[str]
+    ) -> Tuple[List[Tuple], List[Tuple]]:
+        """Load datas various resamples."""
         train_results = []
         test_results = []
         for estimator in estimators:
@@ -160,7 +184,7 @@ class BaseEstimatorEvaluator(ABC):
                                 if file.endswith(".csv"):
                                     file_path = os.path.abspath(f"{dataset_dir}/{file}")
                                     res = self.evaluate_csv_data(file_path)
-                                    if 'test' in file:
+                                    if "test" in file:
                                         test_results.append(res)
                                     else:
                                         train_results.append(res)
