@@ -217,9 +217,6 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     train_data = data[:window_length]
     test_data = data[window_length:]
 
-    # Forecast data does not retain the original frequency
-    test_data.index.freq = None
-
     # For example, for n=2, window_length=4, sp=3:
 
     # print(train_data)
