@@ -283,7 +283,7 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int
+        cutoff : pd.Period, int
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
 
@@ -294,7 +294,11 @@ class ForecastingHorizon:
         """
         return _to_absolute(fh=self, cutoff=cutoff)
 
-    def to_absolute_int(self, start, cutoff: Union[pd.Period, int] = None):
+    def to_absolute_int(
+        self,
+        start: Union[pd.Period, pd.Timestamp, int],
+        cutoff: Union[pd.Period, int] = None,
+    ):
         """Return absolute values as zero-based integer index starting from `start`.
 
         Parameters
@@ -338,12 +342,12 @@ class ForecastingHorizon:
 
         return self._new(integers, is_relative=False)
 
-    def to_in_sample(self, cutoff=None):
+    def to_in_sample(self, cutoff: Union[pd.Period, int] = None):
         """Return in-sample index values of fh.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, int, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
 
@@ -356,12 +360,12 @@ class ForecastingHorizon:
         in_sample = self.to_pandas()[is_in_sample]
         return self._new(in_sample)
 
-    def to_out_of_sample(self, cutoff=None):
+    def to_out_of_sample(self, cutoff: Union[pd.Period, int] = None):
         """Return out-of-sample values of fh.
 
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, int, optional (default=None)
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
 
