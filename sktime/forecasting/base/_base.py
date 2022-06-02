@@ -767,7 +767,7 @@ class BaseForecaster(BaseEstimator):
     def update_predict(
         self,
         y,
-        cv,
+        cv=None,
         X=None,
         update_params=True,
         reset_forecaster=True,
@@ -812,10 +812,13 @@ class BaseForecaster(BaseEstimator):
             For further details:
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
-        cv : temporal cross-validation generator, e.g. a splitter like
-                SlidingWindowSplitter or ExpandingWindowSplitter
+        cv : temporal cross-validation generator inheriting from BaseSplitter, optional
+            for example, SlidingWindowSplitter or ExpandingWindowSplitter
+            default = ExpandingWindowSplitter with `initial_window=1` and defaults
+                = individual data points in y/X are added and forecast one-by-one,
+                `initial_window = 1`, `step_length = 1` and `fh = 1`
         X : time series in sktime compatible format, optional (default=None)
-                Exogeneous time series for updating and forecasting
+            Exogeneous time series for updating and forecasting
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain y.index and fh.index both
@@ -836,6 +839,11 @@ class BaseForecaster(BaseEstimator):
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        if cv is None:
+            cv = ExpandingWindowSplitter(initial_window=1)
+
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
