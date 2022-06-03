@@ -108,7 +108,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         "fit_is_empty": False,
         "transform-returns-same-time-index": False,
         "univariate-only": False,
-        "capability:inverse_transform": True,
+        "capability:inverse_transform": False,
     }
 
     _delegate_name = "transformer_"
