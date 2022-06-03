@@ -6,6 +6,7 @@
 __author__ = ["miraep8"]
 
 import pandas as pd
+from numpy.testing import assert_array_equal
 from sklearn.base import clone
 
 from sktime.datasets import load_shampoo_sales
@@ -28,8 +29,6 @@ def test_multiplex_transformer_alone():
     transformer - we can confirm that if the selected_transformer is set that the
     MultiplexTransformer delegates all its transformation responsibilities as expected.
     """
-    from numpy.testing import assert_array_equal
-
     y = load_shampoo_sales()
     # randomly make some of the values nans:
     y.loc[y.sample(frac=0.1).index] = pd.np.nan
@@ -54,7 +53,7 @@ def test_multiplex_transformer_alone():
 
 
 def _find_best_transformer(forecaster, transformers, cv, y):
-    """Will evaluate all the forecasters on y and return the name of best."""
+    """Evaluate all the forecasters on y and return the name of best."""
     scoring = check_scoring(None)
     scoring_name = f"test_{scoring.name}"
     score = None
