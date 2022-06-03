@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Evaluator for clustering experiments."""
 import ast
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
+import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
@@ -14,7 +15,9 @@ from sklearn.metrics import (
 )
 
 from sktime.benchmarking.evaluation.base import BaseEstimatorEvaluator
-from sktime.datasets import read_clusterer_result_from_uea_format
+from sktime.clustering.metrics import silhouette_score
+from sktime.datasets import load_from_tsfile, read_clusterer_result_from_uea_format
+from sktime.datatypes import convert_to
 
 _evaluation_metrics_dict = {
     "RI": rand_score,  # Rand index
@@ -22,12 +25,11 @@ _evaluation_metrics_dict = {
     "MI": mutual_info_score,  # Mutual information
     "NMI": normalized_mutual_info_score,  # Normalized mutual information
     "AMI": adjusted_mutual_info_score,  # Adjusted mutual information
-    # "FM": fowlkes_mallows_score,  # Fowlkes-Mallows
-    # "SC": some_callable,  # Silhouette Coefficient
-    # "CHI": calinski_harabasz_score,  # Calinski-Harabasz Index
+    "SC": silhouette_score,  # Silhouette Coefficient
     "ACC": accuracy_score,  # Accuracy
-    # "PCM": confusion_matrix,  # Pair confusion matrix
 }
+
+_metric_require_dataset = ["SC"]
 
 
 class ClusterEvaluator(BaseEstimatorEvaluator):
@@ -43,7 +45,9 @@ class ClusterEvaluator(BaseEstimatorEvaluator):
         The name of the experiment (the directory that stores the results will be called
         this).
     metrics: List[str], defaults = None
-        List of metrics to evaluate over.
+        List of metrics to evaluate over. If None is specified all metrics that don't
+        require a dataset path are used. If you want to easily use all the metrics
+        specify 'metrics = "all"'.
     naming_parameter_key: str, defaults = None
         The key from the dict defining the parameters of the experiments (first line of
         csv file).
@@ -53,6 +57,21 @@ class ClusterEvaluator(BaseEstimatorEvaluator):
     critical_diff_params: dict, defaults = None
         Parameters for critical difference call. See create_critical_difference_diagram
         method for list of valid parameters.
+    dataset_paths: str, defaults = None
+        Dict containing the path or values each dataset. The key should be the dataset
+        name str and the value should be a list with either the paths or a np.ndarray
+        which are the datasets. A mixture of paths and np.ndarray can be passed. It is
+        assumed that the dataset path points to a .ts file. The first value in the list
+        should be training data and the second should be the test. For example:
+        {
+            'dataset1' : ['training_path/dataset1.ts', testing_path/dataset1.ts']
+            'dataset2' : [np.array([[1,2,3]...]), 'testing_path/dataset2.ts']
+            'dataset3' : ['data/dataset3']
+        }
+        If there is no split then the first value is taken and assumed as the whole
+        dataset.
+
+
     """
 
     def __init__(
@@ -60,14 +79,16 @@ class ClusterEvaluator(BaseEstimatorEvaluator):
         results_path: str,
         evaluation_out_path: str,
         experiment_name: str,
-        metrics: List[str] = None,
+        metrics: Union[str, List[str]] = None,
         naming_parameter_key: str = None,
         draw_critical_difference_diagrams: bool = True,
         critical_diff_params: dict = None,
+        dataset_paths: dict = None,
     ):
-
         if metrics is None:
             metrics = ["RI", "ARI", "MI", "NMI", "AMI", "ACC"]
+        if metrics == "all":
+            metrics = list(_evaluation_metrics_dict.keys())
         for metric in metrics:
             if metric not in _evaluation_metrics_dict:
                 raise ValueError(
@@ -76,6 +97,11 @@ class ClusterEvaluator(BaseEstimatorEvaluator):
                 )
         self.metrics = metrics
         self.naming_parameter_key = naming_parameter_key
+
+        self.dataset_paths = dataset_paths
+        if dataset_paths is None:
+            self.dataset_paths = {}
+
         super(ClusterEvaluator, self).__init__(
             results_path,
             evaluation_out_path,
@@ -108,7 +134,9 @@ class ClusterEvaluator(BaseEstimatorEvaluator):
         parameters = ast.literal_eval(",".join((data["estimator_parameters"])))
         temp = pd.DataFrame(data["predictions"])
         predictions_df = pd.DataFrame(temp[[0, 1]])
-        metrics_score = self._compute_metrics(predictions_df)
+        metrics_score = self._compute_metrics(
+            predictions_df, first_line[0], first_line[2]
+        )
         estimator_name = self.get_estimator_name(first_line, parameters)
         return (first_line[0], first_line[1], estimator_name, metrics_score)
 
@@ -136,19 +164,99 @@ class ClusterEvaluator(BaseEstimatorEvaluator):
             )
         return estimator_name
 
-    def _compute_metrics(self, predictions_df: pd.DataFrame) -> Dict:
+    def _compute_metrics(
+        self, predictions_df: pd.DataFrame, dataset_name: str, split: str
+    ) -> Dict:
+        """Compute the metrics for a given dataset.
+
+        Parameters
+        ----------
+        predictions_df: pd.DataFrame
+            Dataframe containing two columns. The first column is 'True y class' which
+            is the actual class and the second column is the 'Predicted y class' which
+            is the estimators prediction.
+        dataset_name: str
+            Dataset the metric is taken over.
+        split: str
+            Data split which is either 'train' or 'test'
+
+        Returns
+        -------
+        dict
+            Dict where the key is the metric and the value is the score for that
+            metric.
+        """
         numpy_pred = predictions_df.to_numpy()
         true_class = [i[0] for i in numpy_pred[1:]]
         predicted_class = [i[1] for i in numpy_pred[1:]]
         metric_scores = {}
         for metric in self.metrics:
             metric_callable = _evaluation_metrics_dict[metric]
-            metric_scores[metric] = metric_callable(true_class, predicted_class)
+            if metric in _metric_require_dataset:
+                if self.dataset_paths == {}:
+                    raise ValueError(
+                        f"Unable to evaluate over metric {metric} as a "
+                        f"dataset is required. Please specify the dataset "
+                        f"or path to the dataset in the constructors "
+                        f"'dataset_paths' parameter."
+                    )
+                curr_dataset = self.dataset_paths[dataset_name]
+                if isinstance(curr_dataset, list) and len(curr_dataset) > 1:
+                    index = 0
+                    if split == "test":
+                        index = 1
+                    curr_dataset = curr_dataset[index]
+                X = None
+                if isinstance(curr_dataset, np.ndarray):
+                    X = curr_dataset
+                elif isinstance(curr_dataset, str):
+                    X = convert_to(load_from_tsfile(curr_dataset), "numpy3D")
+
+                if X is None:
+                    raise ValueError(
+                        f"The value for the dataset {dataset_name} in the "
+                        f"dataset_paths parameter is not a str or "
+                        f"np.ndarray so unable to process."
+                    )
+                metric_scores[metric] = metric_callable(X, predicted_class)
+            else:
+                metric_scores[metric] = metric_callable(true_class, predicted_class)
 
         return metric_scores
 
 
 if __name__ == "__main__":
+    from sktime.datasets import load_acsf1, load_arrow_head, load_osuleaf
+
+    datasets = [
+        ("acsf1", load_acsf1),
+        ("arrowhead", load_arrow_head),
+        ("osuleaf", load_osuleaf),
+    ]
+
+    dataset_paths = {}
+
+    for dataset in datasets:
+        dataset_name = dataset[0]
+        load_dataset = dataset[1]
+        X_train, y_train = load_dataset(split="train")
+        X_test, y_test = load_dataset(split="test")
+
+        num_data_train = len(X_train)
+        num_data_test = len(X_test)
+
+        max_num_data_points = 20
+
+        if num_data_train > max_num_data_points:
+            num_data_train = max_num_data_points
+
+        if num_data_test > max_num_data_points:
+            num_data_test = max_num_data_points
+
+        trainX = convert_to(X_train[0:num_data_train], "numpy3D")
+        testX = convert_to(X_test[0:num_data_test], "numpy3D")
+        dataset_paths[dataset_name] = [trainX, testX]
+
     evaluator = ClusterEvaluator(
         "C:\\Users\\chris\\Documents\\Projects\\sktime\\sktime\\benchmarking"
         "\\evaluation\\tests\\test_results",
@@ -157,6 +265,8 @@ if __name__ == "__main__":
         experiment_name="example_experiment",
         naming_parameter_key="metric",
         critical_diff_params={"alpha": 100000.0},
+        metrics="all",
+        dataset_paths=dataset_paths,
     )
 
     evaluator.run_evaluation(["kmeans", "kmedoids"])
