@@ -95,7 +95,21 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     >>> gscv = gscv.fit(y)
     """
 
-    _tags = {}
+    # tags will largely be copied from selected_transformer
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "fit_is_empty": False,
+        "transform-returns-same-time-index": False,
+        "univariate-only": False,
+        "capability:inverse_transform": True,
+    }
 
     _delegate_name = "transformer_"
 
