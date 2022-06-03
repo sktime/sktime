@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -39,6 +39,7 @@ class _TbatsAdapter(BaseForecaster):
         multiprocessing_start_method="spawn",
         context=None,
     ):
+        _check_soft_dependencies("tbats", severity="error", object=self)
 
         self.use_box_cox = use_box_cox
         self.box_cox_bounds = box_cox_bounds
@@ -55,6 +56,14 @@ class _TbatsAdapter(BaseForecaster):
         self._yname = None  # .fit(y) -> y.name
 
         super(_TbatsAdapter, self).__init__()
+
+    def _create_model_class(self):
+        """Instantiate (T)BATS model.
+
+        This method should write a (T)BATS model to self._ModelClass,
+            and should be overridden by concrete classes.
+        """
+        raise NotImplementedError
 
     def _instantiate_model(self):
         n_jobs = check_n_jobs(self.n_jobs)
@@ -89,13 +98,14 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._create_model_class()
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
         self._yname = y.name
 
         return self
 
-    def _predict(self, fh, X, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         Parameters
@@ -104,22 +114,13 @@ class _TbatsAdapter(BaseForecaster):
             Forecasting horizon
         X : (default=None)
             NOT USED BY TBATS
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float, optional (default=0.05)
-            Interpreted as "Confidence Interval" = 1 - alpha
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
         """
-        if return_pred_int:
-            return self._tbats_forecast_with_interval(fh, alpha)
-        else:
-            return self._tbats_forecast(fh)
+        return self._tbats_forecast(fh)
 
     def _tbats_forecast(self, fh):
         """TBATS forecast without confidence interval.

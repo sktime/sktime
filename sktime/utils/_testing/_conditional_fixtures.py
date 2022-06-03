@@ -17,10 +17,9 @@ import numpy as np
 class FixtureGenerationError(Exception):
     """Raised when a fixture fails to generate."""
 
-    def __init__(self, fixture_name=""):
+    def __init__(self, fixture_name="", err=None):
         self.fixture_name = fixture_name
-        fixture_name = fixture_name + " "
-        super().__init__(f"fixture {fixture_name}failed to generate")
+        super().__init__(f"fixture {fixture_name} failed to generate. {err}")
 
 
 def create_conditional_fixtures_and_names(
@@ -28,6 +27,8 @@ def create_conditional_fixtures_and_names(
     fixture_vars: List[str],
     generator_dict: Dict[str, Callable],
     fixture_sequence: List[str] = None,
+    raise_exceptions: bool = False,
+    deepcopy_fixtures: bool = False,
 ):
     """Create conditional fixtures for pytest_generate_tests.
 
@@ -65,6 +66,14 @@ def create_conditional_fixtures_and_names(
             under the assumption that arguments have given values
     fixture_sequence : list of str, optional, default = None
         used in prioritizing conditional generators, sequentially (see above)
+    raise_exceptions : bool, optional, default = False
+        whether fixture generation errors or other Exceptions are raised
+        if False, exceptions are returned instead of fixtures
+    deepcopy_fixtures : bool. optional, default = False
+        whether returned fixture list in fixture_prod are deecopy-independent
+        if False, identical list/tuple elements will be identical by reference
+        if True, identical elements will be identical by value but no by reference
+        "elements" refer to fixture[i] as described below, in fixture_prod
 
     Returns
     -------
@@ -81,6 +90,8 @@ def create_conditional_fixtures_and_names(
                         fixture_var(i-1) = fixture[i-1],
                     )
             return (fixture[1], fixture[2], ..., fixture[N])
+        if deepcopy_fixtures = False, identical fixture[i] are identical by reference
+        if deepcopy_fixtures = True, identical fixture[i] are not identical references
     fixture_names : list of str, fixture ids to use in pytest.fixture.parameterize
         fixture names, generated according to the following conditional rule:
             let fixture_vars = [fixture_var1, fixture_var2, ..., fixture_varN]
@@ -95,6 +106,7 @@ def create_conditional_fixtures_and_names(
         fixture names correspond to fixtures with the same indices at picks (from lists)
     """
     fixture_vars = _check_list_of_str(fixture_vars, name="fixture_vars")
+    fixture_vars = [var for var in fixture_vars if var in generator_dict.keys()]
 
     # order fixture_vars according to fixture_sequence if provided
     if fixture_sequence is not None:
@@ -132,14 +144,16 @@ def create_conditional_fixtures_and_names(
         """
         try:
             res = generator_dict[fixture_var](test_name, **kwargs)
-            if len(res) == 2:
+            if isinstance(res, tuple) and len(res) == 2:
                 fixture_prod = res[0]
                 fixture_names = res[1]
             else:
                 fixture_prod = res
                 fixture_names = [str(x) for x in res]
-        except Exception:
-            error = FixtureGenerationError(fixture_name=fixture_var)
+        except Exception as err:
+            error = FixtureGenerationError(fixture_name=fixture_var, err=err)
+            if raise_exceptions:
+                raise error
             fixture_prod = [error]
             fixture_names = [f"Error:{fixture_var}"]
 
@@ -157,19 +171,23 @@ def create_conditional_fixtures_and_names(
         new_fixture_names = []
 
         for j, fixture in enumerate(fixture_prod):
+            # retrieve kwargs corresponding to old fixture values
             fixture_name = fixture_names[j]
             if i == 0:
                 kwargs = dict()
             else:
                 kwargs = dict(zip(old_fixture_vars, fixture))
-
-            new_fixtures, new_fixture_names_r = deepcopy(
-                get_fixtures(fixture_var, **kwargs)
-            )
+            # retrieve conditional fixtures, conditional on fixture values in kwargs
+            new_fixtures, new_fixture_names_r = get_fixtures(fixture_var, **kwargs)
+            # new fixture values are concatenation/product of old values plus new
             new_fixture_prod += [
-                deepcopy(fixture) + (new_fixture,) for new_fixture in new_fixtures
+                fixture + (new_fixture,) for new_fixture in new_fixtures
             ]
-            new_fixture_names += [f"{fixture_name}-{x}" for x in new_fixture_names_r]
+            # new fixture name is concatenation of name so far and "dash-new name"
+            #   if the new name is empty string, don't add a dash
+            if len(new_fixture_names_r) > 0 and new_fixture_names_r[0] != "":
+                new_fixture_names_r = [f"-{x}" for x in new_fixture_names_r]
+            new_fixture_names += [f"{fixture_name}{x}" for x in new_fixture_names_r]
 
         fixture_prod = new_fixture_prod
         fixture_names = new_fixture_names
@@ -183,6 +201,11 @@ def create_conditional_fixtures_and_names(
     # we need to remove the tuple bracket from singleton
     #   in pytest convention, only multiple variables (2 or more) are tuples
     fixture_prod = [_remove_single(x) for x in fixture_prod]
+
+    # if deepcopy_fixtures = True:
+    # we run deepcopy on every element of fixture_prod to make them independent
+    if deepcopy_fixtures:
+        fixture_prod = [deepcopy(x) for x in fixture_prod]
 
     return fixture_param_str, fixture_prod, fixture_names
 

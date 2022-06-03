@@ -97,20 +97,20 @@ integration services we use.
 | Platform      | Operation             | Configuration                       |
 +===============+=======================+=====================================+
 | `GitHub       | Build/test/           | `.github/workflows/ <https://gi     |
-| Act           | distribute            | thub.com/alan-turing-institute/skti |
-| ions <https:/ | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
+| Actions       | distribute            | thub.com/alan-turing-institute/skti |
+| <https:/      | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
 | /docs.github. | Windows,              |                                     |
 | com/en/free-p | run code quality      |                                     |
 | ro-team@lates | checks                |                                     |
 | t/actions>`__ |                       |                                     |
 +---------------+-----------------------+-------------------------------------+
-| `Read the     | Build/deploy          | `.readthed                          |
-| Docs <h       | documentation         | ocs.yml <https://github.com/alan-tu |
+| `Read the     | Build/deploy          | `.readthedocs.yml                   |
+| Docs <h       | documentation         | <https://github.com/alan-tu         |
 | ttps://readth |                       | ring-institute/sktime/blob/main/.gi |
 | edocs.org>`__ |                       | thub/workflows/code-quality.yml>`__ |
 +---------------+-----------------------+-------------------------------------+
-| `Codec        | Test coverage         | `.codecov.yml <https                |
-| ov <https://c |                       | ://github.com/alan-turing-institute |
+| `Codecov      | Test coverage         | `.codecov.yml <https                |
+| <https://c    |                       | ://github.com/alan-turing-institute |
 | odecov.io>`__ |                       | /sktime/blob/main/.codecov.yml>`__, |
 |               |                       | `.coveragerc <htt                   |
 |               |                       | ps://github.com/alan-turing-institu |

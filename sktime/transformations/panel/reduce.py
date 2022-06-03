@@ -1,21 +1,15 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Tabularizer transform, for pipelining."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = ["Tabularizer"]
 
-import pandas as pd
-from sklearn.utils.validation import check_array
-
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
-from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
-from sktime.utils.validation.panel import check_X
+from sktime.datatypes import convert, convert_to
+from sktime.transformations.base import BaseTransformer
 
 
-class Tabularizer(_PanelToTabularTransformer):
+class Tabularizer(BaseTransformer):
     """
     A transformer that turns time series/panel data into tabular data.
 
@@ -27,26 +21,35 @@ class Tabularizer(_PanelToTabularTransformer):
     validation learning algorithms (as in sklearn).
     """
 
-    def transform(self, X, y=None):
+    _tags = {
+        "fit_is_empty": True,
+        "univariate-only": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": ["nested_univ", "numpy3D"],
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # and for y?
+    }
+
+    def _transform(self, X, y=None):
         """Transform nested pandas dataframe into tabular dataframe.
 
         Parameters
         ----------
-        X : pandas DataFrame
-            Nested dataframe with pandas series or numpy arrays in cells.
-        y : array-like, optional (default=None)
+        X : pandas DataFrame or 3D np.ndarray
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         Xt : pandas DataFrame
             Transformed dataframe with only primitives in cells.
         """
-        self.check_is_fitted()
-        X = check_X(X)
-        if isinstance(X, pd.DataFrame):
-            return from_nested_to_2d_array(X)
-        else:
-            return from_3d_numpy_to_2d_array(X)
+        Xt = convert_to(X, to_type="numpyflat", as_scitype="Panel")
+        return Xt
 
     def inverse_transform(self, X, y=None):
         """Transform tabular pandas dataframe into nested dataframe.
@@ -62,8 +65,5 @@ class Tabularizer(_PanelToTabularTransformer):
         Xt : pandas DataFrame
             Transformed dataframe with series in cells.
         """
-        self.check_is_fitted()
-        # We expect a tabular pd.DataFrame or np.array here, hence we use
-        # scikit-learn's input validation function.
-        X = check_array(X)
-        return from_2d_array_to_nested(X)
+        Xt = convert(X, from_type="numpyflat", to_type="numpy3D", as_scitype="Panel")
+        return Xt

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-__author__ = "Angus Dempster"
+"""MiniRocket transformer."""
+
+__author__ = "angus924"
 __all__ = ["MiniRocket"]
 
 import multiprocessing
@@ -8,11 +10,10 @@ import numpy as np
 import pandas as pd
 from numba import get_num_threads, njit, prange, set_num_threads, vectorize
 
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.panel import check_X
+from sktime.transformations.base import BaseTransformer
 
 
-class MiniRocket(_PanelToTabularTransformer):
+class MiniRocket(BaseTransformer):
     """MINIROCKET.
 
     MINImally RandOm Convolutional KErnel Transform
@@ -40,7 +41,17 @@ class MiniRocket(_PanelToTabularTransformer):
     random_state             : int, random seed (optional, default None)
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {
+        "univariate-only": True,
+        "fit_is_empty": False,
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what is the scitype of y: None (not needed), Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(
         self,
@@ -53,24 +64,26 @@ class MiniRocket(_PanelToTabularTransformer):
         self.max_dilations_per_kernel = max_dilations_per_kernel
 
         self.n_jobs = n_jobs
-        self.random_state = (
-            np.int32(random_state) if isinstance(random_state, int) else None
-        )
+        self.random_state = random_state
         super(MiniRocket, self).__init__()
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fits dilations and biases to input time series.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         self
         """
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        random_state = (
+            np.int32(self.random_state) if isinstance(self.random_state, int) else None
+        )
+
         X = X[:, 0, :].astype(np.float32)
         _, n_timepoints = X.shape
         if n_timepoints < 9:
@@ -81,25 +94,23 @@ class MiniRocket(_PanelToTabularTransformer):
                 )
             )
         self.parameters = _fit(
-            X, self.num_kernels, self.max_dilations_per_kernel, self.random_state
+            X, self.num_kernels, self.max_dilations_per_kernel, random_state
         )
-        self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def _transform(self, X, y=None):
         """Transform input time series.
 
         Parameters
         ----------
-        X : pandas DataFrame, input time series (sktime format)
-        y : array_like, target values (optional, ignored as irrelevant)
+        X : 3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            panel of time series to transform
+        y : ignored argument for interface compatibility
 
         Returns
         -------
         pandas DataFrame, transformed features
         """
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X[:, 0, :].astype(np.float32)
 
         # change n_jobs dependend on value and existing cores

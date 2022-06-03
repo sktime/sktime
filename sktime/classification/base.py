@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Abstract base class for time series classifiers.
 
@@ -26,22 +25,24 @@ __all__ = [
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 
 import time
+from abc import ABC, abstractmethod
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
+from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
 
 
-class BaseClassifier(BaseEstimator):
+class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
-    classifiers have to implement. Attributes with a underscore suffix are set in the
+    classifiers have to implement. Attributes with an underscore suffix are set in the
     method fit.
-    #TODO: Make _fit and _predict abstract
 
     Parameters
     ----------
@@ -60,7 +61,6 @@ class BaseClassifier(BaseEstimator):
         "capability:missing_values": False,
         "capability:train_estimate": False,
         "capability:contractable": False,
-        "capability:early_prediction": False,
         "capability:multithreading": False,
     }
 
@@ -70,7 +70,50 @@ class BaseClassifier(BaseEstimator):
         self.fit_time_ = 0
         self._class_dictionary = {}
         self._threads_to_use = 1
+
+        # required for compatability with some sklearn interfaces
+        # i.e. CalibratedClassifierCV
+        self._estimator_type = "classifier"
+
         super(BaseClassifier, self).__init__()
+
+    def __rmul__(self, other):
+        """Magic * method, return concatenated ClassifierPipeline, transformers on left.
+
+        Overloaded multiplication operation for classifiers. Implemented for `other`
+        being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        ClassifierPipeline object, concatenation of `other` (first) with `self` (last).
+        """
+        from sktime.classification.compose import ClassifierPipeline
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.compose import TransformerPipeline
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+        # behaviour is implemented only if other inherits from BaseTransformer
+        #  in that case, distinctions arise from whether self or other is a pipeline
+        #  todo: this can probably be simplified further with "zero length" pipelines
+        if isinstance(other, BaseTransformer):
+            # ClassifierPipeline already has the dunder method defined
+            if isinstance(self, ClassifierPipeline):
+                return other * self
+            # if other is a TransformerPipeline but self is not, first unwrap it
+            elif isinstance(other, TransformerPipeline):
+                return ClassifierPipeline(classifier=self, transformers=other.steps)
+            # if neither self nor other are a pipeline, construct a ClassifierPipeline
+            else:
+                return ClassifierPipeline(classifier=self, transformers=[other])
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
 
     def fit(self, X, y):
         """Fit time series classifier to training data.
@@ -98,6 +141,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        # reset estimator at the start of fit
+        self.reset()
+
         start = int(round(time.time() * 1000))
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
@@ -183,6 +229,7 @@ class BaseClassifier(BaseEstimator):
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
+
         return self._predict_proba(X)
 
     def score(self, X, y) -> float:
@@ -212,35 +259,31 @@ class BaseClassifier(BaseEstimator):
 
         return accuracy_score(y, self.predict(X), normalize=True)
 
-    def _check_convert_X_for_predict(self, X):
-        """Input checks, capability checks, repeated in all predict/score methods.
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
 
         Parameters
         ----------
-        X : any object (to check/convert)
-            should be of a supported Panel mtype or 2D numpy.ndarray
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
-        X: an object of a supported Panel mtype, numpy3D if X was a 2D numpy.ndarray
-
-        Raises
-        ------
-        ValueError if X is of invalid input data type, or there is not enough data
-        ValueError if the capabilities in self._tags do not handle the data.
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        X = _internal_convert(X)
-        X_metadata = _check_classifier_input(X)
-        missing = X_metadata["has_nans"]
-        multivariate = not X_metadata["is_univariate"]
-        unequal = not X_metadata["is_equal_length"]
-        # Check this classifier can handle characteristics
-        self._check_capabilities(missing, multivariate, unequal)
-        # Convert data as dictated by the classifier tags
-        X = self._convert_X(X)
+        return super().get_test_params(parameter_set=parameter_set)
 
-        return X
-
+    @abstractmethod
     def _fit(self, X, y):
         """Fit time series classifier to training data.
 
@@ -257,6 +300,7 @@ class BaseClassifier(BaseEstimator):
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : 1D np.array of int, of shape [n_instances] - class labels for fitting
             indices correspond to instance indices in X
+
         Returns
         -------
         self :
@@ -267,10 +311,9 @@ class BaseClassifier(BaseEstimator):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        raise NotImplementedError(
-            "_fit is a protected abstract method, it must be implemented."
-        )
+        ...
 
+    @abstractmethod
     def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
@@ -291,9 +334,7 @@ class BaseClassifier(BaseEstimator):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
-        raise NotImplementedError(
-            "_predict is a protected abstract method, it must be implemented."
-        )
+        ...
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
@@ -326,6 +367,35 @@ class BaseClassifier(BaseEstimator):
 
         return dists
 
+    def _check_convert_X_for_predict(self, X):
+        """Input checks, capability checks, repeated in all predict/score methods.
+
+        Parameters
+        ----------
+        X : any object (to check/convert)
+            should be of a supported Panel mtype or 2D numpy.ndarray
+
+        Returns
+        -------
+        X: an object of a supported Panel mtype, numpy3D if X was a 2D numpy.ndarray
+
+        Raises
+        ------
+        ValueError if X is of invalid input data type, or there is not enough data
+        ValueError if the capabilities in self._tags do not handle the data.
+        """
+        X = _internal_convert(X)
+        X_metadata = _check_classifier_input(X)
+        missing = X_metadata["has_nans"]
+        multivariate = not X_metadata["is_univariate"]
+        unequal = not X_metadata["is_equal_length"]
+        # Check this classifier can handle characteristics
+        self._check_capabilities(missing, multivariate, unequal)
+        # Convert data as dictated by the classifier tags
+        X = self._convert_X(X)
+
+        return X
+
     def _check_capabilities(self, missing, multivariate, unequal):
         """Check whether this classifier can handle the data characteristics.
 
@@ -342,23 +412,35 @@ class BaseClassifier(BaseEstimator):
         allow_multivariate = self.get_tag("capability:multivariate")
         allow_missing = self.get_tag("capability:missing_values")
         allow_unequal = self.get_tag("capability:unequal_length")
+
+        self_name = type(self).__name__
+
+        # identify problems, mismatch of capability and inputs
+        problems = []
         if missing and not allow_missing:
-            raise ValueError(
-                "The data has missing values, this classifier cannot handle missing "
-                "values"
-            )
+            problems += ["missing values"]
         if multivariate and not allow_multivariate:
-            # this error message could be more informative, but it is for backward
-            # compatibility with the testing functions
-            raise ValueError(
-                "X must be univariate, this classifier cannot deal with "
-                "multivariate input."
-            )
+            problems += ["multivariate series"]
         if unequal and not allow_unequal:
-            raise ValueError(
-                "The data has unequal length series, this classifier cannot handle "
-                "unequal length series"
-            )
+            problems += ["unequal length series"]
+
+        # construct error message
+        problems_and = " and ".join(problems)
+        problems_or = " or ".join(problems)
+        msg = (
+            f"Data seen by {self_name} instance has {problems_and}, "
+            f"but this {self_name} instance cannot handle {problems_or}. "
+            f"Calls with {problems_or} may result in error or unreliable results."
+        )
+
+        # raise exception or warning with message
+        # if self is composite, raise a warning, since passing could be fine
+        #   see discussion in PR 2366 why
+        if len(problems) > 0:
+            if self.is_composite():
+                warn(msg)
+            else:
+                raise ValueError(msg)
 
     def _convert_X(self, X):
         """Convert equal length series from DataFrame to numpy array or vice versa.

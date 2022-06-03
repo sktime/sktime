@@ -84,6 +84,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
@@ -131,8 +132,12 @@ class ThetaForecaster(ExponentialSmoothing):
         super(ThetaForecaster, self)._fit(y, fh=fh)
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
+        # compute and store historical residual standard error
+        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (len(y) - 1))
+
         # compute trend
         self.trend_ = self._compute_trend(y)
+
         return self
 
     def _predict(self, fh, X=None):
@@ -144,6 +149,8 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
@@ -209,15 +216,11 @@ class ThetaForecaster(ExponentialSmoothing):
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
 
-        # compute historical residual standard error
-        n_timepoints = len(self._y)
-
-        self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(
-            self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
+            self.fh.to_relative(self.cutoff) * self.initial_level_**2 + 1
         )
 
-        y_pred = super(ThetaForecaster, self).predict(fh, X)
+        y_pred = self._predict(fh, X)
 
         # we assume normal additive noise with sem variance
         for a in alpha:

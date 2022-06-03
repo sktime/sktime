@@ -45,10 +45,7 @@ __all__ = ["check_dict"]
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._series._check import check_pdDataFrame_Series
-
-VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
-VALID_MULTIINDEX_TYPES = (pd.Int64Index, pd.RangeIndex)
+from sktime.datatypes._series._check import check_pddataframe_series
 
 
 def _list_all_equal(obj):
@@ -97,14 +94,14 @@ def check_pdmultiindex_hierarchical(obj, return_metadata=False, var_name="obj"):
     panel_inds = inst_inds.droplevel(-1).unique()
 
     check_res = [
-        check_pdDataFrame_Series(obj.loc[i], return_metadata=True) for i in inst_inds
+        check_pddataframe_series(obj.loc[i], return_metadata=True) for i in inst_inds
     ]
     bad_inds = [i[1] for i in enumerate(inst_inds) if not check_res[i[0]][0]]
 
     if len(bad_inds) > 0:
         msg = (
             f"{var_name}.loc[i] must be Series of mtype pd.DataFrame,"
-            " not at i={bad_inds}"
+            f" not at i={bad_inds}"
         )
         return _ret(False, msg, None, return_metadata)
 

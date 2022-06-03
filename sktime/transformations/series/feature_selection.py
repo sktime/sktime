@@ -79,7 +79,7 @@ class FeatureSelection(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for y?
-        "fit-in-transform": False,
+        "fit_is_empty": False,
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": True,
         "univariate-only": False,
@@ -195,8 +195,15 @@ class FeatureSelection(BaseTransformer):
             self.n_columns_ = int(math.ceil(Z.shape[1] / 2))
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

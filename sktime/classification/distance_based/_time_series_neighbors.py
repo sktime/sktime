@@ -84,7 +84,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> classifier = KNeighborsTimeSeriesClassifier()
+    >>> classifier = KNeighborsTimeSeriesClassifier(distance="euclidean")
     >>> classifier.fit(X_train, y_train)
     KNeighborsTimeSeriesClassifier(...)
     >>> y_pred = classifier.predict(X_test)
@@ -92,6 +92,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     _tags = {
         "capability:multivariate": True,
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -100,7 +101,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         weights="uniform",
         distance="dtw",
         distance_params=None,
-        **kwargs
+        **kwargs,
     ):
         # self._distance_params = distance_params
         # if distance_params is None:
@@ -116,7 +117,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             algorithm="brute",
             metric=distance,
             metric_params=None,  # Extra distance params handled in _fit
-            **kwargs
+            **kwargs,
         )
         BaseClassifier.__init__(self)
         self.weights = _check_weights(weights)
@@ -131,16 +132,16 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
+        Input number of cases (n), with series of dimension (d), each series length (d).
+
         Parameters
         ----------
-        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
-        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
+        X : sktime-format pandas dataframe with shape(n,d),
+        or numpy ndarray with shape(n,d,m)
 
         y : {array-like, sparse matrix}
-            Target values of shape = [n_samples]
+            Target values of shape = [n]
         """
-        # Transpose to work correctly with distance functions
-        X = X.transpose((0, 2, 1))
         if isinstance(self.distance, str):
             if self.distance_params is None:
                 self.metric = distance_factory(X[0], X[0], metric=self.distance)
@@ -148,8 +149,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 self.metric = distance_factory(
                     X[0], X[0], metric=self.distance, **self.distance_params
                 )
-
-        y = np.asarray(y)
         check_classification_targets(y)
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             self.outputs_2d_ = False
@@ -219,8 +218,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        # Transpose to work correctly with distance functions
-        X = X.transpose((0, 2, 1))
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -274,7 +271,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 reduce_func=reduce_func,
                 metric=self.effective_metric_,
                 n_jobs=n_jobs,
-                **kwds
+                **kwds,
             )
         else:
             raise ValueError("internal: _fit_method not recognized")
@@ -312,11 +309,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 return dist, neigh_ind
             return neigh_ind
 
-    def predict(self, X, **kwargs):
+    def predict(self, X, **kwargs) -> np.ndarray:
         """Predict wrapper."""
         return BaseClassifier.predict(self, X, **kwargs)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict the class labels for the provided data.
 
         Parameters
@@ -368,11 +365,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = temp
         return y_pred
 
-    def predict_proba(self, X, **kwargs):
+    def predict_proba(self, X, **kwargs) -> np.ndarray:
         """Predict proba wrapper."""
         return BaseClassifier.predict_proba(self, X, **kwargs)
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Return probability estimates for the test data X.
 
         Parameters
@@ -437,6 +434,30 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             check_array.__code__ = temp
         return probabilities
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        return {"distance": "euclidean"}
 
 
 # overwrite sklearn internal checks, this is really hacky

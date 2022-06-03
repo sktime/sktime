@@ -13,12 +13,15 @@ __all__ = [
 ]
 
 
+from copy import deepcopy
 from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
+from sktime.utils._testing.series import _make_series
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
@@ -65,11 +68,41 @@ class ForecasterTestScenario(TestScenario, BaseObject):
 
         return True
 
+    def get_args(self, key, obj=None, deepcopy_args=True):
+        """Return args for key. Can be overridden for dynamic arg generation.
+
+        If overridden, must not have any side effects on self.args
+            e.g., avoid assignments args[key] = x without deepcopying self.args first
+
+        Parameters
+        ----------
+        key : str, argument key to construct/retrieve args for
+        obj : obj, optional, default=None. Object to construct args for.
+        deepcopy_args : bool, optional, default=True. Whether to deepcopy return.
+
+        Returns
+        -------
+        args : argument dict to be used for a method, keyed by `key`
+            names for keys need not equal names of methods these are used in
+                but scripted method will look at key with same name as default
+        """
+        PREDICT_LIKE_FUNCTIONS = ["predict", "predict_var", "predict_proba"]
+        # use same args for predict-like functions as for predict
+        if key in PREDICT_LIKE_FUNCTIONS:
+            key = "predict"
+
+        args = self.args[key]
+
+        if deepcopy_args:
+            args = deepcopy(args)
+
+        return args
+
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "pre-refactor": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": False}
 
     args = {
         "fit": {"y": _make_series(n_timepoints=20, random_state=RAND_SEED), "fh": 1},
@@ -126,7 +159,7 @@ X_test_short = LONG_X.iloc[20:21]
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
     """Fit/predict only, univariate y, with X."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
         "fit": {
@@ -158,7 +191,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
     """Fit/predict only, multivariate y, no X."""
 
-    _tags = {"univariate_y": False, "fh_passed_in_fit": True, "pre-refactor": True}
+    _tags = {"univariate_y": False, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
         "fit": {
@@ -186,6 +219,32 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+y_panel = _make_panel_X(
+    n_instances=3, n_timepoints=10, n_columns=1, random_state=RAND_SEED
+)
+
+
+class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
+    """Fit/predict only, univariate Panel y, no X, and longer fh."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+
+    args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+    default_method_sequence = ["fit", "predict"]
+
+
+y_hierarchical = _make_hierarchical(n_columns=1, random_state=RAND_SEED)
+
+
+class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
+    """Fit/predict only, univariate Hierarchical y, no X, and longer fh."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+
+    args = {"fit": {"y": y_panel.copy(), "fh": [1, 2, 3]}, "predict": {}}
+    default_method_sequence = ["fit", "predict"]
+
+
 forecasting_scenarios_simple = [
     ForecasterFitPredictUnivariateNoX,
     ForecasterFitPredictMultivariateWithX,
@@ -199,6 +258,8 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictUnivariateWithXLongFh,
     ForecasterFitPredictMultivariateNoX,
     ForecasterFitPredictMultivariateWithX,
+    ForecasterFitPredictPanelSimple,
+    ForecasterFitPredictHierarchicalSimple,
 ]
 
 scenarios_forecasting = forecasting_scenarios_extended

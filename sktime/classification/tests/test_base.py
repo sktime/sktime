@@ -12,6 +12,8 @@ from sktime.classification.base import (
     _check_classifier_input,
     _internal_convert,
 )
+from sktime.classification.feature_based import Catch22Classifier
+from sktime.utils._testing.panel import _make_classification_y, _make_panel
 
 
 class _DummyClassifier(BaseClassifier):
@@ -25,9 +27,16 @@ class _DummyClassifier(BaseClassifier):
         """Predict dummy."""
         return self
 
-    def _predict_proba(self):
+    def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
+
+
+class _DummyComposite(_DummyClassifier):
+    """Dummy classifier for testing base class fit/predict/predict_proba."""
+
+    def __init__(self, foo):
+        self.foo = foo
 
 
 class _DummyHandlesAllInput(BaseClassifier):
@@ -47,7 +56,7 @@ class _DummyHandlesAllInput(BaseClassifier):
         """Predict dummy."""
         return self
 
-    def _predict_proba(self):
+    def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
 
@@ -67,14 +76,14 @@ class _DummyConvertPandas(BaseClassifier):
         """Predict dummy."""
         return self
 
-    def _predict_proba(self):
+    def _predict_proba(self, X):
         """Predict proba dummy."""
         return self
 
 
-multivariate_message = r"X must be univariate, this classifier cannot deal with"
-missing_message = r"The data has missing values"
-unequal_message = r"The data has unequal length series"
+multivariate_message = r"multivariate series"
+missing_message = r"missing values"
+unequal_message = r"unequal length series"
 incorrect_X_data_structure = r"must be a np.array or a pd.Series"
 incorrect_y_data_structure = r"must be 1-dimensional"
 
@@ -120,7 +129,13 @@ def test_base_classifier_fit():
         result = dummy.fit(test_X1, test_X3)
 
 
-def test_check_capabilities():
+TF = [True, False]
+
+
+@pytest.mark.parametrize("missing", TF)
+@pytest.mark.parametrize("multivariate", TF)
+@pytest.mark.parametrize("unequal", TF)
+def test_check_capabilities(missing, multivariate, unequal):
     """Test the checking of capabilities.
 
     There are eight different combinations to be tested with a classifier that can
@@ -128,31 +143,35 @@ def test_check_capabilities():
     explicitly test;
     """
     handles_none = _DummyClassifier()
+    handles_none_composite = _DummyComposite(_DummyClassifier())
 
-    handles_none._check_capabilities(False, False, False)
-    with pytest.raises(ValueError, match=missing_message):
-        handles_none._check_capabilities(True, True, True)
-        handles_none._check_capabilities(True, True, False)
-        handles_none._check_capabilities(True, False, False)
-        handles_none._check_capabilities(True, False, True)
-    with pytest.raises(ValueError, match=multivariate_message):
-        handles_none._check_capabilities(False, True, True)
-        handles_none._check_capabilities(False, True, False)
-        handles_none._check_capabilities(False, False, True)
-    with pytest.raises(ValueError, match=unequal_message):
-        handles_none._check_capabilities(False, False, True)
+    # checks that errors are raised
+    if missing:
+        with pytest.raises(ValueError, match=missing_message):
+            handles_none._check_capabilities(missing, multivariate, unequal)
+    if multivariate:
+        with pytest.raises(ValueError, match=multivariate_message):
+            handles_none._check_capabilities(missing, multivariate, unequal)
+    if unequal:
+        with pytest.raises(ValueError, match=unequal_message):
+            handles_none._check_capabilities(missing, multivariate, unequal)
+    if not missing and not multivariate and not unequal:
+        handles_none._check_capabilities(missing, multivariate, unequal)
+
+    if missing:
+        with pytest.warns(UserWarning, match=missing_message):
+            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+    if multivariate:
+        with pytest.warns(UserWarning, match=multivariate_message):
+            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+    if unequal:
+        with pytest.warns(UserWarning, match=unequal_message):
+            handles_none_composite._check_capabilities(missing, multivariate, unequal)
+    if not missing and not multivariate and not unequal:
+        handles_none_composite._check_capabilities(missing, multivariate, unequal)
 
     handles_all = _DummyHandlesAllInput()
-    handles_all._check_capabilities(False, False, False)
-    handles_all._check_capabilities(False, False, False)
-    handles_all._check_capabilities(True, True, True)
-    handles_all._check_capabilities(True, True, False)
-    handles_all._check_capabilities(True, False, True)
-    handles_all._check_capabilities(False, True, True)
-    handles_all._check_capabilities(True, False, False)
-    handles_all._check_capabilities(False, True, False)
-    handles_all._check_capabilities(False, False, True)
-    handles_all._check_capabilities(False, False, False)
+    handles_all._check_capabilities(missing, multivariate, unequal)
 
 
 def test_convert_input():
@@ -191,17 +210,6 @@ def test_convert_input():
     assert isinstance(tempY, np.ndarray)
     assert isinstance(tempX, np.ndarray)
     assert tempX.ndim == 3
-
-
-def _create_example_dataframe(cases=5, dimensions=1, length=10):
-    """Create a simple data frame set of time series (X) for testing."""
-    test_X = pd.DataFrame(dtype=np.float32)
-    for i in range(0, dimensions):
-        instance_list = []
-        for _ in range(0, cases):
-            instance_list.append(pd.Series(np.random.randn(length)))
-        test_X["dimension_" + str(i)] = instance_list
-    return test_X
 
 
 def test__check_classifier_input():
@@ -244,6 +252,17 @@ def test__check_classifier_input():
         _check_classifier_input(test_X2, test_y1, enforce_min_instances=6)
 
 
+def _create_example_dataframe(cases=5, dimensions=1, length=10):
+    """Create a simple data frame set of time series (X) for testing."""
+    test_X = pd.DataFrame(dtype=np.float32)
+    for i in range(0, dimensions):
+        instance_list = []
+        for _ in range(0, cases):
+            instance_list.append(pd.Series(np.random.randn(length)))
+        test_X["dimension_" + str(i)] = instance_list
+    return test_X
+
+
 def _create_nested_dataframe(cases=5, dimensions=1, length=10):
     testy = pd.DataFrame(dtype=np.float32)
     for i in range(0, dimensions):
@@ -264,3 +283,21 @@ def _create_unequal_length_nested_dataframe(cases=5, dimensions=1, length=10):
         testy["dimension_" + str(i + 1)] = instance_list
 
     return testy
+
+
+MTYPES = ["numpy3D", "pd-multiindex", "df-list", "numpyflat", "nested_univ"]
+
+
+@pytest.mark.parametrize("mtype", MTYPES)
+def test_input_conversion_fit_predict(mtype):
+    """Test that base class lets all Panel mtypes through."""
+    y = _make_classification_y()
+    X = _make_panel(return_mtype=mtype)
+
+    clf = Catch22Classifier()
+    clf.fit(X, y)
+    clf.predict(X)
+
+    clf = _DummyConvertPandas()
+    clf.fit(X, y)
+    clf.predict(X)

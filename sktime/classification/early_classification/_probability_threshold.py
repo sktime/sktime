@@ -12,6 +12,7 @@ import copy
 
 import numpy as np
 from joblib import Parallel, delayed
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
@@ -43,7 +44,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         An sktime estimator to be built using the transformed data. Defaults to a
         CanonicalIntervalForest.
     classification_points : List or None, default=None
-        List of integer time series thresholds to build classifiers and allow
+        List of integer time series time stamps to build classifiers and allow
         predictions at. Early predictions must have a series length that matches a value
         in the _classification_points List. Duplicate values will be removed, and the
         full series length will be appeneded if not present.
@@ -108,6 +109,10 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         super(ProbabilityThresholdEarlyClassifier, self).__init__()
 
     def _fit(self, X, y):
+        m = getattr(self.estimator, "predict_proba", None)
+        if not callable(m):
+            raise ValueError("Base estimator must have a predict_proba method.")
+
         _, _, series_length = X.shape
 
         self._classification_points = (
@@ -118,17 +123,20 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         # remove duplicates
         self._classification_points = list(set(self._classification_points))
         self._classification_points.sort()
-        # remove classification points that are less than 3
+        # remove classification points that are less than 3 time stamps
         self._classification_points = [i for i in self._classification_points if i >= 3]
         # make sure the full series length is included
         if self._classification_points[-1] != series_length:
             self._classification_points.append(series_length)
-        # create dictionary of classification point indicies
+        # create dictionary of classification point indices
         self._classification_point_dictionary = {}
         for index, classification_point in enumerate(self._classification_points):
             self._classification_point_dictionary[classification_point] = index
 
-        self._estimators = Parallel(n_jobs=self._threads_to_use)(
+        m = getattr(self.estimator, "n_jobs", None)
+        threads = self._threads_to_use if m is None else 1
+
+        self._estimators = Parallel(n_jobs=threads)(
             delayed(self._fit_estimator)(
                 X,
                 y,
@@ -139,7 +147,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -148,7 +156,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         _, _, series_length = X.shape
         idx = self._classification_point_dictionary.get(series_length, -1)
         if idx == -1:
@@ -157,15 +165,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 f" in fit. Current classification points: {self._classification_points}"
             )
 
-        m = getattr(self._estimators[idx], "predict_proba", None)
-        if callable(m):
-            return self._estimators[idx].predict_proba(X)
-        else:
-            dists = np.zeros((X.shape[0], self.n_classes_))
-            preds = self._estimators[idx].predict(X)
-            for i in range(0, X.shape[0]):
-                dists[i, self._class_dictionary[preds[i]]] = 1
-            return dists
+        return self._estimators[idx].predict_proba(X)
 
     def decide_prediction_safety(self, X, X_probabilities, state_info):
         """Decide on the safety of an early classification.
@@ -243,7 +243,8 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
                 idx + 1,
                 # consecutive predictions, add one if positive decision and same class
                 state_info[i][1] + 1 if decisions[i] and preds[i] == state_info[i][2]
-                # 0 if the decision is negative, 1 if its positive but different class
+                # set to 0 if the decision is negative, 1 if its positive but different
+                # class
                 else 1 if decisions[i] else 0,
                 # predicted class index
                 preds[i],
@@ -256,9 +257,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             return decisions, new_state_info
         else:
             return [
-                True
-                if decisions[i] and new_state_info[i][1] >= self.consecutive_predictions
-                else False
+                True if new_state_info[i][1] >= self.consecutive_predictions else False
                 for i in range(n_instances)
             ], new_state_info
 
@@ -272,10 +271,36 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             rng,
         )
 
-        estimator.fit(X[:, :, : self._classification_points[i]], y)
-
         m = getattr(estimator, "n_jobs", None)
         if m is not None:
             estimator.n_jobs = self._threads_to_use
 
+        estimator.fit(X[:, :, : self._classification_points[i]], y)
+
         return estimator
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class.
+        """
+        from sktime.classification.feature_based import Catch22Classifier
+
+        params = {
+            "classification_points": [3],
+            "estimator": Catch22Classifier(
+                estimator=RandomForestClassifier(n_estimators=2)
+            ),
+        }
+        return params

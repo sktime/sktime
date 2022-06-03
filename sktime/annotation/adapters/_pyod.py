@@ -4,13 +4,13 @@
 """Implements outlier detection from pyOD."""
 
 import numpy as np
+from sklearn.base import clone
+
 from sktime.annotation.base._base import BaseSeriesAnnotator
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
-
-from sklearn import clone
 
 
 class PyODAnnotator(BaseSeriesAnnotator):
