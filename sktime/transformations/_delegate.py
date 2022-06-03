@@ -55,8 +55,6 @@ class _DelegatedTransformer(BaseTransformer):
         self : a fitted instance of the estimator
         """
         estimator = self._get_delegate()
-        self.clone_tags(estimator)
-        self.set_tags(**{"fit_is_empty": False})
         estimator.fit(X=X, y=y)
         return self
 

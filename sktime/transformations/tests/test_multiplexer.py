@@ -79,7 +79,7 @@ def test_multiplex_transformer_in_grid():
     """
     y = load_shampoo_sales()
     # randomly make some of the values nans:
-    y.loc[y.sample(frac=0.1).index] = -1
+    y.iloc[[5, 10, 15, 25, 32]] = -1
     # Note - we select two forecasters which are deterministic.
     transformer_tuples = [
         ("mean", Imputer(method="mean", missing_values=-1)),
@@ -91,7 +91,10 @@ def test_multiplex_transformer_in_grid():
         initial_window=24, step_length=12, start_with_window=True, fh=[1, 2, 3]
     )
     pipe = TransformedTargetForecaster(
-        steps=[("multiplex", multiplex_transformer), ("forecaster", NaiveForecaster())]
+        steps=[
+            ("multiplex", multiplex_transformer),
+            ("forecaster", NaiveForecaster(strategy="mean")),
+        ]
     )
     gscv = ForecastingGridSearchCV(
         cv=cv,
@@ -103,5 +106,7 @@ def test_multiplex_transformer_in_grid():
     for name, estimator in best_steps:
         if "multiplex" == name:
             gscv_best_name = estimator.selected_transformer
-    best_name = _find_best_transformer(NaiveForecaster(), transformer_tuples, cv, y)
+    best_name = _find_best_transformer(
+        NaiveForecaster(strategy="mean"), transformer_tuples, cv, y
+    )
     assert gscv_best_name == best_name

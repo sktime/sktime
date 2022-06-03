@@ -171,6 +171,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self : reference to self
         """
         self._set_transformer()
+        self.clone_tags(self.transformer_)
+        self.set_tags(**{"fit_is_empty": False})
         super()._fit(y=y, X=X)
 
         return self
@@ -217,28 +219,21 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         -------
         params : dict or list of dict
         """
-        from sktime.transformations.series.detrend import Deseasonalizer, Detrender
+        from sktime.transformations.series.impute import Imputer
 
         # test with 2 simple detrend transformations with selected_transformer
         params1 = {
             "transformers": [
-                ("deseasonalize", Deseasonalizer()),
-                ("detrended", Detrender()),
+                ("imputer_mean", Imputer(method="mean")),
+                ("imputer_near", Imputer(method="nearest")),
             ],
-            "selected_transformer": "detrended",
+            "selected_transformer": "imputer_near",
         }
         # test no selected_transformer
         params2 = {
             "transformers": [
-                ("deseasonalize", Deseasonalizer()),
-                ("detrended", Detrender()),
+                ("imputer_mean", Imputer(method="mean")),
+                ("imputer_near", Imputer(method="nearest")),
             ],
         }
-        # test no selected_transformer and no names
-        params3 = {
-            "transformers": [
-                Deseasonalizer(),
-                Detrender(),
-            ],
-        }
-        return [params1, params2, params3]
+        return [params1, params2]
