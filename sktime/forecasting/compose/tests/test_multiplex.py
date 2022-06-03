@@ -28,7 +28,7 @@ def _score_forecasters(forecasters, cv, y):
     score = None
     for name, forecaster in forecasters:
         results = evaluate(forecaster, cv, y)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
