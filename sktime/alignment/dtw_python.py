@@ -12,7 +12,13 @@ import pandas as pd
 from sktime.alignment.base import BaseAligner
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("dtw")
+_check_soft_dependencies(
+    "dtw-python",
+    package_import_alias={"dtw-python": "dtw"},
+    severity="warning",
+    object="AlignerDTW or AlignerDTWfromDist",
+    suppress_import_stdout=True,
+)
 
 
 class AlignerDTW(BaseAligner):
@@ -65,6 +71,13 @@ class AlignerDTW(BaseAligner):
         variable_to_align=None,
     ):
         """Construct instance."""
+        _check_soft_dependencies(
+            "dtw-python",
+            package_import_alias={"dtw-python": "dtw"},
+            severity="error",
+            object=self,
+            suppress_import_stdout=True,
+        )
         super(AlignerDTW, self).__init__()
 
         self.dist_method = dist_method
@@ -231,9 +244,17 @@ class AlignerDTWfromDist(BaseAligner):
         open_end=False,
     ):
         """Construct instance."""
+        _check_soft_dependencies(
+            "dtw-python",
+            package_import_alias={"dtw-python": "dtw"},
+            severity="error",
+            object=self,
+            suppress_import_stdout=True,
+        )
         super(AlignerDTWfromDist, self).__init__()
 
         self.dist_trafo = dist_trafo
+        self.dist_trafo_ = self.dist_trafo.clone()
         self.step_pattern = step_pattern
         self.window_type = window_type
         self.open_begin = open_begin
@@ -256,7 +277,7 @@ class AlignerDTWfromDist(BaseAligner):
         from dtw import dtw
 
         # these variables from self are accessed
-        dist_trafo = self.dist_trafo
+        dist_trafo = self.dist_trafo_
         step_pattern = self.step_pattern
         window_type = self.window_type
         open_begin = self.open_begin
@@ -333,7 +354,7 @@ class AlignerDTWfromDist(BaseAligner):
         return distmat
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Test parameters for AlignerDTWdist."""
         # importing inside to avoid circular dependencies
         from sktime.dists_kernels import ScipyDist

@@ -61,12 +61,15 @@ import pandas as pd
 from sktime.alignment.base import BaseAligner
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.clustering.base import BaseClusterer
 from sktime.dists_kernels._base import (
     BasePairwiseTransformer,
     BasePairwiseTransformerPanel,
 )
 from sktime.forecasting.base import BaseForecaster
+
+# from sktime.performance_metrics.base import BaseMetric
 from sktime.regression.base import BaseRegressor
 from sktime.transformations.base import (
     BaseTransformer,
@@ -79,6 +82,7 @@ from sktime.transformations.base import (
 BASE_CLASS_REGISTER = [
     ("series-annotator", BaseSeriesAnnotator, "time series annotator"),
     ("classifier", BaseClassifier, "time series classifier"),
+    ("early_classifier", BaseEarlyClassifier, "early time series classifier"),
     ("clusterer", BaseClusterer, "time series clusterer"),
     ("regressor", BaseRegressor, "time series regressor"),
     ("forecaster", BaseForecaster, "forecaster"),
@@ -94,7 +98,10 @@ BASE_CLASS_REGISTER = [
         "pairwise transformer for panel data, distance or kernel",
     ),
     ("aligner", BaseAligner, "time series aligner or sequence aligner"),
+    # ("metric", BaseMetric, "performance metric"),
+    # TODO Fails because it assumes it has fit
 ]
+
 
 BASE_CLASS_SCITYPE_LIST = pd.DataFrame(BASE_CLASS_REGISTER)[0].tolist()
 

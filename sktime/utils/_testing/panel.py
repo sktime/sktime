@@ -1,8 +1,8 @@
-#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+"""Utility functions for generating panel data and learning task scenarios."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["mloning", "fkiraly"]
 __all__ = [
     "make_classification_problem",
     "make_regression_problem",
@@ -13,18 +13,46 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.clustering.tests._clustering_tests import generate_univaritate_series
-from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
+from sktime.datatypes import convert
 
 
-def _make_panel_X(
+def _make_panel(
     n_instances=20,
     n_columns=1,
     n_timepoints=20,
     y=None,
-    return_numpy=False,
+    all_positive=False,
     random_state=None,
+    return_mtype="pd-multiindex",
 ):
+    """Generate sktime compatible test data, Panel data formats.
+
+    Parameters
+    ----------
+    n_instances : int, optional, default=20
+        number of instances per series in the panel
+    n_columns : int, optional, default=1
+        number of variables in the time series
+    n_timepoints : int, optional, default=20
+        number of time points in each series
+    y : None (default), or 1D np.darray or 1D array-like, shape (n_instances, )
+        if passed, return will be generated with association to y
+    all_positive : bool, optional, default=False
+        whether series contain only positive values when generated
+    random_state : None (default) or int
+        if int is passed, will be used in numpy RandomState for generation
+    return_mtype : str, sktime Panel mtype str, default="pd-multiindex"
+        see sktime.datatypes.MTYPE_LIST_PANEL for a full list of admissible strings
+        see sktime.datatypes.MTYPE_REGISTER for an short explanation of formats
+        see examples/AA_datatypes_and_datasets.ipynb for a full specification
+
+    Returns
+    -------
+    X : an sktime time series data container of mtype return_mtype
+        with n_instances instances, n_columns variables, n_timepoints time points
+        generating distribution is all values i.i.d. normal with std 0.5
+        if y is passed, i-th series values are additively shifted by y[i] * 100
+    """
     # If target variable y is given, we ignore n_instances and instead generate as
     # many instances as in the target variable
     if y is not None:
@@ -39,10 +67,36 @@ def _make_panel_X(
     if y is not None:
         X = X + (y * 100).reshape(-1, 1, 1)
 
+    if all_positive:
+        X = X**2
+
+    X = convert(X, from_type="numpy3D", to_type=return_mtype)
+    return X
+
+
+def _make_panel_X(
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    y=None,
+    all_positive=False,
+    return_numpy=False,
+    random_state=None,
+):
     if return_numpy:
-        return X
+        return_mtype = "numpy3D"
     else:
-        return from_3d_numpy_to_nested(X)
+        return_mtype = "nested_univ"
+
+    return _make_panel(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        y=y,
+        all_positive=all_positive,
+        random_state=random_state,
+        return_mtype=return_mtype,
+    )
 
 
 def _make_regression_y(n_instances=20, return_numpy=True, random_state=None):
@@ -93,7 +147,11 @@ def make_classification_problem(
 
 
 def make_regression_problem(
-    n_instances=20, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    return_numpy=False,
+    random_state=None,
 ):
     """Make Regression Problem."""
     y = _make_regression_y(
@@ -111,20 +169,21 @@ def make_regression_problem(
 
 def make_clustering_problem(
     n_instances=20,
-    series_size=20,
-    return_numpy=True,
+    n_columns=1,
+    n_timepoints=20,
+    return_numpy=False,
     random_state=None,
-    n_columns=None,
 ):
     """Make Clustering Problem."""
     # Can only currently support univariate so converting
     # to univaritate for the time being
-    X = generate_univaritate_series(n_instances, series_size, random_state)
-
-    if return_numpy:
-        return X
-    else:
-        return pd.Series(X)
+    return _make_panel_X(
+        n_instances=n_instances,
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_numpy=return_numpy,
+        random_state=random_state,
+    )
 
 
 def make_transformer_problem(

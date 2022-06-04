@@ -18,21 +18,24 @@ from importlib import import_module
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
     "sktime.benchmarking.experiments": ["tsfresh", "esig"],
-    "sktime.forecasting.all": ["pmdarima", "fbprophet", "tbats"],
+    "sktime.forecasting.all": ["pmdarima", "prophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
+    "sktime.forecasting.statsforecast": ["statsforecast"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
-    "sktime.forecasting.fbprophet": ["fbprophet"],
+    "sktime.forecasting.fbprophet": ["prophet"],
     "sktime.classification.feature_based": ["tsfresh", "esig"],
-    "sktime.classification.signature_based": ["esig"],
+    "sktime.classification.deep_learning": ["tensorflow"],
+    "sktime.networks": ["tensorflow"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
     "sktime.transformations.panel.signature_based": ["esig"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
     "sktime.alignment.dtw_python": ["dtw"],
+    "sktime.clustering": ["tslearn"],
 }
-MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
+MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 
 
 def _is_test(module):

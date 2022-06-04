@@ -15,10 +15,6 @@ import sktime
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-# When we build the docs on readthedocs, we build the package and want to
-# use the built files in order for sphinx to be able to properly read the
-# Cython files. Hence, we do not add the source code path to the system
-# path.
 ON_READTHEDOCS = os.environ.get("READTHEDOCS") == "True"
 if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
@@ -362,10 +358,8 @@ def _make_estimator_overview(app):
             + "</a>"
         )
 
-        df = df.append(
-            pd.Series([modname, algorithm_type, author_info], index=COLNAMES),
-            ignore_index=True,
-        )
+        record = pd.DataFrame([modname, algorithm_type, author_info], index=COLNAMES).T
+        df = pd.concat([df, record], ignore_index=True)
     with open("estimator_overview_table.md", "w") as file:
         df.to_markdown(file, index=False)
 
@@ -379,7 +373,7 @@ def setup(app):
     """
 
     def adds(pth):
-        print("Adding stylesheet: %s" % pth)  # noqa: T001
+        print("Adding stylesheet: %s" % pth)  # noqa: T201, T001
         app.add_css_file(pth)
 
     adds("fields.css")  # for parameters, etc.

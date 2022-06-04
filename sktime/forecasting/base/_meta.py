@@ -7,13 +7,9 @@
 __author__ = ["mloning"]
 __all__ = ["_HeterogenousEnsembleForecaster"]
 
-from joblib import Parallel
-from joblib import delayed
-
-from sklearn.base import clone
+from joblib import Parallel, delayed
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
 
 
@@ -67,21 +63,13 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
             return forecaster.fit(y, X, fh)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(clone(forecaster), y, X, fh)
+            delayed(_fit_forecaster)(forecaster.clone(), y, X, fh)
             for forecaster in forecasters
         )
 
-    def _predict_forecasters(
-        self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def _predict_forecasters(self, fh=None, X=None):
         """Collect results from forecaster.predict() calls."""
-        if return_pred_int:
-            raise NotImplementedError()
-
-        return [
-            forecaster.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
-            for forecaster in self.forecasters_
-        ]
+        return [forecaster.predict(fh=fh, X=X) for forecaster in self.forecasters_]
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters.
@@ -105,7 +93,7 @@ class _HeterogenousEnsembleForecaster(BaseForecaster, _HeterogenousMetaEstimator
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
 

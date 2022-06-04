@@ -22,10 +22,66 @@ import sktime
 from sktime.datasets import (
     generate_example_long_table,
     load_from_long_to_dataframe,
+    load_from_tsfile,
     load_from_tsfile_to_dataframe,
+    load_tsf_to_dataframe,
     load_uschange,
     write_dataframe_to_tsfile,
 )
+from sktime.datasets._data_io import MODULE, _convert_tsf_to_hierarchical
+from sktime.datatypes import check_is_mtype
+
+
+def test_load_from_tsfile():
+    """Test function for loading TS formats.
+
+    Test
+    1. Univariate equal length (UnitTest) returns 2D numpy X, 1D numpy y
+    2. Multivariate equal length (BasicMotions) returns 3D numpy X, 1D numpy y
+    3. Univariate and multivariate unequal length (PLAID) return X as DataFrame
+    """
+    data_path = MODULE + "/data/UnitTest/UnitTest_TRAIN.ts"
+    # Test 1.1: load univariate equal length (UnitTest), should return 2D array and 1D
+    # array, test first and last data
+    # Test 1.2: Load a problem without y values (UnitTest),  test first and last data.
+    X, y = load_from_tsfile(data_path, return_data_type="np2D")
+    X2 = load_from_tsfile(data_path, return_y=False, return_data_type="np2D")
+    assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
+    assert X.ndim == 2 and X2.ndim == 2
+    assert X.shape == (20, 24) and y.shape == (20,)
+    assert X[0][0] == 573.0
+    X2 = load_from_tsfile(data_path, return_y=False, return_data_type="numpy3D")
+    assert isinstance(X2, np.ndarray)
+    assert X2.ndim == 3
+    assert X2.shape == (20, 1, 24)
+    assert X2[0][0][0] == 573.0
+
+    # Test 2: load multivare equal length (BasicMotions), should return 3D array and 1D
+    # array, test first and last data.
+    data_path = MODULE + "/data/BasicMotions/BasicMotions_TRAIN.ts"
+    X, y = load_from_tsfile(data_path, return_data_type="numpy3d")
+    assert isinstance(X, np.ndarray) and isinstance(y, np.ndarray)
+    assert X.shape == (40, 6, 100) and y.shape == (40,)
+    assert X[1][2][3] == -1.898794
+    X, y = load_from_tsfile(data_path)
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (40, 6) and y.shape == (40,)
+    assert isinstance(X.iloc[1, 2], pd.Series)
+    assert X.iloc[1, 2].iloc[3] == -1.898794
+
+    # Test 3.1: load univariate unequal length (PLAID), should return a one column
+    # dataframe,
+    data_path = MODULE + "/data/PLAID/PLAID_TRAIN.ts"
+    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (537, 1) and y.shape == (537,)
+    # Test 3.2: load multivariate unequal length (JapaneseVowels), should return a X
+    # columns dataframe,
+    data_path = MODULE + "/data/JapaneseVowels/JapaneseVowels_TRAIN.ts"
+    X, y = load_from_tsfile(full_file_path_and_name=data_path)
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (270, 12) and y.shape == (270,)
+
 
 _CHECKS = {
     "uschange": {
@@ -1026,3 +1082,292 @@ def test_write_dataframe_to_ts_fail(tmp_path):
             path=str(tmp_path),
             problem_name="GunPoint",
         )
+
+
+@pytest.mark.parametrize(
+    "input_path, return_type, output_df",
+    [
+        (
+            "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
+            "default_tsf",
+            pd.DataFrame(
+                {
+                    "series_name": ["T1", "T2", "T3"],
+                    "start_timestamp": [
+                        pd.Timestamp(year=1979, month=1, day=1),
+                        pd.Timestamp(year=1979, month=1, day=1),
+                        pd.Timestamp(year=1973, month=1, day=1),
+                    ],
+                    "series_value": [
+                        [
+                            25092.2284,
+                            24271.5134,
+                            25828.9883,
+                            27697.5047,
+                            27956.2276,
+                            29924.4321,
+                            30216.8321,
+                        ],
+                        [887896.51, 887068.98, 971549.04],
+                        [227921, 230995, 183635, 238605, 254186],
+                    ],
+                }
+            ),
+        ),
+        (
+            "datasets/data/UnitTest/UnitTest_Tsf_Loader_hierarchical.tsf",
+            "pd_multiindex_hier",
+            pd.DataFrame(
+                data=[
+                    25092.2284,
+                    24271.5134,
+                    25828.9883,
+                    27697.5047,
+                    27956.2276,
+                    29924.4321,
+                    30216.8321,
+                    887896.51,
+                    887068.98,
+                    971549.04,
+                    227921,
+                    230995,
+                    183635,
+                    238605,
+                    254186,
+                ],
+                index=pd.MultiIndex.from_tuples(
+                    [
+                        ("G1", "T1", pd.Timestamp(year=1979, month=1, day=1)),
+                        ("G1", "T1", pd.Timestamp(year=1980, month=1, day=1)),
+                        ("G1", "T1", pd.Timestamp(year=1981, month=1, day=1)),
+                        ("G1", "T1", pd.Timestamp(year=1982, month=1, day=1)),
+                        ("G1", "T1", pd.Timestamp(year=1983, month=1, day=1)),
+                        ("G1", "T1", pd.Timestamp(year=1984, month=1, day=1)),
+                        ("G1", "T1", pd.Timestamp(year=1985, month=1, day=1)),
+                        ("G1", "T2", pd.Timestamp(year=1979, month=1, day=1)),
+                        ("G1", "T2", pd.Timestamp(year=1980, month=1, day=1)),
+                        ("G1", "T2", pd.Timestamp(year=1981, month=1, day=1)),
+                        ("G2", "T3", pd.Timestamp(year=1973, month=1, day=1)),
+                        ("G2", "T3", pd.Timestamp(year=1974, month=1, day=1)),
+                        ("G2", "T3", pd.Timestamp(year=1975, month=1, day=1)),
+                        ("G2", "T3", pd.Timestamp(year=1976, month=1, day=1)),
+                        ("G2", "T3", pd.Timestamp(year=1977, month=1, day=1)),
+                    ],
+                    names=["series_group", "series_name", "timestamp"],
+                ),
+                columns=["series_value"],
+            ),
+        ),
+        (
+            "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
+            "pd-multiindex",
+            pd.DataFrame(
+                data=[
+                    25092.2284,
+                    24271.5134,
+                    25828.9883,
+                    27697.5047,
+                    27956.2276,
+                    29924.4321,
+                    30216.8321,
+                    887896.51,
+                    887068.98,
+                    971549.04,
+                    227921,
+                    230995,
+                    183635,
+                    238605,
+                    254186,
+                ],
+                index=pd.MultiIndex.from_tuples(
+                    [
+                        ("T1", pd.Timestamp(year=1979, month=1, day=1)),
+                        ("T1", pd.Timestamp(year=1980, month=1, day=1)),
+                        ("T1", pd.Timestamp(year=1981, month=1, day=1)),
+                        ("T1", pd.Timestamp(year=1982, month=1, day=1)),
+                        ("T1", pd.Timestamp(year=1983, month=1, day=1)),
+                        ("T1", pd.Timestamp(year=1984, month=1, day=1)),
+                        ("T1", pd.Timestamp(year=1985, month=1, day=1)),
+                        ("T2", pd.Timestamp(year=1979, month=1, day=1)),
+                        ("T2", pd.Timestamp(year=1980, month=1, day=1)),
+                        ("T2", pd.Timestamp(year=1981, month=1, day=1)),
+                        ("T3", pd.Timestamp(year=1973, month=1, day=1)),
+                        ("T3", pd.Timestamp(year=1974, month=1, day=1)),
+                        ("T3", pd.Timestamp(year=1975, month=1, day=1)),
+                        ("T3", pd.Timestamp(year=1976, month=1, day=1)),
+                        ("T3", pd.Timestamp(year=1977, month=1, day=1)),
+                    ],
+                    names=["series_name", "timestamp"],
+                ),
+                columns=["series_value"],
+            ),
+        ),
+        (
+            "datasets/data/UnitTest/UnitTest_Tsf_Loader_no_start_timestamp.tsf",
+            "default_tsf",
+            pd.DataFrame(
+                {
+                    "series_name": ["T1", "T2", "T3"],
+                    "series_value": [
+                        [
+                            25092.2284,
+                            24271.5134,
+                            25828.9883,
+                            27697.5047,
+                            27956.2276,
+                            29924.4321,
+                            30216.8321,
+                        ],
+                        [887896.51, 887068.98, 971549.04],
+                        [227921, 230995, 183635, 238605, 254186],
+                    ],
+                }
+            ),
+        ),
+        (
+            "datasets/data/UnitTest/UnitTest_Tsf_Loader_no_start_timestamp.tsf",
+            "pd-multiindex",
+            pd.DataFrame(
+                data=[
+                    25092.2284,
+                    24271.5134,
+                    25828.9883,
+                    27697.5047,
+                    27956.2276,
+                    29924.4321,
+                    30216.8321,
+                    887896.51,
+                    887068.98,
+                    971549.04,
+                    227921,
+                    230995,
+                    183635,
+                    238605,
+                    254186,
+                ],
+                index=pd.MultiIndex.from_tuples(
+                    [
+                        ("T1", 0),
+                        ("T1", 1),
+                        ("T1", 2),
+                        ("T1", 3),
+                        ("T1", 4),
+                        ("T1", 5),
+                        ("T1", 6),
+                        ("T2", 0),
+                        ("T2", 1),
+                        ("T2", 2),
+                        ("T3", 0),
+                        ("T3", 1),
+                        ("T3", 2),
+                        ("T3", 3),
+                        ("T3", 4),
+                    ],
+                    names=["series_name", "timestamp"],
+                ),
+                columns=["series_value"],
+            ),
+        ),
+    ],
+)
+def test_load_tsf_to_dataframe(input_path, return_type, output_df):
+    """Test function for loading tsf format."""
+    data_path = os.path.join(
+        os.path.dirname(sktime.__file__),
+        input_path,
+    )
+
+    expected_metadata = {
+        "frequency": "yearly",
+        "forecast_horizon": 4,
+        "contain_missing_values": False,
+        "contain_equal_length": False,
+    }
+
+    df, metadata = load_tsf_to_dataframe(data_path, return_type=return_type)
+
+    assert_frame_equal(df, output_df, check_dtype=False)
+    assert metadata == expected_metadata
+    if return_type != "default_tsf":
+        assert check_is_mtype(obj=df, mtype=return_type)
+
+
+@pytest.mark.parametrize("freq", [None, "YS"])
+def test_convert_tsf_to_multiindex(freq):
+    input_df = pd.DataFrame(
+        {
+            "series_name": ["T1", "T2", "T3"],
+            "start_timestamp": [
+                pd.Timestamp(year=1979, month=1, day=1),
+                pd.Timestamp(year=1979, month=1, day=1),
+                pd.Timestamp(year=1973, month=1, day=1),
+            ],
+            "series_value": [
+                [
+                    25092.2284,
+                    24271.5134,
+                    25828.9883,
+                    27697.5047,
+                    27956.2276,
+                    29924.4321,
+                    30216.8321,
+                ],
+                [887896.51, 887068.98, 971549.04],
+                [227921, 230995, 183635, 238605, 254186],
+            ],
+        }
+    )
+
+    output_df = pd.DataFrame(
+        data=[
+            25092.2284,
+            24271.5134,
+            25828.9883,
+            27697.5047,
+            27956.2276,
+            29924.4321,
+            30216.8321,
+            887896.51,
+            887068.98,
+            971549.04,
+            227921,
+            230995,
+            183635,
+            238605,
+            254186,
+        ],
+        index=pd.MultiIndex.from_tuples(
+            [
+                ("T1", pd.Timestamp(year=1979, month=1, day=1)),
+                ("T1", pd.Timestamp(year=1980, month=1, day=1)),
+                ("T1", pd.Timestamp(year=1981, month=1, day=1)),
+                ("T1", pd.Timestamp(year=1982, month=1, day=1)),
+                ("T1", pd.Timestamp(year=1983, month=1, day=1)),
+                ("T1", pd.Timestamp(year=1984, month=1, day=1)),
+                ("T1", pd.Timestamp(year=1985, month=1, day=1)),
+                ("T2", pd.Timestamp(year=1979, month=1, day=1)),
+                ("T2", pd.Timestamp(year=1980, month=1, day=1)),
+                ("T2", pd.Timestamp(year=1981, month=1, day=1)),
+                ("T3", pd.Timestamp(year=1973, month=1, day=1)),
+                ("T3", pd.Timestamp(year=1974, month=1, day=1)),
+                ("T3", pd.Timestamp(year=1975, month=1, day=1)),
+                ("T3", pd.Timestamp(year=1976, month=1, day=1)),
+                ("T3", pd.Timestamp(year=1977, month=1, day=1)),
+            ],
+            names=["series_name", "timestamp"],
+        ),
+        columns=["series_value"],
+    )
+
+    metadata = {
+        "frequency": "yearly",
+        "forecast_horizon": 4,
+        "contain_missing_values": False,
+        "contain_equal_length": False,
+    }
+
+    assert_frame_equal(
+        output_df,
+        _convert_tsf_to_hierarchical(input_df, metadata, freq=freq),
+        check_dtype=False,
+    )

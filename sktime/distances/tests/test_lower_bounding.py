@@ -23,9 +23,9 @@ def _validate_bounding_result(
     matrix: np.ndarray (2d array)
         Bounding matrix.
     x: np.ndarray (1d, 2d or 3d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (1d, 2d or 3d array)
-        Second timeseries.
+        Second time series.
     all_finite: bool, default = False
         Boolean that when true will check all the values are finite.
     all_infinite: bool, default = False
@@ -84,34 +84,33 @@ def _validate_bounding(
     Parameters
     ----------
     x: np.ndarray (1d, 2d or 3d)
-        First timeseries
+        First time series
     y: np.ndarray (1d, 2d, or 3d)
-        Second timeseries
+        Second time series
     """
-    x_y_max = max(len(x), len(y))
     no_bounding = LowerBounding.NO_BOUNDING
     no_bounding_result = no_bounding.create_bounding_matrix(x, y)
     _validate_bounding_result(no_bounding_result, x, y, all_finite=True)
 
     sakoe_chiba = LowerBounding.SAKOE_CHIBA
     _validate_bounding_result(
-        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=2),
+        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=0.25),
         x,
         y,
     )
     _validate_bounding_result(
-        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=3),
+        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=0.25),
         x,
         y,
     )
     _validate_bounding_result(
-        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=x_y_max),
+        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=1.0),
         x,
         y,
         all_finite=True,
     )
     _validate_bounding_result(
-        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=0),
+        sakoe_chiba.create_bounding_matrix(x, y, sakoe_chiba_window_radius=0.0),
         x,
         y,
         all_infinite=True,
@@ -120,26 +119,26 @@ def _validate_bounding(
     itakura_parallelogram = LowerBounding.ITAKURA_PARALLELOGRAM
 
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=2.0),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.2),
         x,
         y,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=3),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.3),
         x,
         y,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=x_y_max),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=1.0),
         x,
         y,
         all_finite=True,
         is_gradient_bounding=True,
     )
     _validate_bounding_result(
-        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0),
+        itakura_parallelogram.create_bounding_matrix(x, y, itakura_max_slope=0.0),
         x,
         y,
         all_infinite=True,
@@ -169,33 +168,8 @@ def test_lower_bounding() -> None:
     )
 
     _validate_bounding(
-        x=np.array([10.0]),
-        y=np.array([15.0]),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10),
-        y=create_test_distance_numpy(10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
-    )
-
-    _validate_bounding(
         x=create_test_distance_numpy(10, 10),
         y=create_test_distance_numpy(10, 10, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 1),
-        y=create_test_distance_numpy(10, 10, 1, random_state=2),
-    )
-
-    _validate_bounding(
-        x=create_test_distance_numpy(10, 10, 10),
-        y=create_test_distance_numpy(10, 10, 10, random_state=2),
     )
 
 
@@ -233,10 +207,10 @@ def test_incorrect_parameters() -> None:
 
     with pytest.raises(ValueError):  # Try pass float to sakoe
         sakoe_chiba.create_bounding_matrix(
-            numpy_x, numpy_y, sakoe_chiba_window_radius=4.0
+            numpy_x, numpy_y, sakoe_chiba_window_radius=1.2
         )
 
     with pytest.raises(ValueError):  # Try pass both window and gradient
         sakoe_chiba.create_bounding_matrix(
-            numpy_x, numpy_y, sakoe_chiba_window_radius=4.0, itakura_max_slope=10.0
+            numpy_x, numpy_y, sakoe_chiba_window_radius=1.2, itakura_max_slope=10.0
         )

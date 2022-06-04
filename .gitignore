@@ -6,7 +6,6 @@ __pycache__/
 # C extensions
 *.so
 *.c
-*mrseql.cpp
 
 # Distribution / packaging
 .Python
@@ -33,7 +32,7 @@ results/
 MANIFEST
 
 #downloaded datasets
-sktime/datasets/data/
+sktime/datasets/local_data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -52,7 +51,6 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
@@ -156,4 +154,7 @@ build_doc_site/
 # dev files
 envs/
 *.html
-sktime/contrib/debug.py
+sktime/_contrib/debug.py
+sktime/_contrib/local_code.py
+sktime/_contrib/main.py
+sktime/_contrib/temp/

@@ -14,8 +14,11 @@ __all__ = [
     "write_ndarray_to_tsfile",
     "write_results_to_uea_format",
     "write_tabular_transformation_to_arff",
+    "load_from_tsfile",
     "load_from_tsfile_to_dataframe",
+    "load_from_arff_to_dataframe",
     "load_from_long_to_dataframe",
+    "load_from_ucr_tsv_to_dataframe",
 ]
 
 import itertools
@@ -24,11 +27,15 @@ import shutil
 import tempfile
 import textwrap
 import zipfile
+from datetime import datetime
+from distutils.util import strtobool
+from typing import Dict
 from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, MTYPE_LIST_PANEL, convert
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -58,8 +65,7 @@ def _download_and_extract(url, extract_path=None):
     -------
     extract_path : string or None
         if successful, string containing the path of the extracted file, None
-        if it wasn't succesful
-
+        if it wasn't successful
     """
     file_name = os.path.basename(url)
     dl_dir = tempfile.mkdtemp()
@@ -67,7 +73,7 @@ def _download_and_extract(url, extract_path=None):
     urlretrieve(url, zip_file_name)
 
     if extract_path is None:
-        extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
+        extract_path = os.path.join(MODULE, "local_data/%s/" % file_name.split(".")[0])
     else:
         extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
 
@@ -86,7 +92,7 @@ def _download_and_extract(url, extract_path=None):
         )
 
 
-def _list_downloaded_datasets(extract_path):
+def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
     Modified version of
@@ -100,7 +106,7 @@ def _list_downloaded_datasets(extract_path):
 
     """
     if extract_path is None:
-        data_dir = os.path.join(MODULE, DIRNAME)
+        data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
     datasets = [
@@ -119,26 +125,34 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         local_dirname = extract_path
     else:
         local_module = MODULE
-        local_dirname = DIRNAME
+        local_dirname = "data"
 
     if not os.path.exists(os.path.join(local_module, local_dirname)):
         os.makedirs(os.path.join(local_module, local_dirname))
-    if name not in _list_downloaded_datasets(extract_path):
-        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-        # This also tests the validitiy of the URL, can't rely on the html
-        # status code as it always returns 200
-        try:
-            _download_and_extract(
-                url,
-                extract_path=extract_path,
-            )
-        except zipfile.BadZipFile as e:
-            raise ValueError(
-                "Invalid dataset name. ",
-                extract_path,
-                "Please make sure the dataset "
-                + "is available on http://timeseriesclassification.com/.",
-            ) from e
+    if name not in _list_available_datasets(extract_path):
+        local_dirname = "local_data"
+        if not os.path.exists(os.path.join(local_module, local_dirname)):
+            os.makedirs(os.path.join(local_module, local_dirname))
+        if name not in _list_available_datasets(
+            os.path.join(local_module, local_dirname)
+        ):
+            # Dataset is not baked in the datasets directory, look in local_data,
+            # if it is not there, download and install it.
+            url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+            # This also tests the validitiy of the URL, can't rely on the html
+            # status code as it always returns 200
+            try:
+                _download_and_extract(
+                    url,
+                    extract_path=extract_path,
+                )
+            except zipfile.BadZipFile as e:
+                raise ValueError(
+                    "Invalid dataset name. ",
+                    extract_path,
+                    "Please make sure the dataset "
+                    + "is available on http://timeseriesclassification.com/.",
+                ) from e
     if isinstance(split, str):
         split = split.upper()
 
@@ -156,7 +170,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
-        y = pd.Series.to_numpy(y, dtype=np.str)
+        y = pd.Series.to_numpy(y, dtype=str)
     else:
         raise ValueError("Invalid `split` value =", split)
 
@@ -165,6 +179,206 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         return X, y
     else:
         X["class_val"] = pd.Series(y)
+        return X
+
+
+def _load_provided_dataset(name, split=None, return_X_y=True, return_type=None):
+    """Load baked in time series classification datasets (helper function).
+
+    Loads data from the provided files from sktime/datasets/data only.
+
+    Parameters
+    ----------
+        name : string, file name
+        split : string, default = None, or one of "TRAIN" or "TEST".
+        return_X_y : default = True, if true, returns X and y separately.
+        return_type : default = None,
+    """
+    if isinstance(split, str):
+        split = split.upper()
+
+    if split in ("TRAIN", "TEST"):
+        fname = name + "_" + split + ".ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X, y = load_from_tsfile(abspath, return_data_type=return_type)
+    # if split is None, load both train and test set
+    elif split is None:
+        fname = name + "_TRAIN.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_train, y_train = load_from_tsfile(abspath, return_data_type=return_type)
+        fname = name + "_TEST.ts"
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        X_test, y_test = load_from_tsfile(abspath, return_data_type=return_type)
+        if isinstance(X_train, np.ndarray):
+            X = np.concatenate((X_train, X_test))
+        elif isinstance(X_train, pd.DataFrame):
+            X = pd.concat([X_train, X_test])
+        else:
+            raise IOError(
+                f"Invalid data structure type {type(X_train)} for loading "
+                f"classification problem "
+            )
+        y = np.concatenate((y_train, y_test))
+
+    else:
+        raise ValueError("Invalid `split` value =", split)
+    # Return appropriately
+    if return_X_y:
+        return X, y
+    else:
+        X["class_val"] = pd.Series(y)
+        return X
+
+
+def _read_header(file, full_file_path_and_name):
+    """Read the header information, returning the meta information."""
+    # Meta data for data information
+    meta_data = {
+        "is_univariate": True,
+        "is_equally_spaced": True,
+        "is_equal_length": True,
+        "has_nans": False,
+        "has_timestamps": False,
+        "has_class_labels": True,
+    }
+    # Read header until @data tag met
+    for line in file:
+        line = line.strip().lower()
+        if line:
+            if line.startswith("@problemname"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+            elif line.startswith("@timestamps"):
+                tokens = line.split(" ")
+                if tokens[1] == "true":
+                    meta_data["has_timestamps"] = True
+                elif tokens[1] != "false":
+                    raise IOError(
+                        f"invalid timestamps tag value {tokens[1]} value in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@univariate"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["is_univariate"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid univariate tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@equallength"):
+                tokens = line.split(" ")
+                if tokens[1] == "false":
+                    meta_data["is_equal_length"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        f"invalid unequal tag value {tokens[1]} in file "
+                        f"{full_file_path_and_name}"
+                    )
+            elif line.startswith("@classlabel"):
+                tokens = line.split(" ")
+                token_len = len(tokens)
+                if tokens[1] == "false":
+                    meta_data["class_labels"] = False
+                elif tokens[1] != "true":
+                    raise IOError(
+                        "invalid classLabel value in file " f"{full_file_path_and_name}"
+                    )
+                if token_len == 2 and meta_data["class_labels"]:
+                    raise IOError(
+                        f"if the classlabel tag is true then class values must be "
+                        f"supplied in file{full_file_path_and_name} but read {tokens}"
+                    )
+            elif line.startswith("@data"):
+                return meta_data
+    raise IOError(
+        f"End of file reached for {full_file_path_and_name} but no indicated start of "
+        f"data with the tag @data"
+    )
+
+
+def load_from_tsfile(
+    full_file_path_and_name,
+    replace_missing_vals_with="NaN",
+    return_y=True,
+    return_data_type="nested_univ",
+):
+    """Load time series .ts file into X and (optionally) y.
+
+    Data from a .ts file is loaded into a nested pd.DataFrame, or optionally into a
+    2d np.ndarray (equal length, univariate problem) or 3d np.ndarray (eqal length,
+    multivariate problem) if requested. If present, y is loaded into a 1d .
+
+    Parameters
+    ----------
+    full_file_path_and_name : str
+        The full pathname and file name of the .ts file to read.
+    replace_missing_vals_with : str, default NaN
+       The value that missing values in the text file should be replaced with prior
+       to parsing.
+    return_y : boolean, default True
+       whether to return the y variable, if it is present.
+    return_data_type : str, optional, default = "nested_univ"
+        memory data format specification to return X in.
+        str can be any other supported Panel mtype
+            for list of mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        commonly used specifications:
+            "nested_univ: nested pd.DataFrame, pd.Series in cells
+            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
+            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
+            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+        Exception is raised if the data cannot be stored in therequested type.
+
+    Returns
+    -------
+    X : sktime compatible in-memory container of mtype return_data_type
+        for list of mtypes, see datatypes.SCITYPE_REGISTER
+        for specifications, see examples/AA_datatypes_and_datasets.ipynb
+    y : returned only if return_y=True, np.ndarray
+
+    Raises
+    ------
+    IOError if the requested file does not exist
+    IOError if input series are not all the same dimension (not supported)
+    IOError if class labels have been requested but are not present in the file
+    IOError if the input file has no cases
+    ValueError if return_data_type = numpy3d but the data are unequal length series
+    ValueError if return_data_type = numpy2d but the data are multivariate and/
+    or unequal length series
+    """
+    if return_data_type is None:
+        return_data_type = "nested_univ"
+    if return_data_type in ["numpy2d", "numpy2D", "np2d", "np2D"]:
+        return_data_type = "numpyflat"
+    if return_data_type in ["numpy3d", "np3d", "np3D"]:
+        return_data_type = "numpy3D"
+
+    if not isinstance(return_data_type, str):
+        raise TypeError(
+            f"return_data_type argument must be a str, but found "
+            f"{type(return_data_type)}"
+        )
+    if return_data_type not in MTYPE_LIST_PANEL:
+        raise ValueError(
+            f"return_data_type must be one of the following identifier strings for "
+            f"sktime panel time series data format specifications: {MTYPE_LIST_PANEL}, "
+            f"but found {return_data_type}"
+        )
+
+    # Initialize flags and variables used when parsing the file
+    X, y = load_from_tsfile_to_dataframe(
+        full_file_path_and_name=full_file_path_and_name,
+        return_separate_X_and_y=True,
+        replace_missing_vals_with=replace_missing_vals_with,
+    )
+
+    X = convert(X, from_type="nested_univ", to_type=return_data_type)
+
+    if return_y:
+        return X, y
+    else:
         return X
 
 
@@ -189,7 +403,7 @@ def load_from_tsfile_to_dataframe(
 
     Returns
     -------
-    DataFrame, ndarray
+    DataFrame (default) or ndarray (i
         If return_separate_X_and_y then a tuple containing a DataFrame and a
         numpy array containing the relevant time-series and corresponding
         class values.
@@ -1028,14 +1242,7 @@ def write_results_to_uea_format(
         )
     # If the full directory path is not passed, make the standard structure
     if not full_path:
-        output_path = (
-            str(output_path)
-            + "/"
-            + str(estimator_name)
-            + "/Predictions/"
-            + str(dataset_name)
-            + "/"
-        )
+        output_path = f"{output_path}/{estimator_name}/Predictions/{dataset_name}/"
     try:
         os.makedirs(output_path)
     except os.error:
@@ -1047,20 +1254,10 @@ def write_results_to_uea_format(
         train_or_test = "test"
     else:
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
-    file = open(
-        str(output_path)
-        + "/"
-        + str(train_or_test)
-        + "Resample"
-        + str(resample_seed)
-        + ".csv",
-        "w",
-    )
+    file = open(f"{output_path}/{train_or_test}Resample{resample_seed}.csv", "w")
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    first_line = (
-        str(estimator_name) + "," + str(dataset_name) + "," + str(train_or_test)
-    )
+    first_line = f"{dataset_name},{estimator_name},{train_or_test},{resample_seed}"
     if timing_type is not None:
         first_line += "," + timing_type
     if first_line_comment is not None:
@@ -1403,3 +1600,293 @@ def write_ndarray_to_tsfile(
             file.write(f"{a}{missing_values}")
         file.write("\n")  # open a new line
     file.close()
+
+
+def load_tsf_to_dataframe(
+    full_file_path_and_name,
+    replace_missing_vals_with="NaN",
+    value_column_name="series_value",
+    return_type="pd_multiindex_hier",
+):
+    """
+    Convert the contents in a .tsf file into a dataframe.
+
+    This code was extracted from
+    https://github.com/rakshitha123/TSForecasting/blob
+    /master/utils/data_loader.py.
+
+    Parameters
+    ----------
+    full_file_path_and_name: str
+        The full path to the .tsf file.
+    replace_missing_vals_with: str, default="NAN"
+        A term to indicate the missing values in series in the returning dataframe.
+    value_column_name: str, default="series_value"
+        Any name that is preferred to have as the name of the column containing series
+        values in the returning dataframe.
+    return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
+        mtype string for in-memory data container format specification of the
+        return type:
+        - "pd_multiindex_hier" = pd.DataFrame of sktime type `pd_multiindex_hier`
+        - "tsf_default" = container that faithfully mirrors tsf format from the original
+            implementation in: https://github.com/rakshitha123/TSForecasting/
+            blob/master/utils/data_loader.py.
+        - other valid mtype strings are Panel or Hierarchical mtypes in
+            datatypes.MTYPE_REGISTER. If Panel or Hierarchical mtype str is given, a
+            conversion to that mtype will be attempted
+        For tutorials and detailed specifications, see
+        examples/AA_datatypes_and_datasets.ipynb
+
+    Returns
+    -------
+    loaded_data: pd.DataFrame
+        The converted dataframe containing the time series.
+    metadata: dict
+        The metadata for the forecasting problem. The dictionary keys are:
+        "frequency", "forecast_horizon", "contain_missing_values",
+        "contain_equal_length"
+    """
+    col_names = []
+    col_types = []
+    all_data = {}
+    line_count = 0
+    frequency = None
+    forecast_horizon = None
+    contain_missing_values = None
+    contain_equal_length = None
+    found_data_tag = False
+    found_data_section = False
+    started_reading_data_section = False
+
+    with open(full_file_path_and_name, "r", encoding="cp1252") as file:
+        for line in file:
+            # Strip white space from start/end of line
+            line = line.strip()
+
+            if line:
+                if line.startswith("@"):  # Read meta-data
+                    if not line.startswith("@data"):
+                        line_content = line.split(" ")
+                        if line.startswith("@attribute"):
+                            if (
+                                len(line_content) != 3
+                            ):  # Attributes have both name and type
+                                raise Exception("Invalid meta-data specification.")
+
+                            col_names.append(line_content[1])
+                            col_types.append(line_content[2])
+                        else:
+                            if (
+                                len(line_content) != 2
+                            ):  # Other meta-data have only values
+                                raise Exception("Invalid meta-data specification.")
+
+                            if line.startswith("@frequency"):
+                                frequency = line_content[1]
+                            elif line.startswith("@horizon"):
+                                forecast_horizon = int(line_content[1])
+                            elif line.startswith("@missing"):
+                                contain_missing_values = bool(
+                                    strtobool(line_content[1])
+                                )
+                            elif line.startswith("@equallength"):
+                                contain_equal_length = bool(strtobool(line_content[1]))
+
+                    else:
+                        if len(col_names) == 0:
+                            raise Exception(
+                                "Missing attribute section. "
+                                "Attribute section must come before data."
+                            )
+
+                        found_data_tag = True
+                elif not line.startswith("#"):
+                    if len(col_names) == 0:
+                        raise Exception(
+                            "Missing attribute section. "
+                            "Attribute section must come before data."
+                        )
+                    elif not found_data_tag:
+                        raise Exception("Missing @data tag.")
+                    else:
+                        if not started_reading_data_section:
+                            started_reading_data_section = True
+                            found_data_section = True
+                            all_series = []
+
+                            for col in col_names:
+                                all_data[col] = []
+
+                        full_info = line.split(":")
+
+                        if len(full_info) != (len(col_names) + 1):
+                            raise Exception("Missing attributes/values in series.")
+
+                        series = full_info[len(full_info) - 1]
+                        series = series.split(",")
+
+                        if len(series) == 0:
+                            raise Exception(
+                                "A given series should contains a set "
+                                "of comma separated numeric values."
+                                "At least one numeric value should be there "
+                                "in a series. "
+                                "Missing values should be indicated with ? symbol"
+                            )
+
+                        numeric_series = []
+
+                        for val in series:
+                            if val == "?":
+                                numeric_series.append(replace_missing_vals_with)
+                            else:
+                                numeric_series.append(float(val))
+
+                        if numeric_series.count(replace_missing_vals_with) == len(
+                            numeric_series
+                        ):
+                            raise Exception(
+                                "All series values are missing. "
+                                "A given series should contains a set "
+                                "of comma separated numeric values."
+                                "At least one numeric value should be there "
+                                "in a series."
+                            )
+
+                        all_series.append(pd.Series(numeric_series).array)
+
+                        for i in range(len(col_names)):
+                            att_val = None
+                            if col_types[i] == "numeric":
+                                att_val = int(full_info[i])
+                            elif col_types[i] == "string":
+                                att_val = str(full_info[i])
+                            elif col_types[i] == "date":
+                                att_val = datetime.strptime(
+                                    full_info[i], "%Y-%m-%d %H-%M-%S"
+                                )
+                            else:
+                                # Currently, the code supports only
+                                # numeric, string and date types.
+                                # Extend this as required.
+                                raise Exception("Invalid attribute type.")
+
+                            if att_val is None:
+                                raise Exception("Invalid attribute value.")
+                            else:
+                                all_data[col_names[i]].append(att_val)
+
+                line_count = line_count + 1
+
+        if line_count == 0:
+            raise Exception("Empty file.")
+        if len(col_names) == 0:
+            raise Exception("Missing attribute section.")
+        if not found_data_section:
+            raise Exception("Missing series information under data section.")
+
+        all_data[value_column_name] = all_series
+        loaded_data = pd.DataFrame(all_data)
+
+        # metadata dict
+        metadata = dict(
+            zip(
+                (
+                    "frequency",
+                    "forecast_horizon",
+                    "contain_missing_values",
+                    "contain_equal_length",
+                ),
+                (
+                    frequency,
+                    forecast_horizon,
+                    contain_missing_values,
+                    contain_equal_length,
+                ),
+            )
+        )
+
+        if return_type != "default_tsf":
+            loaded_data = _convert_tsf_to_hierarchical(
+                loaded_data, metadata, value_column_name=value_column_name
+            )
+            if (
+                loaded_data.index.nlevels == 2
+                and return_type not in MTYPE_LIST_HIERARCHICAL
+            ):
+                loaded_data = convert(
+                    loaded_data, from_type="pd-multiindex", to_type=return_type
+                )
+            else:
+                loaded_data = convert(
+                    loaded_data, from_type="pd_multiindex_hier", to_type=return_type
+                )
+
+        return loaded_data, metadata
+
+
+def _convert_tsf_to_hierarchical(
+    data: pd.DataFrame,
+    metadata: Dict,
+    freq: str = None,
+    value_column_name: str = "series_value",
+) -> pd.DataFrame:
+    """Convert the data from default_tsf to pd_multiindex_hier.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        nested values dataframe
+    metadata : Dict
+        tsf file metadata
+    freq : str, optional
+        pandas compatible time frequency, by default None
+        if not speciffied it's automatically mapped from the tsf frequency to a pandas
+        frequency
+    value_column_name: str, optional
+        The name of the column that contains the values, by default "series_value"
+
+    Returns
+    -------
+    pd.DataFrame
+        sktime pd_multiindex_hier mtype
+    """
+    df = data.copy()
+
+    if freq is None:
+        freq_map = {
+            "daily": "D",
+            "weekly": "W",
+            "monthly": "MS",
+            "yearly": "YS",
+        }
+        freq = freq_map[metadata["frequency"]]
+
+    # create the time index
+    if "start_timestamp" in df.columns:
+        df["timestamp"] = df.apply(
+            lambda x: pd.date_range(
+                start=x["start_timestamp"], periods=len(x[value_column_name]), freq=freq
+            ),
+            axis=1,
+        )
+        drop_columns = ["start_timestamp"]
+    else:
+        df["timestamp"] = df.apply(
+            lambda x: pd.RangeIndex(start=0, stop=len(x[value_column_name])), axis=1
+        )
+        drop_columns = []
+
+    # pandas implementation of multiple column explode
+    # can be removed and replaced by explode if we move to pandas version 1.3.0
+    columns = [value_column_name, "timestamp"]
+    index_columns = [c for c in list(df.columns) if c not in drop_columns + columns]
+    result = pd.DataFrame({c: df[c].explode() for c in columns})
+    df = (
+        df.drop(columns=columns + drop_columns)
+        .join(result)
+        .set_index(index_columns + ["timestamp"])
+    )
+    df = df.astype({value_column_name: "float"}, errors="ignore")
+
+    return df

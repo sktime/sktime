@@ -16,6 +16,7 @@ How to use this implementation template to implement a new estimator:
 - change docstrings for functions and the file
 - ensure interface compatibility by testing clustering/tests
 - once complete: use as a local library, or contribute to sktime via PR
+- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
 
 Mandatory implements:
     fitting            - _fit(self, X)
@@ -29,8 +30,9 @@ Testing - implement if sktime forecaster (not needed locally):
 
 copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
+import numpy as np
 
-from sktime.clustering.base import BaseClusterer
+from sktime.clustering import BaseClusterer
 
 # todo: add any necessary imports here
 
@@ -59,6 +61,18 @@ class MyClusterer(BaseClusterer):
     and so on
     """
 
+    # optional todo: override base class estimator default tags here if necessary
+    # these are the default values, only add if different to these.
+    _tags = {
+        "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
+        # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
+        # types are allowable, see datatypes/panel/_registry.py for options.
+        "capability:multivariate": False,
+        "capability:unequal_length": False,
+        "capability:missing_values": False,
+        "capability:multithreading": False,
+    }
+
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
         # estimators should precede parameters
@@ -80,41 +94,37 @@ class MyClusterer(BaseClusterer):
         # todo: change "MyClusterer" to the name of the class
         super(MyClusterer, self).__init__()
 
-    # todo: implement this, mandatory
+    # todo: implement this abstract class, mandatory
     def _fit(self, X):
-        """Fit the clustering algorithm on the dataset X.
-
-            core logic
+        """Fit time series clusterer to training data.
 
         Parameters
         ----------
-        X: 2D np.array with shape (n_instances, n_timepoints)
-            panel of univariate time series to train the clustering model on
+        X : Data to cluster, of type self.get_tag("X_inner_mtype")
 
         Returns
         -------
-        reference to self
+        self:
+            Fitted estimator.
         """
         # implement here
         # IMPORTANT: avoid side effects to X
 
-    # todo: consider implementing this, optional
+    # todo: implement this, mandatory
     # at least one of _predict and _get_fitted_params should be implemented
-    def _predict(self, X):
-        """
-        Return cluster center index for data samples.
-
-            core logic
+    def _predict(self, X) -> np.ndarray:
+        """Predict the closest cluster each sample in X belongs to.
 
         Parameters
         ----------
-        X: 2D np.array with shape (n_instances, n_timepoints)
-            panel of univariate time series to cluster
+        X : data to cluster based on model formed in _fit, of type self.get_tag(
+        "X_inner_mtype")
+        y: ignored, exists for API consistency reasons.
 
         Returns
         -------
-        Numpy_Array: 1D np.array of length n_instances
-            Index of the cluster each sample belongs to
+        np.ndarray (1d array of shape (n_instances,))
+            Index of the cluster each time series in X belongs to.
         """
         # implement here
         # IMPORTANT: avoid side effects to X
@@ -136,8 +146,15 @@ class MyClusterer(BaseClusterer):
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for clusterers.
 
         Returns
         -------
@@ -150,12 +167,18 @@ class MyClusterer(BaseClusterer):
 
         # todo: set the testing parameters for the estimators
         # Testing parameters can be dictionary or list of dictionaries
+        # Testing parameter choice should cover internal cases well.
         #
-        # this can, if required, use:
+        # this method can, if required, use:
         #   class properties (e.g., inherited); parent class test case
         #   imported objects such as estimators from sktime or sklearn
         # important: all such imports should be *inside get_test_params*, not at the top
         #            since imports are used only at testing time
+        #
+        # The parameter_set argument is not used for automated, module level tests.
+        #   It can be used in custom, estimator specific tests, for "special" settings.
+        # A parameter dictionary must be returned *for all values* of parameter_set,
+        #   i.e., "parameter_set not available" errors should never be raised.
         #
         # example 1: specify params as dictionary
         # any number of params can be specified
@@ -165,5 +188,14 @@ class MyClusterer(BaseClusterer):
         # note: Only first dictionary will be used by create_test_instance
         # params = [{"est": value1, "parama": value2},
         #           {"est": value3, "parama": value4}]
+        # return params
         #
+        # example 3: parameter set depending on param_set value
+        #   note: only needed if a separate parameter set is needed in tests
+        # if parameter_set == "special_param_set":
+        #     params = {"est": value1, "parama": value2}
+        #     return params
+        #
+        # # "default" params - always returned except for "special_param_set" value
+        # params = {"est": value3, "parama": value4}
         # return params
