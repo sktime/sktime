@@ -52,7 +52,31 @@ def _get_t_matrix(time_t, matrices, shape, time_steps):
     )
 
 
-def _check_param_dims(param_name, matrix_shape, actual_shape, time_steps=None):
+def _validate_param_shape(param_name, matrix_shape, actual_shape, time_steps=None):
+    """Validate shape of matrix parameter.
+
+    Assert `actual_shape` equals to:
+        -   'shape' of a single matrix or
+        -   'shape' of time_steps matrices.
+    If neither, raise an informative `ValueError` that includes the parameter's name.
+
+    Parameters
+    ----------
+    param_name : str
+        The name of the matrix-parameter.
+    matrix_shape : tuple
+        The supposed shape of a single matrix.
+    actual_shape : tuple
+        The actual shape of matrix-parameter.
+    time_steps : int
+        actual_shape[0] if matrix-parameter is dynamic (matrix per time-step).
+
+    Raises
+    ------
+        ValueError
+            error with an informative message that includes parameter's name,
+            and the shape that parameter should have.
+    """
     if time_steps is None:
         if actual_shape != matrix_shape:
             raise ValueError(
@@ -85,6 +109,43 @@ def _init_matrix(matrices, transform_func, default_val):
     if matrices is None:
         return default_val
     return transform_func(matrices)
+
+
+def _check_conditional_dependency(obj, condition, package, severity, msg=None):
+    """If `condition` applies, check the soft dependency `package` installation.
+
+    Call _check_soft_dependencies.
+    If `package` is not installed, raise ModuleNotFoundError with
+    `msg` as the error message.
+
+    Parameters
+    ----------
+    condition : bool
+        The condition to perform the soft dependency check.
+    msg : str
+        Error message to attach to ModuleNotFoundError.
+    package : str
+        Package name for soft dependency check.
+    severity : str
+        'error' or 'warning'.
+
+    Raises
+    ------
+    ModuleNotFoundError
+        error with informative message, asking to install required soft dependencies
+    """
+    if condition:
+        if msg is None:
+            msg = (
+                f"The specific parameter values of {obj.__class__.__name__}'s "
+                f"class instance require `{package}` installed. Please run: "
+                f"`pip install {package}` to "
+                f"install the `{package}` package. "
+            )
+        try:
+            _check_soft_dependencies(package, severity=severity, object=obj)
+        except ModuleNotFoundError as e:
+            raise ModuleNotFoundError(msg) from e
 
 
 class BaseKalmanFilter:
@@ -216,7 +277,7 @@ class BaseKalmanFilter:
         return shapes
 
     def _get_init_values(self, measurement_dim, state_dim):
-        """Initialize parameter matrices to default values and returns them.
+        """Initialize matrix parameters to default values and returns them.
 
         Parameters
         ----------
@@ -225,7 +286,7 @@ class BaseKalmanFilter:
 
         Returns
         -------
-            Six parameter matrices F,Q,R,H,X0,P0 as np.ndarray
+            Six matrix parameters F,Q,R,H,X0,P0 as np.ndarray
         """
         shapes = self._get_shapes(state_dim=state_dim, measurement_dim=measurement_dim)
         F = _init_matrix(
@@ -261,14 +322,30 @@ class BaseKalmanFilter:
 
         return F, Q, R, H, X0, P0
 
-    def _set_param(self, param_name, inner_name, value, matrix_shape, time_steps=None):
-        _check_param_dims(
+    def _set_attribute(
+        self, param_name, attr_name, value, matrix_shape, time_steps=None
+    ):
+        """Validate the shape of parameter and set as attribute if no error.
+
+        Parameters
+        ----------
+        param_name : str
+            The name of matrix-parameter.
+        attr_name : str
+            The name of corresponding attribute.
+        value : np.ndarray
+            The value of corresponding attribute.
+        matrix_shape : tuple
+            The supposed shape of a single matrix.
+        time_steps : int, optional (default=None)
+        """
+        _validate_param_shape(
             param_name=param_name,
             matrix_shape=matrix_shape,
             actual_shape=value.shape,
             time_steps=time_steps,
         )
-        setattr(self, inner_name, value)
+        setattr(self, attr_name, value)
 
 
 class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
@@ -502,48 +579,48 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
                 P0_,
             ) = self._em(X=X, measurement_dim=measurement_dim, state_dim=self.state_dim)
 
-        self._set_param(
+        self._set_attribute(
             param_name="state_transition",
-            inner_name="F_",
+            attr_name="F_",
             value=F_,
             matrix_shape=shapes["F"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="process_noise",
-            inner_name="Q_",
+            attr_name="Q_",
             value=Q_,
             matrix_shape=shapes["Q"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="measurement_noise",
-            inner_name="R_",
+            attr_name="R_",
             value=R_,
             matrix_shape=shapes["R"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="measurement_function",
-            inner_name="H_",
+            attr_name="H_",
             value=H_,
             matrix_shape=shapes["H"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="initial_state",
-            inner_name="X0_",
+            attr_name="X0_",
             value=X0_,
             matrix_shape=shapes["X0"],
         )
-        self._set_param(
+        self._set_attribute(
             param_name="initial_state_covariance",
-            inner_name="P0_",
+            attr_name="P0_",
             value=P0_,
             matrix_shape=shapes["P0"],
         )
 
-        _check_param_dims(
+        _validate_param_shape(
             param_name="transition_offsets",
             matrix_shape=shapes["b"],
             actual_shape=transition_offsets_.shape,
@@ -551,7 +628,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         )
         self.transition_offsets_ = np.copy(transition_offsets_)
 
-        _check_param_dims(
+        _validate_param_shape(
             param_name="measurement_offsets",
             matrix_shape=shapes["d"],
             actual_shape=measurement_offsets_.shape,
@@ -645,7 +722,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
         Returns
         -------
-            Eight parameter matrices -
+            Eight matrix parameters -
             F, H, Q, R, transition_offsets, measurement_offsets,
             X0, P0 as np.ndarray.
         """
@@ -950,13 +1027,24 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         -------
             self: reference to self
         """
-        # The below call to `_check_conditioned_dependency` checks the installation
+        # The below call to `_check_conditional_dependency` checks the installation
         # of `pykalman` package, if needed. `pykalman` is used when the user requires
         # matrices estimation (`estimate_matrices` is not None).
         # This conditioned dependency check can be performed in
         # `__init__` for early user feedback.
-        self._check_conditioned_dependency(
-            condition=(self.estimate_matrices is not None)
+        _check_conditional_dependency(
+            obj=self,
+            condition=(self.estimate_matrices is not None),
+            package="pykalman",
+            severity="error",
+            msg=(
+                f"{self.__class__.__name__}'s matrix parameter estimation "
+                f"is performed when `estimate_matrices` "
+                f"is {self.estimate_matrices}, "
+                f"and requires `pykalman` installed. Please run: "
+                f"`pip install pykalman` to "
+                f"install the `pykalman` package. "
+            ),
         )
 
         measurement_dim = X.shape[1]
@@ -1005,43 +1093,43 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             X0_ = transformer_.X0_
             P0_ = transformer_.P0_
 
-        self._set_param(
+        self._set_attribute(
             param_name="state_transition",
-            inner_name="F_",
+            attr_name="F_",
             value=F_,
             matrix_shape=shapes["F"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="process_noise",
-            inner_name="Q_",
+            attr_name="Q_",
             value=Q_,
             matrix_shape=shapes["Q"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="measurement_noise",
-            inner_name="R_",
+            attr_name="R_",
             value=R_,
             matrix_shape=shapes["R"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="measurement_function",
-            inner_name="H_",
+            attr_name="H_",
             value=H_,
             matrix_shape=shapes["H"],
             time_steps=time_steps,
         )
-        self._set_param(
+        self._set_attribute(
             param_name="initial_state",
-            inner_name="X0_",
+            attr_name="X0_",
             value=X0_,
             matrix_shape=shapes["X0"],
         )
-        self._set_param(
+        self._set_attribute(
             param_name="initial_state_covariance",
-            inner_name="P0_",
+            attr_name="P0_",
             value=P0_,
             matrix_shape=shapes["P0"],
         )
@@ -1090,7 +1178,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             transform_func=np.atleast_2d,
             default_val=np.eye(*shapes["G"]),
         )
-        _check_param_dims(
+        _validate_param_shape(
             param_name="control_transition",
             matrix_shape=shapes["G"],
             actual_shape=G.shape,
@@ -1215,43 +1303,3 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         shapes["u"] = (u_dim,)
         shapes["G"] = (state_dim, u_dim)
         return shapes
-
-    def _check_conditioned_dependency(
-        self, condition, msg=None, package="pykalman", severity="error"
-    ):
-        """If `condition` applies, check the soft dependency `package` installation.
-
-        Call _check_soft_dependencies.
-        If `package` is not installed, raise ModuleNotFoundError with
-        `msg` as the error message.
-
-        Parameters
-        ----------
-        condition : bool
-            The condition to perform the soft dependency check.
-        msg : str
-            Error message to attach to ModuleNotFoundError.
-        package : str
-            Package name for soft dependency check.
-        severity : str
-            'error' or 'warning'.
-
-        Raises
-        ------
-        ModuleNotFoundError
-            error with informative message, asking to install required soft dependencies
-        """
-        if condition:
-            if msg is None:
-                msg = (
-                    f"{self.__class__.__name__}'s parameter matrices estimation "
-                    f"is performed when `estimate_matrices` "
-                    f"is {self.estimate_matrices}, "
-                    f"and requires {package} installed. Please run: "
-                    f"`pip install {package}` to "
-                    f"install the {package} package. "
-                )
-            try:
-                _check_soft_dependencies(package, severity=severity, object=self)
-            except ModuleNotFoundError as e:
-                raise ModuleNotFoundError(msg) from e

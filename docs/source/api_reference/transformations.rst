@@ -386,6 +386,18 @@ FeatureSelection
 
     FeatureSelection
 
+Kalman filter
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.kalman_filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KalmanFilterTransformerPK
+    KalmanFilterTransformerFP
+
 STLBootstrapTransformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
