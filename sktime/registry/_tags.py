@@ -7,7 +7,6 @@ No other place is necessary to add new tags.
 This module exports the following:
 
 ---
-
 ESTIMATOR_TAG_REGISTER - list of tuples
 
 each tuple corresponds to a tag, elements as follows:
@@ -206,13 +205,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multivariate",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        ["classifier", "transformer"],
+        ["classifier", "early_classifier", "transformer"],
         "bool",
         "can the estimator handle unequal length time series?",
     ),
@@ -221,7 +220,7 @@ ESTIMATOR_TAG_REGISTER = [
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
     ),
@@ -259,7 +258,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multithreading",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),

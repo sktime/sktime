@@ -156,7 +156,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # IMPORTANT: avoid side effects to X
 
     # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be  called.
+    # if you do not implement it, then the default _predict_proba will be called.
     # the default simply calls predict and sets probas to 0 or 1.
     def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.

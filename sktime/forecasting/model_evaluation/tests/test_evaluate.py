@@ -7,7 +7,7 @@ In particular, function `evaluate`, that performs time series
 cross-validation, is tested with various configurations for correct output.
 """
 
-__author__ = ["Martin Walter", "Markus Löning"]
+__author__ = ["aiwalter", "mloning"]
 __all__ = [
     "test_evaluate_common_configs",
     "test_evaluate_initial_window",
@@ -17,7 +17,6 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.base import clone
 
 from sktime.datasets import load_longley
 from sktime.forecasting.arima import ARIMA
@@ -109,7 +108,7 @@ def test_evaluate_common_configs(CV, fh, window_length, step_length, strategy, s
     n_splits = cv.get_n_splits(y)
     expected = np.empty(n_splits)
     for i, (train, test) in enumerate(cv.split(y)):
-        f = clone(forecaster)
+        f = forecaster.clone()
         f.fit(y.iloc[train], fh=fh)
         expected[i] = scoring(y.iloc[test], f.predict(), y_train=y.iloc[train])
 
@@ -133,7 +132,7 @@ def test_evaluate_initial_window():
     # check scoring
     actual = out.loc[0, f"test_{scoring.name}"]
     train, test = next(cv.split(y))
-    f = clone(forecaster)
+    f = forecaster.clone()
     f.fit(y.iloc[train], fh=fh)
     expected = scoring(y.iloc[test], f.predict(), y_Train=y.iloc[train])
     np.testing.assert_equal(actual, expected)

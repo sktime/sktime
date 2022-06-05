@@ -5,11 +5,14 @@ Tests for BaseObject universal base class.
 
 tests in this module:
 
-    test_get_class_tags - tests get_class_tags inheritance logic
-    test_get_class_tag  - tests get_class_tag logic, incl default value
-    test_get_tags       - tests get_tags inheritance logic
-    test_get_tag        - tests get_tag logic, incl default value
-    test_set_tags       - tests set_tags logic and related get_tags inheritance
+    test_get_class_tags  - tests get_class_tags inheritance logic
+    test_get_class_tag   - tests get_class_tag logic, incl default value
+    test_get_tags        - tests get_tags inheritance logic
+    test_get_tag         - tests get_tag logic, incl default value
+    test_set_tags        - tests set_tags logic and related get_tags inheritance
+
+    test_reset           - tests reset logic on a simple, non-composite estimator
+    test_reset_composite - tests reset logic on a composite estimator
 """
 
 __author__ = ["fkiraly"]
@@ -20,6 +23,8 @@ __all__ = [
     "test_get_tags",
     "test_get_tag",
     "test_set_tags",
+    "test_reset",
+    "test_reset_composite",
 ]
 
 from copy import deepcopy
@@ -171,6 +176,7 @@ class CompositionDummy(BaseObject):
 
     def __init__(self, foo, bar=84):
         self.foo = foo
+        self.foo_ = deepcopy(foo)
         self.bar = bar
 
 
@@ -197,15 +203,15 @@ class ResetTester(BaseObject):
         self.b = b
         self.c = 84
 
-    def foo(self):
-        self.d = 126
-        self._d = 126
-        self.d_ = 126
+    def foo(self, d=126):
+        self.d = deepcopy(d)
+        self._d = deepcopy(d)
+        self.d_ = deepcopy(d)
         self.f__o__o = 252
 
 
 def test_reset():
-    """Tests reset method for correct behaviour.
+    """Tests reset method for correct behaviour, on a simple estimator.
 
     Raises
     ------
@@ -229,3 +235,43 @@ def test_reset():
     assert not hasattr(x, "d_")
     assert hasattr(x, "f__o__o") and x.f__o__o == 252
     assert hasattr(x, "foo")
+
+
+def test_reset_composite():
+    """Test reset method for correct behaviour, on a composite estimator."""
+    y = ResetTester(42)
+    x = ResetTester(a=y)
+
+    x.foo(y)
+    x.d.foo()
+
+    x.reset()
+
+    assert hasattr(x, "a")
+    assert not hasattr(x, "d")
+    assert not hasattr(x.a, "d")
+
+
+def test_components():
+    """Tests component retrieval.
+
+    Raises
+    ------
+    AssertionError if logic behind _components is incorrect, logic tested:
+        calling _components on a non-composite returns an empty dict
+        calling _components on a composite returns name/BaseObject pair in dict,
+        and BaseObject returned is identical with attribute of the same name
+    """
+    non_composite = CompositionDummy(foo=42)
+    composite = CompositionDummy(foo=non_composite)
+
+    non_comp_comps = non_composite._components()
+    comp_comps = composite._components()
+
+    assert isinstance(non_comp_comps, dict)
+    assert set(non_comp_comps.keys()) == set()
+
+    assert isinstance(comp_comps, dict)
+    assert set(comp_comps.keys()) == set(["foo_"])
+    assert comp_comps["foo_"] == composite.foo_
+    assert comp_comps["foo_"] != composite.foo

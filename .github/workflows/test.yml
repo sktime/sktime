@@ -81,7 +81,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime --timeout=600 -v -n 2 --pyargs sktime
+          python -m pytest
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
@@ -109,7 +109,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test
+        run: make test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
@@ -150,7 +150,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test
+        run: make test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2

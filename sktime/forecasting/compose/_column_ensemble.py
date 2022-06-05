@@ -8,7 +8,6 @@ __all__ = ["ColumnEnsembleForecaster"]
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
@@ -125,7 +124,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.y_columns = list(y.columns)
 
         for (name, forecaster, index) in forecasters:
-            forecaster_ = clone(forecaster)
+            forecaster_ = forecaster.clone()
 
             forecaster_.fit(y.iloc[:, index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
@@ -346,7 +345,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster):
         if isinstance(self.forecasters, BaseForecaster):
             ycols = [str(col) for col in y.columns]
             colrange = range(len(ycols))
-            forecaster_list = [clone(self.forecasters) for _ in colrange]
+            forecaster_list = [self.forecasters.clone() for _ in colrange]
             return list(zip(ycols, forecaster_list, colrange))
 
         if (
