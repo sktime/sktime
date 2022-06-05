@@ -26,7 +26,6 @@ std_transformer = SeriesToPrimitivesRowTransformer(
 
 def test_FeatureUnion_pipeline():
     """Pipeline with segmentation plus multiple feature extraction."""
-
     steps = [
         ("segment", RandomIntervalSegmenter(n_intervals=1)),
         (
