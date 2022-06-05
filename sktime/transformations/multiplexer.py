@@ -3,8 +3,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements transformer for selecting among different model classes."""
 
-from sklearn.base import clone
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
@@ -146,10 +144,10 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         if self.selected_transformer is not None:
             for name, transformer in self._get_estimator_tuples(self.transformers_):
                 if self.selected_transformer == name:
-                    self.transformer_ = clone(transformer)
+                    self.transformer_ = transformer.clone()
         else:
             # if None, simply clone the first transformer to self.transformer_
-            self.transformer_ = clone(self._get_estimator_list(self.transformers)[0])
+            self.transformer_ = self._get_estimator_list(self.transformers)[0].clone()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
