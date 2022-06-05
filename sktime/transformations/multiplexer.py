@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements forecaster for selecting among different model classes."""
+"""Implements transformer for selecting among different model classes."""
 
 from sklearn.base import clone
 
@@ -17,20 +17,16 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     """Facilitate an AutoML based selection of the best transformer.
 
     When used in combination with either TransformedTargetForecaster or
-    ForecastingPipeline in combination with ForecastingGridSearchCV MultiplexTransformer
-    provides a framework for transformer selection.  It can be used with exogenous
-    transformers (ie data to be applied to exogenous X variables) or transformers on
-    the y data, simply select the appropriate pipeline.
+    ForecastingPipeline in combination with ForecastingGridSearchCV
+    MultiplexTransformer provides a framework for transformer selection.  Through
+    selection of the appropriate pipeline (ie TransformedTargetForecaster vs
+    ForecastingPipeline) the transformers in MultiplexTransformer will either be
+    applied to exogenous data, or to the target data.
 
-    MultiplexTransformer has 2 parameters:
-    transformers, which is a list of (optionally named) transformers.  If names are not
-        provided they will be automatically generated based on the transformer name.
-    selected_transformer, which is a str acting as a hyper-parameter. It must match one
-        of the names in transformers.  This is generally the parameter being tuned in
-        the grid search.
-    MultiplexTransformer delegated all transforming tasks to a copy of the transformer
-    in transformers whose name matches selected_transformer.  All other transformers
-    in transformers will be ignored.
+    MultiplexTransformer delegates all transforming tasks (ie, calls to fit, transform,
+    inverse_transform, and update) to a copy of the transformer in transformers
+    whose name matches selected_transformer.  All other transformers in transformers
+    will be ignored.
 
     Parameters
     ----------
@@ -42,7 +38,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         change their state at all. - Rather a copy of each is created and this is what
         is updated.
     selected_transformer: str or None, optional, Default=None.
-        If str, must be one of the forecaster names.
+        If str, must be one of the transformer names.
             If passed in transformers were unnamed then selected_transformer must
             coincide with auto-generated name strings.
             To inspect auto-generated name strings, call get_params.
@@ -139,57 +135,21 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         selected = self.selected_transformer
         if selected is not None and selected not in component_names:
             raise Exception(
-                f"Invalid selected_forecaster parameter value provided, "
+                f"Invalid selected_transformer parameter value provided, "
                 f" found: {selected}. Must be one of these"
-                f" valid selected_forecaster parameter values: {component_names}."
+                f" valid selected_transformer parameter values: {component_names}."
             )
 
     def _set_transformer(self):
         self._check_selected_transformer()
         # clone the selected transformer to self.transformer_
         if self.selected_transformer is not None:
-            for name, transformer in self._get_estimator_tuples(self.transformers):
+            for name, transformer in self._get_estimator_tuples(self.transformers_):
                 if self.selected_transformer == name:
                     self.transformer_ = clone(transformer)
         else:
-            # if None, simply clone the first forecaster to self.forecaster_
+            # if None, simply clone the first transformer to self.transformer_
             self.transformer_ = clone(self._get_estimator_list(self.transformers)[0])
-
-    def _fit(self, y, X=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self._set_transformer()
-        self.clone_tags(self.transformer_)
-        self.set_tags(**{"fit_is_empty": False})
-        super()._fit(y=y, X=X)
-
-        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -205,7 +165,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("transformers", deep=deep)
+        return self._get_params("transformers_", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -216,7 +176,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("transformers", **kwargs)
+        self._set_params("transformers_", **kwargs)
         return self
 
     @classmethod
@@ -246,8 +206,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         # test no selected_transformer
         params2 = {
             "transformers": [
-                ("imputer_mean", Imputer(method="mean")),
-                ("imputer_near", Imputer(method="nearest")),
+                (Imputer(method="mean")),
+                (Imputer(method="nearest")),
             ],
         }
         return [params1, params2]
