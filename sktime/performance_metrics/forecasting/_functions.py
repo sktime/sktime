@@ -8,8 +8,6 @@ Function named as ``*_error`` or ``*_loss`` return a value to minimize:
 the lower the better.
 """
 
-from warnings import warn
-
 import numpy as np
 from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
