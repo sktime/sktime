@@ -409,17 +409,22 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "This may indicate incorrect objects passed to the metric. "
                 "Indices of y_true will be used for y_pred."
             )
-            y_pred = y_pred.copy()
-            y_pred.index = y_true.index
+            y_pred_orig = y_pred_orig.copy()
+            if isinstance(y_pred_orig, VectorizedDF):
+                y_pred_orig.X.index = y_true.index
+            else:
+                y_pred_orig.index = y_true_orig.index
         if not same_cols:
             warn(
                 "y_pred and y_true do not have the same column index. "
                 "This may indicate incorrect objects passed to the metric. "
                 "Indices of y_true will be used for y_pred."
             )
-            y_pred = y_pred.copy()
-            y_pred.columns = y_true.columns
-
+            y_pred_orig = y_pred_orig.copy()
+            if isinstance(y_pred_orig, VectorizedDF):
+                y_pred_orig.X.columns = y_true.columns
+            else:
+                y_pred_orig.columns = y_true_orig.columns
         # check multioutput arg
         # todo: add this back when variance_weighted is supported
         # ("raw_values", "uniform_average", "variance_weighted")
