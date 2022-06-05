@@ -759,7 +759,13 @@
         "code",
         "bug",
         "projectManagement",
-        "fundingFinding"
+        "fundingFinding",
+        "mentoring",
+        "ideas",
+        "design",
+        "review",
+        "doc",
+        "talk"
       ]
     },
     {
@@ -941,7 +947,10 @@
       "profile": "https://github.com/Lovkush-A",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "ideas",
+        "mentoring",
+        "projectManagement"
       ]
     },
     {
@@ -1015,7 +1024,9 @@
       "profile": "https://github.com/ltsaprounis",
       "contributions": [
         "code",
-        "bug"
+        "bug",
+        "mentoring",
+        "review"
       ]
     },
     {
@@ -1033,7 +1044,12 @@
       "avatar_url": "https://avatars.githubusercontent.com/GuzalBulatova",
       "profile": "https://github.com/GuzalBulatova",
       "contributions": [
+        "bug",
         "code",
+        "eventOrganizing",
+        "mentoring",
+        "projectManagement",
+        "review",
         "test"
       ]
     },
@@ -1385,7 +1401,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/19947407?v=4",
       "profile": "https://github.com/danbartl",
       "contributions": [
-        "code"
+        "bug",
+        "code",
+        "review",
+        "talk",
+        "test",
+        "tutorial",
+        "video"
       ]
     },
     {
@@ -1446,7 +1468,8 @@
         "infra",
         "test",
         "bug",
-        "maintenance"
+        "maintenance",
+        "mentoring"
       ]
     },
     {
