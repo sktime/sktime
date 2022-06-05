@@ -35,7 +35,6 @@ def test_FeatureUnion_pipeline():
         ("clf", DecisionTreeClassifier()),
     ]
     clf = Pipeline(steps)
-
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
