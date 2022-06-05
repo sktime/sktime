@@ -206,8 +206,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         # test no selected_transformer
         params2 = {
             "transformers": [
-                (Imputer(method="mean")),
-                (Imputer(method="nearest")),
+                Imputer(method="mean"),
+                Imputer(method="nearest"),
             ],
         }
         return [params1, params2]
