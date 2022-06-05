@@ -2,8 +2,6 @@
 """Meta-transformers for building composite transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from warnings import warn
-
 import pandas as pd
 from sklearn import clone
 
