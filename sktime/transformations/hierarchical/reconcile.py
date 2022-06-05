@@ -26,17 +26,22 @@ class Reconciler(BaseTransformer):
     predictions in a hierarchy of time-series sum together appropriately.
 
     The methods implemented in this class only require the structure of the
-    hierarchy to reconcile the forecasts.
+    hierarchy or the forecasts values for reconciliation.
+
+    These functions are intended for transforming hierarchical forecasts, i.e.
+    after prediction. However they are general and can be used to transform
+    hierarchical time-series data.
 
     Please refer to [1]_ for further information
 
     Parameters
     ----------
-    method : {"bu", "ols", "wls_str"}, default="bu"
+    method : {"bu", "ols", "wls_str", "td_fcst"}, default="bu"
         The reconciliation approach applied to the forecasts
             "bu" - bottom-up
             "ols" - ordinary least squares
             "wls_str" - weighted least squares (structural)
+            "td_fcst" - top down based on (forecast) proportions
 
     References
     ----------
@@ -49,8 +54,8 @@ class Reconciler(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": [
-            "pd.Series",
             "pd.DataFrame",
+            "pd.Series",
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
@@ -64,7 +69,7 @@ class Reconciler(BaseTransformer):
         "transform-returns-same-time-index": True,
     }
 
-    METHOD_LIST = ["bu", "ols", "wls_str"]
+    METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]
 
     def __init__(self, method="bu"):
 
@@ -103,16 +108,23 @@ class Reconciler(BaseTransformer):
         if _check_index_no_total(X):
             X = self._add_totals(X)
 
+        # define reconciliation matrix
         if self.method == "bu":
             self.g_matrix = _get_g_matrix_bu(X)
         elif self.method == "ols":
             self.g_matrix = _get_g_matrix_ols(X)
         elif self.method == "wls_str":
             self.g_matrix = _get_g_matrix_wls_str(X)
+        elif self.method == "td_fcst":
+            self.g_matrix = _get_g_matrix_td_fcst(X)
         else:
             raise RuntimeError("unreachable condition, error in _check_method")
 
+        # now summation matrix
         self.s_matrix = _get_s_matrix(X)
+
+        # parent child df
+        self.parent_child = _parent_child_df(self.s_matrix)
 
         return self
 
@@ -157,11 +169,25 @@ class Reconciler(BaseTransformer):
                 "the data used in Reconciler().fit(X)."
             )
 
-        # include index between matrices here as in df.dot()?
         X = X.groupby(level=-1)
-        recon_preds = X.transform(
-            lambda y: np.dot(self.s_matrix, np.dot(self.g_matrix, y))
-        )
+        # could use X.transform() with np.dot, v. marginally faster in my tests
+        # - loop can use index matching via df.dot() which is probably worth it
+        recon_preds = []
+        gmat = self.g_matrix
+        for _name, group in X:
+
+            if self.method == "td_fcst":
+                gmat = _update_td_fcst(
+                    g_matrix=gmat, x_sf=group.droplevel(-1), conn_df=self.parent_child
+                )
+            # reconcile via SGy
+            fcst = self.s_matrix.dot(gmat.dot(group.droplevel(-1)))
+            # add back in time index
+            fcst.index = group.index
+            recon_preds.append(fcst)
+
+        recon_preds = pd.concat(recon_preds, axis=0)
+        recon_preds = recon_preds.sort_index()
 
         return recon_preds
 
@@ -379,3 +405,138 @@ def _get_g_matrix_wls_str(X):
     g_wls_str = g_wls_str.transpose()
 
     return g_wls_str
+
+
+def _get_g_matrix_td_fcst(X):
+    """Determine the "G" matrix for the top down forecast proportions method.
+
+    Reconciliation methods require the G matrix. The G matrix is used to redefine
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    Note that the G matrix for this method changes for each forecast. This
+    is just a template G matrix which is updated at each iteration.
+
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    X :  Panel of mtype pd_multiindex_hier
+
+    Returns
+    -------
+    g_matrix : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
+    """
+    g_matrix = _get_g_matrix_bu(X)
+    g_matrix = g_matrix.replace(to_replace=1, value=0)
+
+    return g_matrix
+
+
+def _update_td_fcst(g_matrix, x_sf, conn_df):
+    """Update the "G" matrix for the top down forecast proportions method.
+
+    Reconciliation methods require the G matrix. The G matrix is used to redefine
+    base forecasts for the entire hierarchy to the bottom-level only before
+    summation using the S matrix.
+
+    This takes the gmatrix template from _get_g_matrix_td_fcst() and updates
+    it based on a single forecast.
+    Please refer to [1]_ for further information.
+
+    Parameters
+    ----------
+    g_matrix :  pd.DataFrame reconciliation matrix template from
+        _get_g_matrix_td_fcst()
+    x_sf : pd.Series which contains a hierarchy forecast for a single timepoint
+    conn_df : A look up table containing the child and parent of each connection
+        in a hierarchy
+
+    Returns
+    -------
+    g_matrix : pd.DataFrame with rows equal to the number of bottom level nodes
+        only, i.e. with no aggregate nodes, and columns equal to the number of
+        unique nodes in the hierarchy. The matrix indexes is inherited from the
+        input data, with the time level removed.
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
+    """
+    for i in g_matrix.index:
+        # start from each bottom index
+        child = i
+        props = []
+        # if the bottom level are single strings, integers, or whatever
+        if not isinstance(child, tuple):
+            child_chk = (child,)
+        else:
+            child_chk = child
+
+        while sum([j == "__total" for j in list(child_chk)]) < len(child_chk):
+            # find the parent of the child
+            parent = conn_df.loc[conn_df["child"] == child, "parent"].values[0]
+            # now need to find nodes directly connected to the parent
+            children = conn_df.loc[conn_df["parent"] == parent, "child"].unique()
+            # calculate proportions
+            props.append((x_sf.loc[child] / x_sf.loc[children].sum()).values[0])
+            # move up the chain
+            child = parent
+            if not isinstance(child, tuple):
+                child_chk = (child,)
+            else:
+                child_chk = child
+
+        g_matrix.loc[i, "__total"] = np.prod(props)
+
+    return g_matrix
+
+
+def _parent_child_df(s_matrix):
+    """Extract the parent and child connections in a hierarchy.
+
+    This function takes the summation S matrix for a given hierarchy and
+    returns a dataframe containing a the parent and child node id for each
+    connection in a hierarchy.
+
+    Parameters
+    ----------
+    s_matrix :  The summation matrix for a given hierarchy from the function
+        _get_s_matrix().
+
+    Returns
+    -------
+    df : A two column pd.DataFrame with rows equal to the number of
+        connections in a hierarchy.
+    """
+    parent_child = []
+    total_count = s_matrix.index.to_frame()
+    total_count = (total_count == "__total").sum(axis=1)
+
+    # for each bottom node
+    for i in s_matrix.columns:
+        # get all connections
+        connected_nodes = s_matrix[(s_matrix[i] == 1)].sum(axis=1)
+        # for non-flattened hiearchies make sure "__totals" are above
+        connected_nodes = (connected_nodes + total_count).dropna()
+        connected_nodes = connected_nodes.sort_values(ascending=False)
+
+        # starting from top add list of [parent, child]
+        for j in range(len(connected_nodes.index) - 1):
+            parent_child.append(
+                [connected_nodes.index[j], connected_nodes.index[j + 1]]
+            )
+
+    df = pd.DataFrame(parent_child)
+    df.columns = ["parent", "child"]
+
+    df = df.drop_duplicates().sort_values(["parent", "child"]).reset_index(drop=True)
+
+    return df

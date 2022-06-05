@@ -34,5 +34,5 @@ done
 # Install built wheel and test
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Run tests
-  "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=sktime --cov-report=xml --cov-report=html --pyargs sktime --timeout=600
+  "${PYTHON}/pytest" --junitxml=junit/test-results.xml
 done
