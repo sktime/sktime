@@ -1304,7 +1304,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
     >>> mape(y_true, y_pred)
     0.33690476190476193
-    >>> smape = MeanAbsolutePercentageError()
+    >>> smape = MeanAbsolutePercentageError(symmetric=True)
     >>> smape(y_true, y_pred)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -1316,13 +1316,13 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mape(y_true, y_pred)
     array([0.38095238, 0.72222222])
-    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values')
+    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=True)
     >>> smape(y_true, y_pred)
     array([0.71111111, 0.50505051])
     >>> mape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mape(y_true, y_pred)
     0.6198412698412699
-    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smape(y_true, y_pred)
     0.5668686868686869
     """
@@ -1390,7 +1390,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
     >>> mdape(y_true, y_pred)
     0.16666666666666666
-    >>> smdape = MedianAbsolutePercentageError()
+    >>> smdape = MedianAbsolutePercentageError(symmetric=True)
     >>> smdape(y_true, y_pred)
     0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -1402,13 +1402,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mdape(y_true, y_pred)
     array([0.14285714, 1.        ])
-    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values')
+    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=True)
     >>> smdape(y_true, y_pred)
     array([0.13333333, 0.66666667])
     >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mdape(y_true, y_pred)
     0.7428571428571428
-    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
     0.5066666666666666
     """

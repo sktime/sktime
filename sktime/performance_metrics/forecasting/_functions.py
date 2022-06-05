@@ -1519,23 +1519,25 @@ def mean_absolute_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.33690476190476193
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5515873015873016
-    >>> mean_absolute_percentage_error(y_true, y_pred)
+    >>> mean_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.6080808080808081
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
         symmetric=False)
     array([0.38095238, 0.72222222])
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+        symmetric=Truee)
     array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
     0.6198412698412699
-    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     0.5668686868686869
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -1635,23 +1637,25 @@ def median_absolute_percentage_error(
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.16666666666666666
-    >>> median_absolute_percentage_error(y_true, y_pred)
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_percentage_error(y_true, y_pred, symmetric=False)
     0.5714285714285714
-    >>> median_absolute_percentage_error(y_true, y_pred)
+    >>> median_absolute_percentage_error(y_true, y_pred, symmetric=True)
     0.39999999999999997
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
     symmetric=False)
     array([0.14285714, 1.        ])
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
+    symmetric=Truee)
     array([0.13333333, 0.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
     0.7428571428571428
-    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
+    symmetric=True)
     0.5066666666666666
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
