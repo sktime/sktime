@@ -119,7 +119,7 @@ class BaseForecastingErrorMetric(BaseMetric):
     # todo: 0.13.0, remove the greater_is_better property
     @property
     def greater_is_better(self):
-        """Whether `fit` has been called."""
+        """Whether greater is better for the metric."""
         warn(
             "The greater_is_better attribute is deprecated from 0.12.0 "
             "and will be removed in 0.13.0. Use the lower_is_better tag instead, "
