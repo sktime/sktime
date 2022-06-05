@@ -1531,7 +1531,7 @@ def mean_absolute_percentage_error(
         symmetric=False)
     array([0.38095238, 0.72222222])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-        symmetric=Truee)
+        symmetric=True)
     array([0.71111111, 0.50505051])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
@@ -1649,7 +1649,7 @@ def median_absolute_percentage_error(
     symmetric=False)
     array([0.14285714, 1.        ])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput='raw_values', \
-    symmetric=Truee)
+    symmetric=True)
     array([0.13333333, 0.66666667])
     >>> median_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7], \
     symmetric=False)
