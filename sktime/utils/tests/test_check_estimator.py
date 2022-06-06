@@ -45,7 +45,7 @@ def test_check_estimator_subset_tests():
         ExponentTransformer,
         verbose=False,
         tests_to_run=tests_to_run,
-        tests_to_exclude=tests_to_exclude
+        tests_to_exclude=tests_to_exclude,
     )
 
     assert set(results.keys()) == expected_tests
