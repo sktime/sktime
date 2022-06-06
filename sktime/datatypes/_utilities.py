@@ -317,7 +317,7 @@ def get_slice(obj, start=None, end=None):
     obj sub-set sliced for `start` (inclusive) and `end` (exclusive) indices
         None if obj was None
     """
-    from sktime.datatypes import check_is_scitype
+    from sktime.datatypes import check_is_scitype, convert_to
 
     if (start is None and end is None) or obj is None:
         return obj
@@ -327,6 +327,9 @@ def get_slice(obj, start=None, end=None):
     )
     if not valid:
         raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
+    obj_in_mtype = metadata["mtype"]
+
+    obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
 
     if (
         isinstance(start, pd.Timestamp)
@@ -335,18 +338,26 @@ def get_slice(obj, start=None, end=None):
         or isinstance(end, pd.Period)
     ):
         if start and end:
-            return obj[start:end][:-1]
+            obj_slice = obj[start:end][:-1]
         elif end:
-            return obj[:end][:-1]
+            obj_slice = obj[:end][:-1]
         else:
-            return obj[start:]
+            obj_slice = obj[start:]
     else:
         if start and end:
-            return obj[start:end]
+            obj_slice = obj[start:end]
         elif end:
-            return obj[:end]
+            obj_slice = obj[:end]
         else:
-            return obj[start:]
+            obj_slice = obj[start:]
+
+    # numpy3D (Panel) or np.npdarray (Series)
+    if isinstance(obj_slice, np.ndarray):
+        return obj_slice
+    # pd.DataFrame(Series)
+    # TODO: add support for pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
+    if isinstance(obj_slice, pd.DataFrame):
+        return convert_to(obj_slice, obj_in_mtype)
 
     raise ValueError(
         "bug in get_slice, unreachable condition, ifs should be exhaustive"
