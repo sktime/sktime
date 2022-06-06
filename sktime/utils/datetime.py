@@ -6,7 +6,7 @@ __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 import re
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,10 @@ import pandas as pd
 from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
-def _coerce_duration_to_int(duration, freq=None):
+def _coerce_duration_to_int(
+    duration: Union[int, pd.Timedelta, pd.tseries.offsets.BaseOffset, pd.Index],
+    freq: str = None,
+) -> Union[int, pd.Index]:
     """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
@@ -31,8 +34,8 @@ def _coerce_duration_to_int(duration, freq=None):
     """
     if isinstance(duration, int):
         return duration
-    elif isinstance(duration, pd.tseries.offsets.DateOffset):
-        return duration.n
+    elif isinstance(duration, pd.tseries.offsets.BaseOffset):
+        return int(duration.n / _get_intervals_count_and_unit(freq)[0])
     elif isinstance(duration, pd.Index) and isinstance(
         duration[0], pd.tseries.offsets.BaseOffset
     ):
