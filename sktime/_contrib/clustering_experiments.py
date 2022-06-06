@@ -125,18 +125,17 @@ if __name__ == "__main__":
     clusterer = "tslearn"
     chris_config = False  # This is so chris doesn't have to change config each time
     tune = False
-
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         data_dir = sys.argv[1]
         results_dir = sys.argv[2]
         distance = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5]) - 1
-        clusterer = sys.argv[6]
-        averaging = sys.argv[7]
+        tf = sys.argv[6]
+        clusterer = sys.argv[8]
+        averaging = sys.argv[9]
         if averaging == "dba":
             results_dir = results_dir + clusterer + "_dba"
-        tf = True
     elif chris_config is True:
         path = "C:/Users/chris/Documents/Masters"
         data_dir = os.path.abspath(f"{path}/datasets/Univariate_ts/")
