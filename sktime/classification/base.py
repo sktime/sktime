@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Abstract base class for time series classifiers.
 
@@ -42,7 +41,7 @@ class BaseClassifier(BaseEstimator, ABC):
     """Abstract base class for time series classifiers.
 
     The base classifier specifies the methods and method signatures that all
-    classifiers have to implement. Attributes with a underscore suffix are set in the
+    classifiers have to implement. Attributes with an underscore suffix are set in the
     method fit.
 
     Parameters
@@ -81,7 +80,8 @@ class BaseClassifier(BaseEstimator, ABC):
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
 
-        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+        Overloaded multiplication operation for classifiers. Implemented for `other`
+        being a transformer, otherwise returns `NotImplemented`.
 
         Parameters
         ----------
@@ -300,6 +300,7 @@ class BaseClassifier(BaseEstimator, ABC):
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : 1D np.array of int, of shape [n_instances] - class labels for fitting
             indices correspond to instance indices in X
+
         Returns
         -------
         self :
