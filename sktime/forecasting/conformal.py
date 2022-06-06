@@ -290,9 +290,7 @@ class ConformalIntervals(BaseForecaster):
                 )
                 continue
             try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(
-                    y_test, X_test
-                ).iloc[:, 0]
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X_test)
             except IndexError:
                 warn(
                     f"Couldn't predict after fitting on time series of length \

@@ -317,7 +317,7 @@ def get_slice(obj, start=None, end=None):
     obj sub-set sliced for `start` (inclusive) and `end` (exclusive) indices
         None if obj was None
     """
-    from sktime.datatypes import check_is_scitype, convert_to
+    from sktime.datatypes import check_is_scitype
 
     if (start is None and end is None) or obj is None:
         return obj
@@ -327,8 +327,6 @@ def get_slice(obj, start=None, end=None):
     )
     if not valid:
         raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
-
-    obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
 
     if (
         isinstance(start, pd.Timestamp)
