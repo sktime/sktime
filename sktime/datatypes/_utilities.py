@@ -304,6 +304,8 @@ def get_slice(obj, start=None, end=None):
     obj : sktime compatible time series Series type or None
         if not None, must be of one of the following mtypes:
             pd.Series, pd.DataFrame, np.ndarray, of Series scitype
+            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
+            pd_multiindex_hier, of Hierarchical scitype
     start : int or timestamp, optional, default = None
         must be int if obj is int indexed, timestamp if datetime indexed
         Inclusive start of slice. Default = None.
