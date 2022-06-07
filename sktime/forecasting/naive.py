@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -632,8 +633,8 @@ class NaiveVariance(BaseForecaster):
 
         for id in y_index:
             forecaster = forecaster.clone()
-            y_train = y[:id]  # subset on which we fit
-            y_test = y[id:]  # subset on which we predict
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
             try:
                 forecaster.fit(y_train, fh=y_test.index)
             except ValueError:
