@@ -331,33 +331,29 @@ def get_slice(obj, start=None, end=None):
 
     obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
 
-    if (
-        isinstance(start, pd.Timestamp)
-        or isinstance(end, pd.Timestamp)
-        or isinstance(start, pd.Period)
-        or isinstance(end, pd.Period)
-    ):
-        if start and end:
-            obj_slice = obj[start:end][:-1]
-        elif end:
-            obj_slice = obj[:end][:-1]
-        else:
-            obj_slice = obj[start:]
-    else:
-        if start and end:
-            obj_slice = obj[start:end]
-        elif end:
-            obj_slice = obj[:end]
-        else:
-            obj_slice = obj[start:]
-
     # numpy3D (Panel) or np.npdarray (Series)
-    if isinstance(obj_slice, np.ndarray):
-        return obj_slice
-    # pd.DataFrame(Series)
-    # TODO: add support for pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
-    if isinstance(obj_slice, pd.DataFrame):
-        return convert_to(obj_slice, obj_in_mtype)
+    # Assumes the index is integer so will be exclusive by default
+    if isinstance(obj, np.ndarray):
+        if start and end:
+            obj_subset = obj[start:end]
+        elif end:
+            obj_subset = obj[:end]
+        else:
+            obj_subset = obj[start:]
+        return obj_subset
+
+    # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
+    # Assumes the index is pd.Timestamp or pd.Period and ensures the end is
+    # exclusive with slice_select
+    if isinstance(obj, pd.DataFrame):
+        if not isinstance(obj.index, pd.MultiIndex):
+            time_indices = obj.index
+        else:
+            time_indices = obj.index.get_level_values(-1)
+
+        slice_select = (time_indices >= start) & (time_indices < end)
+        obj_subset = obj.iloc[slice_select]
+        return convert_to(obj_subset, obj_in_mtype)
 
     raise ValueError(
         "bug in get_slice, unreachable condition, ifs should be exhaustive"
