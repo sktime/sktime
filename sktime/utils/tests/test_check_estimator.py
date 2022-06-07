@@ -41,7 +41,6 @@ def test_check_estimator_subset_tests():
     tests_to_exclude = ["test_repr"]
 
     expected_tests = set(tests_to_run).difference(tests_to_exclude)
-    expected_tests = set(x.split("[")[0] for x in expected_tests)
 
     results = check_estimator(
         ExponentTransformer,
@@ -49,5 +48,6 @@ def test_check_estimator_subset_tests():
         tests_to_run=tests_to_run,
         tests_to_exclude=tests_to_exclude,
     )
+    results_tests = set(x.split("[")[0] for x in results.keys())
 
-    assert set(results.keys()) == expected_tests
+    assert results_tests == expected_tests
