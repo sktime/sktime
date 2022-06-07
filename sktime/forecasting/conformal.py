@@ -143,7 +143,7 @@ class ConformalIntervals(BaseForecaster):
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,
             )
-            
+
         return self
 
     def _predict(self, fh, X=None):
