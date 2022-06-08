@@ -14,6 +14,7 @@ from sktime.datatypes import check_is_mtype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_selection import (
+    ExpandingWindowSplitter,
     SlidingWindowSplitter,
     temporal_train_test_split,
 )
@@ -516,24 +517,23 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
-    @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
+    @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS_INT)
     def test_update_predict_predicted_index(
         self,
         estimator_instance,
         n_columns,
         fh_int_oos,
-        window_length,
         step_length,
+        initial_window,
         update_params,
     ):
         """Check predicted index in update_predict."""
         y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
         y_train, y_test = temporal_train_test_split(y)
-        cv = SlidingWindowSplitter(
-            fh_int_oos,
-            window_length=window_length,
+        cv = ExpandingWindowSplitter(
+            fh=fh_int_oos,
+            initial_window=initial_window,
             step_length=step_length,
-            start_with_window=False,
         )
         estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.update_predict(
@@ -541,7 +541,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         assert isinstance(y_pred, (pd.Series, pd.DataFrame))
         expected = _get_expected_index_for_update_predict(
-            y_test, fh_int_oos, step_length
+            y_test, fh_int_oos, step_length, initial_window
         )
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
