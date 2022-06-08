@@ -105,6 +105,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+sktime-dev/
 
 # mkdocs documentation
 /site
