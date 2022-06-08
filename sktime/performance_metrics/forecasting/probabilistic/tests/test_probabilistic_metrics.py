@@ -55,44 +55,44 @@ Multivariate and multiscor
 For each of the data types we need to test with score average = T/F \
     and multioutput with "raw_values" and "uniform_average"
 """
-QUANTILE_PRED_UNI_S = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
-INTERVAL_PRED_UNI_S = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
-QUANTILE_PRED_UNI_M = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.05, 0.5, 0.95])
-INTERVAL_PRED_UNI_M = f_uni.predict_interval(fh=fh_uni, coverage=[0.7, 0.8, 0.9, 0.99])
+quantile_pred_uni_s = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.5])
+interval_pred_uni_s = f_uni.predict_interval(fh=fh_uni, coverage=0.9)
+quantile_pred_uni_m = f_uni.predict_quantiles(fh=fh_uni, alpha=[0.05, 0.5, 0.95])
+interval_pred_uni_m = f_uni.predict_interval(fh=fh_uni, coverage=[0.7, 0.8, 0.9, 0.99])
 
-QUANTILE_PRED_MULTI_S = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.5])
-INTERVAL_PRED_MULTI_S = f_multi.predict_interval(fh=fh_multi, coverage=0.9)
-QUANTILE_PRED_MULTI_M = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.05, 0.5, 0.95])
-INTERVAL_PRED_MULTI_M = f_multi.predict_interval(
+quantile_pred_multi_s = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.5])
+interval_pred_multi_s = f_multi.predict_interval(fh=fh_multi, coverage=0.9)
+quantile_pred_multi_m = f_multi.predict_quantiles(fh=fh_multi, alpha=[0.05, 0.5, 0.95])
+interval_pred_multi_m = f_multi.predict_interval(
     fh=fh_multi, coverage=[0.7, 0.8, 0.9, 0.99]
 )
 
 uni_data = [
-    QUANTILE_PRED_UNI_S,
-    INTERVAL_PRED_UNI_S,
-    QUANTILE_PRED_UNI_M,
-    INTERVAL_PRED_UNI_M,
+    quantile_pred_uni_s,
+    interval_pred_uni_s,
+    quantile_pred_uni_m,
+    interval_pred_uni_m,
 ]
 
 multi_data = [
-    QUANTILE_PRED_MULTI_S,
-    INTERVAL_PRED_MULTI_S,
-    QUANTILE_PRED_MULTI_M,
-    INTERVAL_PRED_MULTI_M,
+    quantile_pred_multi_s,
+    interval_pred_multi_s,
+    quantile_pred_multi_m,
+    interval_pred_multi_m,
 ]
 
 quantile_data = [
-    QUANTILE_PRED_UNI_S,
-    QUANTILE_PRED_UNI_M,
-    QUANTILE_PRED_MULTI_S,
-    QUANTILE_PRED_MULTI_M,
+    quantile_pred_uni_s,
+    quantile_pred_uni_m,
+    quantile_pred_multi_s,
+    quantile_pred_multi_m,
 ]
 
 interval_data = [
-    INTERVAL_PRED_UNI_S,
-    INTERVAL_PRED_UNI_M,
-    INTERVAL_PRED_MULTI_S,
-    INTERVAL_PRED_MULTI_M,
+    interval_pred_uni_s,
+    interval_pred_uni_m,
+    interval_pred_multi_s,
+    interval_pred_multi_m,
 ]
 
 
