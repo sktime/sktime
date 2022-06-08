@@ -51,6 +51,9 @@ class VARMAX(_StatsModelsAdapter):
         optim_hessian=None,
         flags=None,
         low_memory=False,
+        dynamic=False,
+        information_set='predicted',
+        signal_only=False,
         random_state=None,
     ):
         # Model parameters
@@ -77,6 +80,9 @@ class VARMAX(_StatsModelsAdapter):
         self.optim_hessian = optim_hessian
         self.flags = flags
         self.low_memory = low_memory
+        self.dynamic = dynamic
+        self.information_set = information_set
+        self.signal_only = signal_only
 
         super(VARMAX, self).__init__() # why is this (random_state=random_state) in VAR
 
@@ -153,44 +159,16 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        y_pred_outsample = None
-        y_pred_insample = None
         exog_future = X.values if X is not None else None
-        fh_int = fh.to_relative(self.cutoff) # how to find .to_relative() in codebase
-        n_lags = self._fitted_forecaster.specification.k_ar 
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        print(self._y.values[-n_lags:], fh_int[-1],exog_future)
-        # out-sample predictions
-        if fh_int.max() > 0:
-            y_pred_outsample = self._fitted_forecaster.forecast(
-                #y=self._y.values[-n_lags:],
-                steps=fh_int[-1],
-                #exog_future=exog_future,
-            )
-
-        
-
-        # in-sample prediction by means of residuals
-        if fh_int.min() <= 0:
-            y_pred_insample = self._y - self._fitted_forecaster.resid # where is predicted? why access via residuals?
-            y_pred_insample = y_pred_insample.values
-
-        if y_pred_insample is not None and y_pred_outsample is not None:
-            y_pred = np.concatenate([y_pred_outsample, y_pred_insample], axis=0)
-        else:
-            y_pred = (
-                y_pred_insample if y_pred_insample is not None else y_pred_outsample
-            )
-
-        index = fh.to_absolute(self.cutoff)
-        index.name = self._y.index.name
-        y_pred = pd.DataFrame(
-            y_pred[fh.to_indexer(self.cutoff), :],
-            index=fh.to_absolute(self.cutoff),
-            columns=self._y.columns,
+        return self._fitted_forecaster.predict(start = start,
+            end = end,
+            dynamic = self.dynamic,
+            information_set = self.information_set,
+            signal_only = self.signal_only,
+            exog = X,
         )
-        return y_pred
-    # ValueError: Prediction must have `end` after `start`.
 
 
     @classmethod
@@ -237,15 +215,3 @@ class VARMAX(_StatsModelsAdapter):
 
 
 
-# VARMAX class
-# https://www.statsmodels.org/dev/generated/statsmodels.tsa.statespace.varmax.VARMAX.html
-
-# VARMAX fit
-# https://www.statsmodels.org/stable/generated/statsmodels.tsa.statespace.varmax.VARMAX.fit.html
-
-# fit return type
-# https://www.statsmodels.org/dev/generated/statsmodels.tsa.statespace.varmax.VARMAXResults.html#statsmodels.tsa.statespace.varmax.VARMAXResults
-
-# p is lag, q is order of moving average
-# q=0 => VARMA = VAR
-# p=0 => VARMA = VMA
