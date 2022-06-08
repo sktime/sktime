@@ -353,7 +353,13 @@ def get_slice(obj, start=None, end=None):
         else:
             time_indices = obj.index.get_level_values(-1)
 
-        slice_select = (time_indices >= start) & (time_indices < end)
+        if start and end:
+            slice_select = (time_indices >= start) & (time_indices < end)
+        elif end:
+            slice_select = time_indices < end
+        elif start:
+            slice_select = time_indices >= start
+
         obj_subset = obj.iloc[slice_select]
         return convert_to(obj_subset, obj_in_mtype)
 
