@@ -116,19 +116,28 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self.selected_transformer = selected_transformer
 
         self.transformers = transformers
-        self.transformers_ = self._check_estimators(
-            transformers,
-            attr_name="transformers",
-            cls_type=BaseTransformer,
-            clone_ests=False,
-        )
+        # self.transformers_ = self._check_estimators(
+        #     transformers,
+        #     attr_name="transformers",
+        #     cls_type=BaseTransformer,
+        #     clone_ests=False,
+        # )
         self._set_transformer()
         self.clone_tags(self.transformer_)
         self.set_tags(**{"fit_is_empty": False})
 
+    @property
+    def _transformers(self):
+        """Transformers turned into name/est tuples."""
+        return self._get_estimator_tuples(self.transformers, clone_ests=False)
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers = value
+
     def _check_selected_transformer(self):
         component_names = self._get_estimator_names(
-            self.transformers_, make_unique=True
+            self._transformers, make_unique=True
         )
         selected = self.selected_transformer
         if selected is not None and selected not in component_names:
@@ -142,7 +151,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self._check_selected_transformer()
         # clone the selected transformer to self.transformer_
         if self.selected_transformer is not None:
-            for name, transformer in self._get_estimator_tuples(self.transformers_):
+            for name, transformer in self._get_estimator_tuples(self._transformers):
                 if self.selected_transformer == name:
                     self.transformer_ = transformer.clone()
         else:
@@ -163,7 +172,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("transformers_", deep=deep)
+        return self._get_params("_transformers", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -174,7 +183,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("transformers_", **kwargs)
+        self._set_params("_transformers", **kwargs)
         return self
 
     @classmethod
