@@ -153,5 +153,11 @@ def test_sklearn_after_primitives():
 
     assert deep_equals(X_out.index, X_summary.index)
     assert deep_equals(X_out.columns, X_summary.columns)
-    assert X_out.iloc[0, 0] > -0.79
-    assert X_out.iloc[0, 0] < -0.78
+    # var_0 is the same for all three instances
+    # so summary statistics are all the same, thus StandardScaler transforms to 0
+    assert X_out.iloc[0, 0] > -0.01
+    assert X_out.iloc[0, 0] < 0.01
+    # var_1 has some variation between three instances
+    # fix this to one value to tie the output to current behaviour
+    assert X_out.iloc[0, 10] > -1.37
+    assert X_out.iloc[0, 10] < -1.36
