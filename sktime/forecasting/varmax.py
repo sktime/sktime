@@ -8,24 +8,123 @@ from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
-
 class VARMAX(_StatsModelsAdapter):
-    """todo: write docstring.
+    """
+    Vector Autoregressive Moving Average with eXogenous regressors model
+
+    Parameters
+    ----------
+    endog : array_like
+        The observed time-series process :math:`y`, , shaped nobs x k_endog.
+    exog : array_like, optional
+        Array of exogenous regressors, shaped nobs x k.
+    order : iterable
+        The (p,q) order of the model for the number of AR and MA parameters to
+        use.
+    trend : str{'n','c','t','ct'} or iterable, optional
+        Parameter controlling the deterministic trend polynomial :math:`A(t)`.
+        Can be specified as a string where 'c' indicates a constant (i.e. a
+        degree zero component of the trend polynomial), 't' indicates a
+        linear trend with time, and 'ct' is both. Can also be specified as an
+        iterable defining the non-zero polynomial exponents to include, in
+        increasing order. For example, `[1,1,0,1]` denotes
+        :math:`a + bt + ct^3`. Default is a constant trend component.
+    error_cov_type : {'diagonal', 'unstructured'}, optional
+        The structure of the covariance matrix of the error term, where
+        "unstructured" puts no restrictions on the matrix and "diagonal"
+        requires it to be a diagonal matrix (uncorrelated errors). Default is
+        "unstructured".
+    measurement_error : bool, optional
+        Whether or not to assume the endogenous observations `endog` were
+        measured with error. Default is False.
+    enforce_stationarity : bool, optional
+        Whether or not to transform the AR parameters to enforce stationarity
+        in the autoregressive component of the model. Default is True.
+    enforce_invertibility : bool, optional
+        Whether or not to transform the MA parameters to enforce invertibility
+        in the moving average component of the model. Default is True.
+    trend_offset : int, optional
+        The offset at which to start time trend values. Default is 1, so that
+        if `trend='t'` the trend is equal to 1, 2, ..., nobs. Typically is only
+        set when the model created by extending a previous dataset.
+    **kwargs
+        Keyword arguments may be used to provide default values for state space
+        matrices or for Kalman filtering options. See `Representation`, and
+        `KalmanFilter` for more details.
+    Attributes
+    ----------
+    order : iterable
+        The (p,q) order of the model for the number of AR and MA parameters to
+        use.
+    trend : str{'n','c','t','ct'} or iterable
+        Parameter controlling the deterministic trend polynomial :math:`A(t)`.
+        Can be specified as a string where 'c' indicates a constant (i.e. a
+        degree zero component of the trend polynomial), 't' indicates a
+        linear trend with time, and 'ct' is both. Can also be specified as an
+        iterable defining the non-zero polynomial exponents to include, in
+        increasing order. For example, `[1,1,0,1]` denotes
+        :math:`a + bt + ct^3`.
+    error_cov_type : {'diagonal', 'unstructured'}, optional
+        The structure of the covariance matrix of the error term, where
+        "unstructured" puts no restrictions on the matrix and "diagonal"
+        requires it to be a diagonal matrix (uncorrelated errors). Default is
+        "unstructured".
+    measurement_error : bool, optional
+        Whether or not to assume the endogenous observations `endog` were
+        measured with error. Default is False.
+    enforce_stationarity : bool, optional
+        Whether or not to transform the AR parameters to enforce stationarity
+        in the autoregressive component of the model. Default is True.
+    enforce_invertibility : bool, optional
+        Whether or not to transform the MA parameters to enforce invertibility
+        in the moving average component of the model. Default is True.
+    Notes
+    -----
+    Generically, the VARMAX model is specified (see for example chapter 18 of
+    [1]_):
+    .. math::
+        y_t = A(t) + A_1 y_{t-1} + \dots + A_p y_{t-p} + B x_t + \epsilon_t +
+        M_1 \epsilon_{t-1} + \dots M_q \epsilon_{t-q}
+    where :math:`\epsilon_t \sim N(0, \Omega)`, and where :math:`y_t` is a
+    `k_endog x 1` vector. Additionally, this model allows considering the case
+    where the variables are measured with error.
+    Note that in the full VARMA(p,q) case there is a fundamental identification
+    problem in that the coefficient matrices :math:`\{A_i, M_j\}` are not
+    generally unique, meaning that for a given time series process there may
+    be multiple sets of matrices that equivalently represent it. See Chapter 12
+    of [1]_ for more information. Although this class can be used to estimate
+    VARMA(p,q) models, a warning is issued to remind users that no steps have
+    been taken to ensure identification in this case.
+    
+    References
+    ----------
+    .. [1] Lütkepohl, Helmut. 2007.
+       New Introduction to Multiple Time Series Analysis.
+       Berlin: Springer.
+
+    Examples
+    --------
+    >>>from sktime.forecasting.varmax import VARMAX
+    >>>from sktime.datasets import load_longley
+    >>>_, y = load_longley()
+    >>>train, test = y.iloc[:-3,], y.iloc[-3:,]
+    >>>forecaster = VARMAX()
+    >>>forecaster.fit(train[['GNPDEFL', 'GNP', 'UNEMP', 'POP']], X=train[['ARMED']])
+    >>>y_pred = forecaster.predict(fh=[1,2,3], X=test[['ARMED']])
     """
 
     _tags = {
-        "scitype:y": "multivariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "y_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for y?
-        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement predict_quantiles?
+        "scitype:y": "multivariate",
+        "ignores-exogeneous-X": False,
+        "handles-missing-data": False,
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:pred_int": False, 
     }
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
         order = (1,0),
@@ -84,9 +183,9 @@ class VARMAX(_StatsModelsAdapter):
         self.information_set = information_set
         self.signal_only = signal_only
 
-        super(VARMAX, self).__init__() # why is this (random_state=random_state) in VAR
+        super(VARMAX, self).__init__()
 
-    def _fit_forecaster(self, y, X=None): # why error when fit
+    def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -138,9 +237,6 @@ class VARMAX(_StatsModelsAdapter):
         )
         return self
 
-
-
-    # todo: implement this, mandatory
     def _predict(self, fh, X=None):
         """
         Wrap Statmodel's VARMAX forecast method.
@@ -159,7 +255,6 @@ class VARMAX(_StatsModelsAdapter):
         y_pred : np.ndarray
             Returns series of predicted values.
         """
-        exog_future = X.values if X is not None else None
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
         return self._fitted_forecaster.predict(start = start,
