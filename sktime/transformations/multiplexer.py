@@ -50,7 +50,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     transformer_ : sktime transformer
         clone of the transformer named by selected_transformer to which all the
         transformation functionality is delegated to.
-    transformers_ : copy of the list of transformers passed.  If transformers was
+    _transformers : copy of the list of transformers passed.  If transformers was
         passed without names, those will be auto-generated and put here.
 
     Examples
@@ -91,18 +91,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
 
     # tags will largely be copied from selected_transformer
     _tags = {
-        "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "fit_is_empty": False,
-        "transform-returns-same-time-index": False,
         "univariate-only": False,
-        "capability:inverse_transform": False,
     }
 
     _delegate_name = "transformer_"
@@ -116,7 +106,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self.selected_transformer = selected_transformer
 
         self.transformers = transformers
-        self.transformers_ = self._check_estimators(
+        self._transformers = self._check_estimators(
             transformers,
             attr_name="transformers",
             cls_type=BaseTransformer,
@@ -128,7 +118,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
 
     def _check_selected_transformer(self):
         component_names = self._get_estimator_names(
-            self.transformers_, make_unique=True
+            self._transformers, make_unique=True
         )
         selected = self.selected_transformer
         if selected is not None and selected not in component_names:
@@ -142,7 +132,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self._check_selected_transformer()
         # clone the selected transformer to self.transformer_
         if self.selected_transformer is not None:
-            for name, transformer in self._get_estimator_tuples(self.transformers_):
+            for name, transformer in self._get_estimator_tuples(self.transformers):
                 if self.selected_transformer == name:
                     self.transformer_ = transformer.clone()
         else:
@@ -163,7 +153,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("transformers_", deep=deep)
+        return self._get_params("_transformers", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -174,7 +164,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("transformers_", **kwargs)
+        self._set_params("_transformers", **kwargs)
         return self
 
     @classmethod
