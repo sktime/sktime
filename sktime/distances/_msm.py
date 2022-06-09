@@ -5,7 +5,7 @@ import warnings
 from typing import List, Tuple
 
 import numpy as np
-from numba import njit
+from numba import njit, objmode, float64
 from numba.core.errors import NumbaWarning
 
 from sktime.distances._distance_alignment_paths import compute_min_return_path
@@ -181,23 +181,31 @@ class _MsmDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
+        # @njit(cache=True)
         def numba_msm_distance(
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+            _x = _x.astype(np.float32)
+            _y = _y.astype(np.float32)
+
+            cost_matrix = _cost_matrix(
+                _x, _y, c, _bounding_matrix
+            )
             return cost_matrix[-1, -1]
 
         return numba_msm_distance
 
-
-@njit(cache=True)
+@njit()
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
     c: float,
     bounding_matrix: np.ndarray,
+    # addition_x_x: np.ndarray,
+    # addition_y_y: np.ndarray,
+    # addition_x_y: np.ndarray,
+    # addition_y_x: np.ndarray
 ) -> float:
     """MSM distance compiled to no_python.
 
@@ -225,27 +233,36 @@ def _cost_matrix(
     cost_matrix = np.zeros((x_size, y_size))
     cost_matrix[0, 0] = np.sum(np.abs(x[:, 0] - y[:, 0]))
 
+    with objmode(addition_x_x='float32[:,:]', addition_y_y='float32[:,:]'):
+                 # addition_x_y='float32[:,:]', addition_y_x='float32[:,:]'):
+        addition_x_x = np.divide(np.add(x, np.roll(x, -1)), 2).astype(np.float32)
+        addition_y_y = np.divide(np.add(y, np.roll(y, -1)), 2).astype(np.float32)
+        # addition_x_y = np.divide(np.add(x, np.roll(y, -1)), 2).astype(np.float32)
+        # addition_y_x = np.divide(np.add(y, np.roll(x, -1)), 2).astype(np.float32)
+
+    print(addition_x_x.shape)
+    print(addition_y_y.shape)
+    # print(addition_x_y.shape)
+    # print(addition_y_x.shape)
+
     for i in range(1, x_size):
         cost_matrix[i][0] = cost_matrix[i - 1][0] + _cost_function(
-            x[:, i], x[:, i - 1], y[:, 0], c
+            x[:, i], x[:, i - 1], y[:, 0], c, addition_x_x[i - 1]
         )
     for i in range(1, y_size):
         cost_matrix[0][i] = cost_matrix[0][i - 1] + _cost_function(
-            y[:, i], y[:, i - 1], x[:, 0], c
+            y[:, i], y[:, i - 1], x[:, 0], c , addition_y_y[i - 1]
         )
 
     for i in range(1, x_size):
         for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                sum = 0
-                for k in range(dimensions):
-                    sum += (x[k][i] - y[k][j]) ** 2
                 d1 = cost_matrix[i - 1][j - 1] + np.abs(x[0][i] - y[0][j])
                 d2 = cost_matrix[i - 1][j] + _cost_function(
-                    x[:, i], x[:, i - 1], y[:, j], c
+                    x[:, i], x[:, i - 1], y[:, j], c#, addition_x_y[i - 1]
                 )
                 d3 = cost_matrix[i][j - 1] + _cost_function(
-                    y[:, j], x[:, i], y[:, j - 1], c
+                    y[:, j], x[:, i], y[:, j - 1], c# , addition_y_x[i - 1]
                 )
 
             temp = d1
@@ -259,7 +276,7 @@ def _cost_matrix(
     return cost_matrix[0:, 0:]
 
 
-@njit(cache=True)
+@njit()
 def _local_euclidean(x: np.ndarray, y: np.ndarray) -> float:
     """Compute local euclidean.
 
@@ -276,22 +293,23 @@ def _local_euclidean(x: np.ndarray, y: np.ndarray) -> float:
         Euclidean distance between x and y.
     """
     sum = 0
-    for i in range(x.ndim):
+    dims = x.ndim
+    for i in range(dims):
         sum += (x[i] - y[i]) ** 2
     return np.sqrt(sum)
 
 
-@njit(cache=True)
-def _cost_function(x: float, y: float, z: float, c: float) -> float:
+@njit()
+def _cost_function(x: np.ndarray, y: np.ndarray, z: np.ndarray, c: float, mid = None) -> float:
     """Compute cost function for msm.
 
     Parameters
     ----------
-    x: float
+    x: np.ndarray
         First point.
-    y: float
+    y: np.ndarray
         Second point.
-    z: float
+    z: np.ndarray
         Third point.
     c: float, default = 1.0
         Cost for split or merge operation.
@@ -301,8 +319,11 @@ def _cost_function(x: float, y: float, z: float, c: float) -> float:
     float
         The msm cost between points.
     """
+    if mid is None:
+        mid = (y + z) / 2
+    # with objmode(mid='float64[:]'):
+
     diameter = _local_euclidean(y, z)
-    mid = (y + z) / 2
 
     distance_to_mid = _local_euclidean(mid, x)
 
@@ -315,3 +336,94 @@ def _cost_function(x: float, y: float, z: float, c: float) -> float:
             return c + dist_to_q_prev
         else:
             return c + dist_to_c
+# @njit(cache=True)
+# def _cost_matrix(
+#         x: np.ndarray,
+#         y: np.ndarray,
+#         c: float,
+#         bounding_matrix: np.ndarray,
+# ) -> float:
+#     """MSM distance compiled to no_python.
+#
+#     Parameters
+#     ----------
+#     x: np.ndarray (2d array)
+#         First time series.
+#     y: np.ndarray (2d array)
+#         Second time series.
+#     c: float
+#         Cost for split or merge operation.
+#     bounding_matrix: np.ndarray (2d of size mxn where m is len(x) and n is len(y))
+#         Bounding matrix where the index in bound finite values (0.) and indexes
+#         outside bound points are infinite values (non finite).
+#
+#     Returns
+#     -------
+#     float
+#         MSM distance between the x and y time series.
+#     """
+#     x_size = x.shape[1]
+#     y_size = y.shape[1]
+#     dimensions = x.shape[0]
+#
+#     cost_matrix = np.zeros((x_size, y_size))
+#     cost_matrix[0, 0] = np.sum(np.abs(x[0:dimensions, 0] - y[0:dimensions, 0]))
+#
+#     for i in range(1, x_size):
+#         cost_matrix[i][0] = cost_matrix[i - 1][0] + _cost_function(
+#             x[0:dimensions, i], x[0:dimensions, i - 1], y[0:dimensions, 0], c
+#         )
+#     for i in range(1, y_size):
+#         cost_matrix[0][i] = cost_matrix[0][i - 1] + _cost_function(
+#             y[0:dimensions, i], y[0:dimensions, i - 1], x[0:dimensions, 0], c
+#         )
+#
+#     for i in range(1, x_size):
+#         for j in range(1, y_size):
+#             if np.isfinite(bounding_matrix[i, j]):
+#                 sum = 0
+#                 for k in range(dimensions):
+#                     sum += (x[k][i] - y[k][j]) ** 2
+#
+#                 d1 = cost_matrix[i - 1][j - 1] + sum
+#                 d2 = cost_matrix[i - 1][j] + _cost_function(
+#                     x[0:dimensions, i], x[0:dimensions, i - 1], y[0:dimensions, j], c
+#                 )
+#                 d3 = cost_matrix[i][j - 1] + _cost_function(
+#                     y[0:dimensions, j], x[0:dimensions, i], y[0:dimensions, j - 1], c
+#                 )
+#                 temp = d1
+#                 if d2 < temp:
+#                     temp = d2
+#                 if d3 < temp:
+#                     temp = d3
+#
+#                 cost_matrix[i][j] = temp
+
+    # for i in range(1, x_size):
+    #     cost_matrix[i][0] = cost_matrix[i - 1][0] + _cost_function(
+    #         x[:, i], x[:, i - 1], y[:, 0], c
+    #     )
+    # for i in range(1, y_size):
+    #     cost_matrix[0][i] = cost_matrix[0][i - 1] + _cost_function(
+    #         y[:, i], y[:, i - 1], x[:, 0], c
+    #     )
+
+    # for i in range(1, x_size):
+    #     for j in range(1, y_size):
+    #         if np.isfinite(bounding_matrix[i, j]):
+    #             d1 = cost_matrix[i - 1][j - 1] + np.abs(x[0][i] - y[0][j])
+    #             d2 = cost_matrix[i - 1][j] + _cost_function(
+    #                 x[:, i], x[:, i - 1], y[:, j], c
+    #             )
+    #             d3 = cost_matrix[i][j - 1] + _cost_function(
+    #                 y[:, j], x[:, i], y[:, j - 1], c
+    #             )
+    #
+    #         temp = d1
+    #         if d2 < temp:
+    #             temp = d2
+    #         if d3 < temp:
+    #             temp = d3
+    #
+    #         cost_matrix[i][j] = temp

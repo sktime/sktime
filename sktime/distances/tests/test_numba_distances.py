@@ -217,3 +217,83 @@ def test_distance_factory_1d():
 
     assert first == 14.906015491572047
     assert second == 422.81946268212846
+
+from numba import njit
+
+@njit()
+def some_callable(val):
+    return val * 2
+
+loops = 100
+
+@njit()
+def test_1(x):
+    test = []
+    for i in range(loops):
+        test.append(some_callable(x[:, i]))
+    return test
+
+@njit()
+def test_2(x):
+    test = []
+    numdims = x.ndim
+    for i in range(loops):
+        test.append(some_callable(x[0:numdims, i]))
+    return test
+
+import time
+def test_num_bench():
+    i = 1
+    j = 10000
+    distance_m_d = create_test_distance_numpy(2, i, j)
+    x = distance_m_d[0]
+    y = distance_m_d[1]
+    # test_1(y)
+    # test_2(y)
+
+
+
+    mean = 10
+    random = 1
+    result_1_avg = 0
+    result_2_avg = 0
+    for k in range(0, 10):
+        distance_m_d = create_test_distance_numpy(2, i, j, random_state=random)
+        random += 1
+        x = distance_m_d[0]
+        y = distance_m_d[1]
+        result_1 = test_1(y)
+        result_2 = test_2(y)
+
+
+        test_1_start = time.time()
+        result_1 = test_1(x)
+        result_1_avg += time.time() - test_1_start
+
+        test_2_start = time.time()
+        result_2 = test_2(x)
+        result_2_avg += time.time() - test_2_start
+
+
+    print(np.array_equal(result_1, result_2))
+
+    print("test 1: ", result_1_avg / mean)
+    print("test 2: ", result_2_avg / mean)
+
+
+from sktime.distances import msm_distance
+def test_msm():
+    i = 1
+    j = 1000
+    distance_m_d = create_test_distance_numpy(2, i, j)
+
+    x = distance_m_d[0]
+    y = distance_m_d[1]
+    test = x + np.roll(x, -1)
+    test_2 = np.add(x, np.roll(x, -1))
+
+    joe = msm_distance(x, y)
+    # 1.98764
+    hi = ''
+
+
