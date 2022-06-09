@@ -376,6 +376,8 @@ class AutoARIMA(_PmdArimaAdapter):
         # import inside method to avoid hard dependency
         from pmdarima.arima import AutoARIMA as _AutoARIMA  # type: ignore
 
+        sarimax_kwargs = {key: getattr(self, key) for key in self.SARIMAX_KWARGS_KEYS}
+
         return _AutoARIMA(
             start_p=self.start_p,
             d=self.d,
@@ -415,7 +417,7 @@ class AutoARIMA(_PmdArimaAdapter):
             scoring=self.scoring,
             scoring_args=self.scoring_args,
             with_intercept=self.with_intercept,
-            **self.model_kwargs
+            **sarimax_kwargs,
         )
 
     @classmethod
@@ -698,5 +700,5 @@ class ARIMA(_PmdArimaAdapter):
             scoring_args=self.scoring_args,
             trend=self.trend,
             with_intercept=self.with_intercept,
-            sarimax_kwargs=sarimax_kwargs,
+            **sarimax_kwargs,
         )
