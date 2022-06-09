@@ -17,6 +17,15 @@ _check_soft_dependencies("prophet", severity="warning")
 class Prophet(_ProphetAdapter):
     """Prophet forecaster by wrapping Facebook's prophet algorithm [1]_.
 
+    Direct interface to Facebook prophet, using the sktime interface.
+    All hyper-parameters are exposed via the constructor.
+
+    Data can be passed in one of the sktime compatible formats,
+    naming a column `ds` such as in the prophet package is not necessary.
+
+    Integer indices can also be passed, in which case internally a conversion
+    to days since Jan 1, 2000 is carried out before passing to prophet.
+
     Parameters
     ----------
     freq: str, default=None
