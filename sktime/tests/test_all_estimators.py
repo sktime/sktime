@@ -321,9 +321,9 @@ class QuickTester:
             If both tests_to_run and fixtures_to_run are provided, runs the *union*,
             i.e., all test-fixture combinations for tests in tests_to_run,
                 plus all test-fixture combinations in fixtures_to_run.
-        tests_to_exclude : str or list of str, names of tests to exclude. default = none
+        tests_to_exclude : str or list of str, names of tests to exclude. default = None
             removes tests that should not be run, after subsetting via tests_to_run.
-        fixtures_to_exclude : str or list of str, fixtures to exclude. default = none
+        fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
 
