@@ -287,7 +287,13 @@ class QuickTester:
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
     def run_tests(
-        self, estimator, return_exceptions=True, tests_to_run=None, fixtures_to_run=None
+        self,
+        estimator,
+        return_exceptions=True,
+        tests_to_run=None,
+        fixtures_to_run=None,
+        tests_to_exclude=None,
+        fixtures_to_exclude=None,
     ):
         """Run all tests on one single estimator.
 
@@ -315,6 +321,11 @@ class QuickTester:
             If both tests_to_run and fixtures_to_run are provided, runs the *union*,
             i.e., all test-fixture combinations for tests in tests_to_run,
                 plus all test-fixture combinations in fixtures_to_run.
+        tests_to_exclude : str or list of str, names of tests to exclude. default = None
+            removes tests that should not be run, after subsetting via tests_to_run.
+        fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
+            removes test-fixture combinations that should not be run.
+            This is done after subsetting via fixtures_to_run.
 
         Returns
         -------
@@ -347,6 +358,12 @@ class QuickTester:
         )
         fixtures_to_run = self._check_None_str_or_list_of_str(
             fixtures_to_run, var_name="fixtures_to_run"
+        )
+        tests_to_exclude = self._check_None_str_or_list_of_str(
+            tests_to_exclude, var_name="tests_to_exclude"
+        )
+        fixtures_to_exclude = self._check_None_str_or_list_of_str(
+            fixtures_to_exclude, var_name="fixtures_to_exclude"
         )
 
         # retrieve tests from self
@@ -391,6 +408,12 @@ class QuickTester:
                 tests_from_fixt = [fixt.split("[")[0] for fixt in fixtures_to_run]
                 test_names_subset += list(set(test_names).intersection(tests_from_fixt))
             test_names_subset = list(set(test_names_subset))
+
+        # sub-setting by removing all tests from tests_to_exclude
+        if tests_to_exclude is not None:
+            test_names_subset = list(
+                set(test_names_subset).difference(tests_to_exclude)
+            )
 
         # the below loops run all the tests and collect the results here:
         results = dict()
@@ -449,6 +472,8 @@ class QuickTester:
                 # we subset to test-fixtures to run by this, if given
                 #  key is identical to the pytest test-fixture string identifier
                 if fixtures_to_run is not None and key not in fixtures_to_run:
+                    continue
+                if fixtures_to_exclude is not None and key in fixtures_to_exclude:
                     continue
 
                 if return_exceptions:

@@ -9,6 +9,7 @@ from sklearn import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import is_sklearn_transformer
 
 __author__ = ["fkiraly", "mloning"]
@@ -448,7 +449,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "transformer__variablename"
         if False, columns are MultiIndex (transformer, variablename)
-        has no effect if return mtypes is one without column names
+        has no effect if return mtype is one without column names
     """
 
     _required_parameters = ["transformer_list"]
@@ -632,8 +633,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
-            Xt.columns = flat_index
+            Xt.columns = flatten_multiindex(Xt.columns)
 
         return Xt
 
@@ -676,12 +676,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
-
-    @staticmethod
-    def _underscore_join(iterable):
-        """Create flattened column names from multiindex tuple."""
-        iterable_as_str = [str(x) for x in iterable]
-        return "__".join(iterable_as_str)
 
 
 class FitInTransform(BaseTransformer):
