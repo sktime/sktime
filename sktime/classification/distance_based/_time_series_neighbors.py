@@ -65,14 +65,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             scikit-learn implementation. TO-DO: find permanent
             resolution to this issue (raise as an issue on sklearn GitHub?)
 
-
     Parameters
     ----------
     n_neighbors : int, set k for knn (default =1)
     distance : distance measure for time series: {'dtw','ddtw',
         'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='brute'
         Algorithm used to compute the nearest neighbors:
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
@@ -124,7 +123,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         weights="uniform",
         distance="dtw",
         distance_params=None,
-        algorithm="auto",
+        algorithm="brute",
         leaf_size=30,
         n_jobs=None,
     ):
