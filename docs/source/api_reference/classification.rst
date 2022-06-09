@@ -49,7 +49,7 @@ Distance-based
     ProximityStump
 
 Dummy
---------------
+-----
 
 .. currentmodule:: sktime.classification.dummy
 
@@ -60,7 +60,7 @@ Dummy
     DummyClassifier
 
 Hybrid
---------------
+------
 
 .. currentmodule:: sktime.classification.hybrid
 
@@ -111,7 +111,7 @@ Kernel-based
     Arsenal
 
 Feature-based
----------------
+-------------
 
 .. currentmodule:: sktime.classification.feature_based
 
