@@ -167,4 +167,4 @@ def test_get_slice_expected_result():
     assert len(get_slice(X_s, start=1, end=3)) == 2
 
     X_np = get_examples(mtype="numpy3D")[0]
-    get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
+    assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
