@@ -869,7 +869,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # NotFittedError
         for method in NON_STATE_CHANGING_METHODS:
             # don't test predict_proba if tensorflow_probability is not installed
-            
             if method == "predict_proba" and isinstance(estimator, BaseForecaster):
                 if not _check_dl_dependencies(severity="none"):
                     continue
