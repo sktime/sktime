@@ -50,8 +50,9 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     transformer_ : sktime transformer
         clone of the transformer named by selected_transformer to which all the
         transformation functionality is delegated to.
-    _transformers : copy of the list of transformers passed.  If transformers was
-        passed without names, those will be auto-generated and put here.
+    _transformers : list of (name, est) tuples, where est are direct references to
+        the estimators passed in transformers passed. If transformers was passed
+        without names, those be auto-generated and put here.
 
     Examples
     --------
@@ -106,7 +107,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self.selected_transformer = selected_transformer
 
         self.transformers = transformers
-        self._transformers = self._check_estimators(
+        self._check_estimators(
             transformers,
             attr_name="transformers",
             cls_type=BaseTransformer,
@@ -115,6 +116,15 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         self._set_transformer()
         self.clone_tags(self.transformer_)
         self.set_tags(**{"fit_is_empty": False})
+
+    @property
+    def _transformers(self):
+        """Forecasters turned into name/est tuples."""
+        return self._get_estimator_tuples(self.transformers, clone_ests=False)
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers = value
 
     def _check_selected_transformer(self):
         component_names = self._get_estimator_names(

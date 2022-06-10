@@ -407,10 +407,11 @@ MovingBlockBootstrapTransformer
     :template: class.rst
 
     MovingBlockBootstrapTransformer
+
 Transformer Selection
 ---------------------
 MultiplexTransformer
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.multiplexer
 
