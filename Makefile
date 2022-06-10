@@ -30,6 +30,13 @@ test: ## Run unit tests
 	cp setup.cfg ${TEST_DIR}
 	cd ${TEST_DIR}; python -m pytest
 
+test_softdeps: ## Run unit tests
+	-rm -rf ${TEST_DIR}
+	mkdir -p ${TEST_DIR}
+	cp .coveragerc ${TEST_DIR}
+	cp setup.cfg ${TEST_DIR}
+	cd ${TEST_DIR}; python -m pytest -v -n auto --showlocals --durations=20 -k 'test_all_estimators' $(PYTESTOPTIONS) --pyargs sktime.registry
+
 tests: test
 
 clean: ## Clean build dist and egg directories left after install
