@@ -11,7 +11,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.compose import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_unit_test
-from sktime.series_as_features.compose import FeatureUnion
+from sktime.transformations.compose import FeatureUnion
 from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.transformations.panel.summarize import RandomIntervalFeatureExtractor
