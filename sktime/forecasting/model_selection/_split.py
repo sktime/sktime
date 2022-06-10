@@ -711,7 +711,7 @@ class BaseSplitter(BaseObject):
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
             ).flatten()
         else:
-            return np.array([], dtype=np.int)
+            return np.array([], dtype=int)
 
 
 class CutoffSplitter(BaseSplitter):
