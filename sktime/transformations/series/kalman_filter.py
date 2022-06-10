@@ -150,6 +150,46 @@ def _check_conditional_dependency(obj, condition, package, severity, msg=None):
             raise ModuleNotFoundError(msg) from e
 
 
+def _validate_estimate_matrices(input_ems, all_ems):
+    """Validate elements of `estimate_matrices`.
+
+    Parameters
+    ----------
+    input_ems : str or list of str
+        List of matrices names or "all"
+    all_ems : List of str
+        List of all legal parameters.
+
+    Returns
+    -------
+        em_vars : list
+            Legal parameters names
+    """
+    if isinstance(input_ems, str):
+        if input_ems == "all":
+            return all_ems
+        if input_ems in all_ems:
+            return list([input_ems])
+
+        raise ValueError(
+            f"If `estimate_matrices` is passed as a "
+            f"string, "
+            f"it must be `all` / one of: "
+            f"{all_ems}, but found: "
+            f"{input_ems}"
+        )
+
+    for em in input_ems:
+        if em not in all_ems:
+            raise ValueError(
+                f"Elements of `estimate_matrices` "
+                f"must be a subset of "
+                f"{all_ems}, but found: "
+                f"{em}"
+            )
+    return input_ems
+
+
 class BaseKalmanFilter:
     """Kalman Filter is used for denoising data, or inferring the hidden state of data.
 
@@ -779,32 +819,11 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             "initial_state": "initial_state_mean",
             "initial_state_covariance": "initial_state_covariance",
         }
+        valid_ems = _validate_estimate_matrices(
+            input_ems=self.estimate_matrices, all_ems=list(params_mapping.keys())
+        )
 
-        if isinstance(self.estimate_matrices, str):
-            if self.estimate_matrices == "all":
-                return list(params_mapping.values())
-            if self.estimate_matrices in params_mapping:
-                return list(params_mapping[self.estimate_matrices])
-
-            raise ValueError(
-                f"If `estimate_matrices` is passed as a "
-                f"string, "
-                f"it must be `all` / one of: "
-                f"{list(params_mapping.keys())}, but found: "
-                f"{self.estimate_matrices}"
-            )
-
-        em_vars = []
-        for _matrix in self.estimate_matrices:
-            if _matrix not in params_mapping:
-                raise ValueError(
-                    f"Elements of `estimate_matrices` "
-                    f"must be a subset of "
-                    f"{list(params_mapping.keys())}, but found: "
-                    f"{_matrix}"
-                )
-            em_vars.append(params_mapping[_matrix])
-
+        em_vars = [params_mapping[em_var] for em_var in valid_ems]
         return em_vars
 
     def _get_shapes(self, state_dim, measurement_dim):
@@ -1064,20 +1083,17 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             )
 
         else:
-            if (
-                isinstance(self.estimate_matrices, str)
-                and self.estimate_matrices == "all"
-            ):
-                estimate_matrices_ = [
+            estimate_matrices_ = _validate_estimate_matrices(
+                input_ems=self.estimate_matrices,
+                all_ems=[
                     "state_transition",
                     "process_noise",
                     "measurement_noise",
                     "measurement_function",
                     "initial_state",
                     "initial_state_covariance",
-                ]
-            else:
-                estimate_matrices_ = self.estimate_matrices
+                ],
+            )
 
             transformer_ = KalmanFilterTransformerPK(
                 state_dim=self.state_dim,
@@ -1200,7 +1216,6 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             actual_shape=G.shape,
             time_steps=time_steps,
         )
-        self.G_ = G
 
         x_priori = np.zeros((time_steps, *shapes["X0"]))
         p_priori = np.zeros((time_steps, *shapes["P0"]))

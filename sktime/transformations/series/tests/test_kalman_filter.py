@@ -176,14 +176,20 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
     Given measurements and adapter, adjust params and measurements to
     `FilterPy` usable form.
     """
+    y_dim = 1 if y is None else y.shape[-1]
+
+    G = (
+        np.eye(adapter.state_dim, y_dim)
+        if adapter.control_transition is None
+        else np.atleast_2d(adapter.control_transition)
+    )
+
     matrices = {
         "Fs": [adapter.F_] * n if adapter.F_.ndim == 2 else [f for f in adapter.F_],
         "Qs": [adapter.Q_] * n if adapter.Q_.ndim == 2 else [q for q in adapter.Q_],
         "Rs": [adapter.R_] * n if adapter.R_.ndim == 2 else [r for r in adapter.R_],
         "Hs": [adapter.H_] * n if adapter.H_.ndim == 2 else [h for h in adapter.H_],
-        "Bs": None
-        if y is None
-        else ([adapter.G_] * n if adapter.G_.ndim == 2 else [g for g in adapter.G_]),
+        "Bs": [G] * n if G.ndim == 2 else [g for g in G],
         "us": None if y is None else ([y] * n if y.ndim == 1 else [_y for _y in y]),
         "x": adapter.X0_,
         "P": adapter.P0_,
@@ -640,6 +646,27 @@ def test_em(classes, params, measurements):
             dict(state_dim=4, estimate_matrices=["measurement_functions"]),
             create_data((ts, 4), missing_values=True),
         ),
+        # bad input:
+        # KalmanFilterTransformerFP does not estimate matrix transition_offsets.
+        (
+            [KalmanFilterTransformerFP],
+            dict(state_dim=4, estimate_matrices=["transition_offsets"]),
+            create_data((ts, 4), missing_values=True),
+        ),
+        # bad input:
+        # KalmanFilterTransformerFP does not estimate matrix measurement_offsets.
+        (
+            [KalmanFilterTransformerFP],
+            dict(state_dim=4, estimate_matrices=["measurement_offsets"]),
+            create_data((ts, 4), missing_values=True),
+        ),
+        # bad input:
+        # KalmanFilterTransformerFP does not estimate matrix control_transition.
+        (
+            [KalmanFilterTransformerFP],
+            dict(state_dim=4, estimate_matrices=["control_transition"]),
+            create_data((ts, 4), missing_values=True),
+        ),
         # test case 7 -
         #   state_dim = 1, measurement_dim = 1, params - params_1_1_arrays
         # bad input:
@@ -681,7 +708,7 @@ def test_bad_inputs(classes, params, measurements):
     """Test adapters bad inputs error handling.
 
     Call `fit` of input adapter/s, and pass if ValueError
-    was throne.
+    was thrown.
     This test is useful for both KalmanFilterTransformerPK
     and KalmanFilterTransformerFP.
     """
