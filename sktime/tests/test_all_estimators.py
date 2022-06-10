@@ -51,6 +51,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class BaseFixtureGenerator:
@@ -947,6 +948,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         set_random_state(estimator)
 
         for method in NON_STATE_CHANGING_METHODS:
+
+            # don't test predict_proba if tensorflow_probability is not installed
+            if method == "predict_proba" and isinstance(estimator, BaseForecaster):
+                if not _check_dl_dependencies(severity="none"):
+                    continue
+
             if _has_capability(estimator, method):
 
                 # dict_before = copy of dictionary of estimator before predict, post fit
@@ -982,6 +989,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ), f"Estimator: {estimator} has side effects on arguments of fit"
 
         for method in NON_STATE_CHANGING_METHODS:
+
+            # don't test predict_proba if tensorflow_probability is not installed
+            if method == "predict_proba" and isinstance(estimator, BaseForecaster):
+                if not _check_dl_dependencies(severity="none"):
+                    continue
+
             if _has_capability(estimator, method):
                 # Fit the model, get args before and after
                 _, args_after = scenario.run(
@@ -1004,6 +1017,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # Generate results before pickling
         results = {}
         for method in NON_STATE_CHANGING_METHODS:
+
+            # don't test predict_proba if tensorflow_probability is not installed
+            if method == "predict_proba" and isinstance(estimator, BaseForecaster):
+                if not _check_dl_dependencies(severity="none"):
+                    continue
+
             if _has_capability(estimator, method):
                 results[method] = scenario.run(estimator, method_sequence=[method])
 
@@ -1048,6 +1067,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         if "n_jobs" in params:
             for method in NON_STATE_CHANGING_METHODS:
+                # don't test predict_proba if tensorflow_probability is not installed
+                estimator = estimator_instance
+                if method == "predict_proba" and isinstance(estimator, BaseForecaster):
+                    if not _check_dl_dependencies(severity="none"):
+                        continue
                 if _has_capability(estimator_instance, method):
                     # run on a single process
                     # -----------------------
