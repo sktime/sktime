@@ -449,7 +449,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
         alpha_preds_np = alpha_preds.to_numpy()
         alpha_mat = np.repeat(
-            (y_pred.columns.get_level_values(1).to_numpy().reshape(1, -1)),
+            (alpha_preds.columns.get_level_values(1).to_numpy().reshape(1, -1)),
             repeats=y_true.shape[0],
             axis=0,
         )
