@@ -102,7 +102,10 @@ class BaseFixtureGenerator:
 
     # which sequence the conditional fixtures are generated in
     fixture_sequence = [
-        "estimator_class", "estimator_instance", "scenario", "method_nsc"
+        "estimator_class",
+        "estimator_instance",
+        "scenario",
+        "method_nsc",
     ]
 
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
