@@ -263,13 +263,23 @@ def get_window(obj, window_length=None, lag=0):
 
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
+        # if 2D or 3D, we need to subset by last, not first dimension
+        # if 1D, we need to subset by first dimension
+        # to achieve that effect, we swap first and last in case of 2D, 3D
+        # and always subset on first dimension
+        if obj.ndim > 1:
+            obj = obj.swapaxes(1, -1)
         obj_len = len(obj)
         window_start = max(-window_length - lag, -obj_len)
         window_end = max(-lag, -obj_len)
+        # we need to swap first and last dimension back before returning, if done above
         if window_end == 0:
-            return obj[window_start:]
+            obj_subset = obj[window_start:]
         else:
-            return obj[window_start:window_end]
+            obj_subset = obj[window_start:window_end]
+        if obj.ndim > 1:
+            obj_subset = obj_subset.swapaxes(1, -1)
+        return obj_subset
 
     # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame):
@@ -336,12 +346,22 @@ def get_slice(obj, start=None, end=None):
     # numpy3D (Panel) or np.npdarray (Series)
     # Assumes the index is integer so will be exclusive by default
     if isinstance(obj, np.ndarray):
+        # if 2D or 3D, we need to subset by last, not first dimension
+        # if 1D, we need to subset by first dimension
+        # to achieve that effect, we swap first and last in case of 2D, 3D
+        # and always subset on first dimension
+        if obj.ndim > 1:
+            obj = obj.swapaxes(1, -1)
+        # subsetting
         if start and end:
             obj_subset = obj[start:end]
         elif end:
             obj_subset = obj[:end]
         else:
             obj_subset = obj[start:]
+        # we need to swap first and last dimension back before returning, if done above
+        if obj.ndim > 1:
+            obj_subset = obj_subset.swapaxes(1, -1)
         return obj_subset
 
     # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
