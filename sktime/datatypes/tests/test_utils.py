@@ -121,9 +121,9 @@ def test_get_window_expected_result():
 
     X_hi = get_examples(mtype="numpy3D")[0]
     assert get_window(X_hi, 3, 1).shape == (2, 2, 3)
-    assert get_window(X_hi, 2, 0) == (2, 2, 3)
-    assert get_window(X_hi, 2, 4) == (0, 2, 3)
-    assert get_window(X_hi, 1, 2) == (1, 2, 3)
+    assert get_window(X_hi, 2, 0).shape == (2, 2, 3)
+    assert get_window(X_hi, 2, 4).shape == (0, 2, 3)
+    assert get_window(X_hi, 1, 2).shape == (1, 2, 3)
 
 
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
@@ -165,3 +165,6 @@ def test_get_slice_expected_result():
 
     X_s = get_examples(mtype="pd.Series")[0]
     assert len(get_slice(X_s, start=1, end=3)) == 2
+
+    X_np = get_examples(mtype="numpy3D")[0]
+    get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
