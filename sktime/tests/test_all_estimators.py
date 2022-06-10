@@ -51,6 +51,7 @@ from sktime.utils._testing.estimator_checks import (
     _list_required_methods,
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
+from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 class BaseFixtureGenerator:
