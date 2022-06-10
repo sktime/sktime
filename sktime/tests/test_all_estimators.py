@@ -857,18 +857,25 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     def test_raises_not_fitted_error(self, estimator_instance, scenario):
         """Check that we raise appropriate error for unfitted estimators."""
+        estimator = estimator_instance
+
         # pairwise transformers are exempted from this test, since they have no fitting
         PWTRAFOS = (BasePairwiseTransformer, BasePairwiseTransformerPanel)
-        excepted = isinstance(estimator_instance, PWTRAFOS)
+        excepted = isinstance(estimator, PWTRAFOS)
         if excepted:
             return None
 
         # call methods without prior fitting and check that they raise our
         # NotFittedError
         for method in NON_STATE_CHANGING_METHODS:
-            if _has_capability(estimator_instance, method):
+            # don't test predict_proba if tensorflow_probability is not installed
+            
+            if method == "predict_proba" and isinstance(estimator, BaseForecaster):
+                if not _check_dl_dependencies(severity="none"):
+                    continue
+            if _has_capability(estimator, method):
                 with pytest.raises(NotFittedError, match=r"has not been fitted"):
-                    scenario.run(estimator_instance, method_sequence=[method])
+                    scenario.run(estimator, method_sequence=[method])
 
     def test_fit_idempotent(self, estimator_instance, scenario):
         """Check that calling fit twice is equivalent to calling it once."""
