@@ -119,6 +119,12 @@ def test_get_window_expected_result():
     assert len(get_window(X_hi, 2, 4)) == 0
     assert len(get_window(X_hi, 1, 2)) == 6
 
+    X_hi = get_examples(mtype="numpy3D")[0]
+    assert get_window(X_hi, 3, 1).shape == (2, 2, 3)
+    assert get_window(X_hi, 2, 0) == (2, 2, 3)
+    assert get_window(X_hi, 2, 4) == (0, 2, 3)
+    assert get_window(X_hi, 1, 2) == (1, 2, 3)
+
 
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
 def test_get_slice_output_type(scitype, mtype):
