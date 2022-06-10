@@ -5,63 +5,66 @@
 
 __author__ = ["ciaran-g"]
 
-# import numpy as np
-# import pytest
-# from pandas.testing import assert_frame_equal
+import numpy as np
+import pytest
+from pandas.testing import assert_frame_equal
 
-# from sktime.forecasting.base import ForecastingHorizon
-# from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-# from sktime.forecasting.reconcile import ReconcilerForecaster
-# from sktime.transformations.hierarchical.aggregate import Aggregator
-# from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.reconcile import ReconcilerForecaster
+from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 
 # get all the methods
-# METHOD_LIST = Reconciler.METHOD_LIST
+METHOD_LIST = ReconcilerForecaster.METHOD_LIST
 
 
-# # test the reconciled predictions are actually hierarchical
-# # test the index/columns on the g and s matrices match
-# # test it works for named and unnamed indexes
-# @pytest.mark.parametrize("method", METHOD_LIST)
-# def test_reconciler_fit_transform(method):
-#     """Tests fit_trasnform and output of reconciler.
+# test the reconciled predictions are actually hierarchical
+# test the index/columns on the g and s matrices match
+# test it works for named and unnamed indexes
+@pytest.mark.parametrize("method", METHOD_LIST)
+@pytest.mark.parametrize("mean_scale_residuals", [True, False])
+def test_reconciler_fit_predict(method, mean_scale_residuals):
+    """Tests fit_predict and output of reconciler.
 
-#     Raises
-#     ------
-#     This test asserts that the output of Reconciler is actually hierarhical
-#     in that the predictions sum together appropriately. It also tests the index
-#     and columns of the fitted s and g matrix from each method and finally tests
-#     if the method works for both named and unnamed indexes
-#     """
-#     agg = Aggregator(flatten_single_levels=True)
+    Raises
+    ------
+    This test asserts that the output of ReconcilerForecaster is actually hierarhical
+    in that the predictions sum together appropriately. It also tests the index
+    and columns of the fitted s and g matrix from each method and finally tests
+    if the method works for both named and unnamed indexes
+    """
+    agg = Aggregator(flatten_single_levels=True)
 
-#     X = _bottom_hier_datagen(
-#         no_bottom_nodes=3,
-#         no_levels=1,
-#     )
-#     # add aggregate levels
-#     X = agg.fit_transform(X)
+    y = _bottom_hier_datagen(
+        no_bottom_nodes=3,
+        no_levels=1,
+    )
+    # add aggregate levels
+    y = agg.fit_transform(y)
 
-#     # forecast all levels
-#     fh = ForecastingHorizon([1, 2], is_relative=True)
-#     forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
-#     prds = forecaster.fit(X).predict(fh)
+    # forecast all levels
+    fh = ForecastingHorizon([1, 2], is_relative=True)
+    forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
+    reconciler = ReconcilerForecaster(
+        forecaster, method=method, mean_scale_residuals=mean_scale_residuals
+    )
+    reconciler.fit(y)
+    prds_recon = reconciler.predict(fh=fh)
 
-#     # reconcile forecasts
-#     reconciler = Reconciler(method=method)
-#     prds_recon = reconciler.fit_transform(prds)
+    # check the row index and column indexes match
+    msg = "Summation index/columns and G matrix index/columns do not match."
+    assert np.all(reconciler.g_matrix.columns == reconciler.s_matrix.index), msg
+    assert np.all(reconciler.g_matrix.index == reconciler.s_matrix.columns), msg
 
-#     # check the row index and column indexes match
-#     msg = "Summation index/columns and G matrix index/columns do not match."
-#     assert np.all(reconciler.g_matrix.columns == reconciler.s_matrix.index), msg
-#     assert np.all(reconciler.g_matrix.index == reconciler.s_matrix.columns), msg
+    # check if we now remove aggregate levels and use Aggregator it is equal
+    prds_recon_bottomlevel = agg.inverse_transform(prds_recon)
+    assert_frame_equal(prds_recon, agg.fit_transform(prds_recon_bottomlevel))
 
-#     # check if we now remove aggregate levels and use Aggregator it is equal
-#     prds_recon_bottomlevel = agg.inverse_transform(prds_recon)
-#     assert_frame_equal(prds_recon, agg.fit_transform(prds_recon_bottomlevel))
-
-#     # check with unnamed indexes
-#     prds.index.rename([None] * prds.index.nlevels, inplace=True)
-#     reconciler_unnamed = Reconciler(method=method)
-#     msg = "Reconciler returns different output for named and unnamed indexes."
-#     assert prds_recon.equals(reconciler_unnamed.fit_transform(prds)), msg
+    # check with unnamed indexes
+    y.index.rename([None] * y.index.nlevels, inplace=True)
+    reconciler_unnamed = ReconcilerForecaster(
+        forecaster, method=method, mean_scale_residuals=mean_scale_residuals
+    )
+    msg = "Reconciler returns different output for named and unnamed indexes."
+    assert prds_recon.equals(reconciler_unnamed.fit_predict(y=y, fh=fh)), msg

@@ -8,14 +8,15 @@ __author__ = [
     "ciaran-g",
 ]
 
-# check adding "_" suffix to returned items self.s_matrix_?
-# check the predict residuals bug
-# include the default vectorized fit tag properly
-# include the shrinkage, wls_var, topdown_prop estimators
 # documentation
-# set up the tests
-# include the reconciler transformers
+
+
+# default scaling of resids before covariance matrix? n-1 on cov?
+# go through tags with team
+# include the reconciler transformers?
 # check against fable?
+# what about aggregation of exogenous variables (X) maybe just sum again? discuss
+# top down proportions
 
 import numpy as np
 import pandas as pd
@@ -70,20 +71,25 @@ class ReconcilerForecaster(BaseForecaster):
             "pd-multiindex",
             "pd_multiindex_hier",
         ],
-        "X_inner_mtype": "None",  # which types do _fit, _predict, assume for X?
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "pd.Series",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
     }
 
-    # METHOD_LIST = ["bu", "ols", "wls_str", "td_fcst"]
-    METHOD_LIST = ["mint"]
+    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"]
 
-    def __init__(self, forecaster, method="mint"):
+    def __init__(self, forecaster, method="mint_cov", mean_scale_residuals=False):
 
         self.forecaster = forecaster
         self.method = method
+        self.mean_scale_residuals = mean_scale_residuals
 
         super(ReconcilerForecaster, self).__init__()
 
@@ -91,8 +97,6 @@ class ReconcilerForecaster(BaseForecaster):
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
             "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
@@ -135,8 +139,6 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # get the original from vectorizedDF (baseclass)
-        y = self._y.reconstruct(self._y)
         self._check_method()
 
         # # check the length of index if not hierarchical just return forecaster
@@ -145,37 +147,40 @@ class ReconcilerForecaster(BaseForecaster):
             self.forecaster_.fit(y=y, X=X, fh=fh)
             return self
 
-        # what about aggregation of exogenous variables (X) here...
-        # # hmm maybe just sum again? discuss
         # check index for no "__total", if not add totals to y
         if _check_index_no_total(y):
             y = self._add_totals(y)
+        # if (X is not None) & (_check_index_no_total(X)):
+        #     X = self._add_totals(X)
 
         # fit forecasters for each level
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
 
-        # from vectorized to original df again
-        y = self._y.reconstruct(self._y)
         # now summation matrix
         self.s_matrix = _get_s_matrix(y)
 
         # parent child df
-        self.parent_child_ = _parent_child_df(self.s_matrix)
+        self.parent_child = _parent_child_df(self.s_matrix)
 
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
         )
-        resid = y - self.forecaster_.predict(fh=fh_resid, X=X)
-        # scale
-        grp_range = np.arange(resid.index.nlevels - 1).tolist()
-        resid = resid.groupby(level=grp_range).apply(lambda x: x - x.mean())
+        self.residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
 
-        self.scaled_residual_df_ = resid.unstack().transpose()
+        if self.mean_scale_residuals:
+            grp_range = np.arange(self.residuals.index.nlevels - 1).tolist()
+            self.residuals = self.residuals.groupby(level=grp_range).apply(
+                lambda x: x - x.mean()
+            )
 
-        if self.method == "mint":
-            self.g_matrix_ = self._get_g_matrix_mint(shrink=False)
+        if self.method == "mint_cov":
+            self.g_matrix = self._get_g_matrix_mint(shrink=False)
+        elif self.method == "mint_shrink":
+            self.g_matrix = self._get_g_matrix_mint(shrink=True)
+        elif self.method == "wls_var":
+            self.g_matrix = self._get_g_matrix_mint(shrink=False, diag_only=True)
         else:
             raise RuntimeError("unreachable condition, error in _check_method")
 
@@ -213,7 +218,7 @@ class ReconcilerForecaster(BaseForecaster):
         recon_fc = []
         for _name, group in base_fc:
             # reconcile via SGy
-            fcst = self.s_matrix.dot(self.g_matrix_.dot(group.droplevel(-1)))
+            fcst = self.s_matrix.dot(self.g_matrix.dot(group.droplevel(-1)))
             # add back in time index
             fcst.index = group.index
             recon_fc.append(fcst)
@@ -263,31 +268,78 @@ class ReconcilerForecaster(BaseForecaster):
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
         )
-        resid = y - self.forecaster_.predict(fh=fh_resid, X=X)
-        # scale
-        grp_range = np.arange(resid.index.nlevels - 1).tolist()
-        resid = resid.groupby(level=grp_range).apply(lambda x: x - x.mean())
+        self.residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
 
-        self.scaled_residual_df_ = resid.unstack().transpose()
+        if self.mean_scale_residuals:
+            grp_range = np.arange(self.residuals.index.nlevels - 1).tolist()
+            self.residuals = self.residuals.groupby(level=grp_range).apply(
+                lambda x: x - x.mean()
+            )
 
-        if self.method == "mint":
-            # could implement something specific here
-            # for now just refit
-            self.g_matrix_ = self._get_g_matrix_mint(shrink=False)
+        # could implement something specific here
+        # for now just refit
+        if self.method == "mint_cov":
+            self.g_matrix = self._get_g_matrix_mint(shrink=False)
+        elif self.method == "mint_shrink":
+            self.g_matrix = self._get_g_matrix_mint(shrink=True)
+        elif self.method == "wls_var":
+            self.g_matrix = self._get_g_matrix_mint(shrink=False, diag_only=True)
         else:
             raise RuntimeError("unreachable condition, error in _check_method")
 
         return self
 
-    def _get_g_matrix_mint(self, shrink=False):
+    def _get_g_matrix_mint(self, shrink=False, diag_only=False):
         """Define the G matrix for the MinT method."""
-        if not shrink:
-            cov_mat = self.scaled_residual_df_.transpose().dot(
-                self.scaled_residual_df_
-            ) / (len(self.scaled_residual_df_.index) - 1)
-        else:
-            pass
+        # copy in case of further mods?
+        resid = self.residuals.copy()
+        # cov matrix
+        resid = resid.unstack().transpose()
+        nobs = len(resid)
+        cov_mat = resid.transpose().dot(resid) / nobs
 
+        # shrink method of https://doi.org/10.2202/1544-6115.1175
+        if shrink:
+            # diag matrix of variances
+            var_d = pd.DataFrame(0.0, index=cov_mat.index, columns=cov_mat.columns)
+            np.fill_diagonal(var_d.values, np.diag(cov_mat))
+
+            # get correltion from covariance above
+            cor_mat = (np.diag(cov_mat)) ** (-1 / 2)
+            scale_m = pd.DataFrame(
+                [cor_mat] * len(cor_mat), index=cov_mat.index, columns=cov_mat.columns
+            )
+            cor_mat = cov_mat * (scale_m) * (scale_m.transpose())
+
+            # scale the reiduals by the variance
+            for i in resid.columns:
+                scale = scale_m.loc[scale_m.index == i, scale_m.columns == i].values[0]
+                resid[i] = resid[i] * scale
+
+            crossp = (resid).transpose().dot((resid))
+            crossp2 = (resid**2).transpose().dot((resid**2))
+
+            v = (1 / (nobs * (nobs - 1))) * (crossp2 - (1 / (nobs * (crossp) ** 2)))
+            # set diagonals to zero
+            for i in resid.columns:
+                v.loc[v.index == i, v.columns == i] = 0
+                cor_mat.loc[cor_mat.index == i, cor_mat.columns == i] = 0
+
+            d = cor_mat**2
+
+            # get the shrinkage value
+            lamb = v.sum().sum() / d.sum().sum()
+            lamb = np.min([1, np.max([0, lamb])])
+
+            # shrink the matrix
+            cov_mat = (lamb * var_d) + ((1 - lamb) * cov_mat)
+
+        if diag_only:
+            # digonal matrix of variances
+            for i in resid.columns:
+                cov_mat.loc[cov_mat.index != i, cov_mat.columns == i] = 0
+
+        # now get the g matrix based on the covariance
         g_mint = pd.DataFrame(
             np.dot(
                 inv(
@@ -326,6 +378,22 @@ class ReconcilerForecaster(BaseForecaster):
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 
         FORECASTER = ExponentialSmoothing()
-        params_list = [{"forecaster": FORECASTER, "method": x} for x in cls.METHOD_LIST]
+        params_list = [
+            {
+                "forecaster": FORECASTER,
+                "method": x,
+                "mean_scale_residuals": True,
+            }
+            for x in cls.METHOD_LIST
+        ]
+
+        params_list = params_list + [
+            {
+                "forecaster": FORECASTER,
+                "method": x,
+                "mean_scale_residuals": False,
+            }
+            for x in cls.METHOD_LIST
+        ]
 
         return params_list
