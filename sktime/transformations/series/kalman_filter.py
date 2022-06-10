@@ -14,6 +14,8 @@ __all__ = [
     "KalmanFilterTransformerFP",
 ]
 
+from warnings import warn
+
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
@@ -24,7 +26,7 @@ _check_soft_dependencies("filterpy", severity="warning")
 
 
 def _get_t_matrix(time_t, matrices, shape, time_steps):
-    """Extract matrix to be used at iteration 'time_t' of the Kalman filter iterations.
+    """Extract matrix to be used at iteration `time_t` of the Kalman filter iterations.
 
     Parameters
     ----------
@@ -357,9 +359,9 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
 
 
     This class is the adapter for the `pykalman` package into `sktime`.
-    KalmanFilterTransformerPK implements hidden inferred states and
-    denoising, depending on the boolean input parameter 'denoising'.
-    In addition, KalmanFilterTransformerPK provides parameter
+    `KalmanFilterTransformerPK` implements hidden inferred states and
+    denoising, depending on the boolean input parameter `denoising`.
+    In addition, `KalmanFilterTransformerPK` provides parameter
     optimization via Expectation-Maximization (EM) algorithm [2]_,
     implemented by `pykalman`.
 
@@ -369,48 +371,49 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         System state feature dimension.
     state_transition : np.ndarray, optional (default=None)
         of shape (state_dim, state_dim) or (time_steps, state_dim, state_dim).
-        State transition matrix, also referred to as F, is a matrix
+        State transition matrix, also referred to as `F`, is a matrix
         which describes the way the underlying series moves
         through successive time periods.
     process_noise : np.ndarray, optional (default=None)
         of shape (state_dim, state_dim) or
         (time_steps, state_dim, state_dim).
-        Process noise matrix, also referred to as Q,
+        Process noise matrix, also referred to as `Q`,
         the uncertainty of the dynamic model.
     measurement_noise : np.ndarray, optional (default=None)
         of shape (measurement_dim, measurement_dim) or
         (time_steps, measurement_dim, measurement_dim).
-        Measurement noise matrix, also referred to as R,
+        Measurement noise matrix, also referred to as `R`,
         represents the uncertainty of the measurements.
     measurement_function : np.ndarray, optional (default=None)
         of shape (measurement_dim, state_dim) or
         (time_steps, measurement_dim, state_dim).
-        Measurement equation matrix, also referred to as H, adjusts
+        Measurement equation matrix, also referred to as `H`, adjusts
         dimensions of measurements to match dimensions of state.
     initial_state : np.ndarray, optional (default=None)
         of shape (state_dim,).
-        Initial estimated system state, also referred to as x0.
+        Initial estimated system state, also referred to as `X0`.
     initial_state_covariance : np.ndarray, optional (default=None)
         of shape (state_dim, state_dim).
-        Initial estimated system state covariance, also referred to as P0.
+        Initial estimated system state covariance, also referred to as `P0`.
     transition_offsets : np.ndarray, optional (default=None)
         of shape (state_dim,) or (time_steps, state_dim).
-        State offsets, also referred to as b, as described in `pykalman`.
+        State offsets, also referred to as `b`, as described in `pykalman`.
     measurement_offsets : np.ndarray, optional (default=None)
         of shape (measurement_dim,) or (time_steps, measurement_dim).
-        Observation (measurement) offsets, also referred to as d,
+        Observation (measurement) offsets, also referred to as `d`,
         as described in `pykalman`.
     denoising : bool, optional (default=False).
         This parameter affects `transform`. If False, then `transform` will be inferring
         hidden state. If True, uses `pykalman` `smooth` for denoising.
     estimate_matrices : str or list of str, optional (default=None).
-        Subset of [‘state_transition’, ‘measurement_function’,
-        ‘process_noise’, ‘measurement_noise’, ‘initial_state’,
-        ‘initial_state_covariance’, ‘transition_offsets’, ‘measurement_offsets’]
-        or - ‘all’. If estimate_matrices is an iterable of strings,
-        only matrices in estimate_matrices will be estimated using EM algorithm,
-        like described in `pykalman`. If estimate_matrices is ‘all’,
+        Subset of [`state_transition`, `measurement_function`,
+        `process_noise`, `measurement_noise`, `initial_state`,
+        `initial_state_covariance`, `transition_offsets`, `measurement_offsets`]
+        or - `all`. If `estimate_matrices` is an iterable of strings,
+        only matrices in `estimate_matrices` will be estimated using EM algorithm,
+        like described in `pykalman`. If `estimate_matrices` is `all`,
         then all matrices will be estimated using EM algorithm.
+
         Note - parameters estimated by EM algorithm assumed to be constant.
 
     See Also
@@ -519,8 +522,9 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
             initial_state=initial_state,
             initial_state_covariance=initial_state_covariance,
         )
-
+        # b
         self.transition_offsets = transition_offsets
+        # d
         self.measurement_offsets = measurement_offsets
         self.estimate_matrices = estimate_matrices
         self.denoising = denoising
@@ -704,11 +708,11 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     def _em(self, X, measurement_dim, state_dim):
         """Estimate matrices algorithm if requested by user.
 
-        If input matrices are specified in 'estimate_matrices',
+        If input matrices are specified in `estimate_matrices`,
         this method will use the `pykalman` EM algorithm function
         to estimate said matrices needed to calculate the Kalman Filter.
         Algorithm explained in References[2].
-        If 'estimate_matrices' is None no matrices will be estimated.
+        If `estimate_matrices` is None no matrices will be estimated.
 
         Parameters
         ----------
@@ -831,9 +835,9 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     an estimate of the state of a process.
 
     This class is the adapter for the `FilterPy` package into `sktime`.
-    KalmanFilterTransformerFP implements hidden inferred states and
+    `KalmanFilterTransformerFP` implements hidden inferred states and
     denoising, depending on the boolean input parameter `denoising`.
-    In addition, KalmanFilterTransformerFP provides parameter
+    In addition, `KalmanFilterTransformerFP` provides parameter
     optimization via Expectation-Maximization (EM) algorithm.
 
     Parameters
@@ -842,50 +846,51 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         System state feature dimension.
     state_transition : np.ndarray, optional (default=None)
         of shape (state_dim, state_dim) or (time_steps, state_dim, state_dim).
-        State transition matrix, also referred to as F, is a matrix
+        State transition matrix, also referred to as `F`, is a matrix
         which describes the way the underlying series moves
         through successive time periods.
     process_noise : np.ndarray, optional (default=None)
         of shape (state_dim, state_dim) or (time_steps, state_dim, state_dim).
-        Process noise matrix, also referred to as Q,
+        Process noise matrix, also referred to as `Q`,
         the uncertainty of the dynamic model.
     measurement_noise : np.ndarray, optional (default=None)
         of shape (measurement_dim, measurement_dim) or
         (time_steps, measurement_dim, measurement_dim).
-        Measurement noise matrix, also referred to as R,
+        Measurement noise matrix, also referred to as `R`,
         represents the uncertainty of the measurements.
     measurement_function : np.ndarray, optional (default=None)
         of shape (measurement_dim, state_dim) or
         (time_steps, measurement_dim, state_dim).
-        Measurement equation matrix, also referred to as H, adjusts
+        Measurement equation matrix, also referred to as `H`, adjusts
         dimensions of measurements to match dimensions of state.
     initial_state : np.ndarray, optional (default=None)
         of shape (state_dim,).
-        Initial estimated system state, also referred to as x0.
+        Initial estimated system state, also referred to as `X0`.
     initial_state_covariance : np.ndarray, optional (default=None)
         of shape (state_dim, state_dim).
-        Initial estimated system state covariance, also referred to as P0.
+        Initial estimated system state covariance, also referred to as `P0`.
     control_transition : np.ndarray, optional (default=None)
         of shape (state_dim, control_variable_dim) or
         (time_steps, state_dim, control_variable_dim).
-        Control transition matrix, also referred to as G.
-        'control_variable_dim' is the dimension of 'control variable',
+        Control transition matrix, also referred to as `G`.
+        `control_variable_dim` is the dimension of `control variable`,
         also referred to as `u`.
         `control variable` is an optional parameter for `fit` and `transform` functions.
     denoising : bool, optional (default=False).
         This parameter affects `transform`. If False, then `transform` will be inferring
         hidden state. If True, uses `FilterPy` `rts_smoother` for denoising.
     estimate_matrices : str or list of str, optional (default=None).
-        Subset of [‘state_transition’, ‘measurement_function’,
-        ‘process_noise’, ‘measurement_noise’, ‘initial_state’,
-        ‘initial_state_covariance’]
-        or - ‘all’. If `estimate_matrices` is an iterable of strings,
+        Subset of [`state_transition`, `measurement_function`,
+        `process_noise`, `measurement_noise`, `initial_state`,
+        `initial_state_covariance`]
+        or - `all`. If `estimate_matrices` is an iterable of strings,
         only matrices in `estimate_matrices` will be estimated using EM algorithm.
-        If `estimate_matrices` is ‘all’,
+        If `estimate_matrices` is `all`,
         then all matrices will be estimated using EM algorithm.
+
         Note -
             - parameters estimated by EM algorithm assumed to be constant.
-            - 'control_transition' matrix cannot be estimated.
+            - `control_transition` matrix cannot be estimated.
 
     See Also
     --------
@@ -1003,7 +1008,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             initial_state=initial_state,
             initial_state_covariance=initial_state_covariance,
         )
-
+        # G/B
         self.control_transition = control_transition
         self.estimate_matrices = estimate_matrices
         self.denoising = denoising
@@ -1077,6 +1082,8 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             transformer_ = KalmanFilterTransformerPK(
                 state_dim=self.state_dim,
                 state_transition=self.state_transition,
+                transition_offsets=np.zeros(self.state_dim),
+                measurement_offsets=np.zeros(measurement_dim),
                 process_noise=self.process_noise,
                 measurement_noise=self.measurement_noise,
                 measurement_function=self.measurement_function,
@@ -1167,11 +1174,20 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         measurement_dim = X.shape[1]
 
         if y is None:
-            y = np.zeros(1)
-        u_dim = y.shape[1] if y.ndim == 2 else y.shape[0]
+            if self.control_transition is None:
+                y_dim = 1
+            else:
+                y_dim = np.atleast_2d(self.control_transition).shape[-1]
+                warn(
+                    "Class parameter `control_transition` was initiated with user data "
+                    "but received no data through `transform` argument, `y`. "
+                    "Therefore, omitting `control_transition` "
+                    "when calculating the result. "
+                )
+            y = np.zeros(y_dim)
 
         shapes = self._get_shapes(
-            state_dim=self.state_dim, measurement_dim=measurement_dim, u_dim=u_dim
+            state_dim=self.state_dim, measurement_dim=measurement_dim, u_dim=y.shape[-1]
         )
         G = _init_matrix(
             matrices=self.control_transition,
@@ -1184,6 +1200,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
             actual_shape=G.shape,
             time_steps=time_steps,
         )
+        self.G_ = G
 
         x_priori = np.zeros((time_steps, *shapes["X0"]))
         p_priori = np.zeros((time_steps, *shapes["P0"]))
@@ -1194,6 +1211,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         x = self.X0_
         p = self.P0_
 
+        # kalman filter iterations
         for t in range(time_steps):
             (zt, Ft, Gt, Qt, Rt, Ht, ut) = self._get_iter_t_matrices(
                 X=X, G=G, u=y, t=t, time_steps=time_steps, shapes=shapes

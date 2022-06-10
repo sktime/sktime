@@ -1610,7 +1610,17 @@
       "contributions": [
         "code",
         "doc",
-        "test",
+        "test"
+      ]
+    },
+    {
+      "login": "lielleravid",
+      "name": "Lielle Ravid",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37774194?v=4",
+      "profile": "https://github.com/lielleravid",
+      "contributions": [
+        "code",
+        "doc"
       ]
     }
   ],
