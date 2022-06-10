@@ -14,6 +14,21 @@ For upcoming changes and next releases, see our `milestones <https://github.com/
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 0.12.0 - 2022-06-10
+---------------------------
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* removal of tags now subsumed under `fit_is_empty`
+* decision to leave `capability:pred_int` tag for now
+* set `symmetric` hyper-parameter default to `True` in all relative performance metrics.
+* remove `instance_index` and `time_index` args from `from_multi_index_to_3d_numpy`
+* remove `series_as_features.compose` module, contents are now in `transformations.compose`
+* remove `transformations.series.window_summarize` module, contents are now in `transformations.series.summarize`
+* remove `FeatureUnion`'s `preserve_dataframe` parameter
+
 Version 0.11.4 - 2022-05-13
 ---------------------------
 
