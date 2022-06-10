@@ -18,7 +18,7 @@ from sktime.forecasting.model_selection import (
 )
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.transformations.multiplexer import MultiplexTransformer
-from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
 
@@ -34,8 +34,8 @@ def test_multiplex_transformer_alone():
     y.loc[y.sample(frac=0.1).index] = pd.np.nan
     # Note - we select two forecasters which are deterministic.
     transformer_tuples = [
-        ("mean", Imputer(method="mean")),
-        ("nearest", Imputer(method="nearest")),
+        ("two", ExponentTransformer(2)),
+        ("three", ExponentTransformer(3)),
     ]
     transformer_names = [name for name, _ in transformer_tuples]
     transformers = [transformer for _, transformer in transformer_tuples]
@@ -81,8 +81,8 @@ def test_multiplex_transformer_in_grid():
     y.iloc[[5, 10, 15, 25, 32]] = -1
     # Note - we select two forecasters which are deterministic.
     transformer_tuples = [
-        ("mean", Imputer(method="mean", missing_values=-1)),
-        ("nearest", Imputer(method="nearest", missing_values=-1)),
+        ("two", ExponentTransformer(2)),
+        ("three", ExponentTransformer(3)),
     ]
     transformer_names = [name for name, _ in transformer_tuples]
     multiplex_transformer = MultiplexTransformer(transformers=transformer_tuples)
