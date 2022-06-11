@@ -216,9 +216,11 @@ class Lag(BaseTransformer):
             # because shift always cuts off the end values
             if isinstance(lag, int) and isinstance(X.index, pd.RangeIndex):
                 Xt = X.copy()
-                Xt.index = X_orig_idx + lag
+                Xt.index = X.index + lag
+                X_orig_shifted = X_orig_idx + lag
             else:
                 Xt = X.copy().shift(periods=lag, freq=freq)
+                X_orig_shifted = X_orig_idx.shift(periods=lag, freq=freq)
 
             # extend index to include original, if "extend" or "original"
             if index_out in ["extend", "original"]:
