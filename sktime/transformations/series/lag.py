@@ -103,7 +103,7 @@ class Lag(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
-        "skip-inverse-transform": False,  # is inverse-transform skipped when called?
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
         "capability:unequal_length:removes": False,
         "handles-missing-data": True,  # can estimator handle missing data?
