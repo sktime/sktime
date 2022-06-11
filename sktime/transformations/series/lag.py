@@ -38,7 +38,7 @@ class Lag(BaseTransformer):
             requires time index of transformed data to be time-like (not int)
         str - time rule from pandas.tseries module, e.g., "EOM"
     freq : frequency descriptor of list of frequency descriptors, optional, default=None
-        if passed, must be equal length to "lags" argument
+        if passed, must be scalar, or list of equal length to "lags" argument
         elements in freq correspond to elements in lags
         if i-th element of freq is not None, i-th element of lags must be int
             this is called the "corresponding lags element" below
