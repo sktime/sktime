@@ -364,8 +364,8 @@ class Lag(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params1 = {"lag": 2, "index_out": "original"}
-        params2 = {"lag": [-1, 4]}
-        params3 = {"lag": [-1, 0, 1], "index_out": "shift"}
+        params1 = {"lags": 2, "index_out": "original"}
+        params2 = {"lags": [-1, 4]}
+        params3 = {"lags": [-1, 0, 1], "index_out": "shift"}
 
         return [params1, params2, params3]
