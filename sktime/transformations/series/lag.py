@@ -36,37 +36,54 @@ Testing - implement if sktime transformer (not needed locally):
 #       estimators contributed to sktime should have the copyright notice at the top
 #       estimators of your own do not need to have permissive or BSD-3 copyright
 
-# todo: uncomment the following line, enter authors' GitHub IDs
-# __author__ = [authorGitHubID, anotherAuthorGitHubID]
+__author__ = ["fkiraly"]
 
-# todo: add any necessary sktime external imports here
+import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
 # todo: add any necessary sktime internal imports here
 
 
-class MyTransformer(BaseTransformer):
-    """Custom transformer. todo: write docstring.
+class Lag(BaseTransformer):
+    """Lagging transformer. Lags time series by one or multiple lags.
 
-    todo: describe your custom transformer here
-        fill in sections appropriately
-        docstring must be numpydoc compliant
+    Transforms a time series into a lagged version of itself.
+    Multiple lags can be provided, as a list. Estimator-like wrapper of pandas.shift.
+
+    Lags can be provided as a simple offset, `lags`, or pair of (lag count, frequency),
+    with lag count an int (`lags` arg) and frequency a `pandas` frequency descriptor.
+
+    When multiple lags are provided, multiple column concatenated copies of the lagged
+    time series will be created.
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    lags : lag offset, or list of lag offsets, optional, default=0 (identity transform)
+        a "lag offset" can be one of the following:
+        int - number of periods to shift/lag
+        time-like: DateOffset, tseries.offsets, or timedelta
+            time delta offset to shift/lag
+            requires time index of transformed data to be time-like (not int)
+        str - time rule from pandas.tseries module, e.g., "EOM"
+    freq : frequency descriptor of list of frequency descriptors, optional, default=None
+        if passed, must be equal length to "lags" argument
+        elements in freq correspond to elements in lags
+        if i-th element of freq is not None, i-th element of lags must be int
+            this is called the "corrdsponding lags element" below
+        "frequency descriptor" can be one of the following:
+        time-like: DateOffset, tseries.offsets, or timedelta
+            multiplied to corresponding "lags" element when shifting
+        str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
+    ind_align : str, optional, one of "shift", "realign", "extend", default="extend"
+        determines set of output indices in lagged time series
+        "shift" - only shifted indices are retained.
+            Will not create NA for single lag, but can create NA for multiple lags.
+        "realign" - only original indices are retained. Will usually create NA.
+        "extend" - both original indices and shifted indices are retained.
+            Will usually create NA, possibly many, if shifted/original do not intersect.
+    NA_behaviour : str, optional, one of "NA", "fill_value", "bfill", "nearest"
+        determines handling of NA that are possibly created, after they are created.
     """
 
     # todo: fill out estimator tags here
@@ -119,40 +136,45 @@ class MyTransformer(BaseTransformer):
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
     }
-    # in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__
-    #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, est, parama, est2=None, paramb="default", paramc=None):
-        # estimators should precede parameters
-        #  if estimators have default values, set None and initalize below
+    def __init__(self, lags=0, freq=None, ind_align="extend", NA_behaviour="NA"):
 
-        # todo: write any hyper-parameters and components to self
-        self.est = est
-        self.parama = parama
-        self.paramb = paramb
-        self.paramc = paramc
-        # important: no checking or other logic should happen here
+        self.lags = lags
+        self.freq = freq
+        self.ind_align = ind_align
+        self.NA_behaviour = NA_behaviour
 
-        # todo: default estimators should have None arg defaults
-        #  and be initialized here
-        #  do this only with default estimators, not with parameters
-        # if est2 is None:
-        #     self.est2 = MyDefaultEstimator()
+        def _coerce_to_list(x):
+            if not isinstance(x, list):
+                return [x]
+            else:
+                return x
 
-        # todo: change "MyTransformer" to the name of the class
-        super(MyTransformer, self).__init__()
+        # _lags and _freq are list-coerced variants of lags, freq
+        if not isinstance(lags, list):
+            self._lags = [lags]
+        else:
+            self._lags = lags
 
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        if not isinstance(freq, list):
+            # if freq is a single value, expand it to length of lags
+            self._freq = [freq] * len(self._lags)
+        else:
+            self._freq = freq
+
+        msg = "freq must be a list of equal length to lags, or a scalar."
+        assert len(lags) == len(freq), msg
+
+        super(Lag, self).__init__()
+
+        # todo: dynamic tags
+
+    def _iter_shift_params():
+        """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
+
+
+
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
