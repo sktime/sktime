@@ -1585,6 +1585,27 @@
       ]
     },
     {
+      "login": "niekvanderlaan",
+      "name": "Niek van der Laan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9962825?v=4",
+      "profile": "https://github.com/niekvanderlaan",
+      "contributions": [
+        "code"
+      ]
+    },
+    { 
+      "login": "bethrice44",
+      "name": "bethrice44",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11226988?v=4",
+      "profile": "https://github.com/bethrice44",
+      "contributions": [
+        "bug",
+        "code",
+        "review",
+        "test"
+       ]
+    },
+    {
       "login": "keepersas",
       "name": "Aleksandr Grekov",
       "avatar_url": "https://avatars.githubusercontent.com/u/44262176?v=4",
