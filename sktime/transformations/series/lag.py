@@ -97,9 +97,19 @@ class Lag(BaseTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.lag import Lag
-    >>>
     >>> X = load_airline()
+
+    Single lag
     >>> t = Lag(2)
+    >>> Xt = t.fit_transform(X)
+
+    Multiple lags can be provided, this will result in multiple columns:
+    >>> t = Lag([2, 4, -1])
+    >>> Xt = t.fit_transform(X)
+
+    The default setting of index_out will extend indices either side.
+    To ensure that th indices stay the same, use index_out="original
+    >>> t = Lag([2, 4, -1], index_out="original")
     >>> Xt = t.fit_transform(X)
     """
 
@@ -183,7 +193,7 @@ class Lag(BaseTransformer):
             elif lag is None:
                 name = str(freq)
             else:
-                name = f"{lag}-{freq}"
+                name = f"{lag}{freq}"
             name = "lag_" + name
             yield name
 
