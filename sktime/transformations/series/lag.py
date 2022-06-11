@@ -14,7 +14,8 @@ class Lag(BaseTransformer):
     """Lagging transformer. Lags time series by one or multiple lags.
 
     Transforms a time series into a lagged version of itself.
-    Multiple lags can be provided, as a list. Estimator-like wrapper of pandas.shift.
+    Multiple lags can be provided, as a list.
+    Estimator-like wrapper of pandas.shift and integer index lagging.
 
     Lags can be provided as a simple offset, `lags`, or pair of (lag count, frequency),
     with lag count an int (`lags` arg) and frequency a `pandas` frequency descriptor.
@@ -40,7 +41,7 @@ class Lag(BaseTransformer):
         if passed, must be equal length to "lags" argument
         elements in freq correspond to elements in lags
         if i-th element of freq is not None, i-th element of lags must be int
-            this is called the "corrdsponding lags element" below
+            this is called the "corresponding lags element" below
         "frequency descriptor" can be one of the following:
         time-like: DateOffset, tseries.offsets, or timedelta
             multiplied to corresponding "lags" element when shifting
