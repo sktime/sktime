@@ -127,7 +127,7 @@ class Lag(BaseTransformer):
         if index_out not in ["shift", "extend", "original"]:
             raise ValueError(
                 'index_out must be one of the strings "shift", "extend", "original"'
-                f'but found {index_out}'
+                f'but found "{index_out}"'
             )
 
         # _lags and _freq are list-coerced variants of lags, freq
