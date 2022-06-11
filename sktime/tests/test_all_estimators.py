@@ -898,16 +898,13 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
     def test_raises_not_fitted_error(self, estimator_instance, scenario, method_nsc):
         """Check that we raise appropriate error for unfitted estimators."""
-        estimator = estimator_instance
-
         # pairwise transformers are exempted from this test, since they have no fitting
         PWTRAFOS = (BasePairwiseTransformer, BasePairwiseTransformerPanel)
-        excepted = isinstance(estimator, PWTRAFOS)
+        excepted = isinstance(estimator_instance, PWTRAFOS)
         if excepted:
             return None
 
-        # call methods without prior fitting and check that they raise our
-        # NotFittedError
+        # call methods without prior fitting and check that they raise NotFittedError
         with pytest.raises(NotFittedError, match=r"has not been fitted"):
             scenario.run(estimator_instance, method_sequence=[method_nsc])
 
