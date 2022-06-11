@@ -1,2 +1,2 @@
 # -*- coding: utf-8 -*-
-"""Regressions tests."""
+"""tests for all time series regressors."""
