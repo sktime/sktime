@@ -62,6 +62,7 @@ example_dict_metadata[("Table", 0)] = {
     "is_univariate": True,
     "is_empty": False,
     "has_nans": False,
+    "n_instances": 4,
 }
 
 ###
@@ -97,4 +98,5 @@ example_dict_metadata[("Table", 1)] = {
     "is_univariate": False,
     "is_empty": False,
     "has_nans": False,
+    "n_instances": 4,
 }

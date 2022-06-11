@@ -2,13 +2,13 @@
 """Meta-transformers for building composite transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from warnings import warn
-
 import pandas as pd
 from sklearn import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 
 __author__ = ["fkiraly", "mloning"]
 __all__ = ["TransformerPipeline", "FeatureUnion"]
@@ -68,17 +68,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> # we'll construct a pipeline from 2 transformers below, in three different ways
-    >>> # preparing the transformers
+    We'll construct a pipeline from 2 transformers below, in three different ways
+    Preparing the transformers
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
 
-    >>> # Example 1: construct without strings
+    Example 1, option A: construct without strings
     >>> pipe = TransformerPipeline(steps = [t1, t2])
     >>> # unique names are generated for the two components t1 and t2
 
-    >>> # Example 2: construct with strings to give custom names to steps
+    Example 1, option B: construct with strings to give custom names to steps
     >>> pipe = TransformerPipeline(
     ...         steps = [
     ...             ("trafo1", t1),
@@ -86,13 +86,42 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     ...         ]
     ...     )
 
-    >>> # Example 3: for quick construction, the * dunder method can be used
+    Example 1, option C: for quick construction, the * dunder method can be used
     >>> pipe = t1 * t2
+
+    Example 2: sklearn transformers can be used in the pipeline.
+    If applied to Series, sklearn transformers are applied by series instance.
+    If applied to Table, sklearn transformers are applied to the table as a whole.
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sktime.transformations.series.summarize import SummaryTransformer
+
+    This applies the scaler per series, then summarizes:
+    >>> pipe = StandardScaler() * SummaryTransformer()
+
+    This applies the sumamrization, then scales the full summary table:
+    >>> pipe = SummaryTransformer() * StandardScaler()
+
+    This scales the series, then summarizes, then scales the full summary table:
+    >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
 
     _required_parameters = ["steps"]
 
-    # no default tag values - these are set dynamically below
+    _tags = {
+        # we let all X inputs through to be handled by first transformer
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "np.ndarray",
+            "pd.Series",
+            "pd-multiindex",
+            "df-list",
+            "nested_univ",
+            "numpy3D",
+            "pd_multiindex_hier",
+        ]
+    }
+
+    # no further default tag values - these are set dynamically below
 
     def __init__(self, steps):
 
@@ -101,14 +130,21 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         super(TransformerPipeline, self).__init__()
 
-        first_trafo = self.steps_[0][1]
-        last_trafo = self.steps_[-1][1]
-
-        self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
-        self.clone_tags(last_trafo, "scitype:transform-output")
-
         # abbreviate for readability
         ests = self.steps_
+        first_trafo = ests[0][1]
+        last_trafo = ests[-1][1]
+
+        # input mtype and input type are as of the first estimator
+        self.clone_tags(first_trafo, ["scitype:transform-input"])
+        # output type is that of last estimator, if no "Primitives" occur in the middle
+        # if "Primitives" occur in the middle, then output is set to that too
+        # this is in a case where "Series-to-Series" is applied to primitive df
+        #   e.g., in a case of pipelining with scikit-learn transformers
+        last_out = last_trafo.get_tag("scitype:transform-output")
+        self._anytagis_then_set(
+            "scitype:transform-output", "Primitives", last_out, ests
+        )
 
         # set property tags based on tags of components
         self._anytag_notnone_set("y_inner_mtype", ests)
@@ -160,13 +196,23 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
+        from sktime.classification.compose import SklearnClassifierPipeline
+        from sktime.forecasting.base import BaseForecaster
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
         # need to escape if other is BaseForecaster
         #   this is because forecsting Pipelines are *also* transformers
         #   but they need to take precedence in parsing the expression
-        from sktime.forecasting.base import BaseForecaster
-
         if isinstance(other, BaseForecaster):
             return NotImplemented
+
+        # if sklearn transformer, adapt to sktime transformer first
+        if is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
+
+        # if sklearn classifier, use sklearn classifier pipeline
+        if is_sklearn_classifier(other):
+            return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
 
         return self._dunder_concat(
             other=other,
@@ -195,9 +241,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         #   this is because forecsting Pipelines are *also* transformers
         #   but they need to take precedence in parsing the expression
         from sktime.forecasting.base import BaseForecaster
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         if isinstance(other, BaseForecaster):
             return NotImplemented
+
+        # if sklearn transformer, adapt to sktime transformer first
+        if is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
 
         return self._dunder_concat(
             other=other,
@@ -397,11 +448,10 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
-    preserve_dataframe : bool - deprecated
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "transformer__variablename"
         if False, columns are MultiIndex (transformer, variablename)
-        has no effect if return mtypes is one without column names
+        has no effect if return mtype is one without column names
     """
 
     _required_parameters = ["transformer_list"]
@@ -430,7 +480,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         transformer_list,
         n_jobs=None,
         transformer_weights=None,
-        preserve_dataframe=True,
         flatten_transform_index=True,
     ):
 
@@ -441,16 +490,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
-        self.preserve_dataframe = preserve_dataframe
-        if not preserve_dataframe:
-            warn(
-                "the preserve_dataframe arg has been deprecated in 0.11.0, "
-                "and will be removed in 0.12.0. It has no effect on the output format, "
-                "but can still be set to avoid compatibility issues in the deprecation "
-                "period. FeatureUnion now follows the "
-                "output format specification for sktime transformers. "
-                "To convert the output to another format, use datatypes.convert_to"
-            )
         self.flatten_transform_index = flatten_transform_index
 
         super(FeatureUnion, self).__init__()
@@ -585,8 +624,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
-            Xt.columns = flat_index
+            Xt.columns = flatten_multiindex(Xt.columns)
 
         return Xt
 
@@ -629,12 +667,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
-
-    @staticmethod
-    def _underscore_join(iterable):
-        """Create flattened column names from multiindex tuple."""
-        iterable_as_str = [str(x) for x in iterable]
-        return "__".join(iterable_as_str)
 
 
 class FitInTransform(BaseTransformer):
