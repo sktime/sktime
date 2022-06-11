@@ -19,7 +19,7 @@ param_values_to_set=None,
 param_names=None)
 """
 
-__author__ = ["jasonlines", "TonyBagnall", "chrisholder"]
+__author__ = ["jasonlines", "TonyBagnall", "chrisholder", "AurumnPegasus"]
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 from functools import partial
@@ -77,6 +77,18 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     distance          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     distance_params   : dictionary for metric parameters: default = None
+    leaf_size       : int, default=30
+        Leaf size passed to BallTree or KDTree. This can affect the
+        speed of the construction and query, as well as the memory required to store
+        the tree. The optimal value depends on the nature of the problem.
+    p               : int, default=2
+        Power parameter for the Minkowski metric. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+    n_jobs          : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
 
     Examples
     --------
@@ -99,15 +111,23 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
+        algorithm="brute",
         distance="dtw",
         distance_params=None,
-        **kwargs,
+        leaf_size=30,
+        p=2,
+        n_jobs=None,
     ):
         # self._distance_params = distance_params
         # if distance_params is None:
         #    self._distance_params = {}
+        self.n_neighbors = n_neighbors
+        self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
+        self.leaf_size = leaf_size
+        self.p = p
+        self.n_jobs = n_jobs
 
         if isinstance(self.distance, str):
             distance = distance_factory(metric=self.distance)
@@ -117,7 +137,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             algorithm="brute",
             metric=distance,
             metric_params=None,  # Extra distance params handled in _fit
-            **kwargs,
+            leaf_size=leaf_size,
+            p=p,
+            n_jobs=n_jobs,
         )
         BaseClassifier.__init__(self)
         self.weights = _check_weights(weights)
@@ -125,9 +147,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def fit(self, X, y, **kwargs):
+    def fit(self, X, y):
         """Override fit is required to sort out the multiple inheritance."""
-        return BaseClassifier.fit(self, X, y, **kwargs)
+        return BaseClassifier.fit(self, X, y)
 
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
@@ -309,9 +331,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 return dist, neigh_ind
             return neigh_ind
 
-    def predict(self, X, **kwargs) -> np.ndarray:
+    def predict(self, X) -> np.ndarray:
         """Predict wrapper."""
-        return BaseClassifier.predict(self, X, **kwargs)
+        return BaseClassifier.predict(self, X)
 
     def _predict(self, X) -> np.ndarray:
         """Predict the class labels for the provided data.
@@ -365,9 +387,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = temp
         return y_pred
 
-    def predict_proba(self, X, **kwargs) -> np.ndarray:
+    def predict_proba(self, X) -> np.ndarray:
         """Predict proba wrapper."""
-        return BaseClassifier.predict_proba(self, X, **kwargs)
+        return BaseClassifier.predict_proba(self, X)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Return probability estimates for the test data X.
