@@ -33,7 +33,7 @@ def test_lag_fit_transform_out_index(X, index_out):
     Xt = t.fit_transform(X)
 
     if index_out == "original":
-        assert Xt.index == X.index
+        assert Xt.index.equals(X.index)
     elif index_out == "extend":
         assert X.index.isin(Xt.index).all()
         assert len(Xt) == len(X) + 2
@@ -47,7 +47,7 @@ def test_lag_fit_transform_out_index(X, index_out):
 @pytest.mark.parametrize("lag", [2, [2, 4], [-1, 0, 5]])
 def test_lag_fit_transform_columns(X, index_out, lag):
     """Test that columns of fit_transform output behave as expected."""
-    t = Lag(lag=lag, index_out=index_out)
+    t = Lag(lags=lag, index_out=index_out)
     Xt = t.fit_transform(X)
 
     assert len(Xt.columns) == len(X.columns) * len(lag)
