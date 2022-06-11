@@ -1,40 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Lagging transformer."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""
-Extension template for transformers.
-
-Purpose of this implementation template:
-    quick implementation of new estimators following the template
-    NOT a concrete class to import! This is NOT a base class or concrete class!
-    This is to be used as a "fill-in" coding template.
-
-How to use this implementation template to implement a new estimator:
-- make a copy of the template in a suitable location, give it a descriptive name.
-- work through all the "todo" comments below
-- fill in code for mandatory methods, and optionally for optional methods
-- you can add more private methods, but do not override BaseEstimator's private methods
-    an easy way to be safe is to prefix your methods with "_custom"
-- change docstrings for functions and the file
-- ensure interface compatibility by sktime.utils.estimator_checks.check_estimator
-- once complete: use as a local library, or contribute to sktime via PR
-- more details: https://www.sktime.org/en/stable/developer_guide/add_estimators.html
-
-Mandatory implements:
-    fitting         - _fit(self, X, y=None)
-    transformation  - _transform(self, X, y=None)
-
-Optional implements:
-    inverse transformation      - _inverse_transform(self, X, y=None)
-    update                      - _update(self, X, y=None)
-    fitted parameter inspection - get_fitted_params()
-
-Testing - implement if sktime transformer (not needed locally):
-    get default parameters for test instance(s) - get_test_params()
-"""
-# todo: write an informative docstring for the file or module, remove the above
-# todo: add an appropriate copyright notice for your estimator
-#       estimators contributed to sktime should have the copyright notice at the top
-#       estimators of your own do not need to have permissive or BSD-3 copyright
 
 __author__ = ["fkiraly"]
 
@@ -321,10 +287,6 @@ class Lag(BaseTransformer):
         #  X_inv_transformed : Series of mtype pd.DataFrame
         #       inverse transformed version of X
 
-    # todo: consider implementing this, optional
-    # if not implementing, delete the _update method
-    # standard behaviour is "no update"
-    # also delete in the case where there is no fitting
     def _update(self, X, y=None):
         """Update transformer with X and y.
 
