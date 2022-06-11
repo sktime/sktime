@@ -122,7 +122,6 @@ class Lag(BaseTransformer):
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
-        self.NA_behaviour = NA_behaviour
         self.flatten_transform_index = flatten_transform_index
 
         if index_out not in ["shift", "extend", "original"]:
