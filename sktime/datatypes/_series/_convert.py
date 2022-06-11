@@ -51,6 +51,20 @@ for tp in ["pd.Series", "pd.DataFrame", "np.ndarray"]:
     convert_dict[(tp, tp, "Series")] = convert_identity
 
 
+def convert_UvS_to_UvS_strict_as_Series(obj: pd.Series, store=None) -> pd.Series:
+
+    if not isinstance(obj, pd.Series):
+        raise TypeError("input must be a pd.Series")
+
+    obj = obj.copy()
+    obj.name = None
+
+    return obj
+
+
+convert_dict[("pd.Series", "pd.Series", "Series")] = convert_UvS_to_UvS_strict_as_Series
+
+
 def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
 
     if not isinstance(obj, pd.Series):
