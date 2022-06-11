@@ -53,8 +53,6 @@ class Lag(BaseTransformer):
         "original" - only original indices are retained. Will usually create NA.
         "extend" - both original indices and shifted indices are retained.
             Will usually create NA, possibly many, if shifted/original do not intersect.
-    NA_behaviour : str, optional, one of "NA", "fill_value", "bfill", "nearest"
-        determines handling of NA that are possibly created, after they are created.
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "lagname__variablename"
         if False, columns are MultiIndex (lagname, variablename)
@@ -66,7 +64,7 @@ class Lag(BaseTransformer):
     >>> from sktime.transformations.series.lag import Lag
     >>> X = load_airline()
 
-    Single lag
+    Single lag will yield a time series with the same variables:
     >>> t = Lag(2)
     >>> Xt = t.fit_transform(X)
 
@@ -77,6 +75,16 @@ class Lag(BaseTransformer):
     The default setting of index_out will extend indices either side.
     To ensure that the index remains the same after transform, use index_out="original"
     >>> t = Lag([2, 4, -1], index_out="original")
+    >>> Xt = t.fit_transform(X)
+
+    The lag transformer may (and usually will) create NAs.
+    To deal with the NAs, pipeline with the Imputer:
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.series.lag import Lag
+    >>> X = load_airline()
+    >>>
+    >>> t = Lag([2, 4, -1]) * Imputer("nearest")
     >>> Xt = t.fit_transform(X)
     """
 
@@ -106,7 +114,6 @@ class Lag(BaseTransformer):
         lags=0,
         freq=None,
         index_out="extend",
-        NA_behaviour="NA",
         flatten_transform_index=True,
     ):
 
