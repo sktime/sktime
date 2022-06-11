@@ -127,6 +127,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         leaf_size=30,
         n_jobs=None,
     ):
+        self.n_neighbors = n_neighbors
+        self.weights = _check_weights(weights)
         self.distance = distance
         self.distance_params = distance_params
         if isinstance(self.distance, str):
@@ -145,7 +147,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             n_jobs=n_jobs,
         )
         BaseClassifier.__init__(self)
-        self.weights = _check_weights(weights)
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
