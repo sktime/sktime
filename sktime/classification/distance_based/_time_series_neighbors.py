@@ -208,7 +208,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         return neigh_ind
 
-    def _predict(self, X) -> np.ndarray:
+    def _predict(self, X):
         """Predict the class labels for the provided data.
 
         Parameters
