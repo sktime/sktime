@@ -38,6 +38,7 @@ Testing - implement if sktime transformer (not needed locally):
 
 __author__ = ["fkiraly"]
 
+from operator import index
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
@@ -55,6 +56,11 @@ class Lag(BaseTransformer):
 
     When multiple lags are provided, multiple column concatenated copies of the lagged
     time series will be created.
+    Names of columns are lagname__variablename, where lagname describes the lag/freq.
+
+    If data was provided in _fit or _update, Lag transformer memorizes those indices
+    and uses them for computing lagged values.
+    To use only data seen in transform, use the FitInTransform compositor.
 
     Parameters
     ----------
@@ -87,6 +93,15 @@ class Lag(BaseTransformer):
         if True, columns of return DataFrame are flat, by "lagname__variablename"
         if False, columns are MultiIndex (lagname, variablename)
         has no effect if return mtype is one without column names
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.series.lag import Lag
+    >>>
+    >>> X = load_airline()
+    >>> t = Lag(2)
+    >>> Xt = t.fit_transform(X)
     """
 
     _tags = {
@@ -125,6 +140,12 @@ class Lag(BaseTransformer):
         self.index_out = index_out
         self.NA_behaviour = NA_behaviour
         self.flatten_transform_index = flatten_transform_index
+
+        if index_out not in ["shift", "extend", "original"]:
+            raise ValueError(
+                'index_out must be one of the strings "shift", "extend", "original"'
+                f'but found {index_out}'
+            )
 
         # _lags and _freq are list-coerced variants of lags, freq
         if not isinstance(lags, list):
@@ -217,19 +238,28 @@ class Lag(BaseTransformer):
             if isinstance(lag, int) and isinstance(X.index, pd.RangeIndex):
                 Xt = X.copy()
                 Xt.index = X.index + lag
-                X_orig_shifted = X_orig_idx + lag
+                X_orig_idx_shifted = X_orig_idx + lag
             else:
+                X_orig_idx_shifted = X_orig_idx.shift(periods=lag, freq=freq)
+                if isinstance(lag, int) and freq is None:
+                    freq = "infer"
                 Xt = X.copy().shift(periods=lag, freq=freq)
-                X_orig_shifted = X_orig_idx.shift(periods=lag, freq=freq)
-
             # extend index to include original, if "extend" or "original"
             if index_out in ["extend", "original"]:
                 X_idx = pd.DataFrame(index=X_orig_idx)
                 Xt = Xt.combine_first(X_idx)
+            # sub-set to original plus shifted, if "extend"
+            # this is necessary, because we added indices from _X above
+            if index_out == "extend":
+                X_orig_idx_extended = X_orig_idx_shifted.union(X_orig_idx)
+                Xt = Xt.loc[X_orig_idx_extended]
             # sub-set to original, if "original"
             if index_out == "original":
                 Xt = Xt.loc[X_orig_idx]
-            # if none of the above happens, index is entirely shifted
+            # sub-set to shifted index, if "shifted"
+            # this is necessary, because we added indices from _X above
+            if index_out == "shifted":
+                Xt = Xt.loc[X_orig_idx_shifted]
 
             Xt_list.append(Xt)
 
