@@ -26,6 +26,7 @@ X_time_fixtures = [X_time_idx, X_time_idx_mv]
 
 index_outs = ["original", "extend", "shift"]
 
+
 @pytest.mark.parametrize("X", X_fixtures)
 @pytest.mark.parametrize("index_out", index_outs)
 def test_lag_fit_transform_out_index(X, index_out):
@@ -51,4 +52,4 @@ def test_lag_fit_transform_columns(X, index_out, lag):
     t = Lag(lag=lag, index_out=index_out)
     Xt = t.fit_transform(X)
 
-    assert len(Xt.columns) = len(X.columns) * len(lag)
+    assert len(Xt.columns) == len(X.columns) * len(lag)
