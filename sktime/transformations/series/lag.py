@@ -41,8 +41,7 @@ __author__ = ["fkiraly"]
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-
-# todo: add any necessary sktime internal imports here
+from sktime.utils.multiindex import flatten_multiindex
 
 
 class Lag(BaseTransformer):
@@ -84,6 +83,10 @@ class Lag(BaseTransformer):
             Will usually create NA, possibly many, if shifted/original do not intersect.
     NA_behaviour : str, optional, one of "NA", "fill_value", "bfill", "nearest"
         determines handling of NA that are possibly created, after they are created.
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "lagname__variablename"
+        if False, columns are MultiIndex (lagname, variablename)
+        has no effect if return mtype is one without column names
     """
 
     _tags = {
@@ -108,12 +111,20 @@ class Lag(BaseTransformer):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, lags=0, freq=None, index_out="extend", NA_behaviour="NA"):
+    def __init__(
+        self,
+        lags=0,
+        freq=None,
+        index_out="extend",
+        NA_behaviour="NA",
+        flatten_transform_index=True,
+    ):
 
         self.lags = lags
         self.freq = freq
         self.index_out = index_out
         self.NA_behaviour = NA_behaviour
+        self.flatten_transform_index = flatten_transform_index
 
         # _lags and _freq are list-coerced variants of lags, freq
         if not isinstance(lags, list):
@@ -194,18 +205,20 @@ class Lag(BaseTransformer):
         index_out = self.index_out
 
         X_orig_idx = X.index
-        X = X.combine_first(self._X)
+        X = X.combine_first(self._X).copy()
 
         shift_params = list(self._yield_shift_params())
+
+        Xt_list = []
 
         for lag, freq in shift_params:
             # need to deal separately with RangeIndex
             # because shift always cuts off the end values
             if isinstance(lag, int) and isinstance(X.index, pd.RangeIndex):
-                Xt = X
+                Xt = X.copy()
                 Xt.index = X_orig_idx + lag
             else:
-                Xt = X.shift(periods=lag, freq=freq)
+                Xt = X.copy().shift(periods=lag, freq=freq)
 
             # extend index to include original, if "extend" or "original"
             if index_out in ["extend", "original"]:
@@ -216,8 +229,19 @@ class Lag(BaseTransformer):
                 Xt = Xt.loc[X_orig_idx]
             # if none of the above happens, index is entirely shifted
 
-        return Xt
+            Xt_list.append(Xt)
 
+        if len(Xt_list) == 1:
+            Xt = Xt_list[0]
+        else:
+            lag_names = self._yield_shift_param_names()
+            Xt = pd.concat(
+                Xt_list, axis=1, keys=lag_names, names=["lag", "variable"]
+            )
+            if self.flatten_transform_index:
+                Xt.columns = flatten_multiindex(Xt.columns)
+
+        return Xt
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _inverse_transform method
