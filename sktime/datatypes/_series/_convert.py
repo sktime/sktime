@@ -58,12 +58,11 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
 
     res = pd.DataFrame(obj)
 
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == 1
-    ):
-        res.columns = store["columns"]
+    if isinstance(store, dict):
+        if ("columns" in store.keys() and len(store["columns"]) == 1):
+            res.columns = store["columns"]
+        else:
+            store["name"] = obj.name
 
     return res
 
@@ -79,13 +78,15 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     if len(obj.columns) != 1:
         raise ValueError("input must be univariate pd.DataFrame, with one column")
 
+    res = obj[obj.columns[0]]
+
     if isinstance(store, dict):
-        store["columns"] = obj.columns[[0]]
+        if "name" in store.keys():
+            res.name = store["name"]
+        else:
+            store["columns"] = obj.columns[[0]]
 
-    y = obj[obj.columns[0]]
-    y.name = None
-
-    return y
+    return res
 
 
 convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
