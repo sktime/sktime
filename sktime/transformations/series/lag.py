@@ -78,6 +78,7 @@ class Lag(BaseTransformer):
     >>> Xt = t.fit_transform(X)
 
     The lag transformer may (and usually will) create NAs.
+    (except when index_out="shift" and there is only a single lag, or in trivial cases)
     To deal with the NAs, pipeline with the Imputer:
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.series.impute import Imputer
