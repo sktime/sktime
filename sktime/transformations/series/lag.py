@@ -38,7 +38,6 @@ Testing - implement if sktime transformer (not needed locally):
 
 __author__ = ["fkiraly"]
 
-from operator import index
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
