@@ -50,4 +50,6 @@ def test_lag_fit_transform_columns(X, index_out, lag):
     t = Lag(lags=lag, index_out=index_out)
     Xt = t.fit_transform(X)
 
+    if isinstance(lag, list):
+        lag = [lag]
     assert len(Xt.columns) == len(X.columns) * len(lag)
