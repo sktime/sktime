@@ -13,12 +13,13 @@ from sktime.transformations.base import BaseTransformer
 
 
 class ExponentTransformer(BaseTransformer):
-    """Apply exponent transformation to a timeseries.
+    """Apply element-wise exponentiation transformation to a time series.
 
-    Transformation raises input series to the `power` provided. By default,
-    when offset="auto", a series with negative values is shifted prior to the
-    exponentiation to avoid potential errors of applying certain fractional
-    exponents to negative values.
+    Transformation performs the following operations element-wise:
+        * adds the constant `offset` (shift)
+        * raises to the `power` provided (exponentiation)
+    Offset="auto" computes offset as the smallest offset that ensure all elements
+    are non-negative before exponentiation.
 
     Parameters
     ----------
@@ -38,8 +39,9 @@ class ExponentTransformer(BaseTransformer):
     power : int or float
         User supplied power.
 
-    offset : int or float
+    offset : int or float, or iterable.
         User supplied offset value.
+        Scalar or 1D iterable with as many values as X columns in transform.
 
     See Also
     --------
@@ -76,7 +78,7 @@ class ExponentTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-in-transform": False,
+        "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "univariate-only": False,
         "capability:inverse_transform": True,
@@ -85,48 +87,19 @@ class ExponentTransformer(BaseTransformer):
     def __init__(self, power=0.5, offset="auto"):
         self.power = power
         self.offset = offset
-        self._offset_value = None
 
-        super(ExponentTransformer, self).__init__()
-
-    def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : pd.Series or pd.DataFrame
-            Data to fit transform to
-        y : ignored argument for interface compatibility
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        Z = X
         if not isinstance(self.power, (int, float)):
             raise ValueError(
                 f"Expected `power` to be int or float, but found {type(self.power)}."
             )
-        if self.offset == "auto":
-            if isinstance(Z, pd.Series):
-                min_values = Z.min()
-            else:
-                min_values = Z.min(axis=0).values.reshape(1, -1)
-            self._offset_value = np.where(min_values < 0, np.abs(min_values), 0)
 
-        elif isinstance(self.offset, (int, float)):
-            self._offset_value = self.offset
-
-        else:
+        offset_types = (int, float, pd.Series, np.ndarray)
+        if not isinstance(offset, offset_types) and offset != "auto":
             raise ValueError(
                 f"Expected `offset` to be int or float, but found {type(self.offset)}."
             )
 
-        return self
+        super(ExponentTransformer, self).__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -145,9 +118,8 @@ class ExponentTransformer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
-        Zt = X.copy()
-        Xt = np.power(Zt + self._offset_value, self.power)
-
+        offset = self._get_offset(X)
+        Xt = X.add(offset).pow(self.power)
         return Xt
 
     def _inverse_transform(self, X, y=None):
@@ -165,18 +137,35 @@ class ExponentTransformer(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        Z_inv = X.copy()
-        Xt = np.power(Z_inv, 1.0 / self.power) - self._offset_value
+        offset = self._get_offset(X)
+        Xt = X.pow(1.0 / self.power).add(-offset)
         return Xt
+
+    def _get_offset(self, X):
+        if self.offset == "auto":
+            Xmin = X.min()
+            offset = -Xmin * (Xmin < 0)
+        else:
+            offset = self.offset
+
+        if isinstance(X, pd.DataFrame):
+            if isinstance(offset, (int, float)):
+                offset = pd.Series(offset, index=X.columns)
+            else:
+                offset = pd.Series(offset)
+                offset.index = X.columns
+
+        return offset
 
 
 class SqrtTransformer(ExponentTransformer):
-    """Apply square root transformation to a timeseries.
+    """Apply element-sise square root transformation to a time series.
 
-    Transformation take the square root of the input series. By default,
-    when offset="auto", a series with negative values is shifted prior to the
-    exponentiation to avoid potential errors of applying square root
-    transformation to negative values.
+    Transformation performs the following operations element-wise:
+        * adds the constant `offset` (shift)
+        * applies the square root
+    Offset="auto" computes offset as the smallest offset that ensure all elements
+    are non-negative before taking the square root.
 
     Parameters
     ----------

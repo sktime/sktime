@@ -4,13 +4,13 @@
 """Implements wrapper for using HCrystalBall forecastsers in sktime."""
 
 import pandas as pd
+from deprecated.sphinx import deprecated
 from sklearn.base import clone
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("hcrystalball")
+_check_soft_dependencies("hcrystalball", severity="warning")
 
 
 def _check_fh(fh, cutoff):
@@ -97,6 +97,9 @@ def _adapt_y_pred(y_pred):
     return y_pred.iloc[:, 0]
 
 
+@deprecated(
+    version="v0.12.0", reason="Class HCrystalBallForecaster will be removed in v0.13.0"
+)
 class HCrystalBallForecaster(BaseForecaster):
     """Implement wrapper to allow use of HCrystalBall forecasters in sktime.
 
@@ -113,6 +116,7 @@ class HCrystalBallForecaster(BaseForecaster):
     }
 
     def __init__(self, model):
+        _check_soft_dependencies("hcrystalball", severity="error", object=self)
         self.model = model
         super(HCrystalBallForecaster, self).__init__()
 
@@ -138,7 +142,7 @@ class HCrystalBallForecaster(BaseForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Make forecasts for the given forecast horizon.
 
         Parameters
@@ -147,16 +151,11 @@ class HCrystalBallForecaster(BaseForecaster):
             The forecast horizon with the steps ahead to predict
         X : pd.DataFrame, optional (default=None)
             Exogenous variables (ignored)
-        return_pred_int : bool, optional (default=False)
-            Return the prediction intervals for the forecast.
-        alpha : float or list, optional (default=0.95)
-            If alpha is iterable, multiple intervals will be calculated.
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions for the forecast
-        y_pred_int : pd.DataFrame
         """
         X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
         y_pred = self.model_.predict(X=X_pred)
@@ -168,3 +167,23 @@ class HCrystalBallForecaster(BaseForecaster):
 
     def _compute_pred_err(self, alphas):
         raise NotImplementedError()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from hcrystalball.wrappers import HoltSmoothingWrapper
+
+        params = {"model": HoltSmoothingWrapper()}
+        return params

@@ -104,7 +104,10 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
     # from-fixture is not None and not lossy
     cond3 = cond2 and from_fixture[1] is not None and not from_fixture[1]
 
-    msg = f"conversion {from_mtype} to {to_mtype} failed for fixture {fixture_index}"
+    msg = (
+        f"conversion {from_mtype} to {to_mtype} failed for fixture {fixture_index}, "
+        "expected result (y) and converted result (x) are not equal because: "
+    )
 
     # test that converted from-fixture equals to-fixture
     if cond1 and cond2 and cond3:
@@ -116,7 +119,9 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
             as_scitype=scitype,
         )
 
-        assert deep_equals(
+        equals, deep_equals_msg = deep_equals(
             converted_fixture_i,
             to_fixture[0],
-        ), msg
+            return_msg=True,
+        )
+        assert equals, msg + deep_equals_msg

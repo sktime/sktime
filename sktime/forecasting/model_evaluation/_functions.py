@@ -3,14 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["Martin Walter", "Markus Löning"]
+__author__ = ["aiwalter", "mloning"]
 __all__ = ["evaluate"]
 
 import time
 
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import (
@@ -29,7 +28,6 @@ def evaluate(
     X=None,
     strategy="refit",
     scoring=None,
-    fit_params=None,
     return_data=False,
 ):
     """Evaluate forecaster using timeseries cross-validation.
@@ -51,8 +49,6 @@ def evaluate(
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
         If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
-    fit_params : dict, default=None
-        Parameters passed to the `fit` call of the forecaster.
     return_data : bool, default=False
         Returns three additional columns in the DataFrame, by default False.
         The cells of the columns contain each a pd.Series for y_train,
@@ -87,13 +83,12 @@ def evaluate(
         enforce_multivariate=forecaster.get_tag("scitype:y") == "multivariate",
     )
     X = check_X(X)
-    fit_params = {} if fit_params is None else fit_params
 
     # Define score name.
     score_name = "test_" + scoring.name
 
     # Initialize dataframe.
-    results = pd.DataFrame()
+    results = []
 
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
@@ -106,23 +101,41 @@ def evaluate(
         # fit/update
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
-            forecaster = clone(forecaster)
-            forecaster.fit(y_train, X_train, fh=fh, **fit_params)
+            forecaster = forecaster.clone()
+            forecaster.fit(y_train, X_train, fh=fh)
 
         else:  # if strategy == "update":
             forecaster.update(y_train, X_train)
         fit_time = time.perf_counter() - start_fit
 
+        pred_type = {
+            "pred_quantiles": "forecaster.predict_quantiles",
+            "pred_intervals": "forecaster.predict_interval",
+            "pred_proba": "forecaster.predict_proba",
+            None: "forecaster.predict",
+        }
         # predict
         start_pred = time.perf_counter()
-        y_pred = forecaster.predict(fh, X=X_test)
+
+        if hasattr(scoring, "metric_args"):
+            metric_args = scoring.metric_args
+
+        try:
+            scitype = scoring.get_tag("scitype:y_pred")
+        except ValueError:
+            # If no scitype exists then metric is not proba and no args needed
+            scitype = None
+            metric_args = {}
+
+        y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
+
         pred_time = time.perf_counter() - start_pred
 
         # score
         score = scoring(y_test, y_pred, y_train=y_train)
 
         # save results
-        results = results.append(
+        results.append(
             {
                 score_name: score,
                 "fit_time": fit_time,
@@ -132,10 +145,10 @@ def evaluate(
                 "y_train": y_train if return_data else np.nan,
                 "y_test": y_test if return_data else np.nan,
                 "y_pred": y_pred if return_data else np.nan,
-            },
-            ignore_index=True,
+            }
         )
 
+    results = pd.DataFrame(results)
     # post-processing of results
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])

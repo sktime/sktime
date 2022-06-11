@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
-from sktime.distances._distance import _METRIC_INFOS, distance
+from sktime.distances._distance import _METRIC_INFOS, distance, distance_factory
 from sktime.distances.base import MetricInfo, NumbaDistance
 from sktime.distances.tests._expected_results import _expected_distance_results
 from sktime.distances.tests._shared_tests import (
@@ -36,7 +36,7 @@ def _validate_distance_result(
     Parameters
     ----------
     x: np.ndarray
-        First timeseries.
+        First time series.
     y: np.ndarray
         Second timeseries.
     metric_str: str
@@ -52,6 +52,8 @@ def _validate_distance_result(
     expected_result:
         float that is the expected result of tests.
     """
+    if expected_result is None:
+        return
     if kwargs_dict is None:
         kwargs_dict = {}
     metric_str_result = distance(x, y, metric=metric_str, **kwargs_dict)
@@ -133,11 +135,13 @@ def _validate_distance_result(
         )
 
     metric_str_result_to_self = distance(x, x, metric=metric_str, **kwargs_dict)
-    assert metric_str_result_to_self == 0, (
-        f"The distance when given two of the same timeseries e.g."
-        f"distance(x, x, ...), result should equal 0. This criteria is not met for "
-        f"the metric {metric_str}. The result was {metric_str_result_to_self}"
-    )
+
+    if metric_str != "twe":
+        assert metric_str_result_to_self == 0, (
+            f"The distance when given two of the same time series e.g."
+            f"distance(x, x, ...), result should equal 0. This criteria is not met for "
+            f"the metric {metric_str}. The result was {metric_str_result_to_self}"
+        )
 
     if expected_result is not None:
         assert_almost_equal(metric_str_result, expected_result, 5)
@@ -178,16 +182,6 @@ def test_distance(dist: MetricInfo) -> None:
     )
 
     _validate_distance_result(
-        x=create_test_distance_numpy(10, 1),
-        y=create_test_distance_numpy(10, 1, random_state=2),
-        metric_str=name,
-        distance_factory=distance_factory,
-        distance_function=distance_function,
-        distance_numba_class=distance_numba_class,
-        expected_result=_expected_distance_results[name][1],
-    )
-
-    _validate_distance_result(
         x=create_test_distance_numpy(10, 10),
         y=create_test_distance_numpy(10, 10, random_state=2),
         metric_str=name,
@@ -206,3 +200,20 @@ def test_metric_parameters():
 def test_incorrect_parameters():
     """Ensure incorrect parameters raise errors."""
     _test_incorrect_parameters(distance)
+
+
+def test_distance_factory_1d():
+    """Test distance factory works with 1d and 2d."""
+    x = create_test_distance_numpy(100)
+    y = create_test_distance_numpy(100, random_state=2)
+    callable = distance_factory(x, y, metric="dtw")
+
+    first = callable(x, y)
+
+    x = create_test_distance_numpy(10, 100)
+    y = create_test_distance_numpy(10, 100, random_state=2)
+
+    second = callable(x, y)
+
+    assert first == 14.906015491572047
+    assert second == 422.81946268212846

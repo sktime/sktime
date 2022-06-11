@@ -85,7 +85,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(return_X_y=True, split="train")
     >>> X_test, y_test = load_unit_test(return_X_y=True, split="test")
-    >>> classifier = KNeighborsTimeSeriesClassifier()
+    >>> classifier = KNeighborsTimeSeriesClassifier(distance="euclidean")
     >>> classifier.fit(X_train, y_train)
     KNeighborsTimeSeriesClassifier(...)
     >>> y_pred = classifier.predict(X_test)
@@ -94,6 +94,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
+        "classifier_type": "distance",
     }
 
     def __init__(
@@ -153,11 +154,15 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     def _fit(self, X, y):
         """Fit the model using X as training data and y as target values.
 
+        Input number of cases (n), with series of dimension (d), each series length (d).
+
         Parameters
         ----------
-        X : sktime-compatible Panel data format, with n_samples series
+        X : sktime-format pandas dataframe with shape(n,d),
+            or numpy ndarray with shape(n,d,m)
+
         y : {array-like, sparse matrix}
-            Target values of shape = [n_samples]
+            Target values of shape = [n]
         """
         # store full data as indexed X
         self._X = X
@@ -192,6 +197,8 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         ind : array
             Indices of the nearest points in the population matrix.
         """
+        self.check_is_fitted()
+
         # self._X should be the stored _X
         dist_mat = self._distance(X, self._X)
 
@@ -201,7 +208,7 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
 
         return neigh_ind
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predict the class labels for the provided data.
 
         Parameters

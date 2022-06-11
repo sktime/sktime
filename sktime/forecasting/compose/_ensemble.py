@@ -16,7 +16,6 @@ from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils.stats import (
@@ -202,15 +201,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Return the predicted reduction.
 
         Parameters
         ----------
         fh : int, list or np.array, optional, default=None
         X : pd.DataFrame
-        return_pred_int : boolean, optional, default=False
-        alpha : fh : float, default=DEFAULT_ALPHA
 
         Returns
         -------
@@ -221,6 +218,27 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        return params
 
 
 def _get_weights(regressor):
@@ -316,15 +334,13 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y, X, fh)
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Return the predicted reduction.
 
         Parameters
         ----------
         fh : int, list or np.array, optional, default=None
         X : pd.DataFrame
-        return_pred_int : boolean, optional, default=False
-        alpha : fh : float, default=DEFAULT_ALPHA
 
         Returns
         -------
@@ -335,6 +351,27 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred = _aggregate(y=y_pred, aggfunc=self.aggfunc, weights=self.weights)
 
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.forecasting.naive import NaiveForecaster
+
+        FORECASTER = NaiveForecaster()
+        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        return params
 
 
 def _aggregate(y, aggfunc, weights):

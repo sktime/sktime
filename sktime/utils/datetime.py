@@ -6,15 +6,18 @@ __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 import re
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation.series import check_time_index
+from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
-def _coerce_duration_to_int(duration, freq=None):
+def _coerce_duration_to_int(
+    duration: Union[int, pd.Timedelta, pd.tseries.offsets.BaseOffset, pd.Index],
+    freq: str = None,
+) -> Union[int, pd.Index]:
     """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
@@ -31,13 +34,13 @@ def _coerce_duration_to_int(duration, freq=None):
     """
     if isinstance(duration, int):
         return duration
-    elif isinstance(duration, pd.tseries.offsets.DateOffset):
-        return duration.n
+    elif isinstance(duration, pd.tseries.offsets.BaseOffset):
+        return int(duration.n / _get_intervals_count_and_unit(freq)[0])
     elif isinstance(duration, pd.Index) and isinstance(
         duration[0], pd.tseries.offsets.BaseOffset
     ):
         count = _get_intervals_count_and_unit(freq)[0]
-        return pd.Int64Index([d.n / count for d in duration])
+        return pd.Index([d.n / count for d in duration], dtype=int)
     elif isinstance(duration, (pd.Timedelta, pd.TimedeltaIndex)):
         count, unit = _get_intervals_count_and_unit(freq)
         # integer conversion only works reliably with non-ambiguous units (
@@ -100,7 +103,7 @@ def _shift(x, by=1):
         Shifted time point
     """
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
-    assert isinstance(by, (int, np.integer, pd.Int64Index)), type(by)
+    assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
     if isinstance(x, pd.Timestamp):
         if not hasattr(x, "freq") or x.freq is None:
             raise ValueError("No `freq` information available")

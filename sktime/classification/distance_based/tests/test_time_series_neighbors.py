@@ -11,9 +11,10 @@ distance_functions = [
     "euclidean",
     "dtw",
     "wdtw",
-    # "msm",
+    "msm",
     "erp",
     "lcss",
+    "edr",
 ]
 
 # expected correct on test set using default parameters.
@@ -24,6 +25,7 @@ expected_correct = {
     "msm": 20,
     "erp": 12,
     "lcss": 13,
+    "edr": 20,
 }
 
 

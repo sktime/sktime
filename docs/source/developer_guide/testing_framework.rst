@@ -14,39 +14,36 @@ Test module architecture
 
 ``sktime`` testing happens on three layers, roughly corresponding to the inheritance layers of estimators.
 
-* "package level": testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in
-``tests/test_all_estimators.py``
-* "module level": testing interface compliance of concrete estimators with their scitype base class, for instance
-``forecasting/tests/test_all_forecasters.py``
-* "low level": testing individual functionality of estimators or other code, in individual files in ``tests`` folders
+* "package level": testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in ``tests/test_all_estimators.py``
+
+* "module level": testing interface compliance of concrete estimators with their scitype base class, for instance ``forecasting/tests/test_all_forecasters.py``
+
+* "low level": testing individual functionality of estimators or other code, in individual files in ``tests`` folders.
 
 Module conventions are as follows:
 
-* each module contains a ``tests`` folder, which contains tests specific to that module.
-Sub-modules may also contain ``tests`` folders.
+* Each module contains a ``tests`` folder, which contains tests specific to that module.
+* Sub-modules may also contain ``tests`` folders.
 * ``tests`` folders may contain ``_config.py`` files to collect test configuration settings for that module
 * generic utilities for tests are located in the module ``utils._testing``.
- Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
-* each test module corresponding to a learning task and estimator scitype should contain
-module level tests in a test ``test_all_[name_of_scitype].py`` file that tests interface compliance of all estimators adhering to the scitype.
- For instance, ``forecasting/tests/test_all_forecasters.py``, or ``distances/tests/test_all_dist_kernels.py``.
+* Tests for these utilities should be contained in the ``utils._testing.tests`` folder.
+* Each test module corresponding to a learning task and estimator scitype should containmodule level tests in a test ``test_all_[name_of_scitype].py`` file that tests   interface compliance of all estimators adhering to the scitype.
+  For instance, ``forecasting/tests/test_all_forecasters.py``, or    ``distances/tests/test_all_dist_kernels.py``.
 * Learning task specific tests should not duplicate package level, generic estimator tests in ``test_all_estimators.py``
 
 Test code architecture
 ----------------------
 
-.. _pytestuse: https://docs.pytest.org/en/6.2.x/example/index.html
-
 ``sktime`` test files should use best ``pytest`` practice such as fixtures or test parameterization where possible,
-instead of custom logic, see `pytest documentation <pytestuse>`_.
+instead of custom logic, see `pytest documentation`_.
+
+.. _pytest documentation: https://docs.pytest.org/en/6.2.x/example/index.html
 
 Estimator tests use ``sktime``'s framework plug-in to ``pytest_generate_tests``,
 which parameterizes estimator fixtures and data input scenarios.
 
 An illustrative example
 ~~~~~~~~~~~~~~~~~~~~~~~
-
-.. _pytestgentests: https://docs.pytest.org/en/6.2.x/parametrize.html#basic-pytest-generate-tests-example
 
 Starting with an example:
 
@@ -64,11 +61,15 @@ where the loop is orchestrated by ``pytest`` parameterization in
 ``pytest_generate_tests``, which automatically decorates the test with a suitable loop.
 Notably, loops in the test do not need to be written by the developer,
 if they use a fixture name (such as ``estimator_instance``) which already has a loop defined.
-See below for more details, or the `pytest documentation on the topic <pytestgentests>`_.
+See below for more details, or the `pytest documentation on the topic`_.
+
+.. _pytest documentation on the topic: https://docs.pytest.org/en/6.2.x/parametrize.html#basic-pytest-generate-tests-example
 
 The ``sktime`` plug-in for ``pytest`` generates the tuples of fixture values for this.
 In the above example, we loop over the following fixtures lists:
+
 * ``estimator_instance`` over estimator instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
+
 * ``scenario`` objects, which encodes data inputs and method call sequences to ``estimator_instance`` (explained in further detail below).
 
 The ``sktime`` plug-in ensures that only those ``scenarios`` are retrieved that are
@@ -86,27 +87,28 @@ since inputs to ``fit`` of a classifier will differ to an input to ``fit`` of a 
 Parameterized fixtures
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. _pytestfixtparam: https://docs.pytest.org/en/6.2.x/parametrize.html
-
 ``sktime`` uses ``pytest`` fixture parameterization to execute tests in a loop over fixtures,
 for instance running all interface compatibility tests for all estimators.
-See the `pytest documentation on fixture parameterization <pytestfixtparam>`_ for an explanation of fixture parameterization
-in general.
+See the `pytest documentation on fixture parameterization`_ in general for an explanation of fixture parameterization.
+
+.. _pytest documentation on fixture parameterization: https://docs.pytest.org/en/6.2.x/parametrize.html
 
 Implementation-wise, loops over fixtures is orchestrated by ``pytest`` parameterization in
 ``pytest_generate_tests``, which automatically decorates every test by
 a ``mark.parameterize`` based on the test arguments (``estimator_instance`` and ``scenario`` in the above example).
 This is in line with standard use of ``pytest_generate_tests``, see the section in the ``pytest``
-documentation on `advanced fixture parameterization <pytestgentests>`_ using ``pytest_generate_tests``.
+documentation on `advanced fixture parameterization`_ using ``pytest_generate_tests``.
+
+.. _advanced fixture parameterization: https://docs.pytest.org/en/6.2.x/parametrize.html#basic-pytest-generate-tests-example
 
 Currently, the ``sktime`` testing framework provides automated fixture parameterization
 via ``mark.parameterize`` for the following fixtures, in module level tests:
 
 * ``estimator``: all estimator classes, inheriting from the base class of the given module.
-In the package level tests ``test_all_estimators``, that base class is ``BaseEstimator``.
+* In the package level tests ``test_all_estimators``, that base class is ``BaseEstimator``.
 * ``estimator_instance``: all estimator test instances, obtained from all ``sktime`` estimators via ``create_test_instances_and_names``
 * ``scenario``: test scenarios, applicable to ``estimator`` or ``estimator_instance``.
-   The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
+*  The scenarios are specified in ``utils/_testing/scenarios_[estimator_scitype]``.
 
 Further parameterization may happen for individual tests, the scope is usually explained in the test docstrings.
 
@@ -161,13 +163,15 @@ Depending on the primary change that is tested, the changes to the testing modul
 be shallow or deep. In decreasing order of commonality:
 
 * When adding new estimators or utility functionality, write low level tests that check correctness of the estimator.
-These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
-New estimators are also automatically discovered and looped over by the existing module and package level tests.
-* Introducing or changing base class level interface points will typically require addition of module level tests,
-and addition of, or modification to scenarios with functionality specific to these interface points.
-Rarely, this may require changes package level tests.
-* Major interface changes or addition of modules may require writing of entire test suites,
-and changes or additions to package level tests.
+
+* These typically use only the simplest idioms in ``pytest`` (e.g., fixture parameterization).
+
+* New estimators are also automatically discovered and looped over by the existing module and package level tests.
+
+* Introducing or changing base class level interface points will typically require addition of module level tests, and addition of, or modification to scenarios with functionality specific to these interface points.Rarely, this may require changes package level tests.
+
+* Major interface changes or addition of modules may require writing of entire test suites, and changes or additions to package level tests.
+
 
 Adding low level tests
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -179,8 +183,11 @@ Examples should be located in the docstring of the class or function added.
 For an added estimator of name ``estimator_name``, the test file should be called ``test_estimator_name.py``.
 
 Useful functionality to write tests:
+
 * example fixture generation, via ``datatypes.get_examples``
+
 * data format checkers in ``datatypes``: ``check_is_mtype``, ``check_is_scitype``, ``check_raise``
+
 * miscellaneous utilities in ``utils``, especially in ``_testing``
 
 Escaping tests
@@ -222,19 +229,26 @@ In contrast, fixtures used throughout module or package level tests should typic
 fixture generation process called by ``pytest_generate_tests``.
 
 This requires:
+
 * adding a function ``_generate_[variablename](test_name, **kwargs)``, as described below
+
 * assigning the function to ``generator_dict["variablename"]``
+
 * adding the new variable in the ``fixture_sequence`` list in ``pytest_generate_tests``
 
 The function ``_generate_[variable_name](test_name, **kwargs)`` should return two objects:
+
 * a list of fixture to loop over, to substitute for ``variable_name`` when appearing in a test signature
+
 * a list of names of equal length, i-th element used as a name for the i-th fixture in test logs
 
 The function has access to:
+
 * ``test_name``, the name of the test the variable is called in.
 This can be used to customize the list of fixtures for specific tests,
 although this is meant for generic behaviour mainly.
 One-off escapes and similar should be avoided here, and instead dealt with ``xfail`` and similar.
+
 * the value of the fixture variables that appear earlier in ``fixture_sequence``, in ``kwargs``.
 For instance, the value of ``estimator_instance``, if this is a variable used in the test.
 This can be used to make the list of fixtures for ``variable_name`` dependent on the value of other fixtures variables
@@ -256,8 +270,9 @@ All scenarios inherit from a base class for that scitype, e.g., ``ForecasterTest
 This base class defines generics such as ``is_applicable``, or tag handling, for all scenarios of the same type.
 
 Scenarios should usually define:
+
 * an ``args`` parameter: a dictionary, with arbitrary keys (usually names of methods).
-  The ``args`` parameter may be set as a class variable, or set by the contructor.
+* The ``args`` parameter may be set as a class variable, or set by the contructor.
 * optionally, a ``default_method_sequence`` and a ``default_arg_sequence``, lists of strings.
   These define the sequence in which methods are called, with which argument set,
   if ``run`` is called. Both may be class variables, or object variable set in the constructor.

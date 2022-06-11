@@ -207,4 +207,5 @@ dependencies listed in
 
    .. code:: bash
 
-      make docs
+      cd docs
+      make html

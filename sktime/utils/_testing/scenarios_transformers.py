@@ -23,6 +23,7 @@ from sktime.transformations.base import (
 )
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
 
@@ -89,8 +90,12 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
         # applicable only if number of variables in y complies with scitype:y
         is_univariate = self.get_tag("X_univariate")
-
         if not is_univariate and get_tag(obj, "univariate-only"):
+            return False
+
+        # if transformer requires y, the scenario also must pass y
+        has_y = self.get_tag("has_y")
+        if not has_y and get_tag(obj, "requires_y"):
             return False
 
         # the case that we would need to vectorize with y, skip
@@ -161,13 +166,13 @@ class TransformerTestScenario(TestScenario, BaseObject):
             if s2p:
                 args = {"X": _make_primitives(random_state=RAND_SEED)}
             elif s2s:
-                args = {"X": _make_series(n_timepoints=20, random_state=RAND_SEED)}
+                args = {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)}
             elif p2t:
                 args = {"X": _make_tabular_X(n_instances=7, random_state=RAND_SEED)}
             elif p2p:
                 args = {
                     "X": _make_panel_X(
-                        n_instances=7, n_timepoints=20, random_state=RAND_SEED
+                        n_instances=7, n_timepoints=10, random_state=RAND_SEED
                     )
                 }
             else:
@@ -186,6 +191,12 @@ class TransformerTestScenario(TestScenario, BaseObject):
         return args
 
 
+X_series = _make_series(n_timepoints=10, random_state=RAND_SEED)
+X_panel = _make_panel_X(
+    n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+)
+
+
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Series X."""
 
@@ -193,11 +204,11 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
         "X_scitype": "Series",
         "X_univariate": True,
         "has_y": False,
-        "pre-refactor": True,
+        "is_enabled": True,
     }
 
     args = {
-        "fit": {"X": _make_series(n_timepoints=20, random_state=RAND_SEED)},
+        "fit": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
         "transform": {"X": _make_series(n_timepoints=10, random_state=RAND_SEED)},
         # "inverse_transform": {"X": _make_series(n_timepoints=10)},
     }
@@ -207,11 +218,16 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
 class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Series X."""
 
-    _tags = {"X_scitype": "Series", "X_univariate": False, "has_y": False}
+    _tags = {
+        "X_scitype": "Series",
+        "X_univariate": False,
+        "has_y": False,
+        "is_enabled": True,
+    }
 
     args = {
         "fit": {
-            "X": _make_series(n_columns=2, n_timepoints=20, random_state=RAND_SEED)
+            "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
         },
         "transform": {
             "X": _make_series(n_columns=2, n_timepoints=10, random_state=RAND_SEED)
@@ -223,17 +239,22 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
 class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": True, "has_y": False}
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "has_y": False,
+        "is_enabled": False,
+    }
 
     args = {
         "fit": {
             "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=20, random_state=RAND_SEED
+                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
             )
         },
         "transform": {
             "X": _make_panel_X(
-                n_instances=3, n_columns=1, n_timepoints=10, random_state=RAND_SEED
+                n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
             )
         },
     }
@@ -243,32 +264,98 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
 class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
     """Fit/transform, multivariate Panel X."""
 
-    _tags = {"X_scitype": "Panel", "X_univariate": False, "has_y": False}
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": False,
+        "has_y": False,
+        "is_enabled": False,
+    }
 
     args = {
-        "fit": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=2, n_timepoints=20)},
+        "fit": {
+            "X": _make_panel_X(
+                n_instances=7, n_columns=2, n_timepoints=10, random_state=RAND_SEED
+            )
+        },
+        "transform": {
+            "X": _make_panel_X(
+                n_instances=7, n_columns=2, n_timepoints=10, random_state=RAND_SEED
+            )
+        },
     }
     default_method_sequence = ["fit", "transform"]
 
 
 class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
-    """Fit/transform, multivariate Panel X."""
+    """Fit/transform, multivariate Panel X, with y in fit and transform."""
 
     _tags = {
         "X_scitype": "Panel",
         "X_univariate": True,
-        "pre-refactor": True,
+        "is_enabled": True,
         "has_y": True,
         "y_scitype": "classes",
     }
 
     args = {
         "fit": {
-            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20),
+            "X": _make_panel_X(
+                n_instances=7,
+                n_columns=1,
+                n_timepoints=10,
+                all_positive=True,
+                random_state=RAND_SEED,
+            ),
             "y": _make_classification_y(n_instances=7, n_classes=2),
         },
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=20)},
+        "transform": {
+            "X": _make_panel_X(
+                n_instances=7,
+                n_columns=1,
+                n_timepoints=10,
+                all_positive=True,
+                random_state=RAND_SEED,
+            ),
+            "y": _make_classification_y(n_instances=7, n_classes=2),
+        },
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestScenario):
+    """Fit/transform, multivariate Panel X, with y in fit but not in transform."""
+
+    _tags = {
+        "X_scitype": "Panel",
+        "X_univariate": True,
+        "is_enabled": False,
+        "has_y": True,
+        "y_scitype": "classes",
+    }
+
+    args = {
+        "fit": {
+            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10),
+            "y": _make_classification_y(n_instances=7, n_classes=2),
+        },
+        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=10)},
+    }
+    default_method_sequence = ["fit", "transform"]
+
+
+class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
+    """Fit/transform, univariate Hierarchical X."""
+
+    _tags = {
+        "X_scitype": "Hierarchical",
+        "X_univariate": True,
+        "is_enabled": False,
+        "has_y": False,
+    }
+
+    args = {
+        "fit": {"X": _make_hierarchical(random_state=RAND_SEED)},
+        "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1)},
     }
     default_method_sequence = ["fit", "transform"]
 
@@ -284,4 +371,6 @@ scenarios_transformers = [
     TransformerFitTransformPanelUnivariate,
     TransformerFitTransformPanelMultivariate,
     TransformerFitTransformPanelUnivariateWithClassY,
+    TransformerFitTransformPanelUnivariateWithClassYOnlyFit,
+    TransformerFitTransformHierarchicalUnivariate,
 ]

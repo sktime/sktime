@@ -55,8 +55,8 @@ To install ``sktime`` with maximum dependencies, including soft dependencies, in
 
     conda install -c conda-forge sktime-all-extras
 
-Note: currently this does not include dependencies ``catch-22``, ``pmdarima``, and ``tbats``.
-As these packages are not available on ``conda-forge``, they must be installed via ``pip`` if desired.
+Note: currently this does not include the dependency ``catch-22``.
+As this package is not available on ``conda-forge``, it must be installed via ``pip`` if desired.
 Contributions to remedy this situation are appreciated.
 
 
@@ -217,7 +217,7 @@ In the ``anaconda prompt`` terminal:
    2. :code:`conda install -c conda-forge prophet`
    3. :code:`conda install -c conda-forge scipy`
 
-   If you fail to satisfy all the requirements see the troubleshooting section.
+   If you fail to satisfy all the requirements see the `troubleshooting section <https://www.sktime.org/en/stable/installation.html#release-versions-troubleshooting>`_.
 
 5. Build an editable version of sktime :code:`pip install -e .[all_extras,dev]`
 6. If everything has worked you should see message "successfully installed sktime"

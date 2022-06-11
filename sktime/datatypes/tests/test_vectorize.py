@@ -4,12 +4,13 @@
 __author__ = ["fkiraly"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
-from sktime.datatypes._check import check_is_mtype
+from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._vectorize import VectorizedDF
+from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.utils._testing.deep_equals import deep_equals
 
 SCITYPES = ["Panel", "Hierarchical"]
@@ -29,6 +30,7 @@ def _get_all_mtypes_for_scitype(scitype):
     if scitype not in [s[0] for s in SCITYPE_REGISTER]:
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
     mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
+    mtypes = [mtype for mtype in mtypes if mtype not in AMBIGUOUS_MTYPES]
 
     if len(mtypes) == 0:
         # if there are no mtypes, this must have been reached by mistake/bug
@@ -80,7 +82,8 @@ def _generate_scitype_mtype_fixtureindex_combinations():
         n_fixtures = len(get_examples(mtype=mtype, as_scitype=scitype))
 
         for i in range(n_fixtures):
-            sci_mtype_index_tuples += [(scitype, mtype, i)]
+            if get_examples(mtype=mtype, as_scitype=scitype).get(i) is not None:
+                sci_mtype_index_tuples += [(scitype, mtype, i)]
 
     return sci_mtype_index_tuples
 
@@ -319,3 +322,41 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as):
 
     # reconstructed fixture should equal original fixture if convert_back
     assert deep_equals(X_vect.reconstruct(X_list, convert_back=True), fixture)
+
+
+@pytest.mark.parametrize(
+    "item, freq",
+    [
+        (
+            pd.Series(
+                data=1,
+                index=pd.DatetimeIndex(
+                    ["2000-01-01", "2000-01-02", "2000-01-03", "2000-01-04"], freq="D"
+                ),
+            ),
+            "D",
+        ),
+        (
+            pd.Series(
+                data=1,
+                index=pd.DatetimeIndex(
+                    ["2000-01-01", "2000-01-02", "2000-01-03", "2000-01-04"], freq=None
+                ),
+            ),
+            "D",
+        ),
+        (
+            pd.Series(
+                data=1,
+                index=pd.DatetimeIndex(
+                    ["2000-01-01", "2000-01-03", "2000-01-03", "2000-01-09"], freq=None
+                ),
+            ),
+            None,
+        ),
+    ],
+)
+def test_enforce_index_freq(item, freq):
+    """Tests that enforce freq infers the right frequency."""
+    item = _enforce_index_freq(item)
+    assert item.index.freq == freq

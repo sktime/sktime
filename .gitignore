@@ -43,6 +43,7 @@ sktime/datasets/local_data/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+pip-wheel-metadata/
 
 # Unit test / coverage reports
 htmlcov/
@@ -51,7 +52,6 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
@@ -155,4 +155,7 @@ build_doc_site/
 # dev files
 envs/
 *.html
-sktime/contrib/debug.py
+sktime/_contrib/debug.py
+sktime/_contrib/local_code.py
+sktime/_contrib/main.py
+sktime/_contrib/temp/

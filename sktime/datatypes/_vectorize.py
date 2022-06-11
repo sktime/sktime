@@ -4,7 +4,6 @@
 
 Contains VectorizedDF class.
 """
-
 import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
@@ -150,6 +149,7 @@ class VectorizedDF:
         X = self.X_multiindex
         ind = self.get_iter_indices()[i]
         item = X.loc[ind]
+        item = _enforce_index_freq(item)
         # pd-multiindex type (Panel case) expects these index names:
         if self.iterate_as == "Panel":
             item.index.set_names(["instances", "timepoints"], inplace=True)
@@ -190,7 +190,7 @@ class VectorizedDF:
         X_mi_index = X_mi_reconstructed.index
         X_orig_index = self.X_multiindex.index
         if overwrite_index and len(X_mi_index.names) == len(X_orig_index.names):
-            X_mi_reconstructed.index.set_names(X_orig_index.names)
+            X_mi_reconstructed.index = X_mi_index.set_names(X_orig_index.names)
 
         if not convert_back:
             return X_mi_reconstructed
@@ -208,3 +208,20 @@ class VectorizedDF:
             )
 
             return X_reconstructed_orig_format
+
+
+def _enforce_index_freq(item: pd.Series) -> pd.Series:
+    """Enforce the frequency of a Series index using pd.infer_freq.
+
+    Parameters
+    ----------
+    item : pd.Series
+    Returns
+    -------
+    pd.Series
+        Pandas series with the inferred frequency. If the frequency cannot be inferred
+        it will stay None
+    """
+    if hasattr(item.index, "freq") and item.index.freq is None:
+        item.index.freq = pd.infer_freq(item.index)
+    return item
