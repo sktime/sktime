@@ -523,19 +523,6 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc)
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Stores seasonal periodicity of data.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     MedianAbsoluteScaledError
@@ -619,19 +606,6 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Stores seasonal periodicity of data.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -719,21 +693,6 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Stores seasonal periodicity of data.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     MeanAbsoluteScaledError
@@ -806,7 +765,7 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
 
     Parameters
     ----------
-    sp : int
+    sp : int, default = 1
         Seasonal periodicity of data.
     square_root : bool, default = False
         Whether to take the square root of the metric
@@ -816,21 +775,6 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    sp : int
-        Seasonal periodicity of data.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -901,17 +845,6 @@ class MeanAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     MedianAbsoluteError
@@ -968,17 +901,6 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1037,19 +959,6 @@ class MeanSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1132,19 +1041,6 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     MeanAbsoluteError
@@ -1220,17 +1116,6 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     mean_absolute_error
@@ -1302,19 +1187,6 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1402,7 +1274,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1410,19 +1282,6 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1445,7 +1304,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
     >>> mape(y_true, y_pred)
     0.33690476190476193
-    >>> smape = MeanAbsolutePercentageError()
+    >>> smape = MeanAbsolutePercentageError(symmetric=True)
     >>> smape(y_true, y_pred)
     0.5553379953379953
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -1457,13 +1316,13 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mape(y_true, y_pred)
     array([0.38095238, 0.72222222])
-    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values')
+    >>> smape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=True)
     >>> smape(y_true, y_pred)
     array([0.71111111, 0.50505051])
     >>> mape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mape(y_true, y_pred)
     0.6198412698412699
-    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smape(y_true, y_pred)
     0.5668686868686869
     """
@@ -1474,7 +1333,7 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        symmetric=True,
+        symmetric=False,
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
@@ -1501,7 +1360,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1509,19 +1368,6 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1544,7 +1390,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mdape = MedianAbsolutePercentageError(symmetric=False)
     >>> mdape(y_true, y_pred)
     0.16666666666666666
-    >>> smdape = MedianAbsolutePercentageError()
+    >>> smdape = MedianAbsolutePercentageError(symmetric=True)
     >>> smdape(y_true, y_pred)
     0.18181818181818182
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -1556,13 +1402,13 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     >>> mdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=False)
     >>> mdape(y_true, y_pred)
     array([0.14285714, 1.        ])
-    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values')
+    >>> smdape = MedianAbsolutePercentageError(multioutput='raw_values', symmetric=True)
     >>> smdape(y_true, y_pred)
     array([0.13333333, 0.66666667])
     >>> mdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
     >>> mdape(y_true, y_pred)
     0.7428571428571428
-    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7])
+    >>> smdape = MedianAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
     >>> smdape(y_true, y_pred)
     0.5066666666666666
     """
@@ -1573,7 +1419,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        symmetric=True,
+        symmetric=False,
     ):
         self.symmetric = symmetric
         super().__init__(multioutput=multioutput, multilevel=multilevel)
@@ -1599,7 +1445,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
@@ -1609,21 +1455,6 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1677,7 +1508,7 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        symmetric=True,
+        symmetric=False,
         square_root=False,
     ):
         self.symmetric = symmetric
@@ -1709,7 +1540,7 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
 
     Parameters
     ----------
-    symmetric : bool, default = True
+    symmetric : bool, default = False
         Whether to calculate the symmetric version of the percentage metric
     square_root : bool, default = False
         Whether to take the square root of the metric
@@ -1719,21 +1550,6 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    symmetric : bool
-        Stores whether to calculate the symmetric version of the percentage metric
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1787,7 +1603,7 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         self,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        symmetric=True,
+        symmetric=False,
         square_root=False,
     ):
         self.symmetric = symmetric
@@ -1813,17 +1629,6 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -1887,17 +1692,6 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
-
     See Also
     --------
     MeanRelativeAbsoluteError
@@ -1960,17 +1754,6 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -2041,19 +1824,6 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    square_root : bool
-        Stores whether to take the square root of the metric
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -2156,25 +1926,6 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    asymmetric_threshold : float
-        Stores threshold to use applying asymmetric loss to errors
-    left_error_function: str
-        Stores loss penalty to apply to error values less than the asymmetric
-        threshold.
-    right_error_function: str
-        Stores loss penalty to apply to error values greater than or equal to the
-        asymmetric threshold.
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     See Also
     --------
@@ -2280,20 +2031,6 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
 
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-    a : bool
-        Stores the coefficient that controls whether over- or under- predictions
-        receive an approximately linear or exponential penalty.
-    b : str
-        Stores multiplicative penalty applied to errors.
-
     See Also
     --------
     mean_asymmetric_error
@@ -2391,22 +2128,6 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
-
-    Attributes
-    ----------
-    name : str
-        The name of the loss metric
-
-    greater_is_better : bool
-        Stores whether the metric is optimized by minimization or maximization.
-        If False, minimizing the metric is optimal.
-        If True, maximizing the metric is optimal.
-
-    relative_loss_function : function
-        Stores function used to calculate relative loss
-
-    multioutput : str
-        Stores how the metric should aggregate multioutput data.
 
     References
     ----------

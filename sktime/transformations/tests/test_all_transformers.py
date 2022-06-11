@@ -92,12 +92,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             X_scitype, trafo_input, trafo_output
         )
 
-        # todo 0.11.0 or 0.12.0:
-        #   remove this once #2219 is merged, which adds Hierarchical support
-        #   until then, skip tests if expected scitype is Hierarchical
-        if Xt_expected_scitype == "Hierarchical":
-            return None
-
         valid_scitype, _, Xt_metadata = check_is_scitype(
             Xt, scitype=Xt_expected_scitype, return_metadata=True
         )
