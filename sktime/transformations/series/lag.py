@@ -113,7 +113,6 @@ class Lag(BaseTransformer):
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "requires_y": False,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
@@ -163,7 +162,8 @@ class Lag(BaseTransformer):
 
         super(Lag, self).__init__()
 
-        # todo: dynamic tags
+        if index_out == "original":
+            self.set_tags(**{"transform-returns-same-time-index": True})
 
     def _yield_shift_params(self):
         """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
@@ -179,11 +179,13 @@ class Lag(BaseTransformer):
         """Yield string representation of (periods, freq) pairs."""
         for lag, freq in self._yield_shift_params():
             if freq is None:
-                yield str(lag)
+                name = str(lag)
             elif lag is None:
-                yield str(freq)
+                name = str(freq)
             else:
-                yield f"{lag}-{freq}"
+                name = f"{lag}-{freq}"
+            name = "lag_" + name
+            yield name
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
