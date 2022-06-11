@@ -323,5 +323,6 @@ class Lag(BaseTransformer):
         """
         params1 = {"lag": 2, "index_out": "original"}
         params2 = {"lag": [-1, 4]}
+        params3 = {"lag": [-1, 0, 1], "index_out": "shift"}
 
-        return [params1, params2]
+        return [params1, params2, params3]
