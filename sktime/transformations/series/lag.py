@@ -75,7 +75,7 @@ class Lag(BaseTransformer):
     >>> Xt = t.fit_transform(X)
 
     The default setting of index_out will extend indices either side.
-    To ensure that th indices stay the same, use index_out="original
+    To ensure that the index remains the same after transform, use index_out="original"
     >>> t = Lag([2, 4, -1], index_out="original")
     >>> Xt = t.fit_transform(X)
     """
