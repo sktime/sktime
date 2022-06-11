@@ -70,6 +70,8 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
 
+    obj = obj.copy()
+    obj.name = None
     res = pd.DataFrame(obj)
 
     if (
@@ -96,10 +98,10 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     if isinstance(store, dict):
         store["columns"] = obj.columns[[0]]
 
-    y = obj[obj.columns[0]]
-    y.name = None
+    res = obj[obj.columns[0]]
+    res.name = None
 
-    return y
+    return res
 
 
 convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
