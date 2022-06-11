@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datatypes import get_examples
 from sktime.transformations.series.lag import Lag
@@ -23,10 +24,31 @@ X_fixtures = [X_range_idx, X_range_idx_mv, X_time_idx, X_time_idx_mv]
 # fixtures with time index
 X_time_fixtures = [X_time_idx, X_time_idx_mv]
 
-@pytest.mark.parametrize("theta", [(1, 1.5), (0, 1, 2), (0.25, 0.5, 0.75, 1, 2)])
-def test_thetalines_shape(theta):
-    y = load_airline()
-    t = ThetaLinesTransformer(theta)
-    t.fit(y)
-    actual = t.transform(y)
-    assert actual.shape == (y.shape[0], len(theta))
+index_outs = ["original", "extend", "shift"]
+
+@pytest.mark.parametrize("X", X_fixtures)
+@pytest.mark.parametrize("index_out", index_outs)
+def test_lag_fit_transform_out_index(X, index_out):
+    """Test that index sets of fit_transform output behave as expected."""
+    t = Lag(2, index_out=index_out)
+    Xt = t.fit_transform(X)
+
+    if index_out == "original":
+        assert Xt.index == X.index
+    elif index_out == "extend":
+        assert X.index.isin(Xt.index).all()
+        assert len(Xt) == len(X) + 2
+    elif index_out == "shift":
+        assert len(Xt) == len(X)
+        assert X.index[2:].isin(Xt.index).all()
+
+
+@pytest.mark.parametrize("X", X_fixtures)
+@pytest.mark.parametrize("index_out", index_outs)
+@pytest.mark.parametrize("lag", [2, [2, 4], [-1, 0, 5]])
+def test_lag_fit_transform_columns(X, index_out, lag):
+    """Test that columns of fit_transform output behave as expected."""
+    t = Lag(lag=lag, index_out=index_out)
+    Xt = t.fit_transform(X)
+
+    assert len(Xt.columns) = len(X.columns) * len(lag)
