@@ -303,6 +303,12 @@ class _TestTabularRegressor(BaseEstimator, RegressorMixin, _Recorder):
 class _TestTimeSeriesRegressor(_Recorder, BaseRegressor):
     pass
 
+    def _fit(self, X, y):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    def _predict(self, X):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
 
 @pytest.mark.parametrize(
     "estimator", [_TestTabularRegressor(), _TestTimeSeriesRegressor()]

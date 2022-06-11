@@ -62,6 +62,39 @@ their servers.
 Internships
 -----------
 
-`Google Summer of Code <https://summerofcode.withgoogle.com>`_ as part of `INCF <https://www.incf.org>`_, `Major League Hacking <https://mlh.io>`_ and `Outreachy <https://www.outreachy.org>`_ have all sponsored sktime internships.
+`Google Summer of Code (GSoC) <https://summerofcode.withgoogle.com>`_, `Major League Hacking <https://mlh.io>`_ and `Outreachy <https://www.outreachy.org>`_ have all sponsored sktime internships.
 
 The `Wellcome Trust <https://wellcome.org>`_ sponsored one sktime internship as part of Outreachy.
+
+.. image:: ../images/gsoc.png
+  :width: 32 %
+  :target: https://summerofcode.withgoogle.com
+
+
+.. list-table::
+   :header-rows: 1
+
+   * - Name
+     - GitHub ID
+     - Organization
+     - Year
+   * - Katie Buchhorn
+     - :user:`KatieBuc`
+     - Google Summer of Code
+     - 2022
+   * - Mirae Parker
+     - :user:`miraep8`
+     - Google Summer of Code
+     - 2022
+   * - Shivansh Subramanian
+     - :user:`AurumnPegasus`
+     - Google Summer of Code
+     - 2022
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
+     - Outreachy
+     - 2021
+   * - Svea Marie Meyer
+     - :user:`SveaMeyer13`
+     - Google Summer of Code via `INCF <https://www.incf.org>`_
+     - 2021

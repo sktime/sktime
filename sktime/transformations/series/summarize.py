@@ -12,6 +12,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
 
 
 class WindowSummarizer(BaseTransformer):
@@ -642,6 +643,10 @@ class SummaryTransformer(BaseTransformer):
     quantiles : str, list, tuple or None, default=(0.1, 0.25, 0.5, 0.75, 0.9)
         Optional list of series quantiles to calculate. If None, no quantiles
         are calculated.
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "variablename__feature"
+        if False, columns are MultiIndex (variablename__feature)
+        has no effect if return mtype is one without column names
 
     See Also
     --------
@@ -680,9 +685,12 @@ class SummaryTransformer(BaseTransformer):
         self,
         summary_function=("mean", "std", "min", "max"),
         quantiles=(0.1, 0.25, 0.5, 0.75, 0.9),
+        flatten_transform_index=True,
     ):
         self.summary_function = summary_function
         self.quantiles = quantiles
+        self.flatten_transform_index = flatten_transform_index
+
         super(SummaryTransformer, self).__init__()
 
     def _transform(self, X, y=None):
@@ -703,8 +711,6 @@ class SummaryTransformer(BaseTransformer):
             If `series_or_df` is univariate then a scalar is returned. Otherwise,
             a pd.Series is returned.
         """
-        Z = X
-
         if self.summary_function is None and self.quantiles is None:
             raise ValueError(
                 "One of `summary_function` and `quantiles` must not be None."
@@ -712,14 +718,22 @@ class SummaryTransformer(BaseTransformer):
         summary_function = _check_summary_function(self.summary_function)
         quantiles = _check_quantiles(self.quantiles)
 
-        summary_value = Z.agg(summary_function)
+        summary_value = X.agg(summary_function)
         if quantiles is not None:
-            quantile_value = Z.quantile(quantiles)
+            quantile_value = X.quantile(quantiles)
             quantile_value.index = [str(s) for s in quantile_value.index]
             summary_value = pd.concat([summary_value, quantile_value])
 
-        if isinstance(Z, pd.Series):
-            summary_value.name = Z.name
+        if isinstance(X, pd.Series):
+            summary_value.name = X.name
             summary_value = pd.DataFrame(summary_value)
 
-        return summary_value.T
+        Xt = summary_value.T
+
+        if len(Xt) > 1:
+            # move the row index as second level to column
+            Xt = pd.DataFrame(Xt.T.unstack()).T
+            if self.flatten_transform_index:
+                Xt.columns = flatten_multiindex(Xt.columns)
+
+        return Xt

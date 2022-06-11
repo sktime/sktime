@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.11.3"
+version = "0.11.4"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -56,6 +56,7 @@ all_extras = [
     "dtw-python",
     "esig==0.9.7",
     "prophet>=1.0",
+    "holidays<=0.13",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
