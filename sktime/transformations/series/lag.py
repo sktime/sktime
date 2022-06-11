@@ -235,9 +235,7 @@ class Lag(BaseTransformer):
             Xt = Xt_list[0]
         else:
             lag_names = self._yield_shift_param_names()
-            Xt = pd.concat(
-                Xt_list, axis=1, keys=lag_names, names=["lag", "variable"]
-            )
+            Xt = pd.concat(Xt_list, axis=1, keys=lag_names, names=["lag", "variable"])
             if self.flatten_transform_index:
                 Xt.columns = flatten_multiindex(Xt.columns)
 
