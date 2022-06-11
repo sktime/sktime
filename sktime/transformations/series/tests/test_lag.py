@@ -4,6 +4,7 @@
 
 __author__ = ["fkiraly"]
 
+import pandas as pd
 import pytest
 
 from sktime.datatypes import get_examples
@@ -51,5 +52,14 @@ def test_lag_fit_transform_columns(X, index_out, lag):
     Xt = t.fit_transform(X)
 
     if isinstance(lag, list):
-        lag = [lag]
-    assert len(Xt.columns) == len(X.columns) * len(lag)
+        len_lag = len(lag)
+    else:
+        len_lag = 1
+
+    def ncols(obj):
+        if isinstance(obj, pd.DataFrame):
+            return len(obj.columns)
+        else:
+            return 1
+
+    assert ncols(Xt) == ncols(X) * len_lag
