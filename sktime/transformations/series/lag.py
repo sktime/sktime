@@ -75,81 +75,45 @@ class Lag(BaseTransformer):
         time-like: DateOffset, tseries.offsets, or timedelta
             multiplied to corresponding "lags" element when shifting
         str - offset from pd.tseries module, e.g., "D", "M", or time rule, e.g., "EOM"
-    ind_align : str, optional, one of "shift", "realign", "extend", default="extend"
+    index_out : str, optional, one of "shift", "original", "extend", default="extend"
         determines set of output indices in lagged time series
         "shift" - only shifted indices are retained.
             Will not create NA for single lag, but can create NA for multiple lags.
-        "realign" - only original indices are retained. Will usually create NA.
+        "original" - only original indices are retained. Will usually create NA.
         "extend" - both original indices and shifted indices are retained.
             Will usually create NA, possibly many, if shifted/original do not intersect.
     NA_behaviour : str, optional, one of "NA", "fill_value", "bfill", "nearest"
         determines handling of NA that are possibly created, after they are created.
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    #
-    # todo: define the transformer scitype by setting the tags
-    #   scitype:transform-input - the expected input scitype of X
-    #   scitype:transform-output - the output scitype that transform produces
-    #   scitype:transform-labels - whether y is used and if yes which scitype
-    #   scitype:instancewise - whether transform uses all samples or acts by instance
-    #
-    # todo: define internal types for X, y in _fit/_transform by setting the tags
-    #   X_inner_mtype - the internal mtype used for X in _fit and _transform
-    #   y_inner_mtype - if y is used, the internal mtype used for y; usually "None"
-    #   setting this guarantees that X, y passed to _fit, _transform are of above types
-    #   for possible mtypes see datatypes.MTYPE_REGISTER, or the datatypes tutorial
-    #
-    #  when scitype:transform-input is set to Panel:
-    #   X_inner_mtype must be changed to one or a list of sktime Panel mtypes
-    #  when scitype:transform-labels is set to Series or Panel:
-    #   y_inner_mtype must be changed to one or a list of compatible sktime mtypes
-    #  the other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:transform-labels": "None",
-        # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
-        # this can be a Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "requires_y": False,  # does y need to be passed in fit?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
-        "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
         # does transform return have the same time index as input X
         "skip-inverse-transform": False,  # is inverse-transform skipped when called?
         "capability:unequal_length": True,
-        # can the transformer handle unequal length time series (if passed Panel)?
         "capability:unequal_length:removes": False,
-        # is transform result always guaranteed to be equal length (and series)?
-        #   not relevant for transformers that return Primitives in transform-output
-        "handles-missing-data": False,  # can estimator handle missing data?
-        # todo: rename to capability:missing_values
+        "handles-missing-data": True,  # can estimator handle missing data?
         "capability:missing_values:removes": False,
-        # is transform result always guaranteed to contain no missing values?
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, lags=0, freq=None, ind_align="extend", NA_behaviour="NA"):
+    def __init__(self, lags=0, freq=None, index_out="extend", NA_behaviour="NA"):
 
         self.lags = lags
         self.freq = freq
-        self.ind_align = ind_align
+        self.index_out = index_out
         self.NA_behaviour = NA_behaviour
-
-        def _coerce_to_list(x):
-            if not isinstance(x, list):
-                return [x]
-            else:
-                return x
 
         # _lags and _freq are list-coerced variants of lags, freq
         if not isinstance(lags, list):
@@ -164,19 +128,32 @@ class Lag(BaseTransformer):
             self._freq = freq
 
         msg = "freq must be a list of equal length to lags, or a scalar."
-        assert len(lags) == len(freq), msg
+        assert len(self._lags) == len(self._freq), msg
 
         super(Lag, self).__init__()
 
         # todo: dynamic tags
 
-    def _iter_shift_params():
+    def _yield_shift_params(self):
         """Yield (periods, freq) pairs to pass to pandas.DataFrame.shift."""
+        for lag, freq in zip(self._lags, self._freq):
+            if not isinstance(lag, int):
+                yield 1, lag
+            elif lag is None:
+                yield 1, freq
+            else:
+                yield lag, freq
 
+    def _yield_shift_param_names(self):
+        """Yield string representation of (periods, freq) pairs."""
+        for lag, freq in self._yield_shift_params():
+            if freq is None:
+                yield str(lag)
+            elif lag is None:
+                yield str(freq)
+            else:
+                yield f"{lag}-{freq}"
 
-
-
-    # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -194,27 +171,9 @@ class Lag(BaseTransformer):
         -------
         self: reference to self
         """
+        # remember X for lagging across past data indices
+        self._X = X
 
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
-        #
-        # special case: if no fitting happens before transformation
-        #  then: delete _fit (don't implement)
-        #   set "fit_is_empty" tag to True
-        #
-        # Note: when interfacing a model that has fit, with parameters
-        #   that are not data (X, y) or data-like,
-        #   but model parameters, *don't* add as arguments to fit, but treat as follows:
-        #   1. pass to constructor,  2. write to self in constructor,
-        #   3. read from self in _fit,  4. pass to interfaced_model.fit in _fit
-
-    # todo: implement this, mandatory
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -232,24 +191,33 @@ class Lag(BaseTransformer):
         -------
         transformed version of X
         """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # if transform-output is "Primitives":
-        #  return should be pd.DataFrame, with as many rows as instances in input
-        #  if input is a single series, return should be single-row pd.DataFrame
-        # if transform-output is "Series":
-        #  return should be of same mtype as input, X_inner_mtype
-        #  if multiple X_inner_mtype are supported, ensure same input/output
-        # if transform-output is "Panel":
-        #  return a multi-indexed pd.DataFrame of Panel mtype pd_multiindex
-        #
-        # todo: add the return mtype/scitype to the docstring, e.g.,
-        #  Returns
-        #  -------
-        #  X_transformed : Series of mtype pd.DataFrame
-        #       transformed version of X
+        index_out = self.index_out
+
+        X_orig_idx = X.index
+        X = X.combine_first(self._X)
+
+        shift_params = list(self._yield_shift_params())
+
+        for lag, freq in shift_params:
+            # need to deal separately with RangeIndex
+            # because shift always cuts off the end values
+            if isinstance(lag, int) and isinstance(X.index, pd.RangeIndex):
+                Xt = X
+                Xt.index = X_orig_idx + lag
+            else:
+                Xt = X.shift(periods=lag, freq=freq)
+
+            # extend index to include original, if "extend" or "original"
+            if index_out in ["extend", "original"]:
+                X_idx = pd.DataFrame(index=X_orig_idx)
+                Xt = Xt.combine_first(X_idx)
+            # sub-set to original, if "original"
+            if index_out == "original":
+                Xt = Xt.loc[X_orig_idx]
+            # if none of the above happens, index is entirely shifted
+
+        return Xt
+
 
     # todo: consider implementing this, optional
     # if not implementing, delete the _inverse_transform method
@@ -308,25 +276,7 @@ class Lag(BaseTransformer):
         -------
         self: reference to self
         """
-        # implement here
-        # X, y passed to this function are always of X_inner_mtype, y_inner_mtype
-        # IMPORTANT: avoid side effects to X, y
-        #
-        # any model parameters should be written to attributes ending in "_"
-        #  attributes set by the constructor must not be overwritten
-        #  if used, estimators should be cloned to attributes ending in "_"
-        #  the clones, not the originals, should be used or fitted if needed
-
-    # todo: consider implementing this, optional
-    # if not implementing, delete the method
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-        """
-        # implement here
+        self._X = X.combine_first(self._X)
 
     # todo: return default parameters, so that a test instance can be created
     #   required for automated unit and integration testing of estimator
@@ -349,38 +299,7 @@ class Lag(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        params1 = {"lag": 2, "index_out": "original"}
+        params2 = {"lag": [-1, 4]}
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries
-        # Testing parameter choice should cover internal cases well.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # The parameter_set argument is not used for automated, module level tests.
-        #   It can be used in custom, estimator specific tests, for "special" settings.
-        # A parameter dictionary must be returned *for all values* of parameter_set,
-        #   i.e., "parameter_set not available" errors should never be raised.
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        # return params
-        #
-        # example 3: parameter set depending on param_set value
-        #   note: only needed if a separate parameter set is needed in tests
-        # if parameter_set == "special_param_set":
-        #     params = {"est": value1, "parama": value2}
-        #     return params
-        #
-        # # "default" params - always returned except for "special_param_set" value
-        # params = {"est": value3, "parama": value4}
-        # return params
+        return [params1, params2]
