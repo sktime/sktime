@@ -15,10 +15,63 @@ Base
     :toctree: auto_generated/
     :template: class.rst
 
+    BaseForecaster
     ForecastingHorizon
 
-Naive
------
+Pipeline composition
+--------------------
+
+Compositors for building forecasting pipelines.
+Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
+
+.. currentmodule:: sktime.pipeline
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_pipeline
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TransformedTargetForecaster
+    ForecastingPipeline
+    ColumnEnsembleForecaster
+    MultiplexForecaster
+
+Reduction
+---------
+
+Reduction forecasters that use ``sklearn`` regressors or ``sktime`` time series regressors to make forecasts.
+Use ``make_reduction`` for easy specification.
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_reduction
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DirectTabularRegressionForecaster
+    DirectTimeSeriesRegressionForecaster
+    MultioutputTabularRegressionForecaster
+    MultioutputTimeSeriesRegressionForecaster
+    RecursiveTabularRegressionForecaster
+    RecursiveTimeSeriesRegressionForecaster
+    DirRecTabularRegressionForecaster
+    DirRecTimeSeriesRegressionForecaster
+
+Naive forecaster
+----------------
 
 .. currentmodule:: sktime.forecasting.naive
 
@@ -27,10 +80,30 @@ Naive
     :template: class.rst
 
     NaiveForecaster
+
+Prediction intervals
+--------------------
+
+Wrappers that add prediction intervals to any forecaster.
+
+.. currentmodule:: sktime.forecasting.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
     NaiveVariance
 
-Trend
------
+.. currentmodule:: sktime.forecasting.conformal
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConformalIntervals
+
+Trend forecasters
+-----------------
 
 .. currentmodule:: sktime.forecasting.trend
 
@@ -42,8 +115,8 @@ Trend
     PolynomialTrendForecaster
     STLForecaster
 
-Exponential Smoothing
----------------------
+Exponential smoothing based forecasters
+---------------------------------------
 
 .. currentmodule:: sktime.forecasting.exp_smoothing
 
@@ -61,8 +134,27 @@ Exponential Smoothing
 
     AutoETS
 
-ARIMA
------
+.. currentmodule:: sktime.forecasting.theta
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThetaForecaster
+
+.. currentmodule:: sktime.forecasting.croston
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Croston
+
+AR/MA type forecasters
+----------------------
+
+Forecasters with AR or MA component.
+All "ARIMA" models below include VARIMAX capability.
 
 .. currentmodule:: sktime.forecasting.arima
 
@@ -73,9 +165,6 @@ ARIMA
     AutoARIMA
     ARIMA
 
-StatsForecast
--------------
-
 .. currentmodule:: sktime.forecasting.statsforecast
 
 .. autosummary::
@@ -84,19 +173,24 @@ StatsForecast
 
     StatsForecastAutoARIMA
 
-Theta
------
-
-.. currentmodule:: sktime.forecasting.theta
+.. currentmodule:: sktime.forecasting.sarimax
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ThetaForecaster
+    SARIMAX
 
-BATS/TBATS
-----------
+.. currentmodule:: sktime.forecasting.var
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VAR
+
+Structural time series models
+-----------------------------
 
 .. currentmodule:: sktime.forecasting.bats
 
@@ -114,20 +208,6 @@ BATS/TBATS
 
     TBATS
 
-Croston
--------
-
-.. currentmodule:: sktime.forecasting.croston
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Croston
-
-Prophet
--------
-
 .. currentmodule:: sktime.forecasting.fbprophet
 
 .. autosummary::
@@ -135,9 +215,6 @@ Prophet
     :template: class.rst
 
     Prophet
-
-Unobserved Components
---------------------
 
 .. currentmodule:: sktime.forecasting.structural
 
@@ -147,8 +224,8 @@ Unobserved Components
 
     UnobservedComponents
 
-Composition
------------
+Ensembles and stacking
+----------------------
 
 .. currentmodule:: sktime.forecasting.compose
 
@@ -156,30 +233,12 @@ Composition
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnEnsembleForecaster
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
-    TransformedTargetForecaster
-    ForecastingPipeline
-    DirectTabularRegressionForecaster
-    DirectTimeSeriesRegressionForecaster
-    MultioutputTabularRegressionForecaster
-    MultioutputTimeSeriesRegressionForecaster
-    RecursiveTabularRegressionForecaster
-    RecursiveTimeSeriesRegressionForecaster
-    DirRecTabularRegressionForecaster
-    DirRecTimeSeriesRegressionForecaster
-    MultiplexForecaster
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    make_reduction
-
-Online Forecasting
-------------------
+Online and stream forecasting
+-----------------------------
 
 .. currentmodule:: sktime.forecasting.online_learning
 
@@ -191,8 +250,26 @@ Online Forecasting
     NormalHedgeEnsemble
     NNLSEnsemble
 
-Model Selection
----------------
+.. currentmodule:: sktime.forecasting.online_learning
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    OnlineEnsembleForecaster
+    NormalHedgeEnsemble
+    NNLSEnsemble
+
+.. currentmodule:: sktime.forecasting.stream
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    UpdateRefitsEvery
+
+Model selection and tuning
+--------------------------
 
 .. currentmodule:: sktime.forecasting.model_selection
 
@@ -223,25 +300,3 @@ Model Evaluation (Backtesting)
     :template: function.rst
 
     evaluate
-
-VAR (Vector Autoregression)
----------------------------
-
-.. currentmodule:: sktime.forecasting.var
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    VAR
-
-SARIMAX
-----------
-
-.. currentmodule:: sktime.forecasting.sarimax
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SARIMAX
