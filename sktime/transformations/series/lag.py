@@ -258,6 +258,10 @@ class Lag(BaseTransformer):
             if self.flatten_transform_index:
                 Xt.columns = flatten_multiindex(Xt.columns)
 
+        # some pandas versions do not sort index automatically after concat
+        # so removing will break specific pandas versions
+        Xt = Xt.sort_index()
+
         return Xt
 
     # todo: consider implementing this, optional
