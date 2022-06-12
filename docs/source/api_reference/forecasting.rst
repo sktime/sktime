@@ -250,16 +250,6 @@ Online and stream forecasting
     NormalHedgeEnsemble
     NNLSEnsemble
 
-.. currentmodule:: sktime.forecasting.online_learning
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    OnlineEnsembleForecaster
-    NormalHedgeEnsemble
-    NNLSEnsemble
-
 .. currentmodule:: sktime.forecasting.stream
 
 .. autosummary::
