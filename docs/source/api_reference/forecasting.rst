@@ -267,18 +267,8 @@ Model selection and tuning
     :toctree: auto_generated/
     :template: class.rst
 
-    CutoffSplitter
-    SingleWindowSplitter
-    SlidingWindowSplitter
-    ExpandingWindowSplitter
     ForecastingGridSearchCV
     ForecastingRandomizedSearchCV
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    temporal_train_test_split
 
 Model Evaluation (Backtesting)
 ------------------------------
@@ -290,3 +280,25 @@ Model Evaluation (Backtesting)
     :template: function.rst
 
     evaluate
+
+Time series splitters
+---------------------
+
+Time series splitters can be used in both evaluation and tuning.
+
+.. currentmodule:: sktime.forecasting.model_selection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CutoffSplitter
+    SingleWindowSplitter
+    SlidingWindowSplitter
+    ExpandingWindowSplitter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    temporal_train_test_split
