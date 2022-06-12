@@ -10,6 +10,39 @@ transformations.
    :no-members:
    :no-inherited-members:
 
+
+Composition
+-----------
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TransformerPipeline
+    FeatureUnion
+    FitInTransform
+    MultiplexTransformer
+
+.. currentmodule:: sktime.transformations.series.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    OptionalPassthrough
+    ColumnwiseTransformer
+
+.. currentmodule:: sktime.transformations.panel.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnTransformer
+
+
 Panel transformers
 ------------------
 
@@ -152,6 +185,7 @@ Signature
 
     SignatureTransformer
 
+
 Series transformers
 -------------------
 
@@ -293,17 +327,6 @@ Datetime feature generation
 
     DateTimeFeatures
 
-Lagged Window Summarizer
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.summarize
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    WindowSummarizer
-
 Outlier detection
 ~~~~~~~~~~~~~~~~~
 
@@ -314,28 +337,6 @@ Outlier detection
     :template: class.rst
 
     HampelFilter
-
-Composition
-~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TransformerPipeline
-    FeatureUnion
-    FitInTransform
-
-.. currentmodule:: sktime.transformations.series.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    OptionalPassthrough
-    ColumnwiseTransformer
 
 Theta
 ~~~~~
@@ -348,8 +349,8 @@ Theta
 
     ThetaLinesTransformer
 
-Augmenter
-~~~~~
+Augmentation
+~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.augmenter
 
@@ -362,9 +363,8 @@ Augmenter
     ReverseAugmenter
     WhiteNoiseAugmenter
 
-
-Summary
-~~~~~~~
+Summarization
+~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.summarize
 
@@ -374,6 +374,7 @@ Summary
 
     SummaryTransformer
     MeanTransformer
+    WindowSummarizer
 
 FeatureSelection
 ~~~~~~~~~~~~~~~~
@@ -387,7 +388,7 @@ FeatureSelection
     FeatureSelection
 
 Kalman filter
-~~~~~~~
+~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
@@ -398,8 +399,8 @@ Kalman filter
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
 
-STLBootstrapTransformer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Bootstrap transformations
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.bootstrap
 
@@ -408,27 +409,4 @@ STLBootstrapTransformer
     :template: class.rst
 
     STLBootstrapTransformer
-
-MovingBlockBootstrapTransformer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.bootstrap
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     MovingBlockBootstrapTransformer
-
-Transformer Selection
----------------------
-MultiplexTransformer
-~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.multiplexer
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MultiplexTransformer
