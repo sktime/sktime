@@ -17,7 +17,7 @@ from sktime.forecasting.model_selection import (
     ForecastingGridSearchCV,
 )
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.transformations.multiplexer import MultiplexTransformer
+from sktime.transformations.compose import MultiplexTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
