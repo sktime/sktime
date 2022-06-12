@@ -63,7 +63,7 @@ from sktime.datatypes import (
     mtype_to_scitype,
 )
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.sklearn import is_sklearn_transformer
+from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
@@ -163,7 +163,11 @@ class BaseTransformer(BaseEstimator):
 
         # we wrap self in a pipeline, and concatenate with the other
         #   the TransformerPipeline does the rest, e.g., case distinctions on other
-        if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
+        if (
+            isinstance(other, BaseTransformer)
+            or is_sklearn_classifier(other)
+            or is_sklearn_transformer(other)
+        ):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return self_as_pipeline * other
         else:

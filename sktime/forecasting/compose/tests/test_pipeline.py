@@ -14,7 +14,9 @@ from sktime.datasets import load_airline
 from sktime.forecasting.compose import ForecastingPipeline, TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.detrend import Detrender
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.outlier_detection import HampelFilter
@@ -106,3 +108,17 @@ def test_nesting_pipelines():
     scenario = ForecasterFitPredictUnivariateWithX()
 
     scenario.run(pipe, method_sequence=["fit", "predict"])
+
+
+def test_pipeline_with_detrender():
+    """Tests a specific pipeline that triggers multiple back/forth conversions."""
+    y = load_airline()
+
+    trans_fc = TransformedTargetForecaster(
+        [
+            ("detrender", Detrender(forecaster=PolynomialTrendForecaster(degree=1))),
+            ("forecaster", NaiveForecaster(strategy="last")),
+        ]
+    )
+    trans_fc.fit(y)
+    trans_fc.predict(1)

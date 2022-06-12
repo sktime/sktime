@@ -9,7 +9,7 @@ import pytest
 
 from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._utilities import get_cutoff, get_window
+from sktime.datatypes._utilities import get_cutoff, get_slice, get_window
 
 SCITYPE_MTYPE_PAIRS = [
     ("Series", "pd.Series"),
@@ -118,3 +118,53 @@ def test_get_window_expected_result():
     assert len(get_window(X_hi, 2, 0)) == 12
     assert len(get_window(X_hi, 2, 4)) == 0
     assert len(get_window(X_hi, 1, 2)) == 6
+
+    X_hi = get_examples(mtype="numpy3D")[0]
+    assert get_window(X_hi, 3, 1).shape == (2, 2, 3)
+    assert get_window(X_hi, 2, 0).shape == (2, 2, 3)
+    assert get_window(X_hi, 2, 4).shape == (0, 2, 3)
+    assert get_window(X_hi, 1, 2).shape == (1, 2, 3)
+
+
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_slice_output_type(scitype, mtype):
+    """Tests that get_slice runs for all mtypes, and returns output of same mtype.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+
+    Raises
+    ------
+    Exception if get_slice raises one
+    """
+    # retrieve example fixture
+    fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
+    X = get_slice(fixture)
+    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+
+    msg = (
+        f"get_slice should return an output of mtype {mtype} for that type of input, "
+        f"but it returns an output not conformant with that mtype."
+        f"Error from mtype check: {err}"
+    )
+
+    assert valid, msg
+
+
+def test_get_slice_expected_result():
+    """Tests that get_slice produces return of the right length.
+
+    Raises
+    ------
+    Exception if get_slice raises one
+    """
+    X_df = get_examples(mtype="pd.DataFrame")[0]
+    assert len(get_slice(X_df, start=1, end=3)) == 2
+
+    X_s = get_examples(mtype="pd.Series")[0]
+    assert len(get_slice(X_s, start=1, end=3)) == 2
+
+    X_np = get_examples(mtype="numpy3D")[0]
+    assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
