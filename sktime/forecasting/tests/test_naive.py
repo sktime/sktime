@@ -199,9 +199,10 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")
+    kwargs = dict(closed="left") if pd.__version__ < "1.4.0" else dict(inclusive="left")
     data = pd.Series(
         index=pd.date_range(
-            "2021-06-01 00:00", periods=n * window_length, freq=freq, closed="left"
+            "2021-06-01 00:00", periods=n * window_length, freq=freq, **kwargs
         ),
         data=([float(i) for i in range(1, sp + 1)] * n * window_length)[
             : n * window_length

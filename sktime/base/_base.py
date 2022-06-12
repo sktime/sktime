@@ -512,19 +512,11 @@ class TagAliaserMixin:
 
     # dictionary of aliases
     # key = old tag; value = new tag, aliased by old tag
-    alias_dict = {
-        "fit-in-transform": "fit_is_empty",
-        "fit-in-predict": "fit_is_empty",
-        "capability:early_prediction": "",
-    }
+    alias_dict = {"capability:early_prediction": ""}
 
     # dictionary of removal version
     # key = old tag; value = version in which tag will be removed, as string
-    deprecate_dict = {
-        "fit-in-transform": "0.12.0",
-        "fit-in-predict": "0.12.0",
-        "capability:early_prediction": "0.13.0",
-    }
+    deprecate_dict = {"capability:early_prediction": "0.13.0"}
 
     def __init__(self):
         super(TagAliaserMixin, self).__init__()
