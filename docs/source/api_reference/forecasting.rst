@@ -154,7 +154,7 @@ AR/MA type forecasters
 ----------------------
 
 Forecasters with AR or MA component.
-All "ARIMA" models below include VARIMAX capability.
+All "ARIMA" models below include SARIMAX capability.
 
 .. currentmodule:: sktime.forecasting.arima
 
