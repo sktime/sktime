@@ -6,6 +6,8 @@ Forecasting
 
 The :mod:`sktime.forecasting` module contains algorithms and composition tools for forecasting.
 
+Use ``sktime.registry.all_estimators`` and ``sktime.registry.all_tags`` for dynamic search and tag-based listing of forecasters.
+
 Base
 ----
 
