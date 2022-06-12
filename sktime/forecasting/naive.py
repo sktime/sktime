@@ -339,6 +339,14 @@ class NaiveForecaster(BaseForecaster):
                 strategy=self.strategy, sp=self.sp, window_length=self.window_length
             )
         )
+
+        # 1st part of preserving name/columns, otherwise they get lost on occasion
+        # provisionally hard-fixing the mess of 100 nested function calls
+        # until someone finds it in their heart to simplify the NaiveForecaster
+        if isinstance(y, pd.Series):
+            self.cols_ = y.name
+        else:
+            self.cols_ = y.columns
         self._forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh=None, X=None):
@@ -357,6 +365,14 @@ class NaiveForecaster(BaseForecaster):
         if self._y.index[0] in y_pred.index:
             # fill NaN with next row values
             y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+
+        # 2nd part of preserving name/columns, otherwise they get lost on occasion
+        # provisionally hard-fixing the mess of 100 nested function calls
+        # until someone finds it in their heart to simplify the NaiveForecaster
+        if isinstance(y_pred, pd.Series):
+            y_pred.name = self.cols_
+        else:  # is pd.DataFrame
+            y_pred.columns = self.cols_
 
         return y_pred
 
