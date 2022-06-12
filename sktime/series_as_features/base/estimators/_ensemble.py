@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements base class for time series forests."""
 
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
@@ -42,7 +42,7 @@ def _parallel_build_trees(
 ):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
-        print("building tree %d of %d" % (tree_idx + 1, n_trees))  # noqa: T001
+        print("building tree %d of %d" % (tree_idx + 1, n_trees))  # noqa: T201
 
     # name of step of final estimator in pipeline
     final_estimator = tree.steps[-1][1]

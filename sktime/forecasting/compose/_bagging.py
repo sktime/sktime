@@ -5,6 +5,7 @@
 
 __author__ = ["ltsaprounis"]
 
+from copy import deepcopy
 from typing import List, Union
 
 import numpy as np
@@ -13,16 +14,17 @@ from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import set_random_state
 
+from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.ets import AutoETS
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.bootstrap import STLBootstrapTransformer
+from sktime.utils.estimators import MockForecaster
 
 
 class BaggingForecaster(BaseForecaster):
-    """Bagged "Bootrstrap Aggregating" Forecasts.
+    """Bagged "Bootstrap Aggregating" Forecasts.
 
-    Bagged Forecasts are obtained by forecasting bootsrapped time series and then
+    Bagged Forecasts are obtained by forecasting bootstrapped time series and then
     aggregating the resulting forecasts. For the point forecast, the different forecasts
     are aggregated using the mean function [1]. Prediction intervals and quantiles are
     calculated for each time point in the forecasting horizon by calculating the sampled
@@ -79,9 +81,7 @@ class BaggingForecaster(BaseForecaster):
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
     }
 
@@ -99,10 +99,8 @@ class BaggingForecaster(BaseForecaster):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
-            "enforce_index_type",  # index type that needs to be enforced in X/y
+            "enforce_index_type",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
@@ -148,7 +146,7 @@ class BaggingForecaster(BaseForecaster):
         ):
             raise TypeError(
                 "bootstrap_transformer in BaggingForecaster should be a Transformer "
-                "that take as input a Series and output a Panel."
+                "that takes as input a Series and output a Panel."
             )
 
         if not isinstance(self.forecaster, BaseForecaster):
@@ -156,12 +154,14 @@ class BaggingForecaster(BaseForecaster):
                 "forecaster in BaggingForecaster should be an sktime Forecaster"
             )
 
+        # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
         self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
         set_random_state(self.bootstrap_transformer_, random_state=self.random_state_)
         self.forecaster_ = clone(self.forecaster)
         set_random_state(self.forecaster_, random_state=self.random_state_)
-        y_bootstraps = self.bootstrap_transformer_.fit_transform(X=y)
+        self.bootstrap_transformer_.fit(X=y)
+        y_bootstraps = self.bootstrap_transformer_.transform(X=y)
         self.forecaster_.fit(y=y_bootstraps, fh=fh, X=None)
 
         return self
@@ -230,6 +230,33 @@ class BaggingForecaster(BaseForecaster):
 
         return _calculate_data_quantiles(y_pred, alpha)
 
+    def _update(self, y, X=None, update_params=True):
+        """Update cutoff value and, optionally, fitted parameters.
+
+        Parameters
+        ----------
+        y : pd.Series, pd.DataFrame, or np.array
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogeneous data
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # Need to construct a completely new y out of ol self._y and y and then
+        # fit_treansform the transformer and re-fit the foreaster.
+        _y = deepcopy(self._y)
+        _y = update_data(_y, y)
+
+        self.bootstrap_transformer_.fit(X=_y)
+        y_bootstraps = self.bootstrap_transformer_.transform(X=_y)
+        self.forecaster_.fit(y=y_bootstraps, fh=self.fh, X=None)
+
+        return self
+
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
@@ -244,7 +271,7 @@ class BaggingForecaster(BaseForecaster):
         """
         params = [
             {
-                "forecaster": AutoETS(sp=1),
+                "forecaster": MockForecaster(),
                 "bootstrap_transformer": STLBootstrapTransformer(sp=3),
             }
         ]
