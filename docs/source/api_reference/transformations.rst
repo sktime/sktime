@@ -14,6 +14,9 @@ transformations.
 Composition
 -----------
 
+Pipeline building
+~~~~~~~~~~~~~~~~~
+
 .. currentmodule:: sktime.transformations.compose
 
 .. autosummary::
@@ -41,6 +44,25 @@ Composition
     :template: class.rst
 
     ColumnTransformer
+
+Sklearn facing pipeline elements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Tabularizer
+
+.. currentmodule:: sktime.transformations.series.adapt
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TabularToSeriesAdaptor
 
 
 Panel transformers
@@ -105,7 +127,6 @@ Compose
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnTransformer
     ColumnConcatenator
     SeriesToSeriesRowTransformer
     SeriesToPrimitivesRowTransformer
@@ -137,17 +158,6 @@ PCA
     :template: class.rst
 
     PCATransformer
-
-Reduce
-~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.reduce
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Tabularizer
 
 Rocket
 ~~~~~~
@@ -203,19 +213,8 @@ Detrend
     ConditionalDeseasonalizer
     STLTransformer
 
-Adapt
-~~~~~
-
-.. currentmodule:: sktime.transformations.series.adapt
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TabularToSeriesAdaptor
-
-Box-Cox
-~~~~~~~
+Box-Cox, log, logit
+~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.boxcox
 
@@ -226,9 +225,6 @@ Box-Cox
     BoxCoxTransformer
     LogTransformer
 
-Scaled Logit
-~~~~~~~~~~~~
-
 .. currentmodule:: sktime.transformations.series.scaledlogit
 
 .. autosummary::
@@ -237,19 +233,21 @@ Scaled Logit
 
     ScaledLogitTransformer
 
-ClaSP
-~~~~~
+Summarization
+~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.clasp
+.. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ClaSPTransformer
+    SummaryTransformer
+    MeanTransformer
+    WindowSummarizer
 
-Difference
-~~~~~~~~~~
+Differencing
+~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.difference
 
@@ -259,8 +257,8 @@ Difference
 
     Differencer
 
-Auto-correlation
-~~~~~~~~~~~~~~~~
+Auto-correlation features
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.acf
 
@@ -271,8 +269,8 @@ Auto-correlation
     AutoCorrelationTransformer
     PartialAutoCorrelationTransformer
 
-Cosine
-~~~~~~
+Element-wise transforms
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.cos
 
@@ -281,9 +279,6 @@ Cosine
     :template: class.rst
 
     CosineTransformer
-
-Exponent
-~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.exponent
 
@@ -317,7 +312,7 @@ Missing value imputation
     Imputer
 
 Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -327,8 +322,8 @@ Datetime feature generation
 
     DateTimeFeatures
 
-Outlier detection
-~~~~~~~~~~~~~~~~~
+Outlier detection, changepoint detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.outlier_detection
 
@@ -338,16 +333,14 @@ Outlier detection
 
     HampelFilter
 
-Theta
-~~~~~
-
-.. currentmodule:: sktime.transformations.series.theta
+.. currentmodule:: sktime.transformations.series.clasp
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ThetaLinesTransformer
+    ClaSPTransformer
+
 
 Augmentation
 ~~~~~~~~~~~~
@@ -363,19 +356,6 @@ Augmentation
     ReverseAugmenter
     WhiteNoiseAugmenter
 
-Summarization
-~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.summarize
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SummaryTransformer
-    MeanTransformer
-    WindowSummarizer
-
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
@@ -387,8 +367,8 @@ FeatureSelection
 
     FeatureSelection
 
-Kalman filter
-~~~~~~~~~~~~~
+Filtering and denoising
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.kalman_filter
 
@@ -398,6 +378,15 @@ Kalman filter
 
     KalmanFilterTransformerPK
     KalmanFilterTransformerFP
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer
+
 
 Bootstrap transformations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
