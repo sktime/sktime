@@ -53,9 +53,16 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     Parameters
     ----------
     n_neighbors : int, set k for knn (default =1)
-    weights : string or callable function, optional. default = 'uniform'
-        mechanism for weighting a vot
-        one of: 'uniform', 'distance', or a callable function
+    weights : {'uniform', 'distance'} or callable, default='uniform'
+        Weight function used in prediction.  Possible values:
+        - 'uniform' : uniform weights.  All points in each neighborhood
+          are weighted equally.
+        - 'distance' : weight points by the inverse of their distance.
+          in this case, closer neighbors of a query point will have a
+          greater influence than neighbors which are further away.
+        - [callable] : a user-defined function which accepts an
+          array of distances, and returns an array of the same shape
+          containing the weights.
     algorithm : str, optional. default = 'brute'
         search method for neighbours
         one of {'auto’, 'ball_tree', 'kd_tree', 'brute'}
@@ -78,6 +85,17 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
     distance_mtype : str, or list of str optional. default = None.
         mtype that distance expects for X and X2, if a callable
             only set this if distance is not BasePairwiseTransformerPanel descendant
+    leaf_size : int, default=30
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+    n_jobs : int, default=None
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+        Doesn't affect :meth:`fit` method.
 
     Examples
     --------
@@ -105,13 +123,17 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
         distance="dtw",
         distance_params=None,
         distance_mtype=None,
-        **kwargs,
+        leaf_size=30,
+        n_jobs=None,
     ):
         self.n_neighbors = n_neighbors
+        self.weights = _check_weights(weights)
         self.algorithm = algorithm
         self.distance = distance
         self.distance_params = distance_params
         self.distance_mtype = distance_mtype
+        self.leaf_size = leaf_size
+        self.n_jobs = n_jobs
 
         # translate distance strings into distance callables
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
@@ -126,9 +148,10 @@ class KNeighborsTimeSeriesClassifier(BaseClassifier):
             algorithm=algorithm,
             metric="precomputed",
             metric_params=distance_params,
-            **kwargs,
+            leaf_size=leaf_size,
+            n_jobs=n_jobs,
+            weights=weights,
         )
-        self.weights = _check_weights(weights)
 
         super(KNeighborsTimeSeriesClassifier, self).__init__()
 
