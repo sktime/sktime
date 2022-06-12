@@ -574,7 +574,7 @@ Transformations
 * deprecated: ``fit-in-transform`` tag is deprecated and renamed to ``fit_is_empty``. Old tag ``fit-in-transform`` can be used until 0.12.0 when it will be removed.
 * deprecated: old location in ``series_as_features`` of ``FeatureUnion``, has moved to ``transformations.compose``. Old location is still importable from until 0.12.0.
 * deprecated: ``preserve_dataframe`` argument of ``FeatureUnion``, will be removed in 0.12.0.
-* deprecated: old location in ``transformations.series.windows_summarizer`` of ``WindowSumamrizer``, has moved to ``transformations.series.summarize``. Old location is still importable from until 0.12.0.
+* deprecated: old location in ``transformations.series.windows_summarizer`` of ``WindowSummarizer``, has moved to ``transformations.series.summarize``. Old location is still importable from until 0.12.0.
 
 Enhancements
 ~~~~~~~~~~~~
