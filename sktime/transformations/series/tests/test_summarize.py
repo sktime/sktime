@@ -52,7 +52,14 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
     yt = transformer.transform(y)
 
     output_is_dataframe = isinstance(yt, pd.DataFrame)
-    expected_instances = 1 if isinstance(y, pd.Series) else y.shape[1]
+    assert output_is_dataframe
+
+    # compute number of expected rows and columns
+
+    # all test cases are single series, so single row
+    expected_instances = 1
+
+    # expected number of feature types = quantiles plus summaries
     expected_sum_features = 1 if isinstance(summary_arg, str) else len(summary_arg)
     if quantile_arg is None:
         expected_q_features = 0
@@ -62,7 +69,11 @@ def test_summary_transformer_output_type(y, summary_arg, quantile_arg):
         expected_q_features = len(quantile_arg)
     expected_features = expected_sum_features + expected_q_features
 
-    assert output_is_dataframe and yt.shape == (expected_instances, expected_features)
+    # for multivariate series, columns = no variables * no feature types
+    if isinstance(y, pd.DataFrame):
+        expected_features = len(y.columns) * expected_features
+
+    assert yt.shape == (expected_instances, expected_features)
 
 
 @pytest.mark.parametrize("summary_arg", incorrect_sum_funcs_to_test)

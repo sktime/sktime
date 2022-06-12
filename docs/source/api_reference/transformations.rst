@@ -10,6 +10,61 @@ transformations.
    :no-members:
    :no-inherited-members:
 
+
+Composition
+-----------
+
+Pipeline building
+~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TransformerPipeline
+    FeatureUnion
+    FitInTransform
+    MultiplexTransformer
+
+.. currentmodule:: sktime.transformations.series.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    OptionalPassthrough
+    ColumnwiseTransformer
+
+.. currentmodule:: sktime.transformations.panel.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnTransformer
+
+Sklearn and pandas adapters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Tabularizer
+
+.. currentmodule:: sktime.transformations.series.adapt
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TabularToSeriesAdaptor
+    PandasTransformAdaptor
+
 Panel transformers
 ------------------
 
@@ -72,7 +127,6 @@ Compose
     :toctree: auto_generated/
     :template: class.rst
 
-    ColumnTransformer
     ColumnConcatenator
     SeriesToSeriesRowTransformer
     SeriesToPrimitivesRowTransformer
@@ -104,17 +158,6 @@ PCA
     :template: class.rst
 
     PCATransformer
-
-Reduce
-~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.reduce
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Tabularizer
 
 Rocket
 ~~~~~~
@@ -152,6 +195,7 @@ Signature
 
     SignatureTransformer
 
+
 Series transformers
 -------------------
 
@@ -169,19 +213,8 @@ Detrend
     ConditionalDeseasonalizer
     STLTransformer
 
-Adapt
-~~~~~
-
-.. currentmodule:: sktime.transformations.series.adapt
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TabularToSeriesAdaptor
-
-Box-Cox
-~~~~~~~
+Box-Cox, log, logit
+~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.boxcox
 
@@ -192,9 +225,6 @@ Box-Cox
     BoxCoxTransformer
     LogTransformer
 
-Scaled Logit
-~~~~~~~~~~~~
-
 .. currentmodule:: sktime.transformations.series.scaledlogit
 
 .. autosummary::
@@ -203,19 +233,21 @@ Scaled Logit
 
     ScaledLogitTransformer
 
-ClaSP
-~~~~~
+Summarization
+~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.clasp
+.. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ClaSPTransformer
+    SummaryTransformer
+    MeanTransformer
+    WindowSummarizer
 
-Difference
-~~~~~~~~~~
+Differencing
+~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.difference
 
@@ -225,8 +257,8 @@ Difference
 
     Differencer
 
-Auto-correlation
-~~~~~~~~~~~~~~~~
+Auto-correlation features
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.acf
 
@@ -237,8 +269,8 @@ Auto-correlation
     AutoCorrelationTransformer
     PartialAutoCorrelationTransformer
 
-Cosine
-~~~~~~
+Element-wise transforms
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.cos
 
@@ -247,9 +279,6 @@ Cosine
     :template: class.rst
 
     CosineTransformer
-
-Exponent
-~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.exponent
 
@@ -283,7 +312,7 @@ Missing value imputation
     Imputer
 
 Datetime feature generation
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.date
 
@@ -293,19 +322,8 @@ Datetime feature generation
 
     DateTimeFeatures
 
-Lagged Window Summarizer
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.summarize
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    WindowSummarizer
-
-Outlier detection
-~~~~~~~~~~~~~~~~~
+Outlier detection, changepoint detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.outlier_detection
 
@@ -315,41 +333,17 @@ Outlier detection
 
     HampelFilter
 
-Composition
-~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.compose
+.. currentmodule:: sktime.transformations.series.clasp
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    TransformerPipeline
-    FeatureUnion
-    FitInTransform
+    ClaSPTransformer
 
-.. currentmodule:: sktime.transformations.series.compose
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    OptionalPassthrough
-    ColumnwiseTransformer
-
-Theta
-~~~~~
-
-.. currentmodule:: sktime.transformations.series.theta
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ThetaLinesTransformer
-
-Augmenter
-~~~~~
+Augmentation
+~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.augmenter
 
@@ -362,19 +356,6 @@ Augmenter
     ReverseAugmenter
     WhiteNoiseAugmenter
 
-
-Summary
-~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.summarize
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SummaryTransformer
-    MeanTransformer
-
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
@@ -386,8 +367,29 @@ FeatureSelection
 
     FeatureSelection
 
-STLBootstrapTransformer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Filtering and denoising
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.kalman_filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KalmanFilterTransformerPK
+    KalmanFilterTransformerFP
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer
+
+
+Bootstrap transformations
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.bootstrap
 
@@ -396,14 +398,4 @@ STLBootstrapTransformer
     :template: class.rst
 
     STLBootstrapTransformer
-
-MovingBlockBootstrapTransformer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.bootstrap
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
     MovingBlockBootstrapTransformer
