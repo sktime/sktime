@@ -45,8 +45,8 @@ Pipeline building
 
     ColumnTransformer
 
-Sklearn facing pipeline elements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sklearn and pandas adapters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.reduce
 
@@ -63,7 +63,7 @@ Sklearn facing pipeline elements
     :template: class.rst
 
     TabularToSeriesAdaptor
-
+    PandasTransformAdaptor
 
 Panel transformers
 ------------------
