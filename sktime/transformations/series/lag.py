@@ -217,8 +217,14 @@ class Lag(BaseTransformer):
         for lag, freq in shift_params:
             # need to deal separately with RangeIndex
             # because shift always cuts off the end values
-            INT_INDEX_TYPES = (pd.RangeIndex, pd.Int64Index)
-            if isinstance(lag, int) and isinstance(X.index, INT_INDEX_TYPES):
+
+            def is_int_index(idx):
+                res = False
+                res = res or isinstance(idx, pd.RangeIndex)
+                res = res or (isinstance(idx, pd.Index) and idx.dtype == "int64")
+                return res
+
+            if isinstance(lag, int) and is_int_index(X.index):
                 Xt = X.copy()
                 Xt.index = X.index + lag
                 X_orig_idx_shifted = X_orig_idx + lag
