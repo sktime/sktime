@@ -858,7 +858,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     --------
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.multiplexer import MultiplexTransformer
+    >>> from sktime.transformations.compose import MultiplexTransformer
     >>> from sktime.transformations.series.impute import Imputer
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.model_selection import (
