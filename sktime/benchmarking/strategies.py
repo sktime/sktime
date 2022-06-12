@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Unified high-level interface for various time series related learning
-strategies.
-"""
+"""Unified high-level interface for various time series related learning strategies."""
+
 __all__ = ["TSCStrategy", "TSRStrategy"]
-__author__ = ["Markus Löning", "Sajay Ganesh"]
+__author__ = ["mloning", "sajaysurya"]
 
 import pandas as pd
 from joblib import dump
@@ -31,8 +29,7 @@ CASES = ("TSR", "TSC")
 
 
 class BaseStrategy(BaseEstimator):
-    """
-    Abstract base strategy class.
+    """Abstract base strategy class.
 
     Implements attributes and operations shared by all strategies,
     including input and compatibility checks between passed estimator,
