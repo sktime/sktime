@@ -3,6 +3,7 @@
 
 * @fkiraly @aiwalter @TonyBagnall
 
+sktime/classification/dummy/ @ZiyaoWei
 sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
 sktime/classification/early_classification/ @MatthewMiddlehurst @TonyBagnall
