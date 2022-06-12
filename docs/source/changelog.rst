@@ -265,6 +265,7 @@ Documentation
 * [DOC] Added list of interns to website (:pr:`2708`) :user:`aiwalter`
 * [DOC] reserved variables listed in extension templates (:pr:`2769`) :user:`fkiraly`
 * [DOC] Fix broken link to governance website page in governance.md (:pr:`2795`) :user:`DBCerigo`
+* [DOC] cleaning up forecasting API reference (:pr:`2798`) :user:`fkiraly`
 
 Contributors
 ~~~~~~~~~~~~
