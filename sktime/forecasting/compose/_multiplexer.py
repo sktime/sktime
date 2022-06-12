@@ -3,8 +3,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecaster for selecting among different model classes."""
 
-from sklearn.base import clone
-
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -49,12 +47,10 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     ----------
     forecaster_ : sktime forecaster
         clone of the selected forecaster used for fitting and forecasting.
-    forecasters_ : list of (str, forecaster) tuples
+    _forecasters : list of (str, forecaster) tuples
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
         the string `_[i]` is appended where `[i]` is count of occurrence up until then
-        forecasters in `forecasters_`are reference to forecasters in arg `forecasters`
-        i-th forecaster in `forecasters_` is clone of i-th in `forecasters`
 
     Examples
     --------
@@ -105,7 +101,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         self.selected_forecaster = selected_forecaster
 
         self.forecasters = forecasters
-        self.forecasters_ = self._check_estimators(
+        self._check_estimators(
             forecasters,
             attr_name="forecasters",
             cls_type=BaseForecaster,
@@ -115,8 +111,17 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
 
+    @property
+    def _forecasters(self):
+        """Forecasters turned into name/est tuples."""
+        return self._get_estimator_tuples(self.forecasters, clone_ests=False)
+
+    @_forecasters.setter
+    def _forecasters(self, value):
+        self.forecasters = value
+
     def _check_selected_forecaster(self):
-        component_names = self._get_estimator_names(self.forecasters_, make_unique=True)
+        component_names = self._get_estimator_names(self._forecasters, make_unique=True)
         selected = self.selected_forecaster
         if selected is not None and selected not in component_names:
             raise Exception(
@@ -126,45 +131,54 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
             )
 
     def __or__(self, other):
-        """Magic | method, return MultiplexForecaster.
+        """Magic | (or) method, return (right) concatenated MultiplexForecaster.
+
+        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
 
         Parameters
         ----------
-        other : either a forecaster object or a MultiplexForecaster.
-            if forecaster object:
-                add the forecaster to self's list of forecasters.
-            if MultiplexForecaster:
-                create a new MultiplexForecaster with forecasters from both
-                self and other. (Note selected_forecaster of the new
-                MultiplexForecaster will be None, even if it is not None for
-                either self or other)
+        other: `sktime` forecaster, must inherit from BaseForecaster
+            otherwise, `NotImplemented` is returned
 
         Returns
         -------
-        self : returns an instance of self.
+        MultiplexForecaster object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-MultiplexForecaster `sktime` forecasters
 
         Raises
         ------
         ValueError if other is not of type MultiplexForecaster or BaseForecaster.
         """
-        from sktime.forecasting.base._base import BaseForecaster
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseForecaster,
+            composite_class=MultiplexForecaster,
+            attr_name="forecasters",
+            concat_order="left",
+        )
 
-        # if other was a BaseForecaster - lets make it a MultiplexForecaster:
-        # if already a MultiplexForecaster make new MultiplexForecaster
-        # with forecasters from both MultiplexForecasters:
-        if isinstance(other, BaseForecaster) and not isinstance(
-            other, MultiplexForecaster
-        ):
-            other = MultiplexForecaster([other])
-        if isinstance(other, MultiplexForecaster):
-            new_tuples = self._get_estimator_tuples(
-                self.forecasters + other.forecasters
-            )
-            new_multiplex_forecaster = MultiplexForecaster(new_tuples)
-            return new_multiplex_forecaster
-        # If is anyother type of forecaster, simply add it to forecasters:
-        else:
-            return NotImplemented
+    def __ror__(self, other):
+        """Magic | (or) method, return (left) concatenated MultiplexForecaster.
+
+        Implemented for `other` being a forecaster, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster, must inherit from BaseForecaster
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        MultiplexForecaster object, concatenation of `self` (last) with `other` (first).
+            not nested, contains only non-MultiplexForecaster `sktime` forecasters
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseForecaster,
+            composite_class=MultiplexForecaster,
+            attr_name="forecasters",
+            concat_order="right",
+        )
 
     def _set_forecaster(self):
         self._check_selected_forecaster()
@@ -172,10 +186,10 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         if self.selected_forecaster is not None:
             for name, forecaster in self._get_estimator_tuples(self.forecasters):
                 if self.selected_forecaster == name:
-                    self.forecaster_ = clone(forecaster)
+                    self.forecaster_ = forecaster.clone()
         else:
             # if None, simply clone the first forecaster to self.forecaster_
-            self.forecaster_ = clone(self._get_estimator_list(self.forecasters)[0])
+            self.forecaster_ = self._get_estimator_list(self.forecasters)[0].clone()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -191,7 +205,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("forecasters_", deep=deep)
+        return self._get_params("_forecasters", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -202,7 +216,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("forecasters_", **kwargs)
+        self._set_params("_forecasters", **kwargs)
         return self
 
     @classmethod

@@ -26,12 +26,15 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["prophet"],
     "sktime.classification.feature_based": ["tsfresh", "esig"],
+    "sktime.classification.deep_learning": ["tensorflow"],
+    "sktime.networks": ["tensorflow"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
     "sktime.transformations.panel.signature_based": ["esig"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
     "sktime.alignment.dtw_python": ["dtw"],
     "sktime.clustering": ["tslearn"],
+    "sktime.transformations.series.kalman_filter": ["pykalman", "filterpy"],
 }
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 
