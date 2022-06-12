@@ -12,7 +12,12 @@ from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 
 __author__ = ["fkiraly", "mloning", "miraep8"]
-__all__ = ["TransformerPipeline", "FeatureUnion", "MultiplexTransformer"]
+__all__ = [
+    "TransformerPipeline",
+    "FeatureUnion",
+    "FitInTransform",
+    "MultiplexTransformer",
+]
 
 
 class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
