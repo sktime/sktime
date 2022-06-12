@@ -67,7 +67,9 @@ all_extras = [
     "tensorflow",
     "tensorflow-probability",
     "tsfresh>=0.17.0",
-    "tslearn>=0.5.2"
+    "tslearn>=0.5.2",
+    "filterpy>=1.4.5",
+    "pykalman>=0.9.5",
 ]
 
 dev = [

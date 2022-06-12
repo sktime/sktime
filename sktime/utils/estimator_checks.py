@@ -11,6 +11,8 @@ def check_estimator(
     tests_to_run=None,
     fixtures_to_run=None,
     verbose=True,
+    tests_to_exclude=None,
+    fixtures_to_exclude=None,
 ):
     """Run all tests on one single estimator.
 
@@ -37,6 +39,11 @@ def check_estimator(
             plus all test-fixture combinations in fixtures_to_run.
     verbose : str, optional, default=True.
         whether to print out informative summary of tests run.
+    tests_to_exclude : str or list of str, names of tests to exclude. default = None
+        removes tests that should not be run, after subsetting via tests_to_run.
+    fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
+        removes test-fixture combinations that should not be run.
+        This is done after subsetting via fixtures_to_run.
 
     Returns
     -------
@@ -82,6 +89,8 @@ def check_estimator(
         return_exceptions=return_exceptions,
         tests_to_run=tests_to_run,
         fixtures_to_run=fixtures_to_run,
+        tests_to_exclude=tests_to_exclude,
+        fixtures_to_exclude=fixtures_to_exclude,
     )
 
     try:

@@ -556,7 +556,7 @@ def from_long_to_nested_adp(obj, store=None):
 convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
 
 
-def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
+def from_multi_index_to_3d_numpy(X):
     """Convert pandas multi-index Panel to numpy 3D Panel.
 
     Convert panel data stored as pandas multi-index DataFrame to
@@ -566,15 +566,6 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     ----------
     X : pd.DataFrame
         The multi-index pandas DataFrame
-
-    instance_index, time_index are deprecated since 0.11.0 and will be removed in 0.12.0
-        these are not necessary, since: as of before 0.11.0, the column names are
-            guaranteed if the mtype is pd-multiindex, and after 0.12.0 the condition
-            on column names is relaxed
-    instance_index : str
-        Name of the multi-index level corresponding to the DataFrame's instances
-    time_index : str
-        Name of multi-index level corresponding to DataFrame's timepoints
 
     Returns
     -------
