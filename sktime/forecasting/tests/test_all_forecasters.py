@@ -492,7 +492,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
         expected = mean_absolute_percentage_error(
-            y_pred, y_test.iloc[fh_idx], symmetric=True
+            y_test.iloc[fh_idx], y_pred, symmetric=False
         )
 
         # compare expected score with actual score

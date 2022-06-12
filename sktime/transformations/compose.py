@@ -2,14 +2,13 @@
 """Meta-transformers for building composite transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from warnings import warn
-
 import pandas as pd
 from sklearn import clone
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.sklearn import is_sklearn_transformer
+from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 
 __author__ = ["fkiraly", "mloning"]
 __all__ = ["TransformerPipeline", "FeatureUnion"]
@@ -197,18 +196,23 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
-        # need to escape if other is BaseForecaster
-        #   this is because forecsting Pipelines are *also* transformers
-        #   but they need to take precedence in parsing the expression
+        from sktime.classification.compose import SklearnClassifierPipeline
         from sktime.forecasting.base import BaseForecaster
         from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
+        # need to escape if other is BaseForecaster
+        #   this is because forecsting Pipelines are *also* transformers
+        #   but they need to take precedence in parsing the expression
         if isinstance(other, BaseForecaster):
             return NotImplemented
 
         # if sklearn transformer, adapt to sktime transformer first
         if is_sklearn_transformer(other):
             return self * TabularToSeriesAdaptor(other)
+
+        # if sklearn classifier, use sklearn classifier pipeline
+        if is_sklearn_classifier(other):
+            return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
 
         return self._dunder_concat(
             other=other,
@@ -444,11 +448,10 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
-    preserve_dataframe : bool - deprecated
     flatten_transform_index : bool, optional (default=True)
         if True, columns of return DataFrame are flat, by "transformer__variablename"
         if False, columns are MultiIndex (transformer, variablename)
-        has no effect if return mtypes is one without column names
+        has no effect if return mtype is one without column names
     """
 
     _required_parameters = ["transformer_list"]
@@ -477,7 +480,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         transformer_list,
         n_jobs=None,
         transformer_weights=None,
-        preserve_dataframe=True,
         flatten_transform_index=True,
     ):
 
@@ -488,16 +490,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
 
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
-        self.preserve_dataframe = preserve_dataframe
-        if not preserve_dataframe:
-            warn(
-                "the preserve_dataframe arg has been deprecated in 0.11.0, "
-                "and will be removed in 0.12.0. It has no effect on the output format, "
-                "but can still be set to avoid compatibility issues in the deprecation "
-                "period. FeatureUnion now follows the "
-                "output format specification for sktime transformers. "
-                "To convert the output to another format, use datatypes.convert_to"
-            )
         self.flatten_transform_index = flatten_transform_index
 
         super(FeatureUnion, self).__init__()
@@ -632,8 +624,7 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         )
 
         if self.flatten_transform_index:
-            flat_index = pd.Index([self._underscore_join(x) for x in Xt.columns])
-            Xt.columns = flat_index
+            Xt.columns = flatten_multiindex(Xt.columns)
 
         return Xt
 
@@ -676,12 +667,6 @@ class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
         ]
 
         return {"transformer_list": TRANSFORMERS}
-
-    @staticmethod
-    def _underscore_join(iterable):
-        """Create flattened column names from multiindex tuple."""
-        iterable_as_str = [str(x) for x in iterable]
-        return "__".join(iterable_as_str)
 
 
 class FitInTransform(BaseTransformer):
