@@ -263,13 +263,23 @@ def get_window(obj, window_length=None, lag=0):
 
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
+        # if 2D or 3D, we need to subset by last, not first dimension
+        # if 1D, we need to subset by first dimension
+        # to achieve that effect, we swap first and last in case of 2D, 3D
+        # and always subset on first dimension
+        if obj.ndim > 1:
+            obj = obj.swapaxes(1, -1)
         obj_len = len(obj)
         window_start = max(-window_length - lag, -obj_len)
         window_end = max(-lag, -obj_len)
+        # we need to swap first and last dimension back before returning, if done above
         if window_end == 0:
-            return obj[window_start:]
+            obj_subset = obj[window_start:]
         else:
-            return obj[window_start:window_end]
+            obj_subset = obj[window_start:window_end]
+        if obj.ndim > 1:
+            obj_subset = obj_subset.swapaxes(1, -1)
+        return obj_subset
 
     # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame):
@@ -304,6 +314,8 @@ def get_slice(obj, start=None, end=None):
     obj : sktime compatible time series Series type or None
         if not None, must be of one of the following mtypes:
             pd.Series, pd.DataFrame, np.ndarray, of Series scitype
+            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
+            pd_multiindex_hier, of Hierarchical scitype
     start : int or timestamp, optional, default = None
         must be int if obj is int indexed, timestamp if datetime indexed
         Inclusive start of slice. Default = None.
@@ -331,33 +343,45 @@ def get_slice(obj, start=None, end=None):
 
     obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
 
-    if (
-        isinstance(start, pd.Timestamp)
-        or isinstance(end, pd.Timestamp)
-        or isinstance(start, pd.Period)
-        or isinstance(end, pd.Period)
-    ):
-        if start and end:
-            obj_slice = obj[start:end][:-1]
-        elif end:
-            obj_slice = obj[:end][:-1]
-        else:
-            obj_slice = obj[start:]
-    else:
-        if start and end:
-            obj_slice = obj[start:end]
-        elif end:
-            obj_slice = obj[:end]
-        else:
-            obj_slice = obj[start:]
-
     # numpy3D (Panel) or np.npdarray (Series)
-    if isinstance(obj_slice, np.ndarray):
-        return obj_slice
-    # pd.DataFrame(Series)
-    # TODO: add support for pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
-    if isinstance(obj_slice, pd.DataFrame):
-        return convert_to(obj_slice, obj_in_mtype)
+    # Assumes the index is integer so will be exclusive by default
+    if isinstance(obj, np.ndarray):
+        # if 2D or 3D, we need to subset by last, not first dimension
+        # if 1D, we need to subset by first dimension
+        # to achieve that effect, we swap first and last in case of 2D, 3D
+        # and always subset on first dimension
+        if obj.ndim > 1:
+            obj = obj.swapaxes(1, -1)
+        # subsetting
+        if start and end:
+            obj_subset = obj[start:end]
+        elif end:
+            obj_subset = obj[:end]
+        else:
+            obj_subset = obj[start:]
+        # we need to swap first and last dimension back before returning, if done above
+        if obj.ndim > 1:
+            obj_subset = obj_subset.swapaxes(1, -1)
+        return obj_subset
+
+    # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
+    # Assumes the index is pd.Timestamp or pd.Period and ensures the end is
+    # exclusive with slice_select
+    if isinstance(obj, pd.DataFrame):
+        if not isinstance(obj.index, pd.MultiIndex):
+            time_indices = obj.index
+        else:
+            time_indices = obj.index.get_level_values(-1)
+
+        if start and end:
+            slice_select = (time_indices >= start) & (time_indices < end)
+        elif end:
+            slice_select = time_indices < end
+        elif start:
+            slice_select = time_indices >= start
+
+        obj_subset = obj.iloc[slice_select]
+        return convert_to(obj_subset, obj_in_mtype)
 
     raise ValueError(
         "bug in get_slice, unreachable condition, ifs should be exhaustive"
