@@ -79,6 +79,17 @@ Performance metrics
 ^^^^^^^^^^^^^^^^^^^
 
 * changed: set ``symmetric`` hyper-parameter default to ``True`` in all relative performance metrics.
+* deprecated: ``func`` and ``name`` args will be removed from all performance metric constructors in 0.13.0.
+  If these attributes are needed, they should be object or class attributes, and can be optional constructor arguments.
+  However, it will no longer be required that all performance metrics have ``func`` and ``name`` as constructor arguments.
+* deprecated: the ``greater_is_better`` property will be replaced by the ``greater_is_better`` tag, in 0.13.0.
+  Until then, implementers should set the ``greater_is_better`` tag.
+  Users can still call the ``greater_is_better`` property until 0.13.0, which will alias the ``greater_is_better`` tag, if set.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+* deprecated: ``"capability:early_prediction"`` will be removed in 0.13.0 from ``BaseClassifier`` descendants.
+  Early classifiers should inherit from the learning task specific base class ``BaseEarlyClassifier`` instead.
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -87,6 +98,8 @@ Transformations
 * removed: ``FeatureUnion``'s ``preserve_dataframe`` parameter
 * removed: ``series_as_features.compose`` module, contents are in ``transformations.compose``
 * removed: ``transformations.series.window_summarize`` module, contents are in ``transformations.series.summarize``
+* changed: ``"drift"``, ``"mean"``, ``"median"``, ``"random"`` methods of ``Imputer`` now use the training set (``fit`` arguments)
+  to compute parameters. For pre-0.12.0 behaviour, i.e., using the ``transform`` set, wrap the ``Imputer`` in the ``FitInTransform`` compositor.
 
 Enhancements
 ~~~~~~~~~~~~
