@@ -1593,7 +1593,7 @@
         "code"
       ]
     },
-    { 
+    {
       "login": "bethrice44",
       "name": "bethrice44",
       "avatar_url": "https://avatars.githubusercontent.com/u/11226988?v=4",
@@ -1621,6 +1621,16 @@
       "profile": "https://github.com/dougollerenshaw",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "AurumnPegasus",
+      "name": "Shivansh Subramanian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54315149?v=4",
+      "profile": "https://github.com/AurumnPegasus",
+      "contributions": [
+        "doc",
+        "code"
       ]
     }
   ],
