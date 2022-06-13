@@ -40,7 +40,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning, fkiraly"]
+__author__ = ["mloning, fkiraly", "miraep8"]
 __all__ = [
     "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
@@ -195,6 +195,29 @@ class BaseTransformer(BaseEstimator):
         if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexTranformer.
+
+        Implemented for `other` being either a MultiplexTransformer or a transformer.
+
+        Parameters
+        ----------
+        other: `sktime` transformer or sktime MultiplexTransformer
+
+        Returns
+        -------
+        MultiplexTransformer object
+        """
+        from sktime.transformations.compose import MultiplexTransformer
+
+        if isinstance(other, MultiplexTransformer) or isinstance(
+            other, BaseTransformer
+        ):
+            multiplex_self = MultiplexTransformer([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 
