@@ -854,8 +854,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         the estimators passed in transformers passed. If transformers was passed
         without names, those be auto-generated and put here.
 
-    Example 1 - Use in GridSearch
-    -----------------------------
+    Examples
+    --------
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.compose import MultiplexTransformer
@@ -888,13 +888,6 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     >>> # randomly make some of the values nans:
     >>> y.loc[y.sample(frac=0.1).index] = -1
     >>> gscv = gscv.fit(y)
-    Example 2 - Creation with or dunder:
-    ------------------------------------
-    >>> from sktime.transformations.compose import MultiplexTransformer
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> multiplexer = Imputer(method="mean", missing_values = -1) |
-    ...     Imputer(method="nearest", missing_values = -1) |
-    ...     Imputer(method="random", missing_values = -1)
     """
 
     # tags will largely be copied from selected_transformer
