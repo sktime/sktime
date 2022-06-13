@@ -159,32 +159,32 @@ class VARMAX(_StatsModelsAdapter):
         random_state=None,
     ):
         # Model parameters
-        self.order=order
-        self.trend=trend
-        self.error_cov_type=error_cov_type
-        self.measurement_error=measurement_error
-        self.enforce_stationarity=enforce_stationarity
-        self.enforce_invertibility=enforce_invertibility
-        self.trend_offset=trend_offset
-        self.start_params=start_params
-        self.transformed=transformed
-        self.includes_fixed=includes_fixed
-        self.cov_type=cov_type
-        self.cov_kwds=cov_kwds
-        self.method=method
-        self.maxiter=maxiter
-        self.full_output=full_output
-        self.disp=disp
-        self.callback=callback
-        self.return_params=return_params
-        self.optim_score=optim_score
-        self.optim_complex_step=optim_complex_step
-        self.optim_hessian=optim_hessian
-        self.flags=flags
-        self.low_memory=low_memory
-        self.dynamic=dynamic
-        self.information_set=information_set
-        self.signal_only=signal_only
+        self.order = order
+        self.trend = trend
+        self.error_cov_type = error_cov_type
+        self.measurement_error = measurement_error
+        self.enforce_stationarity = enforce_stationarity
+        self.enforce_invertibility = enforce_invertibility
+        self.trend_offset = trend_offset
+        self.start_params = start_params
+        self.transformed = transformed
+        self.includes_fixed = includes_fixed
+        self.cov_type = cov_type
+        self.cov_kwds = cov_kwds
+        self.method = method
+        self.maxiter = maxiter
+        self.full_output = full_output
+        self.disp = disp
+        self.callback = callback
+        self.return_params = return_params
+        self.optim_score = optim_score
+        self.optim_complex_step = optim_complex_step
+        self.optim_hessian = optim_hessian
+        self.flags = flags
+        self.low_memory = low_memory
+        self.dynamic = dynamic
+        self.information_set = information_set
+        self.signal_only = signal_only
 
         super(VARMAX, self).__init__()
 
@@ -249,7 +249,7 @@ class VARMAX(_StatsModelsAdapter):
         fh : ForecastingHorizon
             The forecasters horizon with the steps ahead to to predict.
             Default is one-step ahead forecast,
-            i.e. np.array([1]) 
+            i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -290,10 +290,12 @@ class VARMAX(_StatsModelsAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
 
-        params = [{"order": (0,0)},
-                  {"order": (1,0)},
-                  {"order": (0,1)},
-                  {"order": (1,1)}]
+        params = [
+            {"order": (0,0)},
+            {"order": (1,0)},
+            {"order": (0,1)},
+            {"order": (1,1)},
+        ]
 
         return params
 

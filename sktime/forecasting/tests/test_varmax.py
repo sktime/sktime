@@ -4,9 +4,9 @@ __author__ = ["KatieBuc"]
 
 import numpy as np
 import pandas as pd
-
 from numpy.testing import assert_allclose
 from statsmodels.tsa.api import VARMAX as _VARMAX
+
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.varmax import VARMAX
@@ -25,7 +25,7 @@ def test_VARMAX_against_statsmodels():
     default variables"""
     train, _ = temporal_train_test_split(df.astype("float64"))
     y = train[["A", "B"]]
-    
+
     sktime_model = VARMAX()
     fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
     sktime_model.fit(y)
@@ -45,7 +45,7 @@ def test_VARMAX_against_statsmodels_with_exog():
     y_train, X_train = train[["A", "B"]], train[["C"]]
     _, X_test = test[["A", "B"]], test[["C"]]
     fh = ForecastingHorizon([1, 2, 3, 4, 5, 6])
-    assert(len(fh) == len(X_test))
+    assert len(fh) == len(X_test)
 
     sktime_model = VARMAX()
     sktime_model.fit(y_train, X=X_train)
@@ -53,7 +53,7 @@ def test_VARMAX_against_statsmodels_with_exog():
 
     stats = _VARMAX(y_train, exog=X_train)
     stats_fit = stats.fit()
-    start, end = len(train) + fh[0] -1, len(train) + fh[-1] -1
+    start, end = len(train) + fh[0] - 1, len(train) + fh[-1] - 1
     y_pred_stats = stats_fit.predict(start=start, end=end, exog=X_test)
 
     assert_allclose(y_pred, y_pred_stats)
