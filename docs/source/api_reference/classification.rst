@@ -48,8 +48,19 @@ Distance-based
     ProximityTree
     ProximityStump
 
+Dummy
+-----
+
+.. currentmodule:: sktime.classification.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyClassifier
+
 Hybrid
---------------
+------
 
 .. currentmodule:: sktime.classification.hybrid
 
@@ -100,7 +111,7 @@ Kernel-based
     Arsenal
 
 Feature-based
----------------
+-------------
 
 .. currentmodule:: sktime.classification.feature_based
 

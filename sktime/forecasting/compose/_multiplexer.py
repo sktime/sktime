@@ -47,12 +47,10 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
     ----------
     forecaster_ : sktime forecaster
         clone of the selected forecaster used for fitting and forecasting.
-    forecasters_ : list of (str, forecaster) tuples
+    _forecasters : list of (str, forecaster) tuples
         str are identical to those passed, if passed strings are unique
         otherwise unique strings are generated from class name; if not unique,
         the string `_[i]` is appended where `[i]` is count of occurrence up until then
-        forecasters in `forecasters_`are reference to forecasters in arg `forecasters`
-        i-th forecaster in `forecasters_` is clone of i-th in `forecasters`
 
     Examples
     --------
@@ -103,7 +101,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         self.selected_forecaster = selected_forecaster
 
         self.forecasters = forecasters
-        self.forecasters_ = self._check_estimators(
+        self._check_estimators(
             forecasters,
             attr_name="forecasters",
             cls_type=BaseForecaster,
@@ -113,8 +111,17 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         self.clone_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
 
+    @property
+    def _forecasters(self):
+        """Forecasters turned into name/est tuples."""
+        return self._get_estimator_tuples(self.forecasters, clone_ests=False)
+
+    @_forecasters.setter
+    def _forecasters(self, value):
+        self.forecasters = value
+
     def _check_selected_forecaster(self):
-        component_names = self._get_estimator_names(self.forecasters_, make_unique=True)
+        component_names = self._get_estimator_names(self._forecasters, make_unique=True)
         selected = self.selected_forecaster
         if selected is not None and selected not in component_names:
             raise Exception(
@@ -198,7 +205,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("forecasters_", deep=deep)
+        return self._get_params("_forecasters", deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -209,7 +216,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
         -------
         self
         """
-        self._set_params("forecasters_", **kwargs)
+        self._set_params("_forecasters", **kwargs)
         return self
 
     @classmethod
