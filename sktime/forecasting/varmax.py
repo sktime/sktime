@@ -8,16 +8,19 @@ from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
+
 class VARMAX(_StatsModelsAdapter):
     """
-    Vector Autoregressive Moving Average with eXogenous regressors model
+    Wrapper for statsmodels VARMAX model
+
+    Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)
 
     Parameters
     ----------
-    endog : array_like
-        The observed time-series process :math:`y`, , shaped nobs x k_endog.
-    exog : array_like, optional
-        Array of exogenous regressors, shaped nobs x k.
+    y : array_like
+        The observed time-series process :math:`y`, , shaped n_obs x k_endog.
+    X : array_like, optional
+        Array of exogenous regressors, shaped n_obs x k.
     order : iterable
         The (p,q) order of the model for the number of AR and MA parameters to
         use.
@@ -45,7 +48,7 @@ class VARMAX(_StatsModelsAdapter):
         in the moving average component of the model. Default is True.
     trend_offset : int, optional
         The offset at which to start time trend values. Default is 1, so that
-        if `trend='t'` the trend is equal to 1, 2, ..., nobs. Typically is only
+        if `trend='t'` the trend is equal to 1, 2, ..., n_obs. Typically is only
         set when the model created by extending a previous dataset.
     **kwargs
         Keyword arguments may be used to provide default values for state space
@@ -95,7 +98,7 @@ class VARMAX(_StatsModelsAdapter):
     of [1]_ for more information. Although this class can be used to estimate
     VARMA(p,q) models, a warning is issued to remind users that no steps have
     been taken to ensure identification in this case.
-    
+
     References
     ----------
     .. [1] Lütkepohl, Helmut. 2007.
@@ -122,14 +125,14 @@ class VARMAX(_StatsModelsAdapter):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
-        "capability:pred_int": False, 
+        "capability:pred_int": False,
     }
 
     def __init__(
         self,
-        order = (1,0),
-        trend = 'c',
-        error_cov_type = 'unstructured',
+        order=(1, 0),
+        trend="c",
+        error_cov_type="unstructured",
         measurement_error=False,
         enforce_stationarity=True,
         enforce_invertibility=True,
@@ -139,7 +142,7 @@ class VARMAX(_StatsModelsAdapter):
         includes_fixed=False,
         cov_type=None,
         cov_kwds=None,
-        method='lbfgs',
+        method="lbfgs",
         maxiter=50,
         full_output=1,
         disp=5,
@@ -151,44 +154,44 @@ class VARMAX(_StatsModelsAdapter):
         flags=None,
         low_memory=False,
         dynamic=False,
-        information_set='predicted',
+        information_set="predicted",
         signal_only=False,
         random_state=None,
     ):
         # Model parameters
-        self.order = order
-        self.trend = trend
-        self.error_cov_type = error_cov_type
-        self.measurement_error = measurement_error
-        self.enforce_stationarity = enforce_stationarity
-        self.enforce_invertibility = enforce_invertibility
-        self.trend_offset = trend_offset
-        self.start_params = start_params
-        self.transformed = transformed
-        self.includes_fixed = includes_fixed
-        self.cov_type = cov_type
-        self.cov_kwds = cov_kwds
-        self.method = method
-        self.maxiter = maxiter
-        self.full_output = full_output
-        self.disp = disp
-        self.callback = callback
-        self.return_params = return_params
-        self.optim_score = optim_score
-        self.optim_complex_step = optim_complex_step
-        self.optim_hessian = optim_hessian
-        self.flags = flags
-        self.low_memory = low_memory
-        self.dynamic = dynamic
-        self.information_set = information_set
-        self.signal_only = signal_only
+        self.order=order
+        self.trend=trend
+        self.error_cov_type=error_cov_type
+        self.measurement_error=measurement_error
+        self.enforce_stationarity=enforce_stationarity
+        self.enforce_invertibility=enforce_invertibility
+        self.trend_offset=trend_offset
+        self.start_params=start_params
+        self.transformed=transformed
+        self.includes_fixed=includes_fixed
+        self.cov_type=cov_type
+        self.cov_kwds=cov_kwds
+        self.method=method
+        self.maxiter=maxiter
+        self.full_output=full_output
+        self.disp=disp
+        self.callback=callback
+        self.return_params=return_params
+        self.optim_score=optim_score
+        self.optim_complex_step=optim_complex_step
+        self.optim_hessian=optim_hessian
+        self.flags=flags
+        self.low_memory=low_memory
+        self.dynamic=dynamic
+        self.information_set=information_set
+        self.signal_only=signal_only
 
         super(VARMAX, self).__init__()
 
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
 
-        private _fit containing the core logic, called from fit
+        private method containing core logic for wrappers for statsmodel
 
         Writes to self:
             Sets fitted model attributes ending in "_".
@@ -209,31 +212,31 @@ class VARMAX(_StatsModelsAdapter):
         self._forecaster = _VARMAX(
             endog=y,
             exog=X,
-            order = self.order,
-            trend = self.trend,
-            error_cov_type = self.error_cov_type,
-            measurement_error = self.measurement_error,
-            enforce_stationarity = self.enforce_stationarity,
-            enforce_invertibility = self.enforce_invertibility,
-            trend_offset = self.trend_offset,
+            order=self.order,
+            trend=self.trend,
+            error_cov_type=self.error_cov_type,
+            measurement_error=self.measurement_error,
+            enforce_stationarity=self.enforce_stationarity,
+            enforce_invertibility=self.enforce_invertibility,
+            trend_offset=self.trend_offset,
         )
         self._fitted_forecaster = self._forecaster.fit(
-            start_params = self.start_params,
-            transformed = self.transformed,
-            includes_fixed = self.includes_fixed,
-            cov_type = self.cov_type,
-            cov_kwds = self.cov_kwds,
-            method = self.method,
-            maxiter = self.maxiter,
-            full_output = self.full_output,
-            disp = self.disp,
-            callback = self.callback,
-            return_params = self.return_params,
-            optim_score = self.optim_score,
-            optim_complex_step = self.optim_complex_step,
-            optim_hessian = self.optim_hessian,
-            flags = self.flags,
-            low_memory = self.low_memory,
+            start_params=self.start_params,
+            transformed=self.transformed,
+            includes_fixed=self.includes_fixed,
+            cov_type=self.cov_type,
+            cov_kwds=self.cov_kwds,
+            method=self.method,
+            maxiter=self.maxiter,
+            full_output=self.full_output,
+            disp=self.disp,
+            callback=self.callback,
+            return_params=self.return_params,
+            optim_score=self.optim_score,
+            optim_complex_step=self.optim_complex_step,
+            optim_hessian=self.optim_hessian,
+            flags=self.flags,
+            low_memory=self.low_memory,
         )
         return self
 
@@ -246,7 +249,7 @@ class VARMAX(_StatsModelsAdapter):
         fh : ForecastingHorizon
             The forecasters horizon with the steps ahead to to predict.
             Default is one-step ahead forecast,
-            i.e. np.array([1])
+            i.e. np.array([1]) 
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -257,12 +260,13 @@ class VARMAX(_StatsModelsAdapter):
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        return self._fitted_forecaster.predict(start = start,
-            end = end,
-            dynamic = self.dynamic,
-            information_set = self.information_set,
-            signal_only = self.signal_only,
-            exog = X,
+        return self._fitted_forecaster.predict(
+            start=start,
+            end=end,
+            dynamic=self.dynamic,
+            information_set=self.information_set,
+            signal_only=self.signal_only,
+            exog=X,
         )
 
 
@@ -286,27 +290,12 @@ class VARMAX(_StatsModelsAdapter):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
 
-        # todo: set the testing parameters for the estimators
-        # Testing parameters can be dictionary or list of dictionaries.
-        # Testing parameter choice should cover internal cases well.
-        #   for "simple" extension, ignore the parameter_set argument.
-        #
-        # this method can, if required, use:
-        #   class properties (e.g., inherited); parent class test case
-        #   imported objects such as estimators from sktime or sklearn
-        # important: all such imports should be *inside get_test_params*, not at the top
-        #            since imports are used only at testing time
-        #
-        # example 1: specify params as dictionary
-        # any number of params can be specified
-        # params = {"est": value0, "parama": value1, "paramb": value2}
-        #
-        # example 2: specify params as list of dictionary
-        # note: Only first dictionary will be used by create_test_instance
-        # params = [{"est": value1, "parama": value2},
-        #           {"est": value3, "parama": value4}]
-        #
-        # return params
+        params = [{"order": (0,0)},
+                  {"order": (1,0)},
+                  {"order": (0,1)},
+                  {"order": (1,1)}]
+
+        return params
 
 
 
