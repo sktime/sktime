@@ -112,7 +112,7 @@ Wrappers that add prediction intervals to any forecaster.
     :template: class.rst
 
     BaggingForecaster
-  
+
 
 Trend forecasters
 -----------------
