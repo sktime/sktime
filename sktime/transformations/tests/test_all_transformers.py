@@ -92,12 +92,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             X_scitype, trafo_input, trafo_output
         )
 
-        # todo 0.11.0 or 0.12.0:
-        #   remove this once #2219 is merged, which adds Hierarchical support
-        #   until then, skip tests if expected scitype is Hierarchical
-        if Xt_expected_scitype == "Hierarchical":
-            return None
-
         valid_scitype, _, Xt_metadata = check_is_scitype(
             Xt, scitype=Xt_expected_scitype, return_metadata=True
         )
@@ -120,6 +114,8 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             return None
 
         # if we vectorize, number of instances before/after transform should be same
+
+        # series-to-series transformers
         if trafo_input == "Series" and trafo_output == "Series":
             if X_scitype == "Series" and Xt_scitype == "Series":
                 if estimator_instance.get_tag("transform-returns-same-time-index"):
@@ -128,9 +124,18 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
             if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
                 assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
+
+        # panel-to-panel transformers
         if trafo_input == "Panel" and trafo_output == "Panel":
             if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
                 assert X_metadata["n_panels"] == Xt_metadata["n_panels"]
+
+        # series-to-primitives transformers
+        if trafo_input == "Series" and trafo_output == "Primitives":
+            if X_scitype == "Series":
+                assert Xt_metadata["n_instances"] == 1
+            if X_scitype == "Panel":
+                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
 
         # todo: also test the expected mtype
 

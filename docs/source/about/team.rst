@@ -78,6 +78,8 @@ Core Developers
      - :user:`aiwalter`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Stanislav Khrapov
+     - :user:`khrapovs`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 

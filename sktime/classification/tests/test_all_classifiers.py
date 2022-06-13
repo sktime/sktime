@@ -92,7 +92,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
         assert y_proba.shape == (X_new_instances, n_classes)
-        np.testing.assert_allclose(y_proba.sum(axis=1), 1)
+        np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
 
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
