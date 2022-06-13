@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -338,6 +339,14 @@ class NaiveForecaster(BaseForecaster):
                 strategy=self.strategy, sp=self.sp, window_length=self.window_length
             )
         )
+
+        # 1st part of preserving name/columns, otherwise they get lost on occasion
+        # provisionally hard-fixing the mess of 100 nested function calls
+        # until someone finds it in their heart to simplify the NaiveForecaster
+        if isinstance(y, pd.Series):
+            self.cols_ = y.name
+        else:
+            self.cols_ = y.columns
         self._forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh=None, X=None):
@@ -356,6 +365,14 @@ class NaiveForecaster(BaseForecaster):
         if self._y.index[0] in y_pred.index:
             # fill NaN with next row values
             y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+
+        # 2nd part of preserving name/columns, otherwise they get lost on occasion
+        # provisionally hard-fixing the mess of 100 nested function calls
+        # until someone finds it in their heart to simplify the NaiveForecaster
+        if isinstance(y_pred, pd.Series):
+            y_pred.name = self.cols_
+        else:  # is pd.DataFrame
+            y_pred.columns = self.cols_
 
         return y_pred
 
@@ -456,9 +473,7 @@ class NaiveVariance(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        # deprecated and likely to be removed in 0.12.0
         "capability:pred_var": True,
-        # deprecated and likely to be removed in 0.12.0
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -632,8 +647,8 @@ class NaiveVariance(BaseForecaster):
 
         for id in y_index:
             forecaster = forecaster.clone()
-            y_train = y[:id]  # subset on which we fit
-            y_test = y[id:]  # subset on which we predict
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
             try:
                 forecaster.fit(y_train, fh=y_test.index)
             except ValueError:
