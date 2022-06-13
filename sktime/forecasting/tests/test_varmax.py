@@ -38,6 +38,7 @@ def test_VARMAX_against_statsmodels():
 
     assert_allclose(y_pred, y_pred_stats)
 
+
 def test_VARMAX_against_statsmodels_with_exog():
     """Compares Sktime's and Statsmodel's VARMAX
     with exogenous input"""

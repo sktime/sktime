@@ -269,7 +269,6 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -291,13 +290,10 @@ class VARMAX(_StatsModelsAdapter):
         """
 
         params = [
-            {"order": (0,0)},
-            {"order": (1,0)},
-            {"order": (0,1)},
-            {"order": (1,1)},
+            {"order": (0, 0)},
+            {"order": (1, 0)},
+            {"order": (0, 1)},
+            {"order": (1, 1)},
         ]
 
         return params
-
-
-
