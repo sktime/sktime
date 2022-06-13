@@ -888,8 +888,8 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
     >>> # randomly make some of the values nans:
     >>> y.loc[y.sample(frac=0.1).index] = -1
     >>> gscv = gscv.fit(y)
-    Example 2 - Creation with | dunder:
-    -----------------------------------
+    Example 2 - Creation with or dunder:
+    ------------------------------------
     >>> from sktime.transformations.compose import MultiplexTransformer
     >>> from sktime.transformations.series.impute import Imputer
     >>> multiplexer = Imputer(method="mean", missing_values = -1) |
