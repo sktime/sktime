@@ -232,9 +232,7 @@ class ConformalIntervals(BaseForecaster):
             pred_int.loc[fh_ind] = pred_int_row
 
         y_pred = self.predict(fh=fh, X=X)
-        y_pred = convert(
-            y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series"
-        )
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
 
         for col in cols:
             if self.method in ABS_RESIDUAL_BASED:
