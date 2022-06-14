@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.datatypes import convert_to, MTYPE_LIST_SERIES
+from sktime.datatypes import MTYPE_LIST_SERIES, convert_to
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 
