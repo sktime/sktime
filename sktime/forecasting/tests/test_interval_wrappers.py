@@ -29,7 +29,6 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype):
     We do this with a trick: the vanilla NaiveForecaster can accept both; we mimick a
     "pd.DataFrame only" forecaster by restricting its y_inner_mtype tag to pd.Series.
     """
-
     y = load_airline()
 
     f = NaiveForecaster()
