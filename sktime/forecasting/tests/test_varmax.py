@@ -21,8 +21,10 @@ df = pd.DataFrame(
 
 
 def test_VARMAX_against_statsmodels():
-    """Compares Sktime's and Statsmodel's VARMAX with
-    default variables"""
+    """Compares Sktime's and Statsmodel's VARMAX.
+
+    with default variables.
+    """
     train, _ = temporal_train_test_split(df.astype("float64"))
     y = train[["A", "B"]]
 
@@ -40,8 +42,10 @@ def test_VARMAX_against_statsmodels():
 
 
 def test_VARMAX_against_statsmodels_with_exog():
-    """Compares Sktime's and Statsmodel's VARMAX
-    with exogenous input"""
+    """Compares Sktime's and Statsmodel's VARMAX.
+
+    with exogenous input.
+    """
     train, test = temporal_train_test_split(df.astype("float64"))
     y_train, X_train = train[["A", "B"]], train[["C"]]
     _, X_test = test[["A", "B"]], test[["C"]]

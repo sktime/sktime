@@ -1,26 +1,20 @@
 # -*- coding: utf-8 -*-
+"""Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)."""
 __all__ = ["VARMAX"]
 __author__ = ["KatieBuc"]
 
-import numpy as np
-import pandas as pd
 from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class VARMAX(_StatsModelsAdapter):
-    """
-    Wrapper for statsmodels VARMAX model
+    r"""Wrapper for statsmodels VARMAX model.
 
     Vector Autoregressive Moving Average with eXogenous regressors model (VARMAX)
 
     Parameters
     ----------
-    y : array_like
-        The observed time-series process :math:`y`, , shaped n_obs x k_endog.
-    X : array_like, optional
-        Array of exogenous regressors, shaped n_obs x k.
     order : iterable
         The (p,q) order of the model for the number of AR and MA parameters to
         use.
@@ -50,37 +44,126 @@ class VARMAX(_StatsModelsAdapter):
         The offset at which to start time trend values. Default is 1, so that
         if `trend='t'` the trend is equal to 1, 2, ..., n_obs. Typically is only
         set when the model created by extending a previous dataset.
-    **kwargs
-        Keyword arguments may be used to provide default values for state space
-        matrices or for Kalman filtering options. See `Representation`, and
-        `KalmanFilter` for more details.
-    Attributes
-    ----------
-    order : iterable
-        The (p,q) order of the model for the number of AR and MA parameters to
-        use.
-    trend : str{'n','c','t','ct'} or iterable
-        Parameter controlling the deterministic trend polynomial :math:`A(t)`.
-        Can be specified as a string where 'c' indicates a constant (i.e. a
-        degree zero component of the trend polynomial), 't' indicates a
-        linear trend with time, and 'ct' is both. Can also be specified as an
-        iterable defining the non-zero polynomial exponents to include, in
-        increasing order. For example, `[1,1,0,1]` denotes
-        :math:`a + bt + ct^3`.
-    error_cov_type : {'diagonal', 'unstructured'}, optional
-        The structure of the covariance matrix of the error term, where
-        "unstructured" puts no restrictions on the matrix and "diagonal"
-        requires it to be a diagonal matrix (uncorrelated errors). Default is
-        "unstructured".
-    measurement_error : bool, optional
-        Whether or not to assume the endogenous observations `endog` were
-        measured with error. Default is False.
-    enforce_stationarity : bool, optional
-        Whether or not to transform the AR parameters to enforce stationarity
-        in the autoregressive component of the model. Default is True.
-    enforce_invertibility : bool, optional
-        Whether or not to transform the MA parameters to enforce invertibility
-        in the moving average component of the model. Default is True.
+    start_params : array_like, optional
+        Initial guess of the solution for the loglikelihood maximization. If
+        None, the default is given by Model.start_params.
+    transformed : bool, optional
+        Whether or not start_params is already transformed. Default is True.
+    includes_fixed : bool, optional
+        If parameters were previously fixed with the fix_params method, this
+        argument describes whether or not start_params also includes the
+        fixed parameters, in addition to the free parameters. Default is False.
+    cov_type : str, optional
+        The `cov_type` keyword governs the method for calculating the
+        covariance matrix of parameter estimates. Can be one of:
+         - 'opg' for the outer product of gradient estimator
+         - 'oim' for the observed information matrix estimator, calculated
+            using the method of Harvey (1989)
+         - 'approx' for the observed information matrix estimator,
+            calculated using a numerical approximation of the Hessian matrix.
+         - 'robust' for an approximate (quasi-maximum likelihood) covariance
+            matrix that may be valid even in the presence of some
+            misspecifications. Intermediate calculations use the 'oim'
+            method.
+         - 'robust_approx' is the same as 'robust' except that the
+            intermediate calculations use the 'approx' method.
+         - 'none' for no covariance matrix calculation.
+        Default is 'opg' unless memory conservation is used to avoid computing the
+        loglikelihood values for each observation, in which case the default is
+        'approx'.
+    cov_kwds : dict or None, optional
+        A dictionary of arguments affecting covariance matrix computation.
+        opg, oim, approx, robust, robust_approx
+         - 'approx_complex_step' : bool, optional - If True, numerical
+            approximations are computed using complex-step methods. If False,
+            numerical approximations are computed using finite difference
+            methods. Default is True.
+         - 'approx_centered' : bool, optional - If True, numerical
+            approximations computed using finite difference methods use a
+            centered approximation. Default is False.
+    method : str, optional
+        The `method` determines which solver from `scipy.optimize`
+        is used, and it can be chosen from among the following strings:
+         - 'newton' for Newton-Raphson
+         - 'nm' for Nelder-Mead
+         - 'bfgs' for Broyden-Fletcher-Goldfarb-Shanno (BFGS)
+         - 'lbfgs' for limited-memory BFGS with optional box constraints
+         - 'powell' for modified Powell's method
+         - 'cg' for conjugate gradient
+         - 'ncg' for Newton-conjugate gradient
+         - 'basinhopping' for global basin-hopping solver
+        The explicit arguments in `fit` are passed to the solver,
+        with the exception of the basin-hopping solver. Each
+        solver has several optional arguments that are not the same across
+        solvers. See the notes section below (or scipy.optimize) for the
+        available arguments and for the list of explicit arguments that the
+        basin-hopping solver supports.
+    maxiter : int, optional
+        The maximum number of iterations to perform.
+    full_output : bool, optional
+        Set to True to have all available output in the Results object's
+        mle_retvals attribute. The output is dependent on the solver.
+        See LikelihoodModelResults notes section for more information.
+    disp : bool, optional
+        Set to True to print convergence messages.
+    callback : callable callback(xk), optional
+        Called after each iteration, as callback(xk), where xk is the
+        current parameter vector.
+    return_params : bool, optional
+        Whether or not to return only the array of maximizing parameters.
+        Default is False.
+    optim_score : {'harvey', 'approx'} or None, optional
+        The method by which the score vector is calculated. 'harvey' uses
+        the method from Harvey (1989), 'approx' uses either finite
+        difference or complex step differentiation depending upon the
+        value of `optim_complex_step`, and None uses the built-in gradient
+        approximation of the optimizer. Default is None. This keyword is
+        only relevant if the optimization method uses the score.
+    optim_complex_step : bool, optional
+        Whether or not to use complex step differentiation when
+        approximating the score; if False, finite difference approximation
+        is used. Default is True. This keyword is only relevant if
+        `optim_score` is set to 'harvey' or 'approx'.
+    optim_hessian : {'opg','oim','approx'}, optional
+        The method by which the Hessian is numerically approximated. 'opg'
+        uses outer product of gradients, 'oim' uses the information
+        matrix formula from Harvey (1989), and 'approx' uses numerical
+        approximation. This keyword is only relevant if the
+        optimization method uses the Hessian matrix.
+    low_memory : bool, optional
+        If set to True, techniques are applied to substantially reduce
+        memory usage. If used, some features of the results object will
+        not be available (including smoothed results and in-sample
+        prediction), although out-of-sample forecasting is possible.
+        Default is False.
+    dynamic : bool, int, str, or datetime, optional
+        Integer offset relative to `start` at which to begin dynamic
+        prediction. Can also be an absolute date string to parse or a
+        datetime type (these are not interpreted as offsets).
+        Prior to this observation, true endogenous values will be used for
+        prediction; starting with this observation and continuing through
+        the end of prediction, forecasted endogenous values will be used
+        instead.
+    information_set : str, optional
+        The information set to condition each prediction on. Default is
+        "predicted", which computes predictions of period t values
+        conditional on observed data through period t-1; these are
+        one-step-ahead predictions, and correspond with the typical
+        `fittedvalues` results attribute. Alternatives are "filtered",
+        which computes predictions of period t values conditional on
+        observed data through period t, and "smoothed", which computes
+        predictions of period t values conditional on the entire dataset
+        (including also future observations t+1, t+2, ...).
+    signal_only : bool, optional
+        Whether to compute predictions of only the "signal" component of
+        the observation equation. Default is False. For example, the
+        observation equation of a time-invariant model is
+        :math:`y_t = d + Z \alpha_t + \varepsilon_t`, and the "signal"
+        component is then :math:`Z \alpha_t`. If this argument is set to
+        True, then predictions of the "signal" :math:`Z \alpha_t` will be
+        returned. Otherwise, the default is for predictions of :math:`y_t`
+        to be returned.
+
     Notes
     -----
     Generically, the VARMAX model is specified (see for example chapter 18 of
@@ -156,7 +239,6 @@ class VARMAX(_StatsModelsAdapter):
         dynamic=False,
         information_set="predicted",
         signal_only=False,
-        random_state=None,
     ):
         # Model parameters
         self.order = order
@@ -191,24 +273,20 @@ class VARMAX(_StatsModelsAdapter):
     def _fit_forecaster(self, y, X=None):
         """Fit forecaster to training data.
 
-        private method containing core logic for wrappers for statsmodel
-
         Writes to self:
             Sets fitted model attributes ending in "_".
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            Exogeneous time series to fit to.
+        y : array_like
+            The observed time-series process :math:`y`, shaped n_obs x k_endog.
+        X : array_like, optional (default=None)
+            Array of exogenous regressors, shaped n_obs x k.
 
         Returns
         -------
         self : reference to self
         """
-
         self._forecaster = _VARMAX(
             endog=y,
             exog=X,
@@ -240,6 +318,8 @@ class VARMAX(_StatsModelsAdapter):
         )
         return self
 
+    # defining _predict method to pass in dynamic, information_set and signal_only
+    # which are not passed into the _predict method in _StatsModelsAdapter
     def _predict(self, fh, X=None):
         """
         Wrap Statmodel's VARMAX forecast method.
@@ -251,7 +331,7 @@ class VARMAX(_StatsModelsAdapter):
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored.
+            Exogenous variables.
 
         Returns
         -------
@@ -288,7 +368,6 @@ class VARMAX(_StatsModelsAdapter):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-
         params = [
             {"order": (0, 0)},
             {"order": (1, 0)},
