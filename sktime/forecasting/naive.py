@@ -474,7 +474,7 @@ class NaiveVariance(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_var": True,
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
     }
 

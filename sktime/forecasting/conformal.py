@@ -85,7 +85,7 @@ class ConformalIntervals(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
     }
 
