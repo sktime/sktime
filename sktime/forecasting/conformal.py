@@ -85,6 +85,8 @@ class ConformalIntervals(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": "pd.DataFrame",
     }
 
     ALLOWED_METHODS = [
@@ -123,8 +125,6 @@ class ConformalIntervals(BaseForecaster):
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
             "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
