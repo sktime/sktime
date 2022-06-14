@@ -548,7 +548,8 @@ class NaiveVariance(BaseForecaster):
         """
         y_pred = self.predict(fh, X)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
-        pred_var = self.predict_var(fh, X)[0]
+        pred_var = self.predict_var(fh, X)
+        pred_var = pred_var[pred_var.columns[0]]
         pred_var.index = y_pred.index
 
         z_scores = norm.ppf(alpha)
