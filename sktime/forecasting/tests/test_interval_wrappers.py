@@ -45,3 +45,8 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
 
     assert isinstance(pred_int, pd.DataFrame)
     assert len(pred_int) == 3
+
+    pred_var = interval_forecaster.predict_var()
+
+    assert isinstance(pred_var, pd.DataFrame)
+    assert len(pred_var) == 3
