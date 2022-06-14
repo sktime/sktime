@@ -548,7 +548,8 @@ class NaiveVariance(BaseForecaster):
         """
         y_pred = self.predict(fh, X)
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
-        pred_var = self.predict_var(fh, X)
+        pred_var = self.predict_var(fh, X)[0]
+        pred_var.index = y_pred.index
 
         z_scores = norm.ppf(alpha)
         errors = [pred_var**0.5 * z for z in z_scores]
@@ -557,6 +558,9 @@ class NaiveVariance(BaseForecaster):
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
+
+        fh_absolute = fh.to_absolute(self.cutoff)
+        pred_quantiles.index = fh_absolute
 
         return pred_quantiles
 
@@ -578,7 +582,7 @@ class NaiveVariance(BaseForecaster):
         Returns
         -------
         pred_var :
-            if cov=False, pd.Series with index fh.
+            if cov=False, pd.DataFrame with index fh.
                 a vector of same length as fh with predictive marginal variances;
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
@@ -617,10 +621,11 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            pred_var = pd.Series(
-                variance,
-                index=fh_absolute,
-            )
+            if hasattr(self._y, "columns"):
+                columns = self._y.columns
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+            else:
+                pred_var = pd.DataFrame(variance, index=fh_absolute)
 
         return pred_var
 
