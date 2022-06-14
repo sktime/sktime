@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sktime.datatypes._convert import convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -474,8 +475,6 @@ class NaiveVariance(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_var": True,
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -491,6 +490,8 @@ class NaiveVariance(BaseForecaster):
             "handles-missing-data",
             "X-y-must-have-same-index",
             "enforce_index_type",
+            "y_inner_mtype",
+            "X_inner_mtype",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
@@ -642,6 +643,8 @@ class NaiveVariance(BaseForecaster):
             [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
             using a clone of the forecaster passed through the forecaster arg
         """
+        y = convert_to(y, "pd.Series")
+
         y_index = y.index[initial_window:]
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
 

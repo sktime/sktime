@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
+from sktime.datatypes._convert import convert_to
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 
@@ -85,8 +86,6 @@ class ConformalIntervals(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
     }
 
     ALLOWED_METHODS = [
@@ -127,6 +126,8 @@ class ConformalIntervals(BaseForecaster):
             "handles-missing-data",
             "X-y-must-have-same-index",
             "enforce_index_type",
+            "y_inner_mtype",
+            "X_inner_mtype",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
@@ -266,6 +267,8 @@ class ConformalIntervals(BaseForecaster):
             if sample_frac is passed this will have NaN values for 1 - sample_frac
             fraction of the matrix
         """
+        y = convert_to(y, "pd.Series")
+
         y_index = y.index[initial_window:]
 
         residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
