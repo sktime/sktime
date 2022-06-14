@@ -488,10 +488,10 @@ class NaiveVariance(BaseForecaster):
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
             "handles-missing-data",
-            "X-y-must-have-same-index",
-            "enforce_index_type",
             "y_inner_mtype",
             "X_inner_mtype",
+            "X-y-must-have-same-index",
+            "enforce_index_type",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
