@@ -40,7 +40,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning, fkiraly", "miraep8"]
+__author__ = ["mloning", "fkiraly", "miraep8"]
 __all__ = [
     "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
@@ -213,9 +213,7 @@ class BaseTransformer(BaseEstimator):
         """
         from sktime.transformations.compose import MultiplexTransformer
 
-        if isinstance(other, MultiplexTransformer) or isinstance(
-            other, BaseTransformer
-        ):
+        if isinstance(other, BaseTransformer):
             multiplex_self = MultiplexTransformer([self])
             return multiplex_self | other
         else:
