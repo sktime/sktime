@@ -547,9 +547,7 @@ class NaiveVariance(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         y_pred = self.predict(fh, X)
-        y_pred = convert(
-            y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series"
-        )
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         pred_var = self.predict_var(fh, X)
 
         z_scores = norm.ppf(alpha)
