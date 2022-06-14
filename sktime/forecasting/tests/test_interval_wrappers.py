@@ -8,15 +8,17 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.datatypes import convert_to, MTYPE_LIST_SERIES
 from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
 
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 
 
+@pytest.mark.parametrize("mtype", MTYPE_LIST_SERIES)
 @pytest.mark.parametrize("override_y_mtype", [True, False])
 @pytest.mark.parametrize("wrapper", INTERVAL_WRAPPERS)
-def test_wrapper_series_mtype(wrapper, override_y_mtype):
+def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
     """Test that interval wrappers behave nicely with different internal y_mtypes.
 
     The wrappers require y to be pd.Series, and the internal estimator can have
@@ -30,6 +32,7 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype):
     "pd.DataFrame only" forecaster by restricting its y_inner_mtype tag to pd.Series.
     """
     y = load_airline()
+    y = convert_to(y, to_type=mtype)
 
     f = NaiveForecaster()
 
