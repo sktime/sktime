@@ -474,6 +474,8 @@ class NaiveVariance(BaseForecaster):
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
         "capability:pred_var": True,
+        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
+        "X_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -487,8 +489,6 @@ class NaiveVariance(BaseForecaster):
             "requires-fh-in-fit",
             "ignores-exogeneous-X",
             "handles-missing-data",
-            "y_inner_mtype",
-            "X_inner_mtype",
             "X-y-must-have-same-index",
             "enforce_index_type",
         ]
