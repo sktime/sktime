@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sktime.datatypes import convert
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -546,6 +547,9 @@ class NaiveVariance(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         y_pred = self.predict(fh, X)
+        y_pred = convert(
+            y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series"
+        )
         pred_var = self.predict_var(fh, X)
 
         z_scores = norm.ppf(alpha)
