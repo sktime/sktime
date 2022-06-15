@@ -8,15 +8,16 @@ __author__ = [
     "ciaran-g",
 ]
 
+# check shrinkage reconciler
+# https://strimmerlab.github.io/publications/journals/shrinkcov2005.pdf
+# looks like the shrinkage estimate needs another look...
 # documentation
 
-
-# default scaling of resids before covariance matrix? n-1 on cov?
-# go through tags with team
 # include the reconciler transformers?
-# check against fable?
-# what about aggregation of exogenous variables (X) maybe just sum again? discuss
-# top down proportions
+# todo: top down historical proportions
+
+
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -63,7 +64,7 @@ class ReconcilerForecaster(BaseForecaster):
     # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
+        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
         "handles-missing-data": False,  # can estimator handle missing data?
         "y_inner_mtype": [
             "pd.DataFrame",
@@ -81,11 +82,12 @@ class ReconcilerForecaster(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
+        "fit_is_empty": False,
     }
 
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"]
 
-    def __init__(self, forecaster, method="mint_cov", mean_scale_residuals=False):
+    def __init__(self, forecaster, method="mint_cov", mean_scale_residuals=True):
 
         self.forecaster = forecaster
         self.method = method
@@ -93,16 +95,15 @@ class ReconcilerForecaster(BaseForecaster):
 
         super(ReconcilerForecaster, self).__init__()
 
-        tags_to_clone = [
-            "requires-fh-in-fit",
-            "ignores-exogeneous-X",
-            "handles-missing-data",
-            "X-y-must-have-same-index",
-            "enforce_index_type",
-        ]
-        self.clone_tags(self.forecaster, tags_to_clone)
+        # tags_to_clone = [
+        #     "requires-fh-in-fit",
+        #     "ignores-exogeneous-X",
+        #     "X-y-must-have-same-index",
+        #     "enforce_index_type",
+        # ]
+        # self.clone_tags(self.forecaster, tags_to_clone)
         # don't fit the reconciler vectorized
-        self.default_vectorized = False
+        # self.default_vectorized = False
 
     def _add_totals(self, y):
         """Add total levels to y, using Aggregate."""
@@ -150,8 +151,10 @@ class ReconcilerForecaster(BaseForecaster):
         # check index for no "__total", if not add totals to y
         if _check_index_no_total(y):
             y = self._add_totals(y)
-        # if (X is not None) & (_check_index_no_total(X)):
-        #     X = self._add_totals(X)
+
+        if X is not None:
+            if _check_index_no_total(X):
+                X = self._add_totals(X)
 
         # fit forecasters for each level
         self.forecaster_ = self.forecaster.clone()
@@ -213,6 +216,14 @@ class ReconcilerForecaster(BaseForecaster):
             Point predictions
         """
         base_fc = self.forecaster_.predict(fh=fh, X=X)
+
+        if base_fc.index.nlevels < 2:
+            warn(
+                "Reconciler is intended for use with y.index.nlevels > 1. "
+                "Returning predictions unchanged."
+            )
+            return base_fc
+
         base_fc = base_fc.groupby(level=-1)
 
         recon_fc = []
@@ -225,6 +236,7 @@ class ReconcilerForecaster(BaseForecaster):
 
         recon_fc = pd.concat(recon_fc, axis=0)
         recon_fc = recon_fc.sort_index()
+
         return recon_fc
 
     def _update(self, y, X=None, update_params=True):
@@ -262,7 +274,9 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.forecaster_.update(y, X, update_params=update_params)
+        if y.index.nlevels < 2:
+            self.forecaster_.update(y, X, update_params=update_params)
+            return self
 
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
@@ -291,6 +305,9 @@ class ReconcilerForecaster(BaseForecaster):
 
     def _get_g_matrix_mint(self, shrink=False, diag_only=False):
         """Define the G matrix for the MinT method."""
+        if self.residuals.index.nlevels < 2:
+            return None
+
         # copy in case of further mods?
         resid = self.residuals.copy()
         # cov matrix
