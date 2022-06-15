@@ -122,19 +122,6 @@ These transformers extract simple summary features.
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
-Dictionary-based features
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.dictionary_based
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PAA
-    SFA
-    SAX
-
 Kernel and wavelet based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -157,7 +144,7 @@ Kernel and wavelet based features
     DWTTransformer
 
 Distance-based features
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.matrix_profile
 
@@ -166,6 +153,19 @@ Distance-based features
     :template: class.rst
 
     MatrixProfile
+
+Dictionary-based features
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+    SFA
+    SAX
 
 Moment-based features
 ~~~~~~~~~~~~~~~~~~~~~
@@ -283,7 +283,7 @@ Filtering and denoising
     ThetaLinesTransformer
 
 Differencing and slope
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.series.difference
 
