@@ -22,7 +22,7 @@ class ScaledLogitTransformer(BaseTransformer):
     accordingly. The transform is applied to all scalar elements of the input array
     individually.
 
-    Combined with a sktime.forecasting.compose.TransformedTargetForecaster it ensures
+    Combined with an sktime.forecasting.compose.TransformedTargetForecaster, it ensures
     that the forecast stays between the specified bounds (lower_bound, upper_bound).
 
     Parameters

@@ -644,7 +644,7 @@ class BaseTransformer(BaseEstimator):
             f"must be in an sktime compatible format, "
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
-            f"or with MultiIndex and last (-1) level a sktime compatible time index. "
+            f"or with MultiIndex and last(-1) level an sktime compatible time index. "
             f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
             f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
