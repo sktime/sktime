@@ -12,7 +12,6 @@ transformations.
 
 Transformations are categorized as follows:
 
-
 .. list-table::
    :header-rows: 1
 
