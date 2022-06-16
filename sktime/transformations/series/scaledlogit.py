@@ -200,8 +200,8 @@ class ScaledLogitTransformer(BaseTransformer):
         """
         test_params = [
             {"lower_bound": None, "upper_bound": None},
-            {"lower_bound": -(10 ** 6), "upper_bound": None},
-            {"lower_bound": None, "upper_bound": 10 ** 6},
-            {"lower_bound": -(10 ** 6), "upper_bound": 10 ** 6},
+            {"lower_bound": -(10**6), "upper_bound": None},
+            {"lower_bound": None, "upper_bound": 10**6},
+            {"lower_bound": -(10**6), "upper_bound": 10**6},
         ]
         return test_params
