@@ -10,6 +10,33 @@ transformations.
    :no-members:
    :no-inherited-members:
 
+Transformations are categorized as follows:
+
+
+.. list-table::
+   :header-rows: 1
+
+   * - Category
+     - Explanation
+     - Example
+   * - Composition
+     - Building blocks for pipelines, wrappers, adapters
+     - Transformer pipeline
+   * - Series-to-features
+     - Transforms series to float/category vector
+     - Length and mean
+   * - Series-to-series
+     - Transforms individual series to series
+     - Differencing, detrending
+   * - Series-to-Panel
+     - transforms a series into a panel
+     - Bootstrap, sliding window
+   * - Panel transform
+     - Transforms panel to panel, not by-series
+     - Padding to equal length
+   * - Hierarchical
+     - uses hierarchy information non-trivially
+     - Reconciliation
 
 Composition
 -----------
