@@ -485,7 +485,7 @@ Dimension reduction
 Series-to-Panel transformers
 ----------------------------
 
-Thee transformers create a panel from a single series.
+These transformers create a panel from a single series.
 
 Bootstrap transformations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
