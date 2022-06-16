@@ -651,7 +651,7 @@ class BaseTransformer(BaseEstimator):
             f"If you think the data is already in an sktime supported input format, "
             f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
             f"where mtype is the string of the type specification you want. "
-            )
+        )
         if not X_valid:
             raise TypeError("X " + msg_invalid_input)
 
