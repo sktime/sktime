@@ -7,8 +7,8 @@ __author__ = ["fkiraly"]
 import pandas as pd
 import pytest
 
-from sktime.transformations.series.subset import ColumnSelect, IndexSubset
 from sktime.datasets import load_airline, load_longley
+from sktime.transformations.series.subset import ColumnSelect, IndexSubset
 
 
 @pytest.mark.parametrize("index_treatment", ["keep", "remove"])
@@ -29,9 +29,7 @@ def test_columnselect_indextreatment(index_treatment):
     """Test that index_treatment behaviour in ColumnSelect works as intended."""
     X = load_longley()[1]
     columns = ["GNPDEFL", "POP", "FOO"]
-    transformer = ColumnSelect(
-        columns=columns, index_treatment=index_treatment
-    )
+    transformer = ColumnSelect(columns=columns, index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X)
     if index_treatment == "remove":
         assert X_subset.columns == X.index.intersect(columns)

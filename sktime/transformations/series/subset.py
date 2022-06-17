@@ -51,8 +51,7 @@ class IndexSubset(BaseTransformer):
         super(IndexSubset, self).__init__()
 
     def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
+        """Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 
@@ -109,8 +108,7 @@ class IndexSubset(BaseTransformer):
         return Xt
 
     def _update(self, X, y=None):
-        """
-        Update transformer to with and y.
+        """Update transformer with X and y.
 
         private _update containing the core logic, called from update
 
