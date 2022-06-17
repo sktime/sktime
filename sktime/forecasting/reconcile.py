@@ -8,14 +8,8 @@ __author__ = [
     "ciaran-g",
 ]
 
-# check shrinkage reconciler
-# https://strimmerlab.github.io/publications/journals/shrinkcov2005.pdf
-# looks like the shrinkage estimate needs another look...
-# documentation
-
-# include the reconciler transformers?
-# todo: top down historical proportions
-
+# todo: include the reconciler transformers?
+# todo: top down historical proportions?
 
 from warnings import warn
 
@@ -32,36 +26,30 @@ from sktime.transformations.hierarchical.reconcile import (
 
 
 class ReconcilerForecaster(BaseForecaster):
-    """Custom forecaster. todo: write docstring.
+    """Hierarchical reconcilation forecaster.
 
-    todo: describe your custom forecaster here
+    Reconciliation is applied to make the forecasts in a hierarchy of
+    time-series sum together appropriately.
+
+    Please refer to [1]_ for further information.
 
     Parameters
     ----------
-    parama : int
-        descriptive explanation of parama
-    paramb : string, optional (default='default')
-        descriptive explanation of paramb
-    paramc : boolean, optional (default= whether paramb is not the default)
-        descriptive explanation of paramc
-    and so on
-    est : sktime.estimator, BaseEstimator descendant
-        descriptive explanation of est
-    est2: another estimator
-        descriptive explanation of est2
-    and so on
+    forecaster : estimator
+        Estimator to generate base forecasts which are then reconciled
+    method : {"mint_cov", "mint_shrink", "wls_var"}, default="mint_cov"
+        The reconciliation approach applied to the forecasts based on
+            "mint_cov" - sample covariance
+            "mint_shrink" - covariance with shrinkage
+            "wls_var" - weighted least squares (variance)
+
+    References
+    ----------
+    .. [1] https://otexts.com/fpp3/hierarchical.html
     """
 
     _required_parameters = ["forecaster"]
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
         "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
         "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
@@ -103,27 +91,14 @@ class ReconcilerForecaster(BaseForecaster):
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : pd.DataFrame
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        fh : ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+        X : pd.DataFrame, default=None
+            Exogenous variables for the base forecaster
 
         Returns
         -------
@@ -175,22 +150,11 @@ class ReconcilerForecaster(BaseForecaster):
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        fh : ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
 
         Returns
@@ -225,31 +189,12 @@ class ReconcilerForecaster(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
-        private _update containing the core logic, called from update
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Writes to self:
-            Sets fitted model attributes ending in "_", if update_params=True.
-            Does not write to self if update_params=False.
-
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
+        y : pd.DataFrame
+            Time series to which to fit the forecaster.
+        X : pd.DataFrame, default=None
+            Exogenous variables based to the base forecaster
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -281,7 +226,34 @@ class ReconcilerForecaster(BaseForecaster):
         return self
 
     def _get_g_matrix_mint(self, shrink=False, diag_only=False):
-        """Define the G matrix for the MinT method."""
+        """Define the G matrix for the MinT methods based on model residuals.
+
+        Reconciliation methods require the G matrix. The G matrix is used to redefine
+        base forecasts for the entire hierarchy to the bottom-level only before
+        summation using the S matrix.
+
+        Please refer to [1]_ for further information.
+
+        Parameters
+        ----------
+        shrink:  bool, optional (default=False)
+            Shrink the off diagonal elements of the sample covariance matrix.
+            according to the method in [2]_
+        diag_only: bool, optional (default=False)
+            Remove the off-diagonal elements of the sample covariance matrix.
+
+        Returns
+        -------
+        g_mint : pd.DataFrame with rows equal to the number of bottom level nodes
+            only, i.e. with no aggregate nodes, and columns equal to the number of
+            unique nodes in the hierarchy. The matrix indexes is inherited from the
+            input data, with the time level removed.
+
+        References
+        ----------
+        .. [1] https://otexts.com/fpp3/hierarchical.html
+        .. [2] https://doi.org/10.2202/1544-6115.1175
+        """
         if self.residuals.index.nlevels < 2:
             return None
 
@@ -295,7 +267,6 @@ class ReconcilerForecaster(BaseForecaster):
         nobs = len(resid)
         cov_mat = resid.transpose().dot(resid) / (nobs - 1)
 
-        # shrink method of https://doi.org/10.2202/1544-6115.1175
         if shrink:
             # diag matrix of variances
             var_d = pd.DataFrame(0.0, index=cov_mat.index, columns=cov_mat.columns)
@@ -308,16 +279,14 @@ class ReconcilerForecaster(BaseForecaster):
             )
             cor_mat = cov_mat * (scale_m) * (scale_m.transpose())
 
-            # scale the residuals
-            resid_further = resid.apply(lambda x: (x / x.std()))
+            # first scale the residuals
+            resid_ho = resid.apply(lambda x: (x / x.std()))
             # scale for higher order cor
-            further_scale = ((resid_further).transpose().dot((resid_further))) ** 2 * (
-                1 / nobs
-            )
-            resid_further = resid_further**2
+            scale_ho = ((resid_ho).transpose().dot((resid_ho))) ** 2 * (1 / nobs)
+            resid_ho = resid_ho**2
 
             # higherorder cor (only diags)
-            corho_mat = (resid_further.transpose().dot(resid_further)) - further_scale
+            corho_mat = (resid_ho.transpose().dot(resid_ho)) - scale_ho
             corho_mat = (nobs / ((nobs - 1)) ** 3) * corho_mat
 
             # set diagonals to zero
