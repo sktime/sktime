@@ -26,8 +26,13 @@ def _check_soft_dependencies(
         key-value pairs are package name, import name
         import name is str used in python import, i.e., from import_name import ...
         should be provided if import name differs from package name
-    severity : str, "error" (default) or "warning"
-        whether the check should raise an error, or only a warning
+    severity : str, "error" (default), "warning", "none"
+        behaviour for raising errors or warnings
+        "error" - raises a ModuleNotFoundException if one of packages is not installed
+        "warning" - raises a warning if one of packages is not installed
+            function returns False if one of packages is not installed, otherwise True
+        "none" - does not raise exception or warning
+            function returns False if one of packages is not installed, otherwise True
     object : python class, object, str, or None, default=None
         if self is passed here when _check_soft_dependencies is called within __init__,
         or a class is passed when it is called at the start of a single-class module,
@@ -40,6 +45,10 @@ def _check_soft_dependencies(
     ------
     ModuleNotFoundError
         error with informative message, asking to install required soft dependencies
+
+    Returns
+    -------
+    boolean - whether all packages are installed, only if no exception is raised
     """
     if not all(isinstance(x, str) for x in packages):
         raise TypeError("packages must be str or tuple of str")
@@ -69,6 +78,7 @@ def _check_soft_dependencies(
                 sys.stdout = sys.__stdout__
             else:
                 import_module(package_import_name)
+            return True
         # if package cannot be imported, make the user aware of installation requirement
         except ModuleNotFoundError as e:
             if object is None:
@@ -101,10 +111,14 @@ def _check_soft_dependencies(
                 raise ModuleNotFoundError(msg) from e
             elif severity == "warning":
                 warnings.warn(msg)
+                return False
+            elif severity == "none":
+                return False
             else:
                 raise RuntimeError(
                     "Error in calling _check_soft_dependencies, severity "
-                    f'argument must be "error" or "warning", found "{severity}".'
+                    'argument must be "error", "warning", or "none",'
+                    f'found "{severity}".'
                 )
 
 
@@ -115,13 +129,22 @@ def _check_dl_dependencies(msg=None, severity="error"):
     ----------
     msg : str, optional, default= default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default) or "warning"
-        whether the check should raise an error, or only a warning
+    severity : str, "error" (default), "warning", "none"
+        behaviour for raising errors or warnings
+        "error" - raises a ModuleNotFoundException if one of packages is not installed
+        "warning" - raises a warning if one of packages is not installed
+            function returns False if one of packages is not installed, otherwise True
+        "none" - does not raise exception or warning
+            function returns False if one of packages is not installed, otherwise True
 
     Raises
     ------
     ModuleNotFoundError
         User friendly error with suggested action to install deep learning dependencies
+
+    Returns
+    -------
+    boolean - whether all packages are installed, only if no exception is raised
     """
     if not isinstance(msg, str):
         msg = (
@@ -132,13 +155,17 @@ def _check_dl_dependencies(msg=None, severity="error"):
     try:
         import_module("tensorflow")
         import_module("tensorflow_probability")
+        return True
     except ModuleNotFoundError as e:
         if severity == "error":
             raise ModuleNotFoundError(msg) from e
         elif severity == "warning":
             warnings.warn(msg)
+            return False
+        elif severity == "none":
+            return False
         else:
             raise RuntimeError(
                 "Error in calling _check_dl_dependencies, severity "
-                f'argument must be "error" or "warning", found "{severity}".'
+                f'argument must be "error", "warning", or "none", found "{severity}".'
             )
