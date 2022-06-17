@@ -340,7 +340,7 @@ class VARMAX(_StatsModelsAdapter):
         """
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        return self._fitted_forecaster.predict(
+        y_pred = self._fitted_forecaster.predict(
             start=start,
             end=end,
             dynamic=self.dynamic,
@@ -348,6 +348,8 @@ class VARMAX(_StatsModelsAdapter):
             signal_only=self.signal_only,
             exog=X,
         )
+
+        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
