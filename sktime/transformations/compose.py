@@ -20,25 +20,15 @@ __all__ = [
 ]
 
 
-def check_dunder_compose(self, other):
+def coerce_to_sktime(other):
     """Check and format inputs to dunders for compose."""
-    from sktime.classification.compose import SklearnClassifierPipeline
-    from sktime.forecasting.base import BaseForecaster
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-
-    # need to escape if other is BaseForecaster
-    #   this is because forecsting Pipelines are *also* transformers
-    #   but they need to take precedence in parsing the expression
-    if isinstance(other, BaseForecaster):
-        return NotImplemented
 
     # if sklearn transformer, adapt to sktime transformer first
     if is_sklearn_transformer(other):
-        return self * TabularToSeriesAdaptor(other)
+        return TabularToSeriesAdaptor(other)
 
-    # if sklearn classifier, use sklearn classifier pipeline
-    if is_sklearn_classifier(other):
-        return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+    return other
 
 
 class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
@@ -223,10 +213,13 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
-        check = check_dunder_compose(self, other)
-        if check:
-            return check
+        from sktime.classification.compose import SklearnClassifierPipeline
 
+        other = coerce_to_sktime(other)
+
+        # if sklearn classifier, use sklearn classifier pipeline
+        if is_sklearn_classifier(other):
+            return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -250,10 +243,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
-        check = check_dunder_compose(self, other)
-        if check:
-            return check
-
+        other = coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -1028,10 +1018,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         ------
         ValueError if other is not of type MultiplexTransformer or BaseTransformer.
         """
-        check = check_dunder_compose(self, other)
-        if check:
-            return check
-
+        other = coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -1056,10 +1043,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
             (first). not nested, contains only non-MultiplexTransformer `sktime`
             transformers
         """
-        check = check_dunder_compose(self, other)
-        if check:
-            return check
-
+        other = coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
