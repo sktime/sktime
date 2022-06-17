@@ -100,8 +100,6 @@ class BaseForecaster(BaseEstimator):
         self._y = None
         self._X = None
 
-        # self.default_vectorized = True
-
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
