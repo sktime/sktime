@@ -226,6 +226,16 @@ Some users have experienced issues when installing NumPy, particularly version 1
 
 .. note::
 
+    If step 5. results in a "no matches found" error, it may be due to how your shell handles special characters.
+
+    - Possible solution: use quotation marks:
+
+        .. code-block:: bash
+
+            pip install -e ."[all_extras,dev]"
+
+.. note::
+
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 

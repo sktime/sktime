@@ -103,5 +103,7 @@ Former Core Developers (inactive)
      - :user:`prockenschaub`
    * - Ryan Kuhns
      - :user:`rnkuhns`
+   * - Sajaysurya Ganesh
+     - :user:`sajaysurya`
    * -
      - :user:`big-o`
