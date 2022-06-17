@@ -220,6 +220,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
             return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
