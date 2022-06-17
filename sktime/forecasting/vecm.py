@@ -8,7 +8,6 @@ __author__ = ["thayeylolu", "AurumnPegasus"]
 
 import numpy as np
 from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
-from statsmodels.tsa.vector_ar.vecm import VECMResults as _VECMResults
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
@@ -57,37 +56,37 @@ class VECM(_StatsModelsAdapter):
     exog_coint : a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
         Deterministic terms inside the cointegration relation.
+
+    Example
+    -------
+    >>> from sktime.forecasting.vecm import VECM
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> index = pd.date_range(start="2005", end="2006-12", freq="M")
+    >>> df = pd.DataFrame(np.random.randint(0, 100, size=(23, 2)),
+    ... columns=list("AB"),
+    ... index=pd.PeriodIndex(index))
+    >>> train, test = temporal_train_test_split(df)
+    >>> sktime_model = VECM()
+    >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
+    >>> sktime_model.fit(train, fh=fh)
+    >>> fc2 = sktime_model.predict(fh=fh)
     """
 
-    # todo: fill out estimator tags here
-    #  tags are inherited from parent class if they are not set
-    # todo: define the forecaster scitype by setting the tags
-    #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
-    #  when changing scitype:y to multivariate or both:
-    #   y_inner_mtype should be changed to pd.DataFrame
-    # other tags are "safe defaults" which can usually be left as-is
     _tags = {
-        "scitype:y": "multivariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
-        "y_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for y?
-        "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
-        "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
-        "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
-        "enforce_index_type": None,  # index type that needs to be enforced in X/y
-        "capability:pred_int": False,  # does forecaster implement proba forecasts?
+        "scitype:y": "multivariate",
+        "ignores-exogeneous-X": True,
+        "handles-missing-data": False,
+        "y_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": True,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:pred_int": False,
     }
-    #  in case of inheritance, concrete class should typically set tags
-    #  alternatively, descendants can set tags in __init__ (avoid this if possible)
 
-    # todo: add any hyper-parameters and components to constructor
     def __init__(
         self,
-        alpha,
-        beta,
-        gamma,
-        sigma_u,
         dates=None,
         freq=None,
         missing="none",
@@ -98,12 +97,6 @@ class VECM(_StatsModelsAdapter):
         first_season=0,
         method="ml",
         exog_coint=None,
-        exog_coint_fc=None,
-        delta_y_1_T=None,
-        y_lag1=None,
-        delta_x=None,
-        model=None,
-        names=None,
     ):
 
         self.dates = dates
@@ -116,20 +109,10 @@ class VECM(_StatsModelsAdapter):
         self.first_season = first_season
         self.method = method
         self.exog_coint = exog_coint
-        self.exog_coint_fc = exog_coint_fc
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
-        self.sigma_u = sigma_u
-        self.delta_y_1_T = delta_y_1_T
-        self.y_lag1 = y_lag1
-        self.delta_x = delta_x
-        self.model = model
-        self.names = names
 
         super(VECM, self).__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, fh, X=None):
         """
         Fit forecaster to training data.
 
@@ -139,7 +122,7 @@ class VECM(_StatsModelsAdapter):
         ----------
         y : pd.DataFrame, guaranteed to have 2 or more columns
             Time series to which to fit the forecaster.
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
@@ -174,7 +157,7 @@ class VECM(_StatsModelsAdapter):
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
@@ -186,32 +169,9 @@ class VECM(_StatsModelsAdapter):
         y_pred : pd.Series
             Point predictions
         """
-        self._predictor = _VECMResults(
-            endog=self._y,
-            exog=self._X,
-            exog_coint=self.exog_coint,
-            k_ar=self.k_ar_diff,
-            coint_rank=self.coint_rank,
-            alpha=self.alpha,
-            beta=self.beta,
-            gamma=self.gamma,
-            sigma_u=self.sigma_u,
-            deterministic=self.deterministic,
-            seasons=self.seasons,
-            first_season=self.first_season,
-            delta_y_1_T=self.delta_y_1_T,
-            y_lag1=self.y_lag1,
-            delta_x=self.delta_x,
-            model=self.model,
-            names=self.names,
-            dates=self.dates,
-        )
-
         fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
         steps = fh_int[-1]
-        forecast = self._predictor.predict(
-            steps=steps, alpha=self.alpha, exog_fc=X, exog_coint_fc=self.exog_coint_fc
-        )
+        forecast = self._fitted_forecaster.predict(steps=steps)
         new_arr = []
         for i in fh:
             new_arr.append(forecast[i - 1])
