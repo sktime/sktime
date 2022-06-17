@@ -19,7 +19,7 @@ def test_indexsubset_indextreatment(index_treatment):
     transformer = IndexSubset(index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X, y=y)
     if index_treatment == "remove":
-        assert X_subset.index.equals(X.index.intersect(y.index))
+        assert X_subset.index.equals(X.index.intersection(y.index))
     elif index_treatment == "keep":
         assert X_subset.index.equals(y.index)
 
@@ -32,7 +32,7 @@ def test_columnselect_indextreatment(index_treatment):
     transformer = ColumnSelect(columns=columns, index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X)
     if index_treatment == "remove":
-        assert X_subset.columns.equals(X.index.intersect(columns))
+        assert X_subset.columns.equals(X.index.intersection(columns))
     elif index_treatment == "keep":
         assert X_subset.columns.equals(pd.Index(columns))
 
