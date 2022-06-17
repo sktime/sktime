@@ -23,9 +23,8 @@ METHOD_LIST = ReconcilerForecaster.METHOD_LIST
 # test the index/columns on the g and s matrices match
 # test it works for named and unnamed indexes
 @pytest.mark.parametrize("method", METHOD_LIST)
-@pytest.mark.parametrize("mean_scale_residuals", [True, False])
-def test_reconciler_fit_predict(method, mean_scale_residuals):
-    """Tests fit_predict and output of reconciler.
+def test_reconciler_fit_predict(method):
+    """Tests fit_predict and output of ReconcilerForecaster.
 
     Raises
     ------
@@ -46,9 +45,7 @@ def test_reconciler_fit_predict(method, mean_scale_residuals):
     # forecast all levels
     fh = ForecastingHorizon([1, 2], is_relative=True)
     forecaster = ExponentialSmoothing(trend="add", seasonal="additive", sp=12)
-    reconciler = ReconcilerForecaster(
-        forecaster, method=method, mean_scale_residuals=mean_scale_residuals
-    )
+    reconciler = ReconcilerForecaster(forecaster, method=method)
     reconciler.fit(y)
     prds_recon = reconciler.predict(fh=fh)
 
@@ -63,8 +60,6 @@ def test_reconciler_fit_predict(method, mean_scale_residuals):
 
     # check with unnamed indexes
     y.index.rename([None] * y.index.nlevels, inplace=True)
-    reconciler_unnamed = ReconcilerForecaster(
-        forecaster, method=method, mean_scale_residuals=mean_scale_residuals
-    )
+    reconciler_unnamed = ReconcilerForecaster(forecaster, method=method)
     msg = "Reconciler returns different output for named and unnamed indexes."
     assert prds_recon.equals(reconciler_unnamed.fit_predict(y=y, fh=fh)), msg

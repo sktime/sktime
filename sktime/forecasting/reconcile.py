@@ -87,23 +87,12 @@ class ReconcilerForecaster(BaseForecaster):
 
     METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"]
 
-    def __init__(self, forecaster, method="mint_cov", mean_scale_residuals=True):
+    def __init__(self, forecaster, method="mint_cov"):
 
         self.forecaster = forecaster
         self.method = method
-        self.mean_scale_residuals = mean_scale_residuals
 
         super(ReconcilerForecaster, self).__init__()
-
-        # tags_to_clone = [
-        #     "requires-fh-in-fit",
-        #     "ignores-exogeneous-X",
-        #     "X-y-must-have-same-index",
-        #     "enforce_index_type",
-        # ]
-        # self.clone_tags(self.forecaster, tags_to_clone)
-        # don't fit the reconciler vectorized
-        # self.default_vectorized = False
 
     def _add_totals(self, y):
         """Add total levels to y, using Aggregate."""
@@ -171,12 +160,6 @@ class ReconcilerForecaster(BaseForecaster):
             y.index.get_level_values(-1).unique(), is_relative=False
         )
         self.residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
-
-        if self.mean_scale_residuals:
-            grp_range = np.arange(self.residuals.index.nlevels - 1).tolist()
-            self.residuals = self.residuals.groupby(level=grp_range).apply(
-                lambda x: x - x.mean()
-            )
 
         if self.method == "mint_cov":
             self.g_matrix = self._get_g_matrix_mint(shrink=False)
@@ -284,12 +267,6 @@ class ReconcilerForecaster(BaseForecaster):
         )
         self.residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
 
-        if self.mean_scale_residuals:
-            grp_range = np.arange(self.residuals.index.nlevels - 1).tolist()
-            self.residuals = self.residuals.groupby(level=grp_range).apply(
-                lambda x: x - x.mean()
-            )
-
         # could implement something specific here
         # for now just refit
         if self.method == "mint_cov":
@@ -308,12 +285,15 @@ class ReconcilerForecaster(BaseForecaster):
         if self.residuals.index.nlevels < 2:
             return None
 
-        # copy in case of further mods?
+        # copy for further mods
         resid = self.residuals.copy()
+        # mean scale
+        grp_range = np.arange(self.residuals.index.nlevels - 1).tolist()
+        resid = resid.groupby(level=grp_range).apply(lambda x: x - x.mean())
         # cov matrix
         resid = resid.unstack().transpose()
         nobs = len(resid)
-        cov_mat = resid.transpose().dot(resid) / nobs
+        cov_mat = resid.transpose().dot(resid) / (nobs - 1)
 
         # shrink method of https://doi.org/10.2202/1544-6115.1175
         if shrink:
@@ -328,24 +308,25 @@ class ReconcilerForecaster(BaseForecaster):
             )
             cor_mat = cov_mat * (scale_m) * (scale_m.transpose())
 
-            # scale the reiduals by the variance
-            for i in resid.columns:
-                scale = scale_m.loc[scale_m.index == i, scale_m.columns == i].values[0]
-                resid[i] = resid[i] * scale
+            # scale the residuals
+            resid_further = resid.apply(lambda x: (x / x.std()))
+            # scale for higher order cor
+            further_scale = ((resid_further).transpose().dot((resid_further))) ** 2 * (
+                1 / nobs
+            )
+            resid_further = resid_further**2
 
-            crossp = (resid).transpose().dot((resid))
-            crossp2 = (resid**2).transpose().dot((resid**2))
+            # higherorder cor (only diags)
+            corho_mat = (resid_further.transpose().dot(resid_further)) - further_scale
+            corho_mat = (nobs / ((nobs - 1)) ** 3) * corho_mat
 
-            v = (1 / (nobs * (nobs - 1))) * (crossp2 - (1 / (nobs * (crossp) ** 2)))
             # set diagonals to zero
             for i in resid.columns:
-                v.loc[v.index == i, v.columns == i] = 0
+                corho_mat.loc[corho_mat.index == i, corho_mat.columns == i] = 0
                 cor_mat.loc[cor_mat.index == i, cor_mat.columns == i] = 0
 
-            d = cor_mat**2
-
             # get the shrinkage value
-            lamb = v.sum().sum() / d.sum().sum()
+            lamb = corho_mat.sum().sum() / (cor_mat**2).sum().sum()
             lamb = np.min([1, np.max([0, lamb])])
 
             # shrink the matrix
@@ -399,18 +380,7 @@ class ReconcilerForecaster(BaseForecaster):
             {
                 "forecaster": FORECASTER,
                 "method": x,
-                "mean_scale_residuals": True,
             }
             for x in cls.METHOD_LIST
         ]
-
-        params_list = params_list + [
-            {
-                "forecaster": FORECASTER,
-                "method": x,
-                "mean_scale_residuals": False,
-            }
-            for x in cls.METHOD_LIST
-        ]
-
         return params_list
