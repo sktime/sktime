@@ -19,9 +19,9 @@ def test_indexsubset_indextreatment(index_treatment):
     transformer = IndexSubset(index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X, y=y)
     if index_treatment == "remove":
-        assert X_subset.index == X.index.intersect(y.index)
+        assert X_subset.index.equals(X.index.intersect(y.index))
     elif index_treatment == "keep":
-        assert X_subset.index == y.index
+        assert X_subset.index.equals(y.index)
 
 
 @pytest.mark.parametrize("index_treatment", ["keep", "remove"])
@@ -32,9 +32,9 @@ def test_columnselect_indextreatment(index_treatment):
     transformer = ColumnSelect(columns=columns, index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X)
     if index_treatment == "remove":
-        assert X_subset.columns == X.index.intersect(columns)
+        assert X_subset.columns.equals(X.index.intersect(columns))
     elif index_treatment == "keep":
-        assert X_subset.columns == pd.Index(columns)
+        assert X_subset.columns.equals(pd.Index(columns))
 
 
 def test_columnselect_int():
@@ -44,4 +44,4 @@ def test_columnselect_int():
     transformer = ColumnSelect(columns=columns)
     X_subset = transformer.fit_transform(X=X)
 
-    assert X_subset.columns == X.columns[[0, 2, 4]]
+    assert X_subset.columns.equals(X.columns[[0, 2, 4]])
