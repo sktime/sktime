@@ -32,7 +32,7 @@ def test_columnselect_indextreatment(index_treatment):
     transformer = ColumnSelect(columns=columns, index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X)
 
-    columns_idx =  pd.Index(columns)
+    columns_idx = pd.Index(columns)
     in_cols = columns_idx.isin(X.columns)
     col_X_and_cols = columns_idx[in_cols]
 
