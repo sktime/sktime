@@ -1173,6 +1173,7 @@ class DirectReducerV2(BaseForecaster):
             ret = pd.DataFrame(index=fh_idx, columns=y_cols)
             for i in X.index:
                 X.loc[i] = self.dummy_value_
+            return ret
 
         lagger_y_to_X = self.lagger_y_to_X_
 
