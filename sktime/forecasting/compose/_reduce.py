@@ -5,11 +5,12 @@
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
+    "mloning",
     "Ayushmaan Seth",
     "Kavin Anand",
     "Luis Zugasti",
-    "Lovkush Agarwal",
-    "Markus Löning",
+    "Lovkush-A",
+    "fkiraly",
 ]
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "MultioutputTabularRegressionForecaster",
     "DirRecTabularRegressionForecaster",
     "DirRecTimeSeriesRegressionForecaster",
+    "DirectReducerV2",
 ]
 
 import numpy as np
