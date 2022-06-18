@@ -233,6 +233,17 @@ Series-to-series transformers transform individual time series into another time
 
 When applied to panels or hierarchical data, individual series are transformed.
 
+Lagging
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Lag
+
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
 
