@@ -31,8 +31,12 @@ def test_columnselect_indextreatment(index_treatment):
     columns = ["GNPDEFL", "POP", "FOO"]
     transformer = ColumnSelect(columns=columns, index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X)
+
+    in_cols = columns.isin(X.columns)
+    col_X_and_cols = pd.Index(columns)[in_cols]
+
     if index_treatment == "remove":
-        assert X_subset.columns.equals(X.index.intersection(columns))
+        assert X_subset.columns.equals(col_X_and_cols)
     elif index_treatment == "keep":
         assert X_subset.columns.equals(pd.Index(columns))
 

@@ -156,8 +156,9 @@ class ColumnSelect(BaseTransformer):
 
     In transform, subsets `X` to `columns` provided as hyper-parameters.
 
-    Caveat: does not change sequence in `Xt=transform(X)`.
-    Selected columns appear in same sequence in `Xt` as they appeared in `X`.
+    Sequence of columns in `Xt=transform(X)` is as in `columns` hyper-parameter.
+    Caveat: this means that `transform` may change sequence of columns,
+        even if no  columns are removed from `X` in `transform(X)`.
 
     Parameters
     ----------
@@ -231,7 +232,8 @@ class ColumnSelect(BaseTransformer):
             col_idx = X.columns[columns]
             return X[col_idx]
 
-        col_X_and_cols = X.columns.intersection(columns)
+        in_cols = columns.isin(X.columns)
+        col_X_and_cols = columns[in_cols]
 
         if index_treatment == "remove":
             Xt = X[col_X_and_cols]
