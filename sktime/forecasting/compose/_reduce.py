@@ -1066,8 +1066,23 @@ def _cut_tail(X, n_tail=1):
     return X
 
 
-class DirectReducer(BaseForecaster):
-    strategy = "direct"
+def _coerce_col_str(X):
+    """Coerce columns to string, to satisfy sklearn convention."""
+    X.columns = [str(x) for x in X.columns]
+    return X
+
+
+class DirectReducerV2(BaseForecaster):
+    """Direct reduction forecaster.
+
+    Parameters
+    ----------
+    estimator
+    window_length
+    transformers
+    X_treatment : str, optional, one of "concurrent" (default) or "shifted"
+    """
+
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "X_inner_mtype": "pd.DataFrame",
@@ -1075,12 +1090,12 @@ class DirectReducer(BaseForecaster):
     }
 
     def __init__(self, estimator, window_length=10, transformers=None):
-        super(_Reducer, self).__init__(window_length=window_length)
+        self.window_length = window_length
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
-        self._cv = None
         self._lags = list(range(window_length))
+        super(DirectReducerV2, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -1105,19 +1120,23 @@ class DirectReducer(BaseForecaster):
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
-        fh_rel = fh.to_relative()
+        fh_rel = fh.to_relative(self.cutoff)
         y_lags = list(fh_rel)
         y_lags = [-x for x in y_lags]
-        lagger_y_to_y = Lag(lags=y_lags, index_out="extend")
+        lagger_y_to_y = Lag(lags=y_lags, index_out="original")
         self.lagger_y_to_y_ = lagger_y_to_y
 
         yt = lagger_y_to_y.fit_transform(y)
-        y_notna = y.notnull().all(axis=1)
-        yt = yt.loc[y_notna]
-        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna]
+        y_notna = yt.notnull().all(axis=1)
+        y_notna_idx = y_notna.index[y_notna]
+        yt = yt.loc[y_notna_idx]
+        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna_idx]
 
         if X is not None:
-            Xt = pd.concat([X, Xt], axis=1)
+            Xt = pd.concat([X.loc[y_notna_idx], Xt], axis=1)
+
+        Xt = _coerce_col_str(Xt)
+        yt = _coerce_col_str(yt)
 
         estimator = clone(self.estimator)
         if not estimator._get_tags()["multioutput"]:
@@ -1129,13 +1148,16 @@ class DirectReducer(BaseForecaster):
 
     def _predict(self, fh=None, X=None):
         """Predict core logic."""
-        fh_idx = fh.to_absolute()
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_cols = self._y.columns
-        X = X.loc[fh_idx]
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        Xt_lastrow = lagger_y_to_X.transform(self._y).iloc[[-1]]
+        Xt_lastrow = lagger_y_to_X.transform(self._y).loc[[self.cutoff]]
+        if self._X is not None:
+            Xt_lastrow = pd.concat([self._X.loc[[self.cutoff]], Xt_lastrow], axis=1)
+
+        Xt_lastrow = _coerce_col_str(Xt_lastrow)
 
         estimator = self.estimator_
         # 2D numpy array with col index = (fh, var) and 1 row
@@ -1145,3 +1167,27 @@ class DirectReducer(BaseForecaster):
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
 
         return y_pred
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.linear_model import LinearRegression
+
+        est = LinearRegression()
+        params = {"estimator": est, "window_length": 3}
+        return params
