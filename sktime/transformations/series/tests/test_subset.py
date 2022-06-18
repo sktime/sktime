@@ -32,13 +32,14 @@ def test_columnselect_indextreatment(index_treatment):
     transformer = ColumnSelect(columns=columns, index_treatment=index_treatment)
     X_subset = transformer.fit_transform(X=X)
 
-    in_cols = columns.isin(X.columns)
-    col_X_and_cols = pd.Index(columns)[in_cols]
+    columns_idx =  pd.Index(columns)
+    in_cols = columns_idx.isin(X.columns)
+    col_X_and_cols = columns_idx[in_cols]
 
     if index_treatment == "remove":
         assert X_subset.columns.equals(col_X_and_cols)
     elif index_treatment == "keep":
-        assert X_subset.columns.equals(pd.Index(columns))
+        assert X_subset.columns.equals(columns_idx)
 
 
 def test_columnselect_int():
