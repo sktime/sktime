@@ -1083,6 +1083,11 @@ class DirectReducerV2(BaseForecaster):
     window_length
     transformers
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
+        determines the timestamps of X from which y(t+h) is predicted, for horizon h
+        "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
+            in particular, if no y-lags are specified, y(t+h) is predicted fron X(t)
+        "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
+            in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
     """
 
     _tags = {
@@ -1131,6 +1136,17 @@ class DirectReducerV2(BaseForecaster):
         yt = lagger_y_to_y.fit_transform(y)
         y_notna = yt.notnull().all(axis=1)
         y_notna_idx = y_notna.index[y_notna]
+
+        # we now check whether the set of full lags is empty
+        # if yes, we set a flag, since we cannot fit the reducer
+        # instead, later, we return a dummy prediction
+        if len(y_notna_idx) == 0:
+            self.empty_lags_ = True
+            self.dummy_value_ = y.mean()
+            return self
+        else:
+            self.empty_lags_ = False
+
         yt = yt.loc[y_notna_idx]
         Xt = lagger_y_to_X.fit_transform(y).loc[y_notna_idx]
 
@@ -1152,6 +1168,11 @@ class DirectReducerV2(BaseForecaster):
         """Predict core logic."""
         fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_cols = self._y.columns
+
+        if self.empty_lags_:
+            ret = pd.DataFrame(index=fh_idx, columns=y_cols)
+            for i in X.index:
+                X.loc[i] = self.dummy_value_
 
         lagger_y_to_X = self.lagger_y_to_X_
 
