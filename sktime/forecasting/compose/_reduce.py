@@ -1105,22 +1105,7 @@ class DirectReducerV2(BaseForecaster):
         super(DirectReducerV2, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
-        fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to to predict.
-
-        Returns
-        -------
-        self : Estimator
-            An fitted instance of self.
-        """
+        """Fit to training data."""
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend") * Imputer(method="ffill")
