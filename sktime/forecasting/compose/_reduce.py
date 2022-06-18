@@ -33,6 +33,8 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
+from sktime.transformations.series.impute import Imputer
+from sktime.transformations.series.lag import Lag
 from sktime.utils.datetime import _shift
 from sktime.utils.validation import check_window_length
 
@@ -262,6 +264,9 @@ class _DirectReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
+        fh_rel = fh.to_relative()
+        self.lagger_X_ = Lag(lags=list(fh_rel)) * Imputer(method="ffill")
+
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
