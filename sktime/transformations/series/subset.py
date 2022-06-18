@@ -14,7 +14,8 @@ class IndexSubset(BaseTransformer):
 
     In transform, subsets X to the indices in y.index.
     If y is None, returns X without subsetting.
-    numpy-based y is interpreted as having RangeIndex starting at 0.
+    numpy-based X are interpreted as having a RangeIndex starting at n,
+    where n is the number of numpy rows seen so far through `fit` and `update`.
     Non-pandas types are interpreted as having index as after conversion to pandas,
     via convert_to, to the "pd.DataFrame" sktime type.
 
