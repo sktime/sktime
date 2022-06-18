@@ -1096,15 +1096,28 @@ class DirectReducerV2(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
     }
 
-    def __init__(self, estimator, window_length=10, transformers=None):
+    def __init__(
+        self, estimator, window_length=10, transformers=None, X_treatment="concurrent"
+    ):
         self.window_length = window_length
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
+        self.X_treatment = X_treatment
         self._lags = list(range(window_length))
         super(DirectReducerV2, self).__init__()
 
     def _fit(self, y, X=None, fh=None):
+        """Fitt dispatcher based on X_treatment."""
+        methodname = f"_fit_{self.X_treatment}"
+        return getattr(self, methodname)(y=y, X=X, fh=fh)
+
+    def _predict(self, X=None, fh=None):
+        """Predict dispatcher based on X_treatment."""
+        methodname = f"_predict_{self.X_treatment}"
+        return getattr(self, methodname)(X=X, fh=fh)
+
+    def _fit_shifted(self, y, X=None, fh=None):
         """Fit to training data."""
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -1149,7 +1162,7 @@ class DirectReducerV2(BaseForecaster):
 
         return self
 
-    def _predict(self, fh=None, X=None):
+    def _predict_shifted(self, fh=None, X=None):
         """Predict core logic."""
         fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_cols = self._y.columns
@@ -1177,6 +1190,76 @@ class DirectReducerV2(BaseForecaster):
 
         return y_pred
 
+    def _fit_concurrent(self, y, X=None, fh=None):
+        """Fit to training data."""
+        # lagger_y_to_X_ will lag y to obtain the sklearn X
+        lags = self._lags
+        lagger_y_to_X = Lag(lags=lags, index_out="extend") * Imputer(method="ffill")
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)
+
+        Xt = lagger_y_to_X.fit_transform(y)
+
+        self.estimators_ = []
+
+        for lag in y_lags:
+
+            lag_plus = Lag(lag, index_out="extend")
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_notna = Xtt.notnull().all(axis=1)
+            Xtt_notna_idx = Xtt_notna.index[Xtt_notna].intersection(y.index)
+
+            yt = y.loc[Xtt_notna_idx]
+            Xtt = Xtt.loc[Xtt_notna_idx]
+
+            if X is not None:
+                Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+
+            Xtt = _coerce_col_str(Xtt)
+            yt = _coerce_col_str(yt)
+
+            estimator = clone(self.estimator)
+            estimator.fit(Xtt, yt)
+            self.estimators_.append(estimator)
+
+        return self
+
+    def _predict_concurrent(self, X=None, fh=None):
+        """Fit to training data."""
+        fh_idx = pd.Index(fh.to_absolute(self.cutoff))
+        y_cols = self._y.columns
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        fh_rel = fh.to_relative(self.cutoff)
+        y_lags = list(fh_rel)
+
+        Xt = lagger_y_to_X.transform(self._y)
+        y_pred_list = []
+
+        for i, lag in enumerate(y_lags):
+
+            lag_plus = Lag(lag, index_out="extend")
+            Xtt = lag_plus.fit_transform(Xt)
+            Xtt_lastrow = Xtt.loc[[self.cutoff]]
+            if self._X is not None:
+                Xtt_lastrow = pd.concat(
+                    [self._X.loc[[self.cutoff]], Xtt_lastrow], axis=1
+                )
+
+            Xtt_lastrow = _coerce_col_str(Xtt_lastrow)
+
+            estimator = self.estimators_[i]
+            # 2D numpy array with col index = (var) and 1 row
+            y_pred_list.append(estimator.predict(Xtt_lastrow))
+
+        y_pred = np.concatenate(y_pred_list)
+        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        return y_pred
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -1198,5 +1281,6 @@ class DirectReducerV2(BaseForecaster):
         from sklearn.linear_model import LinearRegression
 
         est = LinearRegression()
-        params = {"estimator": est, "window_length": 3}
-        return params
+        params1 = {"estimator": est, "window_length": 3, "X_treatment": "shifted"}
+        params2 = {"estimator": est, "window_length": 3, "X_treatment": "concurrent"}
+        return [params1, params2]
