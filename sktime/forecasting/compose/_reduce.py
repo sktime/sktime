@@ -30,7 +30,7 @@ from sklearn.base import RegressorMixin, clone
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
-from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
@@ -177,7 +177,6 @@ class _Reducer(_BaseWindowForecaster):
         self.transformers_ = None
         self.estimator = estimator
         self._cv = None
-        self._lags = list(range(window_length))
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -236,8 +235,6 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
     }
 
     def _transform(self, y, X=None):
@@ -268,50 +265,62 @@ class _DirectReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
-        # lagger_y_to_X_ will lag y to obtain the sklearn X
-        lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend") * Imputer(method="ffill")
-        self.lagger_y_to_X_ = lagger_y_to_X
+        # We currently only support out-of-sample predictions. For the direct
+        # strategy, we need to check this at the beginning of fit, as the fh is
+        # required for fitting.
+        if not self.fh.is_all_out_of_sample(self.cutoff):
+            raise NotImplementedError("In-sample predictions are not implemented.")
 
-        # lagger_y_to_y_ will lag y to obtain the sklearn y
-        fh_rel = fh.to_relative()
-        y_lags = list(fh_rel)
-        y_lags = [-x for x in y_lags]
-        lagger_y_to_y = Lag(lags=y_lags, index_out="extend")
-        self.lagger_y_to_y_ = lagger_y_to_y
+        self.window_length_ = check_window_length(
+            self.window_length, n_timepoints=len(y)
+        )
 
-        yt = lagger_y_to_y.fit_transform(y)
-        y_notna = y.notnull().all(axis=1)
-        yt = yt.loc[y_notna]
-        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna]
+        yt, Xt = self._transform(y, X)
 
-        if X is not None:
-            Xt = pd.concat([X, Xt], axis=1)
-
-        estimator = clone(self.estimator)
-        if not estimator._get_tags()["multioutput"]:
-            estimator = MultiOutputRegressor(estimator)
-        estimator.fit(Xt, yt)
-        self.estimator_ = estimator
-
+        # Iterate over forecasting horizon, fitting a separate estimator for each step.
+        self.estimators_ = []
+        for i in range(len(self.fh)):
+            estimator = clone(self.estimator)
+            estimator.fit(Xt, yt[:, i])
+            self.estimators_.append(estimator)
         return self
 
-    def _predict(self, fh=None, X=None):
-        """Predict core logic."""
-        fh_idx = fh.to_absolute()
-        y_cols = self._y.columns
-        X = X.loc[fh_idx]
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
+        # Get last window of available data.
+        y_last, X_last = self._get_last_window()
 
-        lagger_y_to_X = self.lagger_y_to_X_
+        # If we cannot generate a prediction from the available data, return nan.
+        if not self._is_predictable(y_last):
+            return self._predict_nan(fh)
 
-        Xt_lastrow = lagger_y_to_X.transform(self._y).iloc[[-1]]
+        if self._X is None:
+            n_columns = 1
+        else:
+            # X is ignored here, since we currently only look at lagged values for
+            # exogenous variables and not contemporaneous ones.
+            n_columns = self._X.shape[1] + 1
 
-        estimator = self.estimator_
-        # 2D numpy array with col index = (fh, var) and 1 row
-        y_pred = estimator.predict(Xt_lastrow)
-        y_pred = y_pred.reshape((len(fh), len(y_cols)))
+        # Pre-allocate arrays.
+        window_length = self.window_length_
+        X_pred = np.zeros((1, n_columns, window_length))
 
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+        # Fill pre-allocated arrays with available data.
+        X_pred[:, 0, :] = y_last
+        if self._X is not None:
+            X_pred[:, 1:, :] = X_last.T
+
+        # We need to make sure that X has the same order as used in fit.
+        if self._estimator_scitype == "tabular-regressor":
+            X_pred = X_pred.reshape(1, -1)
+
+        # Allocate array for predictions.
+        y_pred = np.zeros(len(fh))
+
+        # Iterate over estimators/forecast horizon
+        for i, estimator in enumerate(self.estimators_):
+            y_pred[i] = estimator.predict(X_pred)
 
         return y_pred
 
@@ -1055,3 +1064,84 @@ def _cut_tail(X, n_tail=1):
     else:
         X = X.tail(n_tail)
     return X
+
+
+class DirectReducer(BaseForecaster):
+    strategy = "direct"
+    _tags = {
+        "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+    }
+
+    def __init__(self, estimator, window_length=10, transformers=None):
+        super(_Reducer, self).__init__(window_length=window_length)
+        self.transformers = transformers
+        self.transformers_ = None
+        self.estimator = estimator
+        self._cv = None
+        self._lags = list(range(window_length))
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        fh : int, list or np.array, optional (default=None)
+             The forecasters horizon with the steps ahead to to predict.
+
+        Returns
+        -------
+        self : Estimator
+            An fitted instance of self.
+        """
+        # lagger_y_to_X_ will lag y to obtain the sklearn X
+        lags = self._lags
+        lagger_y_to_X = Lag(lags=lags, index_out="extend") * Imputer(method="ffill")
+        self.lagger_y_to_X_ = lagger_y_to_X
+
+        # lagger_y_to_y_ will lag y to obtain the sklearn y
+        fh_rel = fh.to_relative()
+        y_lags = list(fh_rel)
+        y_lags = [-x for x in y_lags]
+        lagger_y_to_y = Lag(lags=y_lags, index_out="extend")
+        self.lagger_y_to_y_ = lagger_y_to_y
+
+        yt = lagger_y_to_y.fit_transform(y)
+        y_notna = y.notnull().all(axis=1)
+        yt = yt.loc[y_notna]
+        Xt = lagger_y_to_X.fit_transform(y).loc[y_notna]
+
+        if X is not None:
+            Xt = pd.concat([X, Xt], axis=1)
+
+        estimator = clone(self.estimator)
+        if not estimator._get_tags()["multioutput"]:
+            estimator = MultiOutputRegressor(estimator)
+        estimator.fit(Xt, yt)
+        self.estimator_ = estimator
+
+        return self
+
+    def _predict(self, fh=None, X=None):
+        """Predict core logic."""
+        fh_idx = fh.to_absolute()
+        y_cols = self._y.columns
+        X = X.loc[fh_idx]
+
+        lagger_y_to_X = self.lagger_y_to_X_
+
+        Xt_lastrow = lagger_y_to_X.transform(self._y).iloc[[-1]]
+
+        estimator = self.estimator_
+        # 2D numpy array with col index = (fh, var) and 1 row
+        y_pred = estimator.predict(Xt_lastrow)
+        y_pred = y_pred.reshape((len(fh), len(y_cols)))
+
+        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+
+        return y_pred
