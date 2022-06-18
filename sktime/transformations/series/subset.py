@@ -12,12 +12,12 @@ from sktime.transformations.base import BaseTransformer
 class IndexSubset(BaseTransformer):
     r"""Index subsetting transformer.
 
-    In transform, subsets X to the indices in y.index.
-    If y is None, returns X without subsetting.
-    numpy-based X are interpreted as having a RangeIndex starting at n,
+    In transform, subsets `X` to the indices in `y.index`.
+    If `y` is None, returns `X` without subsetting.
+    numpy-based `X` are interpreted as having a RangeIndex starting at n,
     where n is the number of numpy rows seen so far through `fit` and `update`.
     Non-pandas types are interpreted as having index as after conversion to pandas,
-    via convert_to, to the "pd.DataFrame" sktime type.
+    via `datatypes.convert_to`, to the `"pd.DataFrame"` sktime type.
 
     Parameters
     ----------
