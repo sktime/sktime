@@ -1077,11 +1077,38 @@ def _coerce_col_str(X):
 class DirectReducerV2(BaseForecaster):
     """Direct reduction forecaster.
 
+    Implements direct reduction, of forecasting to tabular regression.
+
+    In `fit`, given endogeneous time series `y` and possibly exogeneous `X`:
+        fits `estimator` to feature-label pairs as defined as follows.
+    if `X_treatment = "concurrent":
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t+h)`
+        labels = `y(t+h)` for `h` in the forecasting horizon
+        ranging over all `t` where the above have been observed (are in the index)
+        for each `h` in the forecasting horizon (separate estimator fitted per `h`)
+    if `X_treatment = "shifted":
+        features = `y(t)`, `y(t-1)`, ..., `y(t-window_size)`, if provided: `X(t)`
+        labels = `y(t+h_1)`, ..., `y(t+h_k)` for `h_j` in the forecasting horizon
+        ranging over all `t` where the above have been observed (are in the index)
+        estimator is fitted as a multi-output estimator (for all  `h_j` simultaneously)
+
+    In `predict`, given possibly exogeneous `X`, at cutoff time `c`,
+    if `X_treatment = "concurrent":
+        applies fitted estimators' predict to
+        feature = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(c+h)`
+        to obtain a prediction for `y(c+h)`, for each `f` in the forecasting horizon
+    if `X_treatment = "shifted":
+        applies fitted estimator's predict to
+        features = `y(c)`, `y(c-1)`, ..., `y(c-window_size)`, if provided: `X(t)`
+        to obtain prediction for `y(c+h_1)`, ..., `y(c+h_k)` for `h_j` in forec. horizon
+
     Parameters
     ----------
-    estimator
-    window_length
-    transformers
+    estimator : sklearn regressor, must be compatible with sklearn interface
+        tabular regression algorithm used in reduction algorithm
+    window_length : int, optional, default=10
+        window length used in the reduction algorithm
+    transformers : currently not used
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
         determines the timestamps of X from which y(t+h) is predicted, for horizon h
         "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
