@@ -36,8 +36,6 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.lag import Lag
 from sktime.utils.datetime import _shift
 from sktime.utils.validation import check_window_length
 
@@ -1155,6 +1153,9 @@ class DirectReducerV2(BaseForecaster):
 
     def _fit_shifted(self, y, X=None, fh=None):
         """Fit to training data."""
+        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.series.lag import Lag
+
         impute_method = self.impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
@@ -1232,6 +1233,9 @@ class DirectReducerV2(BaseForecaster):
 
     def _fit_concurrent(self, y, X=None, fh=None):
         """Fit to training data."""
+        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.series.lag import Lag
+
         impute_method = self.impute_method
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
@@ -1278,6 +1282,8 @@ class DirectReducerV2(BaseForecaster):
 
     def _predict_concurrent(self, X=None, fh=None):
         """Fit to training data."""
+        from sktime.transformations.series.lag import Lag
+
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
         elif X is None and self._X is not None:
