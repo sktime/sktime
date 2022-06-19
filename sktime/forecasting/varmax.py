@@ -349,6 +349,10 @@ class VARMAX(_StatsModelsAdapter):
             exog=X,
         )
 
+        # statsmodel returns zero-indexed observation number only when index is int
+        if self._y.index.dtype == "int64":
+            y_pred.index = y_pred.index + self._y.index[0]
+
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
     @classmethod

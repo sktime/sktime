@@ -37,6 +37,7 @@ def test_VARMAX_against_statsmodels():
     stats_fit = stats.fit()
     start, end = len(train) + fh[0] - 1, len(train) + fh[-1] - 1
     y_pred_stats = stats_fit.predict(start=start, end=end)
+    y_pred_stats = y_pred_stats.loc[fh.to_absolute(train.index[-1]).to_pandas()]
 
     assert_allclose(y_pred, y_pred_stats)
 
@@ -60,5 +61,6 @@ def test_VARMAX_against_statsmodels_with_exog():
     stats_fit = stats.fit()
     start, end = len(train) + fh[0] - 1, len(train) + fh[-1] - 1
     y_pred_stats = stats_fit.predict(start=start, end=end, exog=X_test)
+    y_pred_stats = y_pred_stats.loc[fh.to_absolute(train.index[-1]).to_pandas()]
 
     assert_allclose(y_pred, y_pred_stats)
