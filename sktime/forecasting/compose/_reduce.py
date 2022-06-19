@@ -1088,6 +1088,9 @@ class DirectReducerV2(BaseForecaster):
             in particular, if no y-lags are specified, y(t+h) is predicted fron X(t)
         "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
+    impute : str or None, optional, method string passed to Imputer
+        default="bfill", admissible strings are of Imputer.method parameter, see there
+        if None, no imputation is done when applying Lag transformer to obtain inner X
     """
 
     _tags = {
@@ -1097,13 +1100,19 @@ class DirectReducerV2(BaseForecaster):
     }
 
     def __init__(
-        self, estimator, window_length=10, transformers=None, X_treatment="concurrent"
+        self,
+        estimator,
+        window_length=10,
+        transformers=None,
+        X_treatment="concurrent",
+        impute_method="bfill",
     ):
         self.window_length = window_length
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
         self.X_treatment = X_treatment
+        self.impute_method = impute_method
         self._lags = list(range(window_length))
         super(DirectReducerV2, self).__init__()
 
@@ -1119,9 +1128,13 @@ class DirectReducerV2(BaseForecaster):
 
     def _fit_shifted(self, y, X=None, fh=None):
         """Fit to training data."""
+        impute_method = self.impute_method
+
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend") * Imputer(method="ffill")
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        if impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
         self.lagger_y_to_X_ = lagger_y_to_X
 
         # lagger_y_to_y_ will lag y to obtain the sklearn y
@@ -1192,9 +1205,13 @@ class DirectReducerV2(BaseForecaster):
 
     def _fit_concurrent(self, y, X=None, fh=None):
         """Fit to training data."""
+        impute_method = self.impute_method
+
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
-        lagger_y_to_X = Lag(lags=lags, index_out="extend") * Imputer(method="ffill")
+        lagger_y_to_X = Lag(lags=lags, index_out="extend")
+        if impute_method is not None:
+            lagger_y_to_X = lagger_y_to_X * Imputer(method=impute_method)
         self.lagger_y_to_X_ = lagger_y_to_X
 
         fh_rel = fh.to_relative(self.cutoff)
@@ -1214,46 +1231,72 @@ class DirectReducerV2(BaseForecaster):
             yt = y.loc[Xtt_notna_idx]
             Xtt = Xtt.loc[Xtt_notna_idx]
 
-            if X is not None:
-                Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
+            # we now check whether the set of full lags is empty
+            # if yes, we set a flag, since we cannot fit the reducer
+            # instead, later, we return a dummy prediction
+            if len(Xtt_notna_idx) == 0:
+                self.estimators_.append(y.mean())
+            else:
+                if X is not None:
+                    Xtt = pd.concat([X.loc[Xtt_notna_idx], Xtt], axis=1)
 
-            Xtt = _coerce_col_str(Xtt)
-            yt = _coerce_col_str(yt)
+                Xtt = _coerce_col_str(Xtt)
+                yt = _coerce_col_str(yt)
 
-            estimator = clone(self.estimator)
-            estimator.fit(Xtt, yt)
-            self.estimators_.append(estimator)
+                estimator = clone(self.estimator)
+                estimator.fit(Xtt, yt)
+                self.estimators_.append(estimator)
 
         return self
 
     def _predict_concurrent(self, X=None, fh=None):
         """Fit to training data."""
+        if X is not None and self._X is not None:
+            X_pool = X.combine_first(self._X)
+        elif X is None and self._X is not None:
+            X_pool = self._X
+        else:
+            X_pool = X
+
         fh_idx = pd.Index(fh.to_absolute(self.cutoff))
         y_cols = self._y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
 
         fh_rel = fh.to_relative(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
         y_lags = list(fh_rel)
+        y_abs = list(fh_abs)
 
         Xt = lagger_y_to_X.transform(self._y)
         y_pred_list = []
 
-        for i, lag in enumerate(y_lags):
+        for i in range(len(y_lags)):
+
+            lag = y_lags[i]
+            predict_idx = y_abs[i]
 
             lag_plus = Lag(lag, index_out="extend")
             Xtt = lag_plus.fit_transform(Xt)
-            Xtt_lastrow = Xtt.loc[[self.cutoff]]
-            if self._X is not None:
-                Xtt_lastrow = pd.concat(
-                    [self._X.loc[[self.cutoff]], Xtt_lastrow], axis=1
+            Xtt_predrow = Xtt.loc[[predict_idx]]
+            if X_pool is not None:
+                Xtt_predrow = pd.concat(
+                    [X_pool.loc[[predict_idx]], Xtt_predrow], axis=1
                 )
 
-            Xtt_lastrow = _coerce_col_str(Xtt_lastrow)
+            Xtt_predrow = _coerce_col_str(Xtt_predrow)
 
             estimator = self.estimators_[i]
+
+            # if = no training indices in _fit, fill in y training mean
+            if isinstance(estimator, pd.Series):
+                y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
+                y_pred_i.iloc[0] = estimator
+            # otherwise proceed as per direct reduction algorithm
+            else:
+                y_pred_i = estimator.predict(Xtt_predrow)
             # 2D numpy array with col index = (var) and 1 row
-            y_pred_list.append(estimator.predict(Xtt_lastrow))
+            y_pred_list.append(y_pred_i)
 
         y_pred = np.concatenate(y_pred_list)
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
