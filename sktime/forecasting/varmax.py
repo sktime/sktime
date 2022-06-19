@@ -192,6 +192,7 @@ class VARMAX(_StatsModelsAdapter):
     Examples
     --------
     >>>from sktime.forecasting.varmax import VARMAX
+
     >>>from sktime.datasets import load_longley
     >>>_, y = load_longley()
     >>>train, test = y.iloc[:-3,], y.iloc[-3:,]
