@@ -7,8 +7,12 @@ __all__ = ["VECM"]
 __author__ = ["thayeylolu", "AurumnPegasus"]
 
 import numpy as np
+import pandas as pd
+
+# from icecream import ic
 from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -56,6 +60,9 @@ class VECM(_StatsModelsAdapter):
     exog_coint : a scalar (float), 1D ndarray of size nobs,
         2D ndarray/pd.DataFrame of size (any, neqs)
         Deterministic terms inside the cointegration relation.
+    exog_coint_fc : a scalar (float), 1D ndarray of size nobs,
+        2D ndarray/pd.DataFrame of size (any, neqs)
+        Forcasted value of exog_coint
 
     Example
     -------
@@ -69,20 +76,17 @@ class VECM(_StatsModelsAdapter):
     >>> train, test = temporal_train_test_split(df)
     >>> sktime_model = VECM()
     >>> fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
-    >>> sktime_model.fit(train, fh=fh)
+    >>> _ = sktime_model.fit(train, fh=fh)
     >>> fc2 = sktime_model.predict(fh=fh)
     """
 
     _tags = {
         "scitype:y": "multivariate",
-        "ignores-exogeneous-X": True,
-        "handles-missing-data": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": True,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
-        "capability:pred_int": False,
+        "requires-fh-in-fit": False,
+        "univariate-only": False,
+        "ignores-exogeneous-X": False,
     }
 
     def __init__(
@@ -97,6 +101,7 @@ class VECM(_StatsModelsAdapter):
         first_season=0,
         method="ml",
         exog_coint=None,
+        exog_coint_fc=None,
     ):
 
         self.dates = dates
@@ -109,10 +114,11 @@ class VECM(_StatsModelsAdapter):
         self.first_season = first_season
         self.method = method
         self.exog_coint = exog_coint
+        self.exog_coint_fc = exog_coint_fc
 
         super(VECM, self).__init__()
 
-    def _fit(self, y, fh, X=None):
+    def _fit(self, y, fh=None, X=None):
         """
         Fit forecaster to training data.
 
@@ -150,7 +156,7 @@ class VECM(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit(method=self.method)
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X=None, alpha=DEFAULT_ALPHA):
         """Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
@@ -169,10 +175,44 @@ class VECM(_StatsModelsAdapter):
         y_pred : pd.Series
             Point predictions
         """
-        fh_int = fh.to_absolute_int(self._y.index[0], self._y.index[-1])
-        steps = fh_int[-1]
-        forecast = self._fitted_forecaster.predict(steps=steps)
-        new_arr = []
-        for i in fh:
-            new_arr.append(forecast[i - 1])
-        return np.array(new_arr)
+        y_pred_outsample = None
+        y_pred_insample = None
+        exog_fc = X.values if X is not None else None
+        fh_int = fh.to_relative(self.cutoff)
+        # n_lags = self._fitted_forecaster.k_ar
+
+        if fh_int.max() > 0:
+            y_pred_outsample = self._fitted_forecaster.predict(
+                steps=fh_int[-1],
+                alpha=alpha,
+                exog_fc=exog_fc,
+                exog_coint_fc=self.exog_coint_fc,
+            )
+            if alpha is not None:
+                # y_pred_outsample, y_pred_lower, y_pred_upper = (
+                #     y_pred_outsample[0],
+                #     y_pred_outsample[1],
+                #     y_pred_outsample[2],
+                # )
+                y_pred_outsample = y_pred_outsample[0]
+
+        if fh_int.min() <= 0:
+            y_pred_insample = self._y - self._fitted_forecaster.resid
+            y_pred_insample = y_pred_insample.values
+
+        if y_pred_insample is not None and y_pred_outsample is not None:
+            y_pred = np.concatenate([y_pred_outsample, y_pred_insample], axis=0)
+        else:
+            y_pred = (
+                y_pred_insample if y_pred_insample is not None else y_pred_outsample
+            )
+
+        index = fh.to_absolute(self.cutoff)
+        index.name = self._y.index.name
+        y_pred = pd.DataFrame(
+            y_pred[fh.to_indexer(self.cutoff), :],
+            index=fh.to_absolute(self.cutoff),
+            columns=self._y.columns,
+        )
+
+        return y_pred

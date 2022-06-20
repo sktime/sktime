@@ -8,8 +8,6 @@ from statsmodels.tsa.api import VECM as _VECM
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
-
-#
 from sktime.forecasting.vecm import VECM
 
 index = pd.date_range(start="2005", end="2006-12", freq="M")
@@ -25,7 +23,7 @@ def test_VAR_against_statsmodels():
     train, test = temporal_train_test_split(df)
     sktime_model = VECM()
     fh = ForecastingHorizon([1, 3, 4, 5, 7, 9])
-    sktime_model.fit(train, fh=fh)
+    _ = sktime_model.fit(train)
     y_pred = sktime_model.predict(fh=fh)
 
     stats = _VECM(train)
@@ -36,4 +34,8 @@ def test_VAR_against_statsmodels():
     new_arr = []
     for i in fh_int:
         new_arr.append(y_pred_stats[i - 1])
+    # print("predicted: \n")
+    # print(y_pred)
+    # print("actual: \n")
+    # print(new_arr)
     assert_allclose(y_pred, new_arr)
