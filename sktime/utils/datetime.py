@@ -5,7 +5,6 @@
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
-import re
 from typing import Tuple, Union
 
 import numpy as np
@@ -67,12 +66,10 @@ def _get_intervals_count_and_unit(freq: str) -> Tuple[int, str]:
     """
     if freq is None:
         raise ValueError("frequency is missing")
-    m = re.match(r"(?P<count>\d*)(?P<unit>[a-zA-Z]+)$", freq)
-    if not m:
-        raise ValueError(f"pandas frequency {freq} not understood.")
-    count, unit = m.groups()
-    count = 1 if not count else int(count)
-    return count, unit
+    else:
+        offset = pd.tseries.frequencies.to_offset(freq)
+        count, unit = offset.n, offset.base.freqstr
+        return count, unit
 
 
 def _get_freq(x):
