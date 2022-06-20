@@ -1110,7 +1110,7 @@ class DirectReducerV2(BaseForecaster):
     X_treatment : str, optional, one of "concurrent" (default) or "shifted"
         determines the timestamps of X from which y(t+h) is predicted, for horizon h
         "concurrent": y(t+h) is predicted from lagged y, and X(t+h), for all h in fh
-            in particular, if no y-lags are specified, y(t+h) is predicted fron X(t)
+            in particular, if no y-lags are specified, y(t+h) is predicted from X(t)
         "shifted": y(t+h) is predicted from lagged y, and X(t), for all h in fh
             in particular, if no y-lags are specified, y(t+h) is predicted from X(t+h)
     impute : str or None, optional, method string passed to Imputer
