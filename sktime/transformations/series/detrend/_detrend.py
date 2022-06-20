@@ -139,7 +139,7 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             transformed version of X, detrended series
         """
-        fh = ForecastingHorizon(X.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False, freq=X.index.freqstr)
 
         # univariate: X is pd.Series
         if isinstance(X, pd.Series):
@@ -181,7 +181,7 @@ class Detrender(BaseTransformer):
         Xt : pd.Series or pd.DataFrame, same type as X
             inverse transformed version of X
         """
-        fh = ForecastingHorizon(X.index, is_relative=False)
+        fh = ForecastingHorizon(X.index, is_relative=False, freq=X.index.freqstr)
 
         # univariate: X is pd.Series
         if isinstance(X, pd.Series):
