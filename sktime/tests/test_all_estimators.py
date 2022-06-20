@@ -780,10 +780,12 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         msg = f"set_params of {type(estimator).__name__} does not return self"
         assert estimator.set_params(**params) is estimator, msg
 
-        is_equal, equals_msg = deep_equals(estimator.get_params(), params)
+        is_equal, equals_msg = deep_equals(
+            estimator.get_params(), params, return_msg=True
+        )
         msg = (
-            f"get_params result of {type(estimator).__name__} does not match "
-            f"what was passed to set_params. Reason for discrepancy: {equals_msg}"
+            f"get_params result of {type(estimator).__name__} (x) does not match "
+            f"what was passed to set_params (y). Reason for discrepancy: {equals_msg}"
         )
         assert is_equal, msg
 
@@ -796,15 +798,23 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """
         estimator = estimator_class.create_test_instance()
         test_params = estimator_class.get_test_params()
+        if not isinstance(test_params, list):
+            test_params = [test_params]
+        orig_params = estimator.get_params(deep=False)
 
         for params in test_params:
+            params_full = deepcopy(orig_params)
+            params_full.update(params)
             msg = f"set_params of {estimator_class.__name__} does not return self"
-            assert estimator.set_params(**params) is estimator, msg
+            assert estimator.set_params(**params_full) is estimator, msg
 
-            is_equal, equals_msg = deep_equals(estimator.get_params(deep=False), params)
+            is_equal, equals_msg = deep_equals(
+                estimator.get_params(deep=False), params_full, return_msg=True
+            )
             msg = (
-                f"get_params result of {estimator_class.__name__} does not match "
-                f"what was passed to set_params. Reason for discrepancy: {equals_msg}"
+                f"get_params result of {estimator_class.__name__} (x) does not match "
+                f"what was passed to set_params (y). "
+                f"Reason for discrepancy: {equals_msg}"
             )
             assert is_equal, msg
 
