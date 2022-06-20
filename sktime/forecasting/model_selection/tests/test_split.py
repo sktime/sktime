@@ -462,7 +462,9 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
         # )
     y = _make_series(20, index_type=index_type)
     cutoff = y.index[10]
-    fh = _make_fh(cutoff, values, fh_type, is_relative)
+    fh = _make_fh(
+        cutoff=cutoff, steps=values, fh_type=fh_type, is_relative=is_relative, freq="D"
+    )
     split = temporal_train_test_split(y, fh=fh)
     _check_train_test_split_y(fh, split)
 
