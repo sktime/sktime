@@ -191,14 +191,13 @@ class VARMAX(_StatsModelsAdapter):
 
     Examples
     --------
-    >>>from sktime.forecasting.varmax import VARMAX
-
-    >>>from sktime.datasets import load_longley
-    >>>_, y = load_longley()
-    >>>train, test = y.iloc[:-3,], y.iloc[-3:,]
-    >>>forecaster = VARMAX()
-    >>>forecaster.fit(train[['GNPDEFL', 'GNP', 'UNEMP', 'POP']], X=train[['ARMED']])
-    >>>y_pred = forecaster.predict(fh=[1,2,3], X=test[['ARMED']])
+    >>> from sktime.forecasting.varmax import VARMAX
+    >>> from sktime.datasets import load_longley
+    >>> _, y = load_longley()
+    >>> train, test = y.iloc[:-3,], y.iloc[-3:,]
+    >>> forecaster = VARMAX()
+    >>> forecaster.fit(train[['GNPDEFL', 'GNP', 'UNEMP', 'POP']], X=train[['ARMED']])
+    >>> y_pred = forecaster.predict(fh=[1,2,3], X=test[['ARMED']])
     """
 
     _tags = {
