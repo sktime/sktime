@@ -154,8 +154,11 @@ class BaseObject(_BaseEstimator):
 
         self.reset()
 
+        # recurse in components
         for key, sub_params in nested_params.items():
             valid_params[key].set_params(**sub_params)
+
+        return self
 
     @classmethod
     def get_class_tags(cls):
