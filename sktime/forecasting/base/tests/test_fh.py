@@ -73,7 +73,11 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # choose cutoff point
     cutoff = y_train.index[-1]
 
-    freq = "D" if not hasattr(y_train.index, "freqstr") else y_train.index.freqstr
+    try:
+        freq = pd.infer_freq(y.index, warn=False)
+    except (TypeError, ValueError):
+        freq = "D"
+
     # generate fh
     fh = _make_fh(
         cutoff=cutoff, steps=steps, fh_type=fh_type, is_relative=is_relative, freq=freq
