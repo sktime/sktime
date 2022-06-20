@@ -95,8 +95,13 @@ def evaluate(
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
+        try:
+            freq = pd.infer_freq(y.index, warn=False)
+        except (TypeError, ValueError):
+            freq = "D"
+
         # create forecasting horizon
-        fh = ForecastingHorizon(y_test.index, is_relative=False)
+        fh = ForecastingHorizon(y_test.index, is_relative=False, freq=freq)
 
         # fit/update
         start_fit = time.perf_counter()

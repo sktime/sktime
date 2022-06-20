@@ -363,7 +363,7 @@ class ForecastingHorizon:
         integers = pd.Index([date - start for date in absolute])
 
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-            integers = _coerce_duration_to_int(integers, freq=_get_freq(cutoff))
+            integers = _coerce_duration_to_int(integers, freq=self.freq)
 
         return self._new(integers, is_relative=False)
 

@@ -158,8 +158,12 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
             X_train, X_test = None, None
 
+        try:
+            freq = pd.infer_freq(y.index, warn=False)
+        except (TypeError, ValueError):
+            freq = "D"
         # fit ensemble models
-        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+        fh_test = ForecastingHorizon(y_test.index, is_relative=False, freq=freq)
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
