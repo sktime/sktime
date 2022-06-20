@@ -1,13 +1,16 @@
+# -*- coding: utf-8 -*-
 import time
 import warnings
+
+import numpy as np
+import pandas as pd
 
 from sktime.distances import distance_factory
 from sktime.distances.tests._utils import create_test_distance_numpy
 
-import pandas as pd
-
 warnings.filterwarnings(
-    'ignore')  # Hide warnings that can generate and clutter notebook
+    "ignore"
+)  # Hide warnings that can generate and clutter notebook
 
 
 def timing_experiment(x, y, distance_callable, distance_params=None, average=1):
@@ -32,19 +35,22 @@ def timing_experiment(x, y, distance_callable, distance_params=None, average=1):
         curr_dist = distance_callable(x, y, **distance_params)
         total_time += time.time() - start
 
+    test = np.sqrt(curr_dist)
     return total_time / average
 
 
 def univariate_experiment(distance_metrics, start=1000, end=10000, increment=1000):
-    timings = {
-        'num_timepoints': []
-    }
+    timings = {"num_timepoints": []}
+    x_distances = []
+    y_distances = []
     for i in range(start, end + increment, increment):
-        timings['num_timepoints'].append(i)
+        timings["num_timepoints"].append(i)
         distance_m_d = create_test_distance_numpy(2, 1, i)
 
         x = distance_m_d[0]
         y = distance_m_d[1]
+        x_distances.append(x)
+        y_distances.append(y)
         for dist_callable, name in distance_metrics:
             numba_callable = dist_callable(x, y)
             curr_timing = timing_experiment(x, y, numba_callable)
@@ -53,7 +59,17 @@ def univariate_experiment(distance_metrics, start=1000, end=10000, increment=100
             timings[name].append(curr_timing)
 
     uni_df = pd.DataFrame(timings)
-    uni_df = uni_df.set_index('num_timepoints')
+    uni_df = uni_df.set_index("num_timepoints")
+
+    import csv
+
+    with open("output_x.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(x_distances)
+
+    with open("output_y.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(y_distances)
     return uni_df
 
 
@@ -68,34 +84,35 @@ def multivariate_experiment(start=100, end=500, increment=100):
 
         x = distance_m_d[0]
         y = distance_m_d[1]
-        numba_sktime = distance_factory(x, y, metric='dtw')
+        numba_sktime = distance_factory(x, y, metric="dtw")
 
         sktime_time = timing_experiment(x, y, numba_sktime)
 
         sktime_timing.append(sktime_time)
 
-    multi_df = pd.DataFrame({
-        'time points': col_headers,
-        'sktime': sktime_timing,
-    })
+    multi_df = pd.DataFrame(
+        {
+            "time points": col_headers,
+            "sktime": sktime_timing,
+        }
+    )
     return multi_df
 
 
 from sktime.distances._msm import _MsmDistance
 from sktime.distances.tests.old_msm import _MsmDistance as OldMsm
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     metrics = [
-        (_MsmDistance().distance_factory, 'msm new'),
-        (OldMsm().distance_factory, 'msm old')
+        (_MsmDistance().distance_factory, "msm new"),
+        (OldMsm().distance_factory, "msm old"),
     ]
     uni_df = univariate_experiment(
-        distance_metrics=metrics,
-        start=100,
-        end=100,
-        increment=100
+        distance_metrics=metrics, start=100, end=100, increment=100
     )
+    uni_df.to_csv("result_df.csv")
 
-    joe = ''
+    joe = ""
     # uni_df.to_csv('./uni_dist_results', index=False)
     # multi_df = multivariate_experiment(
     #     start=100,
