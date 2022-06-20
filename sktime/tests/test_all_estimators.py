@@ -776,8 +776,37 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """Check that set_params works correctly."""
         estimator = estimator_instance
         params = estimator.get_params()
-        assert estimator.set_params(**params) is estimator
-        _check_set_params(estimator.__class__.__name__, estimator)
+
+        msg = f"set_params of {type(estimator).__name__} does not return self"
+        assert estimator.set_params(**params) is estimator, msg
+
+        is_equal, equals_msg = deep_equals(estimator.get_params(), params)
+        msg = (
+            f"get_params result of {type(estimator).__name__} does not match "
+            f"what was passed to set_params. Reason for discrepancy: {equals_msg}"
+        )
+        assert is_equal, msg
+
+    def test_set_params_sklearn(self, estimator_class):
+        """Check that set_params works correctly, mirrors sklearn check_set_params.
+
+        Instead of the "fuzz values" in sklearn's check_set_params,
+        we use the other test parameter settings (which are assumed valid).
+        This guarantees settings which play along with the __init__ content.
+        """
+        estimator = estimator_class.create_test_instance()
+        test_params = estimator_class.get_test_params()
+
+        for params in test_params:
+            msg = f"set_params of {estimator_class.__name__} does not return self"
+            assert estimator.set_params(**params) is estimator, msg
+
+            is_equal, equals_msg = deep_equals(estimator.get_params(deep=False), params)
+            msg = (
+                f"get_params result of {estimator_class.__name__} does not match "
+                f"what was passed to set_params. Reason for discrepancy: {equals_msg}"
+            )
+            assert is_equal, msg
 
     def test_clone(self, estimator_instance):
         """Check we can call clone from scikit-learn."""
