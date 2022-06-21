@@ -1220,7 +1220,8 @@ class BaseForecaster(BaseEstimator):
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y, mode="contains")
+                if not self.get_tag("ignores-exogeneous-X"):
+                    check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
