@@ -755,7 +755,7 @@ class BaseTransformer(BaseEstimator):
                 #     "input types natively: Panel X and non-None y."
                 # )
                 iterate_y = _most_complex_scitype(y_inner_scitype)
-                y_inner = VectorizedDF(X=X, iterate_as=iterate_y, is_scitype=X_scitype)
+                y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=X_scitype)
             else:
                 y_inner = None
 
