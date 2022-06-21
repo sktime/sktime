@@ -110,9 +110,7 @@ def test_from_multi_index_to_3d_numpy(n_instances, n_columns, n_timepoints):
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
 
-    array = from_multi_index_to_3d_numpy(
-        mi_df, instance_index="case_id", time_index="reading_id"
-    )
+    array = from_multi_index_to_3d_numpy(mi_df)
 
     assert isinstance(array, np.ndarray)
     assert array.shape == (n_instances, n_columns, n_timepoints)

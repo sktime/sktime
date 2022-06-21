@@ -28,7 +28,7 @@ def _score_forecasters(forecasters, cv, y):
     score = None
     for name, forecaster in forecasters:
         results = evaluate(forecaster, cv, y)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
@@ -126,7 +126,7 @@ def test_multiplex_or_dunder():
     assert isinstance(multiplex_same_name_three_test, MultiplexForecaster)
     assert len(multiplex_same_name_three_test.forecasters) == 3
     forecaster_param_names = multiplex_same_name_three_test._get_estimator_names(
-        multiplex_same_name_three_test.forecasters_
+        multiplex_same_name_three_test._forecasters
     )
     assert len(set(forecaster_param_names)) == 3
 
