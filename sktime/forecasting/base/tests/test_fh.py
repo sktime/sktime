@@ -31,6 +31,7 @@ from sktime.utils.datetime import (
     _get_freq,
     _get_intervals_count_and_unit,
     _shift,
+    infer_freq,
 )
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
@@ -73,14 +74,13 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # choose cutoff point
     cutoff = y_train.index[-1]
 
-    try:
-        freq = pd.infer_freq(y.index, warn=False)
-    except (TypeError, ValueError):
-        freq = "D"
-
     # generate fh
     fh = _make_fh(
-        cutoff=cutoff, steps=steps, fh_type=fh_type, is_relative=is_relative, freq=freq
+        cutoff=cutoff,
+        steps=steps,
+        fh_type=fh_type,
+        is_relative=is_relative,
+        freq=infer_freq(y.index),
     )
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
@@ -445,8 +445,7 @@ def test_exponential_smoothing():
     y.index = time_range.to_period()
 
     forecaster = ExponentialSmoothing(trend="add", seasonal="multiplicative", sp=12)
-    fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], freq=y.index.freqstr)
-    forecaster.fit(y, fh=fh)
+    forecaster.fit(y, fh=[1, 2, 3, 4, 5, 6])
     y_pred = forecaster.predict()
     pd.testing.assert_index_equal(
         y_pred.index, pd.period_range("2019-01-02 00:00", periods=6, freq=freq)
@@ -459,8 +458,7 @@ def test_auto_arima():
 
     https://github.com/alan-turing-institute/sktime/issues/805#issuecomment-891848228.
     """
-    freqstr = "1D"
-    time_index = pd.date_range("January 1, 2021", periods=8, freq=freqstr)
+    time_index = pd.date_range("January 1, 2021", periods=8, freq="1D")
     X = pd.DataFrame(
         np.random.randint(0, 4, 24).reshape(8, 3),
         columns=["First", "Second", "Third"],
@@ -468,18 +466,17 @@ def test_auto_arima():
     )
     y = pd.Series([1, 3, 2, 4, 5, 2, 3, 1], index=time_index)
 
-    fh_ = ForecastingHorizon(X.index[5:], is_relative=False, freq=freqstr)
+    fh_ = ForecastingHorizon(X.index[5:], is_relative=False)
 
     a_clf = AutoARIMA(start_p=2, start_q=2, max_p=5, max_q=5)
     clf = a_clf.fit(X=X[:5], y=y[:5])
     y_pred_sk = clf.predict(fh=fh_, X=X[5:])
 
     pd.testing.assert_index_equal(
-        y_pred_sk.index, pd.date_range("January 6, 2021", periods=3, freq=freqstr)
+        y_pred_sk.index, pd.date_range("January 6, 2021", periods=3, freq="1D")
     )
 
-    freqstr = "2D"
-    time_index = pd.date_range("January 1, 2021", periods=8, freq=freqstr)
+    time_index = pd.date_range("January 1, 2021", periods=8, freq="2D")
     X = pd.DataFrame(
         np.random.randint(0, 4, 24).reshape(8, 3),
         columns=["First", "Second", "Third"],
@@ -487,12 +484,12 @@ def test_auto_arima():
     )
     y = pd.Series([1, 3, 2, 4, 5, 2, 3, 1], index=time_index)
 
-    fh = ForecastingHorizon(X.index[5:], is_relative=False, freq=freqstr)
+    fh = ForecastingHorizon(X.index[5:], is_relative=False)
 
     a_clf = AutoARIMA(start_p=2, start_q=2, max_p=5, max_q=5)
     clf = a_clf.fit(X=X[:5], y=y[:5])
     y_pred_sk = clf.predict(fh=fh, X=X[5:])
 
     pd.testing.assert_index_equal(
-        y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq=freqstr)
+        y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq="2D")
     )

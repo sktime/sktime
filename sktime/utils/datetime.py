@@ -5,7 +5,7 @@
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -83,6 +83,16 @@ def _get_freq(x):
             return x.freqstr
     else:
         return None
+
+
+def infer_freq(index: pd.Index) -> Optional[str]:
+    if hasattr(index, "freqstr"):
+        return index.freqstr
+    else:
+        try:
+            return pd.infer_freq(index, warn=False)
+        except (TypeError, ValueError):
+            return None
 
 
 def _shift(x, by=1):

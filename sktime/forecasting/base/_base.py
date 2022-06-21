@@ -54,7 +54,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.datetime import _shift
+from sktime.utils.datetime import _shift, infer_freq
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -193,15 +193,8 @@ class BaseForecaster(BaseEstimator):
 
     @staticmethod
     def _update_fh_freq(fh: ForecastingHorizon, index: pd.Index) -> ForecastingHorizon:
-        if hasattr(index, "freqstr"):
-            freq = index.freqstr
-        else:
-            try:
-                freq = pd.infer_freq(index, warn=False)
-            except (TypeError, ValueError):
-                freq = None
         if hasattr(fh, "freq") and fh.freq is None:
-            fh.freq = freq
+            fh.freq = infer_freq(index)
         return fh
 
     def fit(self, y, X=None, fh=None):
