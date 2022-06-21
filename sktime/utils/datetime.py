@@ -86,6 +86,19 @@ def _get_freq(x):
 
 
 def infer_freq(index: pd.Index) -> Optional[str]:
+    """Infer frequency string from the pandas index object.
+
+    Parameters
+    ----------
+    index : pd.Index
+        Pandas index object
+
+    Returns
+    -------
+    str
+        Frequency string inferred from the pandas index,
+        or `None`, if inference fails.
+    """
     if hasattr(index, "freqstr"):
         return index.freqstr
     else:
