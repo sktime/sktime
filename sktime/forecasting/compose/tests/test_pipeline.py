@@ -150,7 +150,7 @@ def test_nested_pipeline_with_index_creation_y_before_X():
     # some basic expected output format checks
     assert isinstance(y_pred, pd.DataFrame)
     assert isinstance(y_pred.index, pd.MultiIndex)
-    assert len() == 9
+    assert len(y_pred) == 9
 
 
 def test_nested_pipeline_with_index_creation_X_before_y():
@@ -175,4 +175,4 @@ def test_nested_pipeline_with_index_creation_X_before_y():
     # some basic expected output format checks
     assert isinstance(y_pred, pd.DataFrame)
     assert isinstance(y_pred.index, pd.MultiIndex)
-    assert len() == 9
+    assert len(y_pred) == 9
