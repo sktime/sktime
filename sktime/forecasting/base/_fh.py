@@ -398,7 +398,7 @@ class ForecastingHorizon:
         # to convert the horizon to the absolute representation below
         if isinstance(start, pd.Timestamp):
             start = _coerce_to_period(start, freq=freq)
-        _check_start(start, absolute)
+        _check_cutoff(start, absolute)
 
         # Note: We should here also coerce to periods for more reliable arithmetic
         # operations as in `to_relative` but currently doesn't work with
@@ -649,7 +649,7 @@ def _to_absolute(
 def _check_cutoff(cutoff, index):
     """Check if the cutoff is valid based on time index of forecasting horizon.
 
-    Validates that the cutoff contains necessary information and is
+    Validates that the cutoff is
     compatible with the time index of the forecasting horizon.
 
     Parameters
@@ -670,27 +670,6 @@ def _check_cutoff(cutoff, index):
 
     if isinstance(index, pd.DatetimeIndex):
         assert isinstance(cutoff, pd.Timestamp)
-
-        if not hasattr(cutoff, "freqstr") or cutoff.freqstr is None:
-            raise AttributeError(
-                "The `freq` attribute of the time index is required, "
-                "but found: None. Please specify the `freq` argument "
-                "when setting the time index."
-            )
-
-        # For indices of type DatetimeIndex with irregular steps, frequency will be
-        # None
-        if index.freqstr is not None:
-            assert cutoff.freqstr == index.freqstr
-
-
-def _check_start(start, index):
-    if isinstance(index, pd.PeriodIndex):
-        assert isinstance(start, pd.Period)
-        assert index.freqstr == start.freqstr
-
-    if isinstance(index, pd.DatetimeIndex):
-        assert isinstance(start, pd.Timestamp)
 
 
 def _coerce_to_period(x, freq=None):
