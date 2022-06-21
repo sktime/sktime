@@ -466,7 +466,6 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # default alpha
         if alpha is None:
@@ -479,6 +478,7 @@ class BaseForecaster(BaseEstimator):
 
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
+            fh = self._update_fh_freq(fh=fh, index=self._y.index)
             quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
         else:
             # otherwise we call the vectorized version of predict_quantiles
@@ -548,7 +548,6 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
@@ -558,6 +557,7 @@ class BaseForecaster(BaseEstimator):
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
+            fh = self._update_fh_freq(fh=fh, index=self._y.index)
             pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
         else:
             # otherwise we call the vectorized version of predict_interval
@@ -624,13 +624,13 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
-        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # check and convert X
         X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
+            fh = self._update_fh_freq(fh=fh, index=self._y.index)
             pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
         else:
             # otherwise we call the vectorized version of predict_interval
