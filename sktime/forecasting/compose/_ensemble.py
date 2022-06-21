@@ -18,7 +18,6 @@ from sklearn.pipeline import Pipeline
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.utils.datetime import infer_freq
 from sktime.utils.stats import (
     _weighted_geometric_mean,
     _weighted_max,
@@ -160,9 +159,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_train, X_test = None, None
 
         # fit ensemble models
-        fh_test = ForecastingHorizon(
-            y_test.index, is_relative=False, freq=infer_freq(y.index)
-        )
+        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
