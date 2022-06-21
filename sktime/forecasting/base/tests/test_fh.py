@@ -75,13 +75,8 @@ def test_fh(index_type, fh_type, is_relative, steps):
     cutoff = y_train.index[-1]
 
     # generate fh
-    fh = _make_fh(
-        cutoff=cutoff,
-        steps=steps,
-        fh_type=fh_type,
-        is_relative=is_relative,
-        freq=infer_freq(y.index),
-    )
+    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    fh.freq = infer_freq(y.index)
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
     else:
