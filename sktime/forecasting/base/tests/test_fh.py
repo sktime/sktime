@@ -414,8 +414,7 @@ def test_auto_ets():
     y.index = y.index.to_period(freq=freq)
     forecaster = AutoETS(sp=12, auto=True, n_jobs=-1)
     forecaster.fit(y)
-    fh = ForecastingHorizon([1, 2, 3], freq=y.index.freqstr)
-    y_pred = forecaster.predict(fh=fh)
+    y_pred = forecaster.predict(fh=[1, 2, 3])
     pd.testing.assert_index_equal(
         y_pred.index,
         pd.date_range("2021-09-19", periods=53, freq=freq)[-3:].to_period(freq=freq),
