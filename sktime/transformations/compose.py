@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-def coerce_to_sktime(other):
+def _coerce_to_sktime(other):
     """Check and format inputs to dunders for compose."""
     from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
@@ -215,7 +215,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         """
         from sktime.classification.compose import SklearnClassifierPipeline
 
-        other = coerce_to_sktime(other)
+        other = _coerce_to_sktime(other)
 
         # if sklearn classifier, use sklearn classifier pipeline
         if is_sklearn_classifier(other):
@@ -244,7 +244,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
-        other = coerce_to_sktime(other)
+        other = _coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -1019,7 +1019,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
         ------
         ValueError if other is not of type MultiplexTransformer or BaseTransformer.
         """
-        other = coerce_to_sktime(other)
+        other = _coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
@@ -1044,7 +1044,7 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
             (first). not nested, contains only non-MultiplexTransformer `sktime`
             transformers
         """
-        other = coerce_to_sktime(other)
+        other = _coerce_to_sktime(other)
         return self._dunder_concat(
             other=other,
             base_class=BaseTransformer,
