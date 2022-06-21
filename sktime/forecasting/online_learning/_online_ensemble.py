@@ -8,7 +8,6 @@ __author__ = ["magittan, mloning"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 
 
@@ -74,7 +73,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        fh = ForecastingHorizon(np.arange(len(y)) + 1, freq=y.index.freqstr)
+        fh = np.arange(len(y)) + 1
         estimator_predictions = np.column_stack(self._predict_forecasters(fh, X))
         y = np.array(y)
 

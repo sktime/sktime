@@ -34,13 +34,11 @@ class TrendForecaster(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import TrendForecaster
-    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = TrendForecaster()
     >>> forecaster.fit(y)
     TrendForecaster(...)
-    >>> fh = ForecastingHorizon([1,2,3], freq=y.index.freqstr)
-    >>> y_pred = forecaster.predict(fh=fh)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
@@ -126,13 +124,11 @@ class PolynomialTrendForecaster(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
-    >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = PolynomialTrendForecaster(degree=1)
     >>> forecaster.fit(y)
     PolynomialTrendForecaster(...)
-    >>> fh = ForecastingHorizon([1,2,3], freq=y.index.freqstr)
-    >>> y_pred = forecaster.predict(fh=fh)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {

@@ -525,11 +525,7 @@ def test_reductions_airline_data(forecaster, expected):
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
-    try:
-        freq = pd.infer_freq(y.index, warn=False)
-    except (TypeError, ValueError):
-        freq = "D"
-    fh = ForecastingHorizon(y_test.index, is_relative=False, freq=freq)
+    fh = ForecastingHorizon(y_test.index, is_relative=False, freq=y.index.freqstr)
 
     actual = forecaster.fit(y_train, fh=fh).predict(fh)
 
@@ -543,11 +539,7 @@ def test_dirrec_against_recursive_accumulated_error():
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y, test_size=24)
-    try:
-        freq = pd.infer_freq(y.index, warn=False)
-    except (TypeError, ValueError):
-        freq = "D"
-    fh = ForecastingHorizon(y_test.index, is_relative=False, freq=freq)
+    fh = ForecastingHorizon(y_test.index, is_relative=False, freq=y.index.freqstr)
 
     estimator = LinearRegression()
     recursive = make_reduction(

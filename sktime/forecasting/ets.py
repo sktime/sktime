@@ -164,8 +164,7 @@ class AutoETS(_StatsModelsAdapter):
     >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)
     >>> forecaster.fit(y)
     AutoETS(...)
-    >>> fh = ForeCastingHorizon([1,2,3], freq=y.index.freqstr)
-    >>> y_pred = forecaster.predict(fh=fh)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
