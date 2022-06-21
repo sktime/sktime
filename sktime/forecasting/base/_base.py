@@ -244,15 +244,15 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        # check forecasting horizon and coerce to ForecastingHorizon object
-        fh = self._check_fh(fh)
-
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        # check forecasting horizon and coerce to ForecastingHorizon object
+        fh = self._check_fh(fh=fh, freq=y_inner.index.freqstr)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -308,7 +308,7 @@ class BaseForecaster(BaseEstimator):
         # handle inputs
 
         self.check_is_fitted()
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh=fh, freq=self._y.index.freqstr)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -456,7 +456,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh=fh, freq=self._y.index.freqstr)
 
         # default alpha
         if alpha is None:
@@ -537,7 +537,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh)
+        fh = self._check_fh(fh=fh, freq=self._y.index.freqstr)
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
@@ -1398,7 +1398,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh):
+    def _check_fh(self, fh, freq: str = None):
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1466,7 +1466,7 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh)
+            fh = check_fh(fh=fh, freq=freq)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)

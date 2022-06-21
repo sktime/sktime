@@ -262,7 +262,7 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative=False):
+def check_fh(fh, enforce_relative: bool = False, freq: str = None):
     """Validate forecasting horizon.
 
     Parameters
@@ -271,6 +271,8 @@ def check_fh(fh, enforce_relative=False):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
+    freq : str, optional (default=None)
+        Frequency
 
     Returns
     -------
@@ -281,7 +283,7 @@ def check_fh(fh, enforce_relative=False):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None)
+        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
