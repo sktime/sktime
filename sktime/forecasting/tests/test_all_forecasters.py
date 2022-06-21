@@ -221,17 +221,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
         cutoff = y_train.index[-1]
-        try:
-            freq = pd.infer_freq(y_train.index, warn=False)
-        except (TypeError, ValueError):
-            freq = "D"
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=fh_int,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=freq,
-        )
+        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
