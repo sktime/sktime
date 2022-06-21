@@ -6,7 +6,7 @@ Code based partially on NaiveVariance by ilyasmoutawwakil.
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["ConformalIntervals"]
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "bethrice44"]
 
 from warnings import warn
 
@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
+from sktime.datatypes import convert, convert_to
+from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 
 
@@ -51,6 +53,11 @@ class ConformalIntervals(BaseForecaster):
             Caveat: this does not give frequentist but conformal predictive intervals
         "conformal": as in Stankeviciute et al, but with H=1,
             i.e., no Bonferroni correction under number of indices in the horizon
+    initial_window : int, optional, default=1
+        number of minimum initial indices to use for fitting when computing residuals
+    sample_frac : float, optional, default=None
+        value in range (0,1) corresponding to fraction of y index to calculate
+        residuals matrix values for (for speeding up calculation)
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
 
@@ -88,7 +95,14 @@ class ConformalIntervals(BaseForecaster):
         "conformal_bonferroni",
     ]
 
-    def __init__(self, forecaster, method="empirical", verbose=False):
+    def __init__(
+        self,
+        forecaster,
+        method="empirical",
+        initial_window=1,
+        sample_frac=None,
+        verbose=False,
+    ):
 
         if not isinstance(method, str):
             raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
@@ -101,6 +115,9 @@ class ConformalIntervals(BaseForecaster):
         self.forecaster = forecaster
         self.method = method
         self.verbose = verbose
+        self.initial_window = initial_window
+        self.sample_frac = sample_frac
+
         super(ConformalIntervals, self).__init__()
 
         tags_to_clone = [
@@ -115,8 +132,19 @@ class ConformalIntervals(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
+        self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
+
+        if self.fh_early_:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=y,
+                X=X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+                sample_frac=self.sample_frac,
+            )
+
         return self
 
     def _predict(self, fh, X=None):
@@ -164,32 +192,19 @@ class ConformalIntervals(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        y_index = self._y.index
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
 
-        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
-        for id in y_index:
-            forecaster = clone(self.forecaster)
-            subset = self._y[:id]  # subset on which we fit
-            try:
-                forecaster.fit(subset)
-            except ValueError:
-                if self.verbose:
-                    warn(
-                        f"Couldn't fit the model on "
-                        f"time series window length {len(subset)}.\n"
-                    )
-                continue
-
-            y_true = self._y[id:]  # subset on which we predict
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
-            except IndexError:
-                warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(subset)}.\n"
-                )
+        if self.fh_early_:
+            residuals_matrix = self.residuals_matrix_
+        else:
+            residuals_matrix = self._compute_sliding_residuals(
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+                sample_frac=self.sample_frac,
+            )
 
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
@@ -217,6 +232,8 @@ class ConformalIntervals(BaseForecaster):
             pred_int.loc[fh_ind] = pred_int_row
 
         y_pred = self.predict(fh=fh, X=X)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
+        y_pred.index = fh_absolute
 
         for col in cols:
             if self.method in ABS_RESIDUAL_BASED:
@@ -226,6 +243,66 @@ class ConformalIntervals(BaseForecaster):
             pred_int[col] = y_pred + sign * pred_int[col]
 
         return pred_int.convert_dtypes()
+
+    def _compute_sliding_residuals(self, y, X, forecaster, initial_window, sample_frac):
+        """Compute sliding residuals used in uncertainty estimates.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            sktime compatible time series to use in computing residuals matrix
+        X : pd.DataFrame
+            sktime compatible exogeneous time series to use in forecasts
+        forecaster : sktime compatible forecaster
+            forecaster to use in computing the sliding residuals
+        initial_window : int
+            minimum length of initial window to use in fitting
+        sample_frac : float
+            for speeding up computing of residuals matrix.
+            sample value in range (0, 1) to obtain a fraction of y indices to
+            compute residuals matrix for
+        Returns
+        -------
+        residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
+            [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
+            using a clone of the forecaster passed through the forecaster arg.
+            if sample_frac is passed this will have NaN values for 1 - sample_frac
+            fraction of the matrix
+        """
+        y = convert_to(y, "pd.Series")
+
+        y_index = y.index[initial_window:]
+
+        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+
+        if sample_frac:
+            y_index = y_index.to_series().sample(frac=sample_frac)
+
+        for id in y_index:
+            forecaster = clone(forecaster)
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
+
+            X_train = get_slice(X, start=None, end=id)
+            X_test = get_slice(X, start=id, end=None)
+
+            try:
+                forecaster.fit(y_train, X=X_train, fh=y_test.index)
+            except ValueError:
+                warn(
+                    f"Couldn't fit the model on "
+                    f"time series window length {len(y_train)}.\n"
+                )
+                continue
+            try:
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X_test)
+            except IndexError:
+                warn(
+                    f"Couldn't predict after fitting on time series of length \
+                     {len(y_train)}.\n"
+                )
+
+        return residuals_matrix
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
