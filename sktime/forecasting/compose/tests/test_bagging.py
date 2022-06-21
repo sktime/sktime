@@ -21,7 +21,7 @@ def test_bagging_forecaster_transformer_type_error(transformer):
     """Test that the right exception is raised for invalid transformer."""
     with pytest.raises(TypeError) as ex:
         f = BaggingForecaster(
-            bootstrapping_transformer=transformer, forecaster=NaiveForecaster(sp=12)
+            bootstrap_transformer=transformer, forecaster=NaiveForecaster(sp=12)
         )
         f.fit(y)
         msg = (
@@ -36,7 +36,7 @@ def test_bagging_forecaster_forecaster_type_error(forecaster):
     """Test that the right exception is raised for invalid forecaster."""
     with pytest.raises(TypeError) as ex:
         f = BaggingForecaster(
-            bootstrapping_transformer=STLBootstrapTransformer(sp=12),
+            bootstrap_transformer=STLBootstrapTransformer(sp=12),
             forecaster=forecaster,
         )
         f.fit(y)

@@ -22,33 +22,34 @@ from sktime.utils.estimators import MockForecaster
 
 
 class BaggingForecaster(BaseForecaster):
-    """Bagged "Bootstrap Aggregating" Forecasts.
+    """Forecast a time series by aggregating forecasts from its bootstraps.
 
-    Bagged Forecasts are obtained by forecasting bootstrapped time series and then
-    aggregating the resulting forecasts. For the point forecast, the different forecasts
-    are aggregated using the mean function [1]. Prediction intervals and quantiles are
-    calculated for each time point in the forecasting horizon by calculating the sampled
-    forecast quantiles.
+    Bagged "Bootstrap Aggregating" Forecasts are obtained by forecasting bootstrapped
+    time series and then aggregating the resulting forecasts. For the point forecast,
+    the different forecasts are aggregated using the mean function [1]. Prediction
+    intervals and quantiles are calculated for each time point in the forecasting
+    horizon by calculating the sampled forecast quantiles.
 
     Bergmeir et al. (2016) [2] show that, on average, bagging ETS forecasts gives better
     forecasts than just applying ETS directly.
 
     Parameters
     ----------
-    bootstrapping_transformer : BaseTransformer
-        Bootrstrapping Transformer that takes a series as input and returns a panel
+    bootstrap_transformer : BaseTransformer
+        Bootstrapping Transformer that takes a series as input and returns a panel
         of bootstrapped time series
+        e.g. sktime.transformations.bootstrap.STLBootstrapTransformer
     forecaster : BaseForecaster
         A valid sktime Forecaster
 
     See Also
     --------
     sktime.transformations.bootstrap.MovingBlockBootstrapTransformer :
-        Transofrmer that applies the Moving Block Bootstrapping method to create
+        Transformer that applies the Moving Block Bootstrapping method to create
         a panel of synthetic time series.
 
     sktime.transformations.bootstrap.STLBootstrapTransformer :
-        Transofrmer that utilises BoxCox, STL and Moving Block Bootstrapping to create
+        Transformer that utilises BoxCox, STL and Moving Block Bootstrapping to create
         a panel of similar time series.
 
     References
