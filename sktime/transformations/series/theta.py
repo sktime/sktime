@@ -101,7 +101,7 @@ class ThetaLinesTransformer(BaseTransformer):
 
         forecaster = PolynomialTrendForecaster()
         forecaster.fit(y=X)
-        fh = ForecastingHorizon(X.index, is_relative=False, freq=X.index.freqstr)
+        fh = ForecastingHorizon(X.index, is_relative=False)
         trend = forecaster.predict(fh=fh)
 
         theta_lines = np.zeros((X.shape[0], len(theta)))

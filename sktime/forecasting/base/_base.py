@@ -315,8 +315,7 @@ class BaseForecaster(BaseEstimator):
         # handle inputs
 
         self.check_is_fitted()
-
-        fh = self._check_fh(fh=fh)
+        fh = self._check_fh(fh)
         fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # input check and conversion for X
@@ -466,7 +465,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh=fh)
+        fh = self._check_fh(fh)
         fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # default alpha
@@ -548,7 +547,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh=fh)
+        fh = self._check_fh(fh)
         fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # check alpha and coerce to list
@@ -1478,7 +1477,7 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh=fh)
+            fh = check_fh(fh)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)

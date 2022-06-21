@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.datetime import infer_freq
 from sktime.utils.validation.forecasting import (
     check_cv,
     check_fh,
@@ -95,13 +96,10 @@ def evaluate(
         # split data
         y_train, y_test, X_train, X_test = _split(y, X, train, test, cv.fh)
 
-        try:
-            freq = pd.infer_freq(y.index, warn=False)
-        except (TypeError, ValueError):
-            freq = "D"
-
         # create forecasting horizon
-        fh = ForecastingHorizon(y_test.index, is_relative=False, freq=freq)
+        fh = ForecastingHorizon(
+            y_test.index, is_relative=False, freq=infer_freq(y.index)
+        )
 
         # fit/update
         start_fit = time.perf_counter()

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     TEST_OOS_FHS,
@@ -237,7 +238,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # dtype: float64
 
     # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
-    fh = test_data.index
+    fh = ForecastingHorizon(test_data.index, is_relative=False)
     model = NaiveForecaster(strategy=strategy, sp=sp)
     model.fit(train_data)
     forecast_data = model.predict(fh)
