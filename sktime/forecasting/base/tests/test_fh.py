@@ -76,6 +76,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
     # generate fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    # update frequency of the forecasting horizon
     fh.freq = infer_freq(y.index)
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
@@ -399,6 +400,38 @@ def test_estimator_fh(freqstr):
     pred = forecaster.predict(fh)
     expected_fh = fh.to_absolute(train.index[-1])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
+
+
+@pytest.mark.parametrize("freq", ["G", "W1"])
+def test_error_with_incorrect_string_frequency(freq: str):
+    """Test error with incorrect string frequency string."""
+    match = f"Invalid frequency: {freq}"
+    with pytest.raises(ValueError, match=match):
+        ForecastingHorizon([1, 2, 3], freq=freq)
+    fh = ForecastingHorizon([1, 2, 3])
+    with pytest.raises(ValueError, match=match):
+        fh.freq = freq
+
+
+@pytest.mark.parametrize("freq", [pd.offsets.Day(), pd.Timedelta("1 day")])
+def test_error_with_incorrect_non_string_frequency(freq: str):
+    """Test error with incorrect non-string frequency string."""
+    match = f"Frequency string is expected. Given: {type(freq)}"
+    with pytest.raises(ValueError, match=match):
+        ForecastingHorizon([1, 2, 3], freq=freq)
+    fh = ForecastingHorizon([1, 2, 3])
+    with pytest.raises(ValueError, match=match):
+        fh.freq = freq
+
+
+def test_frequency_setter():
+    """Test frequency setter."""
+    fh = ForecastingHorizon([1, 2, 3])
+    assert fh.freq is None
+    fh.freq = "M"
+    assert fh.freq == "M"
+    fh.freq = "D"
+    assert fh.freq == "D"
 
 
 # TODO: Replace this long running test with fast unit test

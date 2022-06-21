@@ -138,6 +138,45 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     return values.sort_values()
 
 
+def _check_freq(x: str = None) -> Optional[str]:
+    """Check frequency string.
+
+    Parameters
+    ----------
+    x : str, optional (default=None)
+        Frequency string or offset alias as in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+
+    Raises
+    ------
+    ValueError :
+        Raised if frequency string is not supported
+
+    Returns
+    -------
+    x : str
+        Validated frequency string or `None`
+    """
+    if x is not None:
+        url = (
+            "https://pandas.pydata.org/pandas-docs/stable/"
+            "user_guide/timeseries.html#offset-aliases"
+        )
+        if isinstance(x, str):
+            try:
+                pd.tseries.frequencies.to_offset(x)
+                return x
+            except ValueError as error:
+                raise ValueError(f"{error}. See permitted values in {url}.")
+        else:
+            raise ValueError(
+                f"Frequency string is expected. Given: {type(x)}. "
+                f"See permitted values in {url}"
+            )
+    else:
+        return None
+
+
 class ForecastingHorizon:
     """Forecasting horizon.
 
@@ -154,7 +193,7 @@ class ForecastingHorizon:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
     freq : str, optional (default=None)
-        Frequency
+        Frequency string
     """
 
     def __new__(
@@ -203,7 +242,7 @@ class ForecastingHorizon:
 
         self._values = values
         self._is_relative = is_relative
-        self._freq = freq
+        self._freq = _check_freq(freq)
 
     def _new(
         self,
@@ -222,7 +261,7 @@ class ForecastingHorizon:
             - If True, values are relative to end of training series.
             - If False, values are absolute.
         freq : str, optional (default=None)
-            Frequency
+            Frequency string
 
         Returns
         -------
@@ -249,7 +288,7 @@ class ForecastingHorizon:
 
     @property
     def freq(self) -> str:
-        """Frequency.
+        """Frequency string attribute.
 
         Returns
         -------
@@ -258,8 +297,15 @@ class ForecastingHorizon:
         return self._freq
 
     @freq.setter
-    def freq(self, x) -> None:
-        self._freq = x
+    def freq(self, x: str) -> None:
+        """Frequency setter.
+
+        Parameters
+        ----------
+        x : str
+            Frequency string
+        """
+        self._freq = _check_freq(x)
 
     def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
