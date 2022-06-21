@@ -12,7 +12,6 @@ import pytest
 
 from sktime.datatypes import check_is_mtype
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.forecasting.model_selection import (
     ExpandingWindowSplitter,
@@ -289,17 +288,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y.index[len(y) // 2]
-        try:
-            freq = pd.infer_freq(y.index, warn=False)
-        except (TypeError, ValueError):
-            freq = "D"
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=fh_int_oos,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=freq,
-        )
+        fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
@@ -328,18 +317,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = y_train.index[-1]
         steps = -np.arange(len(y_train))
-
-        try:
-            freq = pd.infer_freq(y.index, warn=False)
-        except (TypeError, ValueError):
-            freq = "D"
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=steps,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=freq,
-        )
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
@@ -394,16 +372,15 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 and no NotImplementedError is raised when asking predict for pred.int
         """
         y_train = _make_series(n_columns=n_columns)
-        fh = ForecastingHorizon(fh_int_oos, freq=pd.infer_freq(y_train.index))
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
 
-            pred_ints = estimator_instance.predict_interval(fh, coverage=alpha)
+            pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
             assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
-                estimator_instance.predict_interval(fh, coverage=alpha)
+                estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
 
     def _check_predict_quantiles(
         self, pred_quantiles: pd.DataFrame, y_train: pd.Series, fh, alpha
@@ -455,10 +432,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 and no NotImplementedError is raised when asking predict for pred.int
         """
         y_train = _make_series(n_columns=n_columns)
-        fh = ForecastingHorizon(fh_int_oos, freq=pd.infer_freq(y_train.index))
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         try:
-            quantiles = estimator_instance.predict_quantiles(fh=fh, alpha=alpha)
+            quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
             self._check_predict_quantiles(quantiles, y_train, fh_int_oos, alpha)
         except NotImplementedError:
             pass
@@ -511,8 +487,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Check score method."""
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y)
-        fh = ForecastingHorizon(fh_int_oos, freq=pd.infer_freq(y.index))
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.predict()
 
         fh_idx = check_fh(fh_int_oos).to_indexer()  # get zero based index
@@ -521,7 +496,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
 
         # compare expected score with actual score
-        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh)
+        actual = estimator_instance.score(y_test.iloc[fh_idx], fh=fh_int_oos)
         assert actual == expected
 
     @pytest.mark.parametrize(
@@ -532,9 +507,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check correct time index of update-predict."""
         y = _make_series(n_columns=n_columns)
-        fh = ForecastingHorizon(fh_int_oos, freq=pd.infer_freq(y.index))
         y_train, y_test = temporal_train_test_split(y)
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.update_predict_single(
             y_test, update_params=update_params
         )
@@ -555,12 +529,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     ):
         """Check predicted index in update_predict."""
         y = _make_series(n_columns=n_columns, all_positive=True, index_type="datetime")
-        fh = ForecastingHorizon(fh_int_oos, freq=pd.infer_freq(y.index))
         y_train, y_test = temporal_train_test_split(y)
         cv = ExpandingWindowSplitter(
-            fh=fh, initial_window=initial_window, step_length=step_length
+            fh=fh_int_oos,
+            initial_window=initial_window,
+            step_length=step_length,
         )
-        estimator_instance.fit(y_train, fh=fh)
+        estimator_instance.fit(y_train, fh=fh_int_oos)
         y_pred = estimator_instance.update_predict(
             y_test, cv=cv, update_params=update_params
         )
@@ -616,19 +591,18 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         f = estimator_instance
         y_train = _make_series(n_columns=n_columns)
 
-        fh = ForecastingHorizon(FH0, freq=pd.infer_freq(y.index))
-        f.fit(y_train, fh=fh)
-        np.testing.assert_array_equal(f.fh, fh)
+        f.fit(y_train, fh=FH0)
+        np.testing.assert_array_equal(f.fh, FH0)
         f.predict()
-        np.testing.assert_array_equal(f.fh, fh)
-        f.predict(fh)
-        np.testing.assert_array_equal(f.fh, fh)
+        np.testing.assert_array_equal(f.fh, FH0)
+        f.predict(FH0)
+        np.testing.assert_array_equal(f.fh, FH0)
 
         # if fh is not required in fit, test this again with fh passed late
         if not f.get_tag("requires-fh-in-fit"):
             f.fit(y_train)
-            f.predict(fh)
-            np.testing.assert_array_equal(f.fh, fh)
+            f.predict(FH0)
+            np.testing.assert_array_equal(f.fh, FH0)
 
     def test_fh_not_passed_error_handling(self, estimator_instance, n_columns):
         """Check that not passing fh in fit/predict raises correct error."""
