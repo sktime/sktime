@@ -1012,6 +1012,7 @@ class BaseForecaster(BaseEstimator):
             y_res has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
+        self.check_is_fitted()
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1020,9 +1021,8 @@ class BaseForecaster(BaseEstimator):
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = ForecastingHorizon(
-                y.index, is_relative=False, freq=infer_freq(y.index)
-            )
+            fh = ForecastingHorizon(y.index, is_relative=False)
+            fh = self._update_fh_freq(fh=fh, index=self._y.index)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self.cutoff)
             fh = self._check_fh(fh)
