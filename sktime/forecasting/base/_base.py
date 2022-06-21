@@ -191,6 +191,19 @@ class BaseForecaster(BaseEstimator):
         else:
             return NotImplemented
 
+    @staticmethod
+    def _update_fh_freq(fh: ForecastingHorizon, index: pd.Index) -> ForecastingHorizon:
+        if hasattr(index, "freqstr"):
+            freq = index.freqstr
+        else:
+            try:
+                freq = pd.infer_freq(index, warn=False)
+            except (TypeError, ValueError):
+                freq = None
+        if hasattr(fh, "freq") and fh.freq is None:
+            fh.freq = freq
+        return fh
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -252,7 +265,8 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
-        fh = self._check_fh(fh=fh, freq=y_inner.index.freqstr)
+        fh = self._check_fh(fh=fh)
+        fh = self._update_fh_freq(fh=fh, index=y_inner.index)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -308,7 +322,9 @@ class BaseForecaster(BaseEstimator):
         # handle inputs
 
         self.check_is_fitted()
-        fh = self._check_fh(fh=fh, freq=self._y.index.freqstr)
+
+        fh = self._check_fh(fh=fh)
+        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -383,10 +399,11 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
-        fh = self._check_fh(fh)
-
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        fh = self._check_fh(fh)
+        fh = self._update_fh_freq(fh=fh, index=y_inner)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
@@ -456,7 +473,8 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh=fh, freq=self._y.index.freqstr)
+        fh = self._check_fh(fh=fh)
+        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # default alpha
         if alpha is None:
@@ -537,7 +555,9 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh=fh, freq=self._y.index.freqstr)
+        fh = self._check_fh(fh=fh)
+        fh = self._update_fh_freq(fh=fh, index=self._y.index)
+
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
@@ -612,6 +632,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
+        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -682,6 +703,7 @@ class BaseForecaster(BaseEstimator):
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
+        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -942,6 +964,7 @@ class BaseForecaster(BaseEstimator):
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
+        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -1005,11 +1028,7 @@ class BaseForecaster(BaseEstimator):
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            try:
-                freq = pd.infer_freq(y.index, warn=False)
-            except (TypeError, ValueError):
-                freq = "D"
-            fh = ForecastingHorizon(y.index, is_relative=False, freq=freq)
+            fh = ForecastingHorizon(y.index, is_relative=False)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self.cutoff)
             fh = self._check_fh(fh)
@@ -1398,7 +1417,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh, freq: str = None):
+    def _check_fh(self, fh):
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1466,7 +1485,7 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh=fh, freq=freq)
+            fh = check_fh(fh=fh)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)

@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
     TEST_OOS_FHS,
@@ -237,13 +236,8 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # 2021-06-01 07:00:00    2.0  # (value of 6 hours earlier)
     # dtype: float64
 
-    try:
-        freqstr = pd.infer_freq(data.index, warn=False)
-    except (TypeError, ValueError):
-        freqstr = "D"
-
     # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
-    fh = ForecastingHorizon(test_data.index, is_relative=False, freq=freqstr)
+    fh = test_data.index
     model = NaiveForecaster(strategy=strategy, sp=sp)
     model.fit(train_data)
     forecast_data = model.predict(fh)

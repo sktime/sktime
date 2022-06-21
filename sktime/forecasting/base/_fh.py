@@ -257,6 +257,10 @@ class ForecastingHorizon:
         """
         return self._freq
 
+    @freq.setter
+    def freq(self, x) -> None:
+        self._freq = x
+
     def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
 
