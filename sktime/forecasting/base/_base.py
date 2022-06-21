@@ -259,7 +259,6 @@ class BaseForecaster(BaseEstimator):
 
         # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh=fh)
-        fh = self._update_fh_freq(fh=fh, index=y_inner.index)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -267,6 +266,7 @@ class BaseForecaster(BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
+            fh = self._update_fh_freq(fh=fh, index=y_inner.index)
             self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
@@ -316,13 +316,13 @@ class BaseForecaster(BaseEstimator):
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
-        fh = self._update_fh_freq(fh=fh, index=self._y.index)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict if no looping/vectorization needed
         if not self._is_vectorized:
+            fh = self._update_fh_freq(fh=fh, index=self._y.index)
             y_pred = self._predict(fh=fh, X=X_inner)
         else:
             # otherwise we call the vectorized version of predict
