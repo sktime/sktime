@@ -764,7 +764,7 @@ class BaseTransformer(BaseEstimator):
         #   then apply vectorization, loop method execution over series/panels
         elif case == "case 3: requires vectorization":
             iterate_X = _most_complex_scitype(X_inner_scitype)
-            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
+            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=X_scitype)
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
                 # raise ValueError(
@@ -776,7 +776,7 @@ class BaseTransformer(BaseEstimator):
                 #     "input types natively: Panel X and non-None y."
                 # )
                 iterate_y = _most_complex_scitype(y_inner_scitype)
-                y_inner = VectorizedDF(X=X, iterate_as=iterate_y, is_scitype=X_scitype)
+                y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=y_scitype)
             else:
                 y_inner = None
 
