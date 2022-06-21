@@ -14,7 +14,6 @@ from sktime.datasets import (
 )
 from sktime.registry import all_estimators
 
-
 est_tuples = all_estimators(estimator_types="classifier", return_names=True)
 est_names, ests = zip(*est_tuples)
 

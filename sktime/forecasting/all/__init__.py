@@ -62,7 +62,6 @@ from sktime.registry import all_estimators
 from sktime.transformations.series.detrend import Deseasonalizer, Detrender
 from sktime.utils.plotting import plot_series
 
-
 est_tuples = all_estimators(estimator_types="forecaster", return_names=True)
 est_names, ests = zip(*est_tuples)
 

@@ -8,7 +8,6 @@ import pandas as pd
 
 from sktime.registry import all_estimators
 
-
 est_tuples = all_estimators(estimator_types="transformer", return_names=True)
 est_names, ests = zip(*est_tuples)
 
