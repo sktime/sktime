@@ -250,15 +250,15 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
+        fh = self._check_fh(fh)
+
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
-
-        # check forecasting horizon and coerce to ForecastingHorizon object
-        fh = self._check_fh(fh=fh)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -391,10 +391,11 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
+        fh = self._check_fh(fh)
+
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        fh = self._check_fh(fh)
         fh = self._update_fh_freq(fh=fh, index=y_inner)
 
         # set internal X/y to the new X/y
@@ -548,7 +549,6 @@ class BaseForecaster(BaseEstimator):
 
         # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
