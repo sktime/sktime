@@ -677,12 +677,11 @@ class BaseTransformer(BaseEstimator):
 
         if y_inner_mtype != ["None"] and y is not None:
 
-            if X_scitype == "Series":
-                y_possible_scitypes = "Series"
-            elif X_scitype == "Panel":
-                y_possible_scitypes = ["Table", "Panel"]
-            elif X_scitype == "Hierarchical":
-                y_possible_scitypes = ["Table", "Panel", "Hierarchical"]
+            output_type = self.get_tag("scitype:transform-output")
+            if output_type == "Primitives":
+                y_possible_scitypes = "Table"
+            else:
+                y_possible_scitypes = ["Series", "Panel", "Hierarchical"]
 
             y_valid, _, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
