@@ -1020,7 +1020,9 @@ class BaseForecaster(BaseEstimator):
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = ForecastingHorizon(y.index, is_relative=False)
+            fh = ForecastingHorizon(
+                y.index, is_relative=False, freq=infer_freq(y.index)
+            )
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self.cutoff)
             fh = self._check_fh(fh)
