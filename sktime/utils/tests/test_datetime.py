@@ -64,16 +64,23 @@ def test_coerce_duration_to_int() -> None:
 
 def test_infer_freq() -> None:
     """Test frequency inference."""
-    y = pd.Series()
+    y = pd.Series(dtype=int)
     assert infer_freq(y) is None
-    y = pd.Series(index=pd.date_range(start="2021-01-01", periods=1))
+
+    index = pd.date_range(start="2021-01-01", periods=1)
+    y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) == "D"
-    y = pd.Series(index=pd.date_range(start="2021-01-01", periods=1, freq="M"))
+
+    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
+    y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) == "M"
+
     y = pd.DataFrame(index=pd.date_range(start="2021-01-01", periods=1))
     assert infer_freq(y) == "D"
+
     y = pd.DataFrame(index=pd.date_range(start="2021-01-01", periods=1, freq="M"))
     assert infer_freq(y) == "M"
+
     y = _bottom_hier_datagen(no_levels=2)
     y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
     assert infer_freq(y) == "M"
