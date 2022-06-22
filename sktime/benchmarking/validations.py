@@ -3,10 +3,14 @@
 import functools
 from typing import Callable, Dict, List, Union
 
+from sktime.benchmarking import validation_registry
+from sktime.datasets import load_airline
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.model_evaluation import evaluate
+from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.model_selection._split import BaseSplitter
 from sktime.performance_metrics.base import BaseMetric
+from sktime.performance_metrics.forecasting import MeanSquaredPercentageError
 
 
 def forecasting_validation(
@@ -40,4 +44,20 @@ def factory_forecasting_validation(
         dataset_loader,
         cv_splitter,
         scorers,
+    )
+
+
+for dataset_loader in [load_airline]:
+    validation_registry.register(
+        id=f"forecasting_[dataset={dataset_loader.__name__}]_ExpandingWindow-v1",
+        entry_point=factory_forecasting_validation,
+        kwargs={
+            "dataset_loader": dataset_loader,
+            "cv_splitter": ExpandingWindowSplitter(
+                initial_window=24,
+                step_length=12,
+                fh=12,
+            ),
+            "scorers": [MeanSquaredPercentageError()],
+        },
     )
