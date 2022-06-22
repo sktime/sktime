@@ -5,7 +5,7 @@
 
 __author__ = ["miraep8"]
 
-import pandas as pd
+import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 from sklearn.base import clone
@@ -32,7 +32,7 @@ def test_multiplex_transformer_alone():
     """
     y = load_shampoo_sales()
     # randomly make some of the values nans:
-    y.loc[y.sample(frac=0.1).index] = pd.np.nan
+    y.loc[y.sample(frac=0.1).index] = np.nan
     # Note - we select two transformers which are deterministic.
     transformer_tuples = [
         ("two", ExponentTransformer(2)),
@@ -62,7 +62,7 @@ def _find_best_transformer(forecaster, transformers, cv, y):
         test_transformer = clone(transformer)
         y_hat = test_transformer.fit_transform(y)
         results = evaluate(clone(forecaster), cv, y_hat)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
