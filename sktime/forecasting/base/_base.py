@@ -1187,7 +1187,7 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
-        if X is not None and not self.get_tag("ignores-exogeneous-X"):
+        if X is not None:
             X_valid, _, X_metadata = check_is_scitype(
                 X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
             )
@@ -1214,10 +1214,12 @@ class BaseForecaster(BaseEstimator):
             X_scitype = X_metadata["scitype"]
             requires_vectorization = X_scitype not in X_inner_scitype
         else:
-            # we can get here if X is not None, but ignored.
-            # in that case, we want to set to None in the inner methods
-            X = None
             # X_scitype is used below - set to None if X is None
+            X_scitype = None
+
+        # extra check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
             X_scitype = None
         # end checking X
 
