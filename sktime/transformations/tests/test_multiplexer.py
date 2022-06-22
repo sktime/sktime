@@ -62,7 +62,7 @@ def _find_best_transformer(forecaster, transformers, cv, y):
         test_transformer = clone(transformer)
         y_hat = test_transformer.fit_transform(y)
         results = evaluate(clone(forecaster), cv, y_hat)
-        results = results.mean()
+        results = results.mean(numeric_only=True)
         new_score = float(results[scoring_name])
         if not score or new_score < score:
             score = new_score
