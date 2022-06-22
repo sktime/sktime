@@ -8,8 +8,7 @@ __author__ = [
     "ciaran-g",
 ]
 
-# todo: include the reconciler transformers?
-# todo: top down historical proportions?
+# todo: top down historical proportions? -> new _get_g_matrix_prop(self)
 
 from warnings import warn
 
@@ -20,6 +19,7 @@ from numpy.linalg import inv
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.transformations.hierarchical.reconcile import (
+    Reconciler,
     _get_s_matrix,
     _parent_child_df,
 )
@@ -31,17 +31,27 @@ class ReconcilerForecaster(BaseForecaster):
     Reconciliation is applied to make the forecasts in a hierarchy of
     time-series sum together appropriately.
 
+    The base forecasts are first generated for each member separately in the
+    hierarchy using any forecaster. The base forecasts are then reonciled
+    so that they sum together appropriately. This reconciliation step can often
+    improve the skill of the forecasts in the hierarchy.
+
     Please refer to [1]_ for further information.
 
     Parameters
     ----------
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
-    method : {"mint_cov", "mint_shrink", "wls_var"}, default="mint_cov"
+    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str",
+                "bu", "td_fcst"}, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on
             "mint_cov" - sample covariance
             "mint_shrink" - covariance with shrinkage
+            "ols" - ordinary least squares
             "wls_var" - weighted least squares (variance)
+            "wls_str" - weighted least squares (structural)
+            "bu" - bottom-up
+            "td_fcst" - top down based on forecast proportions
 
     References
     ----------
@@ -73,9 +83,10 @@ class ReconcilerForecaster(BaseForecaster):
         "fit_is_empty": False,
     }
 
-    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"]
+    TRFORM_LIST = Reconciler().METHOD_LIST
+    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + TRFORM_LIST
 
-    def __init__(self, forecaster, method="mint_cov"):
+    def __init__(self, forecaster, method="mint_shrink"):
 
         self.forecaster = forecaster
         self.method = method
@@ -106,7 +117,7 @@ class ReconcilerForecaster(BaseForecaster):
         """
         self._check_method()
 
-        # # check the length of index if not hierarchical just return forecaster
+        # # check the length of index if not hierarchical just return self early
         if y.index.nlevels < 2:
             self.forecaster_ = self.forecaster.clone()
             self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -119,6 +130,11 @@ class ReconcilerForecaster(BaseForecaster):
         if X is not None:
             if _check_index_no_total(X):
                 X = self._add_totals(X)
+
+        if np.isin(self.method, self.TRFORM_LIST):
+            self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
+            self.forecaster_.fit(y=y, X=X, fh=fh)
+            return self
 
         # fit forecasters for each level
         self.forecaster_ = self.forecaster.clone()
@@ -134,8 +150,9 @@ class ReconcilerForecaster(BaseForecaster):
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
         )
-        self.residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.residuals_ = y - self.forecaster_.predict(fh=fh_resid, X=X)
 
+        # now define recon matrix
         if self.method == "mint_cov":
             self.g_matrix = self._get_g_matrix_mint(shrink=False)
         elif self.method == "mint_shrink":
@@ -171,6 +188,10 @@ class ReconcilerForecaster(BaseForecaster):
             )
             return base_fc
 
+        # if Forecaster() * Reconciler() then base_fc is already reconciled
+        if np.isin(self.method, self.TRFORM_LIST):
+            return base_fc
+
         base_fc = base_fc.groupby(level=-1)
 
         recon_fc = []
@@ -202,15 +223,16 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        if y.index.nlevels < 2:
-            self.forecaster_.update(y, X, update_params=update_params)
+        self.forecaster_.update(y, X, update_params=update_params)
+
+        if y.index.nlevels < 2 or np.isin(self.method, self.TRFORM_LIST):
             return self
 
         # bug in self.forecaster_.predict_residuals() for heir data
         fh_resid = ForecastingHorizon(
-            y.index.get_level_values(-1).unique(), is_relative=False
+            self._y.index.get_level_values(-1).unique(), is_relative=False
         )
-        self.residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.residuals_ = self._y - self.forecaster_.predict(fh=fh_resid, X=self._X)
 
         # could implement something specific here
         # for now just refit
@@ -254,18 +276,13 @@ class ReconcilerForecaster(BaseForecaster):
         .. [1] https://otexts.com/fpp3/hierarchical.html
         .. [2] https://doi.org/10.2202/1544-6115.1175
         """
-        if self.residuals.index.nlevels < 2:
+        if self.residuals_.index.nlevels < 2:
             return None
 
         # copy for further mods
-        resid = self.residuals.copy()
-        # mean scale
-        grp_range = np.arange(self.residuals.index.nlevels - 1).tolist()
-        resid = resid.groupby(level=grp_range).apply(lambda x: x - x.mean())
-        # cov matrix
+        resid = self.residuals_.copy()
         resid = resid.unstack().transpose()
-        nobs = len(resid)
-        cov_mat = resid.transpose().dot(resid) / (nobs - 1)
+        cov_mat = resid.cov()
 
         if shrink:
             # diag matrix of variances
@@ -273,29 +290,27 @@ class ReconcilerForecaster(BaseForecaster):
             np.fill_diagonal(var_d.values, np.diag(cov_mat))
 
             # get correltion from covariance above
-            cor_mat = (np.diag(cov_mat)) ** (-1 / 2)
-            scale_m = pd.DataFrame(
-                [cor_mat] * len(cor_mat), index=cov_mat.index, columns=cov_mat.columns
-            )
-            cor_mat = cov_mat * (scale_m) * (scale_m.transpose())
+            cor_mat = resid.corr()
+            nobs = len(resid)
 
-            # first scale the residuals
-            resid_ho = resid.apply(lambda x: (x / x.std()))
-            # scale for higher order cor
-            scale_ho = ((resid_ho).transpose().dot((resid_ho))) ** 2 * (1 / nobs)
-            resid_ho = resid_ho**2
+            # first standardize the residuals
+            resid = resid.apply(lambda x: (x - x.mean()) / x.std())
 
-            # higherorder cor (only diags)
-            corho_mat = (resid_ho.transpose().dot(resid_ho)) - scale_ho
-            corho_mat = (nobs / ((nobs - 1)) ** 3) * corho_mat
+            # scale for higher order var calc
+            scale_hovar = ((resid.transpose().dot(resid)) ** 2) * (1 / nobs)
+
+            # higherorder var (only diags)
+            resid_corseries = resid**2
+            hovar_mat = (resid_corseries.transpose().dot(resid_corseries)) - scale_hovar
+            hovar_mat = (nobs / ((nobs - 1)) ** 3) * hovar_mat
 
             # set diagonals to zero
             for i in resid.columns:
-                corho_mat.loc[corho_mat.index == i, corho_mat.columns == i] = 0
+                hovar_mat.loc[hovar_mat.index == i, hovar_mat.columns == i] = 0
                 cor_mat.loc[cor_mat.index == i, cor_mat.columns == i] = 0
 
             # get the shrinkage value
-            lamb = corho_mat.sum().sum() / (cor_mat**2).sum().sum()
+            lamb = hovar_mat.sum().sum() / (cor_mat**2).sum().sum()
             lamb = np.min([1, np.max([0, lamb])])
 
             # shrink the matrix
