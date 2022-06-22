@@ -1186,6 +1186,9 @@ class BaseForecaster(BaseEstimator):
         # end checking y
 
         # checking X
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+
         if X is not None:
             X_valid, _, X_metadata = check_is_scitype(
                 X, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="X"
