@@ -247,6 +247,9 @@ class BaseForecaster(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
+        fh = self._check_fh(fh=fh, index=y_inner.index)
+
         # set internal X/y to the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
@@ -257,7 +260,6 @@ class BaseForecaster(BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            fh = self._check_fh(fh=fh, index=y_inner.index)
             self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
@@ -306,13 +308,13 @@ class BaseForecaster(BaseEstimator):
         # handle inputs
 
         self.check_is_fitted()
+        fh = self._check_fh(fh=fh, index=self._y.index)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict if no looping/vectorization needed
         if not self._is_vectorized:
-            fh = self._check_fh(fh=fh, index=self._y.index)
             y_pred = self._predict(fh=fh, X=X_inner)
         else:
             # otherwise we call the vectorized version of predict
@@ -451,6 +453,11 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
+        fh = self._check_fh(fh=fh, index=self._y.index)
+
         # default alpha
         if alpha is None:
             alpha = [0.05, 0.95]
@@ -462,7 +469,6 @@ class BaseForecaster(BaseEstimator):
 
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
-            fh = self._check_fh(fh=fh, index=self._y.index)
             quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
         else:
             # otherwise we call the vectorized version of predict_quantiles
@@ -528,6 +534,10 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
 
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
+        fh = self._check_fh(fh=fh, index=self._y.index)
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
@@ -536,7 +546,6 @@ class BaseForecaster(BaseEstimator):
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
-            fh = self._check_fh(fh=fh, index=self._y.index)
             pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
         else:
             # otherwise we call the vectorized version of predict_interval
@@ -601,13 +610,14 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
+        # input checks
+        fh = self._check_fh(fh=fh, index=self._y.index)
 
         # check and convert X
         X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
-            fh = self._check_fh(fh=fh, index=self._y.index)
             pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
         else:
             # otherwise we call the vectorized version of predict_interval
