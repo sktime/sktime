@@ -8,11 +8,9 @@ __author__ = ["thayeylolu", "AurumnPegasus"]
 
 import numpy as np
 import pandas as pd
-
-# from icecream import ic
 from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
+# from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
@@ -156,7 +154,7 @@ class VECM(_StatsModelsAdapter):
         self._fitted_forecaster = self._forecaster.fit(method=self.method)
         return self
 
-    def _predict(self, fh, X=None, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
@@ -179,25 +177,16 @@ class VECM(_StatsModelsAdapter):
         y_pred_insample = None
         exog_fc = X.values if X is not None else None
         fh_int = fh.to_relative(self.cutoff)
-        # n_lags = self._fitted_forecaster.k_ar
 
         if fh_int.max() > 0:
             y_pred_outsample = self._fitted_forecaster.predict(
                 steps=fh_int[-1],
-                alpha=alpha,
                 exog_fc=exog_fc,
                 exog_coint_fc=self.exog_coint_fc,
             )
-            if alpha is not None:
-                # y_pred_outsample, y_pred_lower, y_pred_upper = (
-                #     y_pred_outsample[0],
-                #     y_pred_outsample[1],
-                #     y_pred_outsample[2],
-                # )
-                y_pred_outsample = y_pred_outsample[0]
 
         if fh_int.min() <= 0:
-            y_pred_insample = self._y - self._fitted_forecaster.resid
+            y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
             y_pred_insample = y_pred_insample.values
 
         if y_pred_insample is not None and y_pred_outsample is not None:
