@@ -16,9 +16,9 @@ from sklearn.utils._testing import set_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.ets import AutoETS
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.bootstrap import STLBootstrapTransformer
-from sktime.utils.estimators import MockForecaster
 
 
 class BaggingForecaster(BaseForecaster):
@@ -31,16 +31,23 @@ class BaggingForecaster(BaseForecaster):
     horizon by calculating the sampled forecast quantiles.
 
     Bergmeir et al. (2016) [2] show that, on average, bagging ETS forecasts gives better
-    forecasts than just applying ETS directly.
+    forecasts than just applying ETS directly. The default bootstraping transformer
+    and forecaster are selected as in [2].
 
     Parameters
     ----------
-    bootstrap_transformer : BaseTransformer
+    bootstrap_transformer : BaseTransformer (default=None)
         Bootstrapping Transformer that takes a series as input and returns a panel
-        of bootstrapped time series
-        e.g. sktime.transformations.bootstrap.STLBootstrapTransformer
-    forecaster : BaseForecaster
-        A valid sktime Forecaster
+        of bootstrapped time series if not specified
+        sktime.transformations.bootstrap.STLBootstrapTransformer is used.
+    forecaster : BaseForecaster (default=None)
+        A valid sktime Forecaster. If not specified sktime.forecating.ets.AutoETS is
+        used.
+    sp: int (default=2)
+        Seasonal period for default Forecaster and Transformer. Must be greater than 2.
+        Ignored for the bootstrap_transformer and forecaster if they are specified.
+    random_state: int or np.random.RandomState (default=None)
+        The random state of the estimator, used to control the random number generator
 
     See Also
     --------
@@ -83,17 +90,21 @@ class BaggingForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
+        "requires-fh-in-fit": False,  # like AutoETS overwritten if forecaster not None
+        "enforce_index_type": None,  # like AutoETS overwritten if forecaster not None
         "capability:pred_int": True,  # does forecaster implement predict_quantiles?
     }
 
     def __init__(
         self,
-        bootstrap_transformer: BaseTransformer,
-        forecaster: BaseForecaster,
+        bootstrap_transformer: BaseTransformer = None,
+        forecaster: BaseForecaster = None,
+        sp: int = 2,
         random_state: Union[int, np.random.RandomState] = None,
     ):
         self.bootstrap_transformer = bootstrap_transformer
         self.forecaster = forecaster
+        self.sp = sp
         self.random_state = random_state
 
         super(BaggingForecaster, self).__init__()
@@ -103,7 +114,8 @@ class BaggingForecaster(BaseForecaster):
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
         ]
-        self.clone_tags(self.forecaster, tags_to_clone)
+        if forecaster is not None:
+            self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -134,32 +146,40 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        if self.bootstrap_transformer is None:
+            self.bootstrap_transformer_ = STLBootstrapTransformer(sp=self.sp)
+        else:
+            self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
+
+        if self.forecaster is None:
+            self.forecaster_ = AutoETS(sp=self.sp)
+        else:
+            self.forecaster_ = clone(self.forecaster)
+
         if (
-            self.bootstrap_transformer.get_tag(
+            self.bootstrap_transformer_.get_tag(
                 "scitype:transform-input", raise_error=False
             )
             != "Series"
-            and self.bootstrap_transformer.get_tag(
+            and self.bootstrap_transformer_.get_tag(
                 "scitype:transform-output", raise_error=False
             )
             != "Panel"
-            and not isinstance(self.bootstrap_transformer, BaseTransformer)
+            and not isinstance(self.bootstrap_transformer_, BaseTransformer)
         ):
             raise TypeError(
                 "bootstrap_transformer in BaggingForecaster should be a Transformer "
                 "that takes as input a Series and output a Panel."
             )
 
-        if not isinstance(self.forecaster, BaseForecaster):
+        if not isinstance(self.forecaster_, BaseForecaster):
             raise TypeError(
                 "forecaster in BaggingForecaster should be an sktime Forecaster"
             )
 
         # random state handling passed into input estimators
         self.random_state_ = check_random_state(self.random_state)
-        self.bootstrap_transformer_ = clone(self.bootstrap_transformer)
         set_random_state(self.bootstrap_transformer_, random_state=self.random_state_)
-        self.forecaster_ = clone(self.forecaster)
         set_random_state(self.forecaster_, random_state=self.random_state_)
         self.bootstrap_transformer_.fit(X=y)
         y_bootstraps = self.bootstrap_transformer_.transform(X=y)
@@ -271,10 +291,7 @@ class BaggingForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {
-                "forecaster": MockForecaster(),
-                "bootstrap_transformer": STLBootstrapTransformer(sp=3),
-            }
+            {},
         ]
 
         return params
