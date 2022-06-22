@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Implement and register validations, which compute benchmark results."""
+import functools
 from typing import Callable, Dict, List, Union
 
 from sktime.forecasting.base import BaseForecaster
@@ -26,3 +27,17 @@ def forecasting_validation(
         results[f"{scorer_name}_mean"] = scores_df[f"test_{scorer_name}"].mean()
         results[f"{scorer_name}_std"] = scores_df[f"test_{scorer_name}"].std()
     return results
+
+
+def factory_forecasting_validation(
+    dataset_loader: Callable,
+    cv_splitter: BaseSplitter,
+    scorers: List[BaseMetric],
+) -> Callable:
+    """Build forecasting validation func which just takes an estimator."""
+    return functools.partial(
+        forecasting_validation,
+        dataset_loader,
+        cv_splitter,
+        scorers,
+    )
