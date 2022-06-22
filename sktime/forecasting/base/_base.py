@@ -1214,6 +1214,9 @@ class BaseForecaster(BaseEstimator):
             X_scitype = X_metadata["scitype"]
             requires_vectorization = X_scitype not in X_inner_scitype
         else:
+            # we can get here if X is not None, but ignored.
+            # in that case, we want to set to None in the inner methods
+            X = None
             # X_scitype is used below - set to None if X is None
             X_scitype = None
         # end checking X
