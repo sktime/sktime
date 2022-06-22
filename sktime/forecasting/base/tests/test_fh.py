@@ -77,7 +77,7 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # generate fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
     # update frequency of the forecasting horizon
-    fh.freq = infer_freq(y.index)
+    fh.freq = infer_freq(y)
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
     else:

@@ -248,7 +248,7 @@ class BaseForecaster(BaseEstimator):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
-        fh = self._check_fh(fh=fh, index=y_inner.index)
+        fh = self._check_fh(fh=fh, y=y_inner)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
@@ -308,7 +308,7 @@ class BaseForecaster(BaseEstimator):
         # handle inputs
 
         self.check_is_fitted()
-        fh = self._check_fh(fh=fh, index=self._y.index)
+        fh = self._check_fh(fh=fh, y=self._y)
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -386,7 +386,7 @@ class BaseForecaster(BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        fh = self._check_fh(fh=fh, index=y_inner.index)
+        fh = self._check_fh(fh=fh, y=y_inner)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
@@ -456,7 +456,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh=fh, index=self._y.index)
+        fh = self._check_fh(fh=fh, y=self._y)
 
         # default alpha
         if alpha is None:
@@ -537,7 +537,7 @@ class BaseForecaster(BaseEstimator):
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon
-        fh = self._check_fh(fh=fh, index=self._y.index)
+        fh = self._check_fh(fh=fh, y=self._y)
         # check alpha and coerce to list
         coverage = check_alpha(coverage, name="coverage")
 
@@ -611,7 +611,7 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
         # input checks
-        fh = self._check_fh(fh=fh, index=self._y.index)
+        fh = self._check_fh(fh=fh, y=self._y)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -681,7 +681,7 @@ class BaseForecaster(BaseEstimator):
             )
         self.check_is_fitted()
         # input checks
-        fh = self._check_fh(fh=fh, index=self._y.index)
+        fh = self._check_fh(fh=fh, y=self._y)
 
         # check and convert X
         X_inner = self._check_X(X=X)
@@ -941,7 +941,7 @@ class BaseForecaster(BaseEstimator):
             return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
-        fh = self._check_fh(fh=fh, index=self._y.index)
+        fh = self._check_fh(fh=fh, y=self._y)
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -1007,11 +1007,11 @@ class BaseForecaster(BaseEstimator):
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
             fh = ForecastingHorizon(
-                y.index, is_relative=False, freq=infer_freq(self._y.index)
+                y.index, is_relative=False, freq=infer_freq(self._y)
             )
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self.cutoff)
-            fh = self._check_fh(fh=fh, index=self._y.index)
+            fh = self._check_fh(fh=fh, y=self._y)
         # if np.ndarray, rows are not indexed
         # so will be interpreted as range(len), or existing fh if it is stored
         elif isinstance(y, np.ndarray):
@@ -1397,7 +1397,7 @@ class BaseForecaster(BaseEstimator):
 
         return self._fh
 
-    def _check_fh(self, fh, index: pd.Index) -> ForecastingHorizon:
+    def _check_fh(self, fh, y) -> ForecastingHorizon:
         """Check, set and update the forecasting horizon.
 
         Called from all methods where fh can be passed:
@@ -1406,13 +1406,12 @@ class BaseForecaster(BaseEstimator):
         Reads and writes to self._fh
         Writes fh to self._fh if does not exist
         Checks equality of fh with self._fh if exists, raises error if not equal
-        Assigns the frequency inferred from `index`
+        Assigns the frequency inferred from `y`
 
         Parameters
         ----------
         fh : None, int, list, np.ndarray or ForecastingHorizon
-        index : pd.Index
-            pandas index to extract frequency from
+        y : Series, Panel, or Hierarchical object, or VectorizedDF
 
         Returns
         -------
@@ -1494,7 +1493,7 @@ class BaseForecaster(BaseEstimator):
             # if existing one and new match, ignore new one
 
         if hasattr(self._fh, "freq") and self._fh.freq is None:
-            self._fh.freq = infer_freq(index)
+            self._fh.freq = infer_freq(y)
 
         return self._fh
 

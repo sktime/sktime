@@ -5,11 +5,13 @@
 __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
+from functools import singledispatch
 from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import VectorizedDF
 from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
@@ -85,13 +87,34 @@ def _get_freq(x):
         return None
 
 
-def infer_freq(index: pd.Index) -> Optional[str]:
-    """Infer frequency string from the pandas index object.
+@singledispatch
+def infer_freq(y) -> Optional[str]:
+    """Infer frequency string from the time series object.
+
+    Parameters
+    ----------
+    y : Series, Panel, or Hierarchical object, or VectorizedDF
+
+    Returns
+    -------
+    str
+        Frequency string inferred from the pandas index,
+        or `None`, if inference fails.
+    """
+    return _infer_freq_from_index(y.index)
+
+
+@infer_freq.register
+def _(y: VectorizedDF) -> Optional[str]:
+    return _infer_freq_from_index(y.as_list()[0].index[-1])
+
+
+def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
+    """Infer frequency string from the pandas index.
 
     Parameters
     ----------
     index : pd.Index
-        Pandas index object
 
     Returns
     -------
