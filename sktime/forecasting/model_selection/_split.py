@@ -676,8 +676,10 @@ class BaseSplitter(BaseObject):
 
     def _get_regular_y_index(self, y_index: pd.Index) -> pd.Index:
         """Get equally spaced index."""
-        if isinstance(y_index, (pd.DatetimeIndex, pd.PeriodIndex)):
+        if isinstance(y_index, pd.DatetimeIndex):
             y_regular = pd.date_range(y_index.min(), y_index.max(), freq=self.freq)
+        elif isinstance(y_index, pd.PeriodIndex):
+            y_regular = pd.period_range(y_index.min(), y_index.max(), freq=self.freq)
         elif isinstance(y_index, pd.Index) and array_is_int(y_index.values):
             y_regular = np.arange(y_index.min(), y_index.max() + 1)
         elif isinstance(y_index, pd.MultiIndex):
