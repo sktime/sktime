@@ -190,5 +190,5 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
         params = {"n_changepoints": 10}
         return params
 
-    # def _predict_scores(self, X):
-    #     pass
+    def _predict_scores(self, X):
+        pass
