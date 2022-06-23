@@ -1325,8 +1325,8 @@ class SingleWindowSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         fh = _check_fh(self.fh)
-        y = get_index_for_series(y)
-        end = _get_end(y_index=y, fh=fh)
+        y_index = self._coerce_to_index(y)
+        end = _get_end(y_index=y_index, fh=fh)
         return np.array([end])
 
 
