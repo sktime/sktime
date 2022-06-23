@@ -9,8 +9,12 @@ import pandas as pd
 def _get_index(x):
     if hasattr(x, "index"):
         return x.index
+    elif isinstance(x, np.ndarray):
+        if x.ndim < 3:
+            return pd.RangeIndex(x.shape[0])
+        else:
+            return pd.RangeIndex(x.shape[-1])
     else:
-        # select last dimension for time index
         return pd.RangeIndex(x.shape[-1])
 
 
@@ -23,7 +27,7 @@ def get_time_index(X):
     in one of the following sktime mtype specifications for Series, Panel, Hierarchical:
     pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, nested_univ, pd_multiindex_hier
     assumes all time series have equal length and equal index set
-    will *not* work for list-of-df, pd-wide, pd-long
+    will *not* work for list-of-df, pd-wide, pd-long, numpyflat
 
     Returns
     -------
@@ -45,8 +49,10 @@ def get_time_index(X):
             return X.index
     # numpy3D and np.ndarray
     elif isinstance(X, np.ndarray):
+        # np.ndarray
         if X.ndim < 3:
             return pd.RangeIndex(X.shape[0])
+        # numpy3D
         else:
             return pd.RangeIndex(X.shape[-1])
     elif hasattr(X, "X"):
