@@ -838,9 +838,6 @@ class CutoffSplitter(BaseSplitter):
                 test_window = np.array(
                     [y.get_loc(timestamp) for timestamp in test_window]
                 )
-            # y_regular = pd.date_range(start=y.min(), end=y.max(), freq=self.freq)
-            # training_window = y.get_indexer(y_regular[training_window])
-            # test_window = y.get_indexer(y_regular[test_window])
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
