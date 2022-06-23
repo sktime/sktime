@@ -155,7 +155,8 @@ class VECM(_StatsModelsAdapter):
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+        """
+        Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
 
@@ -178,6 +179,7 @@ class VECM(_StatsModelsAdapter):
         exog_fc = X.values if X is not None else None
         fh_int = fh.to_relative(self.cutoff)
 
+        # out-sample prediction
         if fh_int.max() > 0:
             y_pred_outsample = self._fitted_forecaster.predict(
                 steps=fh_int[-1],
@@ -185,7 +187,11 @@ class VECM(_StatsModelsAdapter):
                 exog_coint_fc=self.exog_coint_fc,
             )
 
+        # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
+
+            # .resid returns np.ndarray
+            # both values need to be pd DataFrame for subtraction
             y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
             y_pred_insample = y_pred_insample.values
 
@@ -205,3 +211,47 @@ class VECM(_StatsModelsAdapter):
         )
 
         return y_pred
+
+    def _predict_interval(self, fh, X=None, coverage=None):
+        """
+        Compute/return prediction quantiles for a forecast.
+
+        private _predict_interval containing the core logic,
+            called from predict_interval and possibly predict_quantiles
+        State required:
+            Requires state to be "fitted".
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        coverage : list of float (guaranteed not None and floats in [0,1] interval)
+           nominal coverage(s) of predictive interval(s)
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level coverage fractions for which intervals were computed.
+                    in the same order as in input `coverage`.
+                Third level is string "lower" or "upper", for lower/upper interval end.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
+                for var in col index, at nominal coverage in second col index,
+                lower/upper depending on third col index, for the row index.
+                Upper/lower interval end forecasts are equivalent to
+                quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
+        """
+        pass
+        # implement here
+        # IMPORTANT: avoid side effects to y, X, fh, coverage
+        #
+        # Note: unlike in predict_interval where coverage can be float or list of float
+        #   coverage in _predict_interval is guaranteed to be a list of float
