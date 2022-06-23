@@ -372,7 +372,7 @@ def _check_freq_and_y_index(
     msg = f"pd.infer_freq(y.index): {inferred_freq}, freq argument: {freq}"
     if both_freq_is_missing:
         raise ValueError(f"Frequency is missing. {msg}")
-    if both_freq_is_present and pd.infer_freq(y) != freq:
+    if both_freq_is_present and inferred_freq != freq:
         raise ValueError(f"Contradicting frequencies. {msg}")
 
 
@@ -685,8 +685,10 @@ class BaseSplitter(BaseObject):
     def _get_regular_y_index(self, y_index: pd.Index) -> pd.Index:
         """Get equally spaced index."""
         if isinstance(y_index, pd.DatetimeIndex):
+            _check_freq_and_y_index(y=y_index, freq=self.freq)
             y_regular = pd.date_range(y_index.min(), y_index.max(), freq=self.freq)
         elif isinstance(y_index, pd.PeriodIndex):
+            _check_freq_and_y_index(y=y_index, freq=self.freq)
             y_regular = pd.period_range(y_index.min(), y_index.max(), freq=self.freq)
         elif isinstance(y_index, pd.Index) and array_is_int(y_index.values):
             y_regular = np.arange(y_index.min(), y_index.max() + 1)
@@ -814,7 +816,6 @@ class CutoffSplitter(BaseSplitter):
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
-        _check_freq_and_y_index(y=y, freq=self.freq)
         cutoffs = check_cutoffs(cutoffs=self.cutoffs)
         fh = _check_fh(fh=self.fh)
         window_length = check_window_length(
