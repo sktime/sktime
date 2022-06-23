@@ -155,7 +155,8 @@ class VECM(_StatsModelsAdapter):
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+        """
+        Forecast time series at future horizon.
 
         Wrapper for statsmodel's VECM (_VECM) predict method
 
@@ -178,6 +179,7 @@ class VECM(_StatsModelsAdapter):
         exog_fc = X.values if X is not None else None
         fh_int = fh.to_relative(self.cutoff)
 
+        # out-sample prediction
         if fh_int.max() > 0:
             y_pred_outsample = self._fitted_forecaster.predict(
                 steps=fh_int[-1],
@@ -185,7 +187,11 @@ class VECM(_StatsModelsAdapter):
                 exog_coint_fc=self.exog_coint_fc,
             )
 
+        # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
+
+            # .resid returns np.ndarray
+            # both values need to be pd DataFrame for subtraction
             y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
             y_pred_insample = y_pred_insample.values
 
