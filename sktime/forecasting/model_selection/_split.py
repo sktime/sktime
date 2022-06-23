@@ -343,6 +343,31 @@ def _check_cutoffs_fh_y(
         raise TypeError("Unsupported type of `cutoffs` and `fh`")
 
 
+def _check_freq_and_y_index(y: pd.Index, freq: str = None) -> None:
+    """Check frequency and y index compatibility.
+
+    Parameters
+    ----------
+    y : pd.Index
+        Index of time series
+    freq : str
+        Frequency string
+
+    Raises
+    ------
+    ValueError
+        if either both sources of frequency information are missing,
+        or both present and contradict each other
+    """
+    both_freq_is_missing = pd.infer_freq(y) is None and freq is None
+    both_freq_is_present = pd.infer_freq(y) is not None and freq is not None
+    msg = f"pd.infer_freq(y.index): {pd.infer_freq(y)}, freq argument: {freq}"
+    if both_freq_is_missing:
+        raise ValueError(f"Frequency is missing. {msg}")
+    if both_freq_is_present and pd.infer_freq(y) != freq:
+        raise ValueError(f"Contradicting frequencies. {msg}")
+
+
 class BaseSplitter(BaseObject):
     r"""Base class for temporal cross-validation splitters.
 
@@ -402,6 +427,8 @@ class BaseSplitter(BaseObject):
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
+    freq : str, optional, (default=None)
+        Frequency of the time series `y` in case `pd.infer_freq(y)` fails
     """
 
     def __init__(
@@ -742,6 +769,8 @@ class CutoffSplitter(BaseSplitter):
     fh : int, timedelta, list or np.ndarray of ints or timedeltas
         Type should match the type of `cutoffs` input.
     window_length : int or timedelta or pd.DateOffset
+    freq : str, optional, (default=None)
+        Frequency of the time series `y` in case `pd.infer_freq(y)` fails
     """
 
     def __init__(
@@ -759,6 +788,7 @@ class CutoffSplitter(BaseSplitter):
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
+        _check_freq_and_y_index(y=y, freq=self.freq)
         cutoffs = check_cutoffs(cutoffs=self.cutoffs)
         fh = _check_fh(fh=self.fh)
         window_length = check_window_length(
