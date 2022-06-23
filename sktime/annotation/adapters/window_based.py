@@ -10,6 +10,8 @@ ruptures.detection.window.Window
 __author__ = ["lielleravid", "NoaBenAmi"]
 __all__ = ["WindowBasedChangePoint"]
 
+import pandas as pd
+
 from sktime.annotation.base import BaseSeriesAnnotator
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
@@ -92,7 +94,6 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
         _check_soft_dependencies("ruptures", severity="error", object=self)
         # self.estimator_prefit = None
         # self.estimator_postfit_ = None
-        self.estimator = None
         self.width = width
         self.model = model
         self.custom_cost = custom_cost
@@ -154,9 +155,11 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
         """
         # return self.estimator_postfit_.predict(self.n_changepoints,
         # self.penalty, self.epsilon)
+        X = X.to_numpy()
+
         from ruptures import Window
 
-        self.estimator = Window(
+        estimator = Window(
             self.width,
             self.model,
             self.custom_cost,
@@ -165,9 +168,10 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
             self.params,
         )
         try:
-            return self.estimator.fit_predict(
+            result = estimator.fit_predict(
                 X, self.n_changepoints, self.penalty, self.epsilon
             )
+            return pd.Series(result)
         except AssertionError:
             raise Exception(
                 "No stopping rule given: 'n_changepoints', "
@@ -193,8 +197,9 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"n_changepoints": 10}
+        params = {"n_changepoints": 3, "jump": 1}
         return params
 
-    def _predict_scores(self, X):
-        pass
+
+#    def _predict_scores(self, X):
+#        pass
