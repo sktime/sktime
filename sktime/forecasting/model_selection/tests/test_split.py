@@ -4,6 +4,8 @@
 
 __author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
+from typing import List
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -57,7 +59,9 @@ def _get_windows(cv, y):
     return train_windows, test_windows
 
 
-def _check_windows(windows, allow_empty_window=False):
+def _check_windows(
+    windows, allow_empty_window: bool = False, missing_obs: List[int] = None
+):
     assert isinstance(windows, list)
     for window in windows:
         assert isinstance(window, np.ndarray)
@@ -65,6 +69,8 @@ def _check_windows(windows, allow_empty_window=False):
         assert window.ndim == 1
         if not allow_empty_window:
             assert len(window) > 0
+        if missing_obs:
+            assert not set(missing_obs).issubset(set(window))
 
 
 def _check_cutoffs(cutoffs):
@@ -108,10 +114,14 @@ def _check_cutoffs_against_train_windows(cutoffs, windows, y):
         np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
 
 
-def _check_cv(cv, y, allow_empty_window=False):
+def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = None):
     train_windows, test_windows = _get_windows(cv, y)
-    _check_windows(train_windows, allow_empty_window=allow_empty_window)
-    _check_windows(test_windows, allow_empty_window=allow_empty_window)
+    _check_windows(
+        train_windows, allow_empty_window=allow_empty_window, missing_obs=missing_obs
+    )
+    _check_windows(
+        test_windows, allow_empty_window=allow_empty_window, missing_obs=missing_obs
+    )
 
     cutoffs = cv.get_cutoffs(y)
     _check_cutoffs(cutoffs)
@@ -190,14 +200,20 @@ def test_single_window_splitter_default_window_length(y, fh):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("missing_obs", [[], [35], [35, 36, 37]])
 @pytest.mark.parametrize("cutoffs", TEST_CUTOFFS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
+def test_cutoff_window_splitter(y, missing_obs, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
     if _inputs_are_supported([cutoffs, fh, window_length]):
-        cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
-        train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
+        non_missing_obs = y.index.difference(y.index[missing_obs])
+        cv = CutoffSplitter(
+            cutoffs, fh=fh, window_length=window_length, freq=pd.infer_freq(y.index)
+        )
+        train_windows, test_windows, cutoffs, n_splits = _check_cv(
+            cv=cv, y=y.loc[non_missing_obs], missing_obs=missing_obs
+        )
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
     else:
         match = "Unsupported combination of types"
