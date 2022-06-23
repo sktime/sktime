@@ -465,7 +465,11 @@ class BaseSplitter(BaseObject):
         else:
             split = self._split_vectorized
 
+        y_regular = self._get_regular_y_index(y_index)
+
         for train, test in split(y_index):
+            train = y_index.get_indexer(y_regular[train])
+            test = y_index.get_indexer(y_regular[test])
             yield train[train >= 0], test[test >= 0]
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
@@ -670,6 +674,18 @@ class BaseSplitter(BaseObject):
 
         return y_inner, mtype
 
+    def _get_regular_y_index(self, y_index: pd.Index) -> pd.Index:
+        """Get equally spaced index."""
+        if isinstance(y_index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            y_regular = pd.date_range(y_index.min(), y_index.max(), freq=self.freq)
+        elif isinstance(y_index, pd.Index) and array_is_int(y_index.values):
+            y_regular = np.arange(y_index.min(), y_index.max() + 1)
+        elif isinstance(y_index, pd.MultiIndex):
+            y_regular = y_index
+        else:
+            raise TypeError(f"Unrecognized index type: {type(y_index)}")
+        return y_regular
+
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
         """Return the number of splits.
 
@@ -822,9 +838,9 @@ class CutoffSplitter(BaseSplitter):
                 test_window = np.array(
                     [y.get_loc(timestamp) for timestamp in test_window]
                 )
-            y_regular = pd.date_range(start=y.min(), end=y.max(), freq=self.freq)
-            training_window = y.get_indexer(y_regular[training_window])
-            test_window = y.get_indexer(y_regular[test_window])
+            # y_regular = pd.date_range(start=y.min(), end=y.max(), freq=self.freq)
+            # training_window = y.get_indexer(y_regular[training_window])
+            # test_window = y.get_indexer(y_regular[test_window])
             yield training_window, test_window
 
     def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
