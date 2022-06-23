@@ -205,6 +205,23 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
             CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
 
+def test_cutoff_window_splitter_with_missing_observations() -> None:
+    """Test CutoffSplitter with missing observation."""
+    index = pd.date_range(start="2021-01-01", end="2021-01-04", freq="D")
+    y = pd.Series(index=index[[0, 1, 3]])
+    cutoffs = np.arange(3)
+    cv = CutoffSplitter(cutoffs=cutoffs, fh=1, window_length=1)
+    splits = list(cv.split(y))
+
+    np.testing.assert_array_equal(cv.get_cutoffs(y), cutoffs)
+    np.testing.assert_array_equal(splits[0][0], np.array([0]))
+    np.testing.assert_array_equal(splits[0][1], np.array([1]))
+    np.testing.assert_array_equal(splits[1][0], np.array([1]))
+    np.testing.assert_array_equal(splits[1][1], np.array([]))
+    np.testing.assert_array_equal(splits[2][0], np.array([]))
+    np.testing.assert_array_equal(splits[2][1], np.array([2]))
+
+
 @pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
