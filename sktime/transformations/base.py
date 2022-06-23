@@ -40,7 +40,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning, fkiraly"]
+__author__ = ["mloning", "fkiraly", "miraep8"]
 __all__ = [
     "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
@@ -195,6 +195,27 @@ class BaseTransformer(BaseEstimator):
         if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexTranformer.
+
+        Implemented for `other` being either a MultiplexTransformer or a transformer.
+
+        Parameters
+        ----------
+        other: `sktime` transformer or sktime MultiplexTransformer
+
+        Returns
+        -------
+        MultiplexTransformer object
+        """
+        from sktime.transformations.compose import MultiplexTransformer
+
+        if isinstance(other, BaseTransformer):
+            multiplex_self = MultiplexTransformer([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 
@@ -644,10 +665,13 @@ class BaseTransformer(BaseEstimator):
             f"must be in an sktime compatible format, "
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
-            f"or with MultiIndex and lowest level a sktime compatible time index. "
-            f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+            f"or with MultiIndex and last(-1) level an sktime compatible time index. "
+            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+            f"If you think the data is already in an sktime supported input format, "
+            f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
+            f"where mtype is the string of the type specification you want. "
         )
         if not X_valid:
             raise TypeError("X " + msg_invalid_input)
@@ -743,7 +767,7 @@ class BaseTransformer(BaseEstimator):
         #   then apply vectorization, loop method execution over series/panels
         elif case == "case 3: requires vectorization":
             iterate_X = _most_complex_scitype(X_inner_scitype)
-            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
+            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=X_scitype)
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
                 # raise ValueError(
@@ -755,7 +779,7 @@ class BaseTransformer(BaseEstimator):
                 #     "input types natively: Panel X and non-None y."
                 # )
                 iterate_y = _most_complex_scitype(y_inner_scitype)
-                y_inner = VectorizedDF(X=X, iterate_as=iterate_y, is_scitype=X_scitype)
+                y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=y_scitype)
             else:
                 y_inner = None
 
