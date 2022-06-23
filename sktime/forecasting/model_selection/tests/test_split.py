@@ -4,6 +4,8 @@
 
 __author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
+from typing import List
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -109,7 +111,10 @@ def _check_cutoffs_against_train_windows(cutoffs, windows, y):
         np.testing.assert_array_equal(windows[0][-1], cutoffs[0])
 
 
-def _check_cv(cv, y, allow_empty_window=False):
+def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = None):
+    if missing_obs:
+        non_missing_obs = y.index.difference(y.index[missing_obs])
+        y = y.loc[non_missing_obs]
     train_windows, test_windows = _get_windows(cv, y)
     _check_windows(train_windows, allow_empty_window=allow_empty_window)
     _check_windows(test_windows, allow_empty_window=allow_empty_window)
@@ -134,9 +139,8 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
     """Test SingleWindowSplitter."""
     if _inputs_are_supported([fh, window_length]):
         cv = SingleWindowSplitter(fh=fh, window_length=window_length)
-        non_missing_obs = y.index.difference(y.index[missing_obs])
         train_windows, test_windows, cutoffs, n_splits = _check_cv(
-            cv=cv, y=y.loc[non_missing_obs]
+            cv=cv, y=y, missing_obs=missing_obs
         )
 
         train_window = train_windows[0]
@@ -165,10 +169,9 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_single_window_splitter_default_window_length(y, missing_obs, fh):
     """Test SingleWindowSplitter."""
-    non_missing_obs = y.index.difference(y.index[missing_obs])
     cv = SingleWindowSplitter(fh=fh)
     train_windows, test_windows, cutoffs, n_splits = _check_cv(
-        cv=cv, y=y.loc[non_missing_obs]
+        cv=cv, y=y, missing_obs=missing_obs
     )
 
     train_window = train_windows[0]
@@ -206,12 +209,11 @@ def test_single_window_splitter_default_window_length(y, missing_obs, fh):
 def test_cutoff_window_splitter(y, missing_obs, cutoffs, fh, window_length):
     """Test CutoffSplitter."""
     if _inputs_are_supported([cutoffs, fh, window_length]):
-        non_missing_obs = y.index.difference(y.index[missing_obs])
         cv = CutoffSplitter(
             cutoffs, fh=fh, window_length=window_length, freq=pd.infer_freq(y.index)
         )
         train_windows, test_windows, cutoffs, n_splits = _check_cv(
-            cv=cv, y=y.loc[non_missing_obs]
+            cv=cv, y=y, missing_obs=missing_obs
         )
         np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
     else:
@@ -239,10 +241,11 @@ def test_cutoff_window_splitter_with_missing_observations(freq: str) -> None:
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("missing_obs", TEST_MISSING_OBSERVATIONS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-def test_sliding_window_splitter(y, fh, window_length, step_length):
+def test_sliding_window_splitter(y, missing_obs, fh, window_length, step_length):
     """Test SlidingWindowSplitter."""
     if _inputs_are_supported([fh, window_length, step_length]):
         cv = SlidingWindowSplitter(
@@ -251,7 +254,7 @@ def test_sliding_window_splitter(y, fh, window_length, step_length):
             step_length=step_length,
             start_with_window=True,
         )
-        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        train_windows, test_windows, _, n_splits = _check_cv(cv=cv, y=y)
 
         assert np.vstack(train_windows).shape == (
             n_splits,
