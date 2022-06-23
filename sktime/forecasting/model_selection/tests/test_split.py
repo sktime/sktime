@@ -99,7 +99,7 @@ def _check_cutoffs_against_test_windows(cutoffs, windows, fh, y):
     np.testing.assert_array_equal(cutoffs, expected)
 
 
-def _check_cutoffs_against_train_windows(cutoffs, windows, y):
+def _check_cutoffs_against_train_windows(cutoffs, windows):
     # Cutoffs should always be the last values of the train windows.
     assert array_is_int(cutoffs)
     actual = np.array([window[-1] for window in windows[1:]])
@@ -120,9 +120,10 @@ def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = 
     _check_windows(test_windows, allow_empty_window=allow_empty_window)
 
     cutoffs = cv.get_cutoffs(y)
-    _check_cutoffs(cutoffs)
-    _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh, y)
-    _check_cutoffs_against_train_windows(cutoffs, train_windows, y)
+    if missing_obs is None or len(missing_obs) == 0:
+        _check_cutoffs(cutoffs)
+        _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh, y)
+        _check_cutoffs_against_train_windows(cutoffs, train_windows)
 
     n_splits = cv.get_n_splits(y)
     _check_n_splits(n_splits)
@@ -132,7 +133,7 @@ def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = 
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("missing_obs", [[]])
+@pytest.mark.parametrize("missing_obs", TEST_MISSING_OBSERVATIONS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_splitter(y, missing_obs, fh, window_length):
@@ -146,9 +147,10 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
         train_window = train_windows[0]
         test_window = test_windows[0]
         assert n_splits == 1
-        assert train_window.shape[0] == _coerce_duration_to_int(
-            duration=window_length, freq="D"
-        )
+        if missing_obs is None or len(missing_obs) == 0:
+            assert train_window.shape[0] == _coerce_duration_to_int(
+                duration=window_length, freq="D"
+            )
         checked_fh = check_fh(fh)
         assert test_window.shape[0] == len(checked_fh)
 
@@ -165,7 +167,7 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("missing_obs", [[]])
+@pytest.mark.parametrize("missing_obs", TEST_MISSING_OBSERVATIONS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_single_window_splitter_default_window_length(y, missing_obs, fh):
     """Test SingleWindowSplitter."""
@@ -183,14 +185,16 @@ def test_single_window_splitter_default_window_length(y, missing_obs, fh):
 
     fh = cv.get_fh()
     if fh.is_all_in_sample():
-        assert train_window.shape[0] == len(y)
+        if missing_obs is None or len(missing_obs) == 0:
+            assert train_window.shape[0] == len(y)
     else:
-        if array_is_int(checked_fh):
-            assert train_window.shape[0] == len(y) - checked_fh.max()
-        else:
-            assert train_window.shape[0] == len(
-                y[y.index <= y.index.max() - checked_fh.max()]
-            )
+        if missing_obs is None or len(missing_obs) == 0:
+            if array_is_int(checked_fh):
+                assert train_window.shape[0] == len(y) - checked_fh.max()
+            else:
+                assert train_window.shape[0] == len(
+                    y[y.index <= y.index.max() - checked_fh.max()]
+                )
 
     if array_is_int(checked_fh):
         test_window_expected = train_window[-1] + checked_fh
@@ -241,7 +245,7 @@ def test_cutoff_window_splitter_with_missing_observations(freq: str) -> None:
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("missing_obs", TEST_MISSING_OBSERVATIONS)
+@pytest.mark.parametrize("missing_obs", [[]])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
@@ -273,12 +277,13 @@ def test_sliding_window_splitter(y, missing_obs, fh, window_length, step_length)
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("missing_obs", [[]])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 @pytest.mark.parametrize("initial_window", TEST_INITIAL_WINDOW)
 def test_sliding_window_splitter_with_initial_window(
-    y, fh, window_length, step_length, initial_window
+    y, missing_obs, fh, window_length, step_length, initial_window
 ):
     """Test SlidingWindowSplitter."""
     if _inputs_are_supported([fh, initial_window, window_length, step_length]):
@@ -289,7 +294,9 @@ def test_sliding_window_splitter_with_initial_window(
             initial_window=initial_window,
             start_with_window=True,
         )
-        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv=cv, y=y, missing_obs=missing_obs
+        )
 
         assert train_windows[0].shape[0] == _coerce_duration_to_int(
             duration=initial_window, freq="D"
@@ -321,11 +328,12 @@ def _get_n_incomplete_windows(window_length, step_length) -> int:
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("missing_obs", [[]])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_splitter_start_with_empty_window(
-    y, fh, window_length, step_length
+    y, missing_obs, fh, window_length, step_length
 ):
     """Test SlidingWindowSplitter."""
     if _inputs_are_supported([fh, window_length, step_length]):
@@ -336,7 +344,7 @@ def test_sliding_window_splitter_start_with_empty_window(
             start_with_window=False,
         )
         train_windows, test_windows, _, n_splits = _check_cv(
-            cv, y, allow_empty_window=True
+            cv, y, allow_empty_window=True, missing_obs=missing_obs
         )
 
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
@@ -398,11 +406,12 @@ def _check_expanding_windows(windows):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("missing_obs", [[]])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_expanding_window_splitter_start_with_empty_window(
-    y, fh, initial_window, step_length
+    y, missing_obs, fh, initial_window, step_length
 ):
     """Test ExpandingWindowSplitter."""
     if _inputs_are_supported([fh, initial_window, step_length]):
@@ -412,7 +421,9 @@ def test_expanding_window_splitter_start_with_empty_window(
             step_length=step_length,
             start_with_window=True,
         )
-        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv=cv, y=y, missing_obs=missing_obs
+        )
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
 
         n_incomplete = _get_n_incomplete_windows(initial_window, step_length)
@@ -430,10 +441,11 @@ def test_expanding_window_splitter_start_with_empty_window(
 
 
 @pytest.mark.parametrize("y", TEST_YS)
+@pytest.mark.parametrize("missing_obs", [[]])
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("initial_window", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-def test_expanding_window_splitter(y, fh, initial_window, step_length):
+def test_expanding_window_splitter(y, missing_obs, fh, initial_window, step_length):
     """Test ExpandingWindowSplitter."""
     if _inputs_are_supported([fh, initial_window, step_length]):
         cv = ExpandingWindowSplitter(
@@ -442,7 +454,7 @@ def test_expanding_window_splitter(y, fh, initial_window, step_length):
             step_length=step_length,
             start_with_window=True,
         )
-        train_windows, test_windows, _, n_splits = _check_cv(cv, y)
+        train_windows, test_windows, _, n_splits = _check_cv(cv=cv, y=y)
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
         assert train_windows[0].shape[0] == _coerce_duration_to_int(
             duration=initial_window, freq="D"
@@ -539,10 +551,10 @@ def test_split_loc():
     for train, test in cv.split_loc(y):
         assert isinstance(train, pd.DatetimeIndex)
         assert len(train) == 10
-        y.loc[train]
+        assert train.isin(y.index).all()
         assert isinstance(test, pd.DatetimeIndex)
         assert len(test) == 1
-        y.loc[test]
+        assert test.isin(y.index).all()
 
 
 def test_split_series_hier():
