@@ -205,10 +205,10 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
             CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
 
-@pytest.mark.parametrize("freq", ["D", "M"])
+@pytest.mark.parametrize("freq", ["25T", "D", "M", "A"])
 def test_cutoff_window_splitter_with_missing_observations(freq: str) -> None:
     """Test CutoffSplitter with missing observation."""
-    index = pd.date_range(start="2021-01-01", periods=4, freq=freq)
+    index = pd.date_range(start="2021-01-15", periods=4, freq=freq)
     y = pd.Series(index=index[[0, 1, 3]])
     cutoffs = np.arange(3)
     cv = CutoffSplitter(cutoffs=cutoffs, fh=1, window_length=1, freq=freq)
