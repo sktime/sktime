@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes import VectorizedDF
+from sktime.datatypes._utilities import get_time_index
 from sktime.utils.validation.series import check_time_index, is_integer_index
 
 
@@ -101,12 +102,12 @@ def infer_freq(y) -> Optional[str]:
         Frequency string inferred from the pandas index,
         or `None`, if inference fails.
     """
-    return _infer_freq_from_index(y.index)
+    return _infer_freq_from_index(get_time_index(y))
 
 
 @infer_freq.register
 def _(y: VectorizedDF) -> Optional[str]:
-    return _infer_freq_from_index(y.as_list()[0].index[-1])
+    return _infer_freq_from_index(get_time_index(y.as_list()[0]))
 
 
 def _infer_freq_from_index(index: pd.Index) -> Optional[str]:

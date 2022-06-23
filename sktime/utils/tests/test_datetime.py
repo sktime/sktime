@@ -75,10 +75,12 @@ def test_infer_freq() -> None:
     y = pd.Series(index=index, dtype=int)
     assert infer_freq(y) == "M"
 
-    y = pd.DataFrame(index=pd.date_range(start="2021-01-01", periods=1))
+    y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
     assert infer_freq(y) == "D"
 
-    y = pd.DataFrame(index=pd.date_range(start="2021-01-01", periods=1, freq="M"))
+    y = pd.DataFrame(
+        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
+    )
     assert infer_freq(y) == "M"
 
     y = _bottom_hier_datagen(no_levels=2)
