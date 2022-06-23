@@ -1145,6 +1145,11 @@ class BaseForecaster(BaseEstimator):
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+
         # checking y
         if y is not None:
             y_valid, _, y_metadata = check_is_scitype(
@@ -1154,12 +1159,16 @@ class BaseForecaster(BaseEstimator):
                 "y must be in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
+                "If you think y is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for y. "
+                "Possible mtype specification strings are as follows. "
             )
             if not y_valid:
-                raise TypeError(msg)
+                raise TypeError(msg + mtypes_msg)
 
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
@@ -1195,20 +1204,16 @@ class BaseForecaster(BaseEstimator):
                 "X must be either None, or in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
                 "If you think X is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
                 "where mtype is the string of the type specification you want for X. "
                 "Possible mtype specification strings are as follows. "
             )
-            for scitype in ALLOWED_SCITYPES:
-                mtypes = set(scitype_to_mtype(scitype))
-                mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-                msg += f'"For {scitype} scitype: {mtypes}. '
             if not X_valid:
-                raise TypeError(msg)
+                raise TypeError(msg + mtypes_msg)
 
             X_scitype = X_metadata["scitype"]
             requires_vectorization = X_scitype not in X_inner_scitype
