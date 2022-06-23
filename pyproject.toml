@@ -72,6 +72,7 @@ all_extras = [
     "tslearn>=0.5.2",
     "filterpy>=1.4.5",
     "pykalman>=0.9.5",
+    "ruptures>=1.1.6",
 ]
 
 dev = [
