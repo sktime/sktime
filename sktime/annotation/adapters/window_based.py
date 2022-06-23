@@ -165,7 +165,7 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
             self.params,
         )
         return self.estimator.fit_predict(
-            self.n_changepoints, self.penalty, self.epsilon
+            X, self.n_changepoints, self.penalty, self.epsilon
         )
 
     @classmethod
