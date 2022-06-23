@@ -131,9 +131,14 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
+        # if transformer just fit pipline and return
         if np.isin(self.method, self.TRFORM_LIST):
             self.forecaster_ = self.forecaster.clone() * Reconciler(method=self.method)
             self.forecaster_.fit(y=y, X=X, fh=fh)
+            # bring g matrix/s_matrix/parent_child to top for compatibility/tests
+            self.s_matrix = self.forecaster_.transformers_post_[0][1].s_matrix
+            self.g_matrix = self.forecaster_.transformers_post_[0][1].g_matrix
+            self.parent_child = self.forecaster_.transformers_post_[0][1].parent_child
             return self
 
         # fit forecasters for each level
