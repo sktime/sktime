@@ -164,9 +164,15 @@ class WindowBasedChangePoint(BaseSeriesAnnotator):
             self.jump,
             self.params,
         )
-        return self.estimator.fit_predict(
-            X, self.n_changepoints, self.penalty, self.epsilon
-        )
+        try:
+            return self.estimator.fit_predict(
+                X, self.n_changepoints, self.penalty, self.epsilon
+            )
+        except AssertionError:
+            raise Exception(
+                "No stopping rule given: 'n_changepoints', "
+                "'penalty' or 'epsilon' must not be None"
+            )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
