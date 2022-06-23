@@ -343,7 +343,9 @@ def _check_cutoffs_fh_y(
         raise TypeError("Unsupported type of `cutoffs` and `fh`")
 
 
-def _check_freq_and_y_index(y: pd.Index, freq: str = None) -> None:
+def _check_freq_and_y_index(
+    y: Union[pd.Index, pd.DatetimeIndex, pd.PeriodIndex], freq: str = None
+) -> None:
     """Check frequency and y index compatibility.
 
     Parameters
@@ -359,9 +361,15 @@ def _check_freq_and_y_index(y: pd.Index, freq: str = None) -> None:
         if either both sources of frequency information are missing,
         or both present and contradict each other
     """
-    both_freq_is_missing = pd.infer_freq(y) is None and freq is None
-    both_freq_is_present = pd.infer_freq(y) is not None and freq is not None
-    msg = f"pd.infer_freq(y.index): {pd.infer_freq(y)}, freq argument: {freq}"
+    if isinstance(y, pd.DatetimeIndex):
+        inferred_freq = pd.infer_freq(y)
+    elif isinstance(y, pd.PeriodIndex):
+        inferred_freq = y.freqstr
+    else:
+        inferred_freq = None
+    both_freq_is_missing = inferred_freq is None and freq is None
+    both_freq_is_present = inferred_freq is not None and freq is not None
+    msg = f"pd.infer_freq(y.index): {inferred_freq}, freq argument: {freq}"
     if both_freq_is_missing:
         raise ValueError(f"Frequency is missing. {msg}")
     if both_freq_is_present and pd.infer_freq(y) != freq:
