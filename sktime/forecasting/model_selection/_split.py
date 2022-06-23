@@ -408,9 +408,11 @@ class BaseSplitter(BaseObject):
         self,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
+        freq: str = None,
     ) -> None:
         self.window_length = window_length
         self.fh = fh
+        self.freq = freq
 
     def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
         """Get iloc references to train/test slits of `y`.
@@ -747,10 +749,13 @@ class CutoffSplitter(BaseSplitter):
         cutoffs: VALID_CUTOFF_TYPES,
         fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
+        freq: str = None,
     ) -> None:
         _check_inputs_for_compatibility([fh, cutoffs, window_length])
         self.cutoffs = cutoffs
-        super(CutoffSplitter, self).__init__(fh, window_length)
+        super(CutoffSplitter, self).__init__(
+            fh=fh, window_length=window_length, freq=freq
+        )
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -787,7 +792,7 @@ class CutoffSplitter(BaseSplitter):
                 test_window = np.array(
                     [y.get_loc(timestamp) for timestamp in test_window]
                 )
-            y_regular = pd.date_range(start=y.min(), end=y.max(), freq="D")
+            y_regular = pd.date_range(start=y.min(), end=y.max(), freq=self.freq)
             training_window = y.get_indexer(y_regular[training_window])
             test_window = y.get_indexer(y_regular[test_window])
             yield training_window, test_window
