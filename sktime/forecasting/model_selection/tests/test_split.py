@@ -139,7 +139,7 @@ def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = 
 def test_single_window_splitter(y, missing_obs, fh, window_length):
     """Test SingleWindowSplitter."""
     if _inputs_are_supported([fh, window_length]):
-        cv = SingleWindowSplitter(fh=fh, window_length=window_length)
+        cv = SingleWindowSplitter(fh=fh, window_length=window_length, freq="D")
         train_windows, test_windows, cutoffs, n_splits = _check_cv(
             cv=cv, y=y, missing_obs=missing_obs
         )
@@ -171,7 +171,7 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 def test_single_window_splitter_default_window_length(y, missing_obs, fh):
     """Test SingleWindowSplitter."""
-    cv = SingleWindowSplitter(fh=fh)
+    cv = SingleWindowSplitter(fh=fh, freq="D")
     train_windows, test_windows, cutoffs, n_splits = _check_cv(
         cv=cv, y=y, missing_obs=missing_obs
     )
