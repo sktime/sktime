@@ -34,6 +34,7 @@ SOFT_DEPENDENCIES = {
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
     "sktime.alignment.dtw_python": ["dtw"],
     "sktime.clustering": ["tslearn"],
+    "sktime.transformations.series.kalman_filter": ["pykalman", "filterpy"],
 }
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 
