@@ -35,31 +35,31 @@ def evaluate(
     Parameters
     ----------
     forecaster : sktime.forecaster
-          Any forecaster
+        Any forecaster
     cv : Temporal cross-validation splitter
-          Splitter of how to split the data into test data and train data
+        Splitter of how to split the data into test data and train data
     y : pd.Series
-          Target time series to which to fit the forecaster.
+        Target time series to which to fit the forecaster.
     X : pd.DataFrame, default=None
-          Exogenous variables
+        Exogenous variables
     strategy : {"refit", "update"}
-          Must be "refit" or "update". The strategy defines whether the `forecaster` is
-          only fitted on the first train window data and then updated,
-          or always refitted.
+        Must be "refit" or "update". The strategy defines whether the `forecaster` is
+        only fitted on the first train window data and then updated,
+        or always refitted.
     scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
-          Used to get a score function that takes y_pred and y_test arguments
-          and accept y_train as keyword argument.
-          If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
+        Used to get a score function that takes y_pred and y_test arguments
+        and accept y_train as keyword argument.
+        If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
     return_data : bool, default=False
-          Returns three additional columns in the DataFrame, by default False.
-          The cells of the columns contain each a pd.Series for y_train,
-          y_pred, y_test.
+        Returns three additional columns in the DataFrame, by default False.
+        The cells of the columns contain each a pd.Series for y_train,
+        y_pred, y_test.
 
     Returns
     -------
     pd.DataFrame
-          DataFrame that contains several columns with information regarding each
-          refit/update and prediction of the forecaster.
+        DataFrame that contains several columns with information regarding each
+        refit/update and prediction of the forecaster.
 
     Examples
     --------
