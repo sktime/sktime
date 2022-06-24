@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
-# from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
