@@ -799,11 +799,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         test_params = estimator_class.get_test_params()
         if not isinstance(test_params, list):
             test_params = [test_params]
-        orig_params = estimator.get_params(deep=False)
 
         for params in test_params:
-            params_full = deepcopy(orig_params)
+            # we construct the full parameter set for params
+            # params may only have parameters that are deviating from defaults
+            # in order to set non-default parameters back to defaults
+            params_full = estimator_class.get_param_defaults()
             params_full.update(params)
+
             msg = f"set_params of {estimator_class.__name__} does not return self"
             est_after_set = estimator.set_params(**params_full)
             assert est_after_set is estimator, msg

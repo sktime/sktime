@@ -14,9 +14,11 @@ Interface specifications below.
 
     class name: BaseObject
 
-Hyper-parameter inspection and setter methods
-    inspect hyper-parameters      - get_params()
-    setting hyper-parameters      - set_params(**params)
+Parameter inspection and setter methods
+    inspect parameter values      - get_params()
+    setting parameter values      - set_params(**params)
+    list of parameter names       - get_param_names()
+    dict of parameter defaults    - get_param_defaults()
 
 Tag inspection and setter methods
     inspect tags (all)            - get_tags()
@@ -112,8 +114,80 @@ class BaseObject(_BaseEstimator):
         A clone is a different object without shared references, in post-init state.
         This function is equivalent to returning sklearn.clone of self.
         Equal in value to `type(self)(**self.get_params(deep=False))`.
+
+        Returns
+        -------
+        instance of type(self), clone of self (see above)
         """
         return clone(self)
+
+    @classmethod
+    def _get_init_signature(cls):
+        """Get init sigature of cls, for use in parameter inspection.
+
+        Returns
+        -------
+        list of inspect Parameter objects (including defaults)
+
+        Raises
+        ------
+        RuntimeError if cls has varargs in __init__
+        """
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
+
+        # introspect the constructor arguments to find the model parameters
+        # to represent
+        init_signature = inspect.signature(init)
+
+        # Consider the constructor parameters excluding 'self'
+        parameters = [
+            p
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
+        for p in parameters:
+            if p.kind == p.VAR_POSITIONAL:
+                raise RuntimeError(
+                    "scikit-learn compatible estimators should always "
+                    "specify their parameters in the signature"
+                    " of their __init__ (no varargs)."
+                    " %s with constructor %s doesn't "
+                    " follow this convention." % (cls, init_signature)
+                )
+        return parameters
+
+    @classmethod
+    def get_param_names(cls):
+        """Get parameter names for the object.
+
+        Returns
+        -------
+        param_names: list of str, alphabetically sorted list of parameter names of cls
+        """
+        parameters = cls._get_init_signature()
+        param_names = sorted([p.name for p in parameters])
+        return param_names
+
+    @classmethod
+    def get_param_defaults(cls):
+        """Get parameter defaults for the object.
+
+        Returns
+        -------
+        default_dict: dict with str keys
+            keys are all parameters of cls that have a default defined in __init__
+            values are the defaults, as defined in __init__
+        """
+        parameters = cls._get_init_signature()
+        default_dict = {
+            x.name: x.default for x in parameters if x.default != inspect._empty
+        }
+        return default_dict
 
     def set_params(self, **params):
         """Set the parameters of this object.
