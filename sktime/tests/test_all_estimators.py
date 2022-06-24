@@ -805,7 +805,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             params_full = deepcopy(orig_params)
             params_full.update(params)
             msg = f"set_params of {estimator_class.__name__} does not return self"
-            assert estimator.set_params(**params_full) is estimator, msg
+            est_after_set = estimator.set_params(**params_full)
+            assert est_after_set is estimator, msg
 
             is_equal, equals_msg = deep_equals(
                 estimator.get_params(deep=False), params_full, return_msg=True
