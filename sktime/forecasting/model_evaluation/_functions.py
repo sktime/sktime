@@ -64,7 +64,7 @@ def evaluate(
     Examples
     --------
         When scoring=None, the default loss function is MeanAbsolutePercentageError
-        This metrics guides leads `evaluate` to perform benchmark on
+        This metrics leads `evaluate` to perform benchmark on
         point forecast
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
