@@ -98,6 +98,7 @@ def evaluate(
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
+    >>> forecaster = NaiveForecaster(strategy="drift")
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
     """
     _check_strategy(strategy)
