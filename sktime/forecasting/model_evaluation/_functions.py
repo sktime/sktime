@@ -67,8 +67,6 @@ def evaluate(
         param `scoring`
         When evaluating model/estimators on point forecast, users can either let
         scoring=None, which defaults to MeanAbsolutePercentageError
-        This metrics leads `evaluate` to perform benchmark on
-        point forecast
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
@@ -79,8 +77,8 @@ def evaluate(
         fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
-        There are other metrics that are compatible with point forecast.
-        For a complete list, see
+        Optionally, users may select other metrics that are
+        compatible with point forecast. For a complete list, see
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
         To evaluate models/estimators using point forecast with these metrics,
