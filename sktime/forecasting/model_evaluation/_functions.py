@@ -34,57 +34,71 @@ def evaluate(
 
     Parameters
     ----------
-      forecaster : sktime.forecaster
+    forecaster : sktime.forecaster
           Any forecaster
-      cv : Temporal cross-validation splitter
+    cv : Temporal cross-validation splitter
           Splitter of how to split the data into test data and train data
-      y : pd.Series
+    y : pd.Series
           Target time series to which to fit the forecaster.
-      X : pd.DataFrame, default=None
+    X : pd.DataFrame, default=None
           Exogenous variables
-      strategy : {"refit", "update"}
+    strategy : {"refit", "update"}
           Must be "refit" or "update". The strategy defines whether the `forecaster` is
           only fitted on the first train window data and then updated,
           or always refitted.
-      scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
+    scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
           Used to get a score function that takes y_pred and y_test arguments
           and accept y_train as keyword argument.
           If None, then uses scoring = MeanAbsolutePercentageError(symmetric=True).
-      return_data : bool, default=False
+    return_data : bool, default=False
           Returns three additional columns in the DataFrame, by default False.
           The cells of the columns contain each a pd.Series for y_train,
           y_pred, y_test.
 
     Returns
     -------
-      pd.DataFrame
+    pd.DataFrame
           DataFrame that contains several columns with information regarding each
           refit/update and prediction of the forecaster.
 
     Examples
     --------
-      >>> from sktime.datasets import load_airline
-      >>> from sktime.forecasting.model_evaluation import evaluate
-      >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
-      >>> from sktime.forecasting.naive import NaiveForecaster
-      >>> y = load_airline()
-      >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
-      >>> cv = ExpandingWindowSplitter(
+        When scoring=None, the default loss function is MeanAbsolutePercentageError
+        This metrics guides leads `evaluate` to perform benchmark on
+        point forecast
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.model_evaluation import evaluate
+    >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
+    >>> cv = ExpandingWindowSplitter(
         initial_window=24,
         step_length=12,
         fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-      >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
-    -------
-      >>> # To evaluate point forecast using metrics
-      >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
-      >>> loss = MeanAbsoluteError()
-      >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
-    -------
-      >>> # To evaluate probabilistic forecast using metrics
-      >>> from sktime.forecasting.naive import NaiveVariance
-      >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
-      >>> loss = PinballLoss()
-      >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
+
+        There are other metrics that are compatible with point forecast.
+        For a complete list, see
+        https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
+
+        To evaluate models/estimators using point forecast
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
+    >>> loss = MeanAbsoluteError()
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
+
+        To evaluate models/estimators on interval predictions or quantile predictions,
+        the metrics PinballLoss can be used. The list of estimators that are
+        compatible with this metrics are
+    >>> from sktime.registry import all_estimators
+    >>> all_estimators("forecaster", filter_tags={"capability:pred_int": True},
+        as_dataframe=True)
+
+        Evaluate estimators using PinballLoss
+    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+    >>> loss = PinballLoss()
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
