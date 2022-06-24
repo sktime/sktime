@@ -639,8 +639,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         if isinstance(param_list, dict):
             param_list = [param_list]
         assert all(isinstance(x, dict) for x in param_list), (
-            "get_test_params must return list of dict or dict, "
-            f"found {param_list}"
+            f"get_test_params must return list of dict or dict, found {param_list}"
         )
         param_names = estimator_class.get_param_names()
         assert all(set(x.keys()).issubset(set(param_names)) for x in param_list), (
@@ -648,9 +647,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             "i.e., names of arguments of __init__"
         )
         if len(param_names) > 0:
-            assert len(param_list) > 1, (
-                "get_test_params should return at least two test parameter sets"
-            )
+            assert (
+                len(param_list) > 1
+            ), "get_test_params should return at least two test parameter sets"
         params_tested = set()
         for params in param_list:
             params_tested = params_tested.union(params.keys())
