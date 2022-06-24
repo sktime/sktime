@@ -63,6 +63,8 @@ def evaluate(
 
     Examples
     --------
+        The type of evaluation that is done by `evaluate` depends on metrics in
+        param `scoring`
         When scoring=None, the default loss function is MeanAbsolutePercentageError
         This metrics leads `evaluate` to perform benchmark on
         point forecast
@@ -82,7 +84,7 @@ def evaluate(
         For a complete list, see
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
-        To evaluate models/estimators using point forecast
+        To evaluate models/estimators using point forecast with these metrics
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
