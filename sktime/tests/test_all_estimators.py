@@ -638,9 +638,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         )
         if isinstance(param_list, dict):
             param_list = [param_list]
-        assert all(isinstance(x, dict) for x in param_list), (
-            f"get_test_params must return list of dict or dict, found {param_list}"
-        )
+        assert all(
+            isinstance(x, dict) for x in param_list
+        ), f"get_test_params must return list of dict or dict, found {param_list}"
         param_names = estimator_class.get_param_names()
         assert all(set(x.keys()).issubset(set(param_names)) for x in param_list), (
             "get_test_params return dict keys must be valid parameter names, "
