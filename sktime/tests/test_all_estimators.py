@@ -628,6 +628,41 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"found {type(estimator)}"
         )
 
+    def test_get_test_params(self, estimator_class):
+        """Check that get_test_params returns valid parameter sets."""
+        param_list = estimator_class.get_test_params()
+
+        assert isinstance(param_list, list) or isinstance(param_list, dict), (
+            "get_test_params must return list of dict or dict, "
+            f"found object of type {type(param_list)}"
+        )
+        if isinstance(param_list, dict):
+            param_list = [param_list]
+        assert all(isinstance(x, dict) for x in param_list), (
+            "get_test_params must return list of dict or dict, "
+            f"found {param_list}"
+        )
+        param_names = estimator_class.get_param_names()
+        assert all(set(x.keys()).issubset(set(param_names)) for x in param_list), (
+            "get_test_params return dict keys must be valid parameter names, "
+            "i.e., names of arguments of __init__"
+        )
+        if len(param_names) > 0:
+            assert len(param_list) > 1, (
+                "get_test_params should return at least two test parameter sets"
+            )
+        params_tested = set()
+        for params in param_list:
+            params_tested = params_tested.union(params.keys())
+
+        # this test is too harsh for the current estimator base
+        # params_not_tested = set(param_names).difference(params_tested)
+        # assert len(params_not_tested) == 0, (
+        #     f"get_test_params shoud set each parameter of {estimator_class} "
+        #     f"to a non-default value at least once, but the following "
+        #     f"parameters are not tested: {params_not_tested}"
+        # )
+
     def test_create_test_instances_and_names(self, estimator_class):
         """Check that create_test_instances_and_names works."""
         estimators, names = estimator_class.create_test_instances_and_names()
