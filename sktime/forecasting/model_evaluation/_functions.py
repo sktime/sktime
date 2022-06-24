@@ -65,7 +65,8 @@ def evaluate(
     --------
         The type of evaluation that is done by `evaluate` depends on metrics in
         param `scoring`
-        When scoring=None, the default loss function is MeanAbsolutePercentageError
+        When evaluating model/estimators on point forecast, users can either let
+        scoring=None, which defaults to MeanAbsolutePercentageError
         This metrics leads `evaluate` to perform benchmark on
         point forecast
     >>> from sktime.datasets import load_airline
@@ -82,14 +83,15 @@ def evaluate(
         For a complete list, see
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
-        To evaluate models/estimators using point forecast with these metrics
+        To evaluate models/estimators using point forecast with these metrics,
+        simply add that metrics as follows
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        To evaluate models/estimators on interval predictions or quantile predictions,
-        the metrics PinballLoss can be used. The list of estimators that are
-        compatible with this metrics are
+        When evaluating models/estimators on interval predictions or
+        quantile predictions, the PinballLoss metrics can be used.
+        The list of estimators that are compatible with this metrics are
     >>> from sktime.registry import all_estimators
     >>> all_estimators("forecaster", filter_tags={"capability:pred_int": True},
         as_dataframe=True)
