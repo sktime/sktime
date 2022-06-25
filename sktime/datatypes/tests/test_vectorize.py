@@ -163,7 +163,7 @@ def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
 
     # if both iterate_as and as_scitype are "Panel", should raise an error
     with pytest.raises(ValueError, match=r'is_scitype is "Panel"'):
-        VectorizedDF(X=fixture, iterate_as="Panel", is_scitype="Panel")
+        VectorizedDF(X=fixture, iterate_as="Hierarchical", is_scitype="Panel")
 
     # invalid argument to iterate_as
     with pytest.raises(ValueError, match=r"iterate_as must be"):

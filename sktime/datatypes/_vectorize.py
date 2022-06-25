@@ -173,9 +173,9 @@ class VectorizedDF:
         if row_ix is None and col_ix is None:
             return [(X.index, X.columns)]
         if row_ix is None:
-            return product(X.index, col_ix)
+            return product([X.index], col_ix)
         if col_ix is None:
-            return product(row_ix, X.columns)
+            return product(row_ix, [X.columns])
         # if row_ix and col_ix are both not None
         return product(row_ix, col_ix)
 
@@ -194,8 +194,8 @@ class VectorizedDF:
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
         X = self.X_multiindex
-        row_ind, col_ind = self.get_iter_indices()[i]
-        item = X[[col_ind]].loc[row_ind]
+        row_ind, col_ind = list(self.get_iter_indices())[i]
+        item = X[pd.Index(col_ind)].loc[row_ind]
         item = _enforce_index_freq(item)
         # pd-multiindex type (Panel case) expects these index names:
         if self.iterate_as == "Panel":
@@ -231,7 +231,7 @@ class VectorizedDF:
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
-        row_ix, col_ix = self.get_iter_indices()
+        row_ix, col_ix = self.iter_indices
         if row_ix is None and col_ix is None:
             X_mi_reconstructed = self.X_multiindex
         elif col_ix is None:
