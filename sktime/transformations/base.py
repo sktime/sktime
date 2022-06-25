@@ -913,7 +913,7 @@ class BaseTransformer(BaseEstimator):
             # if fit is called, create container of transformers, but not in update
             if methodname == "fit":
                 self.transformers_ = pd.DataFrame(index=row_idx, columns=col_idx)
-                for ix in range(len(Xs)):
+                for ix in range(n):
                     i, j = X.get_iloc_indexer(ix)
                     self.transformers_.iloc[i].iloc[j] = self.clone()
 
