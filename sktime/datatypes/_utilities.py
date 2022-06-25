@@ -249,8 +249,8 @@ def get_window(obj, window_length=None, lag=None):
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
-    if obj is None:
-        return None
+    if obj is None or (window_length is None and lag is None):
+        return obj
 
     valid, _, metadata = check_is_scitype(
         obj, scitype=["Series", "Panel", "Hierarchical"], return_metadata=True
