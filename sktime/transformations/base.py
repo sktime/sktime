@@ -952,14 +952,14 @@ class BaseTransformer(BaseEstimator):
 
             # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
-                X, _, Xs, ys, n, _ = unwrap(kwargs)
+                X, _, Xs, ys, n, _, _ = unwrap(kwargs)
 
                 # fit/transform the i-th series/panel with a new clone of self
                 Xts = []
-                for i in range(n):
-                    transformer = self.clone().fit(X=Xs[i], y=ys[i], **kwargs)
+                for ix in range(n):
+                    transformer = self.clone().fit(X=Xs[ix], y=ys[ix], **kwargs)
                     method = getattr(transformer, methodname)
-                    Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
+                    Xts += [method(X=Xs[ix], y=ys[ix], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
             # # one more thing before returning:
