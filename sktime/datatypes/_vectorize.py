@@ -210,7 +210,7 @@ class VectorizedDF:
         row_ind, col_ind = self._iter_indices()[i]
         if isinstance(col_ind, list):
             col_ind = pd.Index(col_ind)
-        else:
+        elif not isinstance(col_ind, pd.Index):
             col_ind = [col_ind]
         item = X[col_ind].loc[row_ind]
         item = _enforce_index_freq(item)
