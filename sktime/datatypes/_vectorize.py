@@ -176,6 +176,7 @@ class VectorizedDF:
             return product(X.index, col_ix)
         if col_ix is None:
             return product(row_ix, X.columns)
+        # if row_ix and col_ix are both not None
         return product(row_ix, col_ix)
 
     def __len__(self):
@@ -187,6 +188,7 @@ class VectorizedDF:
             return len(col_ix)
         if col_ix is None:
             return len(row_ix)
+        # if row_ix and col_ix are both not None
         return len(row_ix) * len(col_ix)
 
     def __getitem__(self, i: int):
@@ -209,7 +211,7 @@ class VectorizedDF:
 
         Parameters
         ----------
-        df_list : iterable of objects of same type as __getitem__ returns.
+        df_list : iterable of objects of same type and sequence as __getitem__ returns.
             can be self, but will in general be another object to be useful.
             Example: [some_operation(df) for df in self] that leaves types the same
         convert_back : bool, default = False
@@ -230,12 +232,25 @@ class VectorizedDF:
             if convert_back=True, will have same format and mtype as X input to __init__
         """
         row_ix, col_ix = self.get_iter_indices()
-        X_mi_reconstructed = pd.concat(df_list, keys=ix)
+        if row_ix is None and col_ix is None:
+            X_mi_reconstructed = self.X_multiindex
+        elif col_ix is None:
+            X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
+        elif row_ix is None:
+            X_mi_reconstructed = pd.concat(df_list, axis=1)
+        else:  # both col_ix and row_ix are not None
+            col_concats = []
+            row_n = len(row_ix)
+            col_n = len(col_ix)
+            for i in range(row_n):
+                ith_col_block = df_list[i*col_n:(i+1)*col_n]
+                col_concats += pd.concat(ith_col_block, axis=1)
+            X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
         X_mi_index = X_mi_reconstructed.index
-        X_orig_index = self.X_multiindex.index
-        if overwrite_index and len(X_mi_index.names) == len(X_orig_index.names):
-            X_mi_reconstructed.index = X_mi_index.set_names(X_orig_index.names)
+        X_orig_row_index = self.X_multiindex.index
+        if overwrite_index and len(X_mi_index.names) == len(X_orig_row_index.names):
+            X_mi_reconstructed.index = X_mi_index.set_names(X_orig_row_index.names)
 
         if not convert_back:
             return X_mi_reconstructed
