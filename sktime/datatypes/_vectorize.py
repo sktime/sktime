@@ -96,9 +96,7 @@ class VectorizedDF:
             )
 
         if iterate_cols not in [True, False]:
-            raise ValueError(
-                f"iterate_cols must be a boolean, found {iterate_as}"
-            )
+            raise ValueError(f"iterate_cols must be a boolean, found {iterate_as}")
         self.iterate_cols = iterate_cols
 
         self.converter_store = dict()
@@ -243,7 +241,7 @@ class VectorizedDF:
             row_n = len(row_ix)
             col_n = len(col_ix)
             for i in range(row_n):
-                ith_col_block = df_list[i*col_n:(i+1)*col_n]
+                ith_col_block = df_list[i * col_n : (i + 1) * col_n]
                 col_concats += pd.concat(ith_col_block, axis=1)
             X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
