@@ -193,7 +193,7 @@ def test_vectorization_multivariate(mtype, exogeneous):
     )
 
     if exogeneous:
-        y_fit = get_window(y, lag=1)
+        y_fit = get_window(y, lag=pd.Timedelta("1D"))
         X_fit = y_fit
         X_pred = get_window(y, window_length=pd.Timedelta("1D"), lag=pd.Timedelta("0D"))
     else:
