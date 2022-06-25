@@ -39,7 +39,6 @@ __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
 from itertools import product
-from multiprocessing.sharedctypes import Value
 from warnings import warn
 
 import numpy as np
