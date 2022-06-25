@@ -167,7 +167,6 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
-
         if estimator_instance.get_tag("scitype:y") == "multivariate":
             y = _make_series(n_columns=1)
             with pytest.raises(ValueError, match=r"two or more variables"):
