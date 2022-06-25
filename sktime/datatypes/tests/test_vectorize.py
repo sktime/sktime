@@ -39,6 +39,27 @@ def _get_all_mtypes_for_scitype(scitype):
     return mtypes
 
 
+def _is_valid_iterate_as(scitype, iterate_as):
+    """Return whether iterate_as has equal or lower type as scitype.
+
+    Parameters
+    ----------
+    scitype : str - scitype
+    iterate_as : str - scitype
+
+    Returns
+    -------
+    valid : bool, whether iterate_as can be iterated over (lower or equal type)
+    """
+    if scitype == "Hierarchical":
+        return True
+    if scitype == "Panel" and iterate_as == "Hierarchical":
+        return False
+    if scitype == "Series" and iterate_as != "Series":
+        return False
+    return True
+
+
 def _generate_scitype_mtype_combinations():
     """Return scitype/mtype tuples for pytest_generate_tests.
 
@@ -124,13 +145,15 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("scitype,mtype", keys, ids=ids)
 
     if "iterate_as" in fixturenames:
-        metafunc.parametrize("iterate_as", ["Panel", "Series"])
+        metafunc.parametrize("iterate_as", ["Hierarchical", "Panel", "Series"])
 
     if "iterate_cols" in fixturenames:
         metafunc.parametrize("iterate_cols", [False, True])
 
 
-def test_construct_vectorizeddf(scitype, mtype, fixture_index, iterate_cols):
+def test_construct_vectorizeddf(
+    scitype, mtype, fixture_index, iterate_cols, iterate_as
+):
     """Test that VectorizedDF constructs with valid arguments.
 
     Fixtures parameterized
@@ -140,22 +163,20 @@ def test_construct_vectorizeddf(scitype, mtype, fixture_index, iterate_cols):
     fixture_index : int - index of fixture tuple with that scitype and mtype
     iterate_cols : bool - whether to iterate over columns
     """
+    if not _is_valid_iterate_as(scitype, iterate_as):
+        return None
+
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # iterate as Series, without automated identification of scitype
     VectorizedDF(
-        X=fixture, iterate_as="Series", is_scitype=scitype, iterate_cols=iterate_cols
+        X=fixture, iterate_as=iterate_as, is_scitype=scitype, iterate_cols=iterate_cols
     )
 
     # iterate as Series, with automated identification of scitype
     VectorizedDF(
-        X=fixture, iterate_as="Series", is_scitype=None, iterate_cols=iterate_cols
-    )
-
-    # iterate as Panel, with automated identification of scitype
-    VectorizedDF(
-        X=fixture, iterate_as="Panel", is_scitype=None, iterate_cols=iterate_cols
+        X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
 
@@ -196,13 +217,15 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     iterate_as : str - level on which to iterate over
     iterate_cols : bool - whether to iterate over columns
     """
-    # escape for the invalid Panel/Panel combination, see above
+    # escape for the invalid combinations, see above
+    if not _is_valid_iterate_as(scitype, iterate_as):
+        return None
 
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # get true length
-    if iterate_as == "Panel" and scitype == "Panel":
+    if iterate_as == scitype:
         true_length = 1
     elif iterate_as == "Series":
         _, _, metadata = check_is_mtype(
@@ -242,8 +265,8 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     iterate_as : str - level on which to iterate over
     iterate_cols : bool - whether to iterate over columns
     """
-    # escape for the invalid Panel/Panel combination, see above
-    if iterate_as == "Panel" and scitype == "Panel":
+    # escape for the invalid combinations, see above
+    if not _is_valid_iterate_as(scitype, iterate_as):
         return None
 
     # retrieve fixture for checking
@@ -282,8 +305,8 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
     iterate_as : str - level on which to iterate over
     iterate_cols : bool - whether to iterate over columns
     """
-    # escape for the invalid Panel/Panel combination, see above
-    if iterate_as == "Panel" and scitype == "Panel":
+    # escape for the invalid combinations, see above
+    if not _is_valid_iterate_as(scitype, iterate_as):
         return None
 
     # retrieve fixture for checking
@@ -302,8 +325,10 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
         correct_mtype = "pd.DataFrame"
     elif iterate_as == "Panel":
         correct_mtype = "pd-multiindex"
+    elif iterate_as == "Hierarchical":
+        correct_mtype = "pd_multiindex_hier"
     else:
-        RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
+        raise RuntimeError(f"found unexpected iterate_as value: {iterate_as}")
 
     X_list_valid = [
         check_is_mtype(X, mtype=correct_mtype, scitype=iterate_as) for X in X_list
@@ -331,8 +356,8 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
     AssertionError if examples are not correctly identified
     error if check itself raises an error
     """
-    # escape for the invalid Panel/Panel combination, see above
-    if iterate_as == "Panel" and scitype == "Panel":
+    # escape for the invalid combinations, see above
+    if not _is_valid_iterate_as(scitype, iterate_as):
         return None
 
     # retrieve fixture for checking
