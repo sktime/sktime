@@ -51,7 +51,7 @@ class VectorizedDF:
         Used to obtain original format after applying operations to self iterated
     """
 
-    SERIES_SCITYPES = ["Series," "Panel", "Hierarchical"]
+    SERIES_SCITYPES = ["Series", "Panel", "Hierarchical"]
 
     def __init__(
         self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
@@ -71,7 +71,7 @@ class VectorizedDF:
         if is_scitype is not None and is_scitype not in self.SERIES_SCITYPES:
             raise ValueError(
                 'is_scitype must be None, "Hierarchical", "Panel", or "Series" ',
-                f"found {is_scitype}",
+                f"found: {is_scitype}",
             )
         self.iterate_as = iterate_as
 
@@ -81,7 +81,7 @@ class VectorizedDF:
         if iterate_as not in self.SERIES_SCITYPES:
             raise ValueError(
                 f'iterate_as must be "Series", "Panel", or "Hierarchical", '
-                f"found {iterate_as}"
+                f"found: {iterate_as}"
             )
         self.iterate_as = iterate_as
 
