@@ -225,7 +225,7 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # get true length
-    if iterate_as == "Panel" and scitype == "Panel":
+    if iterate_as == scitype:
         true_length = 1
     elif iterate_as == "Series":
         _, _, metadata = check_is_mtype(
