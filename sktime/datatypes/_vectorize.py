@@ -5,6 +5,7 @@
 Contains VectorizedDF class.
 """
 from itertools import product
+
 import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
