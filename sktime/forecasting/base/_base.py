@@ -1174,15 +1174,13 @@ class BaseForecaster(BaseEstimator):
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
 
-            requires_vectorization = y_scitype not in y_inner_scitype
-
-            if (
+            req_vec_because_rows = y_scitype not in y_inner_scitype
+            req_vec_because_cols = (
                 self.get_tag("scitype:y") == "univariate"
                 and not y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    "y must be univariate, but found more than one variable"
-                )
+            )
+            requires_vectorization = req_vec_because_rows or req_vec_because_cols
+
             if (
                 self.get_tag("scitype:y") == "multivariate"
                 and y_metadata["is_univariate"]
@@ -1263,7 +1261,12 @@ class BaseForecaster(BaseEstimator):
         else:
             iterate_as = _most_complex_scitype(y_inner_scitype)
             if y is not None:
-                y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+                y_inner = VectorizedDF(
+                    X=y,
+                    iterate_as=iterate_as,
+                    is_scitype=y_scitype,
+                    iterate_cols=req_vec_because_cols,
+                )
             else:
                 y_inner = None
             if X is not None:
@@ -1531,7 +1534,7 @@ class BaseForecaster(BaseEstimator):
             for ix in range(len(ys)):
                 i, j = y.get_iloc_indexer(ix)
                 self.forecasters_.iloc[i].iloc[j] = self.clone()
-                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[ix], **kwargs)
+                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:
@@ -1547,7 +1550,7 @@ class BaseForecaster(BaseEstimator):
             for i, j in product(range(n), range(m)):
                 ix += 1
                 method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                y_preds += [method(X=Xs[ix], **kwargs)]
+                y_preds += [method(X=Xs[i], **kwargs)]
             y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 

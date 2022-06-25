@@ -10,6 +10,7 @@ from operator import mul
 import pytest
 
 from sktime.datatypes import check_is_mtype, convert
+from sktime.datatypes._utilities import get_window
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
@@ -177,6 +178,58 @@ def test_vectorization_preserves_row_index_names(method):
     )
 
     assert y_pred.index.names == y.index.names, msg
+
+
+@pytest.mark.parametrize("mtype", HIER_MTYPES)
+@pytest.mark.parametrize("exogeneous", [True, False])
+def test_vectorization_multivariate(mtype, exogeneous):
+    """Test that forecaster vectorization preserves row index names in forecast."""
+    hierarchy_levels = (2, 4)
+    n_instances = reduce(mul, hierarchy_levels)
+
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels, random_state=84, n_columns=2
+    )
+
+    if exogeneous:
+        y_fit = get_window(y, lag=1)
+        X_fit = y_fit
+        X_pred = get_window(y, window_length=1)
+    else:
+        y_fit = y
+        X_fit = None
+        X_pred = None
+
+    est = ARIMA().fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
+    y_pred = est.predict(X=X_pred)
+    valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
+
+    msg = (
+        f"vectorization of forecasters does not work for test example "
+        f"of mtype {mtype}, using the ARIMA forecaster"
+    )
+    assert valid, msg
+
+    msg = (
+        "vectorization over variables produces wrong set of variables in predict, "
+        f"expected {y_fit.columns}, found {y_pred.columns}"
+    )
+    assert y_fit.columns == y_pred.columns, msg
+
+    y_pred_instances = metadata["n_instances"]
+    msg = (
+        f"vectorization test produces wrong number of instances "
+        f"expected {n_instances}, found {y_pred_instances}"
+    )
+
+    assert y_pred_instances == n_instances, msg
+
+    y_pred_equal_length = metadata["is_equal_length"]
+    msg = (
+        "vectorization test produces non-equal length Panel forecast, should be "
+        "equal length, and length equal to the forecasting horizon [1, 2, 3]"
+    )
+    assert y_pred_equal_length, msg
 
 
 def test_dynamic_tags_reset_properly():
