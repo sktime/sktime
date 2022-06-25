@@ -889,6 +889,11 @@ class BaseTransformer(BaseEstimator):
             y = kwargs.pop("y", None)
 
             row_idx, col_idx = y.get_iter_indices()
+            if row_idx is None:
+                row_idx = ["transformers"]
+            if col_idx is None:
+                col_idx = ["transformers"]
+
             Xs = X.as_list()
             n = len(Xs)
 
@@ -907,11 +912,6 @@ class BaseTransformer(BaseEstimator):
 
             # if fit is called, create container of transformers, but not in update
             if methodname == "fit":
-                if row_idx is None:
-                    row_idx = ["transformers"]
-                if col_idx is None:
-                    col_idx = ["transformers"]
-
                 self.transformers_ = pd.DataFrame(index=row_idx, columns=col_idx)
                 for ix in range(len(Xs)):
                     i, j = X.get_iloc_indexer(ix)
