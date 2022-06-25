@@ -219,7 +219,7 @@ GET_LATEST_WINDOW_SUPPORTED_MTYPES = [
 ]
 
 
-def get_window(obj, window_length=None, lag=0):
+def get_window(obj, window_length=None, lag=None):
     """Slice obj to the time index window with given length and lag.
 
     Returns time series or time series panel with time indices
@@ -249,8 +249,8 @@ def get_window(obj, window_length=None, lag=0):
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
-    if window_length is None or obj is None:
-        return obj
+    if obj is None:
+        return None
 
     valid, _, metadata = check_is_scitype(
         obj, scitype=["Series", "Panel", "Hierarchical"], return_metadata=True
@@ -269,6 +269,8 @@ def get_window(obj, window_length=None, lag=0):
         # and always subset on first dimension
         if obj.ndim > 1:
             obj = obj.swapaxes(1, -1)
+        if lag is None:
+            lag = 0
         obj_len = len(obj)
         window_start = max(-window_length - lag, -obj_len)
         window_end = max(-lag, -obj_len)
@@ -284,21 +286,31 @@ def get_window(obj, window_length=None, lag=0):
     # pd.DataFrame(Series), pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame):
         cutoff = get_cutoff(obj)
-        win_start_excl = cutoff - window_length - lag
-        win_end_incl = cutoff - lag
 
         if not isinstance(obj.index, pd.MultiIndex):
             time_indices = obj.index
         else:
             time_indices = obj.index.get_level_values(-1)
 
-        win_select = (time_indices > win_start_excl) & (time_indices <= win_end_incl)
+        if lag is None:
+            win_end_incl = cutoff
+            win_select = time_indices <= win_end_incl
+            if window_length is not None:
+                win_start_excl = cutoff - window_length
+                win_select = win_select & (time_indices > win_start_excl)
+        else:
+            win_end_incl = cutoff - lag
+            win_select = time_indices <= win_end_incl
+            if window_length is not None:
+                win_start_excl = cutoff - window_length - lag
+                win_select = win_select & (time_indices > win_start_excl)
+
         obj_subset = obj.iloc[win_select]
 
         return convert_to(obj_subset, obj_in_mtype)
 
     raise ValueError(
-        "bug in get_latest_window, unreachable condition, ifs should be exhaustive"
+        "bug in get_window, unreachable condition, ifs should be exhaustive"
     )
 
 
