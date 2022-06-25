@@ -166,17 +166,31 @@ class VectorizedDF:
             i-th element of list selects rows/columns in i-th iterate sub-DataFrame
             first element of pair are rows, second element are columns selected
         """
+        return self.iter_indices
+
+    def _iter_indices(self):
+        """Get indices that are iterated over in vectorization.
+
+        Returns
+        -------
+        list of pair of pandas.Index or pandas.MultiIndex
+            iterable with unique indices that are iterated over
+            use to reconstruct data frame after iteration
+            i-th element of list selects rows/columns in i-th iterate sub-DataFrame
+            first element of pair are rows, second element are columns selected
+        """
         X = self.X_multiindex
         row_ix, col_ix = self.iter_indices
 
         if row_ix is None and col_ix is None:
-            return [(X.index, X.columns)]
-        if row_ix is None:
-            return product([X.index], col_ix)
+            ret = [(X.index, X.columns)]
+        elif row_ix is None:
+            ret = product([X.index], col_ix)
         if col_ix is None:
-            return product(row_ix, [X.columns])
-        # if row_ix and col_ix are both not None
-        return product(row_ix, col_ix)
+            ret = product(row_ix, [X.columns])
+        else:  # if row_ix and col_ix are both not None
+            ret = product(row_ix, col_ix)
+        return list(ret)
 
     def __len__(self):
         """Return number of indices to iterate over."""
@@ -193,8 +207,10 @@ class VectorizedDF:
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
         X = self.X_multiindex
-        row_ind, col_ind = list(self.get_iter_indices())[i]
-        item = X[pd.Index(col_ind)].loc[row_ind]
+        row_ind, col_ind = self._iter_indices()[i]
+        if isinstance(col_ind, list):
+            col_ind = pd.Index(col_ind)
+        item = X[col_ind].loc[row_ind]
         item = _enforce_index_freq(item)
         # pd-multiindex type (Panel case) expects these index names:
         if self.iterate_as == "Panel":
@@ -230,7 +246,7 @@ class VectorizedDF:
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
-        row_ix, col_ix = self.iter_indices
+        row_ix, col_ix = self.get_iter_indices()
         if row_ix is None and col_ix is None:
             X_mi_reconstructed = self.X_multiindex
         elif col_ix is None:
