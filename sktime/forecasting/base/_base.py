@@ -39,6 +39,7 @@ __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
 from itertools import product
+from multiprocessing.sharedctypes import Value
 from warnings import warn
 
 import numpy as np
@@ -1530,8 +1531,8 @@ class BaseForecaster(BaseEstimator):
             self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
             for ix in range(len(ys)):
                 i, j = y.get_iloc_indexer(ix)
-                self.forecasters_.iloc[i, j] = self.clone()
-                self.forecasters_.iloc[i, j].fit(y=ys[ix], X=Xs[ix], **kwargs)
+                self.forecasters_.iloc[i].iloc[j] = self.clone()
+                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[ix], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:

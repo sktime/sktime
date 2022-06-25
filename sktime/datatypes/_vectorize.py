@@ -182,9 +182,9 @@ class VectorizedDF:
         if row_ix is None and col_ix is None:
             return (0, 0)
         elif row_ix is None:
-            return (i, 0)
-        elif col_ix is None:
             return (0, i)
+        elif col_ix is None:
+            return (i, 0)
         else:
             col_n = len(col_ix)
             return (i // col_n, i % col_n)
