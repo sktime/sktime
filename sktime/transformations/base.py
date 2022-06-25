@@ -888,7 +888,7 @@ class BaseTransformer(BaseEstimator):
             X = kwargs.pop("X")
             y = kwargs.pop("y", None)
 
-            row_idx, col_idx = y.get_iter_indices()
+            row_idx, col_idx = X.get_iter_indices()
             if row_idx is None:
                 row_idx = ["transformers"]
             if col_idx is None:
