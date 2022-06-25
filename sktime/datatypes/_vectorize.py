@@ -109,7 +109,14 @@ class VectorizedDF:
         """Convert X to a pandas multiindex format."""
         is_scitype = self.is_scitype
 
-        if is_scitype == "Panel":
+        if is_scitype == "Series":
+            return convert_to(
+                X,
+                to_type="pd.DataFrame",
+                as_scitype="Series",
+                store=self.converter_store,
+            )
+        elif is_scitype == "Panel":
             return convert_to(
                 X,
                 to_type="pd-multiindex",
@@ -207,7 +214,7 @@ class VectorizedDF:
             ret = [(X.index, X.columns)]
         elif row_ix is None:
             ret = product([X.index], col_ix)
-        if col_ix is None:
+        elif col_ix is None:
             ret = product(row_ix, [X.columns])
         else:  # if row_ix and col_ix are both not None
             ret = product(row_ix, col_ix)
