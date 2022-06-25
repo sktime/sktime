@@ -160,13 +160,34 @@ class VectorizedDF:
 
         Returns
         -------
-        list of pair of pandas.Index or pandas.MultiIndex
-            iterable with unique indices that are iterated over
-            use to reconstruct data frame after iteration
+        pair of pandas.Index or pandas.MultiIndex or None
             i-th element of list selects rows/columns in i-th iterate sub-DataFrame
-            first element of pair are rows, second element are columns selected
+            first element is row index, second element is column index
+            if rows/columns are not iterated over, row/column element is None  
+            use to reconstruct data frame after iteration
         """
         return self.iter_indices
+
+    def get_iloc_indexer(self, i: int):
+        """Get iloc row/column indexer for i-th list element.
+
+        Returns
+        -------
+        pair of int, indexes into get_iter_indices
+            1st element is iloc index for 1st element of get_iter_indices
+            2nd element is iloc index for 2nd element of get_iter_indices
+            together, indicate iloc index of self[i] within get_iter_indices index sets
+        """
+        row_ix, col_ix = self.iter_indices
+        if row_ix is None and col_ix is None:
+            return (0, 0)
+        elif row_ix is None:
+            return (i, 0)
+        elif col_ix is None:
+            return (0, i)
+        else:
+            col_n = len(col_ix)
+            return (i // col_n, i % col_n)
 
     def _iter_indices(self):
         """Get indices that are iterated over in vectorization.

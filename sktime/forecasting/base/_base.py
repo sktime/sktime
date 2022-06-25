@@ -1528,11 +1528,10 @@ class BaseForecaster(BaseEstimator):
                 col_idx = ["forecasters"]
 
             self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
-            c = -1
-            for j, i in product(range(len(col_idx)), range(len(row_idx))):
-                c += 1
+            for ix in len(ys):
+                i, j = y.get_iloc_indexer(ix)
                 self.forecasters_.iloc[i, j] = self.clone()
-                self.forecasters_.iloc[i, j].fit(y=ys[c], X=Xs[c], **kwargs)
+                self.forecasters_.iloc[i, j].fit(y=ys[ix], X=Xs[ix], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:
@@ -1545,7 +1544,7 @@ class BaseForecaster(BaseEstimator):
                 Xs = X.as_list()
             y_preds = []
             c = -1
-            for j, i in product(range(m), range(n)):
+            for i, j in product(range(n), range(m)):
                 c += 1
                 method = getattr(self.forecasters_.iloc[i, j], methodname)
                 y_preds += [method(X=Xs[c], **kwargs)]
