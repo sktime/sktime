@@ -210,6 +210,8 @@ class VectorizedDF:
         row_ind, col_ind = self._iter_indices()[i]
         if isinstance(col_ind, list):
             col_ind = pd.Index(col_ind)
+        else:
+            col_ind = [col_ind]
         item = X[col_ind].loc[row_ind]
         item = _enforce_index_freq(item)
         # pd-multiindex type (Panel case) expects these index names:
@@ -259,7 +261,7 @@ class VectorizedDF:
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                col_concats += pd.concat(ith_col_block, axis=1)
+                col_concats += [pd.concat(ith_col_block, axis=1)]
             X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
         X_mi_index = X_mi_reconstructed.index
