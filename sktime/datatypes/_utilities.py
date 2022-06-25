@@ -269,9 +269,11 @@ def get_window(obj, window_length=None, lag=None):
         # and always subset on first dimension
         if obj.ndim > 1:
             obj = obj.swapaxes(1, -1)
+        obj_len = len(obj)
         if lag is None:
             lag = 0
-        obj_len = len(obj)
+        if window_length is None:
+            window_length = obj_len
         window_start = max(-window_length - lag, -obj_len)
         window_end = max(-lag, -obj_len)
         # we need to swap first and last dimension back before returning, if done above
