@@ -4,6 +4,7 @@
 
 Contains VectorizedDF class.
 """
+from itertools import product
 import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
@@ -26,13 +27,15 @@ class VectorizedDF:
         scitype of X, if known; if None, will be inferred
         provide to constructor if known to avoid superfluous checks
             Caution: will not conduct checks if provided, assumes checks done
-    iterate_as : str ("Series", "Panel")
+    iterate_as : str ("Series", "Panel"), optional, default="Series
         scitype of the iteration
         for instance, if X is Panel and iterate_as is "Series"
             then the class will iterate over individual Series in X
         or, if X is Hierarchical and iterate_as is "Panel"
             then the class will iterate over individual Panels in X
                 (Panel = flat/non-hierarchical collection of Series)
+    iterate_cols : boolean, optional, default=False
+        whether to iterate over columns, if true, the class will iterate over columns
 
     Methods
     -------
@@ -48,23 +51,26 @@ class VectorizedDF:
         Used to obtain original format after applying operations to self iterated
     """
 
-    def __init__(self, X, y=None, iterate_as="Series", is_scitype="Panel"):
+    SERIES_SCITYPES = ["Series," "Panel", "Hierarchical"]
+
+    def __init__(
+        self, X, y=None, iterate_as="Series", is_scitype="Panel", iterate_cols=False
+    ):
 
         self.X = X
 
         if is_scitype is None:
-            possible_scitypes = ["Panel", "Hierarchical"]
             _, _, metadata = check_is_scitype(
-                X, scitype=possible_scitypes, return_metadata=True
+                X, scitype=self.SERIES_SCITYPES, return_metadata=True
             )
             is_scitype = metadata["scitype"]
             X_orig_mtype = metadata["mtype"]
         else:
             X_orig_mtype = None
 
-        if is_scitype is not None and is_scitype not in ["Hierarchical", "Panel"]:
+        if is_scitype is not None and is_scitype not in self.SERIES_SCITYPES:
             raise ValueError(
-                'is_scitype must be None, "Hierarchical" or "Panel", ',
+                'is_scitype must be None, "Hierarchical", "Panel", or "Series" ',
                 f"found {is_scitype}",
             )
         self.iterate_as = iterate_as
@@ -72,16 +78,28 @@ class VectorizedDF:
         self.is_scitype = is_scitype
         self.X_orig_mtype = X_orig_mtype
 
-        if iterate_as not in ["Series", "Panel"]:
+        if iterate_as not in self.SERIES_SCITYPES:
             raise ValueError(
-                f'iterate_as must be "Series" or "Panel", found {iterate_as}'
+                f'iterate_as must be "Series", "Panel", or "Hierarchical", '
+                f"found {iterate_as}"
             )
         self.iterate_as = iterate_as
 
-        if iterate_as == "Panel" and is_scitype == "Panel":
+        if is_scitype == "Panel" and iterate_as == "Hierarchical":
             raise ValueError(
-                'If is_scitype is "Panel", then iterate_as must be "Series"'
+                'If is_scitype is "Panel", then iterate_as must be "Series" or "Panel"'
             )
+
+        if is_scitype == "Series" and iterate_as != "Series":
+            raise ValueError(
+                'If is_scitype is "Series", then iterate_as must be "Series"'
+            )
+
+        if iterate_cols not in [True, False]:
+            raise ValueError(
+                f"iterate_cols must be a boolean, found {iterate_as}"
+            )
+        self.iterate_cols = iterate_cols
 
         self.converter_store = dict()
 
@@ -115,40 +133,67 @@ class VectorizedDF:
     def _init_iter_indices(self):
         """Initialize indices that are iterated over in vectorization."""
         iterate_as = self.iterate_as
+        is_scitype = self.is_scitype
+        iterate_cols = self.iterate_cols
         X = self.X_multiindex
 
-        if iterate_as == "Series":
-            ix = X.index.droplevel(-1).unique()
-            return ix
+        if iterate_as == is_scitype:
+            row_ix = None
+        elif iterate_as == "Series":
+            row_ix = X.index.droplevel(-1).unique()
         elif iterate_as == "Panel":
-            ix = X.index.droplevel([-1, -2]).unique()
-            return ix
+            row_ix = X.index.droplevel([-1, -2]).unique()
         else:
             raise RuntimeError(
                 f"unexpected value found for attribute self.iterate_as: {iterate_as}"
                 'must be "Series" or "Panel"'
             )
 
+        if iterate_cols:
+            col_ix = X.columns
+        else:
+            col_ix = None
+
+        return row_ix, col_ix
+
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
 
         Returns
         -------
-        pandas.Index or pandas.MultiIndex
-            index with unique indices that are iterated over
+        list of pair of pandas.Index or pandas.MultiIndex
+            iterable with unique indices that are iterated over
             use to reconstruct data frame after iteration
+            i-th element of list selects rows/columns in i-th iterate sub-DataFrame
+            first element of pair are rows, second element are columns selected
         """
-        return self.iter_indices
+        X = self.X_multiindex
+        row_ix, col_ix = self.iter_indices
+
+        if row_ix is None and col_ix is None:
+            return [(X.index, X.columns)]
+        if row_ix is None:
+            return product(X.index, col_ix)
+        if col_ix is None:
+            return product(row_ix, X.columns)
+        return product(row_ix, col_ix)
 
     def __len__(self):
         """Return number of indices to iterate over."""
-        return len(self.get_iter_indices())
+        row_ix, col_ix = self.iter_indices
+        if row_ix is None and col_ix is None:
+            return 1
+        if row_ix is None:
+            return len(col_ix)
+        if col_ix is None:
+            return len(row_ix)
+        return len(row_ix) * len(col_ix)
 
     def __getitem__(self, i: int):
         """Return the i-th element iterated over in vectorization."""
         X = self.X_multiindex
-        ind = self.get_iter_indices()[i]
-        item = X.loc[ind]
+        row_ind, col_ind = self.get_iter_indices()[i]
+        item = X[[col_ind]].loc[row_ind]
         item = _enforce_index_freq(item)
         # pd-multiindex type (Panel case) expects these index names:
         if self.iterate_as == "Panel":
@@ -184,7 +229,7 @@ class VectorizedDF:
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
-        ix = self.get_iter_indices()
+        row_ix, col_ix = self.get_iter_indices()
         X_mi_reconstructed = pd.concat(df_list, keys=ix)
 
         X_mi_index = X_mi_reconstructed.index
