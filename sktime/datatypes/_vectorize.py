@@ -163,7 +163,7 @@ class VectorizedDF:
         pair of pandas.Index or pandas.MultiIndex or None
             i-th element of list selects rows/columns in i-th iterate sub-DataFrame
             first element is row index, second element is column index
-            if rows/columns are not iterated over, row/column element is None  
+            if rows/columns are not iterated over, row/column element is None
             use to reconstruct data frame after iteration
         """
         return self.iter_indices
