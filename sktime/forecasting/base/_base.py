@@ -1528,7 +1528,7 @@ class BaseForecaster(BaseEstimator):
                 col_idx = ["forecasters"]
 
             self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
-            for ix in len(ys):
+            for ix in range(len(ys)):
                 i, j = y.get_iloc_indexer(ix)
                 self.forecasters_.iloc[i, j] = self.clone()
                 self.forecasters_.iloc[i, j].fit(y=ys[ix], X=Xs[ix], **kwargs)
