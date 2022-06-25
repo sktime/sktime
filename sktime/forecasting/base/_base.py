@@ -1543,11 +1543,11 @@ class BaseForecaster(BaseEstimator):
             else:
                 Xs = X.as_list()
             y_preds = []
-            c = -1
+            ix = -1
             for i, j in product(range(n), range(m)):
-                c += 1
-                method = getattr(self.forecasters_.iloc[i, j], methodname)
-                y_preds += [method(X=Xs[c], **kwargs)]
+                ix += 1
+                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
+                y_preds += [method(X=Xs[ix], **kwargs)]
             y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
