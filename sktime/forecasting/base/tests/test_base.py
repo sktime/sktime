@@ -7,6 +7,7 @@ __author__ = ["fkiraly"]
 from functools import reduce
 from operator import mul
 
+import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_mtype, convert
@@ -194,7 +195,9 @@ def test_vectorization_multivariate(mtype, exogeneous):
     if exogeneous:
         y_fit = get_window(y, lag=1)
         X_fit = y_fit
-        X_pred = get_window(y, window_length=1)
+        X_pred = get_window(
+            y, window_length=pd.Timedelta("1D"), lag = pd.Timedelta("0D")
+        )
     else:
         y_fit = y
         X_fit = None
@@ -214,7 +217,7 @@ def test_vectorization_multivariate(mtype, exogeneous):
         "vectorization over variables produces wrong set of variables in predict, "
         f"expected {y_fit.columns}, found {y_pred.columns}"
     )
-    assert y_fit.columns == y_pred.columns, msg
+    assert set(y_fit.columns) == set(y_pred.columns), msg
 
     y_pred_instances = metadata["n_instances"]
     msg = (

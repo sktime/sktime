@@ -167,17 +167,15 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
     def test_y_multivariate_raises_error(self, estimator_instance):
         """Test that wrong y scitype raises error (uni/multivariate not supported)."""
-        if estimator_instance.get_tag("scitype:y") == "univariate":
-            y = _make_series(n_columns=2)
-            with pytest.raises(ValueError, match=r"univariate"):
-                estimator_instance.fit(y, fh=FH0)
 
         if estimator_instance.get_tag("scitype:y") == "multivariate":
             y = _make_series(n_columns=1)
             with pytest.raises(ValueError, match=r"two or more variables"):
                 estimator_instance.fit(y, fh=FH0)
 
-        if estimator_instance.get_tag("scitype:y") == "both":
+        if estimator_instance.get_tag("scitype:y") in ["univariate", "both"]:
+            # this should pass since "both" allows any number of variables
+            # and "univariate" automatically vectorizes, behaves multivariate
             pass
 
     # todo: should these not be "negative scenarios", tested in test_all_estimators?
