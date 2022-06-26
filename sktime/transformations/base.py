@@ -933,7 +933,7 @@ class BaseTransformer(BaseEstimator):
             for ix in range(n):
                 i, j = X.get_iloc_indexer(ix)
                 method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
-                method(X=Xs[ix], y=ys[ix], **kwargs)
+                method(X=Xs[ix], y=ys[i], **kwargs)
 
             return self
 
@@ -959,7 +959,7 @@ class BaseTransformer(BaseEstimator):
                 for i, j in product(range(n), range(m)):
                     ix += 1
                     method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
-                    Xts += [method(X=Xs[ix], y=ys[ix], **kwargs)]
+                    Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
             # if fit_is_empty: don't store transformers, run fit/transform in one
@@ -969,9 +969,10 @@ class BaseTransformer(BaseEstimator):
                 # fit/transform the i-th series/panel with a new clone of self
                 Xts = []
                 for ix in range(n):
-                    transformer = self.clone().fit(X=Xs[ix], y=ys[ix], **kwargs)
+                    i, j = X.get_iloc_indexer(ix)
+                    transformer = self.clone().fit(X=Xs[ix], y=ys[i], **kwargs)
                     method = getattr(transformer, methodname)
-                    Xts += [method(X=Xs[ix], y=ys[ix], **kwargs)]
+                    Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
             # # one more thing before returning:
