@@ -688,16 +688,20 @@ class BaseTransformer(BaseEstimator):
 
         if X_scitype in X_inner_scitype:
             case = "case 1: scitype supported"
+            req_vec_because_rows = False
         elif any(_scitype_A_higher_B(x, X_scitype) for x in X_inner_scitype):
             case = "case 2: higher scitype supported"
+            req_vec_because_rows = False
         else:
             case = "case 3: requires vectorization"
+            req_vec_because_rows = True
         metadata["_convert_case"] = case
 
         # checking X vs tags
-        enforce_univariate = self.get_tag("univariate-only")
-        if enforce_univariate and not X_metadata["is_univariate"]:
-            raise ValueError("X must be univariate but is not")
+        inner_univariate = self.get_tag("univariate-only")
+        # we remember whether we need to vectorize over columns, and at all
+        req_vec_because_cols = inner_univariate and not X_metadata["is_univariate"]
+        requires_vectorization = req_vec_because_rows or req_vec_because_cols
         # end checking X
 
         if y_inner_mtype != ["None"] and y is not None:
@@ -731,7 +735,7 @@ class BaseTransformer(BaseEstimator):
         # convert X and y to a supported internal mtype
         #  it X/y mtype is already supported, no conversion takes place
         #  if X/y is None, then no conversion takes place (returns None)
-        #  if vectorization is required, we wrap in Vect
+        #  if vectorization is required, we wrap in VectorizedDF
 
         # case 2. internal only has higher scitype, e.g., inner is Panel and X Series
         #       or inner is Hierarchical and X is Panel or Series
@@ -745,7 +749,9 @@ class BaseTransformer(BaseEstimator):
             # then pass to case 1, which we've reduced to, X now has inner scitype
 
         # case 1. scitype of X is supported internally
-        if case in ["case 1: scitype supported", "case 2: higher scitype supported"]:
+        # case in ["case 1: scitype supported", "case 2: higher scitype supported"]
+        #   and does not require vectorization because of cols (multivariate)
+        if not requires_vectorization:
             # converts X
             X_inner = convert_to(
                 X,
@@ -766,9 +772,15 @@ class BaseTransformer(BaseEstimator):
 
         # case 3. scitype of X is not supported, only lower complexity one is
         #   then apply vectorization, loop method execution over series/panels
-        elif case == "case 3: requires vectorization":
+        # elif case == "case 3: requires vectorization":
+        else:  # if requires_vectorization
             iterate_X = _most_complex_scitype(X_inner_scitype)
-            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=X_scitype)
+            X_inner = VectorizedDF(
+                X=X,
+                iterate_as=iterate_X,
+                is_scitype=X_scitype,
+                iterate_cols=req_vec_because_cols,
+            )
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
                 # raise ValueError(
