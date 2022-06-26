@@ -68,6 +68,7 @@ def get_index_for_series(obj, cutoff=0):
     cutoff : int, or pd.datetime, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
 
+    Returns
     -------
     index : pandas.Index, index for obj
     """
@@ -92,7 +93,12 @@ GET_CUTOFF_SUPPORTED_MTYPES = [
 
 
 def get_cutoff(
-    obj, cutoff=0, return_index=False, reverse_order=False, check_input=False
+    obj,
+    cutoff=0,
+    return_index=False,
+    reverse_order=False,
+    check_input=False,
+    convert_input=True,
 ):
     """Get cutoff = latest time point of time series or time series panel.
 
@@ -115,7 +121,10 @@ def get_cutoff(
     reverse_order : bool, optional, default=False
         if False, returns largest time index. If True, returns smallest time index
     check_input : bool, optional, default=False
-        whether to check input for validity
+        whether to check input for validity, i.e., is it one of the scitypes
+    convert_input : bool, optional, default=True
+        whether to convert the input (True), or skip conversion (False)
+        if skipped, function assumes that inputs are one of GET_CUTOFF_SUPPORTED_MTYPES
 
     Returns
     -------
