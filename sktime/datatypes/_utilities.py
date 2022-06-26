@@ -142,7 +142,8 @@ def get_cutoff(
         if not valid:
             raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
 
-    obj = convert_to(obj, GET_CUTOFF_SUPPORTED_MTYPES)
+    if convert_input:
+        obj = convert_to(obj, GET_CUTOFF_SUPPORTED_MTYPES)
 
     if cutoff is None:
         cutoff = 0
