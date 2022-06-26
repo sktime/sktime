@@ -83,7 +83,7 @@ GET_CUTOFF_SUPPORTED_MTYPES = [
     "np.ndarray",
     "pd-multiindex",
     "numpy3D",
-    "nested_univ"
+    "nested_univ",
     "df-list",
     "pd_multiindex_hier",
     "np.ndarray",
