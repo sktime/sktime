@@ -1466,7 +1466,7 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh)
+            fh = check_fh(fh=fh, freq=infer_freq(self._y))
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)
@@ -1490,9 +1490,6 @@ class BaseForecaster(BaseEstimator):
                     "horizon, please re-fit the forecaster. " + msg
                 )
             # if existing one and new match, ignore new one
-
-        if hasattr(self._fh, "freq") and self._fh.freq is None:
-            self._fh.freq = infer_freq(self._y)
 
         return self._fh
 

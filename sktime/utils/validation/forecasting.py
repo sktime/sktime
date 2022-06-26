@@ -25,6 +25,7 @@ import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation import (
     array_is_datetime64,
     array_is_int,
@@ -262,7 +263,9 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative=False):
+def check_fh(
+    fh, enforce_relative: bool = False, freq: str = None
+) -> ForecastingHorizon:
     """Validate forecasting horizon.
 
     Parameters
@@ -271,17 +274,16 @@ def check_fh(fh, enforce_relative=False):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
+    freq : str, optional (default=None)
+        Frequency string
 
     Returns
     -------
     fh : ForecastingHorizon
         Validated forecasting horizon.
     """
-    # Convert to ForecastingHorizon
-    from sktime.forecasting.base import ForecastingHorizon
-
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None)
+        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
@@ -292,6 +294,9 @@ def check_fh(fh, enforce_relative=False):
 
     if enforce_relative and not fh.is_relative:
         raise ValueError("`fh` must be relative, but found absolute `fh`")
+
+    if fh.freq is None:
+        fh.freq = freq
 
     return fh
 
