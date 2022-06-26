@@ -5,14 +5,9 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = []
 
-import pytest
-
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils._testing.scenarios_transformers import (
-    TransformerFitTransformSeriesMultivariate,
-)
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
