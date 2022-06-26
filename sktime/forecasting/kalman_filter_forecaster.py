@@ -4,7 +4,8 @@
 
 Forecaster based on Kalman Filter algorithm.
 """
-__author__ = ["NoaBenAmi"]
+__author__ = ["NoaBenAmi", "lielleravid"]
+__all__ = ["KalmanFilterForecaster"]
 
 import numpy as np
 import pandas as pd
@@ -43,7 +44,7 @@ def _forecast_matrices(fm, tm, split_point):
 
 
 class KalmanFilterForecaster(BaseForecaster):
-    """Kalman Filter is used for forecast, denoise, or estimate hidden state of a process.
+    """Kalman Filter can forecast, denoise, and estimate the hidden state of a process.
 
     The Kalman Filter is an unsupervised algorithm, consisting of
     several mathematical equations which are used to estimate past,
@@ -58,15 +59,19 @@ class KalmanFilterForecaster(BaseForecaster):
     When given input data measurements - :math:`m_t` for :math:`t = 1, 2, ..., n` and
     `forecast horizon` :math:`fh`
 
-    #todo: uses kalman filter transformer to estimate within sample predictions.
+    In-sample predictions are calculated by `KalmanFilterTransformerFP`.
+
+    `time_steps` is referring to the length of training data.
 
     Parameters
     ----------
-    state_dim : int
-        System state feature dimension.
+    state_dim : int, optional (default=None)
+        System state feature dimension. If None, infer the size
+        of the dimension from input data.
     #todo: rewrite state_transition
     state_transition : np.ndarray, optional (default=None)
-        of shape (state_dim, state_dim) or (time_steps, state_dim, state_dim).
+        of shape (state_dim, state_dim) or (n, state_dim, state_dim),
+        s.t :math:`n >= time_steps`.
         State transition matrix, also referred to as `F`, is a matrix
         which describes the way the underlying series moves
         through successive time periods.
@@ -98,25 +103,23 @@ class KalmanFilterForecaster(BaseForecaster):
         `control_variable_dim` is the dimension of `control variable`,
         also referred to as `u`.
         `control variable` is an optional parameter for `fit` and `transform` functions.
-    #todo: remove reference to `FilterPy`
-    denoising : bool, optional (default=False).
-        This parameter affects `transform`. If False, then `transform` will be inferring
-        hidden state. If True, uses `FilterPy` `rts_smoother` for denoising.
+    denoising : bool, optional (default=True).
+        This parameter affects in-sample predictions.
+        `KalmanFilterTransformerFP` is initiated with the value of `denoising` and
+        then used to calculate in-sample predictions.
+        See `KalmanFilterTransformerFP` documentation for more details.
     estimate_matrices : str or list of str, optional (default=None).
         Subset of [`state_transition`, `measurement_function`,
         `process_noise`, `measurement_noise`, `initial_state`,
         `initial_state_covariance`]
         or - `all`. If `estimate_matrices` is an iterable of strings,
         only matrices in `estimate_matrices` will be estimated using EM algorithm.
-        If `estimate_matrices` is `all`,
-        then all matrices will be estimated using EM algorithm.
 
-        #todo: explain that if `state_transition` is None and
-        #todo: "state_transition" not in `estimate_matrices`,
-        #todo: then `state_transition` will be estimated with EM.
         Note -
             - parameters estimated by EM algorithm assumed to be constant.
             - `control_transition` matrix cannot be estimated.
+            - To avoid constant and repetitive results, `state_transition`
+              will be estimated by the EM algorithm if its given value is None.
 
     See Also
     --------
@@ -162,7 +165,7 @@ class KalmanFilterForecaster(BaseForecaster):
         initial_state=None,
         initial_state_covariance=None,
         estimate_matrices=None,
-        denoising=False,
+        denoising=True,
     ):
 
         self.state_dim = state_dim
@@ -196,20 +199,16 @@ class KalmanFilterForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : pd.DataFrame
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            Input data can be univariate or multivariate.
+        fh : ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+            Required (non-optional).
+        X : pd.DataFrame, optional (default=None)
+            of shape (control_variable_dim,) or (time_steps, control_variable_dim).
+            `control variable`, also referred to as `u`.
+            if 2D, must be same length as `y`.
 
         Returns
         -------
@@ -220,9 +219,11 @@ class KalmanFilterForecaster(BaseForecaster):
         time_steps = y.shape[0]
         self.state_dim_ = y.shape[-1] if self.state_dim is None else self.state_dim
 
+        # split control_transition to transform and forecast matrices.
         B_transform, B_forecast = _split(
             to_split=self.control_transition, split_point=time_steps
         )
+        # split state_transition to transform and forecast matrices.
         F_transform, F_forecast = _split(
             to_split=self.state_transition, split_point=time_steps
         )
@@ -230,7 +231,7 @@ class KalmanFilterForecaster(BaseForecaster):
         # if `state_transition` is None and not in `estimate_matrices`,
         # then `state_transition` will be estimated with EM. The default value of
         # `state_transition` is np.eye(state_dim), so when calling `predict` with
-        # future fh, predictions will be a single number.
+        # future fh, predictions will be of a constant value.
         em = [] if self.estimate_matrices is None else self.estimate_matrices
         if F_transform is not None or em == "all" or "state_transition" in em:
             estimate_matrices_ = self.estimate_matrices
@@ -252,8 +253,9 @@ class KalmanFilterForecaster(BaseForecaster):
         transformer_ = transformer_.fit(X=y, y=X)
         y_transformed = transformer_.transform(X=y, y=X)
 
-        # set last value of y_transformed as x_hat_
+        # set last value of y_transformed as x_hat_ (the prediction of t = time_steps)
         self.x_hat_ = y_transformed[-1]
+        # Extract values of in-sample predictions and set as an attribute for later use.
         self.in_samples_preds_ = y_transformed[self._relative_indices()]
 
         self.B_ = _forecast_matrices(
@@ -262,17 +264,6 @@ class KalmanFilterForecaster(BaseForecaster):
         self.F_ = _forecast_matrices(
             fm=F_forecast, tm=transformer_.F_, split_point=time_steps - 1
         )
-        # if B_forecast is None:
-        #     l, r = _split(B_transform, split_point=time_steps - 1)
-        #     self.B_ = l if r is None else r
-        # else:
-        #     self.B_ = B_forecast
-        #
-        # if F_forecast is None:
-        #     l, r = _split(transformer_.F_, split_point=time_steps - 1)
-        #     self.F_ = l if r is None else r
-        # else:
-        #     self.F_ = F_forecast
 
         return self
 
@@ -288,7 +279,7 @@ class KalmanFilterForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+        fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
@@ -300,27 +291,31 @@ class KalmanFilterForecaster(BaseForecaster):
             Point predictions
         """
         X = 0 if X is None else X.to_numpy()
+        # transform X to 2D np.array
         us = _atleast_nd(data=X, default=0, n=2)
+        # transform B_ to 3D np.array
         Bs = _atleast_nd(data=self.B_, default=np.eye(self.state_dim_, us.shape[-1]))
+        # transform F_ to 3D np.array
         Fs = _atleast_nd(data=self.F_, default=np.eye(self.state_dim_))
 
         future_pred_indices = self._relative_indices(in_sample=False)
         preds = []
 
         x = self.x_hat_
+        # Kalman Filter iteration
         for t in range(np.amax(np.asarray(future_pred_indices), initial=0)):
-            F = Fs[t] if len(Fs) > t else Fs[-1]
-            B = Bs[t] if len(Bs) > t else Bs[-1]
-            u = us[t] if len(us) > t else us[-1]
+            Ft = Fs[t] if len(Fs) > t else Fs[-1]
+            Bt = Bs[t] if len(Bs) > t else Bs[-1]
+            ut = us[t] if len(us) > t else us[-1]
 
-            x = np.dot(F, x) + np.dot(B, u)
+            x = np.dot(Ft, x) + np.dot(Bt, ut)
 
             if t + 1 in future_pred_indices:
                 preds.append(x)
 
-        np_res = [pred for pred in self.in_samples_preds_] + preds
+        output_predictions = [pred for pred in self.in_samples_preds_] + preds
         return pd.DataFrame(
-            data=np_res, index=self.fh.to_absolute(self.cutoff).to_numpy()
+            data=output_predictions, index=self.fh.to_absolute(self.cutoff).to_numpy()
         )
 
     @classmethod
@@ -342,7 +337,7 @@ class KalmanFilterForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params = {"denoising": False}
+        params = {"denoising": True}
         return params
 
     def _relative_indices(self, in_sample=True):
