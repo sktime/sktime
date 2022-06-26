@@ -118,7 +118,7 @@ def test_get_window_expected_result():
     assert len(get_window(X_mi, 1, 2)) == 3
     assert len(get_window(X_mi, 2, None)) == 6
     assert len(get_window(X_mi, None, 2)) == 3
-    assert len(get_window(X_mi, None, None)) == 12
+    assert len(get_window(X_mi, None, None)) == 9
 
     X_hi = get_examples(mtype="pd_multiindex_hier")[0]
     assert len(get_window(X_hi, 3, 1)) == 12
