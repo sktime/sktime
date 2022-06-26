@@ -25,7 +25,6 @@ import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation import (
     array_is_datetime64,
     array_is_int,
@@ -263,9 +262,7 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(
-    fh, enforce_relative: bool = False, freq: str = None
-) -> ForecastingHorizon:
+def check_fh(fh, enforce_relative: bool = False, freq: str = None):
     """Validate forecasting horizon.
 
     Parameters
@@ -282,6 +279,9 @@ def check_fh(
     fh : ForecastingHorizon
         Validated forecasting horizon.
     """
+    # Convert to ForecastingHorizon
+    from sktime.forecasting.base import ForecastingHorizon
+
     if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
 
