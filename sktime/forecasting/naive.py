@@ -13,6 +13,7 @@ __author__ = [
     "fkiraly",
 ]
 
+from multiprocessing.sharedctypes import Value
 from warnings import warn
 
 import numpy as np
@@ -315,8 +316,9 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         # check for in-sample prediction, if first time point needs to be imputed
         if self._y.index[0] in y_pred.index:
-            # fill NaN with next row values
-            y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+            if y_pred.loc[[self._y.index[0]]].hasnans:
+                # fill NaN with observed values
+                y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
         return y_pred
 
