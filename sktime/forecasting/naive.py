@@ -12,7 +12,7 @@ __author__ = [
     "aiwalter",
     "IlyasMoutawwakil",
     "fkiraly",
-    "bethrice",
+    "bethrice44",
 ]
 
 from warnings import warn
