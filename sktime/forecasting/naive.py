@@ -6,11 +6,13 @@
 __all__ = ["NaiveForecaster", "NaiveVariance"]
 __author__ = [
     "mloning",
-    "Piyush Gade",
+    "piyush1729",
+    "sri1419",
     "Flix6x",
     "aiwalter",
     "IlyasMoutawwakil",
     "fkiraly",
+    "bethrice",
 ]
 
 from warnings import warn
