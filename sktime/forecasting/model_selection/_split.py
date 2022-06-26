@@ -1314,35 +1314,58 @@ def temporal_train_test_split(
 ) -> SPLIT_TYPE:
     """Split arrays or matrices into sequential train and test subsets.
 
-    Creates train/test splits over endogenous arrays an optional exogenous
-    arrays.
+    Creates temporal train/test splits of `y` and potentially `X`.
+    In temporal train/test splits, train/test sets are consecutive index-wise,
+    and no test index is smaller/earlier than the training index.
 
-    This is a wrapper of scikit-learn's ``train_test_split`` that
-    does not shuffle the data.
+    This is based on train/test window lengths, and "index spans" of the objects passed,
+    defined as the difference between latest/largest index and earliest/lowest index.
+    E.g., the span of an `y` with index set [2, 3, 4] is 2.
 
     Parameters
     ----------
-    y : pd.Series
-        Target series
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data
-    test_size : float, int or None, optional (default=None)
-        If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        relative number of test samples. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.25.
-    train_size : float, int, or None, (default=None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the relative number of train samples. If None,
-        the value is automatically set to the complement of the test size.
-    fh : ForecastingHorizon
+    y : sktime compatible time series data container
+        must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+    X : sktime compatible time series data container, optional (default=None)
+        must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+    test_size : float, int, timedelta, or None, optional (default=None)
+        If float, test span is last `test_size` fraction of full index span of `y`.
+        If int, test span is the integer index range of length `test_size`,
+            and ending with the most recent integer index in `y`.
+        If timedelta, test span are all time indices in the window of size `test_size`,
+            and ending with the most recent time stamp in `y`.
+        If None, will be interpreted as a float and set to 0.25, if `fh` is `None`.
+            If `fh` is provided, will be equal to the int or timedelta span of `fh`.
+        Lower (early) bounds are exclusive, upper (late) bounds are inclusive.
+    train_size : float, int, or None, optional (default=None)
+        If float, training span is `train_size` fraction of full index span seen in `y`,
+            and ending with the lower bound of the test span.
+        If int, training span is the integer index range of length `training_size`,
+            and ending with the most recent integer index that is not in the test span.
+        If timedelta, test span are all time indices in the window of size `train_size`,
+            and ending with the least recent (earliest) time stamp in the test span.
+        If None, will be the complement of the test span in the full span of `y`.
+        Lower (early) bounds are exclusive, upper (late) bounds are inclusive.
+    fh : ForecastingHorizon, or None, optional (detault=None)
+        if passed, `test_size` must be `None`, and `test_size` will be determined
+        the difference between the last index in `fh` and the last index of `y`
 
     Returns
     -------
-    splitting : tuple, length=2 * len(arrays)
-        List containing train-test split of `y` and `X` if given.
+    y_train : sktime compatible time series data container, same type as `y`
+        `y` sub-set to the training span (as defined above)
+    y_test : sktime compatible time series data container, same type as `y`
+        `y` sub-set to the test span (as defined above)
+    X_train : sktime compatible time series data container, same type as `X`
+        `X` sub-set to the training span (as defined above)
+    X_test : sktime compatible time series data container, same type as `X`
+        `X` sub-set to the test span (as defined above)
+    NOTE: train/test span of `X_train`, `X_test` are determined by span of `y`.
+        If span of `X` and `y` are not identical, `X_train` and `X_test` will, in
+        general, not be identical with returns of applying `temporal_train_test_split`,
+        applied to only `X` with the same other parameters.
 
     References
     ----------
@@ -1351,12 +1374,12 @@ def temporal_train_test_split(
     if fh is not None:
         if not isinstance(fh, ForecastingHorizon):
             raise TypeError(
-                f"fh must be of type ForecastingHorizon, but found {type(fh)}")
-        if test_size is not None or train_size is not None:
-            raise ValueError(
-                "If `fh` is given, `test_size` and `train_size` cannot "
-                "also be specified."
+                f"fh must be of type ForecastingHorizon, but found {type(fh)}"
             )
+        if test_size is not None:
+            raise ValueError("If `fh` is passed, `test_size` cannot also be passed.")
+        if not fh.is_relative:
+            fh = fh.to_relative(get_cutoff(y))
         fh_span = fh.to_pandas()[-1]
         test_size = fh_span
 
@@ -1371,7 +1394,7 @@ def temporal_train_test_split(
         test_frac = test_size
     else:
         test_window = test_size
-        test_frac = test_size/y_span
+        test_frac = test_size / y_span
 
     if train_size is None:
         train_frac = 1 - test_frac
@@ -1381,7 +1404,7 @@ def temporal_train_test_split(
         train_frac = train_size
     else:
         train_window = train_size
-        train_frac = train_size/y_span
+        train_frac = train_size / y_span
 
     y_train = get_window(y, window_length=train_window, lag=test_window)
     y_test = get_window(y, window_length=test_window)
