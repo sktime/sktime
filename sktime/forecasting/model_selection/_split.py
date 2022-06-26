@@ -24,7 +24,12 @@ from sklearn.base import _pprint
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_cutoff, get_index_for_series, get_window
+from sktime.datatypes._utilities import (
+    get_cutoff,
+    get_index_for_series,
+    get_time_index,
+    get_window,
+)
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -1392,6 +1397,10 @@ def temporal_train_test_split(
     if isinstance(test_size, float):
         test_window = test_size * y_span
         test_frac = test_size
+    elif isinstance(test_size, int) and not isinstance(y_span, int):
+        y_idx = get_time_index(y)[-test_size]
+        test_window = y_end - y_idx
+        test_frac = test_window / y_span
     else:
         test_window = test_size
         test_frac = test_size / y_span
@@ -1402,6 +1411,10 @@ def temporal_train_test_split(
     elif isinstance(train_size, float):
         train_window = train_size * y_span
         train_frac = train_size
+    elif isinstance(train_size, int) and not isinstance(y_span, int):
+        y_idx = get_time_index(y)
+        train_window = y_idx[-test_size] - y_idx[-test_size + -train_size]
+        train_frac = train_window / y_span
     else:
         train_window = train_size
         train_frac = train_size / y_span
