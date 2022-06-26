@@ -124,6 +124,10 @@ def get_cutoff(
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
+    # deal with VectorizedDF
+    if hasattr(obj, "X"):
+        obj = obj.X
+
     if check_input:
         valid = check_is_scitype(obj, scitype=["Series", "Panel", "Hierarchical"])
         if not valid:
