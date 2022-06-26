@@ -13,7 +13,6 @@ __author__ = [
     "fkiraly",
 ]
 
-from multiprocessing.sharedctypes import Value
 from warnings import warn
 
 import numpy as np
