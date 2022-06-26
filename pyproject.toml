@@ -10,7 +10,6 @@ authors = [
 ]
 maintainers = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Martin Walter"},
 ]
 readme = "README.md"
