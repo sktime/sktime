@@ -91,7 +91,9 @@ GET_CUTOFF_SUPPORTED_MTYPES = [
 ]
 
 
-def get_cutoff(obj, cutoff=0, return_index=False, reverse_order=False):
+def get_cutoff(
+    obj, cutoff=0, return_index=False, reverse_order=False, check_input=False
+):
     """Get cutoff = latest time point of time series or time series panel.
 
     Assumptions on obj are not checked, these should be validated separately.
@@ -111,7 +113,9 @@ def get_cutoff(obj, cutoff=0, return_index=False, reverse_order=False):
         note: return_index=True may set freq attribute of time types to None
             return_index=False will typically preserve freq attribute
     reverse_order : bool, optional, default=False
-        if False, returns largest time index. If True, returns smallest time index.
+        if False, returns largest time index. If True, returns smallest time index
+    check_input : bool, optional, default=False
+        whether to check input for validity
 
     Returns
     -------
@@ -120,9 +124,10 @@ def get_cutoff(obj, cutoff=0, return_index=False, reverse_order=False):
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
-    valid = check_is_scitype(obj, scitype=["Series", "Panel", "Hierarchical"])
-    if not valid:
-        raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
+    if check_input:
+        valid = check_is_scitype(obj, scitype=["Series", "Panel", "Hierarchical"])
+        if not valid:
+            raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
 
     obj = convert_to(obj, GET_CUTOFF_SUPPORTED_MTYPES)
 
