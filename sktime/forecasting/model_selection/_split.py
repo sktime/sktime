@@ -10,7 +10,7 @@ __all__ = [
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["mloning", "kkoralturk", "khrapovs"]
+__author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import inspect
 import numbers
@@ -21,11 +21,10 @@ from typing import Iterator, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
-from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import get_cutoff, get_index_for_series, get_window
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -1296,9 +1295,19 @@ class SingleWindowSplitter(BaseSplitter):
         return np.array([end])
 
 
+SPLIT_SUPPORTED_MTYPES = [
+    "pd.DataFrame",
+    "pd.Series",
+    "np.ndarray",
+    "pd-multiindex",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
+
+
 def temporal_train_test_split(
-    y: ACCEPTED_Y_TYPES,
-    X: Optional[pd.DataFrame] = None,
+    y,
+    X=None,
     test_size: Optional[Union[int, float]] = None,
     train_size: Optional[Union[int, float]] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
@@ -1340,55 +1349,50 @@ def temporal_train_test_split(
     ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     if fh is not None:
+        if not isinstance(fh, ForecastingHorizon):
+            raise TypeError(
+                f"fh must be of type ForecastingHorizon, but found {type(fh)}")
         if test_size is not None or train_size is not None:
             raise ValueError(
                 "If `fh` is given, `test_size` and `train_size` cannot "
                 "also be specified."
             )
-        return _split_by_fh(y, fh, X=X)
+        fh_span = fh.to_pandas()[-1]
+        test_size = fh_span
+
+    y_end = get_cutoff(y)
+    y_start = get_cutoff(y, reverse_order=True)
+    y_span = y_end - y_start
+
+    if test_size is None and train_size is None:
+        test_size = 0.25
+    if isinstance(test_size, float):
+        test_window = test_size * y_span
+        test_frac = test_size
     else:
-        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
-        if pd_format is True and isinstance(y.index, pd.MultiIndex):
-            ys = get_time_index(y)
-            # Get index to group across (only indices other than timepoints index)
-            yi_name = y.index.names
-            yi_grp = yi_name[0:-1]
+        test_window = test_size
+        test_frac = test_size/y_span
 
-            # Get split into test and train data for timeindex only
-            series = (ys,)
-            yret = _train_test_split(
-                *series,
-                shuffle=False,
-                stratify=None,
-                test_size=test_size,
-                train_size=train_size,
-            )
+    if train_size is None:
+        train_frac = 1 - test_frac
+        train_window = train_frac * y_span
+    elif isinstance(train_size, float):
+        train_window = train_size * y_span
+        train_frac = train_size
+    else:
+        train_window = train_size
+        train_frac = train_size/y_span
 
-            # Convert into list indices
-            ysl = ys.to_list()
-            yrl1 = yret[0].to_list()
-            yrl2 = yret[1].to_list()
-            p1 = [index for (index, item) in enumerate(ysl) if item in yrl1]
-            p2 = [index for (index, item) in enumerate(ysl) if item in yrl2]
+    y_train = get_window(y, window_length=train_window, lag=test_window)
+    y_test = get_window(y, window_length=test_window)
 
-            # Subset by group based on identified indices
-            y_train = y.groupby(yi_grp, as_index=False).nth(p1)
-            y_test = y.groupby(yi_grp, as_index=False).nth(p2)
-            if X is not None:
-                X_train = X.groupby(yi_grp, as_index=False).nth(p1)
-                X_test = X.groupby(yi_grp, as_index=False).nth(p2)
-                return y_train, y_test, X_train, X_test
-            else:
-                return y_train, y_test
-        else:
-            series = (y,) if X is None else (y, X)
-            return _train_test_split(
-                *series,
-                shuffle=False,
-                stratify=None,
-                test_size=test_size,
-                train_size=train_size,
-            )
+    if X is not None:
+        X_lag = get_cutoff(X) - y_end
+        X_train = get_window(X, window_length=train_window, lag=test_window + X_lag)
+        X_test = get_window(X, window_length=test_window, lag=X_lag)
+        return y_train, y_test, X_train, X_test
+    else:
+        return y_train, y_test
 
 
 def _split_by_fh(
