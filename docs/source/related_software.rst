@@ -44,6 +44,8 @@ Libraries
      - Library for unsupervised learning with time series including dimensionality reduction, clustering, and Markov model estimation
    * - `deltapy <https://github.com/firmai/deltapy>`_
      - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
+   * - `diviner <https://github.com/databricks/diviner>`_
+     - Diviner by Databricks enables large-scale time series forecasting and serves as a wrapper around other open source forecasting libraries
    * - `dtaidistance <https://github.com/wannesm/dtaidistance>`_
      - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
