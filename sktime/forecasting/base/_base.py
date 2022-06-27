@@ -54,7 +54,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.datetime import _shift
+from sktime.utils.datetime import _shift, infer_freq
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -103,6 +103,7 @@ class BaseForecaster(BaseEstimator):
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
+        self._freq = None
 
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
@@ -1314,6 +1315,7 @@ class BaseForecaster(BaseEstimator):
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
+            self._freq = infer_freq(self._y)
 
         if X is not None:
             # if _X does not exist yet, initialize it with X
@@ -2044,7 +2046,7 @@ class BaseForecaster(BaseEstimator):
             self_copy = self
 
         # set cutoff to time point before data
-        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        self_copy._set_cutoff(_shift(y.index[0], by=-1, freq=self._freq))
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]

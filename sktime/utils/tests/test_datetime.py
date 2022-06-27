@@ -7,9 +7,10 @@ import datetime
 
 import numpy as np
 import pandas as pd
-import pytest
 
-from sktime.utils.datetime import _coerce_duration_to_int, _get_freq, _shift
+from sktime.datatypes import VectorizedDF
+from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq, infer_freq
 
 
 def test_get_freq():
@@ -61,24 +62,29 @@ def test_coerce_duration_to_int() -> None:
     )
 
 
-TIMEPOINTS = [
-    pd.Period("2000", freq="D"),
-    pd.Timestamp("2000-01-01", freq="D"),
-    int(1),
-    3,
-]
+def test_infer_freq() -> None:
+    """Test frequency inference."""
+    assert infer_freq(None) is None
 
+    y = pd.Series(dtype=int)
+    assert infer_freq(y) is None
 
-@pytest.mark.parametrize("timepoint", TIMEPOINTS)
-@pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
-def test_shift(timepoint, by):
-    """Test shifting of ForecastingHorizon."""
-    ret = _shift(timepoint, by=by, freq="D")
+    index = pd.date_range(start="2021-01-01", periods=1)
+    y = pd.Series(index=index, dtype=int)
+    assert infer_freq(y) == "D"
 
-    # check output type, pandas index types inherit from each other,
-    # hence check for type equality here rather than using isinstance
-    assert type(ret) is type(timepoint)
+    index = pd.date_range(start="2021-01-01", periods=1, freq="M")
+    y = pd.Series(index=index, dtype=int)
+    assert infer_freq(y) == "M"
 
-    # check if for a zero shift, input and output are the same
-    if by == 0:
-        assert timepoint == ret
+    y = pd.DataFrame({"a": 1}, index=pd.date_range(start="2021-01-01", periods=1))
+    assert infer_freq(y) == "D"
+
+    y = pd.DataFrame(
+        {"a": 1}, index=pd.date_range(start="2021-01-01", periods=1, freq="M")
+    )
+    assert infer_freq(y) == "M"
+
+    y = _bottom_hier_datagen(no_levels=2)
+    y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
+    assert infer_freq(y) == "M"
