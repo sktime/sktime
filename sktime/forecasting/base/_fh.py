@@ -346,7 +346,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        return _to_relative(fh=self, cutoff=cutoff, freq=self.freq)
+        return _to_relative(fh=self, cutoff=cutoff)
 
     def to_absolute(self, cutoff):
         """Return absolute version of forecasting horizon values.
@@ -362,7 +362,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        return _to_absolute(fh=self, cutoff=cutoff, freq=self.freq)
+        return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
         """Return absolute values as zero-based integer index starting from `start`.
@@ -543,9 +543,7 @@ class ForecastingHorizon:
 # computations, as these are the basic methods and often required internally when
 # calling different methods.
 @lru_cache(typed=True)
-def _to_relative(
-    fh: ForecastingHorizon, cutoff=None, freq: str = None
-) -> ForecastingHorizon:
+def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
     """Return forecasting horizon values relative to a cutoff.
 
     Parameters
@@ -554,8 +552,6 @@ def _to_relative(
     cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
         Cutoff value required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
-    freq : str, optional (default=None)
-        Frequency
 
     Returns
     -------
@@ -572,8 +568,8 @@ def _to_relative(
         if isinstance(absolute, pd.DatetimeIndex):
             # coerce to pd.Period for reliable arithmetics and computations of
             # time deltas
-            absolute = _coerce_to_period(absolute, freq)
-            cutoff = _coerce_to_period(cutoff, freq)
+            absolute = _coerce_to_period(absolute, freq=fh.freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
         # TODO: Replace when we upgrade our lower pandas bound
         #  to a version where this is fixed
@@ -595,9 +591,9 @@ def _to_relative(
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
-            relative = _coerce_duration_to_int(relative, freq=freq)
+            relative = _coerce_duration_to_int(relative, freq=fh.freq)
 
-        return fh._new(relative, is_relative=True, freq=freq)
+        return fh._new(relative, is_relative=True, freq=fh.freq)
 
 
 # This function needs to be outside ForecastingHorizon
@@ -605,9 +601,7 @@ def _to_relative(
 # with object methods, see B019 error of flake8-bugbear for a detail explanation.
 # See more here: https://github.com/alan-turing-institute/sktime/issues/2338
 @lru_cache(typed=True)
-def _to_absolute(
-    fh: ForecastingHorizon, cutoff, freq: str = None
-) -> ForecastingHorizon:
+def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
     """Return absolute version of forecasting horizon values.
 
     Parameters
@@ -616,8 +610,6 @@ def _to_absolute(
     cutoff : pd.Period, pd.Timestamp, int
         Cutoff value is required to convert a relative forecasting
         horizon to an absolute one (and vice versa).
-    freq : str, optional (default=None)
-        Frequency
 
     Returns
     -------
@@ -635,15 +627,15 @@ def _to_absolute(
         if is_timestamp:
             # coerce to pd.Period for reliable arithmetic operations and
             # computations of time deltas
-            cutoff = _coerce_to_period(cutoff, freq=freq)
+            cutoff = _coerce_to_period(cutoff, freq=fh.freq)
 
         absolute = cutoff + relative
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
-            absolute = absolute.to_timestamp(freq)
+            absolute = absolute.to_timestamp(fh.freq)
 
-        return fh._new(absolute, is_relative=False, freq=freq)
+        return fh._new(absolute, is_relative=False, freq=fh.freq)
 
 
 def _check_cutoff(cutoff, index):
