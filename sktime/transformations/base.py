@@ -627,11 +627,11 @@ class BaseTransformer(BaseEstimator):
         metadata = dict()
         metadata["_converter_store_X"] = dict()
 
-        def _most_complex_scitype(scitypes):
+        def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
-            if "Hierarchical" in scitypes:
+            if "Hierarchical" in scitypes and smaller_equal_than == "Hierarchical":
                 return "Hierarchical"
-            elif "Panel" in scitypes:
+            elif "Panel" in scitypes and smaller_equal_than != "Series":
                 return "Panel"
             elif "Series" in scitypes:
                 return "Series"
@@ -774,7 +774,7 @@ class BaseTransformer(BaseEstimator):
         #   then apply vectorization, loop method execution over series/panels
         # elif case == "case 3: requires vectorization":
         else:  # if requires_vectorization
-            iterate_X = _most_complex_scitype(X_inner_scitype)
+            iterate_X = _most_complex_scitype(X_inner_scitype, X_scitype)
             X_inner = VectorizedDF(
                 X=X,
                 iterate_as=iterate_X,
@@ -791,7 +791,7 @@ class BaseTransformer(BaseEstimator):
                 #     "Consider extending _fit and _transform to handle the following "
                 #     "input types natively: Panel X and non-None y."
                 # )
-                iterate_y = _most_complex_scitype(y_inner_scitype)
+                iterate_y = _most_complex_scitype(y_inner_scitype, y_scitype)
                 y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=y_scitype)
             else:
                 y_inner = None
