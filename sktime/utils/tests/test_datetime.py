@@ -128,15 +128,9 @@ def test_shift_against_expectations() -> None:
     )
 
 
-TIMEPOINTS = [
-    pd.Period("2000", freq="D"),
-    pd.Timestamp("2000-01-01", freq="D"),
-    int(1),
-    3,
-]
-
-
-@pytest.mark.parametrize("timepoint", TIMEPOINTS)
+@pytest.mark.parametrize(
+    "timepoint", [pd.Period("2000", freq="D"), pd.Timestamp("2000-01-01"), int(1), 3]
+)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
 def test_shift(timepoint, by):
     """Test _shift."""
