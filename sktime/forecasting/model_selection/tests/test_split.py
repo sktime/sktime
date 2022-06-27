@@ -257,6 +257,7 @@ def test_sliding_window_splitter(y, missing_obs, fh, window_length, step_length)
             window_length=window_length,
             step_length=step_length,
             start_with_window=True,
+            freq=pd.infer_freq(y.index),
         )
         train_windows, test_windows, _, n_splits = _check_cv(
             cv=cv, y=y, missing_obs=missing_obs
