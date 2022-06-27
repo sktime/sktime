@@ -1126,11 +1126,11 @@ class BaseForecaster(BaseEstimator):
         if X is None and y is None:
             return None, None
 
-        def _most_complex_scitype(scitypes, smaller_equal_than=None):
+        def _most_complex_scitype(scitypes):
             """Return most complex scitype in a list of str."""
-            if "Hierarchical" in scitypes and smaller_equal_than == "Hierarchical":
+            if "Hierarchical" in scitypes:
                 return "Hierarchical"
-            elif "Panel" in scitypes and smaller_equal_than != "Series":
+            elif "Panel" in scitypes:
                 return "Panel"
             elif "Series" in scitypes:
                 return "Series"
@@ -1259,9 +1259,7 @@ class BaseForecaster(BaseEstimator):
                 as_scitype=X_scitype,  # we are dealing with series
             )
         else:
-            iterate_as = _most_complex_scitype(
-                y_inner_scitype, smaller_equal_than=y_scitype
-            )
+            iterate_as = _most_complex_scitype(y_inner_scitype)
             if y is not None:
                 y_inner = VectorizedDF(
                     X=y,
