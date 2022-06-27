@@ -88,6 +88,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
+        "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
         "scitype:y": "univariate",
@@ -313,6 +314,13 @@ class NaiveForecaster(_BaseWindowForecaster):
         """
         y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
 
+        # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
+        #   causes a pd.DataFrame to appear as y_pred, which upsets the next lines
+        #   reasons are unclear, this is coming from the _BaseWindowForecaster
+        # todo: investigate this
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.iloc[:, 0]
+
         # check for in-sample prediction, if first time point needs to be imputed
         if self._y.index[0] in y_pred.index:
             if y_pred.loc[[self._y.index[0]]].hasnans:
@@ -341,9 +349,9 @@ class NaiveForecaster(_BaseWindowForecaster):
         """
         params_list = [
             {},
-            {"sp": 2},
-            {"strategy": "mean"},
+            {"strategy": "mean", "sp": 2},
             {"strategy": "drift"},
+            {"strategy": "last"},
             {"strategy": "mean", "window_length": 5},
         ]
 
