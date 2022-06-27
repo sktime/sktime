@@ -258,7 +258,9 @@ def test_sliding_window_splitter(y, missing_obs, fh, window_length, step_length)
             step_length=step_length,
             start_with_window=True,
         )
-        train_windows, test_windows, _, n_splits = _check_cv(cv=cv, y=y)
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv=cv, y=y, missing_obs=missing_obs
+        )
 
         assert np.vstack(train_windows).shape == (
             n_splits,
@@ -454,7 +456,9 @@ def test_expanding_window_splitter(y, missing_obs, fh, initial_window, step_leng
             step_length=step_length,
             start_with_window=True,
         )
-        train_windows, test_windows, _, n_splits = _check_cv(cv=cv, y=y)
+        train_windows, test_windows, _, n_splits = _check_cv(
+            cv=cv, y=y, missing_obs=missing_obs
+        )
         assert np.vstack(test_windows).shape == (n_splits, len(check_fh(fh)))
         assert train_windows[0].shape[0] == _coerce_duration_to_int(
             duration=initial_window, freq="D"
