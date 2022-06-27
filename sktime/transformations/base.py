@@ -635,6 +635,8 @@ class BaseTransformer(BaseEstimator):
                 return "Panel"
             elif "Series" in scitypes:
                 return "Series"
+            elif smaller_equal_than is not None:
+                return _most_complex_scitype(scitypes)
             else:
                 raise ValueError("no series scitypes supported, bug in estimator")
 
