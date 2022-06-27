@@ -68,6 +68,7 @@ def get_index_for_series(obj, cutoff=0):
     cutoff : int, or pd.datetime, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
 
+    Returns
     -------
     index : pandas.Index, index for obj
     """
@@ -77,7 +78,28 @@ def get_index_for_series(obj, cutoff=0):
     return pd.RangeIndex(cutoff, cutoff + obj.shape[0])
 
 
-def get_cutoff(obj, cutoff=0, return_index=False):
+GET_CUTOFF_SUPPORTED_MTYPES = [
+    "pd.DataFrame",
+    "pd.Series",
+    "np.ndarray",
+    "pd-multiindex",
+    "numpy3D",
+    "nested_univ",
+    "df-list",
+    "pd_multiindex_hier",
+    "np.ndarray",
+    "numpy3D",
+]
+
+
+def get_cutoff(
+    obj,
+    cutoff=0,
+    return_index=False,
+    reverse_order=False,
+    check_input=False,
+    convert_input=True,
+):
     """Get cutoff = latest time point of time series or time series panel.
 
     Assumptions on obj are not checked, these should be validated separately.
@@ -86,10 +108,9 @@ def get_cutoff(obj, cutoff=0, return_index=False):
     Parameters
     ----------
     obj : sktime compatible time series data container
-        must be of one of the following mtypes:
-            pd.Series, pd.DataFrame, np.ndarray, of Series scitype
-            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
-            pd_multiindex_hier, of Hierarchical scitype
+        must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+        to avoid conversions, pass data in one of GET_CUTOFF_SUPPORTED_MTYPES
     cutoff : int, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
     return_index : bool, optional, default=False
@@ -97,12 +118,33 @@ def get_cutoff(obj, cutoff=0, return_index=False):
             or a pandas compatible index element (False)
         note: return_index=True may set freq attribute of time types to None
             return_index=False will typically preserve freq attribute
+    reverse_order : bool, optional, default=False
+        if False, returns largest time index. If True, returns smallest time index
+    check_input : bool, optional, default=False
+        whether to check input for validity, i.e., is it one of the scitypes
+    convert_input : bool, optional, default=True
+        whether to convert the input (True), or skip conversion (False)
+        if skipped, function assumes that inputs are one of GET_CUTOFF_SUPPORTED_MTYPES
 
     Returns
     -------
     cutoff_index : pandas compatible index element (if return_index=False)
         pd.Index of length 1 (if return_index=True)
     """
+    from sktime.datatypes import check_is_scitype, convert_to
+
+    # deal with VectorizedDF
+    if hasattr(obj, "X"):
+        obj = obj.X
+
+    if check_input:
+        valid = check_is_scitype(obj, scitype=["Series", "Panel", "Hierarchical"])
+        if not valid:
+            raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
+
+    if convert_input:
+        obj = convert_to(obj, GET_CUTOFF_SUPPORTED_MTYPES)
+
     if cutoff is None:
         cutoff = 0
 
@@ -115,26 +157,36 @@ def get_cutoff(obj, cutoff=0, return_index=False):
             cutoff_ind = obj.shape[-1] + cutoff
         if obj.ndim < 3 and obj.ndim > 0:
             cutoff_ind = obj.shape[0] + cutoff
+        if reverse_order:
+            cutoff_ind = 0
         if return_index:
             return pd.RangeIndex(cutoff_ind - 1, cutoff_ind)
         else:
             return cutoff_ind
 
+    # define "first" or "last" index depending on which is desired
+    if reverse_order:
+        ix = 0
+        agg = min
+    else:
+        ix = -1
+        agg = max
+
     if isinstance(obj, pd.Series):
-        return obj.index[[-1]] if return_index else obj.index[-1]
+        return obj.index[[ix]] if return_index else obj.index[ix]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
         objcols = [x for x in obj.columns if obj.dtypes[x] == "object"]
         # pd.DataFrame
         if len(objcols) == 0:
-            return obj.index[[-1]] if return_index else obj.index[-1]
+            return obj.index[[ix]] if return_index else obj.index[ix]
         # nested_univ
         else:
             if return_index:
-                idxx = [x.index[[-1]] for col in objcols for x in obj[col]]
+                idxx = [x.index[[ix]] for col in objcols for x in obj[col]]
             else:
-                idxx = [x.index[-1] for col in objcols for x in obj[col]]
+                idxx = [x.index[ix] for col in objcols for x in obj[col]]
             return max(idxx)
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
@@ -145,15 +197,15 @@ def get_cutoff(obj, cutoff=0, return_index=False):
             cutoffs = [x[[-1]] for x in series_idx]
         else:
             cutoffs = [x[-1] for x in series_idx]
-        return max(cutoffs)
+        return agg(cutoffs)
 
     # df-list (Panel)
     if isinstance(obj, list):
         if return_index:
-            idxs = [x.index[[-1]] for x in obj]
+            idxs = [x.index[[ix]] for x in obj]
         else:
-            idxs = [x.index[-1] for x in obj]
-        return max(idxs)
+            idxs = [x.index[ix] for x in obj]
+        return agg(idxs)
 
 
 def update_data(X, X_new=None):
@@ -210,7 +262,7 @@ def update_data(X, X_new=None):
         return X_new.combine_first(X)
 
 
-GET_LATEST_WINDOW_SUPPORTED_MTYPES = [
+GET_WINDOW_SUPPORTED_MTYPES = [
     "pd.DataFrame",
     "pd-multiindex",
     "pd_multiindex_hier",
@@ -230,10 +282,9 @@ def get_window(obj, window_length=None, lag=None):
     Parameters
     ----------
     obj : sktime compatible time series data container or None
-        if not None, must be of one of the following mtypes:
-            pd.Series, pd.DataFrame, np.ndarray, of Series scitype
-            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
-            pd_multiindex_hier, of Hierarchical scitype
+        if not None, must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+        to avoid conversions, pass data in one of GET_WINDOW_SUPPORTED_MTYPES
     window_length : int or timedelta, optional, default=-inf
         must be int if obj is int indexed, timedelta if datetime indexed
         length of the window to slice to. Default = window of infinite size
@@ -259,7 +310,7 @@ def get_window(obj, window_length=None, lag=None):
         raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
     obj_in_mtype = metadata["mtype"]
 
-    obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
+    obj = convert_to(obj, GET_WINDOW_SUPPORTED_MTYPES)
 
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
@@ -325,11 +376,10 @@ def get_slice(obj, start=None, end=None):
 
     Parameters
     ----------
-    obj : sktime compatible time series Series type or None
-        if not None, must be of one of the following mtypes:
-            pd.Series, pd.DataFrame, np.ndarray, of Series scitype
-            pd.multiindex, numpy3D, nested_univ, df-list, of Panel scitype
-            pd_multiindex_hier, of Hierarchical scitype
+    obj : sktime compatible time series data container or None
+        if not None, must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+        to avoid conversions, pass data in one of GET_WINDOW_SUPPORTED_MTYPES
     start : int or timestamp, optional, default = None
         must be int if obj is int indexed, timestamp if datetime indexed
         Inclusive start of slice. Default = None.
@@ -355,7 +405,7 @@ def get_slice(obj, start=None, end=None):
         raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
     obj_in_mtype = metadata["mtype"]
 
-    obj = convert_to(obj, GET_LATEST_WINDOW_SUPPORTED_MTYPES)
+    obj = convert_to(obj, GET_WINDOW_SUPPORTED_MTYPES)
 
     # numpy3D (Panel) or np.npdarray (Series)
     # Assumes the index is integer so will be exclusive by default
