@@ -23,10 +23,11 @@ SCITYPE_MTYPE_PAIRS = [
 ]
 
 
+@pytest.mark.parametrize("convert_input", [True, False])
 @pytest.mark.parametrize("reverse_order", [True, False])
 @pytest.mark.parametrize("return_index", [True, False])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
-def test_get_cutoff(scitype, mtype, return_index, reverse_order):
+def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
     """Tests that conversions for scitype agree with from/to example fixtures.
 
     Parameters
@@ -35,6 +36,7 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order):
     mtype : str - mtype of input
     return_index : bool - whether index (True) or index element is returned (False)
     reverse_order : bool - whether first (True) or last index (False) is retrieved
+    convert_input : bool, - whether input is converted (True) or passed through (False)
 
     Raises
     ------
@@ -49,7 +51,10 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order):
             continue
 
         cutoff = get_cutoff(
-            fixture, return_index=return_index, reverse_order=reverse_order
+            fixture,
+            return_index=return_index,
+            reverse_order=reverse_order,
+            convert_input=convert_input,
         )
 
         if return_index:
@@ -66,6 +71,22 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order):
 
         if return_index:
             assert len(cutoff) == 1
+
+
+@pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
+def test_get_cutoff_wrong_input(bad_inputs):
+    """Tests that get_cutoff raises error on bad input when input checks are enabled.
+
+    Parameters
+    ----------
+    bad_inputs : inputs that should set off the input checks
+
+    Raises
+    ------
+    Exception (from pytest) if the error is not raised as expected
+    """
+    with pytest.raises(Exception, match="must be of Series, Panel, or Hierarchical"):
+        get_cutoff(bad_inputs, check_input=True)
 
 
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
