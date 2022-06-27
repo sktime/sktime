@@ -26,7 +26,7 @@ SCITYPE_MTYPE_PAIRS = [
 @pytest.mark.parametrize("reverse_order", [True, False])
 @pytest.mark.parametrize("return_index", [True, False])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
-def test_get_cutoff(scitype, mtype, return_index, ):
+def test_get_cutoff(scitype, mtype, return_index, reverse_order):
     """Tests that conversions for scitype agree with from/to example fixtures.
 
     Parameters
@@ -34,6 +34,7 @@ def test_get_cutoff(scitype, mtype, return_index, ):
     scitype : str - scitype of input
     mtype : str - mtype of input
     return_index : bool - whether index (True) or index element is returned (False)
+    reverse_order : bool - whether first (True) or last index (False) is retrieved
 
     Raises
     ------
