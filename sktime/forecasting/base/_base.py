@@ -1408,10 +1408,11 @@ class BaseForecaster(BaseEstimator):
         Called from all methods where fh can be passed:
             fit, predict-like, update-like
 
-        Reads and writes to self._fh
-        Writes fh to self._fh if does not exist
-        Checks equality of fh with self._fh if exists, raises error if not equal
+        Reads and writes to self._fh.
+        Writes fh to self._fh if does not exist.
+        Checks equality of fh with self._fh if exists, raises error if not equal.
         Assigns the frequency inferred from self._y
+        to the returned forecasting horizon object.
 
         Parameters
         ----------
