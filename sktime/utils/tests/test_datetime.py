@@ -7,10 +7,11 @@ import datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datatypes import VectorizedDF
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
-from sktime.utils.datetime import _coerce_duration_to_int, _get_freq, infer_freq
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq, _shift, infer_freq
 
 
 def test_get_freq():
@@ -88,3 +89,40 @@ def test_infer_freq() -> None:
     y = _bottom_hier_datagen(no_levels=2)
     y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
     assert infer_freq(y) == "M"
+
+
+@pytest.mark.parametrize("x", [None, "a", [1]])
+def test_shift_raises_attribute_error_with_wrong_x(x) -> None:
+    """Test _shift raises AssertionError with wrong input x."""
+    with pytest.raises(AssertionError, match=f"{type(x)}"):
+        _shift(x)
+
+
+@pytest.mark.parametrize(
+    "by", [None, "a", [1], pd.Period("2021-01-01"), pd.Timedelta("1 day")]
+)
+def test_shift_raises_attribute_error_with_wrong_by(by) -> None:
+    """Test _shift raises AssertionError with wrong input by."""
+    with pytest.raises(AssertionError, match=f"{type(by)}"):
+        _shift(pd.Period("2021-01-01"), by=by)
+
+
+def test_shift() -> None:
+    """Test _shift."""
+    assert _shift(1, by=2) == 3
+    assert _shift(1, by=2, freq="D") == 3
+    with pytest.raises(TypeError):
+        _shift(pd.Timestamp("2021-01-01"))
+    assert _shift(pd.Timestamp("2021-01-01"), freq="D") == pd.Timestamp("2021-01-02")
+    assert _shift(pd.Timestamp("2021-01-01"), by=2, freq="D") == pd.Timestamp(
+        "2021-01-03"
+    )
+    assert _shift(pd.Period("2021-01-15")) == pd.Period("2021-01-16")
+    assert _shift(pd.Period("2021-01-15"), freq="D") == pd.Period("2021-01-16")
+    assert _shift(pd.Period("2021-01-15"), by=2, freq="D") == pd.Period("2021-01-17")
+    assert _shift(pd.Period("2021-01-15", freq="M")) == pd.Period("2021-02")
+    assert _shift(pd.Period("2021-01-15", freq="M"), freq="D") == pd.Period("2021-02")
+    assert _shift(pd.Period("2021-01-15", freq="M"), by=2) == pd.Period("2021-03")
+    assert _shift(pd.Period("2021-01-15", freq="M"), by=2, freq="D") == pd.Period(
+        "2021-03"
+    )
