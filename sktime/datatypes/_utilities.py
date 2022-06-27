@@ -293,9 +293,11 @@ def get_window(obj, window_length=None, lag=None):
     window_length : int or timedelta, optional, default=-inf
         must be int if obj is int indexed, timedelta if datetime indexed
         length of the window to slice to. Default = window of infinite size
-    lag : int or timedelta, optional, default = 0 (correct type zero is inferred)
-        must be int if obj is int indexed, timedelta if datetime indexed
+    lag : int, timedelta, or None optional, default = None (zero of correct type)
         lag of the latest time in the window, with respect to cutoff of obj
+        if None, is internally replaced by a zero of type compatible with obj index
+        must be int if obj is int indexed or not pandas based
+        must be timedelta if obj is pandas based and datetime indexed
 
     Returns
     -------
