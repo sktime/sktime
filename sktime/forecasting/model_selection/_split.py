@@ -1281,20 +1281,15 @@ class SingleWindowSplitter(BaseSplitter):
         Forecasting horizon
     window_length : int or timedelta or pd.DateOffset
         Window length
-    freq : str, optional, (default=None)
-        Frequency of the time series `y` in case `pd.infer_freq(y)` fails
     """
 
     def __init__(
         self,
         fh: FORECASTING_HORIZON_TYPES,
         window_length: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
-        freq: str = None,
     ) -> None:
         _check_inputs_for_compatibility(args=[fh, window_length])
-        super(SingleWindowSplitter, self).__init__(
-            fh=fh, window_length=window_length, freq=freq
-        )
+        super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]

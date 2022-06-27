@@ -120,10 +120,9 @@ def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = 
     _check_windows(test_windows, allow_empty_window=allow_empty_window)
 
     cutoffs = cv.get_cutoffs(y)
-    if missing_obs is None or len(missing_obs) == 0:
-        _check_cutoffs(cutoffs)
-        _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh, y)
-        _check_cutoffs_against_train_windows(cutoffs, train_windows)
+    _check_cutoffs(cutoffs)
+    _check_cutoffs_against_test_windows(cutoffs, test_windows, cv.fh, y)
+    _check_cutoffs_against_train_windows(cutoffs, train_windows)
 
     n_splits = cv.get_n_splits(y)
     _check_n_splits(n_splits)
@@ -133,25 +132,20 @@ def _check_cv(cv, y, allow_empty_window: bool = False, missing_obs: List[int] = 
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("missing_obs", TEST_MISSING_OBSERVATIONS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
-def test_single_window_splitter(y, missing_obs, fh, window_length):
+def test_single_window_splitter(y, fh, window_length):
     """Test SingleWindowSplitter."""
     if _inputs_are_supported([fh, window_length]):
-        cv = SingleWindowSplitter(fh=fh, window_length=window_length, freq="D")
-        train_windows, test_windows, cutoffs, n_splits = _check_cv(
-            cv=cv, y=y, missing_obs=missing_obs
-        )
+        cv = SingleWindowSplitter(fh=fh, window_length=window_length)
+        train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
         train_window = train_windows[0]
         test_window = test_windows[0]
         assert n_splits == 1
-        duration = _coerce_duration_to_int(duration=window_length, freq="D")
-        if missing_obs is None or len(missing_obs) == 0:
-            assert train_window.shape[0] == duration
-        else:
-            assert train_window.shape[0] <= duration
+        assert train_window.shape[0] == _coerce_duration_to_int(
+            duration=window_length, freq="D"
+        )
         checked_fh = check_fh(fh)
         assert test_window.shape[0] == len(checked_fh)
 
@@ -168,14 +162,11 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
 
 
 @pytest.mark.parametrize("y", TEST_YS)
-@pytest.mark.parametrize("missing_obs", TEST_MISSING_OBSERVATIONS)
 @pytest.mark.parametrize("fh", [*TEST_FHS, *TEST_FHS_TIMEDELTA])
-def test_single_window_splitter_default_window_length(y, missing_obs, fh):
+def test_single_window_splitter_default_window_length(y, fh):
     """Test SingleWindowSplitter."""
-    cv = SingleWindowSplitter(fh=fh, freq="D")
-    train_windows, test_windows, cutoffs, n_splits = _check_cv(
-        cv=cv, y=y, missing_obs=missing_obs
-    )
+    cv = SingleWindowSplitter(fh=fh)
+    train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
 
     train_window = train_windows[0]
     test_window = test_windows[0]
@@ -186,18 +177,14 @@ def test_single_window_splitter_default_window_length(y, missing_obs, fh):
 
     fh = cv.get_fh()
     if fh.is_all_in_sample():
-        if missing_obs is None or len(missing_obs) == 0:
-            assert train_window.shape[0] == len(y)
-        else:
-            assert train_window.shape[0] <= len(y)
+        assert train_window.shape[0] == len(y)
     else:
-        if missing_obs is None or len(missing_obs) == 0:
-            if array_is_int(checked_fh):
-                assert train_window.shape[0] == len(y) - checked_fh.max()
-            else:
-                assert train_window.shape[0] == len(
-                    y[y.index <= y.index.max() - checked_fh.max()]
-                )
+        if array_is_int(checked_fh):
+            assert train_window.shape[0] == len(y) - checked_fh.max()
+        else:
+            assert train_window.shape[0] == len(
+                y[y.index <= y.index.max() - checked_fh.max()]
+            )
 
     if array_is_int(checked_fh):
         test_window_expected = train_window[-1] + checked_fh
