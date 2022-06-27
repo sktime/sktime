@@ -10,8 +10,8 @@ from operator import mul
 import pandas as pd
 import pytest
 
-from sktime.datatypes import check_is_mtype, convert
-from sktime.datatypes._utilities import get_window
+from sktime.datatypes import check_is_mtype, convert#
+from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
@@ -32,7 +32,8 @@ def test_vectorization_series_to_panel(mtype):
 
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
-    y_pred = ARIMA().fit(y).predict([1, 2, 3])
+    f = ARIMA()
+    y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
     msg = (
@@ -56,6 +57,12 @@ def test_vectorization_series_to_panel(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+    msg = (
+        "estimator in vectorization test does not properly update cutoff, "
+        f"expected {y}, but found {f.cutoff}"
+    )
+    assert f.cutoff == get_cutoff(y), msg
 
 
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -71,7 +78,8 @@ def test_vectorization_series_to_hier(mtype):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
-    y_pred = ARIMA().fit(y).predict([1, 2, 3])
+    f = ARIMA()
+    y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
     msg = (
@@ -95,6 +103,12 @@ def test_vectorization_series_to_hier(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+    msg = (
+        "estimator in vectorization test does not properly update cutoff, "
+        f"expected {y}, but found {f.cutoff}"
+    )
+    assert f.cutoff == get_cutoff(y), msg
 
 
 PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
