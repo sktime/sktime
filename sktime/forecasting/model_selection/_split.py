@@ -924,7 +924,6 @@ class BaseWindowSplitter(BaseSplitter):
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
-        freq: str = None,
     ) -> None:
         _check_inputs_for_compatibility(
             [fh, initial_window, window_length, step_length]
@@ -932,9 +931,7 @@ class BaseWindowSplitter(BaseSplitter):
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
-        super(BaseWindowSplitter, self).__init__(
-            fh=fh, window_length=window_length, freq=freq
-        )
+        super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -1205,7 +1202,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
         initial_window: Optional[ACCEPTED_WINDOW_LENGTH_TYPES] = None,
         start_with_window: bool = True,
-        freq: str = None,
     ) -> None:
         super(SlidingWindowSplitter, self).__init__(
             fh=fh,
@@ -1213,7 +1209,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             initial_window=initial_window,
             step_length=step_length,
             start_with_window=start_with_window,
-            freq=freq,
         )
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
@@ -1258,7 +1253,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
         start_with_window: bool = True,
-        freq: str = None,
     ) -> None:
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
@@ -1269,7 +1263,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
             initial_window=None,
             step_length=step_length,
             start_with_window=start_with_window,
-            freq=freq,
         )
 
     def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
