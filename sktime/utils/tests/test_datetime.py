@@ -107,8 +107,8 @@ def test_shift_raises_attribute_error_with_wrong_by(by) -> None:
         _shift(pd.Period("2021-01-01"), by=by)
 
 
-def test_shift() -> None:
-    """Test _shift."""
+def test_shift_against_expectations() -> None:
+    """Test _shift for equality with expectation."""
     assert _shift(1, by=2) == 3
     assert _shift(1, by=2, freq="D") == 3
     with pytest.raises(TypeError):
@@ -126,3 +126,26 @@ def test_shift() -> None:
     assert _shift(pd.Period("2021-01-15", freq="M"), by=2, freq="D") == pd.Period(
         "2021-03"
     )
+
+
+TIMEPOINTS = [
+    pd.Period("2000", freq="D"),
+    pd.Timestamp("2000-01-01", freq="D"),
+    int(1),
+    3,
+]
+
+
+@pytest.mark.parametrize("timepoint", TIMEPOINTS)
+@pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
+def test_shift(timepoint, by):
+    """Test _shift."""
+    ret = _shift(timepoint, by=by, freq="D")
+
+    # check output type, pandas index types inherit from each other,
+    # hence check for type equality here rather than using isinstance
+    assert type(ret) is type(timepoint)
+
+    # check if for a zero shift, input and output are the same
+    if by == 0:
+        assert timepoint == ret
