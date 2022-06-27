@@ -671,7 +671,7 @@ class BaseForecaster(BaseEstimator):
             "tensorflow-probability must be installed for fully probabilistic forecasts"
             "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
         )
-        if self._is_vectorized:
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
             raise NotImplementedError(
                 "automated vectorization for predict_proba is not implemented"
             )
