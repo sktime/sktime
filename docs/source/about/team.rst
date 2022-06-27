@@ -15,8 +15,6 @@ Community Council
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Martin Walter
