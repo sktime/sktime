@@ -88,7 +88,7 @@ def _get_freq(x):
         return None
 
 
-def _shift(x, by=1):
+def _shift(x: Union[pd.Period, pd.Timestamp, int], freq: str, by: int = 1):
     """Shift time point `x` by a step (`by`) given frequency of `x`.
 
     Parameters
@@ -105,9 +105,7 @@ def _shift(x, by=1):
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
     assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
     if isinstance(x, pd.Timestamp):
-        if not hasattr(x, "freq") or x.freq is None:
-            raise ValueError("No `freq` information available")
-        by *= x.freq
+        by *= pd.tseries.frequencies.to_offset(freq)
     return x + by
 
 

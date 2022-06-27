@@ -7,8 +7,9 @@ import datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int, _get_freq, _shift
 
 
 def test_get_freq():
@@ -58,3 +59,26 @@ def test_coerce_duration_to_int() -> None:
         _coerce_duration_to_int(duration=duration, freq="25T"),
         pd.Index([3, 4], dtype=int),
     )
+
+
+TIMEPOINTS = [
+    pd.Period("2000", freq="D"),
+    pd.Timestamp("2000-01-01", freq="D"),
+    int(1),
+    3,
+]
+
+
+@pytest.mark.parametrize("timepoint", TIMEPOINTS)
+@pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
+def test_shift(timepoint, by):
+    """Test shifting of ForecastingHorizon."""
+    ret = _shift(timepoint, by=by, freq="D")
+
+    # check output type, pandas index types inherit from each other,
+    # hence check for type equality here rather than using isinstance
+    assert type(ret) is type(timepoint)
+
+    # check if for a zero shift, input and output are the same
+    if by == 0:
+        assert timepoint == ret

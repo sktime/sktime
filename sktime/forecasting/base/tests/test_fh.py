@@ -30,7 +30,6 @@ from sktime.utils.datetime import (
     _get_duration,
     _get_freq,
     _get_intervals_count_and_unit,
-    _shift,
 )
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
@@ -201,29 +200,6 @@ def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
     """Test conversion of relative horizons to pandas index."""
     output = ForecastingHorizon(arg, is_relative=True).to_pandas()
     assert is_in_valid_index_types(output)
-
-
-TIMEPOINTS = [
-    pd.Period("2000", freq="M"),
-    pd.Timestamp("2000-01-01", freq="D"),
-    int(1),
-    3,
-]
-
-
-@pytest.mark.parametrize("timepoint", TIMEPOINTS)
-@pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
-def test_shift(timepoint, by):
-    """Test shifting of ForecastingHorizon."""
-    ret = _shift(timepoint, by=by)
-
-    # check output type, pandas index types inherit from each other,
-    # hence check for type equality here rather than using isinstance
-    assert type(ret) is type(timepoint)
-
-    # check if for a zero shift, input and output are the same
-    if by == 0:
-        assert timepoint == ret
 
 
 DURATIONS_ALLOWED = [
