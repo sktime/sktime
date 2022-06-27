@@ -10,7 +10,7 @@ __all__ = [
     "SingleWindowSplitter",
     "temporal_train_test_split",
 ]
-__author__ = ["mloning", "kkoralturk", "khrapovs"]
+__author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import inspect
 import numbers
@@ -21,11 +21,15 @@ from typing import Iterator, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
-from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import (
+    get_cutoff,
+    get_index_for_series,
+    get_time_index,
+    get_window,
+)
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -1296,99 +1300,135 @@ class SingleWindowSplitter(BaseSplitter):
         return np.array([end])
 
 
+SPLIT_SUPPORTED_MTYPES = [
+    "pd.DataFrame",
+    "pd.Series",
+    "np.ndarray",
+    "pd-multiindex",
+    "numpy3D",
+    "pd_multiindex_hier",
+]
+
+
 def temporal_train_test_split(
-    y: ACCEPTED_Y_TYPES,
-    X: Optional[pd.DataFrame] = None,
+    y,
+    X=None,
     test_size: Optional[Union[int, float]] = None,
     train_size: Optional[Union[int, float]] = None,
     fh: Optional[FORECASTING_HORIZON_TYPES] = None,
 ) -> SPLIT_TYPE:
     """Split arrays or matrices into sequential train and test subsets.
 
-    Creates train/test splits over endogenous arrays an optional exogenous
-    arrays.
+    Creates temporal train/test splits of `y` and potentially `X`.
+    In temporal train/test splits, train/test sets are consecutive index-wise,
+    and no test index is smaller/earlier than the training index.
 
-    This is a wrapper of scikit-learn's ``train_test_split`` that
-    does not shuffle the data.
+    This is based on train/test window lengths, and "index spans" of the objects passed,
+    defined as the difference between latest/largest index and earliest/lowest index.
+    E.g., the span of an `y` with index set [2, 3, 4] is 2.
 
     Parameters
     ----------
-    y : pd.Series
-        Target series
-    X : pd.DataFrame, optional (default=None)
-        Exogenous data
-    test_size : float, int or None, optional (default=None)
-        If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        relative number of test samples. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.25.
-    train_size : float, int, or None, (default=None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the relative number of train samples. If None,
-        the value is automatically set to the complement of the test size.
-    fh : ForecastingHorizon
+    y : sktime compatible time series data container
+        must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+    X : sktime compatible time series data container, optional (default=None)
+        must be of Series, Panel, or Hierarchical scitype
+        all mtypes are supported via conversion to internally supported types
+    test_size : float, int, timedelta, or None, optional (default=None)
+        If float, test span is last `test_size` fraction of full index span of `y`.
+        If int, test span is the integer index range of length `test_size`,
+            and ending with the most recent integer index in `y`.
+        If timedelta, test span are all time indices in the window of size `test_size`,
+            and ending with the most recent time stamp in `y`.
+        If None, will be interpreted as a float and set to 0.25, if `fh` is `None`.
+            If `fh` is provided, will be equal to the int or timedelta span of `fh`.
+        Lower (early) bounds are exclusive, upper (late) bounds are inclusive.
+    train_size : float, int, or None, optional (default=None)
+        If float, training span is `train_size` fraction of full index span seen in `y`,
+            and ending with the lower bound of the test span.
+        If int, training span is the integer index range of length `training_size`,
+            and ending with the most recent integer index that is not in the test span.
+        If timedelta, test span are all time indices in the window of size `train_size`,
+            and ending with the least recent (earliest) time stamp in the test span.
+        If None, will be the complement of the test span in the full span of `y`.
+        Lower (early) bounds are exclusive, upper (late) bounds are inclusive.
+    fh : ForecastingHorizon, or None, optional (detault=None)
+        if passed, `test_size` must be `None`, and `test_size` will be determined
+        the difference between the last index in `fh` and the last index of `y`
 
     Returns
     -------
-    splitting : tuple, length=2 * len(arrays)
-        List containing train-test split of `y` and `X` if given.
+    y_train : sktime compatible time series data container, same type as `y`
+        `y` sub-set to the training span (as defined above)
+    y_test : sktime compatible time series data container, same type as `y`
+        `y` sub-set to the test span (as defined above)
+    X_train : sktime compatible time series data container, same type as `X`
+        `X` sub-set to the training span (as defined above)
+    X_test : sktime compatible time series data container, same type as `X`
+        `X` sub-set to the test span (as defined above)
+    NOTE: train/test span of `X_train`, `X_test` are determined by span of `y`.
+        If span of `X` and `y` are not identical, `X_train` and `X_test` will, in
+        general, not be identical with returns of applying `temporal_train_test_split`,
+        applied to only `X` with the same other parameters.
 
     References
     ----------
     ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     if fh is not None:
-        if test_size is not None or train_size is not None:
-            raise ValueError(
-                "If `fh` is given, `test_size` and `train_size` cannot "
-                "also be specified."
+        if not isinstance(fh, ForecastingHorizon):
+            raise TypeError(
+                f"fh must be of type ForecastingHorizon, but found {type(fh)}"
             )
-        return _split_by_fh(y, fh, X=X)
+        if test_size is not None:
+            raise ValueError("If `fh` is passed, `test_size` cannot also be passed.")
+        if not fh.is_relative:
+            fh = fh.to_relative(get_cutoff(y))
+        fh_span = fh.to_pandas()[-1]
+        test_size = fh_span
+
+    y_end = get_cutoff(y)
+    y_start = get_cutoff(y, reverse_order=True)
+    y_span = y_end - y_start
+
+    if test_size is None and train_size is None:
+        test_size = 0.25
+    if isinstance(test_size, float):
+        test_window = test_size * y_span
+        test_frac = test_size
+    elif isinstance(test_size, int) and not isinstance(y_span, int):
+        y_idx = get_time_index(y)[-test_size]
+        test_window = y_end - y_idx
+        test_frac = test_window / y_span
     else:
-        pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
-        if pd_format is True and isinstance(y.index, pd.MultiIndex):
-            ys = get_time_index(y)
-            # Get index to group across (only indices other than timepoints index)
-            yi_name = y.index.names
-            yi_grp = yi_name[0:-1]
+        test_window = test_size
+        test_frac = test_size / y_span
 
-            # Get split into test and train data for timeindex only
-            series = (ys,)
-            yret = _train_test_split(
-                *series,
-                shuffle=False,
-                stratify=None,
-                test_size=test_size,
-                train_size=train_size,
-            )
+    if train_size is None:
+        train_frac = 1 - test_frac
+        train_window = train_frac * y_span
+    elif isinstance(train_size, float):
+        train_window = train_size * y_span
+        train_frac = train_size
+    elif isinstance(train_size, int) and not isinstance(y_span, int):
+        y_idx = get_time_index(y)
+        train_window = y_idx[-test_size] - y_idx[-test_size + -train_size]
+        train_frac = train_window / y_span
+    else:
+        train_window = train_size
+        train_frac = train_size / y_span
 
-            # Convert into list indices
-            ysl = ys.to_list()
-            yrl1 = yret[0].to_list()
-            yrl2 = yret[1].to_list()
-            p1 = [index for (index, item) in enumerate(ysl) if item in yrl1]
-            p2 = [index for (index, item) in enumerate(ysl) if item in yrl2]
+    y_train = get_window(y, window_length=train_window, lag=test_window)
+    y_test = get_window(y, window_length=test_window)
 
-            # Subset by group based on identified indices
-            y_train = y.groupby(yi_grp, as_index=False).nth(p1)
-            y_test = y.groupby(yi_grp, as_index=False).nth(p2)
-            if X is not None:
-                X_train = X.groupby(yi_grp, as_index=False).nth(p1)
-                X_test = X.groupby(yi_grp, as_index=False).nth(p2)
-                return y_train, y_test, X_train, X_test
-            else:
-                return y_train, y_test
-        else:
-            series = (y,) if X is None else (y, X)
-            return _train_test_split(
-                *series,
-                shuffle=False,
-                stratify=None,
-                test_size=test_size,
-                train_size=train_size,
-            )
+    if X is not None:
+        X_lag = get_cutoff(X) - y_end
+        X_train = get_window(X, window_length=train_window, lag=test_window + X_lag)
+        X_test = get_window(X, window_length=test_window, lag=X_lag)
+        return y_train, y_test, X_train, X_test
+    else:
+        return y_train, y_test
 
 
 def _split_by_fh(
