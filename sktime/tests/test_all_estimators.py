@@ -997,6 +997,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         _ = scenario.run(estimator, method_sequence=["fit"])
         dict_before = estimator.__dict__.copy()
 
+        # skip test if vectorization would be necessary and method predict_proba
+        # this is since vectorization is not implemented for predict_proba
+        if estimator._is_vectorized and method_nsc == "predict_proba":
+            return None
+
         # dict_after = dictionary of estimator after predict and fit
         _ = scenario.run(estimator, method_sequence=[method_nsc])
         dict_after = estimator.__dict__
@@ -1026,6 +1031,11 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         assert deep_equals(
             fit_args_before, fit_args_after
         ), f"Estimator: {estimator} has side effects on arguments of fit"
+
+        # skip test if vectorization would be necessary and method predict_proba
+        # this is since vectorization is not implemented for predict_proba
+        if estimator._is_vectorized and method_nsc == "predict_proba":
+            return None
 
         # Fit the model, get args before and after
         _, args_after = scenario.run(
