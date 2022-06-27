@@ -18,7 +18,11 @@ from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.ets import AutoETS
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.bootstrap import STLBootstrapTransformer
+from sktime.transformations.bootstrap import (
+    MovingBlockBootstrapTransformer,
+    STLBootstrapTransformer,
+)
+from sktime.utils.estimators import MockForecaster
 
 
 class BaggingForecaster(BaseForecaster):
@@ -292,6 +296,10 @@ class BaggingForecaster(BaseForecaster):
         """
         params = [
             {},
+            {
+                "bootstrap_transformer": MovingBlockBootstrapTransformer,
+                "forecaster": MockForecaster,
+            },
         ]
 
         return params
