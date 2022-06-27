@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from sktime.datatypes import check_is_mtype, convert
-from sktime.datatypes._utilities import get_window
+from sktime.datatypes._utilities import get_cutoff, get_window
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
