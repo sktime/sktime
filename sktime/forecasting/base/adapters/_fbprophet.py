@@ -264,7 +264,7 @@ class _ProphetAdapter(BaseForecaster):
         self.check_is_fitted()
 
         if hasattr(self, "_is_vectorized") and self._is_vectorized:
-            return {"forecasters", self.forecasters_}
+            return {"forecasters": self.forecasters_}
 
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
