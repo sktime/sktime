@@ -94,7 +94,7 @@ def infer_freq(y=None) -> Optional[str]:
 
     Parameters
     ----------
-    y : Series, Panel, or Hierarchical object, or VectorizedDF
+    y : Series, Panel, or Hierarchical object, or VectorizedDF, optional (default=None)
 
     Returns
     -------
