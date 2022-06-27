@@ -89,7 +89,7 @@ def _get_freq(x):
 
 
 @singledispatch
-def infer_freq(y) -> Optional[str]:
+def infer_freq(y=None) -> Optional[str]:
     """Infer frequency string from the time series object.
 
     Parameters
@@ -102,11 +102,18 @@ def infer_freq(y) -> Optional[str]:
         Frequency string inferred from the pandas index,
         or `None`, if inference fails.
     """
+    return None
+
+
+@infer_freq.register(pd.DataFrame)
+@infer_freq.register(pd.Series)
+@infer_freq.register(np.ndarray)
+def _(y) -> Optional[str]:
     return _infer_freq_from_index(get_time_index(y))
 
 
-@infer_freq.register
-def _(y: VectorizedDF) -> Optional[str]:
+@infer_freq.register(VectorizedDF)
+def _(y) -> Optional[str]:
     return _infer_freq_from_index(get_time_index(y.as_list()[0]))
 
 

@@ -64,6 +64,8 @@ def test_coerce_duration_to_int() -> None:
 
 def test_infer_freq() -> None:
     """Test frequency inference."""
+    assert infer_freq(None) is None
+
     y = pd.Series(dtype=int)
     assert infer_freq(y) is None
 

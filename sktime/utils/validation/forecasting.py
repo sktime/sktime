@@ -25,6 +25,7 @@ import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
+from sktime.utils.datetime import infer_freq
 from sktime.utils.validation import (
     array_is_datetime64,
     array_is_int,
@@ -262,7 +263,7 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative: bool = False, freq: str = None):
+def check_fh(fh, enforce_relative: bool = False, y=None):
     """Validate forecasting horizon.
 
     Parameters
@@ -271,12 +272,12 @@ def check_fh(fh, enforce_relative: bool = False, freq: str = None):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
-    freq : str, optional (default=None)
-        Frequency string.
+    y : time series in sktime compatible data container format, optional (default=None)
+        Used to infer frequency string and assign it to ForecastingHorizon.
         If `fh` argument is not an initialized `ForecastingHorizon` object,
-        then this argument is used to construct it.
+        then frequency is used to construct it.
         If `fh` argument is a `ForecastingHorizon` object,
-        but `freq` attribute is `None`, then this argument
+        but `freq` attribute is `None`, then inferred frequency
         is used to update the attribute.
 
     Returns
@@ -294,7 +295,7 @@ def check_fh(fh, enforce_relative: bool = False, freq: str = None):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
+        fh = ForecastingHorizon(fh, is_relative=None, freq=infer_freq(y))
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
@@ -307,7 +308,7 @@ def check_fh(fh, enforce_relative: bool = False, freq: str = None):
         raise ValueError("`fh` must be relative, but found absolute `fh`")
 
     if fh.freq is None:
-        fh.freq = freq
+        fh.freq = infer_freq(y)
 
     return fh
 
