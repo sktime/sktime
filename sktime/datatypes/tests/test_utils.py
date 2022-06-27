@@ -23,9 +23,10 @@ SCITYPE_MTYPE_PAIRS = [
 ]
 
 
+@pytest.mark.parametrize("reverse_order", [True, False])
 @pytest.mark.parametrize("return_index", [True, False])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
-def test_get_cutoff(scitype, mtype, return_index):
+def test_get_cutoff(scitype, mtype, return_index, ):
     """Tests that conversions for scitype agree with from/to example fixtures.
 
     Parameters
@@ -46,7 +47,9 @@ def test_get_cutoff(scitype, mtype, return_index):
         if fixture is None:
             continue
 
-        cutoff = get_cutoff(fixture, return_index=return_index)
+        cutoff = get_cutoff(
+            fixture, return_index=return_index, reverse_order=reverse_order
+        )
 
         if return_index:
             expected_types = pd.Index
