@@ -272,12 +272,23 @@ def check_fh(fh, enforce_relative: bool = False, freq: str = None):
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
     freq : str, optional (default=None)
-        Frequency string
+        Frequency string.
+        If `fh` argument is not an initialized `ForecastingHorizon` object,
+        then this argument is used to construct it.
+        If `fh` argument is a `ForecastingHorizon` object,
+        but `freq` attribute is `None`, then this argument
+        is used to update the attribute.
 
     Returns
     -------
     fh : ForecastingHorizon
         Validated forecasting horizon.
+
+    Raises
+    ------
+    ValueError
+        If passed fh is of length zero
+        If enforce_relative is True, but fh.is_relative is False
     """
     # Convert to ForecastingHorizon
     from sktime.forecasting.base import ForecastingHorizon
