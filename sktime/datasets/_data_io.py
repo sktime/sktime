@@ -35,7 +35,16 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, MTYPE_LIST_PANEL, convert
+# New dependency from Gluon-ts
+from gluonts.dataset.common import ListDataset
+
+from sktime.datatypes import (
+    MTYPE_LIST_HIERARCHICAL,
+    MTYPE_LIST_PANEL,
+    check_raise,
+    convert,
+    convert_to,
+)
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -1890,3 +1899,88 @@ def _convert_tsf_to_hierarchical(
     df = df.astype({value_column_name: "float"}, errors="ignore")
 
     return df
+
+
+def load_from_multiindex_to_listdataset(
+    trainDF, class_val_list=None, freq="1D", startdate="1750-01-01"
+):
+    """
+    Output a dataset in ListDataset format compatible with gluonts.
+
+    Parameters
+    ----------
+    trainDF: Multiindex dataframe
+        Input DF should be multi-index DataFrame. If not,
+
+    class_val_list: str
+        List of classes in case of classification dataset.
+        If not available, class_val_list will show instance numbers
+    freq: str, default="1D"
+        Pandas-compatible frequency to be used.
+        Only fixed frequency is supported at the moment.
+    startdate: str, default = "1750-01-01"
+        Custom startdate for ListDataset
+    Returns
+    -------
+    A ListDataset mtype type to be used as input for gluonts models/estimators
+
+    Examples
+    --------
+    >>> import os
+    >>> import sktime
+    >>> from sktime.datasets import load_from_tsfile_to_dataframe
+    >>> from gluonts.dataset.common import ListDataset
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from sktime.datatypes import convert_to
+    >>> from sktime.datatypes import check_raise
+
+    >>> DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
+    >>> train_x, train_y = load_from_tsfile_to_dataframe(
+    >>> os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts"))
+
+    >>> train_x_multi = convert_to(train_x, to_type="pd-multiindex")
+    >>> listdataset = load_from_multiindex_to_listdataset(train_x_multi, train_y)
+    >>> list(listdataset)
+    """
+    # input type checks
+    if not check_raise(trainDF, mtype="pd-multiindex"):
+        trainDF = convert_to(trainDF, to_type="nested_univ")
+        trainDF = trainDF.reset_index().drop(["instances"], axis=1)
+
+    num_dimensions = len(trainDF.columns)
+    dimension_name = trainDF.columns
+    if class_val_list is not None:
+        feat_static_cat = class_val_list
+    else:
+        # If not available, class_val_list will show instance numbers
+        feat_static_cat = list(np.arange(len(trainDF)))
+    if num_dimensions > 1:
+        one_dim_target = False
+    else:
+        one_dim_target = True
+
+    # Arbitrary start date
+    dummy_start = [pd.Timestamp(startdate) for _ in range(len(trainDF))]
+    all_instance_list = []
+    for instance, _dim_name in enumerate(trainDF):
+        one_instance_list = []
+        for dim in range(num_dimensions):
+            tmp = list(trainDF.loc[instance, dimension_name[dim]].to_numpy())
+            one_instance_list.append(tmp)
+        if one_dim_target is True:
+            flatlist = [element for sublist in one_instance_list for element in sublist]
+            all_instance_list.append(flatlist)
+        else:
+            all_instance_list.append(one_instance_list)
+    train_ds = ListDataset(
+        [
+            {"target": target, "start": start, "fea_static_cat": [fsc]}
+            for (target, start, fsc) in zip(
+                all_instance_list, dummy_start, feat_static_cat
+            )
+        ],
+        freq=freq,
+        one_dim_target=one_dim_target,
+    )
+    return train_ds
