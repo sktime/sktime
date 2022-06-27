@@ -100,30 +100,43 @@ def test_get_window_expected_result():
     Raises
     ------
     Exception if get_window raises one
+    AssertionError if get_window output shape is not as expected
     """
     X_df = get_examples(mtype="pd.DataFrame")[0]
     assert len(get_window(X_df, 2, 1)) == 2
     assert len(get_window(X_df, 3, 1)) == 3
     assert len(get_window(X_df, 1, 2)) == 1
     assert len(get_window(X_df, 3, 4)) == 0
+    assert len(get_window(X_df, 3, None)) == 3
+    assert len(get_window(X_df, None, 2)) == 2
+    assert len(get_window(X_df, None, None)) == 4
 
     X_mi = get_examples(mtype="pd-multiindex")[0]
     assert len(get_window(X_mi, 3, 1)) == 6
     assert len(get_window(X_mi, 2, 0)) == 6
     assert len(get_window(X_mi, 2, 4)) == 0
     assert len(get_window(X_mi, 1, 2)) == 3
+    assert len(get_window(X_mi, 2, None)) == 6
+    assert len(get_window(X_mi, None, 2)) == 3
+    assert len(get_window(X_mi, None, None)) == 9
 
     X_hi = get_examples(mtype="pd_multiindex_hier")[0]
     assert len(get_window(X_hi, 3, 1)) == 12
     assert len(get_window(X_hi, 2, 0)) == 12
     assert len(get_window(X_hi, 2, 4)) == 0
     assert len(get_window(X_hi, 1, 2)) == 6
+    assert len(get_window(X_hi, 2, None)) == 12
+    assert len(get_window(X_hi, None, 2)) == 6
+    assert len(get_window(X_hi, None, None)) == 18
 
-    X_hi = get_examples(mtype="numpy3D")[0]
-    assert get_window(X_hi, 3, 1).shape == (2, 2, 3)
-    assert get_window(X_hi, 2, 0).shape == (2, 2, 3)
-    assert get_window(X_hi, 2, 4).shape == (0, 2, 3)
-    assert get_window(X_hi, 1, 2).shape == (1, 2, 3)
+    X_np3d = get_examples(mtype="numpy3D")[0]
+    assert get_window(X_np3d, 3, 1).shape == (2, 2, 3)
+    assert get_window(X_np3d, 2, 0).shape == (2, 2, 3)
+    assert get_window(X_np3d, 2, 4).shape == (0, 2, 3)
+    assert get_window(X_np3d, 1, 2).shape == (1, 2, 3)
+    assert get_window(X_np3d, 2, None).shape == (2, 2, 3)
+    assert get_window(X_np3d, None, 2).shape == (1, 2, 3)
+    assert get_window(X_np3d, None, None).shape == (3, 2, 3)
 
 
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
