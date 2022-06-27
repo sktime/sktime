@@ -147,10 +147,11 @@ def test_single_window_splitter(y, missing_obs, fh, window_length):
         train_window = train_windows[0]
         test_window = test_windows[0]
         assert n_splits == 1
+        duration = _coerce_duration_to_int(duration=window_length, freq="D")
         if missing_obs is None or len(missing_obs) == 0:
-            assert train_window.shape[0] == _coerce_duration_to_int(
-                duration=window_length, freq="D"
-            )
+            assert train_window.shape[0] == duration
+        else:
+            assert train_window.shape[0] <= duration
         checked_fh = check_fh(fh)
         assert test_window.shape[0] == len(checked_fh)
 
@@ -187,6 +188,8 @@ def test_single_window_splitter_default_window_length(y, missing_obs, fh):
     if fh.is_all_in_sample():
         if missing_obs is None or len(missing_obs) == 0:
             assert train_window.shape[0] == len(y)
+        else:
+            assert train_window.shape[0] <= len(y)
     else:
         if missing_obs is None or len(missing_obs) == 0:
             if array_is_int(checked_fh):
