@@ -108,7 +108,7 @@ def assign_prs(prs, categs: List[Dict[str, List[str]]]):  # noqa
 def render_row(pr):  # noqa
     "Render a single row with PR in restructuredText format"
     print(  # noqa
-        "*", pr["title"], f"(:pr:`{pr['number']}`)", f":user:`{pr['user']['login']}`"
+        "*", pr["title"].replace("`", "``"), f"(:pr:`{pr['number']}`)", f":user:`{pr['user']['login']}`"
     )
 
 
