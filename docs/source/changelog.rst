@@ -35,7 +35,7 @@ Core interface changes
 BaseObject
 ^^^^^^^^^^
 
-* ``set_params`` now behaves identically to ``__init__`` call with corresponding parameters, including dynamic setting of tags. 
+* ``set_params`` now behaves identically to ``__init__`` call with corresponding parameters, including dynamic setting of tags.
   This is to fully comply with the ``sklearn`` interface assumption that this is the case. (:pr:`2835`) :user:`fkiraly`
 
 Enhancements
@@ -73,7 +73,6 @@ Transformations
 
 * [BUG] Vectorization in transformers overwrote ``y`` with ``X`` if ``y`` was passed (:pr:`2844`) :user:`fkiraly`
 * [BUG] output type check fix for ambiguous return types in vectorized ``Panel`` case (:pr:`2843`) :user:`fkiraly`
-
 
 Documentation
 ~~~~~~~~~~~~~
