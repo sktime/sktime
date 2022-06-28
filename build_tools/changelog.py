@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-
 """RestructuredText changelog generator."""
 
 import os
 from collections import defaultdict
+from platform import release
 from typing import Dict, List
 
 import httpx
@@ -18,24 +18,34 @@ if os.getenv("GITHUB_TOKEN") is not None:
 
 OWNER = "alan-turing-institute"
 REPO = "sktime"
+GITHUB_REPOS = "https://api.github.com/repos"
 
 
 def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:  # noqa
     "Fetch a page of pull requests"
-    params = {"state": "closed", "page": page, "per_page": 50}
+    params = {"state": "closed", "page": page, "per_page": 50, "sort": "updated", "direction": "desc"}
     r = httpx.get(
-        f"https://api.github.com/repos/{OWNER}/{REPO}/pulls",
+        f"{GITHUB_REPOS}/{OWNER}/{REPO}/pulls",
         headers=HEADERS,
         params=params,
     )
     return [pr for pr in r.json() if pr["merged_at"]]
 
 
-def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
+def fetch_latest_release():  #noqa
+    response = httpx.get(
+        f"{GITHUB_REPOS}/{OWNER}/{REPO}/releases/latest", headers=HEADERS
+    )
 
-    release = httpx.get(
-        f"https://api.github.com/repos/{OWNER}/{REPO}/releases/latest", headers=HEADERS
-    ).json()
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise ValueError(response.text, response.status_code)
+
+def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
+    "Fetch pull requests and filter based on merged date"
+
+    release = fetch_latest_release()
     published_at = parser.parse(release["published_at"])
     print(  # noqa
         f"Latest release {release['tag_name']} was published at {published_at}"
@@ -54,9 +64,18 @@ def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
     return all_pulls
 
 
-def render_contributors(prs: List, fmt: str = "rst"):  # noqa
+def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):  #noqa
+    "Compare commit between two tags"
+    response = httpx.get(f"{GITHUB_REPOS}/{OWNER}/{REPO}/compare/{tag_left}...{tag_right}")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise ValueError(response.text, response.status_code)
+
+
+def render_contributors(prs: List, fmt: str = "rst"):    # noqa
     "Find unique authors and print a list in  given format"
-    authors = sorted(set(pr["user"]["login"] for pr in prs), key=lambda x: x.lower())
+    authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
     header = "Contributors"
     if fmt == "github":
@@ -68,8 +87,8 @@ def render_contributors(prs: List, fmt: str = "rst"):  # noqa
         print(",\n".join(f":user:`{user}`" for user in authors))  # noqa
 
 
-def assign_prs(prs, categs):  # noqa
-
+def assign_prs(prs, categs: List[Dict[str, List[str]]]):  # noqa
+    "Assign PR to categories based on labels"
     assigned = defaultdict(list)
 
     for i, pr in enumerate(prs):
@@ -81,9 +100,8 @@ def assign_prs(prs, categs):  # noqa
     #             if any(l.startswith("module") for l in pr_labels):
     #                 print(i, pr_labels)
 
-    assigned["Other"] = list(
-        set(range(len(prs))) - set([i for _, l in assigned.items() for i in l])
-    )
+    assigned["Other"] = list(set(range(len(prs))) - {i for _, l in assigned.items() for i in l})
+
     return assigned
 
 
@@ -95,6 +113,7 @@ def render_row(pr):  # noqa
 
 
 def render_changelog(prs, assigned):  # noqa
+    # sourcery skip: use-named-expression
     "Render changelog"
     for title, _ in assigned.items():
         pr_group = [prs[i] for i in assigned[title]]
@@ -122,3 +141,8 @@ if __name__ == "__main__":
     render_changelog(pulls, assigned)
     print()  # noqa
     render_contributors(pulls)
+
+    release = fetch_latest_release()
+    diff = github_compare_tags(release["tag_name"])
+    if diff["total_commits"] != len(pulls):
+        raise ValueError("Something went wrong ")
