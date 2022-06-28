@@ -21,3 +21,11 @@ Adapters
     :template: class.rst
 
     PyODAnnotator
+
+.. currentmodule:: sktime.annotation.adapters.window_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowBasedChangePoint
