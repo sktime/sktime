@@ -27,7 +27,7 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-* upper bound ``prophet < 1.1`` due to ``pystan`` incompatibility
+* upper bound ``prophet < 1.1`` due to ``cmdstanpy`` incompatibility
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
