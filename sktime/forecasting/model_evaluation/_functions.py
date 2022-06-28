@@ -76,8 +76,8 @@ def evaluate(
     >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3, fh=[1, 2, 3])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
-        Optionally, users may select other metrics that are
-        compatible with point forecast. For a complete list, see
+        Optionally, users may select other metrics that are compatible
+        with point forecast. For a complete list, see
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
         To evaluate models/estimators using point forecast with these metrics,
