@@ -1936,8 +1936,8 @@ def load_from_multiindex_to_listdataset(
     >>> from sktime.datatypes import check_raise
 
     >>> DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
-    >>> train_x, train_y = load_from_tsfile_to_dataframe(
-        os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts"))
+    >>> train_x, train_y = load_from_tsfile_to_dataframe(...
+        ... os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts"))
 
     >>> train_x_multi = convert_to(train_x, to_type="pd-multiindex")
     >>> listdataset = load_from_multiindex_to_listdataset(train_x_multi, train_y)
