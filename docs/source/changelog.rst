@@ -28,6 +28,7 @@ Enhancements
 
 * [ENH] subsetting transforms (:pr:`2831`) :user:`fkiraly`
 * [ENH] make `get_cutoff` compatible with all time series formats, fix bug for VectorizedDF input (:pr:`2870`) :user:`fkiraly`
+* [ENH] more informative error messages on input format (:pr:`2824`) :user:`fkiraly`
 
 Fixes
 ~~~~~
@@ -48,7 +49,6 @@ Documentation
 * [DOC] adds solution to "no matches found" to troubleshoot section of install guide (:pr:`2786`) :user:`AurumnPegasus`
 * [DOC] cleaning up transformer API reference (:pr:`2818`) :user:`fkiraly`
 * [DOC] team update: remove Tony from CC (:pr:`2794`) :user:`fkiraly`
-* [EHH] more informative error messages on input format (:pr:`2824`) :user:`fkiraly`
 * [DOC] Added diviner by Databricks and statsforecast by Nixtla to related software (:pr:`2873`) :user:`aiwalter`
 
 Maintenance
