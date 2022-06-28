@@ -20,11 +20,19 @@ Version 0.12.1 - 2022-06-28
 Enhancements
 ~~~~~~~~~~~~
 
-* [ENH] test univariate forecasting with ``pd.DataFrame`` input and longer ``fh``  (:pr:`2581`) :user:`fkiraly`
 * [ENH] subsetting transforms (:pr:`2831`) :user:`fkiraly`
 * [ENH] A new `ReconcilerForecaster` estimator for reconciling forecasts using base model residuals  (:pr:`2830`) :user:`ciaran-g`
-* [ENH] Lagging transformer (:pr:`2783`) :user:`fkiraly`
-* [ENH] Adding | dunder for MultiplexTransformer (:pr:`2810`) :user:`miraep8`
+* [ENH] make `get_cutoff` compatible with all time series formats, fix bug for VectorizedDF input (:pr:`2870`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+* [BUG] Fixing type conversion for proba interval wrappers - option 2, convert for computing residuals logic (:pr:`2815`) :user:`bethrice44`
+* [BUG] Vectorization in transformers overwrote y with X (:pr:`2844`) :user:`fkiraly`
+* [ENG] fix `Lag` for numpy int (:pr:`2832`) :user:`fkiraly`
+* [ENH] fix `get_window` utility when `window_length` was `None` (:pr:`2866`) :user:`fkiraly`
+* [BUG] transformers: output type check fix for ambiguous return types (:pr:`2843`) :user:`fkiraly`
+* [ENH] make `get_cutoff` compatible with all time series formats, fix bug for VectorizedDF input (:pr:`2870`) :user:`fkiraly`
 
 
 Documentation
@@ -38,17 +46,12 @@ Documentation
 * [EHH] more informative error messages on input format (:pr:`2824`) :user:`fkiraly`
 * [DOC] Added diviner by Databricks and statsforecast by Nixtla to related software (:pr:`2873`) :user:`aiwalter`
 
-Fixes
-~~~~~
+Maintenance
+~~~~~~~~~~~
 
-* [BUG] Fixing type conversion for proba interval wrappers - option 2, convert for computing residuals logic (:pr:`2815`) :user:`bethrice44`
-* [BUG] Vectorization in transformers overwrote y with X (:pr:`2844`) :user:`fkiraly`
-* [ENG] fix `Lag` for numpy int (:pr:`2832`) :user:`fkiraly`
-* [ENH] fix `get_window` utility when `window_length` was `None` (:pr:`2866`) :user:`fkiraly`
-
-Other
-~~~~~
-
+* [ENH] test univariate forecasting with `pd.DataFrame` input and longer `fh` (:pr:`2581`) :user:`fkiraly`
+* [ENH] Lagging transformer (:pr:`2783`) :user:`fkiraly`
+* [ENH] Adding | dunder for MultiplexTransformer (:pr:`2810`) :user:`miraep8`
 * [MNT] Address future warnings (:pr:`2847`) :user:`khrapovs`
 * [MNT] Fix loop reassignment (:pr:`2840`) :user:`khrapovs`
 
@@ -62,8 +65,6 @@ Contributors
 :user:`fkiraly`,
 :user:`khrapovs`,
 :user:`miraep8`
-
-
 
 
 Version 0.12.0 - 2022-06-12
