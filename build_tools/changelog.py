@@ -148,4 +148,4 @@ if __name__ == "__main__":
         raise ValueError(
             "Something went wrong and not all PR were fetched. "
             f'There is {len(pulls)} PRs but {diff["total_commits"]} in the diff'
-            "Please verify that all PRs are included in the changelog.")
+            "Please verify that all PRs are included in the changelog.")  # noqa
