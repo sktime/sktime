@@ -12,6 +12,8 @@ __all__ = [
     "make_forecasting_problem",
 ]
 
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
@@ -138,7 +140,13 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     y_pred_index.equals(expected)
 
 
-def _make_fh(cutoff, steps, fh_type, is_relative):
+def _make_fh(
+    cutoff: Union[pd.Timestamp, pd.Period],
+    steps: Union[int, pd.Timedelta, pd.DatetimeIndex, pd.PeriodIndex],
+    fh_type: str,
+    is_relative: bool,
+    freq: str,
+) -> ForecastingHorizon:
     """Construct forecasting horizons for testing."""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
 
@@ -151,16 +159,16 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
         steps = [steps]
 
     if is_relative:
-        return ForecastingHorizon(fh_class(steps), is_relative=is_relative)
+        return ForecastingHorizon(fh_class(steps), is_relative=is_relative, freq=freq)
 
     else:
         kwargs = {}
 
         if fh_type == "datetime":
-            steps *= cutoff.freq
+            steps *= pd.tseries.frequencies.to_offset(freq)
 
         if fh_type == "period":
-            kwargs = {"freq": cutoff.freq}
+            kwargs = {"freq": freq}
 
         values = cutoff + steps
         return ForecastingHorizon(fh_class(values, **kwargs), is_relative)

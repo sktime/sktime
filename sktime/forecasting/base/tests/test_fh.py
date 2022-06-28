@@ -31,6 +31,7 @@ from sktime.utils.datetime import (
     _get_freq,
     _get_intervals_count_and_unit,
     _shift,
+    infer_freq,
 )
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
@@ -74,7 +75,13 @@ def test_fh(index_type, fh_type, is_relative, steps):
     cutoff = y_train.index[-1]
 
     # generate fh
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    fh = _make_fh(
+        cutoff=cutoff,
+        steps=steps,
+        fh_type=fh_type,
+        is_relative=is_relative,
+        freq=infer_freq(y_train),
+    )
     if fh_type == "int":
         assert is_integer_index(fh.to_pandas())
     else:
