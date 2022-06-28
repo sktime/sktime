@@ -31,7 +31,7 @@ from sktime.forecasting.tests._config import (
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
-from sktime.utils.datetime import _coerce_duration_to_int, infer_freq
+from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     array_is_datetime64,
     array_is_int,
@@ -462,13 +462,7 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
         # )
     y = _make_series(20, index_type=index_type)
     cutoff = y.index[10]
-    fh = _make_fh(
-        cutoff=cutoff,
-        steps=values,
-        fh_type=fh_type,
-        is_relative=is_relative,
-        freq=infer_freq(y),
-    )
+    fh = _make_fh(cutoff, values, fh_type, is_relative)
     split = temporal_train_test_split(y, fh=fh)
     _check_train_test_split_y(fh, split)
 

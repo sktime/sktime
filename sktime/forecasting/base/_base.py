@@ -54,7 +54,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.datetime import _shift
+from sktime.utils.datetime import _shift, infer_freq
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -244,15 +244,15 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, estimator is reset, including fitted state
         self.reset()
 
-        # check forecasting horizon and coerce to ForecastingHorizon object
-        fh = self._check_fh(fh)
-
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        # check forecasting horizon and coerce to ForecastingHorizon object
+        fh = self._check_fh(fh)
 
         # checks and conversions complete, pass to inner fit
         #####################################################
@@ -383,14 +383,14 @@ class BaseForecaster(BaseEstimator):
         # if fit is called, fitted state is re-set
         self._is_fitted = False
 
-        fh = self._check_fh(fh)
-
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        fh = self._check_fh(fh)
 
         # apply fit and then predict
         vectorization_needed = isinstance(y_inner, VectorizedDF)
@@ -997,6 +997,7 @@ class BaseForecaster(BaseEstimator):
             y_res has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
+        self.check_is_fitted()
         # if no y is passed, the so far observed y is used
         if y is None:
             y = self._y
@@ -1005,7 +1006,9 @@ class BaseForecaster(BaseEstimator):
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = ForecastingHorizon(y.index, is_relative=False)
+            fh = ForecastingHorizon(
+                y.index, is_relative=False, freq=infer_freq(self._y)
+            )
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self.cutoff)
             fh = self._check_fh(fh)
@@ -1405,9 +1408,11 @@ class BaseForecaster(BaseEstimator):
         Called from all methods where fh can be passed:
             fit, predict-like, update-like
 
-        Reads and writes to self._fh
-        Writes fh to self._fh if does not exist
-        Checks equality of fh with self._fh if exists, raises error if not equal
+        Reads and writes to self._fh.
+        Writes fh to self._fh if does not exist.
+        Checks equality of fh with self._fh if exists, raises error if not equal.
+        Assigns the frequency inferred from self._y
+        to the returned forecasting horizon object.
 
         Parameters
         ----------
@@ -1467,7 +1472,7 @@ class BaseForecaster(BaseEstimator):
         # B. fh is passed
         else:
             # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh)
+            fh = check_fh(fh=fh, y=self._y)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)

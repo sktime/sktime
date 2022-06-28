@@ -171,4 +171,6 @@ def _make_fh(
             kwargs = {"freq": freq}
 
         values = cutoff + steps
-        return ForecastingHorizon(fh_class(values, **kwargs), is_relative)
+        return ForecastingHorizon(
+            fh_class(values, **kwargs), is_relative=is_relative, freq=freq
+        )
