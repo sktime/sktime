@@ -188,9 +188,7 @@ In the ``anaconda prompt`` terminal:
 
 4. Install required packages:
 
-   1. :code:`conda install -c conda-forge pystan`
-   2. :code:`conda install -c conda-forge prophet`
-   3. :code:`conda install -c conda-forge scipy`
+   :code:`conda install -c conda-forge scipy`
 
    If you fail to satisfy all the requirements see the `troubleshooting section <https://www.sktime.org/en/stable/installation.html#release-versions-troubleshooting>`_.
 
