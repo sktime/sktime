@@ -71,31 +71,6 @@ minimum dependencies and using an estimator which interfaces a package that has 
 been installed in the environment. To resolve this, install the missing package, or
 install ``sktime`` with maximum dependencies (see above).
 
-
-Facebook prophet
-""""""""""""""""
-
-A frequent issue arises with installation of facebook prophet when installing via ``pip``, especially on Windows systems.
-There are several workarounds:
-
-- Option 1: Install manually via ``conda-forge``:
-
-   .. code-block:: bash
-
-       conda install -c conda-forge pystan
-       conda install -c conda-forge prophet
-
-The remaining packages can be installed via ``pip`` or ``conda``.
-
-- Option 2: Install ``pystan`` with ``no-cache`` parameter:
-
-   .. code-block:: bash
-
-       pip install pystan --no-cache
-
-- Option 3: If on Windows: use WSL (Windows Subsystem for Linux), see end of section `Windows 8.1 and higher`_.
-
-
 Development versions
 --------------------
 To install the latest development version of ``sktime``, or earlier versions, the sequence of steps is as follows:
