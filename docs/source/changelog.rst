@@ -17,11 +17,16 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.12.1 - 2022-06-28
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* A new `ReconcilerForecaster` estimator for reconciling forecasts using base model residuals  (:pr:`2830`) :user:`ciaran-g`
+* Adding | dunder for MultiplexTransformer (:pr:`2810`) :user:`miraep8`
+
 Enhancements
 ~~~~~~~~~~~~
 
 * [ENH] subsetting transforms (:pr:`2831`) :user:`fkiraly`
-* [ENH] A new `ReconcilerForecaster` estimator for reconciling forecasts using base model residuals  (:pr:`2830`) :user:`ciaran-g`
 * [ENH] make `get_cutoff` compatible with all time series formats, fix bug for VectorizedDF input (:pr:`2870`) :user:`fkiraly`
 
 Fixes
@@ -51,7 +56,6 @@ Maintenance
 
 * [ENH] test univariate forecasting with `pd.DataFrame` input and longer `fh` (:pr:`2581`) :user:`fkiraly`
 * [ENH] Lagging transformer (:pr:`2783`) :user:`fkiraly`
-* [ENH] Adding | dunder for MultiplexTransformer (:pr:`2810`) :user:`miraep8`
 * [MNT] Address future warnings (:pr:`2847`) :user:`khrapovs`
 * [MNT] Fix loop reassignment (:pr:`2840`) :user:`khrapovs`
 
