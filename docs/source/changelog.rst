@@ -29,7 +29,7 @@ Fixes
 
 * [BUG] Fixing type conversion for proba interval wrappers - option 2, convert for computing residuals logic (:pr:`2815`) :user:`bethrice44`
 * [BUG] Vectorization in transformers overwrote y with X (:pr:`2844`) :user:`fkiraly`
-* [ENG] fix `Lag` for numpy int (:pr:`2832`) :user:`fkiraly`
+* [BUG] fix `Lag` for numpy int (:pr:`2832`) :user:`fkiraly`
 * [ENH] fix `get_window` utility when `window_length` was `None` (:pr:`2866`) :user:`fkiraly`
 * [BUG] transformers: output type check fix for ambiguous return types (:pr:`2843`) :user:`fkiraly`
 * [ENH] make `get_cutoff` compatible with all time series formats, fix bug for VectorizedDF input (:pr:`2870`) :user:`fkiraly`
