@@ -86,19 +86,21 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        When evaluating models/estimators on interval predictions or
-        quantile predictions, the PinballLoss metrics can be used.
-        The list of estimators that are compatible with this metrics are
+        When evaluating models/estimators on interval
+        predictions or quantile predictions, the PinballLoss
+        metrics can be used. The list of estimators that are compatible with
+        this metrics are
     >>> from sktime.registry import all_estimators
     >>> all_estimators("forecaster", filter_tags={"capability:pred_int": True},
-        as_dataframe=True)
+    ... as_dataframe=True)
 
         Evaluate estimators using PinballLoss
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
     >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
+    >>> results = evaluate(forecaster=NaiveVariance(forecaster),
+    ... y=y, cv=cv, scoring=loss)
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
