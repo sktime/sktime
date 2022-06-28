@@ -3,7 +3,6 @@
 
 import os
 from collections import defaultdict
-from platform import release
 from typing import Dict, List
 
 import httpx
