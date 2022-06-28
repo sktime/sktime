@@ -20,7 +20,6 @@ from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
-from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 
 from sktime.base import BaseEstimator
 from sktime.dists_kernels._base import (
@@ -776,8 +775,51 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         """Check that set_params works correctly."""
         estimator = estimator_instance
         params = estimator.get_params()
-        assert estimator.set_params(**params) is estimator
-        _check_set_params(estimator.__class__.__name__, estimator)
+
+        msg = f"set_params of {type(estimator).__name__} does not return self"
+        assert estimator.set_params(**params) is estimator, msg
+
+        is_equal, equals_msg = deep_equals(
+            estimator.get_params(), params, return_msg=True
+        )
+        msg = (
+            f"get_params result of {type(estimator).__name__} (x) does not match "
+            f"what was passed to set_params (y). Reason for discrepancy: {equals_msg}"
+        )
+        assert is_equal, msg
+
+    def test_set_params_sklearn(self, estimator_class):
+        """Check that set_params works correctly, mirrors sklearn check_set_params.
+
+        Instead of the "fuzz values" in sklearn's check_set_params,
+        we use the other test parameter settings (which are assumed valid).
+        This guarantees settings which play along with the __init__ content.
+        """
+        estimator = estimator_class.create_test_instance()
+        test_params = estimator_class.get_test_params()
+        if not isinstance(test_params, list):
+            test_params = [test_params]
+
+        for params in test_params:
+            # we construct the full parameter set for params
+            # params may only have parameters that are deviating from defaults
+            # in order to set non-default parameters back to defaults
+            params_full = estimator_class.get_param_defaults()
+            params_full.update(params)
+
+            msg = f"set_params of {estimator_class.__name__} does not return self"
+            est_after_set = estimator.set_params(**params_full)
+            assert est_after_set is estimator, msg
+
+            is_equal, equals_msg = deep_equals(
+                estimator.get_params(deep=False), params_full, return_msg=True
+            )
+            msg = (
+                f"get_params result of {estimator_class.__name__} (x) does not match "
+                f"what was passed to set_params (y). "
+                f"Reason for discrepancy: {equals_msg}"
+            )
+            assert is_equal, msg
 
     def test_clone(self, estimator_instance):
         """Check we can call clone from scikit-learn."""
