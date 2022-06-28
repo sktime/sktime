@@ -23,7 +23,13 @@ GITHUB_REPOS = "https://api.github.com/repos"
 
 def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:  # noqa
     "Fetch a page of pull requests"
-    params = {"state": "closed", "page": page, "per_page": 50, "sort": "updated", "direction": "desc"}
+    params = {
+        "state": "closed",
+        "page": page,
+        "per_page": 50,
+        "sort": "updated",
+        "direction": "desc",
+    }
     r = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/pulls",
         headers=HEADERS,
@@ -32,7 +38,7 @@ def fetch_merged_pull_requests(page: int = 1) -> List[Dict]:  # noqa
     return [pr for pr in r.json() if pr["merged_at"]]
 
 
-def fetch_latest_release():  #noqa
+def fetch_latest_release():  # noqa
     response = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/releases/latest", headers=HEADERS
     )
@@ -41,6 +47,7 @@ def fetch_latest_release():  #noqa
         return response.json()
     else:
         raise ValueError(response.text, response.status_code)
+
 
 def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
     "Fetch pull requests and filter based on merged date"
@@ -64,16 +71,18 @@ def fetch_pull_requests_since_last_release() -> List[Dict]:  # noqa
     return all_pulls
 
 
-def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):  #noqa
+def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):  # noqa
     "Compare commit between two tags"
-    response = httpx.get(f"{GITHUB_REPOS}/{OWNER}/{REPO}/compare/{tag_left}...{tag_right}")
+    response = httpx.get(
+        f"{GITHUB_REPOS}/{OWNER}/{REPO}/compare/{tag_left}...{tag_right}"
+    )
     if response.status_code == 200:
         return response.json()
     else:
         raise ValueError(response.text, response.status_code)
 
 
-def render_contributors(prs: List, fmt: str = "rst"):    # noqa
+def render_contributors(prs: List, fmt: str = "rst"):  # noqa
     "Find unique authors and print a list in  given format"
     authors = sorted({pr["user"]["login"] for pr in prs}, key=lambda x: x.lower())
 
@@ -100,7 +109,9 @@ def assign_prs(prs, categs: List[Dict[str, List[str]]]):  # noqa
     #             if any(l.startswith("module") for l in pr_labels):
     #                 print(i, pr_labels)
 
-    assigned["Other"] = list(set(range(len(prs))) - {i for _, l in assigned.items() for i in l})
+    assigned["Other"] = list(
+        set(range(len(prs))) - {i for _, l in assigned.items() for i in l}
+    )
 
     return assigned
 
@@ -108,7 +119,10 @@ def assign_prs(prs, categs: List[Dict[str, List[str]]]):  # noqa
 def render_row(pr):  # noqa
     "Render a single row with PR in restructuredText format"
     print(  # noqa
-        "*", pr["title"].replace("`", "``"), f"(:pr:`{pr['number']}`)", f":user:`{pr['user']['login']}`"
+        "*",
+        pr["title"].replace("`", "``"),
+        f"(:pr:`{pr['number']}`)",
+        f":user:`{pr['user']['login']}`",
     )
 
 
@@ -148,4 +162,5 @@ if __name__ == "__main__":
         raise ValueError(
             "Something went wrong and not all PR were fetched. "
             f'There is {len(pulls)} PRs but {diff["total_commits"]} in the diff'
-            "Please verify that all PRs are included in the changelog.")  # noqa
+            "Please verify that all PRs are included in the changelog."
+        )  # noqa
