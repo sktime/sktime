@@ -145,4 +145,7 @@ if __name__ == "__main__":
     release = fetch_latest_release()
     diff = github_compare_tags(release["tag_name"])
     if diff["total_commits"] != len(pulls):
-        raise ValueError("Something went wrong ")
+        raise ValueError(
+            "Something went wrong and not all PR were fetched. "
+            f'There is {len(pulls)} PRs but {diff["total_commits"]} in the diff'
+            "Please verify that all PRs are included in the changelog.")
