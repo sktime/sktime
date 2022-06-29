@@ -50,12 +50,15 @@ if __name__ == "__main__":
     """Main test"""
     print("Length of multivariate  = ", len(multivariate))
     for problem in multivariate:
-        X, y = load_UCR_UEA_dataset(problem)
-        print(
-            " Shape of combined train test for ",
-            problem,
-            " is X = ",
-            X.shape,
-            " Y = ",
-            y.shape,
-        )
+        try:
+            X, y = load_UCR_UEA_dataset(problem)
+            print(
+                " Shape of combined train test for ",
+                problem,
+                " is X = ",
+                X.shape,
+                " Y = ",
+                y.shape,
+            )
+        except:
+            print("Failed to load ", problem)
