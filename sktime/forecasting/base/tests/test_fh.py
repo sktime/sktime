@@ -15,8 +15,8 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import (
     DELEGATED_METHODS,
+    _extract_freq_from_cutoff,
     _extract_freq_from_inputs,
-    _extract_freq_from_values,
 )
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -528,28 +528,24 @@ def test_auto_arima():
 
 def test_extract_freq_from_inputs() -> None:
     """Test extract frequency from inputs."""
-    values = pd.period_range(start="2020", periods=3, freq="D")
-    assert _extract_freq_from_inputs(values=values) == "D"
-
-    values = pd.Index(pd.date_range(start="2020", periods=3).tolist())
-    assert values.freqstr is None
-    assert _extract_freq_from_inputs(values=values, freq="D") == "D"
-
-    values = pd.period_range(start="2020", periods=3, freq="D")
-    assert _extract_freq_from_inputs(values=values, freq="D") == "D"
+    cutoff = pd.Period("2020", freq="D")
+    assert _extract_freq_from_inputs(cutoff=cutoff) == "D"
+    assert _extract_freq_from_inputs(freq="D") == "D"
+    assert _extract_freq_from_inputs(cutoff=cutoff, freq="D") == "D"
 
     with pytest.raises(
         ValueError, match="Frequencies from two sources do not coincide"
     ):
-        _extract_freq_from_inputs(values=values, freq="M")
+        _extract_freq_from_inputs(cutoff=cutoff, freq="M")
 
 
-def test_extract_freq_from_values() -> None:
-    """Test extract frequency from values."""
-    values = pd.period_range(start="2020", periods=3, freq="D")
-    assert _extract_freq_from_values(values) == "D"
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_extract_freq_from_cutoff(freq: str) -> None:
+    """Test extract frequency from cutoff."""
+    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
 
-    values = pd.date_range(start="2020", periods=3, freq="D")
-    assert _extract_freq_from_values(values) == "D"
 
-    assert _extract_freq_from_values([1, 2, 3]) is None
+@pytest.mark.parametrize("x", [1, pd.Timestamp("2020")])
+def test_extract_freq_from_cutoff_with_wrong_input(x) -> None:
+    """Test extract frequency from cutoff with wrong input."""
+    assert _extract_freq_from_cutoff(x) is None

@@ -177,25 +177,25 @@ def _check_freq(x: str = None) -> Optional[str]:
         return None
 
 
-def _extract_freq_from_inputs(values: pd.Index, freq: str = None) -> str:
+def _extract_freq_from_inputs(cutoff: pd.Period = None, freq: str = None) -> str:
     _freq = _check_freq(freq)
-    freq_from_values = _extract_freq_from_values(values)
-    if _freq is None and freq_from_values is not None:
-        return freq_from_values
-    elif _freq is not None and freq_from_values is None:
+    freq_from_cutoff = _extract_freq_from_cutoff(cutoff)
+    if _freq is None and freq_from_cutoff is not None:
+        return freq_from_cutoff
+    elif _freq is not None and freq_from_cutoff is None:
         return _freq
-    elif _freq == freq_from_values:
+    elif _freq == freq_from_cutoff:
         return _freq
     else:
         raise ValueError(
             "Frequencies from two sources do not coincide: "
-            f"From values: {freq_from_values}, from freq: {freq}."
+            f"From values: {freq_from_cutoff}, from freq: {freq}."
         )
 
 
-def _extract_freq_from_values(values: pd.Index) -> Optional[str]:
-    if isinstance(values, (pd.DatetimeIndex, pd.PeriodIndex)):
-        return values.freqstr
+def _extract_freq_from_cutoff(x: pd.Period) -> Optional[str]:
+    if isinstance(x, pd.Period):
+        return x.freqstr
     else:
         return None
 
@@ -265,7 +265,7 @@ class ForecastingHorizon:
 
         self._values = values
         self._is_relative = is_relative
-        self._freq = _extract_freq_from_inputs(values=self._values, freq=freq)
+        self._freq = _check_freq(freq)
 
     def _new(
         self,
@@ -369,6 +369,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
+        self.freq = _extract_freq_from_inputs(cutoff=cutoff, freq=self.freq)
         return _to_relative(fh=self, cutoff=cutoff)
 
     def to_absolute(self, cutoff):
@@ -385,6 +386,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
+        self.freq = _extract_freq_from_inputs(cutoff=cutoff, freq=self.freq)
         return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
@@ -404,7 +406,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        freq = self.freq
+        freq = _extract_freq_from_inputs(cutoff=cutoff, freq=self.freq)
 
         if isinstance(cutoff, pd.Timestamp):
             # coerce to pd.Period for reliable arithmetic operations and
