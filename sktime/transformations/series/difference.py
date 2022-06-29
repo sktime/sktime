@@ -60,9 +60,6 @@ def _inverse_diff(Z, lag):
     return Z
 
 
-# todo: deprecation in 0.13.0
-#   remove the drop_na *argument* and its handling
-#   change the default behaviour form "drop_na" to "fill_zero"
 class Differencer(BaseTransformer):
     """Apply iterative differences to a timeseries.
 
