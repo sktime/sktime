@@ -405,7 +405,7 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         return res
 
 
-class DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
+class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
     """Class for defining forecasting error metrics from a function dynamically."""
 
     def __init__(
@@ -472,7 +472,7 @@ def make_forecasting_scorer(
         Metric class that can be used as forecasting scorer.
     """
     lower_is_better = not greater_is_better
-    return DynamicForecastingErrorMetric(
+    return _DynamicForecastingErrorMetric(
         func,
         name=name,
         multioutput=multioutput,

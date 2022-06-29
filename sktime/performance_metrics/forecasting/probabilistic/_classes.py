@@ -542,12 +542,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True):
-        name = "ConstraintViolation"
         self.score_average = score_average
         self.multioutput = multioutput
-        super().__init__(
-            name=name, score_average=score_average, multioutput=multioutput
-        )
+        super().__init__(score_average=score_average, multioutput=multioutput)
 
     def _evaluate_by_index(self, y_true, y_pred, multioutput, **kwargs):
         """Logic for finding the metric evaluated at each index.
