@@ -177,6 +177,29 @@ def _check_freq(x: str = None) -> Optional[str]:
         return None
 
 
+def _extract_freq_from_inputs(values: pd.Index, freq: str = None) -> str:
+    _freq = _check_freq(freq)
+    freq_from_values = _extract_freq_from_values(values)
+    if _freq is None and freq_from_values is not None:
+        return freq_from_values
+    elif _freq is not None and freq_from_values is None:
+        return _freq
+    elif _freq == freq_from_values:
+        return _freq
+    else:
+        raise ValueError(
+            "Frequencies from two sources do not coincide: "
+            f"From values: {freq_from_values}, from freq: {freq}."
+        )
+
+
+def _extract_freq_from_values(values: pd.Index) -> Optional[str]:
+    if isinstance(values, (pd.DatetimeIndex, pd.PeriodIndex)):
+        return values.freqstr
+    else:
+        return None
+
+
 class ForecastingHorizon:
     """Forecasting horizon.
 
@@ -242,7 +265,7 @@ class ForecastingHorizon:
 
         self._values = values
         self._is_relative = is_relative
-        self._freq = _check_freq(freq)
+        self._freq = _extract_freq_from_inputs(values=self._values, freq=freq)
 
     def _new(
         self,

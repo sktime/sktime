@@ -13,7 +13,11 @@ from pytest import raises
 from sktime.datasets import load_airline
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.base._fh import DELEGATED_METHODS
+from sktime.forecasting.base._fh import (
+    DELEGATED_METHODS,
+    _extract_freq_from_inputs,
+    _extract_freq_from_values,
+)
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -520,3 +524,32 @@ def test_auto_arima():
     pd.testing.assert_index_equal(
         y_pred_sk.index, pd.date_range("January 11, 2021", periods=3, freq="2D")
     )
+
+
+def test_extract_freq_from_inputs() -> None:
+    """Test extract frequency from inputs."""
+    values = pd.period_range(start="2020", periods=3, freq="D")
+    assert _extract_freq_from_inputs(values=values) == "D"
+
+    values = pd.Index(pd.date_range(start="2020", periods=3).tolist())
+    assert values.freqstr is None
+    assert _extract_freq_from_inputs(values=values, freq="D") == "D"
+
+    values = pd.period_range(start="2020", periods=3, freq="D")
+    assert _extract_freq_from_inputs(values=values, freq="D") == "D"
+
+    with pytest.raises(
+        ValueError, match="Frequencies from two sources do not coincide"
+    ):
+        _extract_freq_from_inputs(values=values, freq="M")
+
+
+def test_extract_freq_from_values() -> None:
+    """Test extract frequency from values."""
+    values = pd.period_range(start="2020", periods=3, freq="D")
+    assert _extract_freq_from_values(values) == "D"
+
+    values = pd.date_range(start="2020", periods=3, freq="D")
+    assert _extract_freq_from_values(values) == "D"
+
+    assert _extract_freq_from_values([1, 2, 3]) is None
