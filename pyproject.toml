@@ -52,16 +52,16 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
+    "cmdstanpy<1.0.2", # can be relaxed if issue is resolved at prophet or cmdstanpy side
     "dtw-python",
     "esig==0.9.7",
     "filterpy>=1.4.5",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
-    "prophet>=1.0,<1.1",
+    "prophet>=1.1",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
-    "pystan==2.19.1.1",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
