@@ -147,15 +147,15 @@ def _check_freq(x: str = None) -> Optional[str]:
         Frequency string or offset alias as in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
 
-    Raises
-    ------
-    ValueError :
-        Raised if frequency string is not supported
-
     Returns
     -------
     x : str
-        Validated frequency string or `None`
+        Validated frequency string or None
+
+    Raises
+    ------
+    ValueError
+        Raised if frequency string is not supported
     """
     if x is not None:
         url = (
@@ -178,14 +178,30 @@ def _check_freq(x: str = None) -> Optional[str]:
 
 
 def _extract_freq_from_inputs(cutoff: pd.Period = None, freq: str = None) -> str:
-    _freq = _check_freq(freq)
+    """Extract frequency string from cutoff and/or freq.
+
+    Parameters
+    ----------
+    cutoff : pd.Period, optional (default=None)
+    freq : str, optional (default=None)
+
+    Returns
+    -------
+    freq : str
+        Frequency string or None
+
+    Raises
+    ------
+    ValueError
+        Raised if both inputs are given, but do not coincide
+    """
     freq_from_cutoff = _extract_freq_from_cutoff(cutoff)
-    if _freq is None and freq_from_cutoff is not None:
+    if freq is None and freq_from_cutoff is not None:
         return freq_from_cutoff
-    elif _freq is not None and freq_from_cutoff is None:
-        return _freq
-    elif _freq == freq_from_cutoff:
-        return _freq
+    elif freq is not None and freq_from_cutoff is None:
+        return freq
+    elif freq == freq_from_cutoff:
+        return freq
     else:
         raise ValueError(
             "Frequencies from two sources do not coincide: "
@@ -194,6 +210,17 @@ def _extract_freq_from_inputs(cutoff: pd.Period = None, freq: str = None) -> str
 
 
 def _extract_freq_from_cutoff(x: pd.Period) -> Optional[str]:
+    """Extract frequency string from cutoff.
+
+    Parameters
+    ----------
+    x : pd.Period
+
+    Returns
+    -------
+    str
+        Frequency string or None
+    """
     if isinstance(x, pd.Period):
         return x.freqstr
     else:
