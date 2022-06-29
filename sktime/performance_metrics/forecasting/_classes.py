@@ -414,7 +414,7 @@ class DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
         name=None,
         multioutput="uniform_average",
         multilevel="uniform_average",
-        lower_is_better=True
+        lower_is_better=True,
     ):
         self.multioutput = multioutput
         self.multilevel = multilevel
@@ -473,12 +473,12 @@ def make_forecasting_scorer(
     """
     lower_is_better = not greater_is_better
     return DynamicForecastingErrorMetric(
-            func,
-            name=name,
-            multioutput=multioutput,
-            multilevel=multilevel,
-            lower_is_better=lower_is_better,
-        )
+        func,
+        name=name,
+        multioutput=multioutput,
+        multilevel=multilevel,
+        lower_is_better=lower_is_better,
+    )
 
 
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
