@@ -54,11 +54,11 @@ dependencies = [
 all_extras = [
     "dtw-python",
     "esig==0.9.7",
-    "prophet>=1.1",
     "filterpy>=1.4.5",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
+    "prophet>=1.1",
     "pykalman>=0.9.5",
     "pyod>=0.8.0",
     "scikit_posthocs>=0.6.5",
