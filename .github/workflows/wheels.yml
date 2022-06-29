@@ -84,6 +84,11 @@ jobs:
             python-version: '3.10'
             bitness: 64
             platform_id: win_amd64
+          - os: windows-2019
+            python: 39
+            python-version: 3.9
+            bitness: 64
+            platform_id: win_amd64
 
     steps:
       - uses: actions/checkout@v2
