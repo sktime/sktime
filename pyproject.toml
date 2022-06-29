@@ -52,7 +52,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all_extras = [
-    "cmdstanpy!=1.0.2",
+    "cmdstanpy<1.0.2", # can be relaxed if issue is resolved at prophet or cmdstanpy side
     "dtw-python",
     "esig==0.9.7",
     "filterpy>=1.4.5",
