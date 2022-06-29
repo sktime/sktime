@@ -35,6 +35,7 @@ SOFT_DEPENDENCIES = {
     "sktime.alignment.dtw_python": ["dtw"],
     "sktime.clustering": ["tslearn"],
     "sktime.transformations.series.kalman_filter": ["pykalman", "filterpy"],
+    "sktime.datasets": ["gluonts"],
 }
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 
