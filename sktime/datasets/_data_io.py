@@ -35,16 +35,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-# New dependency from Gluon-ts
-from gluonts.dataset.common import ListDataset
-
-from sktime.datatypes import (
-    MTYPE_LIST_HIERARCHICAL,
-    MTYPE_LIST_PANEL,
-    check_raise,
-    convert,
-    convert_to,
-)
+from sktime.datatypes import MTYPE_LIST_HIERARCHICAL, MTYPE_LIST_PANEL, convert
 from sktime.datatypes._panel._convert import _make_column_names, from_long_to_nested
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation.panel import check_X, check_X_y
@@ -1910,7 +1901,7 @@ def load_from_multiindex_to_listdataset(
     Parameters
     ----------
     trainDF: Multiindex dataframe
-        Input DF should be multi-index DataFrame. If not,
+        Input DF should be multi-index DataFrame.
 
     class_val_list: str
         List of classes in case of classification dataset.
@@ -1936,13 +1927,20 @@ def load_from_multiindex_to_listdataset(
     >>> from sktime.datatypes import check_raise
 
     >>> DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
-    >>> train_x, train_y = load_from_tsfile_to_dataframe(...
-        ... os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts"))
+    >>> train_x, train_y = load_from_tsfile_to_dataframe(
+    ... os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts"))
 
     >>> train_x_multi = convert_to(train_x, to_type="pd-multiindex")
     >>> listdataset = load_from_multiindex_to_listdataset(train_x_multi, train_y)
-    >>> list(listdataset)
     """
+    import numpy as np
+    import pandas as pd
+
+    # New dependency from Gluon-ts
+    from gluonts.dataset.common import ListDataset
+
+    from sktime.datatypes import check_raise, convert_to
+
     # input type checks
     if not check_raise(trainDF, mtype="pd-multiindex"):
         trainDF = convert_to(trainDF, to_type="nested_univ")
