@@ -85,6 +85,22 @@ class FittedForecaster(_DelegatedForecaster):
         else:
             self.set_tags(**{"fit_is_empty": True})
 
+    def clone(self):
+        """Obtain a clone of the object with same hyper-parameters.
+
+        A clone is a different object without shared references, in post-init state.
+        This function is equivalent to returning sklearn.clone of self.
+        Equal in value to `type(self)(**self.get_params(deep=False))`.
+
+        Returns
+        -------
+        instance of type(self), clone of self (see above)
+        """
+        selfcopy = deepcopy(self)
+        delattr(selfcopy, "fitted_forecaster_")
+        delattr(selfcopy, "_tags_dynamic")
+        return selfcopy
+
     def _unwrap_serialized(self, fitted_forecaster):
         """Unwraps serialized object to sktime forecaster.
 
