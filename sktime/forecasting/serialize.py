@@ -4,8 +4,8 @@
 
 __author__ = ["fkiraly"]
 
-from copy import deepcopy
 import pickle
+from copy import deepcopy
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._base import BaseForecaster
@@ -164,8 +164,8 @@ class FittedForecaster(_DelegatedForecaster):
         -------
         params : dict or list of dict
         """
-        from sktime.utils._testing.series import _make_series
         from sktime.forecasting.naive import NaiveForecaster
+        from sktime.utils._testing.series import _make_series
 
         y = _make_series()
         fitted_forecaster = NaiveForecaster().fit(y)
