@@ -73,7 +73,7 @@ class FittedForecaster(_DelegatedForecaster):
         else:
             raise ValueError(
                 f'unwrap_time must be one of "construct" or "fit", but'
-                f" found {unwrap_time}'
+                f" found {unwrap_time}"
             )
 
         self.clone_tags(self.fitted_forecaster)
