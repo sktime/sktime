@@ -667,12 +667,6 @@ class BaseForecaster(BaseEstimator):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        msg = (
-            "tensorflow-probability must be installed for fully probabilistic forecasts"
-            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
-        )
-        _check_dl_dependencies(msg)
-
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not have the capability to return "
@@ -680,6 +674,18 @@ class BaseForecaster(BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            raise NotImplementedError(
+                "automated vectorization for predict_proba is not implemented"
+            )
+
+        msg = (
+            "tensorflow-probability must be installed for fully probabilistic forecasts"
+            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
+        )
+        _check_dl_dependencies(msg)
+
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
