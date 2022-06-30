@@ -34,6 +34,7 @@ sktime/transformations/series/exponent.py @rnkuhns
 sktime/transformations/series/scaledlogit.py @ltsaprounis
 sktime/transformations/series/kalman_filter.py @NoaBenAmi
 sktime/transformations/panel/augmenter.py @MrPr3ntice @iljamaurer
+sktime/transformations/series/rounding.py @AJarman
 sktime/transformations/multiplex.py @miraep8
 sktime/transformations/tests/test_multiplexer.py @miraep8
 

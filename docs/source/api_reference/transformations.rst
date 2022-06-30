@@ -285,6 +285,10 @@ Depending on the transformer, the transformation parameters can be fitted.
     ExponentTransformer
     SqrtTransformer
 
+.. currentmodule:: sktime.transformations.series.rounding    
+
+    Discretizer
+
 Detrending
 ~~~~~~~~~~
 
