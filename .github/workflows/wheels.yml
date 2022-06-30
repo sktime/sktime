@@ -95,11 +95,6 @@ jobs:
       - name: Install conda libpython
         run: conda install -c anaconda -n test -y libpython
 
-      - name: Install conda dependencies
-        run: |
-          conda install -c anaconda -n test -y "pystan==2.19.1.1"
-          conda install -c conda-forge -n test -y "prophet>=1.0.0"
-
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
 
