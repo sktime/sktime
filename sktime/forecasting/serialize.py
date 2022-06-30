@@ -40,7 +40,7 @@ class FittedForecaster(_DelegatedForecaster):
     >>> from sktime.serialize import FittedForecaster
 
     >>> y_train = load_airline()[:36]
-    >>> y_deploy = load_airline()[:36]
+    >>> y_deploy = load_airline()[36:]
     >>> pickled_forecaster = pickle.dumps(NaiveForecaster(sp=12).fit(y_train))
     >>> fitted_forecaster = FittedForecaster(pickled_forecaster)
     >>> fitted_forecaster.fit(y_deploy)
