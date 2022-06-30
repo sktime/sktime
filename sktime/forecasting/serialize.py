@@ -6,6 +6,7 @@ __author__ = ["fkiraly"]
 
 from copy import deepcopy
 import pickle
+from turtle import update
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._base import BaseForecaster
@@ -143,6 +144,9 @@ class FittedForecaster(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        if self.update_forecaster:
+            self._fitted_forecaster.update(y=y, X=X, update_params=update_params)
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
