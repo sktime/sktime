@@ -6,7 +6,6 @@ __author__ = ["fkiraly"]
 
 from copy import deepcopy
 import pickle
-from turtle import update
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._base import BaseForecaster
