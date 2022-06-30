@@ -110,7 +110,7 @@ if __name__ == "__main__":
         predefined_resample = False
 
         load_and_run_classification_experiment(
-            overwrite=True,
+            overwrite=False,
             problem_path=data_dir,
             results_path=results_dir,
             cls_name=cls_name,

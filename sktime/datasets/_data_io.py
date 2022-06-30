@@ -932,6 +932,9 @@ def load_from_tsfile_to_dataframe(
         data = pd.DataFrame(dtype=np.float32)
         for dim in range(0, num_dimensions):
             data["dim_" + str(dim)] = instance_list[dim]
+            # Stop a warning about highly fragmented data frames for high dimensional data
+            if dim > 0 and dim % 50 == 0:
+                data = data.copy()
         # Check if we should return any associated class labels separately
         if class_labels:
             if return_separate_X_and_y:
