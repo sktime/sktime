@@ -56,9 +56,9 @@ class FittedForecaster(_DelegatedForecaster):
     }
 
     # attribute for _DelegatedForecaster, which then delegates
-    #     all non-overridden methods to those of same name in self.forecaster_
+    #     all non-overridden methods to those of same name in self.fitted_forecaster_
     #     see further details in _DelegatedForecaster docstring
-    _delegate_name = "_fitted_forecaster"
+    _delegate_name = "fitted_forecaster_"
 
     def __init__(self, fitted_forecaster, update_forecaster, unwrap_time="construct"):
         super(FittedForecaster, self).__init__()
@@ -67,7 +67,14 @@ class FittedForecaster(_DelegatedForecaster):
         self.unwrap_time = unwrap_time
 
         if unwrap_time == "construct":
-            self._fitted_forecaster = self._unwrap_serialized(fitted_forecaster)
+            self.fitted_forecaster_ = self._unwrap_serialized(fitted_forecaster)
+        elif unwrap_time == "fit":
+            self.fitted_forecaster_ = None
+        else:
+            raise ValueError(
+                f'unwrap_time must be one of "construct" or "fit", but'
+                f" found {unwrap_time}'
+            )
 
         self.clone_tags(self.fitted_forecaster)
 
@@ -122,10 +129,10 @@ class FittedForecaster(_DelegatedForecaster):
         self : returns an instance of self.
         """
         if self.unwrap_time == "fit":
-            self._fitted_forecaster = self._unwrap_serialized(self.fitted_forecaster)
+            self.fitted_forecaster_ = self._unwrap_serialized(self.fitted_forecaster)
 
         if self.update_forecaster:
-            self._fitted_forecaster.update(y=y, X=X, update_params=True)
+            self.fitted_forecaster_.update(y=y, X=X, update_params=True)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -147,7 +154,7 @@ class FittedForecaster(_DelegatedForecaster):
         self : reference to self
         """
         if self.update_forecaster:
-            self._fitted_forecaster.update(y=y, X=X, update_params=update_params)
+            self.fitted_forecaster_.update(y=y, X=X, update_params=update_params)
         return self
 
     @classmethod
