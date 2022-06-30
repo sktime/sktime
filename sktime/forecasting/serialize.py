@@ -70,15 +70,15 @@ class FittedForecaster(_DelegatedForecaster):
 
         if unwrap_time == "construct":
             self.fitted_forecaster_ = self._unwrap_serialized(fitted_forecaster)
+            self.clone_tags(fitted_forecaster)
         elif unwrap_time == "fit":
             self.fitted_forecaster_ = None
+            self.set_tags(**self._unwrap_serialized_tags(fitted_forecaster))
         else:
             raise ValueError(
                 f'unwrap_time must be one of "construct" or "fit", but'
                 f" found {unwrap_time}"
             )
-
-        self.clone_tags(self.fitted_forecaster)
 
         if unwrap_time == "fit" or update_forecaster:
             self.set_tags(**{"fit_is_empty": False})
@@ -112,6 +112,29 @@ class FittedForecaster(_DelegatedForecaster):
                 f"fitted_forecaster of type {self.__class__.__name__} has not "
                 f"been fitted yet; please call `fit` first."
             )
+
+        return unwrapped_forecaster
+
+    def _unwrap_serialized_tags(self, fitted_forecaster):
+        """Get tags from serialized forecaster.
+
+        Parameters
+        ----------
+        fitted_forecaster : serialized forecaster, one of the following
+            sktime forecaster object (BaseForecaster) in fitted state, after `fit`
+            pickled sktime forecaster object
+
+        Returns
+        -------
+        tags : sktime tags dict
+        """
+        if isinstance(fitted_forecaster, BaseForecaster):
+            tags = fitted_forecaster.get_tags()
+
+        if isinstance(fitted_forecaster, bytes):
+            tags = pickle.loads(fitted_forecaster).get_tags()
+
+        return tags
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
