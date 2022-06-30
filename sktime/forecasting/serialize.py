@@ -60,7 +60,9 @@ class FittedForecaster(_DelegatedForecaster):
     #     see further details in _DelegatedForecaster docstring
     _delegate_name = "fitted_forecaster_"
 
-    def __init__(self, fitted_forecaster, update_forecaster, unwrap_time="construct"):
+    def __init__(
+        self, fitted_forecaster, update_forecaster=True, unwrap_time="construct"
+    ):
         super(FittedForecaster, self).__init__()
         self.fitted_forecaster = fitted_forecaster
         self.update_forecaster = update_forecaster
