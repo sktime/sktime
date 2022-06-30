@@ -182,42 +182,6 @@ class _MsmDistance(NumbaDistance):
         return numba_msm_distance
 
 
-@njit(cache=True, fastmath=True)
-def _dimension_sum(x: np.ndarray, j: int):
-    total = 0
-    for i in range(x.shape[0]):
-        total += x[i][j]
-
-    return total
-
-
-@njit(cache=True)
-def _calc_cost_cell(
-    new_point: np.ndarray,
-    x: np.ndarray,
-    y: np.ndarray,
-    c: float,
-) -> float:
-    """Cost calculation function for MSM."""
-    new_point_sum = _dimension_sum(new_point)
-    x_sum = _dimension_sum(x)
-    y_sum = _dimension_sum(y)
-
-    if ((x_sum <= new_point_sum) and (new_point_sum <= y_sum)) or (
-        (y_sum <= new_point_sum) and new_point_sum <= x_sum
-    ):
-        return c
-    else:
-        a = np.abs(new_point_sum - x_sum)
-        b = np.abs(new_point_sum - y_sum)
-
-        if a < b:
-            return c + a
-        else:
-            return c + b
-        # return c + np.min([np.abs(new_point - x), np.abs(new_point - y)])
-
-
 @njit(cache=True)
 def _cost_function(x: float, y: float, z: float, c: float) -> float:
     if (y <= x and x <= z) or (y >= x and x >= z):
