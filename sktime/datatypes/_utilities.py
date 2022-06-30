@@ -130,6 +130,11 @@ def get_cutoff(
     -------
     cutoff_index : pandas compatible index element (if return_index=False)
         pd.Index of length 1 (if return_index=True)
+
+    Raises
+    ------
+    ValueError, TypeError, if check_input or convert_input are True
+        exceptions from check or conversion failure, in check_is_scitype, convert_to
     """
     from sktime.datatypes import check_is_scitype, convert_to
 
@@ -288,9 +293,11 @@ def get_window(obj, window_length=None, lag=None):
     window_length : int or timedelta, optional, default=-inf
         must be int if obj is int indexed, timedelta if datetime indexed
         length of the window to slice to. Default = window of infinite size
-    lag : int or timedelta, optional, default = 0
-        must be int if obj is int indexed, timedelta if datetime indexed
+    lag : int, timedelta, or None optional, default = None (zero of correct type)
         lag of the latest time in the window, with respect to cutoff of obj
+        if None, is internally replaced by a zero of type compatible with obj index
+        must be int if obj is int indexed or not pandas based
+        must be timedelta if obj is pandas based and datetime indexed
 
     Returns
     -------
