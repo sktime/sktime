@@ -180,7 +180,7 @@ class VectorizedDF:
         -------
         X_reconstructed_orig_format : row-concatenation of df-list,
             with keys and additional level from self.get_iter_indices
-            if convert_back=False, always a pd.DataFrame in a sktime MultiIndex format
+            if convert_back=False, always a pd.DataFrame in an sktime MultiIndex format
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
@@ -190,7 +190,7 @@ class VectorizedDF:
         X_mi_index = X_mi_reconstructed.index
         X_orig_index = self.X_multiindex.index
         if overwrite_index and len(X_mi_index.names) == len(X_orig_index.names):
-            X_mi_reconstructed.index.set_names(X_orig_index.names)
+            X_mi_reconstructed.index = X_mi_index.set_names(X_orig_index.names)
 
         if not convert_back:
             return X_mi_reconstructed

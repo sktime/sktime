@@ -169,6 +169,11 @@ class UnobservedComponents(_StatsModelsAdapter):
         not be available (including smoothed results and in-sample
         prediction), although out-of-sample forecasting is possible.
         Default is False.
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     See Also
     --------
@@ -199,6 +204,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     _tags = {
         "capability:pred_int": True,
         "handles-missing-data": False,
+        "ignores-exogeneous-X": False,
     }
 
     def __init__(
@@ -235,7 +241,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         optim_hessian=None,
         flags=None,
         low_memory=False,
-        **kwargs
+        random_state=None,
     ):
         # Model params
         self.level = level
@@ -273,7 +279,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(UnobservedComponents, self).__init__()
+        super(UnobservedComponents, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.

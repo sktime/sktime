@@ -95,12 +95,6 @@ jobs:
       - name: Install conda libpython
         run: conda install -c anaconda -n test -y libpython
 
-      - name: Install conda dependencies
-        run: |
-          conda install -c anaconda -n test -y "pystan==2.19.1.1"
-          conda install -c conda-forge -n test -y "prophet>=1.0.0"
-          conda install -c conda-forge -n test -y scipy matplotlib
-
       - name: Display downloaded artifacts
         run: ls -l wheelhouse
 
@@ -122,7 +116,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --pyargs sktime
+          python -m pytest
 
   upload_wheels:
     name: Upload wheels to PyPI

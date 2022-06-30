@@ -61,6 +61,9 @@ class BaseClusterer(BaseEstimator, ABC):
         self:
             Fitted estimator.
         """
+        # reset estimator at the start of fit
+        self.reset()
+
         X = self._check_clusterer_input(X)
 
         multithread = self.get_tag("capability:multithreading")
