@@ -16,7 +16,10 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 class FittedForecaster(_DelegatedForecaster):
     """Pre-fitted forecaster, from serialized object.
 
-    `FittedForecaster` wraps a serialized object that is already fitted
+    `FittedForecaster` wraps a serialized object that is already fitted.
+
+    Depending on parameters, `fit` is empty, or behaves like an `update`.
+    Where the state of this forecaster is updated, the `fitted_forecaster` is unchanged.
 
     Parameters
     ----------
