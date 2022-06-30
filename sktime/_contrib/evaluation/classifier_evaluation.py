@@ -179,6 +179,40 @@ univariate = [
     "WormsTwoClass",
 ]
 
+testy = ["AsphaltObstaclesCoordinates"]
+
+
+def run_experiments(
+    classifiers,
+    datasets,
+    extract_path=None,
+    overwrite=True,
+    results_path="../local_results/",
+    resample=0,
+    build_train=False,
+):
+    """Run experiments."""
+    for cls_name in classifiers:
+        for dataset in datasets:
+            X_train, y_train = load_UCR_UEA_dataset(
+                problem, split="TRAIN", extract_path=extract_path
+            )
+            X_test, y_test = load_UCR_UEA_dataset(
+                problem, split="TEST", extract_path=extract_path
+            )
+            classifier = set_classifier(cls_name)
+            load_and_run_classification_experiment(
+                overwrite=overwrite,
+                problem_path=extract_path,
+                results_path=results_path,
+                cls_name=cls_name,
+                classifier=classifier,
+                dataset=dataset,
+                resample_id=resample,
+                build_train=build_train
+                #                predefined_resample=predefined_resample,
+            )
+
 
 if __name__ == "__main__":
     """Main test"""
@@ -209,5 +243,5 @@ if __name__ == "__main__":
                 " Y = ",
                 y.shape,
             )
-        except:
-            print("Failed to load ", problem)
+        except Exception as e:
+            print("Failed to load ", problem, " exception = ", e)
