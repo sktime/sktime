@@ -278,7 +278,8 @@ class BaseTransformer(BaseEstimator):
 
         Parameters
         ----------
-        key: valid input for `columns` in `ColumnSubset`, or tuple thereof
+        key: valid input for `columns` in `ColumnSubset`, or pair thereof
+            keys can also be a :-slice, in which case it is considered as not passed
 
         Returns
         -------
