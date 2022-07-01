@@ -284,7 +284,7 @@ class BaseTransformer(BaseEstimator):
         Returns
         -------
         the following TransformerPipeline object:
-            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            ColumnSubset(columns2) * self * ColumnSubset(columns1)
             where `columns1` is first item in `key` and `columns` is second item
             if only one of the two is passed, the corresponding pipeline item is skipped
         """
