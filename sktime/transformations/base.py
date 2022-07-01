@@ -285,7 +285,7 @@ class BaseTransformer(BaseEstimator):
         -------
         the following TransformerPipeline object:
             ColumnSubset(columns2) * self * ColumnSubset(columns1)
-            where `columns1` is first item in `key` and `columns` is second item
+            where `columns1` is first item in `key` and `columns2` is second item
             if only one of the two is passed, the corresponding pipeline item is skipped
         """
         from sktime.transformations.series.subset import ColumnSelect
