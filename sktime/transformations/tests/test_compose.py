@@ -161,3 +161,27 @@ def test_sklearn_after_primitives():
     # fix this to one value to tie the output to current behaviour
     assert X_out.iloc[0, 10] > -1.37
     assert X_out.iloc[0, 10] < -1.36
+
+
+def test_subset_getitem():
+    """Test subsetting using the [ ] dunder, __getitem__."""
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+
+    t = ExponentTransformer(power=2)
+
+    t_after = t["a"]
+    t_before = t[:, ["b", "c"]]
+    t_both = t[["a", "b"], ["b", "c"]]
+    t_none = t[:, :]
+
+    assert isinstance(t_after, TransformerPipeline)
+    assert isinstance(t_before, TransformerPipeline)
+    assert isinstance(t_both, TransformerPipeline)
+    assert isinstance(t_none, ExponentTransformer)
+
+    X_square = t.fit_transform(X)
+
+    _assert_array_almost_equal(t_after.fit_transform(X), X_square[["a"]])
+    _assert_array_almost_equal(t_before.fit_transform(X), X_square[["b", "c"]])
+    _assert_array_almost_equal(t_both.fit_transform(X), X_square[["b"]])
+    _assert_array_almost_equal(t_none.fit_transform(X), X_square)

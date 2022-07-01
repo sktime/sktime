@@ -269,6 +269,48 @@ class BaseTransformer(BaseEstimator):
         else:
             return NotImplemented
 
+    def __getitem__(self, key):
+        """Magic [...] method, return column subsetted transformer.
+
+        First index does output subsetting, second index does input subsetting.
+
+        Keys must be valid inputs for `columns` in `ColumnSubset`.
+
+        Parameters
+        ----------
+        key: valid input for `columns` in `ColumnSubset`, or tuple thereof
+
+        Returns
+        -------
+        the following TransformerPipeline object:
+            ColumnSubset(columns1) * self * ColumnSubset(columns2)
+            where `columns1` is first item in `key` and `columns` is second item
+            if only one of the two is passed, the corresponding pipeline item is skipped
+        """
+        from sktime.transformations.series.subset import ColumnSelect
+
+        def is_noneslice(obj):
+            res = isinstance(obj, slice)
+            res = res and obj.start is None and obj.stop is None and obj.step is None
+            return res
+
+        if isinstance(key, tuple):
+            if not len(key) == 2:
+                raise ValueError(
+                    "there should be one or two keys when calling [] or getitem, "
+                    "e.g., mytrafo[key], or mytrafo[key1, key2]"
+                )
+            columns1 = key[0]
+            columns2 = key[1]
+            if is_noneslice(columns1) and is_noneslice(columns2):
+                return self
+            elif is_noneslice(columns1):
+                return ColumnSelect(columns2) * self
+            else:
+                return ColumnSelect(columns1) * self * ColumnSelect(columns2)
+        else:
+            return self * ColumnSelect(key)
+
     def fit(self, X, y=None):
         """Fit transformer to X, optionally to y.
 
