@@ -95,9 +95,13 @@ def _download_and_extract(url, extract_path=None):
 def _list_available_datasets(extract_path):
     """Return a list of all the currently downloaded datasets.
 
-    Modified version of
-    https://github.com/tslearn-team/tslearn/blob
-    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
+    To count as available, each directory <dir_name> in the extract_path must contain
+    files called <dir_name>_TRAIN.ts and <dir_name>_TEST.ts.
+
+    Parameters
+    ----------
+    extract_path: string
+        root directory where to look for files, if None defaults to sktime/datasets/data
 
     Returns
     -------
@@ -109,11 +113,13 @@ def _list_available_datasets(extract_path):
         data_dir = os.path.join(MODULE, "data")
     else:
         data_dir = extract_path
-    datasets = [
-        path
-        for path in os.listdir(data_dir)
-        if os.path.isdir(os.path.join(data_dir, path))
-    ]
+    datasets = []
+    for name in os.listdir(data_dir):
+        sub_dir = os.path.join(data_dir, name)
+        if os.path.isdir(sub_dir):
+            all_files = os.listdir(sub_dir)
+            if name + "_TRAIN.ts" in all_files and name + "_TEST.ts" in all_files:
+                datasets.append(name)
     return datasets
 
 
@@ -136,8 +142,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         if name not in _list_available_datasets(
             os.path.join(local_module, local_dirname)
         ):
-            # Dataset is not baked in the datasets directory, look in local_data,
-            # if it is not there, download and install it.
+            # Dataset is not already present in the datasets directory provided.
+            # If it is not there, download and install it.
             url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
             # This also tests the validitiy of the URL, can't rely on the html
             # status code as it always returns 200
