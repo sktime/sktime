@@ -1192,6 +1192,7 @@ class BaseForecaster(BaseEstimator):
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
+            requires_vectorization = False
         # end checking y
 
         # checking X
@@ -1220,12 +1221,18 @@ class BaseForecaster(BaseEstimator):
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
+
+        # extra check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y, mode="contains")
+                if not self.get_tag("ignores-exogeneous-X"):
+                    check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
