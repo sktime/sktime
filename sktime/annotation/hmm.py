@@ -84,8 +84,12 @@ class HMM(SimpleBaseEstimator):
 
         # assign emission probabilities from each state to each position:
         emi_probs = np.zeros(shape=(self.num_states, self.num_obs))
-        for state_id, emission_func in enumerate(self.emission_funcs):
-            emi_probs[state_id, :] = emission_func(self.observations)
+        for state_id, emission_tuple in enumerate(self.emission_funcs):
+            emission_func = emission_tuple[0]
+            kwargs = emission_tuple[1]
+            emi_probs[state_id, :] = np.array(
+                [emission_func(x, **kwargs) for x in self.observations]
+            )
 
         # use Vertibi Algorithm to fill in trans_prob and trans_id:
         for i in range(1, self.num_obs):
@@ -93,12 +97,12 @@ class HMM(SimpleBaseEstimator):
             # means 0 probability
             paths = np.asarray(
                 [trans_prob[:, i - 1] for _ in range(self.num_states)]
-            )  # adds log(trans_prob) column-wise
+            ).T  # adds trans_prob (which is already a log prob) column-wise
             paths += np.log(
                 self.transition_prob_mat
             )  # adds log(transition_prob_mat) element-wise
-            paths += np.expand_dims(
-                np.log(emi_probs[:, i]), axis=0
+            paths += np.asarray(
+                [np.log(emi_probs[:, i]) for _ in range(self.num_states)]
             )  # adds log(probs_sub) row-wise
             trans_id[:, i] = np.argmax(paths, axis=0)
             trans_prob[:, i] = np.max(paths, axis=0)
@@ -132,10 +136,10 @@ class HMM(SimpleBaseEstimator):
         """
         if self.made_prediction:
             return self.hmm_predict
-        hmm_fit = np.zeros([self.num_obs, 1])
+        hmm_fit = np.zeros([self.num_obs])
         # Now we trace backwards and find the most likely path:
         max_inds = np.zeros([self.num_obs]).astype(int)
-        max_inds[-1] = int(np.argmax(self.trans_prob[:, len(self.trans_prob)]))
+        max_inds[-1] = np.argmax(self.trans_prob[:, -1])
         hmm_fit[-1] = self.states[max_inds[-1]]
         for index in reversed(list(range(1, len(hmm_fit)))):
             max_inds[index - 1] = self.trans_id[max_inds[index], index]
