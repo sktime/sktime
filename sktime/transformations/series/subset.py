@@ -228,8 +228,10 @@ class ColumnSelect(BaseTransformer):
 
         if columns is None:
             return X
-        else:
-            columns = pd.Index(columns)
+        if pd.api.types.is_scalar(columns):
+            columns = [columns]
+
+        columns = pd.Index(columns)
 
         if integer_treatment == "col" and columns.is_integer():
             columns = [x for x in columns if x < len(X.columns)]
