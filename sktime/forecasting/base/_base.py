@@ -2058,7 +2058,8 @@ class BaseForecaster(BaseEstimator):
             self_copy = self
 
         # set cutoff to time point before data
-        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
+        self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]

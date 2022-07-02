@@ -88,26 +88,49 @@ def _get_freq(x):
         return None
 
 
-def _shift(x, by=1):
+def _shift(x, by=1, return_index=False):
     """Shift time point `x` by a step (`by`) given frequency of `x`.
 
     Parameters
     ----------
     x : pd.Period, pd.Timestamp, int
         Time point
-    by : int
+    by : int, optional, default=1
+    return_index : bool, optional, default=False
+        whether to return an index element (False) or a pandas Index (True)
 
     Returns
     -------
     ret : pd.Period, pd.Timestamp, int
         Shifted time point
     """
+    # deprecate in 0.13.0, pd.Timestamp will not have freq
+    if isinstance(x, pd.Timestamp):
+        raise TypeError("_shift no longer supports x: pd.Timestamp")
+    #     if not hasattr(x, "freq") or x.freq is None:
+    #         raise ValueError("No `freq` information available")
+    #     by *= x.freq
+    #     return x + by
+
+    if isinstance(x, pd.Index):
+        idx = x
+        x = idx[0]
+    else:
+        idx = pd.Index([x])
+
+    if return_index:
+        if idx.is_integer():
+            return idx + by
+        else:
+            return idx.shift(by)
+
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
     assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
+
     if isinstance(x, pd.Timestamp):
-        if not hasattr(x, "freq") or x.freq is None:
-            raise ValueError("No `freq` information available")
-        by *= x.freq
+        if not hasattr(idx, "freq") or idx.freq is None:
+            raise ValueError(f"No `freq` information available, object {idx}")
+        by *= idx.freq
     return x + by
 
 
