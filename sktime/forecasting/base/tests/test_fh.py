@@ -209,7 +209,7 @@ TIMEPOINTS = [
     3,
 ]
 
-LENGTH1_INDICES = [pd.Index(x) for x in TIMEPOINTS]
+LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
 LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
 
 
