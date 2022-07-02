@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Tests for TSFreshFeatureExtractor."""
-__author__ = ["Ayushmann Seth", "mloning"]
+__author__ = ["AyushmannSeth", "mloning"]
 
 import sys
+
 import numpy as np
 import pytest
 

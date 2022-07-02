@@ -14,6 +14,7 @@ __author__ = ["fkiraly"]
 __all__ = []
 
 from inspect import isclass
+import sys
 
 import pytest
 
