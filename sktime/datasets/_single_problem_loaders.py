@@ -94,7 +94,7 @@ def load_UCR_UEA_dataset(name, split=None, return_X_y=True, extract_path=None):
     Examples
     --------
     >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> X, y = load_UCR_UEA_dataset(name="Yoga")
+    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
@@ -584,7 +584,7 @@ def load_shampoo_sales():
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
     y.name = "Number of shampoo sales"
     return y
@@ -693,7 +693,7 @@ def load_lynx():
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
     y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
     y.name = "Number of Lynx trappings"
     return y
@@ -734,7 +734,7 @@ def load_airline():
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
@@ -781,7 +781,7 @@ def load_uschange(y_name="Consumption"):
     name = "Uschange"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
+    data = pd.read_csv(path, index_col=0).squeeze("columns")
 
     # Sort by Quarter then set simple numeric index
     # TODO add support for period/datetime indexing
@@ -832,7 +832,7 @@ def load_gun_point_segmentation():
     change_points = np.int32([900])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
-    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+    ts = pd.read_csv(path, index_col=0, header=None).squeeze("columns")
 
     return ts, period_length, change_points
 
@@ -872,7 +872,7 @@ def load_electric_devices_segmentation():
     change_points = np.int32([1090, 4436, 5712, 7923])
 
     path = os.path.join(MODULE, DIRNAME, dir, fname)
-    ts = pd.read_csv(path, index_col=0, header=None, squeeze=True)
+    ts = pd.read_csv(path, index_col=0, header=None).squeeze("columns")
 
     return ts, period_length, change_points
 
@@ -914,7 +914,7 @@ def load_PBS_dataset():
     name = "PBS_dataset"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: float})
+    y = pd.read_csv(path, index_col=0, dtype={1: float}).squeeze("columns")
 
     # make sure time index is properly formatted
     y.index = pd.PeriodIndex(y.index, freq="M", name="Period")

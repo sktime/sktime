@@ -88,7 +88,7 @@ def evaluate(
     score_name = "test_" + scoring.name
 
     # Initialize dataframe.
-    results = pd.DataFrame()
+    results = []
 
     # Run temporal cross-validation.
     for i, (train, test) in enumerate(cv.split(y)):
@@ -127,11 +127,7 @@ def evaluate(
             scitype = None
             metric_args = {}
 
-        y_pred = eval(pred_type[scitype])(
-            fh,
-            X_test,
-            **metric_args,
-        )
+        y_pred = eval(pred_type[scitype])(fh, X_test, **metric_args)
 
         pred_time = time.perf_counter() - start_pred
 
@@ -139,7 +135,7 @@ def evaluate(
         score = scoring(y_test, y_pred, y_train=y_train)
 
         # save results
-        results = results.append(
+        results.append(
             {
                 score_name: score,
                 "fit_time": fit_time,
@@ -149,10 +145,10 @@ def evaluate(
                 "y_train": y_train if return_data else np.nan,
                 "y_test": y_test if return_data else np.nan,
                 "y_pred": y_pred if return_data else np.nan,
-            },
-            ignore_index=True,
+            }
         )
 
+    results = pd.DataFrame(results)
     # post-processing of results
     if not return_data:
         results = results.drop(columns=["y_train", "y_test", "y_pred"])

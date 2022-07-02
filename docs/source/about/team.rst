@@ -15,8 +15,6 @@ Community Council
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Martin Walter
@@ -78,6 +76,8 @@ Core Developers
      - :user:`aiwalter`
    * - Patrick Schäfer
      - :user:`patrickzib`
+   * - Stanislav Khrapov
+     - :user:`khrapovs`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
 
@@ -101,5 +101,7 @@ Former Core Developers (inactive)
      - :user:`prockenschaub`
    * - Ryan Kuhns
      - :user:`rnkuhns`
+   * - Sajaysurya Ganesh
+     - :user:`sajaysurya`
    * -
      - :user:`big-o`

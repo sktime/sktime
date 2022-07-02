@@ -7,7 +7,6 @@ No other place is necessary to add new tags.
 This module exports the following:
 
 ---
-
 ESTIMATOR_TAG_REGISTER - list of tuples
 
 each tuple corresponds to a tag, elements as follows:
@@ -55,18 +54,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "can transformer handle multivariate series? True = no",
-    ),
-    (
-        "fit-in-transform",
-        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
-    ),
-    (
-        "fit-in-predict",
-        "estimator",
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
     ),
     (
         "fit_is_empty",
