@@ -709,7 +709,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -893,7 +893,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -1363,19 +1363,24 @@ class BaseForecaster(BaseEstimator):
         -------
         cutoff : pandas compatible index element
         """
-        return self._cutoff
+        if self._cutoff is None:
+            return None
+        else:
+            return self._cutoff[0]
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
 
         Parameters
         ----------
-        cutoff: pandas compatible index element
+        cutoff: pandas compatible index or index element
 
         Notes
         -----
         Set self._cutoff is to `cutoff`.
         """
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index([cutoff])
         self._cutoff = cutoff
 
     def _set_cutoff_from_y(self, y):
@@ -1392,7 +1397,7 @@ class BaseForecaster(BaseEstimator):
         -----
         Set self._cutoff to latest index seen in `y`.
         """
-        cutoff_idx = get_cutoff(y, self.cutoff)
+        cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
 
     @property
