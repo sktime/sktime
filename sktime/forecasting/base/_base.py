@@ -26,6 +26,7 @@ Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
     current ForecastingHorizon  - fh
+    current cutoff              - cutoff
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -1377,7 +1378,7 @@ class BaseForecaster(BaseEstimator):
 
         Notes
         -----
-        Set self._cutoff is to `cutoff`.
+        Set self._cutoff to `cutoff`, coerced to a pandas.Index.
         """
         if not isinstance(cutoff, pd.Index):
             cutoff = pd.Index([cutoff])
@@ -1395,7 +1396,7 @@ class BaseForecaster(BaseEstimator):
                 pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
-        Set self._cutoff to latest index seen in `y`.
+        Set self._cutoff to pandas.Index containing latest index seen in `y`.
         """
         cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
