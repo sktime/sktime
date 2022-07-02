@@ -2,6 +2,7 @@
 """Tests for TSFreshFeatureExtractor."""
 __author__ = ["Ayushmann Seth", "mloning"]
 
+import sys
 import numpy as np
 import pytest
 
@@ -10,6 +11,7 @@ from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils._testing.panel import make_classification_problem
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
 @pytest.mark.parametrize("default_fc_parameters", ["minimal"])
 def test_tsfresh_extractor(default_fc_parameters):
     """Test that mean feature of TSFreshFeatureExtract is identical with sample mean."""

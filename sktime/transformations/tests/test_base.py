@@ -15,6 +15,8 @@ __all__ = []
 
 from inspect import isclass
 
+import pytest
+
 from sktime.datatypes import check_is_scitype, mtype_to_scitype
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.panel.tsfresh import (
@@ -283,6 +285,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     assert len(Xt) == 7
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
 def test_series_in_primitives_out_not_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -318,6 +321,7 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
 def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     """Test that fit/transform runs and returns the correct output type.
 

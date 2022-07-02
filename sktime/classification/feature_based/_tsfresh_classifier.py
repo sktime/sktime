@@ -83,6 +83,7 @@ class TSFreshClassifier(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "feature",
+        "python_version_upper_bound": "3.10",
     }
 
     def __init__(
