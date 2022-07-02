@@ -19,6 +19,7 @@ from sktime.transformations.panel.signature_based._checks import (
 from sktime.transformations.panel.signature_based._signature_method import (
     SignatureTransformer,
 )
+from sktime.utils.validation._dependencies import _check_python_version
 
 
 class SignatureClassifier(BaseClassifier):
@@ -109,6 +110,7 @@ class SignatureClassifier(BaseClassifier):
         depth=4,
         random_state=None,
     ):
+        _check_python_version(self, "esig", severity="error")
         super(SignatureClassifier, self).__init__()
         self.estimator = estimator
         self.augmentation_list = augmentation_list
