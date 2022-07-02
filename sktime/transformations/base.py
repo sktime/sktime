@@ -66,7 +66,6 @@ from sktime.datatypes._series_as_panel import convert_to_scitype
 from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 from sktime.utils.validation._dependencies import _check_python_version
 
-
 # single/multiple primitives
 Primitive = Union[np.integer, int, float, str]
 Primitives = np.ndarray
