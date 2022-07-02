@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 """DrCIF test code."""
-import numpy as np
-from sklearn.metrics import accuracy_score
-
 from sktime.classification.interval_based import DrCIF
 from sktime.datasets import load_unit_test
 

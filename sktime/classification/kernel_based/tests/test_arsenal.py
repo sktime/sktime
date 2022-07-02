@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 """Arsenal test code."""
-import numpy as np
-from sklearn.metrics import accuracy_score
-
 from sktime.classification.kernel_based import Arsenal
 from sktime.datasets import load_unit_test
 
