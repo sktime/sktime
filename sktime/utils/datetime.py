@@ -104,7 +104,7 @@ def _shift(x, by=1, return_index=False):
     ret : pd.Period, pd.Timestamp, int
         Shifted time point
     """
-    # deprecate in 0.13.0, pd.Timestamp will not have freq
+    # deprecate in 0.13.0 and remove in 0.14.0, pd.Timestamp will not have freq
     if isinstance(x, pd.Timestamp):
         raise TypeError("_shift no longer supports x: pd.Timestamp")
     #     if not hasattr(x, "freq") or x.freq is None:
@@ -119,6 +119,7 @@ def _shift(x, by=1, return_index=False):
     else:
         idx = pd.Index([x])
 
+    # if we want index, we can simply use add dunder or shift
     if return_index:
         if idx.is_integer():
             return idx + by
@@ -128,6 +129,8 @@ def _shift(x, by=1, return_index=False):
     assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
     assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
 
+    # if we want index element, we can still use add, except if timestamp
+    # deprecate this in 0.13.0 and remove in 0.14.0
     if isinstance(x, pd.Timestamp):
         if not hasattr(idx, "freq") or idx.freq is None:
             raise ValueError(f"No `freq` information available, object {idx}")
