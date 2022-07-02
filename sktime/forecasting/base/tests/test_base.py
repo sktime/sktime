@@ -59,7 +59,7 @@ def test_vectorization_series_to_panel(mtype):
 
     msg = (
         "estimator in vectorization test does not properly update cutoff, "
-        f"expected {y}, but found {f.cutoff}"
+        f"expected {get_cutoff(y)}, but found {f.cutoff}"
     )
     assert f.cutoff == get_cutoff(y), msg
 

@@ -166,13 +166,13 @@ def get_cutoff(
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
         if obj.ndim == 3:
-            cutoff_ind = obj.shape[-1] + cutoff
+            cutoff_ind = obj.shape[-1] + cutoff - 1
         if obj.ndim < 3 and obj.ndim > 0:
-            cutoff_ind = obj.shape[0] + cutoff
+            cutoff_ind = obj.shape[0] + cutoff - 1
         if reverse_order:
             cutoff_ind = 0
         if return_index:
-            return pd.RangeIndex(cutoff_ind - 1, cutoff_ind)
+            return pd.RangeIndex(cutoff_ind, cutoff_ind + 1)
         else:
             return cutoff_ind
 
