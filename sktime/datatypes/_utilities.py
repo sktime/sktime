@@ -189,7 +189,7 @@ def get_cutoff(
         if not return_index:
             return idx[ix]
         res = idx[[ix]]
-        if idx.freq is not None:
+        if hasattr(idx, "freq") and idx.freq is not None:
             res.freq = idx.freq
         return res
 
