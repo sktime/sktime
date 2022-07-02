@@ -190,7 +190,8 @@ def get_cutoff(
             return idx[ix]
         res = idx[[ix]]
         if hasattr(idx, "freq") and idx.freq is not None:
-            res.freq = idx.freq
+            if res.freq != idx.freq:
+                res.freq = idx.freq
         return res
 
     if isinstance(obj, pd.Series):
