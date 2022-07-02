@@ -218,18 +218,12 @@ def get_cutoff(
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         idx = obj.index
         series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
-        if return_index:
-            cutoffs = [x[[-1]] for x in series_idx]
-        else:
-            cutoffs = [x[-1] for x in series_idx]
+        cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
         return agg(cutoffs)
 
     # df-list (Panel)
     if isinstance(obj, list):
-        if return_index:
-            idxs = [x.index[[ix]] for x in obj]
-        else:
-            idxs = [x.index[ix] for x in obj]
+        idxs = [sub_idx(x.index, ix, return_index) for x in obj]
         return agg(idxs)
 
 
