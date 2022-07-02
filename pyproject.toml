@@ -64,11 +64,11 @@ all_extras = [
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
-    "stumpy>=1.5.1"; python_version < '3.10'",
+    "stumpy>=1.5.1",
     "tbats>=1.1.0",
     "tensorflow-probability",
     "tensorflow",
-    "tsfresh>=0.17.0",
+    "tsfresh>=0.17.0"; python_version < '3.10'",
     "tslearn>=0.5.2",
 ]
 
