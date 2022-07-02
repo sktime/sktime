@@ -112,6 +112,7 @@ def _shift(x, by=1, return_index=False):
     #     by *= x.freq
     #     return x + by
 
+    # we ensure idx is pd.Index, x is first (and usually only) element
     if isinstance(x, pd.Index):
         idx = x
         x = idx[0]
