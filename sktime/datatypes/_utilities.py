@@ -159,11 +159,6 @@ def get_cutoff(
                 f" found a pd.Index with length {len(cutoff)}"
             )
         cutoff = cutoff[0]
-    elif not isinstance(cutoff, int):
-        raise TypeError(
-            "cutoff must be an integer, length 1 pd.Index of int, or None, but"
-            f" found {type(cutoff)}"
-        )
 
     if len(obj) == 0:
         return cutoff
