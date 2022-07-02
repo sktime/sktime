@@ -13,8 +13,8 @@ import numpy as np
 from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
-from sktime.utils.validation.panel import check_X_y
 from sktime.utils.validation._dependencies import _check_python_version
+from sktime.utils.validation.panel import check_X_y
 
 
 class FreshPRINCE(BaseClassifier):
