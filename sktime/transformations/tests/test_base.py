@@ -13,8 +13,8 @@ Transformer scenarios cover different combinations of input data types.
 __author__ = ["fkiraly"]
 __all__ = []
 
-from inspect import isclass
 import sys
+from inspect import isclass
 
 import pytest
 
