@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
+"""Tests for using sklearn FeatureUnion with sktime."""
+
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import FeatureUnion
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
-from sktime.transformations.panel.compose import (
-    SeriesToPrimitivesRowTransformer,
-)
+from sktime.transformations.panel.compose import SeriesToPrimitivesRowTransformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
 from sktime.utils._testing.panel import make_classification_problem
 
@@ -26,8 +25,7 @@ std_transformer = SeriesToPrimitivesRowTransformer(
 
 
 def test_FeatureUnion_pipeline():
-    # pipeline with segmentation plus multiple feature extraction
-
+    """Pipeline with segmentation plus multiple feature extraction."""
     steps = [
         ("segment", RandomIntervalSegmenter(n_intervals=1)),
         (
@@ -37,7 +35,6 @@ def test_FeatureUnion_pipeline():
         ("clf", DecisionTreeClassifier()),
     ]
     clf = Pipeline(steps)
-
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -46,6 +43,7 @@ def test_FeatureUnion_pipeline():
 
 
 def test_FeatureUnion():
+    """Test that sklearn/sktime combined FeatureUnion pipeline works."""
     X, y = load_gunpoint(return_X_y=True)
     feature_union = FeatureUnion([("mean", mean_transformer), ("std", std_transformer)])
     Xt = feature_union.fit_transform(X, y)

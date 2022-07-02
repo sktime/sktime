@@ -69,15 +69,10 @@ jobs:
       - name: Install conda libpython
         run: conda install -c anaconda libpython
 
-      - name: Install conda dependencies
-        run: |
-          conda install -c anaconda "pystan==2.19.1.1"
-          conda install -c conda-forge "prophet>=1.0"
-
       - name: Install sktime and dependencies
         run: python -m pip install .[all_extras,dev]
 
-      - name: Show dependecies
+      - name: Show dependencies
         run: python -m pip list
 
       - name: Run tests
@@ -86,7 +81,7 @@ jobs:
           cp .coveragerc testdir/
           cp setup.cfg testdir/
           cd testdir/
-          python -m pytest --showlocals --durations=10 --cov-report=xml --cov=sktime --timeout=600 -v -n 2 --pyargs sktime
+          python -m pytest
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
@@ -114,7 +109,7 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test
+        run: make test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
@@ -151,11 +146,33 @@ jobs:
         run: |
           python -m pip install .[all_extras,dev]
 
-      - name: Show dependecies
+      - name: Show dependencies
         run: python -m pip list
 
       - name: Run tests
-        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test
+        run: make test
 
       - name: Publish code coverage
         uses: codecov/codecov-action@v2
+
+  test-nosoftdeps:
+    needs: code-quality
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install sktime and dependencies
+        run: |
+          python -m pip install .[dev]
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Run tests
+        run: make PYTESTOPTIONS="--cov --cov-report=xml --timeout=600" test_softdeps

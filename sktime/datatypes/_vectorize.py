@@ -150,9 +150,6 @@ class VectorizedDF:
         ind = self.get_iter_indices()[i]
         item = X.loc[ind]
         item = _enforce_index_freq(item)
-        # pd-multiindex type (Panel case) expects these index names:
-        if self.iterate_as == "Panel":
-            item.index.set_names(["instances", "timepoints"], inplace=True)
         return item
 
     def as_list(self):
@@ -180,7 +177,7 @@ class VectorizedDF:
         -------
         X_reconstructed_orig_format : row-concatenation of df-list,
             with keys and additional level from self.get_iter_indices
-            if convert_back=False, always a pd.DataFrame in a sktime MultiIndex format
+            if convert_back=False, always a pd.DataFrame in an sktime MultiIndex format
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """

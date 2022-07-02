@@ -9,7 +9,7 @@ import pytest
 
 from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._utilities import get_cutoff, get_window
+from sktime.datatypes._utilities import get_cutoff, get_slice, get_window
 
 SCITYPE_MTYPE_PAIRS = [
     ("Series", "pd.Series"),
@@ -23,9 +23,11 @@ SCITYPE_MTYPE_PAIRS = [
 ]
 
 
+@pytest.mark.parametrize("convert_input", [True, False])
+@pytest.mark.parametrize("reverse_order", [True, False])
 @pytest.mark.parametrize("return_index", [True, False])
 @pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
-def test_get_cutoff(scitype, mtype, return_index):
+def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
     """Tests that conversions for scitype agree with from/to example fixtures.
 
     Parameters
@@ -33,6 +35,8 @@ def test_get_cutoff(scitype, mtype, return_index):
     scitype : str - scitype of input
     mtype : str - mtype of input
     return_index : bool - whether index (True) or index element is returned (False)
+    reverse_order : bool - whether first (True) or last index (False) is retrieved
+    convert_input : bool, - whether input is converted (True) or passed through (False)
 
     Raises
     ------
@@ -46,7 +50,12 @@ def test_get_cutoff(scitype, mtype, return_index):
         if fixture is None:
             continue
 
-        cutoff = get_cutoff(fixture, return_index=return_index)
+        cutoff = get_cutoff(
+            fixture,
+            return_index=return_index,
+            reverse_order=reverse_order,
+            convert_input=convert_input,
+        )
 
         if return_index:
             expected_types = pd.Index
@@ -62,6 +71,22 @@ def test_get_cutoff(scitype, mtype, return_index):
 
         if return_index:
             assert len(cutoff) == 1
+
+
+@pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
+def test_get_cutoff_wrong_input(bad_inputs):
+    """Tests that get_cutoff raises error on bad input when input checks are enabled.
+
+    Parameters
+    ----------
+    bad_inputs : inputs that should set off the input checks
+
+    Raises
+    ------
+    Exception (from pytest) if the error is not raised as expected
+    """
+    with pytest.raises(Exception, match="must be of Series, Panel, or Hierarchical"):
+        get_cutoff(bad_inputs, check_input=True)
 
 
 @pytest.mark.parametrize("window_length, lag", [(2, 0), (None, 0), (4, 1)])
@@ -100,21 +125,84 @@ def test_get_window_expected_result():
     Raises
     ------
     Exception if get_window raises one
+    AssertionError if get_window output shape is not as expected
     """
     X_df = get_examples(mtype="pd.DataFrame")[0]
     assert len(get_window(X_df, 2, 1)) == 2
     assert len(get_window(X_df, 3, 1)) == 3
     assert len(get_window(X_df, 1, 2)) == 1
     assert len(get_window(X_df, 3, 4)) == 0
+    assert len(get_window(X_df, 3, None)) == 3
+    assert len(get_window(X_df, None, 2)) == 2
+    assert len(get_window(X_df, None, None)) == 4
 
     X_mi = get_examples(mtype="pd-multiindex")[0]
     assert len(get_window(X_mi, 3, 1)) == 6
     assert len(get_window(X_mi, 2, 0)) == 6
     assert len(get_window(X_mi, 2, 4)) == 0
     assert len(get_window(X_mi, 1, 2)) == 3
+    assert len(get_window(X_mi, 2, None)) == 6
+    assert len(get_window(X_mi, None, 2)) == 3
+    assert len(get_window(X_mi, None, None)) == 9
 
     X_hi = get_examples(mtype="pd_multiindex_hier")[0]
     assert len(get_window(X_hi, 3, 1)) == 12
     assert len(get_window(X_hi, 2, 0)) == 12
     assert len(get_window(X_hi, 2, 4)) == 0
     assert len(get_window(X_hi, 1, 2)) == 6
+    assert len(get_window(X_hi, 2, None)) == 12
+    assert len(get_window(X_hi, None, 2)) == 6
+    assert len(get_window(X_hi, None, None)) == 18
+
+    X_np3d = get_examples(mtype="numpy3D")[0]
+    assert get_window(X_np3d, 3, 1).shape == (2, 2, 3)
+    assert get_window(X_np3d, 2, 0).shape == (2, 2, 3)
+    assert get_window(X_np3d, 2, 4).shape == (0, 2, 3)
+    assert get_window(X_np3d, 1, 2).shape == (1, 2, 3)
+    assert get_window(X_np3d, 2, None).shape == (2, 2, 3)
+    assert get_window(X_np3d, None, 2).shape == (1, 2, 3)
+    assert get_window(X_np3d, None, None).shape == (3, 2, 3)
+
+
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_slice_output_type(scitype, mtype):
+    """Tests that get_slice runs for all mtypes, and returns output of same mtype.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+
+    Raises
+    ------
+    Exception if get_slice raises one
+    """
+    # retrieve example fixture
+    fixture = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)[0]
+    X = get_slice(fixture)
+    valid, err, _ = check_is_mtype(X, mtype=mtype, return_metadata=True)
+
+    msg = (
+        f"get_slice should return an output of mtype {mtype} for that type of input, "
+        f"but it returns an output not conformant with that mtype."
+        f"Error from mtype check: {err}"
+    )
+
+    assert valid, msg
+
+
+def test_get_slice_expected_result():
+    """Tests that get_slice produces return of the right length.
+
+    Raises
+    ------
+    Exception if get_slice raises one
+    """
+    X_df = get_examples(mtype="pd.DataFrame")[0]
+    assert len(get_slice(X_df, start=1, end=3)) == 2
+
+    X_s = get_examples(mtype="pd.Series")[0]
+    assert len(get_slice(X_s, start=1, end=3)) == 2
+
+    X_np = get_examples(mtype="numpy3D")[0]
+    assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)

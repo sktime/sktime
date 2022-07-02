@@ -812,9 +812,13 @@ class BaseForecaster(BaseEstimator):
             For further details:
                 on usage, see forecasting tutorial examples/01_forecasting.ipynb
                 on specification of formats, examples/AA_datatypes_and_datasets.ipynb
-        cv : temporal cross-validation generator, optional (default=None)
+        cv : temporal cross-validation generator inheriting from BaseSplitter, optional
+            for example, SlidingWindowSplitter or ExpandingWindowSplitter
+            default = ExpandingWindowSplitter with `initial_window=1` and defaults
+                = individual data points in y/X are added and forecast one-by-one,
+                `initial_window = 1`, `step_length = 1` and `fh = 1`
         X : time series in sktime compatible format, optional (default=None)
-                Exogeneous time series for updating and forecasting
+            Exogeneous time series for updating and forecasting
             Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
                 X.index must contain y.index and fh.index both
@@ -830,11 +834,25 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        y_pred : time series in sktime compatible data container format
-            Point forecasts at fh, with same index as fh
-            y_pred has same type as the y that has been passed most recently:
+        y_pred : object that tabulates point forecasts from multiple split batches
+            format depends on pairs (cutoff, absolute horizon) forecast overall
+            if collection of absolute horizon points is unique:
+                type is time series in sktime compatible data container format
+                cutoff is suppressed in output
+                has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
+            if collection of absolute horizon points is not unique:
+                type is a pandas DataFrame, with row and col index being time stamps
+                row index corresponds to cutoffs that are predicted from
+                column index corresponds to absolut horizons that are predicted
+                entry is the point prediction of col index predicted from row index
+                entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        if cv is None:
+            cv = ExpandingWindowSplitter(initial_window=1)
+
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
@@ -914,6 +932,7 @@ class BaseForecaster(BaseEstimator):
         -------
         y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
+            if fh was relative, index is relative to cutoff after update with y
             y_pred has same type as the y that has been passed most recently:
                 Series, Panel, Hierarchical scitype, same format (see above)
         """
@@ -1126,6 +1145,11 @@ class BaseForecaster(BaseEstimator):
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
         FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
 
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
+
         # checking y
         if y is not None:
             y_valid, _, y_metadata = check_is_scitype(
@@ -1135,12 +1159,16 @@ class BaseForecaster(BaseEstimator):
                 "y must be in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
+                "If you think y is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for y. "
+                "Possible mtype specification strings are as follows. "
             )
             if not y_valid:
-                raise TypeError(msg)
+                raise TypeError(msg + mtypes_msg)
 
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
@@ -1164,6 +1192,7 @@ class BaseForecaster(BaseEstimator):
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
+            requires_vectorization = False
         # end checking y
 
         # checking X
@@ -1176,32 +1205,34 @@ class BaseForecaster(BaseEstimator):
                 "X must be either None, or in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
                 "If you think X is already in an sktime supported input format, "
                 "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
                 "where mtype is the string of the type specification you want for X. "
                 "Possible mtype specification strings are as follows. "
             )
-            for scitype in ALLOWED_SCITYPES:
-                mtypes = set(scitype_to_mtype(scitype))
-                mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
-                msg += f'"For {scitype} scitype: {mtypes}. '
             if not X_valid:
-                raise TypeError(msg)
+                raise TypeError(msg + mtypes_msg)
 
             X_scitype = X_metadata["scitype"]
             requires_vectorization = X_scitype not in X_inner_scitype
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
+
+        # extra check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y, mode="contains")
+                if not self.get_tag("ignores-exogeneous-X"):
+                    check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
@@ -1313,7 +1344,9 @@ class BaseForecaster(BaseEstimator):
         pd.Series
             y_pred, sliced by fh
         """
-        y_pred = y_in_sample.append(y_out_sample, ignore_index=True).rename("y_pred")
+        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
+            "y_pred"
+        )
         y_pred = pd.DataFrame(y_pred)
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
