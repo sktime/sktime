@@ -114,7 +114,6 @@ def _shift(x, by=1, return_index=False):
         return x + by
         # raise TypeError("_shift no longer supports x: pd.Timestamp")
 
-
     # we ensure idx is pd.Index, x is first (and usually only) element
     if isinstance(x, pd.Index):
         idx = x
