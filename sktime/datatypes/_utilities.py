@@ -152,6 +152,18 @@ def get_cutoff(
 
     if cutoff is None:
         cutoff = 0
+    elif isinstance(cutoff, pd.Index):
+        if not len(cutoff) == 1:
+            raise ValueError(
+                "if cutoff is a pd.Index, its length must be 1, but"
+                f" found a pd.Index with length {len(cutoff)}"
+            )
+        cutoff = cutoff[0]
+    elif not isinstance(cutoff, int):
+        raise TypeError(
+            "cutoff must be an integer, length 1 pd.Index of int, or None, but"
+            f" found {type(cutoff)}"
+        )
 
     if len(obj) == 0:
         return cutoff
@@ -177,22 +189,30 @@ def get_cutoff(
         ix = -1
         agg = max
 
+    def sub_idx(idx, ix, return_index=True):
+        """Like sub-setting pd.index, but preserves freq attribute."""
+        if not return_index:
+            return idx[ix]
+        res = idx[[ix]]
+        if idx.freq is not None:
+            res.freq = idx.freq
+        return res
+
     if isinstance(obj, pd.Series):
-        return obj.index[[ix]] if return_index else obj.index[ix]
+        return sub_idx(obj.index, ix) if return_index else obj.index[ix]
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
         objcols = [x for x in obj.columns if obj.dtypes[x] == "object"]
         # pd.DataFrame
         if len(objcols) == 0:
-            return obj.index[[ix]] if return_index else obj.index[ix]
+            return sub_idx(obj.index, ix) if return_index else obj.index[ix]
         # nested_univ
         else:
-            if return_index:
-                idxx = [x.index[[ix]] for col in objcols for x in obj[col]]
-            else:
-                idxx = [x.index[ix] for col in objcols for x in obj[col]]
-            return max(idxx)
+            idxx = [
+                sub_idx(x.index, ix, return_index) for col in objcols for x in obj[col]
+            ]
+            return agg(idxx)
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
