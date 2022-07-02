@@ -64,7 +64,7 @@ all_extras = [
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
-    "stumpy>=1.5.1",
+    "stumpy>=1.5.1"; python_version < '3.10'",
     "tbats>=1.1.0",
     "tensorflow-probability",
     "tensorflow",
