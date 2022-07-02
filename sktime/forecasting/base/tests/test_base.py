@@ -10,9 +10,11 @@ from operator import mul
 import pytest
 
 from sktime.datatypes import check_is_mtype, convert
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.arima import ARIMA
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
+from sktime.utils._testing.series import _make_series
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
 HIER_MTYPES = ["pd_multiindex_hier"]
@@ -29,7 +31,8 @@ def test_vectorization_series_to_panel(mtype):
 
     y = _make_panel(n_instances=n_instances, random_state=42, return_mtype=mtype)
 
-    y_pred = ARIMA().fit(y).predict([1, 2, 3])
+    f = ARIMA()
+    y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
     msg = (
@@ -53,6 +56,12 @@ def test_vectorization_series_to_panel(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+    msg = (
+        "estimator in vectorization test does not properly update cutoff, "
+        f"expected {y}, but found {f.cutoff}"
+    )
+    assert f.cutoff == get_cutoff(y), msg
 
 
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
@@ -68,7 +77,8 @@ def test_vectorization_series_to_hier(mtype):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
-    y_pred = ARIMA().fit(y).predict([1, 2, 3])
+    f = ARIMA()
+    y_pred = f.fit(y).predict([1, 2, 3])
     valid, _, metadata = check_is_mtype(y_pred, mtype, return_metadata=True)
 
     msg = (
@@ -92,6 +102,12 @@ def test_vectorization_series_to_hier(mtype):
         "equal length, and length equal to the forecasting horizon [1, 2, 3]"
     )
     assert y_pred_equal_length, msg
+
+    msg = (
+        "estimator in vectorization test does not properly update cutoff, "
+        f"expected {y}, but found {f.cutoff}"
+    )
+    assert f.cutoff == get_cutoff(y), msg
 
 
 PROBA_DF_METHODS = ["predict_interval", "predict_quantiles", "predict_var"]
@@ -176,3 +192,19 @@ def test_vectorization_preserves_row_index_names(method):
     )
 
     assert y_pred.index.names == y.index.names, msg
+
+
+def test_dynamic_tags_reset_properly():
+    """Test that dynamic tags are being reset properly."""
+    from sktime.forecasting.compose import MultiplexForecaster
+    from sktime.forecasting.theta import ThetaForecaster
+    from sktime.forecasting.var import VAR
+
+    # this forecaster will have the scitype:y tag set to "univariate"
+    f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
+    f.set_params(selected_forecaster="var")
+
+    X_multivariate = _make_series(n_columns=2)
+    # fit should reset the estimator, and set scitype:y tag to "multivariate"
+    # the fit will cause an error if this is not happening properly
+    f.fit(X_multivariate)

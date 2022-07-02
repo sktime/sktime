@@ -23,9 +23,9 @@ names, metrics = zip(*metric_classes)
 def test_metric_output_direct(metric, multioutput, n_columns):
     """Test output is of correct type, dependent on multioutput.
 
-    Also tests that ways to call the metric yield equivalent results:
+    Also tests that four ways to call the metric yield equivalent results:
         1. using the __call__ dunder
-        (currently just one way, but built for comparison and extensibility)
+        2. calling the evaluate method
     """
     y_pred = _make_series(n_columns=n_columns, n_timepoints=20, random_state=21)
     y_true = _make_series(n_columns=n_columns, n_timepoints=20, random_state=42)
@@ -43,7 +43,7 @@ def test_metric_output_direct(metric, multioutput, n_columns):
         y_train=y_true,
     )
 
-    res[2] = metric(multioutput=multioutput)(
+    res[2] = metric(multioutput=multioutput).evaluate(
         y_true=y_true,
         y_pred=y_pred,
         y_pred_benchmark=y_pred,

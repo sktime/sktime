@@ -131,6 +131,7 @@ class BasePairwiseTransformer(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self.reset()
         self._is_fitted = True
         return self
 
@@ -288,6 +289,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
     def fit(self, X=None, X2=None):
         """Fit method for interface compatibility (no logic inside)."""
         # no fitting logic, but in case fit is called or expected
+        self.reset()
         self._is_fitted = True
         return self
 
@@ -322,8 +324,8 @@ class BasePairwiseTransformerPanel(BaseEstimator):
                 "X and X2 must be in an sktime compatible format, "
                 "of scitype Series or Panel, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
             raise TypeError(msg)
 

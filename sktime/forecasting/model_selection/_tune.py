@@ -11,7 +11,6 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid, ParameterSampler, check_cv
 from sklearn.utils.metaestimators import if_delegate_has_method
 
@@ -139,34 +138,6 @@ class BaseGridSearch(BaseForecaster):
         self.check_is_fitted("inverse_transform")
         return self.best_forecaster_.inverse_transform(y, X)
 
-    def score(self, y, X=None, fh=None):
-        """Return the score on the given data, if forecaster been refitted.
-
-        This uses the score defined by ``scoring`` where provided, and the
-        ``best_forecaster_.score`` method otherwise.
-
-        Parameters
-        ----------
-        y : pandas.Series
-            Target time series to which to compare the forecasts.
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables.
-        fh : ForecastingHorizon, int, np.ndarray, pd.Index, optional (default=None)
-            Forecasting horizon
-
-        Returns
-        -------
-        score : float
-        """
-        self.check_is_fitted("score")
-
-        if self.scoring is None:
-            return self.best_forecaster_.score(y, X=X, fh=fh)
-
-        else:
-            y_pred = self.best_forecaster_.predict(fh, X=X)
-            return self.scoring(y, y_pred)
-
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("abstract method")
 
@@ -226,7 +197,7 @@ class BaseGridSearch(BaseForecaster):
 
         def _fit_and_score(params):
             # Clone forecaster.
-            forecaster = clone(self.forecaster)
+            forecaster = self.forecaster.clone()
 
             # Set parameters.
             forecaster.set_params(**params)
@@ -295,7 +266,7 @@ class BaseGridSearch(BaseForecaster):
         self.best_index_ = results.loc[:, f"rank_{scoring_name}"].argmin()
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = clone(self.forecaster).set_params(**self.best_params_)
+        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
 
         # Refit model with best parameters.
         if self.refit:
@@ -312,7 +283,7 @@ class BaseGridSearch(BaseForecaster):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = clone(self.forecaster).set_params(**params)
+            forecaster = self.forecaster.clone().set_params(**params)
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y, X, fh)
@@ -443,7 +414,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ...         "forecaster": [ThetaForecaster(sp=12)],
     ...     },
     ...     {
-    ...         "imputer__method": ["mean", "last"],
+    ...         "imputer__method": ["mean", "median"],
     ...         "forecaster": [ExponentialSmoothing(sp=12)],
     ...         "forecaster__trend": ["add", "mul"],
     ...     },
