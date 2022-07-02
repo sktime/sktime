@@ -199,7 +199,7 @@ def get_cutoff(
         return res
 
     if isinstance(obj, pd.Series):
-        return sub_idx(obj.index, ix) if return_index else obj.index[ix]
+        return sub_idx(obj.index, ix, return_index)
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
