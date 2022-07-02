@@ -55,7 +55,10 @@ from sktime.datatypes import (
 )
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation._dependencies import _check_dl_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_dl_dependencies,
+    _check_python_version,
+)
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 
@@ -107,6 +110,7 @@ class BaseForecaster(BaseEstimator):
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
         super(BaseForecaster, self).__init__()
+        _check_python_version(self)
 
     def __mul__(self, other):
         """Magic * method, return (right) concatenated TransformedTargetForecaster.
