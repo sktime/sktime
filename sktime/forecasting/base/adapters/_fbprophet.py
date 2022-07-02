@@ -21,7 +21,6 @@ class _ProphetAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
-        "python_version_upper_bound": "3.10",
     }
 
     def _convert_int_to_date(self, y):
