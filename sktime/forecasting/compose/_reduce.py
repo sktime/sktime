@@ -5,7 +5,7 @@
 """Composition functionality for reduction approaches to forecasting."""
 
 __author__ = [
-    "Ayushmaan Seth",
+    "AyushmaanSeth",
     "Kavin Anand",
     "Luis Zugasti",
     "Lovkush Agarwal",
