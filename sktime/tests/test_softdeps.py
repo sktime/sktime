@@ -151,6 +151,8 @@ def test_softdep_error(estimator):
         except ModuleNotFoundError as e:
             error_msg = str(e)
 
+            raise RuntimeError(error_msg)
+
             # Check if appropriate exception with useful error message is raised as
             # defined in the `_check_soft_dependencies` function
             expected_error_msg = (
@@ -160,7 +162,7 @@ def test_softdep_error(estimator):
                 raise RuntimeError(
                     f"Estimator {estimator.__name__} requires soft dependencies "
                     f"{softdeps} according to tags, but does not raise an appropriate "
-                    f"error message on __init__, when the soft dependency is missing."
+                    f"error message on __init__, when the soft dependency is missing. "
                     f"Likely reason is that __init__ does not call super(cls).__init__"
                 ) from e
 
