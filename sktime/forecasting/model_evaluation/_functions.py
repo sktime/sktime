@@ -88,7 +88,8 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        When evaluating models/estimators on interval
+        An example of an interval metric is the PinballLoss.
+        It can be used with all probabilistic forecasters, which can be listed as follows:
         predictions or quantile predictions, the PinballLoss
         metrics can be used. The list of estimators that are compatible with
         this metrics are
