@@ -147,7 +147,7 @@ def test_softdep_error(estimator):
     softdeps = _get_soft_deps(estimator)
     if not _is_in_env(softdeps):
         try:
-            est_with_soft_dep.create_test_instance()
+            estimator.create_test_instance()
         except ModuleNotFoundError as e:
             error_msg = str(e)
 
