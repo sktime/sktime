@@ -64,7 +64,7 @@ def evaluate(
     --------
         The type of evaluation that is done by `evaluate` depends on metrics in
         param `scoring`
-        When evaluating model/estimators on point forecast, users can either let
+        When evaluating model/estimators on point forecast, users can let
         scoring=None, which defaults to MeanAbsolutePercentageError
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
@@ -72,11 +72,14 @@ def evaluate(
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
-    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3, fh=[1, 2, 3])
+    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3,
+    ... fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
-        Optionally, users may select other metrics that are compatible
-        with point forecast. For a complete list, see
+        Optionally, users may select other metrics that can be supplied
+        by `scoring` argument.
+        These can be forecast metrics of any kind, i.e., point forecast metrics,
+        interval metrics, quantile foreast metrics.
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
         To evaluate models/estimators using point forecast with these metrics,
