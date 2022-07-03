@@ -111,7 +111,7 @@ class BaseFixtureGenerator:
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
     #   to generate an indirect fixture at runtime. Example: estimator_instance
     #   warning: direct fixtures retain state changes within the same test
-    indirect_fixtures = ["estimator_instance"]
+    indirect_fixtures = ["estimator_instance", "estimator_fitted"]
 
     def pytest_generate_tests(self, metafunc):
         """Test parameterization routine for pytest.
