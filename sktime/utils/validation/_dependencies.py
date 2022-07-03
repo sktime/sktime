@@ -172,7 +172,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
-    """Check if deep learning dependencies are installed.
+    """Check if package dependencies are installed.
 
     Parameters
     ----------
@@ -184,6 +184,10 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         error message to be returned in the `ModuleNotFoundError`, overrides default
     severity : str, "error" (default) or "warning"
         whether the check should raise an error, or only a warning
+
+    Returns
+    -------
+    reference to obj
 
     Raises
     ------
@@ -232,3 +236,41 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
             "Error in calling _check_python_version, severity "
             f'argument must be "error" or "warning", found "{severity}".'
         )
+
+    return obj
+
+
+def _check_estimator_deps(obj, msg=None, severity="error"):
+    """Check all dependencies of estimator, packages and python.
+
+    Convenience wrapper around _check_python_version and _check_soft_dependencies,
+    checking against estimator tags "python_version_upper_bound", "python_dependencies".
+
+    Parameters
+    ----------
+    obj : sktime estimator, BaseObject descendant
+        used to check python version
+    msg : str, optional, default = default message (msg below)
+        error message to be returned in the `ModuleNotFoundError`, overrides default
+    severity : str, "error" (default) or "warning"
+        whether the check should raise an error, or only a warning
+
+    Returns
+    -------
+    reference to obj
+
+    Raises
+    ------
+    ModuleNotFoundError
+        User friendly error if obj has python_version_upper_bound tag that is
+        incompatible with the system python version.
+        Packages are determined based on the "python_dependencies" tag of obj.
+    """
+    pkg_deps = obj.get_tag("python_dependencies", None, raise_error=False)
+    if pkg_deps is not None and not isinstance(pkg_deps, list):
+        pkg_deps = [pkg_deps]
+    if pkg_deps is not None:
+        _check_soft_dependencies(*pkg_deps, msg=msg, severity=severity, object=obj)
+    _check_python_version(obj, severity=severity)
+
+    return obj
