@@ -53,7 +53,8 @@ def _extract_dependency_from_error_msg(msg):
 
 
 # collect all modules
-_, modules, _ = pkgutil.walk_packages(path=["./sktime/"], prefix="sktime.")
+modules = pkgutil.walk_packages(path=["./sktime/"], prefix="sktime.")
+modules = [x[1] for x in modules]
 modules = [x for x in modules if not _is_test(x) and not _is_ignored(x)]
 
 
