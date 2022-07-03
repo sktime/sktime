@@ -97,7 +97,7 @@ def evaluate(
     >>> all_estimators("forecaster", filter_tags={"capability:pred_int": True},
     ... as_dataframe=True)
 
-        Evaluate estimators using PinballLoss
+        To evaluate probabilistic forecasts, simply pass a probabilistic metric like PinballLoss:
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
