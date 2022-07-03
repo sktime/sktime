@@ -238,8 +238,12 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="function")
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
-        # esetimator_instance is cloned at the start of every test
-        return request.param.clone()
+        # estimator_instance is cloned at the start of every test
+        # we need to make sure that the _test_param_id gets preserved
+        estimator_instance = request.param
+        estimator_clone = request.param.clone()
+        estimator_clone._test_param_id = estimator_instance._test_param_id
+        return estimator_clone
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
