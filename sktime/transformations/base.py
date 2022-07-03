@@ -665,10 +665,13 @@ class BaseTransformer(BaseEstimator):
             f"must be in an sktime compatible format, "
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
-            f"or with MultiIndex and lowest level a sktime compatible time index. "
-            f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+            f"or with MultiIndex and last(-1) level an sktime compatible time index. "
+            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+            f"If you think the data is already in an sktime supported input format, "
+            f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
+            f"where mtype is the string of the type specification you want. "
         )
         if not X_valid:
             raise TypeError("X " + msg_invalid_input)
@@ -698,12 +701,14 @@ class BaseTransformer(BaseEstimator):
 
         if y_inner_mtype != ["None"] and y is not None:
 
-            if X_scitype == "Series":
+            if "Table" in y_inner_scitype:
+                y_possible_scitypes = "Table"
+            elif X_scitype == "Series":
                 y_possible_scitypes = "Series"
             elif X_scitype == "Panel":
-                y_possible_scitypes = ["Table", "Panel"]
+                y_possible_scitypes = "Panel"
             elif X_scitype == "Hierarchical":
-                y_possible_scitypes = ["Table", "Panel", "Hierarchical"]
+                y_possible_scitypes = ["Panel", "Hierarchical"]
 
             y_valid, _, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"

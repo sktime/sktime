@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "0.12.0"
+version = "0.12.1"
 description = "A unified framework for machine learning with time series"
 authors = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
@@ -10,7 +10,6 @@ authors = [
 ]
 maintainers = [
     {name = "Franz Király", email = "f.kiraly@ucl.ac.uk"},
-    {name = "Tony Bagnall", email = "ajb@uea.ac.uk"},
     {name = "Martin Walter"},
 ]
 readme = "README.md"
@@ -55,23 +54,22 @@ dependencies = [
 all_extras = [
     "dtw-python",
     "esig==0.9.7",
-    "prophet>=1.0",
+    "filterpy>=1.4.5",
     "hcrystalball>=0.1.9",
     "matplotlib>=3.3.2",
     "pmdarima>=1.8.0,!=1.8.1",
+    "prophet>=1.1",
+    "pykalman>=0.9.5",
     "pyod>=0.8.0",
-    "pystan==2.19.1.1",
     "scikit_posthocs>=0.6.5",
     "seaborn>=0.11.0",
     "statsforecast>=0.5.2",
     "stumpy>=1.5.1",
     "tbats>=1.1.0",
-    "tensorflow",
     "tensorflow-probability",
+    "tensorflow",
     "tsfresh>=0.17.0",
     "tslearn>=0.5.2",
-    "filterpy>=1.4.5",
-    "pykalman>=0.9.5",
 ]
 
 dev = [

@@ -453,6 +453,20 @@ These transformers select features in `X` based on `y`.
 
     FeatureSelection
 
+Subsetting time points and variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These transformers subset `X` by time points (`pandas` index or index level) or variables (`pandas` columns).
+
+.. currentmodule:: sktime.transformations.series.subset
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnSelect
+    IndexSubset
+
 Panel transformers
 ------------------
 

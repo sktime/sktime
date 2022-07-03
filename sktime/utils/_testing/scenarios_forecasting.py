@@ -16,6 +16,8 @@ __all__ = [
 from copy import deepcopy
 from inspect import isclass
 
+import pandas as pd
+
 from sktime.base import BaseObject
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -100,7 +102,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
 
 
 class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
-    """Fit/predict only, univariate y, no X."""
+    """Fit/predict only, univariate y, no X, fh passed late in predict."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": False}
 
@@ -112,7 +114,7 @@ class ForecasterFitPredictUnivariateNoX(ForecasterTestScenario):
 
 
 class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
-    """Fit/predict only, univariate y, no X, no fh in predict."""
+    """Fit/predict only, univariate y, no X, fh passed late in predict."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
@@ -124,7 +126,7 @@ class ForecasterFitPredictUnivariateNoXEarlyFh(ForecasterTestScenario):
 
 
 class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
-    """Fit/predict only, univariate y, no X, no fh in predict."""
+    """Fit/predict only, univariate y, no X, fh passed late in predict."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": False}
 
@@ -136,9 +138,9 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
 
 
 class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
-    """Fit/predict only, univariate y, no X, longer fh."""
+    """Fit/predict only, univariate y, no X, longer fh, passed early in fit."""
 
-    _tags = {"univariate_y": True, "fh_passed_in_fit": True}
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
         "fit": {
@@ -157,13 +159,13 @@ X_test_short = LONG_X.iloc[20:21]
 
 
 class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
-    """Fit/predict only, univariate y, with X."""
+    """Fit/predict only, univariate y, with X, fh passed early in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": True}
 
     args = {
         "fit": {
-            "y": _make_series(n_timepoints=20, random_state=RAND_SEED),
+            "y": pd.DataFrame(_make_series(n_timepoints=20, random_state=RAND_SEED)),
             "X": X.copy(),
             "fh": 1,
         },
@@ -173,7 +175,7 @@ class ForecasterFitPredictUnivariateWithX(ForecasterTestScenario):
 
 
 class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
-    """Fit/predict only, univariate y, with X, and longer fh."""
+    """Fit/predict only, univariate y, with X, and longer fh, passed early in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
@@ -189,7 +191,7 @@ class ForecasterFitPredictUnivariateWithXLongFh(ForecasterTestScenario):
 
 
 class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
-    """Fit/predict only, multivariate y, no X."""
+    """Fit/predict only, multivariate y, no X, fh passed early in fit."""
 
     _tags = {"univariate_y": False, "fh_passed_in_fit": True, "is_enabled": True}
 
@@ -204,7 +206,7 @@ class ForecasterFitPredictMultivariateNoX(ForecasterTestScenario):
 
 
 class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
-    """Fit/predict only, multivariate y, with X, and longer fh."""
+    """Fit/predict only, multivariate y, with X, and longer fh, passed early in fit."""
 
     _tags = {"univariate_y": False, "fh_passed_in_fit": True}
 
@@ -225,7 +227,7 @@ y_panel = _make_panel_X(
 
 
 class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
-    """Fit/predict only, univariate Panel y, no X, and longer fh."""
+    """Fit/predict only, univariate Panel y, no X, and longer fh passed early in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
@@ -237,7 +239,7 @@ y_hierarchical = _make_hierarchical(n_columns=1, random_state=RAND_SEED)
 
 
 class ForecasterFitPredictHierarchicalSimple(ForecasterTestScenario):
-    """Fit/predict only, univariate Hierarchical y, no X, and longer fh."""
+    """Fit/predict only, univariate Hierarchical y, no X, and longer fh in fit."""
 
     _tags = {"univariate_y": True, "fh_passed_in_fit": True}
 
