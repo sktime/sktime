@@ -41,8 +41,9 @@ class BaggingForecaster(BaseForecaster):
     ----------
     bootstrap_transformer : BaseTransformer
         (sktime.transformations.bootstrap.STLBootstrapTransformer)
-        Bootstrapping Transformer that takes a series as input  and returns a panel
-        of bootstrapped time series if not specified
+        Bootstrapping Transformer that takes a series (with tag
+        scitype:transform-input=Series) as input and returns a panel (with tag
+        scitype:transform-input=Panel) of bootstrapped time series if not specified
         sktime.transformations.bootstrap.STLBootstrapTransformer is used.
     forecaster : BaseForecaster (sktime.forecating.ets.AutoETS)
         A valid sktime Forecaster. If not specified sktime.forecating.ets.AutoETS is
