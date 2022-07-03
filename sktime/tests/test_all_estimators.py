@@ -55,9 +55,7 @@ from sktime.utils.validation._dependencies import _check_dl_dependencies
 
 
 @lru_cache(maxsize=None)
-def _cached_estimator_fitting(
-    estimator_class, scenario, test_param_id, random_state=0
-):
+def _cached_estimator_fitting(estimator_class, scenario, test_param_id, random_state=0):
     """Cache estimator/scenario combination for fast test runs."""
     estimator_instance_params = estimator_class.get_test_params()
     if not isinstance(estimator_instance_params, dict):
@@ -318,12 +316,12 @@ class BaseFixtureGenerator:
             random_state of all estimator instances is set to 0
         """
         # for the caching to work, we need to hash/cache *classes*
-        if "estimator_class" in kwargs.keys():
-            objs = kwargs["estimator_class"].create_test_instances_and_names()[0]
-            was_class = True
-        elif "estimator_instance" in kwargs.keys():
+        if "estimator_instance" in kwargs.keys():
             objs = [kwargs["estimator_instance"]]
             was_class = False
+        elif "estimator_class" in kwargs.keys():
+            objs = kwargs["estimator_class"].create_test_instances_and_names()[0]
+            was_class = True
         else:
             return []
 
