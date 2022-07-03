@@ -160,17 +160,34 @@ def test_softdep_error(estimator):
 
 
 @pytest.mark.parametrize("estimator", est_with_soft_dep)
-def test_softdep_work(estimator):
+def test_est_construct_if_softdep_available(estimator):
     """Test that estimators construct if required soft dependencies are there."""
     softdeps = _get_soft_deps(estimator)
     if _is_in_env(softdeps):
         try:
-            est_with_soft_dep.create_test_instance()
+            estimator.create_test_instance()
         except ModuleNotFoundError as e:
             error_msg = str(e)
             raise RuntimeError(
-                f"Estimator {estimator.__name__} does not require soft dependencies "
-                f"{softdeps} according to tags, but raise ModuleNotFoundError "
-                f"on __init__. Required soft dependencies should be added ."
+                f"Estimator {estimator.__name__} requires soft dependencies "
+                f"{softdeps} according to tags, but raises ModuleNotFoundError "
+                f"on __init__ when those dependencies are in the environment. "
+                f" Likely cause is additionally needed soft dependencies, "
+                f"these should be added "
                 f'to the "python_dependencies" tag. Exception text: {error_msg}'
             ) from e
+
+
+@pytest.mark.parametrize("estimator", est_without_soft_dep)
+def test_est_construct_without_modulenotfound(estimator):
+    """Test that estimators that do not require soft dependencies construct properly."""
+    try:
+        estimator.create_test_instance()
+    except ModuleNotFoundError as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Estimator {estimator.__name__} does not require soft dependencies "
+            f"according to tags, but raises ModuleNotFoundError "
+            f"on __init__. Required soft dependencies should be added "
+            f'to the "python_dependencies" tag. Exception text: {error_msg}'
+        ) from e
