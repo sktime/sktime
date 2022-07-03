@@ -343,6 +343,15 @@ class BaseFixtureGenerator:
 
         return fitted_ests, fitted_est_names
 
+    # this is executed before each test instance call
+    #   if this were not executed, estimator_instance would keep state changes
+    #   within executions of the same test with different parameters
+    @pytest.fixture(scope="session")
+    def estimator_fitted(self, request):
+        """estimator_fitted fixture definition for indirect use."""
+        # esetimator_instance is cloned at the start of every test
+        return request.param.clone()
+
     def _generate_method_nsc(self, test_name, **kwargs):
         """Return estimator test scenario.
 
