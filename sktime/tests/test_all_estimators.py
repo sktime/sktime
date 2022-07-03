@@ -62,9 +62,9 @@ def _cached_estimator_fitting(estimator_class, scenario, test_param_id, random_s
         estimator_instance_params = estimator_instance_params[test_param_id]
     estimator_instance = estimator_class(**estimator_instance_params)
     set_random_state(estimator_instance, random_state=random_state)
-    estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
+    scenario.run(estimator_instance, method_sequence=["fit"])
 
-    return estimator_fitted
+    return estimator_instance
 
 
 class BaseFixtureGenerator:
