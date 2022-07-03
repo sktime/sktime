@@ -87,9 +87,8 @@ def evaluate(
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
-        An example of an interval metric is the PinballLoss.
-        It can be used with all probabilistic forecasters, which can be used
-        as follows:
+        An example of an interval metric is the PinballLoss. It can be used with
+        all probabilistic forecasters.
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
