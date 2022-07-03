@@ -11,6 +11,7 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
+from functools import lru_cache
 from inspect import getfullargspec, isclass, signature
 
 import joblib
@@ -51,6 +52,21 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.validation._dependencies import _check_dl_dependencies
+
+
+@lru_cache(maxsize=None)
+def _cached_estimator_fitting(
+    estimator_class, scenario, test_param_id, random_state=0
+):
+    """Cache estimator/scenario combination for fast test runs."""
+    estimator_instance_params = estimator_class.get_test_params()
+    if not isinstance(estimator_instance_params, dict):
+        estimator_instance_params = estimator_instance_params[test_param_id]
+    estimator_instance = estimator_class(**estimator_instance_params)
+    set_random_state(estimator_instance, random_state=random_state)
+    estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
+
+    return estimator_fitted
 
 
 class BaseFixtureGenerator:
@@ -104,6 +120,7 @@ class BaseFixtureGenerator:
         "estimator_class",
         "estimator_instance",
         "scenario",
+        "estimator_fitted",
         "method_nsc",
     ]
 
@@ -291,6 +308,41 @@ class BaseFixtureGenerator:
 
         return False
 
+    def _generate_estimator_fitted(self, test_name, **kwargs):
+        """Return fitted estimator instance.
+
+        Fixtures parameterized
+        ----------------------
+        estimator_fitted: fitted estimator instance
+            ranges over all estimator instances, fitted to all applicable scenarios
+            random_state of all estimator instances is set to 0
+        """
+        # for the caching to work, we need to hash/cache *classes*
+        if "estimator_class" in kwargs.keys():
+            objs = kwargs["estimator_class"].create_test_instances_and_names()[0]
+            was_class = True
+        elif "estimator_instance" in kwargs.keys():
+            objs = [kwargs["estimator_instance"]]
+            was_class = False
+        else:
+            return []
+
+        scenario = kwargs["scenario"]
+
+        fitted_ests = []
+        for obj in objs:
+            fitted_ests += [
+                self._cached_estimator_fitting(type(obj), scenario, obj._test_param_id)
+            ]
+            # fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
+
+        if was_class and len(fitted_ests) > 1:
+            fitted_est_names = [str(i) for i in range(len(fitted_ests))]
+        else:
+            fitted_est_names = ["" for i in range(len(fitted_ests))]
+
+        return fitted_ests, fitted_est_names
+
     def _generate_method_nsc(self, test_name, **kwargs):
         """Return estimator test scenario.
 
@@ -305,6 +357,9 @@ class BaseFixtureGenerator:
             cls = obj
         elif "estimator_instance" in kwargs.keys():
             obj = kwargs["estimator_instance"]
+            cls = type(obj)
+        elif "estimator_fitted" in kwargs.keys():
+            obj = kwargs["estimator_fitted"]
             cls = type(obj)
         else:
             return []
@@ -994,7 +1049,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # err_msg=f"Idempotency check failed for method {method}",
         )
 
-    def test_fit_does_not_overwrite_hyper_params(self, estimator_instance, scenario):
+    def test_fit_does_not_overwrite_hyper_params(
+        self, estimator_instance, scenario, estimator_fitted
+    ):
         """Check that we do not overwrite hyper-parameters in fit."""
         estimator = estimator_instance
         set_random_state(estimator)
@@ -1003,8 +1060,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         params = estimator.get_params()
         original_params = deepcopy(params)
 
-        # Fit the model
-        fitted_est = scenario.run(estimator_instance, method_sequence=["fit"])
+        # Fit the model - get this from the fixture
+        fitted_est = estimator_fitted
 
         # Compare the state of the model parameters with the original parameters
         new_params = fitted_est.get_params()
@@ -1024,7 +1081,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             )
 
     def test_methods_do_not_change_state(
-        self, estimator_instance, scenario, method_nsc
+        self, estimator_instance, scenario, estimator_fitted, method_nsc
     ):
         """Check that non-state-changing methods do not change state.
 
@@ -1032,11 +1089,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         estimators do not change anything (including hyper-parameters and
         fitted parameters)
         """
-        estimator = estimator_instance
-        set_random_state(estimator)
-
         # dict_before = copy of dictionary of estimator before predict, post fit
-        _ = scenario.run(estimator, method_sequence=["fit"])
+        estimator = estimator_fitted
         dict_before = estimator.__dict__.copy()
 
         # dict_after = dictionary of estimator after predict and fit
@@ -1055,7 +1109,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     ):
         """Check that calling methods has no side effects on args."""
         estimator = estimator_instance
-
         set_random_state(estimator)
 
         # Fit the model, get args before and after
@@ -1080,7 +1133,9 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             method_args_after, method_args_before
         ), f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
 
-    def test_persistence_via_pickle(self, estimator_instance, scenario, method_nsc):
+    def test_persistence_via_pickle(
+        self, estimator_instance, scenario, method_nsc, estimator_fitted
+    ):
         """Check that we can pickle all estimators."""
         # escape predict_proba for forecasters, tfp distributions cannot be pickled
         if (
@@ -1089,10 +1144,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         ):
             return None
 
-        estimator = estimator_instance
-        set_random_state(estimator)
-        # Fit the model, get args before and after
-        scenario.run(estimator, method_sequence=["fit"], return_args=True)
+        estimator = estimator_fitted
 
         # Generate results before pickling
         vanilla_result = scenario.run(estimator, method_sequence=[method_nsc])
