@@ -330,7 +330,7 @@ class BaseFixtureGenerator:
         fitted_ests = []
         for obj in objs:
             fitted_ests += [
-                self._cached_estimator_fitting(type(obj), scenario, obj._test_param_id)
+                _cached_estimator_fitting(type(obj), scenario, obj._test_param_id)
             ]
             # fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
 
