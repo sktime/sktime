@@ -82,7 +82,7 @@ def evaluate(
         interval metrics, quantile foreast metrics.
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
-        To evaluate models/estimators using point forecast with these metrics,
+        To evaluate models/estimators using a specific metric, provide them to the scoring arg
         simply add that metrics as follows
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
