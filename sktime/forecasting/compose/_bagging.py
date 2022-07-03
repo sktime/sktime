@@ -297,8 +297,8 @@ class BaggingForecaster(BaseForecaster):
         params = [
             {},
             {
-                "bootstrap_transformer": MovingBlockBootstrapTransformer,
-                "forecaster": MockForecaster,
+                "bootstrap_transformer": MovingBlockBootstrapTransformer(),
+                "forecaster": MockForecaster(),
             },
         ]
 
