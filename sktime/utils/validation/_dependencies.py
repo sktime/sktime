@@ -84,7 +84,7 @@ def _check_soft_dependencies(
             if object is None:
                 msg = (
                     f"{e}. '{package}' is a soft dependency and not included in the "
-                    f"sktime installation. Please run: `pip install {package}` to "
+                    f"base sktime installation. Please run: `pip install {package}` to "
                     f"install the {package} package. "
                     f"To install all soft dependencies, run: `pip install "
                     f"sktime[all_extras]`"

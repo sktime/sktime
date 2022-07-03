@@ -70,7 +70,7 @@ def test_module_softdeps(module):
         # Check if appropriate exception with useful error message is raised as
         # defined in the `_check_soft_dependencies` function
         expected_error_msg = (
-            "is a soft dependency and not included in the sktime installation"
+            "is a soft dependency and not included in the base sktime installation"
         )
         if expected_error_msg not in error_msg:
             raise RuntimeError(
@@ -154,7 +154,7 @@ def test_softdep_error(estimator):
             # Check if appropriate exception with useful error message is raised as
             # defined in the `_check_soft_dependencies` function
             expected_error_msg = (
-                "is a soft dependency and not included in the sktime installation"
+                "is a soft dependency and not included in the base sktime installation"
             )
             if expected_error_msg not in error_msg:
                 raise RuntimeError(
