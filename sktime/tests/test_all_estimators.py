@@ -11,7 +11,6 @@ import numbers
 import pickle
 import types
 from copy import deepcopy
-from functools import lru_cache
 from inspect import getfullargspec, isclass, signature
 
 import joblib
@@ -52,19 +51,6 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-
-@lru_cache(maxsize=None)
-def _cached_estimator_fitting(estimator_class, scenario, test_param_id, random_state=0):
-    """Cache estimator/scenario combination for fast test runs."""
-    estimator_instance_params = estimator_class.get_test_params()
-    if not isinstance(estimator_instance_params, dict):
-        estimator_instance_params = estimator_instance_params[test_param_id]
-    estimator_instance = estimator_class(**estimator_instance_params)
-    set_random_state(estimator_instance, random_state=random_state)
-    estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
-
-    return estimator_fitted
 
 
 class BaseFixtureGenerator:
@@ -327,19 +313,16 @@ class BaseFixtureGenerator:
 
         scenario = kwargs["scenario"]
 
-        fitted_ests = []
-        for obj in objs:
-            fitted_ests += [
-                self._cached_estimator_fitting(type(obj), scenario, obj._test_param_id)
-            ]
-            # fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
+        # we pass this on unfitted, but paired with the scenario
+        # the fitting happens in the pytest fixture, at a session scope
+        cls_plus_scen = [(type(obj), scenario, obj._test_param_id) for obj in objs]
 
-        if was_class and len(fitted_ests) > 1:
-            fitted_est_names = [str(i) for i in range(len(fitted_ests))]
+        if was_class and len(cls_plus_scen) > 1:
+            fitted_est_names = [str(i) for i in range(len(cls_plus_scen))]
         else:
-            fitted_est_names = ["" for i in range(len(fitted_ests))]
+            fitted_est_names = ["" for i in range(len(cls_plus_scen))]
 
-        return fitted_ests, fitted_est_names
+        return cls_plus_scen, fitted_est_names
 
     # this is executed before each test instance call
     #   if this were not executed, estimator_instance would keep state changes
@@ -347,8 +330,19 @@ class BaseFixtureGenerator:
     @pytest.fixture(scope="session")
     def estimator_fitted(self, request):
         """estimator_fitted fixture definition for indirect use."""
-        # esetimator_instance is cloned at the start of every test
-        return request.param.clone()
+        estimator_class = request.param[0]
+        scenario = request.param[1]
+        test_param_id = request.param[2]
+        random_state = 0
+
+        estimator_instance_params = estimator_class.get_test_params()
+        if not isinstance(estimator_instance_params, dict):
+            estimator_instance_params = estimator_instance_params[test_param_id]
+        estimator_instance = estimator_class(**estimator_instance_params)
+        set_random_state(estimator_instance, random_state=random_state)
+        estimator_fitted = scenario.run(estimator_instance, method_sequence=["fit"])
+
+        return estimator_fitted
 
     def _generate_method_nsc(self, test_name, **kwargs):
         """Return estimator test scenario.
