@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Meta-transformers for building composite transformers."""
 
-__author__ = ["aiwalter", "SveaMeyer13"]
+__author__ = ["aiwalter", "SveaMeyer13", "fkiraly"]
 __all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featurizer"]
 
 import pandas as pd
@@ -11,9 +11,6 @@ from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.exponent import (
-    ExponentTransformer as _ExponentTransformer,
-)
 from sktime.utils.validation.series import check_series
 
 
@@ -436,92 +433,26 @@ def _check_is_pdseries(z):
 
 
 class Featurizer(BaseTransformer):
-    """Create new exogenous features based on a given transformer.
+    """Create exogeneous features which are a copy of the endogenous data.
 
     Parameters
     ----------
-    transformer: BaseTransformer
-        A transformer to create a new feature and append it to X
-        as new column
-    lags : int, default = 0
-        Lags to shift the created feature. In forecasting context,
-        this param must be >=1 as in predict(fh, X) the new feature
-        also needs to be given as part of X. If fh=[1,2,3], then
-        the Featurizer needs to get lags=3.
-    suffix : str, default = None
-        The suffix is used to name the new feature/columns of X.
-        If None, then then feature gets the target name and the class
-        name of the given transformer. E.g. the target is called
-        "SALES" and the transformer is ExponentTransformer, then
-        the new feauture is called SALES_ExponentTransformer.
-
-    Attributes
-    ----------
-    transformer_ : BaseTransformer
-        Fitted transformer.
+    no parameters
     """
 
     _tags = {
         "transform-returns-same-time-index": True,
         "skip-inverse-transform": False,
         "univariate-only": False,
-        "X_inner_mtype": ["pd.DataFrame"],
-        "y_inner_mtype": ["pd.Series"],
-        "scitype:y": "univariate",
-        "fit_is_empty": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "scitype:y": "both",
+        "fit_is_empty": True,
         "requires_y": True,
-        # "scitype:X": "multivariate",
     }
 
-    def __init__(self, transformer, lags=0, suffix=None):
-        self.transformer = transformer
-        self.lags = lags
-        self.suffix = suffix
+    def __init__(self):
         super(Featurizer, self).__init__()
-
-    def _fit(self, X, y=None):
-        """
-        Fit transformer to X and y.
-
-        core logic
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for tarnsformation
-
-        Returns
-        -------
-        self: a fitted instance of the estimator
-        """
-        # store y and X in self to use it in transform for outsample transformation
-        # if y is None:
-        #     raise NotImplementedError("y must be nopt None to use Featurizer.")
-        self._y = y.copy()
-        self._X = X.copy()
-
-        if not isinstance(self.transformer, BaseTransformer):
-            raise TypeError("Given transformer must be a _SeriesToSeriesTransformer")
-
-        self.transformer_ = clone(self.transformer)
-        # fit only on lagged data if lags are given. The left data at the end
-        # is used in transform()
-        if self.lags > 0:
-            y = y.copy().iloc[: -self.lags]
-            X = X.copy().iloc[: -self.lags]
-
-        # swap X, y
-        self.transformer_.fit(X=y, y=X)
-        # set suffix from transformer class name if None
-        _suffix = (
-            self.suffix
-            if self.suffix is not None
-            else self.transformer.__class__.__name__
-        )
-        self._featurized_col = self._y.name + "_" + _suffix if self._y.name else _suffix
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -530,37 +461,16 @@ class Featurizer(BaseTransformer):
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
+        X : time series or panel in one of the pd.DataFrame formats
             Data to be transformed
-        y : Series or Panel, default=None
+        y : time series or panel in one of the pd.DataFrame formats
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        transformed version of X
+        y, as a transformed version of X
         """
-        X = X.copy()
-        if not X.index.equals(self._X.index):
-            if len(X) != self.lags:
-                raise ValueError(
-                    f"""
-                    Given len of X must be equal to len of lags but found
-                    len(X)={len(X)} and lags={self.lags}"""
-                )
-
-        # get input from self for transform_.predict()
-        y_t = self._y.iloc[-self.lags :]
-        X_t = self._X.iloc[-self.lags :]
-
-        if self._featurized_col in X.columns:
-            raise AttributeError(
-                f"""Name {self._featurized_col} is already in X.columns,
-                please give (another) suffix."""
-            )
-        # swap y and X
-        X[self._featurized_col] = self.transformer_.transform(X=y_t, y=X_t).values
-        return X
+        return y
 
     def _inverse_transform(self, X, y=None):
         """Inverse transform, inverse operation to transform.
@@ -579,12 +489,4 @@ class Featurizer(BaseTransformer):
         -------
         inverse transformed version of X
         """
-        X_inv = X.copy().drop(columns=[self._featurized_col])
-        return X_inv
-
-    @classmethod
-    def get_test_params(cls):
-        """Return testing parameter settings for the estimator."""
-        return {
-            "transformer": _ExponentTransformer(),
-        }
+        return y
