@@ -1945,13 +1945,6 @@ def load_from_multiindex_to_listdataset(
     # New dependency from Gluon-ts
     from gluonts.dataset.common import ListDataset
 
-    from sktime.datatypes import check_raise, convert_to
-
-    # input type checks
-    if not check_raise(trainDF, mtype="pd-multiindex"):
-        trainDF = convert_to(trainDF, to_type="nested_univ")
-        trainDF = trainDF.reset_index().drop(["instances"], axis=1)
-
     num_dimensions = len(trainDF.columns)
     dimension_name = trainDF.columns
     if class_val_list is not None:
