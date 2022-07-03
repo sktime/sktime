@@ -150,9 +150,6 @@ class VectorizedDF:
         ind = self.get_iter_indices()[i]
         item = X.loc[ind]
         item = _enforce_index_freq(item)
-        # pd-multiindex type (Panel case) expects these index names:
-        if self.iterate_as == "Panel":
-            item.index.set_names(["instances", "timepoints"], inplace=True)
         return item
 
     def as_list(self):
