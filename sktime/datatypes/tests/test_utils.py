@@ -16,7 +16,6 @@ from sktime.datatypes._utilities import (
     get_window,
 )
 
-
 SCITYPE_MTYPE_PAIRS = [
     ("Series", "pd.Series"),
     ("Series", "pd.DataFrame"),
