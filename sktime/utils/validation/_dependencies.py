@@ -270,7 +270,9 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        _check_soft_dependencies(*pkg_deps, msg=msg, severity=severity, object=obj)
+        _check_soft_dependencies(
+            *pkg_deps, severity=severity, object=obj, suppress_import_stdout=True
+        )
     _check_python_version(obj, severity=severity)
 
     return obj
