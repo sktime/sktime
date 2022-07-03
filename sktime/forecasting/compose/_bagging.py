@@ -5,7 +5,6 @@
 
 __author__ = ["ltsaprounis"]
 
-from copy import deepcopy
 from typing import List, Union
 
 import numpy as np
@@ -40,11 +39,12 @@ class BaggingForecaster(BaseForecaster):
 
     Parameters
     ----------
-    bootstrap_transformer : BaseTransformer (default=None)
+    bootstrap_transformer : BaseTransformer
+        (sktime.transformations.bootstrap.STLBootstrapTransformer)
         Bootstrapping Transformer that takes a series as input  and returns a panel
         of bootstrapped time series if not specified
         sktime.transformations.bootstrap.STLBootstrapTransformer is used.
-    forecaster : BaseForecaster (default=None)
+    forecaster : BaseForecaster (sktime.forecating.ets.AutoETS)
         A valid sktime Forecaster. If not specified sktime.forecating.ets.AutoETS is
         used.
     sp: int (default=2)
@@ -273,8 +273,7 @@ class BaggingForecaster(BaseForecaster):
         """
         # Need to construct a completely new y out of ol self._y and y and then
         # fit_treansform the transformer and re-fit the foreaster.
-        _y = deepcopy(self._y)
-        _y = update_data(_y, y)
+        _y = update_data(self._y, y)
 
         self.bootstrap_transformer_.fit(X=_y)
         y_bootstraps = self.bootstrap_transformer_.transform(X=_y)
