@@ -439,7 +439,7 @@ class BaseObject(_BaseEstimator):
         Returns
         -------
         instance : instance of the class with default parameters
-            and with additional attribute _test_param_id = 0
+            and with additional attribute __test_param_id = 0
 
         Notes
         -----
@@ -467,7 +467,7 @@ class BaseObject(_BaseEstimator):
             )
 
         obj = cls(**params)
-        obj._test_param_id = 0
+        obj.__test_param_id = 0
 
         return obj
 
@@ -485,7 +485,7 @@ class BaseObject(_BaseEstimator):
         -------
         objs : list of instances of cls
             i-th instance is cls(**cls.get_test_params()[i])
-            with additional attribute _test_param_id = i
+            with additional attribute __test_param_id = i
         names : list of str, same length as objs
             i-th element is name of i-th instance of obj in tests
             convention is {cls.__name__}-{i} if more than one instance
@@ -514,7 +514,7 @@ class BaseObject(_BaseEstimator):
                     "return must be param dict for class, or list thereof"
                 )
             obj = cls(**params)
-            obj._test_param_id = i
+            obj.__test_param_id = i
             objs += [obj]
 
         num_instances = len(param_list)

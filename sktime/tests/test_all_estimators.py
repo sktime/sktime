@@ -253,11 +253,7 @@ class BaseFixtureGenerator:
     def estimator_instance(self, request):
         """estimator_instance fixture definition for indirect use."""
         # estimator_instance is cloned at the start of every test
-        # we need to make sure that the _test_param_id gets preserved
-        estimator_instance = request.param
-        estimator_clone = request.param.clone()
-        estimator_clone._test_param_id = estimator_instance._test_param_id
-        return estimator_clone
+        return request.param.clone()
 
     def _generate_scenario(self, test_name, **kwargs):
         """Return estimator test scenario.
@@ -334,9 +330,9 @@ class BaseFixtureGenerator:
         fitted_ests = []
         for obj in objs:
             fitted_ests += [
-                _cached_estimator_fitting(type(obj), scenario, obj._test_param_id)
+                _cached_estimator_fitting(type(obj), scenario, obj.__test_param_id)
             ]
-            # fitted_est_names += [f"{type(obj.__name__)}-{obj._test_param_id}"]
+            # fitted_est_names += [f"{type(obj.__name__)}-{obj.__test_param_id}"]
 
         if was_class and len(fitted_ests) > 1:
             fitted_est_names = [str(i) for i in range(len(fitted_ests))]
