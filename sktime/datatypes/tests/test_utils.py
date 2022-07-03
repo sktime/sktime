@@ -59,8 +59,10 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
 
         if return_index:
             expected_types = pd.Index
+            cutoff_val = cutoff[0]
         else:
             expected_types = (int, float, np.int64, pd.Timestamp)
+            cutoff_val = cutoff
 
         msg = (
             f"incorrect return type of get_cutoff"
@@ -71,6 +73,27 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
 
         if return_index:
             assert len(cutoff) == 1
+            if isinstance(cutoff_val, (pd.Period, pd.Timestamp)):
+                assert hasattr(cutoff, "freq") and cutoff.freq is not None
+
+        if isinstance(fixture, np.ndarray):
+            if reverse_order:
+                assert cutoff_val == 0
+            else:
+                assert cutoff_val > 0
+
+        if mtype in ["pd.Series", "pd.DataFrame"]:
+            if reverse_order:
+                assert cutoff_val == fixture.index[0]
+            else:
+                assert cutoff_val == fixture.index[-1]
+
+        if mtype in ["pd-multiindex", "pd_multiindex_hier"]:
+            time_idx = fixture.index.get_level_values(-1)
+            if reverse_order:
+                assert cutoff_val == time_idx.min()
+            else:
+                assert cutoff_val == time_idx.max()
 
 
 @pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
