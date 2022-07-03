@@ -44,8 +44,7 @@ def evaluate(
         Exogenous variables
     strategy : {"refit", "update"}
         Must be "refit" or "update". The strategy defines whether the `forecaster` is
-        only fitted on the first train window data and then updated,
-        or always refitted.
+        only fitted on the first train window data and then updated, or always refitted.
     scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
