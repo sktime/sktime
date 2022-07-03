@@ -162,8 +162,6 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
-        _check_soft_dependencies("prophet", severity="error", object=self)
-
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays

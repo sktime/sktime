@@ -27,6 +27,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(
@@ -43,8 +44,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         profiling_sorting=None,
         distributor=None,
     ):
-        _check_soft_dependencies("tsfresh", severity="error", object=self)
-
         self.default_fc_parameters = default_fc_parameters
         self.kind_to_fc_parameters = kind_to_fc_parameters
         self.n_jobs = n_jobs
