@@ -77,28 +77,19 @@ def evaluate(
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
         Optionally, users may select other metrics that can be supplied
-        by `scoring` argument.
-        These can be forecast metrics of any kind, i.e., point forecast metrics,
-        interval metrics, quantile foreast metrics.
+        by `scoring` argument. These can be forecast metrics of any kind,
+        i.e., point forecast metrics, interval metrics, quantile foreast metrics.
         https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
 
         To evaluate models/estimators using a specific metric, provide them to the
-        scoring arg simply add that metrics as follows
+        scoring arg.
     >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
     >>> loss = MeanAbsoluteError()
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
 
         An example of an interval metric is the PinballLoss.
-        It can be used with all probabilistic forecasters, which can be listed
-        as follows: predictions or quantile predictions, the PinballLoss
-        metrics can be used. The list of estimators that are compatible with
-        this metrics are
-    >>> from sktime.registry import all_estimators
-    >>> all_estimators("forecaster", filter_tags={"capability:pred_int": True},
-    ... as_dataframe=True)
-
-        To evaluate probabilistic forecasts, simply pass a probabilistic metric
-        like PinballLoss:
+        It can be used with all probabilistic forecasters, which can be used
+        as follows:
     >>> from sktime.forecasting.naive import NaiveVariance
     >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
     >>> loss = PinballLoss()
