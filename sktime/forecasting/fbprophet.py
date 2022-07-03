@@ -186,12 +186,12 @@ class Prophet(_ProphetAdapter):
         self.stan_backend = stan_backend
         self.verbose = verbose
 
+        super(Prophet, self).__init__()
+
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
-
-        super(Prophet, self).__init__()
 
     def _instantiate_model(self):
         self._forecaster = self._ModelClass(
