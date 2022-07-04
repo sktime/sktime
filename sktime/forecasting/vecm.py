@@ -215,6 +215,7 @@ class VECM(_StatsModelsAdapter):
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """
         Compute/return prediction quantiles for a forecast.
+
         private _predict_interval containing the core logic,
             called from predict_interval and possibly predict_quantiles
         State required:
@@ -250,7 +251,11 @@ class VECM(_StatsModelsAdapter):
         """
         exog_fc = X.values if X is not None else None
         fh_oos = fh.to_out_of_sample(self.cutoff)
-        var_names = self._y.index.name if self._y.index.name is not None else self._y.columns.values
+        var_names = (
+            self._y.index.name
+            if self._y.index.name is not None
+            else self._y.columns.values
+        )
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
 
         for c in coverage:
@@ -259,7 +264,7 @@ class VECM(_StatsModelsAdapter):
                 steps=fh_oos[-1],
                 exog_fc=exog_fc,
                 exog_coint_fc=self.exog_coint_fc,
-                alpha=alpha
+                alpha=alpha,
             )
             values = []
             for v_idx in range(len(var_names)):
