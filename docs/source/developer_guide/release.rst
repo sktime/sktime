@@ -78,7 +78,7 @@ The release process is as follows, on high-level:
 ``conda`` release and release validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-8. If the release on ``pypi`` has succeeded, there should be an automated release PR created 
+8. If the release on ``pypi`` has succeeded, there should be an automated release PR created
   against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock.
 
 9. The conda release PR need to be reviewed and in dependencies should be checked against any changes in the main sktime repo.
