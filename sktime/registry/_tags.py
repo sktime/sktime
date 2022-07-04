@@ -56,18 +56,6 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "fit-in-transform",
-        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
-    ),
-    (
-        "fit-in-predict",
-        "estimator",
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no - deprecated for 0.12.0",
-    ),
-    (
         "fit_is_empty",
         "estimator",
         "bool",
