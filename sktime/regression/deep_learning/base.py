@@ -11,6 +11,8 @@ __all__ = ["BaseDeepRegressor"]
 
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 # import numpy as np
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
@@ -82,6 +84,7 @@ class BaseDeepRegressor(BaseRegressor, ABC):
         X = X.transpose((0, 2, 1))
         y_pred = self.model_.predict(X, self.batch_size, **kwargs)
         # rng = check_random_state(self.random_state)
+        y_pred = np.squeeze(y_pred, axis=-1)
         # if y_pred.ndim == 1:
         #     y_pred.ravel()
         return y_pred
