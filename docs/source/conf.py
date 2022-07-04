@@ -401,7 +401,9 @@ nbsphinx_prolog = f"""
 """
 
 # add link to original notebook at the bottom
-notebook_url = f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
+notebook_url = (
+    f"https://github.com/sktime/sktime/tree/{CURRENT_VERSION}/{current_file}"  # noqa
+)
 nbsphinx_epilog = f"""
 ----
 
