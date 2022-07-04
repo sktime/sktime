@@ -30,5 +30,5 @@ you can follow. Simply run:
    make release
 
 This calls
-`build_tools/make_release.py <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/make_release.py>`__
+`build_tools/make_release.py <https://github.com/sktime/sktime/blob/main/build_tools/make_release.py>`__
 and will guide you through the release process.

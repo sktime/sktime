@@ -5,11 +5,11 @@ Git and GitHub workflow
 
 The preferred workflow for contributing to sktime’s repository is to
 fork the `main
-repository <https://github.com/alan-turing-institute/sktime/>`__ on
+repository <https://github.com/sktime/sktime/>`__ on
 GitHub, clone, and develop on a new branch.
 
 1.  Fork the `project
-    repository <https://github.com/alan-turing-institute/sktime>`__ by
+    repository <https://github.com/sktime/sktime>`__ by
     clicking on the 'Fork' button near the top right of the page. This
     creates a copy of the code under your GitHub user account. For more
     details on how to fork a repository see `this
@@ -32,7 +32,7 @@ GitHub, clone, and develop on a new branch.
     .. code:: bash
 
        git remote -v
-       git remote add upstream https://github.com/alan-turing-institute/sktime.git
+       git remote add upstream https://github.com/sktime/sktime.git
 
 4.  Verify the new upstream repository you've specified for your fork:
 
@@ -41,8 +41,8 @@ GitHub, clone, and develop on a new branch.
        git remote -v
        > origin    https://github.com/<username>/sktime.git (fetch)
        > origin    https://github.com/<username>/sktime.git (push)
-       > upstream  https://github.com/alan-turing-institute/sktime.git (fetch)
-       > upstream  https://github.com/alan-turing-institute/sktime.git (push)
+       > upstream  https://github.com/sktime/sktime.git (fetch)
+       > upstream  https://github.com/sktime/sktime.git (push)
 
 5.  `Sync <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_
     the ``main`` branch of your fork with the upstream repository:

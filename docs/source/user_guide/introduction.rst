@@ -8,7 +8,7 @@ Introduction
     The user guide is under development. We have created a basic
     structure and are looking for contributions to develop the user guide
     further. For more details, please go to issue `#361 <https://github
-    .com/alan-turing-institute/sktime/issues/361>`_ on GitHub.
+    .com/sktime/sktime/issues/361>`_ on GitHub.
 
 sktime is a unified toolbox for machine learning with time series. Time
 series give rise to multiple learning tasks (e.g.
@@ -61,6 +61,6 @@ Currently, sktime provides:
 * Tuning,
 * Ensembling, such as a fully customisable random forest for time-series classification and regression, as well as ensembling for multivariate problems,
 
-For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/main/ESTIMATOR_OVERVIEW.md>`_.
+For a list of implemented methods, see our `estimator overview <https://github.com/sktime/sktime/blob/main/ESTIMATOR_OVERVIEW.md>`_.
 
 In addition, sktime includes an experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.

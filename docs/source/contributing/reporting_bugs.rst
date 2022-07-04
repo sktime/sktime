@@ -11,9 +11,9 @@ It is recommended to check that your issue complies with the following
 rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   `issues <https://github.com/alan-turing-institute/sktime/issues>`__
+   `issues <https://github.com/sktime/sktime/issues>`__
    or `pull
-   requests <https://github.com/alan-turing-institute/sktime/pulls>`__.
+   requests <https://github.com/sktime/sktime/pulls>`__.
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks. See `Creating and highlighting code
    blocks <https://help.github.com/articles/creating-and-highlighting-code-blocks>`__.

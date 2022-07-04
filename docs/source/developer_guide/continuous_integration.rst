@@ -36,9 +36,9 @@ Once installed, pre-commit will automatically run our code quality
 checks on the files you changed whenever you make a new commit.
 
 You can find our pre-commit configuration in
-`.pre-commit-config.yaml <https://github.com/alan-turing-institute/sktime/blob/main/.pre-commit-config.yaml>`_.
+`.pre-commit-config.yaml <https://github.com/sktime/sktime/blob/main/.pre-commit-config.yaml>`_.
 Additional configurations can be found in
-`setup.cfg <https://github.com/alan-turing-institute/sktime/blob/main/setup.cfg>`_.
+`setup.cfg <https://github.com/sktime/sktime/blob/main/setup.cfg>`_.
 
 .. note::
    If you want to exclude some line of code from being checked, you can add a ``# noqa`` (no quality assurance) comment at the end of that line.
@@ -97,7 +97,7 @@ integration services we use.
 | Platform      | Operation             | Configuration                       |
 +===============+=======================+=====================================+
 | `GitHub       | Build/test/           | `.github/workflows/ <https://gi     |
-| Actions       | distribute            | thub.com/alan-turing-institute/skti |
+| Actions       | distribute            | thub.com/sktime/skti |
 | <https:/      | on Linux, MacOS and   | me/blob/main/.github/workflows/>`__ |
 | /docs.github. | Windows,              |                                     |
 | com/en/free-p | run code quality      |                                     |
@@ -110,7 +110,7 @@ integration services we use.
 | edocs.org>`__ |                       | thub/workflows/code-quality.yml>`__ |
 +---------------+-----------------------+-------------------------------------+
 | `Codecov      | Test coverage         | `.codecov.yml <https                |
-| <https://c    |                       | ://github.com/alan-turing-institute |
+| <https://c    |                       | ://github.com/sktime |
 | odecov.io>`__ |                       | /sktime/blob/main/.codecov.yml>`__, |
 |               |                       | `.coveragerc <htt                   |
 |               |                       | ps://github.com/alan-turing-institu |
@@ -119,4 +119,4 @@ integration services we use.
 
 Additional scripts used for building, unit testing and distribution can
 be found in
-`build_tools/ <https://github.com/alan-turing-institute/sktime/tree/main/build_tools>`__.
+`build_tools/ <https://github.com/sktime/sktime/tree/main/build_tools>`__.

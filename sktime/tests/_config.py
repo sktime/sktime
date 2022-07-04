@@ -28,7 +28,7 @@ from sktime.transformations.panel.shapelet_transform import RandomShapeletTransf
 from sktime.transformations.panel.summarize import FittedParamExtractor
 
 # The following estimators currently do not pass all unit tests
-# https://github.com/alan-turing-institute/sktime/issues/1627
+# https://github.com/sktime/sktime/issues/1627
 EXCLUDE_ESTIMATORS = [
     # ConditionalDeseasonalizer and STLtransformer still need refactoring
     #  (see PR 1773, blocked through open discussion) escaping until then
