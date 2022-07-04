@@ -31,10 +31,10 @@ The release process is as follows, on high-level:
   Collect list of deprecation actions in an issue, as they will have to go in the release notes.
   Deprecation actions should be merged only by release managers.
 
-2. create a "release" pull request. This should make changes to the version numbers and have complete release notes.
+2. create a "release" pull request (ideally from a branch following the naming pattern ``release/v0.x.y``). This should make changes to the version numbers and have complete release notes.
   See below for version numbers and release notes.
 
-3. The PR and release notes should optimally be reviewed by the other core developers, then merged once testst pass.
+3. The PR and release notes should optimally be reviewed by the other core developers, then merged once tests pass.
 
 4. create a GitHub draft release with a new tag following the syntax v[MAJOR].[MINOR].[PATCH],
    e.g., the string ``v0.12.0`` for version 0.12.0.
@@ -57,8 +57,7 @@ The release process is as follows, on high-level:
   All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
   In the most common case, the install instructions need to be updated.
 
-8. If the release on ``pypi`` has succeeded, the ``conda`` release should automatically trigger via
-  https://github.com/conda-forge/sktime-feedstock
+8. If the release on ``pypi`` has succeeded, there should be an automated release PR created  against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock. This PR need to be reviewed and in dependencies should be checked against any changes in the main sktime repo. In case the dependencies (or python version support) have changes the ``meta.yml`` file in the conda recipe need to updated to reflect those changes. Once the PR is merge tit will trigger a release of the conda package.  
   If this has not happened, action to diagnose and remedy should be taken.
   Once the package is available on ``conda``, a test install should be carried out to validate the release.
 
@@ -76,7 +75,7 @@ Version numbers need to be updated in:
 Release notes
 -------------
 
-Release notes can be generated using the ``build_tools.release`` script, and should be placed at the top of the ``changelog.rst``.
+Release notes can be generated using the ``build_tools.changelog.py`` script, and should be placed at the top of the ``changelog.rst``.
 Generally, release notes should follow the general pattern of previous release notes, with sections:
 
 * highlights
