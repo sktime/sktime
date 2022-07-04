@@ -200,7 +200,7 @@ class VARMAX(_StatsModelsAdapter):
     >>> train, test = y.iloc[:-3,], y.iloc[-3:,]
     >>> forecaster = VARMAX()
     >>> forecaster.fit(train[['GNPDEFL', 'POP']], X=train[['ARMED']])
-    VARMAX()
+    VARMAX(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3], X=test[['ARMED']])
     """
 
