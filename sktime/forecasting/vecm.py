@@ -257,6 +257,7 @@ class VECM(_StatsModelsAdapter):
             else self._y.columns.values
         )
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        # pred_int = pd.DataFrame(index=int_idx)
 
         for c in coverage:
             alpha = 1 - c
@@ -270,6 +271,24 @@ class VECM(_StatsModelsAdapter):
             for v_idx in range(len(var_names)):
                 values.append(y_lower[0][v_idx])
                 values.append(y_upper[0][v_idx])
-        pred_int = pd.DataFrame([values], columns=int_idx)
+                # pred_int.loc[(var_names[v_idx], c, "lower"), :] = (y_lower[0][v_idx])
+                # pred_int.loc[(var_names[v_idx], c, "upper"), :] = (y_upper[0][v_idx])
+        pred_int = pd.DataFrame(
+            [values], index=fh.to_absolute(self.cutoff), columns=int_idx
+        )
 
         return pred_int
+
+
+# if __name__ == "__main__":
+#     from icecream import ic
+
+#     from sktime.utils.estimator_checks import check_estimator
+
+#     a = check_estimator(
+#         VECM,
+#         return_exceptions=False,
+#         fixtures_to_run="test_predict_quantiles[VECM-fh=1-alpha=0.05]",
+#     )
+#     # a = check_estimator(VECM)
+#     ic(a)
