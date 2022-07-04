@@ -73,7 +73,7 @@ Version numbers need to be updated in:
 Release notes
 -------------
 
-Release notes can be generated using the ``build_tools.release`` script, and should be placed at the top of the ``changelog.rst``.
+Release notes can be generated using the ``build_tools.changelog.py`` script, and should be placed at the top of the ``changelog.rst``.
 Generally, release notes should follow the general pattern of previous release notes, with sections:
 
 * highlights
