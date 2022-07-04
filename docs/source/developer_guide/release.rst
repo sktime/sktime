@@ -29,7 +29,7 @@ The release process is as follows, on high-level:
   Collect list of deprecation actions in an issue, as they will have to go in the release notes.
   Deprecation actions should be merged only by release managers.
 
-2. create a "release" pull request. This should make changes to the version numbers and have complete release notes.
+2. create a "release" pull request (ideally from a branch following the naming pattern ``release/v0.x.y``). This should make changes to the version numbers and have complete release notes.
   See below for version numbers and release notes.
 
 3. The PR and release notes should optimally be reviewed by the other core developers, then merged once testst pass.
