@@ -11,6 +11,19 @@ Core developers making a release should be release managers (appointed by CC) an
 Summary of release process
 --------------------------
 
+The release process includes, in sequence:
+
+* release cycle management
+* release version preparation
+* the release on ``pypi``
+* the release on ``conda``
+* troubeleshooting and accident remedial, if applicable
+
+Details follow below.
+
+Release cycle process
+^^^^^^^^^^^^^^^^^^^^^
+
 ``sktime`` aims for a release every two weeks.
 
 The release cycle process is as follows:
@@ -22,6 +35,8 @@ The release cycle process is as follows:
   Any delays and extensions to the feature freeze should also be announced.
 4. if "must have" are not merged by planned release date: either delay release date and extend freeze period, or deprioritize.
 
+Preparing the release version
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The release process is as follows, on high-level:
 
@@ -42,9 +57,12 @@ The release process is as follows, on high-level:
    and otherwise link to the release notes in the changelog,
    following the pattern of current GitHub release notes.
 
-5. publish the GitHub draft release. Creation of the new tag will trigger the release CI/CD.
+``pypi`` release and release validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-6. wait for the release CI/CD to finish. If tests fail due to sporadic unrelated failure, restart.
+5. publish the GitHub draft release. Creation of the new tag will trigger the ``pypi`` release CI/CD.
+
+6. wait for the ``pypi`` release CI/CD to finish. If tests fail due to sporadic unrelated failure, restart.
   If tests fail genuinely, something went wrong in the above steps, investigate, fix, and repeat.
   Common possibilities are core devs not respecting the feature freeze period,
   new releases of dependencies that happen in the ca one day period between release PR and release.
@@ -56,6 +74,9 @@ The release process is as follows, on high-level:
   If the install does not succeed or wheels have not been uploaded, urgent action to diagnose and remedy must be taken.
   All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
   In the most common case, the install instructions need to be updated.
+
+``conda`` release and release validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8. If the release on ``pypi`` has succeeded, there should be an automated release PR created 
   against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock.
