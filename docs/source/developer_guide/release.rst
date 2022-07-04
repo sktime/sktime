@@ -55,8 +55,7 @@ The release process is as follows, on high-level:
   All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
   In the most common case, the install instructions need to be updated.
 
-8. If the release on ``pypi`` has succeeded, the ``conda`` release should automatically trigger via
-  https://github.com/conda-forge/sktime-feedstock
+8. If the release on ``pypi`` has succeeded, there should be an automated release PR created  against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock. This PR need to be reviewed and in dependencies should be checked against any changes in the main sktime repo. In case the dependencies (or python version support) have changes the ``meta.yml`` file in the conda recipe need to updated to reflect those changes. Once the PR is merge tit will trigger a release of the conda package.  
   If this has not happened, action to diagnose and remedy should be taken.
   Once the package is available on ``conda``, a test install should be carried out to validate the release.
 
