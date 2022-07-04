@@ -280,15 +280,4 @@ class VECM(_StatsModelsAdapter):
         return pred_int
 
 
-# if __name__ == "__main__":
-#     from icecream import ic
-
-#     from sktime.utils.estimator_checks import check_estimator
-
-#     a = check_estimator(
-#         VECM,
-#         return_exceptions=False,
-#         fixtures_to_run="test_predict_quantiles[VECM-fh=1-alpha=0.05]",
-#     )
-#     # a = check_estimator(VECM)
-#     ic(a)
+# s
