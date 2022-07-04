@@ -32,7 +32,7 @@ The release process is as follows, on high-level:
 2. create a "release" pull request (ideally from a branch following the naming pattern ``release/v0.x.y``). This should make changes to the version numbers and have complete release notes.
   See below for version numbers and release notes.
 
-3. The PR and release notes should optimally be reviewed by the other core developers, then merged once testst pass.
+3. The PR and release notes should optimally be reviewed by the other core developers, then merged once tests pass.
 
 4. create a GitHub draft release with a new tag following the syntax v[MAJOR].[MINOR].[PATCH],
    e.g., the string ``v0.12.0`` for version 0.12.0.
