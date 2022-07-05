@@ -192,9 +192,10 @@ class BaseObject(_BaseEstimator):
     def set_params(self, **params):
         """Set the parameters of this object.
 
-        The method works on simple estimators as well as on nested objects.
-        The latter have parameters of the form ``<component>__<parameter>`` so that it's
-        possible to update each component of a nested object.
+        The method works on simple estimators as well as on composite objects.
+        Parameter key strings ``<component>__<parameter>`` can be used for composites,
+        i.e., objects that contain other objects, to access ``<parameter>`` in
+        the component ``<component>``
 
         Parameters
         ----------
