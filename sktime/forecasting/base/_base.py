@@ -26,6 +26,7 @@ Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
     current ForecastingHorizon  - fh
+    current cutoff              - cutoff
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -716,7 +717,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -900,7 +901,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -1373,21 +1374,27 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        cutoff : pandas compatible index element
+        cutoff : pandas compatible index element, or None
+            pandas compatible index element, if cutoff has been set; None otherwise
         """
-        return self._cutoff
+        if self._cutoff is None:
+            return None
+        else:
+            return self._cutoff[0]
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
 
         Parameters
         ----------
-        cutoff: pandas compatible index element
+        cutoff: pandas compatible index or index element
 
         Notes
         -----
-        Set self._cutoff is to `cutoff`.
+        Set self._cutoff to `cutoff`, coerced to a pandas.Index.
         """
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index([cutoff])
         self._cutoff = cutoff
 
     def _set_cutoff_from_y(self, y):
@@ -1402,9 +1409,9 @@ class BaseForecaster(BaseEstimator):
                 pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
-        Set self._cutoff to latest index seen in `y`.
+        Set self._cutoff to pandas.Index containing latest index seen in `y`.
         """
-        cutoff_idx = get_cutoff(y, self.cutoff)
+        cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
 
     @property
@@ -2072,7 +2079,8 @@ class BaseForecaster(BaseEstimator):
             self_copy = self
 
         # set cutoff to time point before data
-        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
+        self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
