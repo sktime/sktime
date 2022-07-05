@@ -292,6 +292,8 @@ def check_fh(fh, enforce_relative: bool = False, freq=None):
 
     if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
+    else:
+        fh.freq = freq
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon
