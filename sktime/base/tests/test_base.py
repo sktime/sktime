@@ -275,3 +275,52 @@ def test_components():
     assert set(comp_comps.keys()) == set(["foo_"])
     assert comp_comps["foo_"] == composite.foo_
     assert comp_comps["foo_"] != composite.foo
+
+
+class AliasTester(BaseObject):
+
+    def __init__(self, a, bar=42):
+        self.a = a
+        self.bar = bar
+
+
+def test_param_alias():
+    """Tests parameter aliasing with parameter string shorthands.
+
+    Raises
+    ------
+    AssertionError if logic behind _components is incorrect, logic tested:
+        calling _components on a non-composite returns an empty dict
+        calling _components on a composite returns name/BaseObject pair in dict,
+        and BaseObject returned is identical with attribute of the same name
+    """
+    non_composite = AliasTester(a=42, bar=4242)
+    composite = CompositionDummy(foo=non_composite)
+
+    # this should write to a of foo, because there is only one suffix called a
+    composite.set_params(**{"a": 424242})
+    assert composite.get_params()["foo__a"] == 424242
+
+    # this should write to bar of composite, because "bar" is a full parameter string
+    #   there is a suffix in foo, but if the full string is there, it writes to that
+    composite.set_params(**{"bar": 424243})
+    assert composite.get_params()["bar"] == 424243
+
+    # trying to write to bad_param should raise an exception
+    # since bad_param is neither a suffix nor a full parameter string
+    with pytest.raises(ValueError, match=r"no parameter key is identical with"):
+        composite.set_params(**{"bad_param": 424242})
+
+    # new example: highly nested composite with identical suffixes
+    non_composite1 = composite
+    non_composite2 = AliasTester(a=42, bar=4242)
+    uber_composite = CompositionDummy(foo=non_composite1, bar=non_composite2)
+
+    # trying to write to a should raise an exception
+    # since there are two suffix a, and a is not a full parameter string
+    with pytest.raises(ValueError, match=r"does not uniquely determine parameter key"):
+        uber_composite.set_params(**{"a": 424242})
+
+    # same as above
+    uber_composite.set_params(**{"bar": 424243})
+    assert uber_composite.get_params()["bar"] == 424243

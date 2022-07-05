@@ -210,6 +210,9 @@ class BaseObject(_BaseEstimator):
             return self
         valid_params = self.get_params(deep=True)
 
+        # aliasing, syntactic sugar to access uniquely named params more easily
+        params = self._alias_params(params, valid_params)
+
         nested_params = defaultdict(dict)  # grouped by prefix
         for key, value in params.items():
             key, delim, sub_key = key.partition("__")
@@ -233,6 +236,61 @@ class BaseObject(_BaseEstimator):
             valid_params[key].set_params(**sub_params)
 
         return self
+
+    @staticmethod
+    def _alias_params(d, valid_params):
+        """Replace shorthands in d by full keys from valid_params.
+
+        Parameters
+        ----------
+        d: dict with str keys
+        valid_params: dict with str keys
+
+        Result
+        ------
+        alias_dict: dict with str keys, all keys in valid_params
+            values are as in d, with keys replaced by following rule:
+            if key is in valid_params, key is replaced by key (itself)
+            else, if key is a __ suffix of exactly one key in valid_params,
+                it is replaced by that key. Otherwise an exception is raised.
+            A __ suffix of a str is any str obtained as suffix from partition by __.
+
+        Raises
+        ------
+        ValueError if at least one key of d is neither contained in valid_params,
+            nor is it a __ suffix of exactly one key in valid_params
+        """
+
+        def _is_suffix(x, y):
+            """Return whether x is a strict __ suffix of y."""
+            return y.endswith(x) and y.endswith("__" + x)
+
+        def _get_alias(x, d):
+            """Return alias of x in d."""
+            # if key is in valid_params, key is replaced by key (itself)
+            if any(x == y for y in d.keys()):
+                return x
+
+            suff_list = [y for y in d.keys() if _is_suffix(x, y)]
+
+            # if key is a __ suffix of exactly one key in valid_params,
+            #   it is replaced by that key
+            ns = len(suff_list)
+            if ns > 1:
+                raise ValueError(
+                    f"suffix {x} does not uniquely determine parameter key, "
+                    f"the following parameter keys have the same suffix: {suff_list}"
+                )
+            if ns == 0:
+                raise ValueError(
+                    f"no parameter key is identical with, or has suffix {x}"
+                )
+            # if ns == 1
+            return suff_list[0]
+
+        alias_dict = {_get_alias(x, valid_params): d[x] for x in d.keys()}
+
+        return alias_dict
 
     @classmethod
     def get_class_tags(cls):
