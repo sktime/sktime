@@ -110,8 +110,6 @@ def _shift(x, by=1, return_index=False):
         warn("_shift no longer supports x: pd.Timestamp fom 0.14.0", DeprecationWarning)
         if not hasattr(x, "freq") or x.freq is None:
             raise ValueError("No `freq` information available")
-        by *= x.freq
-        return x + by
         # raise TypeError("_shift no longer supports x: pd.Timestamp")
 
     # we ensure idx is pd.Index, x is first (and usually only) element
