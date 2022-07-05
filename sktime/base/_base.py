@@ -246,6 +246,7 @@ class BaseObject(_BaseEstimator):
                 f"Invalid keys provided: {unmatched_keys}"
             )
 
+        # for unmatched keys, resolve by aliasing via available __ suffixes, recurse
         if len(unmatched_keys) > 0:
 
             valid_params = self.get_params(deep=True)
