@@ -216,15 +216,12 @@ class BaseObject(_BaseEstimator):
         valid_params = self.get_params(deep=True)
 
         unmatched_keys = []
-        matched = False
 
         nested_params = defaultdict(dict)  # grouped by prefix
         for full_key, value in params.items():
             key, delim, sub_key = full_key.partition("__")
             if key not in valid_params:
                 unmatched_keys += [key]
-            else:
-                matched = True
 
             if delim:
                 nested_params[key][sub_key] = value
@@ -238,14 +235,6 @@ class BaseObject(_BaseEstimator):
         for key, sub_params in nested_params.items():
             valid_params[key].set_params(**sub_params)
 
-        if not matched:
-            raise ValueError(
-                f"Invalid parameter keys provided to set_params of object {self}. "
-                "Check the list of available parameters "
-                "with `object.get_params().keys()`. "
-                f"Invalid keys provided: {unmatched_keys}"
-            )
-
         # for unmatched keys, resolve by aliasing via available __ suffixes, recurse
         if len(unmatched_keys) > 0:
 
@@ -253,9 +242,20 @@ class BaseObject(_BaseEstimator):
             unmatched_params = {key: params[key] for key in unmatched_keys}
 
             # aliasing, syntactic sugar to access uniquely named params more easily
-            unmatched_params = self._alias_params(unmatched_params, valid_params)
+            aliased_params = self._alias_params(unmatched_params, valid_params)
 
-            self.set_params(**unmatched_params)
+            # if none of the parameter names change through aliasing, raise error
+            if set(aliased_params) == set(unmatched_params):
+                raise ValueError(
+                    f"Invalid parameter keys provided to set_params of object {self}. "
+                    "Check the list of available parameters "
+                    "with `object.get_params().keys()`. "
+                    f"Invalid keys provided: {unmatched_keys}"
+                )
+
+            # recurse: repeat matching and aliasing until no further matches found
+            #   termination condition is above, "no change in keys via aliasing"
+            self.set_params(**aliased_params)
 
         return self
 
