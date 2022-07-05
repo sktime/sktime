@@ -321,7 +321,7 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
-    fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
+    fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
     assert abs_fh._values.freqstr == freqstr
 
@@ -331,7 +331,7 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
     """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
-    fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
+    fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
 
     converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
@@ -361,7 +361,7 @@ def test_relative_to_relative_with_integer_horizon(freqstr):
     """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
-    fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
+    fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(train.index[-1])
 
     converted_rel_fh = abs_fh.to_relative(train.index[-1])
