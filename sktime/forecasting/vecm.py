@@ -3,6 +3,7 @@
 
 """VECM Forecaster."""
 
+
 __all__ = ["VECM"]
 __author__ = ["thayeylolu", "AurumnPegasus"]
 
@@ -278,6 +279,3 @@ class VECM(_StatsModelsAdapter):
         )
 
         return pred_int
-
-
-# s
