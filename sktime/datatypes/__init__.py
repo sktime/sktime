@@ -3,6 +3,7 @@
 
 __author__ = ["fkiraly"]
 
+from sktime.datatypes._adapters import convert_from_multiindex_to_listdataset
 from sktime.datatypes._check import (
     check_is_mtype,
     check_is_scitype,
@@ -49,4 +50,5 @@ __all__ = [
     "SCITYPE_REGISTER",
     "update_data",
     "VectorizedDF",
+    "convert_from_multiindex_to_listdataset",
 ]
