@@ -195,7 +195,10 @@ class BaseObject(_BaseEstimator):
         The method works on simple estimators as well as on composite objects.
         Parameter key strings ``<component>__<parameter>`` can be used for composites,
         i.e., objects that contain other objects, to access ``<parameter>`` in
-        the component ``<component>``
+        the component ``<component>``.
+        The string ``<parameter>``, without ``<component>__``, can also be used if
+        this makes the reference unambiguous, e.g., there are no two parameters of
+        components with the name ``<parameter>``.
 
         Parameters
         ----------
