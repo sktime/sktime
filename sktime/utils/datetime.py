@@ -128,15 +128,9 @@ def _shift(x, by=1, return_index=False):
         else:
             return idx.shift(by)
 
-    assert isinstance(x, (pd.Period, pd.Timestamp, int, np.integer)), type(x)
+    assert isinstance(x, (pd.Period, int, np.integer)), type(x)
     assert isinstance(by, (int, np.integer)) or is_integer_index(by), type(by)
 
-    # if we want index element, we can still use add, except if timestamp
-    # deprecate this in 0.13.0 and remove in 0.14.0
-    if isinstance(x, pd.Timestamp):
-        if not hasattr(idx, "freq") or idx.freq is None:
-            raise ValueError(f"No `freq` information available, object {idx}")
-        by *= idx.freq
     return x + by
 
 
