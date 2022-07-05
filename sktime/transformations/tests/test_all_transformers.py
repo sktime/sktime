@@ -5,14 +5,9 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = []
 
-import pytest
-
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
-from sktime.utils._testing.scenarios_transformers import (
-    TransformerFitTransformSeriesMultivariate,
-)
 
 
 class TransformerFixtureGenerator(BaseFixtureGenerator):
@@ -152,20 +147,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             _assert_array_almost_equal(X, Xit)
         else:
             _assert_array_almost_equal(X.loc[Xit.index], Xit)
-
-    def test_multivariate_raises_error(self, estimator_instance):
-        """Test error raised for multivariate data passed to univariate transformer."""
-        # test is only for univariate transformers, skip multivariate ones
-        if not estimator_instance.get_tag("univariate-only"):
-            return None
-        scenario = TransformerFitTransformSeriesMultivariate()
-        with pytest.raises(ValueError, match=r"univariate"):
-            # error should be raised in fit, unless fit is skipped
-            if estimator_instance.get_tag("fit_is_empty", False):
-                scenario.run(estimator_instance, method_sequence=["fit", "transform"])
-            else:
-                # All other estimators should raise the error in fit.
-                scenario.run(estimator_instance, method_sequence=["fit"])
 
 
 # todo: add testing of inverse_transform
