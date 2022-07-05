@@ -215,18 +215,16 @@ class BaseObject(_BaseEstimator):
             return self
         valid_params = self.get_params(deep=True)
 
-        # aliasing, syntactic sugar to access uniquely named params more easily
-        params = self._alias_params(params, valid_params)
+        unmatched_keys = []
+        matched = False
 
         nested_params = defaultdict(dict)  # grouped by prefix
-        for key, value in params.items():
-            key, delim, sub_key = key.partition("__")
+        for full_key, value in params.items():
+            key, delim, sub_key = full_key.partition("__")
             if key not in valid_params:
-                raise ValueError(
-                    "Invalid parameter %s for object %s. "
-                    "Check the list of available parameters "
-                    "with `object.get_params().keys()`." % (key, self)
-                )
+                unmatched_keys += [key]
+            else:
+                matched = True
 
             if delim:
                 nested_params[key][sub_key] = value
@@ -240,10 +238,27 @@ class BaseObject(_BaseEstimator):
         for key, sub_params in nested_params.items():
             valid_params[key].set_params(**sub_params)
 
+        if not matched:
+            raise ValueError(
+                f"Invalid parameter keys provided to set_params of object {self}. "
+                "Check the list of available parameters "
+                "with `object.get_params().keys()`. "
+                f"Invalid keys provided: {unmatched_keys}"
+            )
+
+        if len(unmatched_keys) > 0:
+
+            valid_params = self.get_params(deep=True)
+            unmatched_params = {key: params[key] for key in unmatched_keys}
+
+            # aliasing, syntactic sugar to access uniquely named params more easily
+            unmatched_params = self._alias_params(unmatched_params, valid_params)
+
+            self.set_params(**unmatched_params)
+
         return self
 
-    @staticmethod
-    def _alias_params(d, valid_params):
+    def _alias_params(self, d, valid_params):
         """Replace shorthands in d by full keys from valid_params.
 
         Parameters
@@ -283,12 +298,14 @@ class BaseObject(_BaseEstimator):
             ns = len(suff_list)
             if ns > 1:
                 raise ValueError(
-                    f"suffix {x} does not uniquely determine parameter key, "
+                    f"suffix {x} does not uniquely determine parameter key, of "
+                    f"{type(self).__name__} instance"
                     f"the following parameter keys have the same suffix: {suff_list}"
                 )
             if ns == 0:
                 raise ValueError(
-                    f"no parameter key is identical with, or has suffix {x}"
+                    f"no parameter key of {type(self).__name__} instance "
+                    f"is identical with, or has suffix {x}"
                 )
             # if ns == 1
             return suff_list[0]
