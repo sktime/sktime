@@ -308,7 +308,7 @@ def test_param_alias():
 
     # trying to write to bad_param should raise an exception
     # since bad_param is neither a suffix nor a full parameter string
-    with pytest.raises(ValueError, match=r"Invalid parameter keys provided"):
+    with pytest.raises(ValueError, match=r"no parameter key of"):
         composite.set_params(**{"bad_param": 424242})
 
     # new example: highly nested composite with identical suffixes
