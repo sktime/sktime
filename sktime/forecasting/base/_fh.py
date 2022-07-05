@@ -11,6 +11,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
 from sktime.utils.validation import (
@@ -178,62 +179,36 @@ def _check_freqstr(x: str = None) -> Optional[str]:
 
 
 def _check_freq(obj):
-    """Coerce obj to a frequency string for the ForecastingHorizon.
+    """Coerce obj to a pandas frequency offset for the ForecastingHorizon.
 
     Parameters
     ----------
-    obj : pd.Index, pd.Period, or None
+    obj : pd.Index, pd.Period, pd offset, or None
 
     Returns
     -------
-    str or None
+    pd offset
 
     Raises
     ------
     TypeError if the type assumption on obj is not met
     """
+    if isinstance(obj, pd.offsets.BaseOffset):
+        freq = obj
     if isinstance(obj, (pd.Period, pd.Index)):
-        freqstr = _extract_freq_from_cutoff(obj)
-
-    if not isinstance(freqstr, "str") and not freqstr is None:
-        raise TypeError(
-            "freq passed to ForecastingHorizon must be pd.Index, str, or None,"
-            f" but found freq of type {type(freqstr)}"
-        )
-
-    return _check_freq(freqstr)
-
-
-def _extract_freq_from_inputs(cutoff: pd.Period = None, freq: str = None) -> str:
-    """Extract frequency string from cutoff and/or freq.
-
-    Parameters
-    ----------
-    cutoff : pd.Period, optional (default=None)
-    freq : str, optional (default=None)
-
-    Returns
-    -------
-    freq : str
-        Frequency string or None
-
-    Raises
-    ------
-    ValueError
-        Raised if both inputs are given, but do not coincide
-    """
-    freq_from_cutoff = _extract_freq_from_cutoff(cutoff)
-    if freq is None and freq_from_cutoff is not None:
-        return freq_from_cutoff
-    elif freq is not None and freq_from_cutoff is None:
-        return freq
-    elif freq == freq_from_cutoff:
-        return freq
+        freq = _extract_freq_from_cutoff(obj)
+    elif isinstance(freq, "str") or freq is None:
+        freq = to_offset(None)
+    elif isinstance(freq, pd.Timestamp):
+        return None
     else:
-        raise ValueError(
-            "Frequencies from two sources do not coincide: "
-            f"From values: {freq_from_cutoff}, from freq: {freq}."
+        raise TypeError(
+            "freq passed to ForecastingHorizon must be "
+            " pd.Index, pd.offset, str, or None,"
+            f" but found freq of type {type(freq)}"
         )
+
+    return freq
 
 
 def _extract_freq_from_cutoff(x) -> Optional[str]:
@@ -248,7 +223,7 @@ def _extract_freq_from_cutoff(x) -> Optional[str]:
     str : Frequency string or None
     """
     if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
-        return x.freqstr
+        return x.freq
     else:
         return None
 
@@ -278,7 +253,7 @@ class ForecastingHorizon:
         cls,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
         is_relative: bool = None,
-        freq: str = None,
+        freq=None,
     ):
         """Create a new ForecastingHorizon object."""
         # We want the ForecastingHorizon class to be an extension of the
@@ -295,12 +270,25 @@ class ForecastingHorizon:
         self,
         values: Union[VALID_FORECASTING_HORIZON_TYPES] = None,
         is_relative: Optional[bool] = True,
-        freq: str = None,
+        freq=None,
     ):
+        # coercing inputs
+
+        # values to pd.Index self._values
+        values = _check_values(values)
+        self._values = values
+
+        # infer freq from values, if available
+        # if not, infer from freq argument, if available
+        if hasattr(values.index, "freq"):
+            self.freq = values.freq
+        self.freq = freq
+
+        # infer self._is_relative from is_relative, and type of values
+        # depending on type of values, is_relative is inferred
+        # integers and timedeltas are interpreted as relative, by default, etc
         if is_relative is not None and not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean or None")
-        values = _check_values(values)
-
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
@@ -317,10 +305,7 @@ class ForecastingHorizon:
         else:
             if not is_in_valid_absolute_index_types(values):
                 raise TypeError(error_msg)
-
-        self._values = values
         self._is_relative = is_relative
-        self._freq = _check_freq(freq)
 
     def _new(
         self,
@@ -349,9 +334,9 @@ class ForecastingHorizon:
         if values is None:
             values = self._values
         if is_relative is None:
-            is_relative = self.is_relative
+            is_relative = self._is_relative
         if freq is None:
-            freq = self.freq
+            freq = self._freq
         return type(self)(values=values, is_relative=is_relative, freq=freq)
 
     @property
@@ -366,24 +351,42 @@ class ForecastingHorizon:
 
     @property
     def freq(self) -> str:
-        """Frequency string attribute.
+        """Frequency attribute.
 
         Returns
         -------
-        freq : str
+        freq : pandas frequency string
         """
-        return self._freq
+        # _freq is a pandas offset, frequency string is obtained via freqstr
+        return self._freq.freqstr
 
     @freq.setter
-    def freq(self, x: str) -> None:
+    def freq(self, obj) -> None:
         """Frequency setter.
+
+        Attempts to set frequency from obj.
+        Raises error if freq is already set and discrepant from frequency of obj.
 
         Parameters
         ----------
-        x : str
-            Frequency string
+        obj : str, or pd.Index
+            object carrying frequency information on values
+            Frequency string or pd.Index
+
+        Raises
+        ------
+        ValueError
+            Raised if both inputs are given, but do not coincide
         """
-        self._freq = _check_freqstr(x)
+        freq_from_obj = _check_freq(obj)
+        if self._freq is not None and freq_from_obj is not None:
+            if self._freq != freq_from_obj:
+                raise ValueError(
+                    "Frequencies from two sources do not coincide: "
+                    f"Current: {self._freq}, from update: {freq_from_obj}."
+                )
+        else:  # both are None, or only self._freq is None
+            self._freq = freq_from_obj
 
     def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
@@ -424,7 +427,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Relative representation of forecasting horizon.
         """
-        self.freq = _extract_freq_from_inputs(cutoff=cutoff, freq=self.freq)
+        self.freq = cutoff
         return _to_relative(fh=self, cutoff=cutoff)
 
     def to_absolute(self, cutoff):
@@ -441,7 +444,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Absolute representation of forecasting horizon.
         """
-        self.freq = _extract_freq_from_inputs(cutoff=cutoff, freq=self.freq)
+        self.freq = cutoff
         return _to_absolute(fh=self, cutoff=cutoff)
 
     def to_absolute_int(self, start, cutoff=None):
@@ -461,7 +464,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon as zero-based
             integer index.
         """
-        freq = _extract_freq_from_inputs(cutoff=cutoff, freq=self.freq)
+        self.freq = cutoff
 
         if isinstance(cutoff, pd.Timestamp):
             # coerce to pd.Period for reliable arithmetic operations and
