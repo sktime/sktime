@@ -278,10 +278,11 @@ class BaseObject(_BaseEstimator):
         ------
         alias_dict: dict with str keys, all keys in valid_params
             values are as in d, with keys replaced by following rule:
-            if key is in valid_params, key is replaced by key (itself)
-            else, if key is a __ suffix of exactly one key in valid_params,
+            If key is a __ suffix of exactly one key in valid_params,
                 it is replaced by that key. Otherwise an exception is raised.
             A __ suffix of a str is any str obtained as suffix from partition by __.
+            Else, i.e., if key is in valid_params or not a __ suffix,
+            the key is replaced by itself, i.e., left unchanged.
 
         Raises
         ------
@@ -311,10 +312,7 @@ class BaseObject(_BaseEstimator):
                     f"the following parameter keys have the same suffix: {suff_list}"
                 )
             if ns == 0:
-                raise ValueError(
-                    f"no parameter key of {type(self).__name__} instance "
-                    f"is identical with, or has suffix {x}"
-                )
+                return x
             # if ns == 1
             return suff_list[0]
 
