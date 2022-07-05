@@ -1495,8 +1495,8 @@ class BaseForecaster(BaseEstimator):
 
         # B. fh is passed
         else:
-            # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh=fh, y=self._y)
+            # If fh is passed, coerce to ForecastingHorizon and validate (all cases)
+            fh = check_fh(fh=fh, y=self._cutoff)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)

@@ -269,7 +269,9 @@ class ForecastingHorizon:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
     freq : str, or pd.Index, optional (default=None)
-        Frequency string
+        object carrying frequency information on values
+        ignored unless values is without inferrable freq
+        Frequency string or pd.Index
     """
 
     def __new__(
