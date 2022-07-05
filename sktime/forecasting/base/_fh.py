@@ -138,7 +138,7 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     return values.sort_values()
 
 
-def _check_freq(x: str = None) -> Optional[str]:
+def _check_freqstr(x: str = None) -> Optional[str]:
     """Check frequency string.
 
     Parameters
@@ -177,6 +177,33 @@ def _check_freq(x: str = None) -> Optional[str]:
         return None
 
 
+def _check_freq(obj):
+    """Coerce obj to a frequency string for the ForecastingHorizon.
+
+    Parameters
+    ----------
+    obj : pd.Index, pd.Period, or None
+
+    Returns
+    -------
+    str or None
+
+    Raises
+    ------
+    TypeError if the type assumption on obj is not met
+    """
+    if isinstance(obj, (pd.Period, pd.Index)):
+        freqstr = _extract_freq_from_cutoff(obj)
+
+    if not isinstance(freqstr, "str") and not freqstr is None:
+        raise TypeError(
+            "freq passed to ForecastingHorizon must be pd.Index, str, or None,"
+            f" but found freq of type {type(freqstr)}"
+        )
+
+    return _check_freq(freqstr)
+
+
 def _extract_freq_from_inputs(cutoff: pd.Period = None, freq: str = None) -> str:
     """Extract frequency string from cutoff and/or freq.
 
@@ -209,7 +236,7 @@ def _extract_freq_from_inputs(cutoff: pd.Period = None, freq: str = None) -> str
         )
 
 
-def _extract_freq_from_cutoff(x: pd.Period) -> Optional[str]:
+def _extract_freq_from_cutoff(x) -> Optional[str]:
     """Extract frequency string from cutoff.
 
     Parameters
@@ -218,10 +245,9 @@ def _extract_freq_from_cutoff(x: pd.Period) -> Optional[str]:
 
     Returns
     -------
-    str
-        Frequency string or None
+    str : Frequency string or None
     """
-    if isinstance(x, pd.Period):
+    if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
         return x.freqstr
     else:
         return None
@@ -242,7 +268,7 @@ class ForecastingHorizon:
         - if None, the flag is determined automatically:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
-    freq : str, optional (default=None)
+    freq : str, or pd.Index, optional (default=None)
         Frequency string
     """
 
@@ -355,7 +381,7 @@ class ForecastingHorizon:
         x : str
             Frequency string
         """
-        self._freq = _check_freq(x)
+        self._freq = _check_freqstr(x)
 
     def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
