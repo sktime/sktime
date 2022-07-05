@@ -347,7 +347,6 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3),
-        freq=freqstr,
     )
     abs_fh = fh.to_absolute(train.index[-1])
 
@@ -376,7 +375,6 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3),
-        freq=freqstr,
     )
     abs_fh = fh.to_absolute(train.index[-1])
 
@@ -418,7 +416,7 @@ def test_estimator_fh(freqstr):
     )
     forecaster = AutoETS(auto=True, sp=52, n_jobs=-1, restrict=True)
     forecaster.fit(train)
-    fh = ForecastingHorizon(np.arange(1, 27), freq=freqstr)
+    fh = ForecastingHorizon(np.arange(1, 27))
     pred = forecaster.predict(fh)
     expected_fh = fh.to_absolute(train.index[-1])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
