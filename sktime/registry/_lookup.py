@@ -12,6 +12,10 @@ all_tags(estimator_types)
     lookup and filtering of estimator tags
 """
 
+__author__ = ["fkiraly", "mloning", "katiebuc", "miraep8", "xloem"]
+# all_estimators is also based on the sklearn utility of the same name
+
+
 import inspect
 import pkgutil
 from copy import deepcopy

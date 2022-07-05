@@ -10,6 +10,32 @@ transformations.
    :no-members:
    :no-inherited-members:
 
+Transformations are categorized as follows:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Category
+     - Explanation
+     - Example
+   * - Composition
+     - Building blocks for pipelines, wrappers, adapters
+     - Transformer pipeline
+   * - Series-to-features
+     - Transforms series to float/category vector
+     - Length and mean
+   * - Series-to-series
+     - Transforms individual series to series
+     - Differencing, detrending
+   * - Series-to-Panel
+     - transforms a series into a panel
+     - Bootstrap, sliding window
+   * - Panel transform
+     - Transforms panel to panel, not by-series
+     - Padding to equal length
+   * - Hierarchical
+     - uses hierarchy information non-trivially
+     - Reconciliation
 
 Composition
 -----------
@@ -45,6 +71,29 @@ Pipeline building
 
     ColumnTransformer
 
+.. currentmodule:: sktime.transformations.series.func_transform
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FunctionTransformer
+
+.. currentmodule:: sktime.transformations.panel.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SeriesToSeriesRowTransformer
+    SeriesToPrimitivesRowTransformer
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_row_transformer
+
 Sklearn and pandas adapters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -65,24 +114,28 @@ Sklearn and pandas adapters
     TabularToSeriesAdaptor
     PandasTransformAdaptor
 
-Panel transformers
-------------------
+Series-to-features transformers
+-------------------------------
 
-Dictionary-based
-~~~~~~~~~~~~~~~~
+Series-to-features transformers transform individual time series to a collection of primitive features.
+Primitive features are usually a vector of floats, but can also be categorical.
 
-.. currentmodule:: sktime.transformations.panel.dictionary_based
+When applied to panels or hierarchical data, the transformation result is a table with as many rows as time series in the collection.
+
+Summarization
+~~~~~~~~~~~~~
+
+These transformers extract simple summary features.
+
+.. currentmodule:: sktime.transformations.series.summarize
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    PAA
-    SFA
-    SAX
-
-Summarize
-~~~~~~~~~
+    SummaryTransformer
+    MeanTransformer
+    WindowSummarizer
 
 .. currentmodule:: sktime.transformations.panel.summarize
 
@@ -95,72 +148,8 @@ Summarize
     RandomIntervalFeatureExtractor
     FittedParamExtractor
 
-tsfresh
-~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.tsfresh
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    TSFreshRelevantFeatureExtractor
-    TSFreshFeatureExtractor
-
-Catch22
-~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.catch22
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Catch22
-
-Compose
-~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.compose
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ColumnConcatenator
-    SeriesToSeriesRowTransformer
-    SeriesToPrimitivesRowTransformer
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    make_row_transformer
-
-Matrix profile
-~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.matrix_profile
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MatrixProfile
-
-PCA
-~~~
-
-.. currentmodule:: sktime.transformations.panel.pca
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PCATransformer
-
-Rocket
-~~~~~~
+Kernel and wavelet based features
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.rocket
 
@@ -172,20 +161,40 @@ Rocket
     MiniRocket
     MiniRocketMultivariate
 
-Segment
-~~~~~~~
-
-.. currentmodule:: sktime.transformations.panel.segment
+.. currentmodule:: sktime.transformations.panel.dwt
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    IntervalSegmenter
-    RandomIntervalSegmenter
+    DWTTransformer
 
-Signature
-~~~~~~~~~
+Distance-based features
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.matrix_profile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MatrixProfile
+
+Dictionary-based features
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.dictionary_based
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PAA
+    SFA
+    SAX
+
+Moment-based features
+~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.transformations.panel.signature_based
 
@@ -195,26 +204,52 @@ Signature
 
     SignatureTransformer
 
+Feature collections
+~~~~~~~~~~~~~~~~~~~
 
-Series transformers
--------------------
+These transformers extract larger collections of features.
 
-Detrend
-~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.detrend
+.. currentmodule:: sktime.transformations.panel.tsfresh
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    Detrender
-    Deseasonalizer
-    ConditionalDeseasonalizer
-    STLTransformer
+    TSFreshRelevantFeatureExtractor
+    TSFreshFeatureExtractor
 
-Box-Cox, log, logit
-~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: sktime.transformations.panel.catch22
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Catch22
+
+Series-to-series transformers
+-----------------------------
+
+Series-to-series transformers transform individual time series into another time series.
+
+When applied to panels or hierarchical data, individual series are transformed.
+
+Lagging
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Lag
+
+Element-wise transforms
+~~~~~~~~~~~~~~~~~~~~~~~
+
+These transformations apply a function element-wise.
+
+Depending on the transformer, the transformation parameters can be fitted.
 
 .. currentmodule:: sktime.transformations.series.boxcox
 
@@ -233,45 +268,6 @@ Box-Cox, log, logit
 
     ScaledLogitTransformer
 
-Summarization
-~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.summarize
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SummaryTransformer
-    MeanTransformer
-    WindowSummarizer
-
-Differencing
-~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.difference
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Differencer
-
-Auto-correlation features
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.transformations.series.acf
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    AutoCorrelationTransformer
-    PartialAutoCorrelationTransformer
-
-Element-wise transforms
-~~~~~~~~~~~~~~~~~~~~~~~
-
 .. currentmodule:: sktime.transformations.series.cos
 
 .. autosummary::
@@ -289,16 +285,78 @@ Element-wise transforms
     ExponentTransformer
     SqrtTransformer
 
-Matrix Profile
-~~~~~~~~~~~~~~
+Detrending
+~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.matrix_profile
+.. currentmodule:: sktime.transformations.series.detrend
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    MatrixProfileTransformer
+    Detrender
+    Deseasonalizer
+    ConditionalDeseasonalizer
+    STLTransformer
+
+Filtering and denoising
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.kalman_filter
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KalmanFilterTransformerPK
+    KalmanFilterTransformerFP
+
+.. currentmodule:: sktime.transformations.series.theta
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThetaLinesTransformer
+
+Differencing and slope
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.difference
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Differencer
+
+.. currentmodule:: sktime.transformations.panel.slope
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SlopeTransformer
+
+Binning and segmentation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.interpolate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSInterpolator
+
+.. currentmodule:: sktime.transformations.panel.segment
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    IntervalSegmenter
+    RandomIntervalSegmenter
 
 Missing value imputation
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -322,25 +380,51 @@ Datetime feature generation
 
     DateTimeFeatures
 
-Outlier detection, changepoint detection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Auto-correlation series
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.outlier_detection
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    HampelFilter
-
-.. currentmodule:: sktime.transformations.series.clasp
+.. currentmodule:: sktime.transformations.series.acf
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ClaSPTransformer
+    AutoCorrelationTransformer
+    PartialAutoCorrelationTransformer
 
+Window-based series transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These transformers create a series based on a sequence of sliding windows.
+
+.. currentmodule:: sktime.transformations.series.matrix_profile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MatrixProfileTransformer
+
+.. currentmodule:: sktime.transformations.panel.hog1d
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HOG1DTransformer
+
+Multivariate-to-univariate
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These transformers convert multivariate series to univariate.
+
+.. currentmodule:: sktime.transformations.panel.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnConcatenator
 
 Augmentation
 ~~~~~~~~~~~~
@@ -359,6 +443,8 @@ Augmentation
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
+These transformers select features in `X` based on `y`.
+
 .. currentmodule:: sktime.transformations.series.feature_selection
 
 .. autosummary::
@@ -367,26 +453,64 @@ FeatureSelection
 
     FeatureSelection
 
-Filtering and denoising
+Subsetting time points and variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These transformers subset `X` by time points (`pandas` index or index level) or variables (`pandas` columns).
+
+.. currentmodule:: sktime.transformations.series.subset
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnSelect
+    IndexSubset
+
+Panel transformers
+------------------
+
+Panel transformers transform a panel of time series into a panel of time series.
+
+A panel transformer is fitted on an entire panel, and not per series.
+
+Equal length transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformations.series.kalman_filter
+These transformations ensure all series in a panel have equal length
+
+.. currentmodule:: sktime.transformations.panel.padder
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    KalmanFilterTransformerPK
-    KalmanFilterTransformerFP
+    PaddingTransformer
 
-.. currentmodule:: sktime.transformations.series.theta
+.. currentmodule:: sktime.transformations.panel.truncation
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    ThetaLinesTransformer
+    TruncationTransformer
 
+
+Dimension reduction
+~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.pca
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PCATransformer
+
+Series-to-Panel transformers
+----------------------------
+
+These transformers create a panel from a single series.
 
 Bootstrap transformations
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -399,3 +523,45 @@ Bootstrap transformations
 
     STLBootstrapTransformer
     MovingBlockBootstrapTransformer
+
+Outlier detection, changepoint detection
+----------------------------------------
+
+.. currentmodule:: sktime.transformations.series.outlier_detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HampelFilter
+
+.. currentmodule:: sktime.transformations.series.clasp
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClaSPTransformer
+
+Hierarchical transformers
+-------------------------
+
+These transformers are specifically for hierarchical data and panel data.
+
+The transformation depends on the specified hierarchy in a non-trivial way.
+
+.. currentmodule:: sktime.transformations.hierarchical.aggregate
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Aggregator
+
+.. currentmodule:: sktime.transformations.hierarchical.reconcile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Reconciler
