@@ -57,11 +57,12 @@ def test_vectorization_series_to_panel(mtype):
     )
     assert y_pred_equal_length, msg
 
+    cutoff_expected = get_cutoff(y)
     msg = (
         "estimator in vectorization test does not properly update cutoff, "
-        f"expected {y}, but found {f.cutoff}"
+        f"expected {cutoff_expected}, but found {f.cutoff}"
     )
-    assert f.cutoff == get_cutoff(y), msg
+    assert f.cutoff == cutoff_expected, msg
 
 
 @pytest.mark.parametrize("mtype", HIER_MTYPES)
