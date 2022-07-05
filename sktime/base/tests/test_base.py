@@ -278,7 +278,6 @@ def test_components():
 
 
 class AliasTester(BaseObject):
-
     def __init__(self, a, bar=42):
         self.a = a
         self.bar = bar
