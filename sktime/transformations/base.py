@@ -40,7 +40,7 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning, fkiraly"]
+__author__ = ["mloning", "fkiraly", "miraep8"]
 __all__ = [
     "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
@@ -49,6 +49,7 @@ __all__ = [
     "_PanelToPanelTransformer",
 ]
 
+from itertools import product
 from typing import Union
 
 import numpy as np
@@ -195,6 +196,27 @@ class BaseTransformer(BaseEstimator):
         if isinstance(other, BaseTransformer) or is_sklearn_transformer(other):
             self_as_pipeline = TransformerPipeline(steps=[self])
             return other * self_as_pipeline
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexTranformer.
+
+        Implemented for `other` being either a MultiplexTransformer or a transformer.
+
+        Parameters
+        ----------
+        other: `sktime` transformer or sktime MultiplexTransformer
+
+        Returns
+        -------
+        MultiplexTransformer object
+        """
+        from sktime.transformations.compose import MultiplexTransformer
+
+        if isinstance(other, BaseTransformer):
+            multiplex_self = MultiplexTransformer([self])
+            return multiplex_self | other
         else:
             return NotImplemented
 
@@ -644,10 +666,13 @@ class BaseTransformer(BaseEstimator):
             f"must be in an sktime compatible format, "
             f"of scitype Series, Panel or Hierarchical, "
             f"for instance a pandas.DataFrame with sktime compatible time indices, "
-            f"or with MultiIndex and lowest level a sktime compatible time index. "
-            f"allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
+            f"or with MultiIndex and last(-1) level an sktime compatible time index. "
+            f"Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
             # f"See the transformers tutorial examples/05_transformers.ipynb, or"
-            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+            f" See the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+            f"If you think the data is already in an sktime supported input format, "
+            f"run sktime.datatypes.check_raise(data, mtype) to diagnose the error, "
+            f"where mtype is the string of the type specification you want. "
         )
         if not X_valid:
             raise TypeError("X " + msg_invalid_input)
@@ -677,12 +702,14 @@ class BaseTransformer(BaseEstimator):
 
         if y_inner_mtype != ["None"] and y is not None:
 
-            if X_scitype == "Series":
+            if "Table" in y_inner_scitype:
+                y_possible_scitypes = "Table"
+            elif X_scitype == "Series":
                 y_possible_scitypes = "Series"
             elif X_scitype == "Panel":
-                y_possible_scitypes = ["Table", "Panel"]
+                y_possible_scitypes = "Panel"
             elif X_scitype == "Hierarchical":
-                y_possible_scitypes = ["Table", "Panel", "Hierarchical"]
+                y_possible_scitypes = ["Panel", "Hierarchical"]
 
             y_valid, _, y_metadata = check_is_scitype(
                 y, scitype=y_possible_scitypes, return_metadata=True, var_name="y"
@@ -743,7 +770,7 @@ class BaseTransformer(BaseEstimator):
         #   then apply vectorization, loop method execution over series/panels
         elif case == "case 3: requires vectorization":
             iterate_X = _most_complex_scitype(X_inner_scitype)
-            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=y_scitype)
+            X_inner = VectorizedDF(X=X, iterate_as=iterate_X, is_scitype=X_scitype)
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
                 # raise ValueError(
@@ -755,7 +782,7 @@ class BaseTransformer(BaseEstimator):
                 #     "input types natively: Panel X and non-None y."
                 # )
                 iterate_y = _most_complex_scitype(y_inner_scitype)
-                y_inner = VectorizedDF(X=X, iterate_as=iterate_y, is_scitype=X_scitype)
+                y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=y_scitype)
             else:
                 y_inner = None
 
@@ -863,67 +890,78 @@ class BaseTransformer(BaseEstimator):
             X = kwargs.pop("X")
             y = kwargs.pop("y", None)
 
-            idx = X.get_iter_indices()
-            n = len(idx)
+            row_idx, col_idx = X.get_iter_indices()
+            if row_idx is None:
+                row_idx = ["transformers"]
+            if col_idx is None:
+                col_idx = ["transformers"]
+
             Xs = X.as_list()
+            n = len(Xs)
 
             if y is None:
-                ys = [None] * len(Xs)
+                ys = [None] * n
             else:
                 ys = y.as_list()
 
-            return X, y, Xs, ys, n, idx
+            return X, y, Xs, ys, n, row_idx, col_idx
 
         FIT_METHODS = ["fit", "update"]
         TRAFO_METHODS = ["transform", "inverse_transform"]
 
         if methodname in FIT_METHODS:
-            X, _, Xs, ys, n, idx = unwrap(kwargs)
+            X, _, Xs, ys, n, row_idx, col_idx = unwrap(kwargs)
 
             # if fit is called, create container of transformers, but not in update
             if methodname == "fit":
-                self.transformers_ = pd.DataFrame(index=idx, columns=["transformers"])
-                for i in range(n):
-                    self.transformers_.iloc[i, 0] = self.clone()
+                self.transformers_ = pd.DataFrame(index=row_idx, columns=col_idx)
+                for ix in range(n):
+                    i, j = X.get_iloc_indexer(ix)
+                    self.transformers_.iloc[i].iloc[j] = self.clone()
 
-            # fit/update the i-th transformer with the i-th series/panel
-            for i in range(n):
-                method = getattr(self.transformers_.iloc[i, 0], methodname)
-                method(X=Xs[i], y=ys[i], **kwargs)
+            # fit/update the ix-th transformer with the ix-th series/panel
+            for ix in range(n):
+                i, j = X.get_iloc_indexer(ix)
+                method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
+                method(X=Xs[ix], y=ys[ix], **kwargs)
 
             return self
 
         if methodname in TRAFO_METHODS:
             # loop through fitted transformers one-by-one, and transform series/panels
             if not self.get_tag("fit_is_empty"):
-                X, _, Xs, ys, n, _ = unwrap(kwargs)
+                X, _, Xs, ys, n_trafos, _, _ = unwrap(kwargs)
 
-                n_fit = len(self.transformers_.index)
+                n = len(self.transformers_.index)
+                m = len(self.transformers_.columns)
+                n_fit = n * m
 
-                if n != n_fit:
+                if n_trafos != n_fit:
                     raise RuntimeError(
                         "found different number of instances in transform than in fit. "
                         f"number of instances seen in fit: {n_fit}; "
-                        f"number of instances seen in transform: {n}"
+                        f"number of instances seen in transform: {n * m}"
                     )
 
                 # transform the i-th series/panel with the i-th stored transformer
                 Xts = []
-                for i in range(n):
-                    method = getattr(self.transformers_.iloc[i, 0], methodname)
-                    Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
+                ix = -1
+                for i, j in product(range(n), range(m)):
+                    ix += 1
+                    method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
+                    Xts += [method(X=Xs[ix], y=ys[ix], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
             # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
-                X, _, Xs, ys, n, _ = unwrap(kwargs)
+                X, _, Xs, ys, n, _, _ = unwrap(kwargs)
 
                 # fit/transform the i-th series/panel with a new clone of self
                 Xts = []
-                for i in range(n):
-                    transformer = self.clone().fit(X=Xs[i], y=ys[i], **kwargs)
+                for ix in range(n):
+                    transformer = self.clone().fit(X=Xs[ix], y=ys[ix], **kwargs)
                     method = getattr(transformer, methodname)
-                    Xts += [method(X=Xs[i], y=ys[i], **kwargs)]
+                    Xts += [method(X=Xs[ix], y=ys[ix], **kwargs)]
                 Xt = X.reconstruct(Xts, overwrite_index=False)
 
             # # one more thing before returning:

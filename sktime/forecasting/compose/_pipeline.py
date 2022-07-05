@@ -282,6 +282,7 @@ class ForecastingPipeline(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -294,9 +295,10 @@ class ForecastingPipeline(_Pipeline):
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
@@ -653,6 +655,7 @@ class TransformedTargetForecaster(_Pipeline):
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
         "capability:pred_int": True,
+        "X-y-must-have-same-index": False,
     }
 
     def __init__(self, steps):
@@ -667,9 +670,10 @@ class TransformedTargetForecaster(_Pipeline):
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
-            "X-y-must-have-same-index",  # can estimator handle different X/y index?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
+        # we do not clone X-y-must-have-same-index, since transformers can
+        #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 

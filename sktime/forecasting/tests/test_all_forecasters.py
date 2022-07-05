@@ -444,7 +444,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         Arguments
         ---------
-        Forecaster: BaseEstimator class descendant, forecaster to test
+        estimator_instance : instance of BaseForecaster
 
         Raises
         ------
