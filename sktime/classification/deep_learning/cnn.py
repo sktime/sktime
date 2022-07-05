@@ -136,7 +136,7 @@ class CNNClassifier(BaseDeepClassifier):
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
-            self.model.summary()
+            self.model_.summary()
         self.history = self.model_.fit(
             X,
             y_onehot,

@@ -9,8 +9,12 @@ import pandas as pd
 def _get_index(x):
     if hasattr(x, "index"):
         return x.index
+    elif isinstance(x, np.ndarray):
+        if x.ndim < 3:
+            return pd.RangeIndex(x.shape[0])
+        else:
+            return pd.RangeIndex(x.shape[-1])
     else:
-        # select last dimension for time index
         return pd.RangeIndex(x.shape[-1])
 
 
@@ -19,15 +23,15 @@ def get_time_index(X):
 
     Parameters
     ----------
-    X : pd.DataFrame / pd.Series / np.ndarray
+    X : pd.DataFrame, pd.Series, np.ndarray, or VectorizedDF
     in one of the following sktime mtype specifications for Series, Panel, Hierarchical:
     pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, nested_univ, pd_multiindex_hier
     assumes all time series have equal length and equal index set
-    will *not* work for list-of-df, pd-wide, pd-long
+    will *not* work for list-of-df, pd-wide, pd-long, numpyflat
 
     Returns
     -------
-    time_index : pandas Index
+    time_index : pandas.Index
         Index of time series
     """
     # assumes that all samples share the same the time index, only looks at
@@ -45,10 +49,17 @@ def get_time_index(X):
             return X.index
     # numpy3D and np.ndarray
     elif isinstance(X, np.ndarray):
-        return _get_index(X)
+        # np.ndarray
+        if X.ndim < 3:
+            return pd.RangeIndex(X.shape[0])
+        # numpy3D
+        else:
+            return pd.RangeIndex(X.shape[-1])
+    elif hasattr(X, "X"):
+        return get_time_index(X.X)
     else:
         raise ValueError(
-            f"X must be a pandas DataFrame or Series, but found: {type(X)}"
+            f"X must be pd.DataFrame, pd.Series, or np.ndarray, but found: {type(X)}"
         )
 
 
@@ -152,6 +163,13 @@ def get_cutoff(
 
     if cutoff is None:
         cutoff = 0
+    elif isinstance(cutoff, pd.Index):
+        if not len(cutoff) == 1:
+            raise ValueError(
+                "if cutoff is a pd.Index, its length must be 1, but"
+                f" found a pd.Index with length {len(cutoff)}"
+            )
+        cutoff = cutoff[0]
 
     if len(obj) == 0:
         return cutoff
@@ -159,13 +177,13 @@ def get_cutoff(
     # numpy3D (Panel) or np.npdarray (Series)
     if isinstance(obj, np.ndarray):
         if obj.ndim == 3:
-            cutoff_ind = obj.shape[-1] + cutoff
+            cutoff_ind = obj.shape[-1] + cutoff - 1
         if obj.ndim < 3 and obj.ndim > 0:
-            cutoff_ind = obj.shape[0] + cutoff
+            cutoff_ind = obj.shape[0] + cutoff - 1
         if reverse_order:
             cutoff_ind = 0
         if return_index:
-            return pd.RangeIndex(cutoff_ind - 1, cutoff_ind)
+            return pd.RangeIndex(cutoff_ind, cutoff_ind + 1)
         else:
             return cutoff_ind
 
@@ -177,39 +195,42 @@ def get_cutoff(
         ix = -1
         agg = max
 
+    def sub_idx(idx, ix, return_index=True):
+        """Like sub-setting pd.index, but preserves freq attribute."""
+        if not return_index:
+            return idx[ix]
+        res = idx[[ix]]
+        if hasattr(idx, "freq") and idx.freq is not None:
+            if res.freq != idx.freq:
+                res.freq = idx.freq
+        return res
+
     if isinstance(obj, pd.Series):
-        return obj.index[[ix]] if return_index else obj.index[ix]
+        return sub_idx(obj.index, ix, return_index)
 
     # nested_univ (Panel) or pd.DataFrame(Series)
     if isinstance(obj, pd.DataFrame) and not isinstance(obj.index, pd.MultiIndex):
         objcols = [x for x in obj.columns if obj.dtypes[x] == "object"]
         # pd.DataFrame
         if len(objcols) == 0:
-            return obj.index[[ix]] if return_index else obj.index[ix]
+            return sub_idx(obj.index, ix) if return_index else obj.index[ix]
         # nested_univ
         else:
-            if return_index:
-                idxx = [x.index[[ix]] for col in objcols for x in obj[col]]
-            else:
-                idxx = [x.index[ix] for col in objcols for x in obj[col]]
-            return max(idxx)
+            idxx = [
+                sub_idx(x.index, ix, return_index) for col in objcols for x in obj[col]
+            ]
+            return agg(idxx)
 
     # pd-multiindex (Panel) and pd_multiindex_hier (Hierarchical)
     if isinstance(obj, pd.DataFrame) and isinstance(obj.index, pd.MultiIndex):
         idx = obj.index
         series_idx = [obj.loc[x].index.get_level_values(-1) for x in idx.droplevel(-1)]
-        if return_index:
-            cutoffs = [x[[-1]] for x in series_idx]
-        else:
-            cutoffs = [x[-1] for x in series_idx]
+        cutoffs = [sub_idx(x, ix, return_index) for x in series_idx]
         return agg(cutoffs)
 
     # df-list (Panel)
     if isinstance(obj, list):
-        if return_index:
-            idxs = [x.index[[ix]] for x in obj]
-        else:
-            idxs = [x.index[ix] for x in obj]
+        idxs = [sub_idx(x.index, ix, return_index) for x in obj]
         return agg(idxs)
 
 
