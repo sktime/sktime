@@ -94,16 +94,21 @@ def _shift(x, by=1, return_index=False):
 
     Parameters
     ----------
-    x : pd.Period, pd.Timestamp, int
-        Time point
+    x : pd.Index, pd.Period, int. If pd.Index or pd.Peeriod, must have `freq` attribute.
+        If pd.Index, must be of integer type, PeriodIndex, or DateTimeIndex
+        Time point to shift
     by : int, optional, default=1
     return_index : bool, optional, default=False
         whether to return an index element (False) or a pandas Index (True)
 
     Returns
     -------
-    ret : pd.Period, pd.Timestamp, int
-        Shifted time point
+    ret : pd.Index if return_index = True; int, pd.Period, or pd.Timestamp if False.
+        Shifted time point, `x` shifted by `by` periods
+        if return_index = True: pd.Index coerced `x`, shifted by `by` periods.
+        if return_index = False: index element coerced `x`, shifted by `by` periods.
+            if `x` is index, is coerced to index element by selecting first element
+        Period shift is integer for `x: int`, and `freq` if `x` is temporal with `freq`
     """
     # deprecate in 0.13.0 and remove in 0.14.0, pd.Timestamp will not have freq
     if isinstance(x, pd.Timestamp):
