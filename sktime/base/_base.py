@@ -199,7 +199,8 @@ class BaseObject(_BaseEstimator):
         Parameters
         ----------
         **params : dict
-            BaseObject parameters
+            BaseObject parameters, keys must be ``<component>__<parameter>`` strings.
+            __ suffixes can alias full strings, if unique among get_params keys.
 
         Returns
         -------
