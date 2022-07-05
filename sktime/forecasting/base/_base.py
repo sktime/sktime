@@ -39,6 +39,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from itertools import product
 from warnings import warn
 
 import numpy as np
@@ -1527,7 +1528,7 @@ class BaseForecaster(BaseEstimator):
 
             self._yvec = y
 
-            idx = y.get_iter_indices()
+            row_idx, col_idx = y.get_iter_indices()
             ys = y.as_list()
 
             if X is None:
@@ -1535,23 +1536,32 @@ class BaseForecaster(BaseEstimator):
             else:
                 Xs = X.as_list()
 
-            self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
-            for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = self.clone()
-                self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
+            if row_idx is None:
+                row_idx = ["forecasters"]
+            if col_idx is None:
+                col_idx = ["forecasters"]
+
+            self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
+            for ix in range(len(ys)):
+                i, j = y.get_iloc_indexer(ix)
+                self.forecasters_.iloc[i].iloc[j] = self.clone()
+                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[ix], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:
             n = len(self.forecasters_.index)
+            m = len(self.forecasters_.columns)
             X = kwargs.pop("X", None)
             if X is None:
-                Xs = [None] * n
+                Xs = [None] * n * m
             else:
                 Xs = X.as_list()
             y_preds = []
-            for i in range(n):
-                method = getattr(self.forecasters_.iloc[i, 0], methodname)
-                y_preds += [method(X=Xs[i], **kwargs)]
+            ix = -1
+            for i, j in product(range(n), range(m)):
+                ix += 1
+                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
+                y_preds += [method(X=Xs[ix], **kwargs)]
             y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
