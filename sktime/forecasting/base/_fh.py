@@ -194,21 +194,21 @@ def _check_freq(obj):
     TypeError if the type assumption on obj is not met
     """
     if isinstance(obj, pd.offsets.BaseOffset):
-        freq = obj
-    if isinstance(obj, (pd.Period, pd.Index)):
-        freq = _extract_freq_from_cutoff(obj)
-    elif isinstance(freq, "str") or freq is None:
-        freq = to_offset(None)
-    elif isinstance(freq, pd.Timestamp):
+        return obj
+    elif hasattr(obj, "_cutoff"):
+        return _check_freq(obj._cutoff)
+    elif isinstance(obj, (pd.Period, pd.Index)):
+        return _extract_freq_from_cutoff(obj)
+    elif isinstance(obj, "str") or obj is None:
+        return to_offset(obj)
+    elif isinstance(obj, pd.Timestamp):
         return None
     else:
         raise TypeError(
             "freq passed to ForecastingHorizon must be "
             " pd.Index, pd.offset, str, or None,"
-            f" but found freq of type {type(freq)}"
+            f" but found freq of type {type(obj)}"
         )
-
-    return freq
 
 
 def _extract_freq_from_cutoff(x) -> Optional[str]:
@@ -243,10 +243,9 @@ class ForecastingHorizon:
         - if None, the flag is determined automatically:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
-    freq : str, or pd.Index, optional (default=None)
+    freq : str, pd.Index, pandas offset, or Baseforecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferrable freq
-        Frequency string or pd.Index
     """
 
     def __new__(
@@ -369,9 +368,8 @@ class ForecastingHorizon:
 
         Parameters
         ----------
-        obj : str, or pd.Index
-            object carrying frequency information on values
-            Frequency string or pd.Index
+        obj : str, pd.Index, BaseForecaster, pandas offset
+            object carrying frequency information on self.values
 
         Raises
         ------
