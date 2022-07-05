@@ -222,8 +222,7 @@ class BaseObject(_BaseEstimator):
             key, delim, sub_key = full_key.partition("__")
             if key not in valid_params:
                 unmatched_keys += [key]
-
-            if delim:
+            elif delim:
                 nested_params[key][sub_key] = value
             else:
                 setattr(self, key, value)
