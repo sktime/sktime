@@ -205,16 +205,18 @@ def test_check_fh_relative_values_input_conversion_to_pandas_index(arg):
 
 TIMEPOINTS = [
     pd.Period("2000", freq="M"),
-    pd.Timestamp("2000-01-01", freq="D"),
     int(1),
     3,
 ]
+
+LENGTH1_INDICES = [pd.Index([x]) for x in TIMEPOINTS]
+LENGTH1_INDICES += [pd.DatetimeIndex(["2000-01-01"], freq="D")]
 
 
 @pytest.mark.parametrize("timepoint", TIMEPOINTS)
 @pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
 def test_shift(timepoint, by):
-    """Test shifting of ForecastingHorizon."""
+    """Test shifting of cutoff index element."""
     ret = _shift(timepoint, by=by)
 
     # check output type, pandas index types inherit from each other,
@@ -224,6 +226,21 @@ def test_shift(timepoint, by):
     # check if for a zero shift, input and output are the same
     if by == 0:
         assert timepoint == ret
+
+
+@pytest.mark.parametrize("timepoint", LENGTH1_INDICES)
+@pytest.mark.parametrize("by", [-3, -1, 0, 1, 3])
+def test_shift_index(timepoint, by):
+    """Test shifting of cutoff index, length 1 pandas.Index type."""
+    ret = _shift(timepoint, by=by, return_index=True)
+
+    # check output type, pandas index types inherit from each other,
+    # hence check for type equality here rather than using isinstance
+    assert type(ret) is type(timepoint)
+
+    # check if for a zero shift, input and output are the same
+    if by == 0:
+        assert (timepoint == ret).all()
 
 
 DURATIONS_ALLOWED = [
