@@ -465,6 +465,7 @@ class ForecastingHorizon:
             integer index.
         """
         self.freq = cutoff
+        freq = self.freq
 
         if isinstance(cutoff, pd.Timestamp):
             # coerce to pd.Period for reliable arithmetic operations and
