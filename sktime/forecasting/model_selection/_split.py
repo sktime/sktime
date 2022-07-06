@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split as _train_test_split
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert_to
-from sktime.datatypes._utilities import get_index_for_series, get_time_index
+from sktime.datatypes._utilities import get_cutoff, get_index_for_series, get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import VALID_FORECASTING_HORIZON_TYPES
 from sktime.utils.validation import (
@@ -1340,6 +1340,7 @@ def temporal_train_test_split(
     ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     if fh is not None:
+        fh.freq = get_cutoff(y)
         if test_size is not None or train_size is not None:
             raise ValueError(
                 "If `fh` is given, `test_size` and `train_size` cannot "
