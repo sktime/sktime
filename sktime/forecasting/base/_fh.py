@@ -139,45 +139,6 @@ def _check_values(values: Union[VALID_FORECASTING_HORIZON_TYPES]) -> pd.Index:
     return values.sort_values()
 
 
-def _check_freqstr(x: str = None) -> Optional[str]:
-    """Check frequency string.
-
-    Parameters
-    ----------
-    x : str, optional (default=None)
-        Frequency string or offset alias as in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
-
-    Returns
-    -------
-    x : str
-        Validated frequency string or None
-
-    Raises
-    ------
-    ValueError
-        Raised if frequency string is not supported
-    """
-    if x is not None:
-        url = (
-            "https://pandas.pydata.org/pandas-docs/stable/"
-            "user_guide/timeseries.html#offset-aliases"
-        )
-        if isinstance(x, str):
-            try:
-                pd.tseries.frequencies.to_offset(x)
-                return x
-            except ValueError as error:
-                raise ValueError(f"{error}. See permitted values in {url}.")
-        else:
-            raise ValueError(
-                f"Frequency string is expected. Given: {type(x)}. "
-                f"See permitted values in {url}"
-            )
-    else:
-        return None
-
-
 def _check_freq(obj):
     """Coerce obj to a pandas frequency offset for the ForecastingHorizon.
 
@@ -482,7 +443,6 @@ class ForecastingHorizon:
             integer index.
         """
         cutoff = self._coerce_cutoff_to_index_element(cutoff)
-
         freq = self.freq
 
         if isinstance(cutoff, pd.Timestamp):
@@ -775,17 +735,17 @@ def _coerce_to_period(x, freq=None):
 
     Parameters
     ----------
-    x : pandas Index
+    x : pandas Index or index element
         pandas Index to convert.
-    freq :
+    freq : pandas frequency string
 
     Returns
     -------
     index : pd.Period or pd.PeriodIndex
-        Index coerced to preferred format.
+        Index or index element coerced to period based format.
     """
-    if freq is None:
-        freq = _get_freq(x)
+    if isinstance(x, pd.Timestamp) and freq is None:
+        raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
     try:
         return x.to_period(freq)
     except (ValueError, AttributeError) as e:
