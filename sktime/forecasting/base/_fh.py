@@ -358,8 +358,11 @@ class ForecastingHorizon:
         -------
         freq : pandas frequency string
         """
-        # _freq is a pandas offset, frequency string is obtained via freqstr
-        return self._freq.freqstr
+        if hasattr(self, "_freq"):
+            # _freq is a pandas offset, frequency string is obtained via freqstr
+            return self._freq.freqstr
+        else:
+            return None
 
     @freq.setter
     def freq(self, obj) -> None:
@@ -379,11 +382,16 @@ class ForecastingHorizon:
             Raised if both inputs are given, but do not coincide
         """
         freq_from_obj = _check_freq(obj)
-        if self._freq is not None and freq_from_obj is not None:
-            if self._freq != freq_from_obj:
+        if hasattr(self, "_freq"):
+            freq_from_self = self._freq
+        else:
+            freq_from_self = None
+
+        if freq_from_self is not None and freq_from_obj is not None:
+            if freq_from_self != freq_from_obj:
                 raise ValueError(
                     "Frequencies from two sources do not coincide: "
-                    f"Current: {self._freq}, from update: {freq_from_obj}."
+                    f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         else:  # both are None, or only self._freq is None
             self._freq = freq_from_obj
