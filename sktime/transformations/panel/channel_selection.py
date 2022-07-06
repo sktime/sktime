@@ -10,6 +10,7 @@ __all__ = ["ElbowChannelSelection"]
 
 
 import itertools
+from string import printable
 import time
 
 import numpy as np
@@ -133,9 +134,9 @@ class ElbowChannelSelection(BaseTransformer):
     _tags = {
         # Not sure what these mean, I would have thought input and output were both
         # panel, but others are set like this, so will try this first
-        "scitype:transform-input": "Series",
+        # "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Primitives",
+        # "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
@@ -150,6 +151,7 @@ class ElbowChannelSelection(BaseTransformer):
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.channels_selected = []
         super(ElbowChannelSelection, self).__init__()
 
     def _fit(self, X, y):
@@ -169,16 +171,15 @@ class ElbowChannelSelection(BaseTransformer):
         -------
         self: reference to self
         """
-        """Convert training data."""
-        self.dimensions_selected_ = []
+        
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
         centroids = centroid_obj.create_centroid(X.copy(), y)
         distances = _distance_matrix()
         self.distance_frame_ = distances.distance(centroids)
-        distance = self.distance_frame.sum(axis=1).sort_values(ascending=False).values
-        indices = self.distance_frame.sum(axis=1).sort_values(ascending=False).index
-        self.dimensions_selected_.extend(_detect_knee_point(distance, indices)[0])
+        distance = self.distance_frame_.sum(axis=1).sort_values(ascending=False).values
+        indices = self.distance_frame_.sum(axis=1).sort_values(ascending=False).index
+        self.channels_selected.extend(_detect_knee_point(distance, indices)[0])
         self.train_time_ = int(round(time.time() * 1000)) - start
         return self
 
@@ -200,7 +201,7 @@ class ElbowChannelSelection(BaseTransformer):
         -------
         X with a subset of dimensions
         """
-        return X[:, self.dimensions_selected_, :]
+        return X[:, self.channels_selected, :]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -227,7 +228,7 @@ class ElbowChannelSelection(BaseTransformer):
 
 
 
-class ClusterChannelSelection(BaseEstimator):
+class ClusterChannelSelection(BaseTransformer):
     """Channel Selection Method: KMeans.
     
     Apply KMeans to the distance matrix derived and creates two clusters to identify useful channels.
@@ -242,9 +243,9 @@ class ClusterChannelSelection(BaseEstimator):
     _tags = {
         # Not sure what these mean, I would have thought input and output were both
         # panel, but others are set like this, so will try this first
-        "scitype:transform-input": "Series",
+        # "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Primitives",
+        # "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
@@ -261,27 +262,44 @@ class ClusterChannelSelection(BaseEstimator):
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
-        self.dimensions_selected = None
+        self.channels_selected = []
         self._is_fitted = False
         self.train_time = 0
+        super(ClusterChannelSelection, self).__init__()
 
     def _fit(self, X, y):
-        """Convert training data."""
+        """
+        Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
         obj = _distance_matrix()
-        self.distance_frame = obj.distance(df)
+        self.distance_frame_ = obj.distance(df)
         # l2 normalisng for kmeans
-        self.distance_frame = pd.DataFrame(
-            normalize(self.distance_frame, axis=0),
-            columns=self.distance_frame.columns.tolist(),
+        self.distance_frame_ = pd.DataFrame(
+            normalize(self.distance_frame_, axis=0),
+            columns=self.distance_frame_.columns.tolist(),
         )
 
-        self.kmeans = KMeans(n_clusters=2, random_state=0).fit(self.distance_frame)
+        self.kmeans = KMeans(n_clusters=2, random_state=0).fit(self.distance_frame_)
         # Find the cluster name with maximum avg distance
         self.cluster = np.argmax(self.kmeans.cluster_centers_.mean(axis=1))
-        self.dimensions_selected = [
+        self.channels_selected = [
             id_ for id_, item in enumerate(self.kmeans.labels_) if item == self.cluster
         ]
         self.train_time = int(round(time.time() * 1000)) - start
@@ -289,14 +307,28 @@ class ClusterChannelSelection(BaseEstimator):
 
         return self
 
-    def _transform(self, X):
-        """Return the transformed data."""
-        # Modified from original version which used pandas and this version uses numpy arrays
-        # return X.iloc[:, self.relevant_dims]
-        return X[:, self.dimensions_selected, :]
+    def _transform(self, X, y ):
+        """
+        Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        X with a subset of dimensions
+        """
+        return X[:, self.channels_selected, :]
 
 
-class ElbowClassPairwise(BaseEstimator):
+class ElbowClassPairwise(BaseTransformer):
     """Channel Selection Method: ECP.
     
     Apply to a set of multivariate time series instances (referred to as a Panel),
@@ -313,9 +345,9 @@ class ElbowClassPairwise(BaseEstimator):
     _tags = {
         # Not sure what these mean, I would have thought input and output were both
         # panel, but others are set like this, so will try this first
-        "scitype:transform-input": "Series",
+        # "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Primitives",
+        # "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
@@ -330,31 +362,62 @@ class ElbowClassPairwise(BaseEstimator):
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
-        self.dimensions_selected = None
+        self.channels_selected  = []
         self._is_fitted = False
         self.train_time = 0
+        super(ElbowClassPairwise, self).__init__()
+
 
     def _fit(self, X, y):
+        """
+        Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
         start = int(round(time.time() * 1000))
-        """Convert training data."""
         centroid_obj = _shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
         obj = _distance_matrix()
-        self.distance_frame = obj.distance(df)
+        self.distance_frame_ = obj.distance(df)
 
-        self.dimensions_selected = []
-        for pairdistance in self.distance_frame.iteritems():
+        
+        for pairdistance in self.distance_frame_.iteritems():
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
-            # print(distance, indices)
-            self.dimensions_selected.extend(_detect_knee_point(distance, indices)[0])
-            self.dimensions_selected = list(set(self.dimensions_selected))
+            self.channels_selected.extend(_detect_knee_point(distance, indices)[0])
+            self.channels_selected = list(set(self.channels_selected))
         self.train_time = int(round(time.time() * 1000)) - start
         self._is_fitted = True
         return self
 
-    def _transform(self, X):
-        """Return the transformed data."""
-        # Modified from original version which used pandas and this version uses numpy arrays
-        # return X.iloc[:, self.relevant_dims]
-        return X[:, self.dimensions_selected, :]
+    def _transform(self, X,y):
+        """
+        Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        X with a subset of dimensions
+        """
+        return X[:, self.channels_selected, :]
