@@ -746,6 +746,8 @@ def _coerce_to_period(x, freq=None):
     index : pd.Period or pd.PeriodIndex
         Index or index element coerced to period based format.
     """
+    # timestamp/freq combinations are deprecated from 0.13.0
+    # warning should be replaced by exception in 0.14.0
     if isinstance(x, pd.Timestamp) and freq is None:
         raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
     try:
