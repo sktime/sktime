@@ -412,7 +412,19 @@ def test_to_absolute_int(idx: int, freq: str):
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3])
     cutoff = train.index[[idx]]
-    cutoff.freq = train.freq
+    cutoff.freq = train.index.freq
+    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=cutoff)
+    assert_array_equal(fh + idx, absolute_int)
+
+
+@pytest.mark.parametrize("idx", range(5))
+@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
+    """Test converting between relative and absolute, freq passed to fh."""
+    # Converts from relative to absolute and back to relative
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
+    fh = ForecastingHorizon([1, 2, 3], freq=freq)
+    cutoff = train.index[idx]
     absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=cutoff)
     assert_array_equal(fh + idx, absolute_int)
 
@@ -436,17 +448,6 @@ def test_estimator_fh(freqstr):
 def test_error_with_incorrect_string_frequency(freq: str):
     """Test error with incorrect string frequency string."""
     match = f"Invalid frequency: {freq}"
-    with pytest.raises(ValueError, match=match):
-        ForecastingHorizon([1, 2, 3], freq=freq)
-    fh = ForecastingHorizon([1, 2, 3])
-    with pytest.raises(ValueError, match=match):
-        fh.freq = freq
-
-
-@pytest.mark.parametrize("freq", [pd.Timedelta("1 day")])
-def test_error_with_incorrect_non_string_frequency(freq: str):
-    """Test error with incorrect non-string frequency string."""
-    match = f"Frequency string is expected. Given: {type(freq)}"
     with pytest.raises(ValueError, match=match):
         ForecastingHorizon([1, 2, 3], freq=freq)
     fh = ForecastingHorizon([1, 2, 3])
