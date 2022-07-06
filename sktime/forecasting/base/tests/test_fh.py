@@ -398,7 +398,7 @@ def test_to_relative(freq: str):
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
-    cutoff = get_cutoff(t, reverse_order=True, return_index=True)
+    cutoff = pd.date_range(start="2021-01-01", freq=freq, periods=1)
     fh_abs = ForecastingHorizon(t, is_relative=False)
     fh_rel = fh_abs.to_relative(cutoff=cutoff)
     assert_array_equal(fh_rel, np.arange(5))
@@ -411,7 +411,9 @@ def test_to_absolute_int(idx: int, freq: str):
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3])
-    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[[idx]])
+    cutoff = train.index[[idx]]
+    cutoff.freq = train.freq
+    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=cutoff)
     assert_array_equal(fh + idx, absolute_int)
 
 
