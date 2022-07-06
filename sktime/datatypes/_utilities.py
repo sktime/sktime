@@ -163,7 +163,8 @@ def _get_cutoff_from_index(idx, return_index=False, reverse_order=False):
     if not return_index:
         return time_idx[ix]
     res = time_idx[[ix]]
-    res.freq = time_idx.freq
+    if hasattr(time_idx, "freq") and time_idx.freq is not None:
+        res.freq = time_idx.freq
     return res
 
 
