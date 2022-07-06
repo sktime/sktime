@@ -201,14 +201,14 @@ def _check_freq(obj):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
         return to_offset(obj)
-    elif isinstance(obj, pd.Timestamp):
-        return None
     else:
-        raise TypeError(
-            "freq passed to ForecastingHorizon must be "
-            " pd.Index, pd.offset, str, or None,"
-            f" but found freq of type {type(obj)}"
-        )
+        return None
+    # else:
+    #     raise TypeError(
+    #         "freq passed to ForecastingHorizon must be "
+    #         "pd.Index, pd.offset, str, or None,"
+    #         f" but found freq of type {type(obj)}"
+    #     )
 
 
 def _extract_freq_from_cutoff(x) -> Optional[str]:
