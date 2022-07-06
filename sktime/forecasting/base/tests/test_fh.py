@@ -557,7 +557,7 @@ def test_auto_arima():
 
 def test_extract_freq_from_inputs() -> None:
     """Test extract frequency from inputs."""
-    assert _check_freq() is None
+    assert _check_freq(None) is None
     cutoff = pd.Period("2020", freq="D")
     assert _check_freq(cutoff=cutoff) == "D"
     assert _check_freq("D") == "D"
