@@ -3,7 +3,7 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNNRegressor"]
-from sklearn.utils import check_random_state
+import numpy as np
 
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
@@ -59,9 +59,12 @@ class CNNRegressor(BaseDeepRegressor):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
+        random_seed=21,
     ):
         _check_dl_dependencies("tensorflow", severity="error")
-        super(CNNRegressor, self).__init__()
+        super(CNNRegressor, self).__init__(
+            batch_size=batch_size,
+        )
         self.n_conv_layers = n_conv_layers
         self.avg_pool_size = avg_pool_size
         self.kernel_size = kernel_size
@@ -71,6 +74,7 @@ class CNNRegressor(BaseDeepRegressor):
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
+        self.random_seed = random_seed
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, **kwargs):
@@ -90,17 +94,22 @@ class CNNRegressor(BaseDeepRegressor):
         -------
         output : a compiled Keras Model
         """
+        import tensorflow as tf
         from tensorflow import keras
 
         if self.metrics is None:
             metrics = ["accuracy"]
         else:
             metrics = self.metrics
+
+        tf.random.set_seed(self.random_seed)
+        np.random.seed(self.random_seed)
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=1, activation="sigmoid")(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
+
         model.compile(
             loss=self.loss,
             optimizer=keras.optimizers.Adam(),
@@ -124,18 +133,18 @@ class CNNRegressor(BaseDeepRegressor):
         """
         if self.callbacks is None:
             self._callbacks = []
-        y_onehot = self.convert_y_to_keras(y)
+
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
-        check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
             self.model.summary()
+
         self.history = self.model_.fit(
             X,
-            y_onehot,
+            y,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
