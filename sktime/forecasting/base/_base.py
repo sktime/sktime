@@ -1016,7 +1016,7 @@ class BaseForecaster(BaseEstimator):
         if isinstance(y, (pd.DataFrame, pd.Series)):
             fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
-                fh = fh.to_relative(self.cutoff)
+                fh = fh.to_relative(self._cutoff)
             fh = self._check_fh(fh)
         # if np.ndarray, rows are not indexed
         # so will be interpreted as range(len), or existing fh if it is stored
