@@ -454,14 +454,17 @@ def test_error_with_incorrect_non_string_frequency(freq: str):
         fh.freq = freq
 
 
-def test_frequency_setter():
+@pytest.mark.parametrize("freqstr", ["M", "D"])
+def test_frequency_setter(freqstr):
     """Test frequency setter."""
     fh = ForecastingHorizon([1, 2, 3])
     assert fh.freq is None
-    fh.freq = "M"
-    assert fh.freq == "M"
-    fh.freq = "D"
-    assert fh.freq == "D"
+
+    fh.freq = freqstr
+    assert fh.freq == freqstr
+
+    fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
+    assert fh.freq == freqstr
 
 
 # TODO: Replace this long running test with fast unit test
