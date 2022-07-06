@@ -181,10 +181,12 @@ def get_cutoff(
 
     Parameters
     ----------
-    obj : sktime compatible time series data container
-        must be of Series, Panel, or Hierarchical scitype
+    obj : sktime compatible time series data container or pandas.Index
+        if sktime time series, must be of Series, Panel, or Hierarchical scitype
         all mtypes are supported via conversion to internally supported types
         to avoid conversions, pass data in one of GET_CUTOFF_SUPPORTED_MTYPES
+        if pandas.Index, it is assumed that last level is time-like,
+        e.g., as in the pd.DataFrame, pd-multiindex, or pd_multiindex_hier mtypes
     cutoff : int, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
     return_index : bool, optional, default=False
