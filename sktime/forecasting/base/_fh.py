@@ -392,8 +392,11 @@ class ForecastingHorizon:
                     "Frequencies from two sources do not coincide: "
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
-        else:  # both are None, or only self._freq is None
+        elif freq_from_obj is not None:  # only freq_from_obj is not None
             self._freq = freq_from_obj
+        else:
+            # leave self._freq as freq_from_self, or set to None if does not exist yet
+            self._freq = freq_from_self
 
     def to_pandas(self) -> pd.Index:
         """Return forecasting horizon's underlying values as pd.Index.
@@ -479,6 +482,7 @@ class ForecastingHorizon:
             integer index.
         """
         cutoff = self._coerce_cutoff_to_index_element(cutoff)
+
         freq = self.freq
 
         if isinstance(cutoff, pd.Timestamp):
