@@ -668,12 +668,6 @@ class BaseForecaster(BaseEstimator):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        msg = (
-            "tensorflow-probability must be installed for fully probabilistic forecasts"
-            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
-        )
-        _check_dl_dependencies(msg)
-
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not have the capability to return "
@@ -681,6 +675,18 @@ class BaseForecaster(BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            raise NotImplementedError(
+                "automated vectorization for predict_proba is not implemented"
+            )
+
+        msg = (
+            "tensorflow-probability must be installed for fully probabilistic forecasts"
+            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
+        )
+        _check_dl_dependencies(msg)
+
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
@@ -1127,11 +1133,11 @@ class BaseForecaster(BaseEstimator):
         if X is None and y is None:
             return None, None
 
-        def _most_complex_scitype(scitypes):
+        def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
-            if "Hierarchical" in scitypes:
+            if "Hierarchical" in scitypes and smaller_equal_than == "Hierarchical":
                 return "Hierarchical"
-            elif "Panel" in scitypes:
+            elif "Panel" in scitypes and smaller_equal_than != "Series":
                 return "Panel"
             elif "Series" in scitypes:
                 return "Series"
@@ -1175,15 +1181,13 @@ class BaseForecaster(BaseEstimator):
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
 
-            requires_vectorization = y_scitype not in y_inner_scitype
-
-            if (
+            req_vec_because_rows = y_scitype not in y_inner_scitype
+            req_vec_because_cols = (
                 self.get_tag("scitype:y") == "univariate"
                 and not y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    "y must be univariate, but found more than one variable"
-                )
+            )
+            requires_vectorization = req_vec_because_rows or req_vec_because_cols
+
             if (
                 self.get_tag("scitype:y") == "multivariate"
                 and y_metadata["is_univariate"]
@@ -1269,9 +1273,16 @@ class BaseForecaster(BaseEstimator):
                 as_scitype=X_scitype,  # we are dealing with series
             )
         else:
-            iterate_as = _most_complex_scitype(y_inner_scitype)
+            iterate_as = _most_complex_scitype(
+                y_inner_scitype, smaller_equal_than=y_scitype
+            )
             if y is not None:
-                y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+                y_inner = VectorizedDF(
+                    X=y,
+                    iterate_as=iterate_as,
+                    is_scitype=y_scitype,
+                    iterate_cols=req_vec_because_cols,
+                )
             else:
                 y_inner = None
             if X is not None:
@@ -1545,7 +1556,7 @@ class BaseForecaster(BaseEstimator):
             for ix in range(len(ys)):
                 i, j = y.get_iloc_indexer(ix)
                 self.forecasters_.iloc[i].iloc[j] = self.clone()
-                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[ix], **kwargs)
+                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:
@@ -1561,7 +1572,7 @@ class BaseForecaster(BaseEstimator):
             for i, j in product(range(n), range(m)):
                 ix += 1
                 method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                y_preds += [method(X=Xs[ix], **kwargs)]
+                y_preds += [method(X=Xs[i], **kwargs)]
             y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
