@@ -9,7 +9,12 @@ import pytest
 
 from sktime.datatypes._check import check_is_mtype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._utilities import get_cutoff, get_slice, get_window
+from sktime.datatypes._utilities import (
+    get_cutoff,
+    get_slice,
+    get_time_index,
+    get_window,
+)
 
 SCITYPE_MTYPE_PAIRS = [
     ("Series", "pd.Series"),
@@ -21,6 +26,51 @@ SCITYPE_MTYPE_PAIRS = [
     ("Panel", "df-list"),
     ("Hierarchical", "pd_multiindex_hier"),
 ]
+
+
+@pytest.mark.parametrize("scitype,mtype", SCITYPE_MTYPE_PAIRS)
+def test_get_time_index(scitype, mtype):
+    """Tests that conversions for scitype agree with from/to example fixtures.
+
+    Parameters
+    ----------
+    scitype : str - scitype of input
+    mtype : str - mtype of input
+
+    Raises
+    ------
+    AssertionError if get_cutoff does not return a length 1 pandas.index
+        for any fixture example of given scitype, mtype
+    """
+    # get_time_index currently does not work for df-list type, skip
+    if mtype == "df-list":
+        return None
+
+    # retrieve example fixture
+    fixtures = get_examples(mtype=mtype, as_scitype=scitype, return_lossy=False)
+
+    for fixture in fixtures.values():
+        if fixture is None:
+            continue
+
+        idx = get_time_index(fixture)
+
+        msg = f"get_time_index should return pd.Index, but found {type(idx)}"
+        assert isinstance(idx, pd.Index), msg
+
+        if mtype in ["pd.Series", "pd.DataFrame"]:
+            assert (idx == fixture.index).all()
+
+        if mtype in ["np.ndarray", "numpy3D"]:
+            assert isinstance(idx, pd.RangeIndex)
+            if mtype == "np.ndarray":
+                assert len(idx) == fixture.shape[0]
+            else:
+                assert len(idx) == fixture.shape[-1]
+
+        if mtype in ["pd-multiindex", "pd_multiindex_hier"]:
+            exp_idx = fixture.index.get_level_values(-1).unique()
+            assert (idx == exp_idx).all()
 
 
 @pytest.mark.parametrize("convert_input", [True, False])
@@ -59,8 +109,10 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
 
         if return_index:
             expected_types = pd.Index
+            cutoff_val = cutoff[0]
         else:
             expected_types = (int, float, np.int64, pd.Timestamp)
+            cutoff_val = cutoff
 
         msg = (
             f"incorrect return type of get_cutoff"
@@ -71,6 +123,27 @@ def test_get_cutoff(scitype, mtype, return_index, reverse_order, convert_input):
 
         if return_index:
             assert len(cutoff) == 1
+            if isinstance(cutoff_val, (pd.Period, pd.Timestamp)):
+                assert hasattr(cutoff, "freq") and cutoff.freq is not None
+
+        if isinstance(fixture, np.ndarray):
+            if reverse_order:
+                assert cutoff_val == 0
+            else:
+                assert cutoff_val > 0
+
+        if mtype in ["pd.Series", "pd.DataFrame"]:
+            if reverse_order:
+                assert cutoff_val == fixture.index[0]
+            else:
+                assert cutoff_val == fixture.index[-1]
+
+        if mtype in ["pd-multiindex", "pd_multiindex_hier"]:
+            time_idx = fixture.index.get_level_values(-1)
+            if reverse_order:
+                assert cutoff_val == time_idx.min()
+            else:
+                assert cutoff_val == time_idx.max()
 
 
 @pytest.mark.parametrize("bad_inputs", ["foo", 12345, [[[]]]])
