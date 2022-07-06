@@ -443,7 +443,7 @@ def test_error_with_incorrect_string_frequency(freq: str):
         fh.freq = freq
 
 
-@pytest.mark.parametrize("freq", [pd.offsets.Day(), pd.Timedelta("1 day")])
+@pytest.mark.parametrize("freq", [pd.Timedelta("1 day")])
 def test_error_with_incorrect_non_string_frequency(freq: str):
     """Test error with incorrect non-string frequency string."""
     match = f"Frequency string is expected. Given: {type(freq)}"
