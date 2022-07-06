@@ -346,7 +346,7 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
-        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3),
+        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
     abs_fh = fh.to_absolute(train.index[-1])
 
@@ -374,7 +374,7 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
-        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3),
+        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
     abs_fh = fh.to_absolute(train.index[-1])
 
@@ -391,7 +391,7 @@ def test_to_relative(freq: str):
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
-    fh_abs = ForecastingHorizon(t, is_relative=False, freq=freq)
+    fh_abs = ForecastingHorizon(t, is_relative=False)
     fh_rel = fh_abs.to_relative(cutoff=t.min())
     assert_array_equal(fh_rel, np.arange(5))
 
@@ -402,7 +402,7 @@ def test_to_absolute_int(idx: int, freq: str):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
-    fh = ForecastingHorizon([1, 2, 3], freq=freq)
+    fh = ForecastingHorizon([1, 2, 3])
     absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[idx])
     assert_array_equal(fh + idx, absolute_int)
 
