@@ -10,14 +10,12 @@ __all__ = ["ElbowChannelSelection"]
 
 
 import itertools
-from string import printable
 import time
 
 import numpy as np
 import pandas as pd
-
-from sklearn.neighbors import NearestCentroid
 from sklearn.cluster import KMeans
+from sklearn.neighbors import NearestCentroid
 from sklearn.preprocessing import normalize
 
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
@@ -153,7 +151,8 @@ class ElbowChannelSelection(BaseTransformer):
         super(ElbowChannelSelection, self).__init__()
 
     def _fit(self, X, y):
-        """Fit transformer to X and y.
+        """
+        Fit transformer to X and y.
 
         private _fit containing the core logic, called from fit
 
@@ -169,7 +168,6 @@ class ElbowChannelSelection(BaseTransformer):
         -------
         self: reference to self
         """
-        
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
         centroids = centroid_obj.create_centroid(X.copy(), y)
@@ -224,12 +222,11 @@ class ElbowChannelSelection(BaseTransformer):
         return params
 
 
-
-
 class ClusterChannelSelection(BaseTransformer):
     """Channel Selection Method: KMeans.
-    
-    Apply KMeans to the distance matrix derived and creates two clusters to identify useful channels.
+
+    Apply KMeans to the distance matrix derived and
+    creates two clusters to identify useful channels.
 
     Parameters
     ----------
@@ -251,8 +248,6 @@ class ClusterChannelSelection(BaseTransformer):
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
     }
-
-
 
     def __init__(self, normalise=True, n_jobs=1, random_state=None):
         self.normalise = normalise
@@ -303,7 +298,7 @@ class ClusterChannelSelection(BaseTransformer):
 
         return self
 
-    def _transform(self, X, y ):
+    def _transform(self, X, y):
         """
         Transform X and return a transformed version.
 
@@ -326,7 +321,7 @@ class ClusterChannelSelection(BaseTransformer):
 
 class ElbowClassPairwise(BaseTransformer):
     """Channel Selection Method: ECP.
-    
+
     Apply to a set of multivariate time series instances (referred to as a Panel),
     in order to select dimensions using a scoring then elbow method (more details to
     follow).
@@ -356,11 +351,10 @@ class ElbowClassPairwise(BaseTransformer):
         self.normalise = normalise
         self.n_jobs = n_jobs
         self.random_state = random_state if isinstance(random_state, int) else None
-        self.channels_selected  = []
+        self.channels_selected = []
         self._is_fitted = False
         self.train_time = 0
         super(ElbowClassPairwise, self).__init__()
-
 
     def _fit(self, X, y):
         """
@@ -386,7 +380,6 @@ class ElbowClassPairwise(BaseTransformer):
         obj = _distance_matrix()
         self.distance_frame_ = obj.distance(df)
 
-        
         for pairdistance in self.distance_frame_.iteritems():
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
@@ -396,7 +389,7 @@ class ElbowClassPairwise(BaseTransformer):
         self._is_fitted = True
         return self
 
-    def _transform(self, X,y):
+    def _transform(self, X, y):
         """
         Transform X and return a transformed version.
 
