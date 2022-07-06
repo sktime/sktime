@@ -358,7 +358,7 @@ class ForecastingHorizon:
         -------
         freq : pandas frequency string
         """
-        if hasattr(self, "_freq"):
+        if hasattr(self, "_freq") and hasattr(self._freq, "freqstr"):
             # _freq is a pandas offset, frequency string is obtained via freqstr
             return self._freq.freqstr
         else:
