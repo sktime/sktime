@@ -199,7 +199,7 @@ def _check_freq(obj):
         return _check_freq(obj._cutoff)
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
-    elif isinstance(obj, "str") or obj is None:
+    elif isinstance(obj, str) or obj is None:
         return to_offset(obj)
     elif isinstance(obj, pd.Timestamp):
         return None
