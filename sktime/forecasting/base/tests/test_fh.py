@@ -11,6 +11,7 @@ from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
 
 from sktime.datasets import load_airline
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import (
@@ -321,8 +322,10 @@ FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
-    abs_fh = fh.to_absolute(train.index[-1])
+
+    abs_fh = fh.to_absolute(cutoff)
     assert abs_fh._values.freqstr == freqstr
 
 
@@ -331,10 +334,11 @@ def test_absolute_to_absolute_with_integer_horizon(freqstr):
     """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
     assert converted_abs_fh._values.freqstr == freqstr
 
@@ -344,13 +348,14 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     """Test converting between absolute and relative."""
     # Converts from absolute to relative and back to absolute
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_abs_fh = abs_fh.to_relative(train.index[-1]).to_absolute(train.index[-1])
+    converted_abs_fh = abs_fh.to_relative(cutoff).to_absolute(cutoff)
     assert_array_equal(abs_fh, converted_abs_fh)
     assert converted_abs_fh._values.freqstr == freqstr
 
@@ -360,10 +365,11 @@ def test_relative_to_relative_with_integer_horizon(freqstr):
     """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    converted_rel_fh = abs_fh.to_relative(cutoff)
     assert_array_equal(fh, converted_rel_fh)
 
 
@@ -372,13 +378,14 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
     """Test converting between relative and absolute with timedelta horizons."""
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    cutoff = get_cutoff(train, return_index=True)
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
         pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
-    abs_fh = fh.to_absolute(train.index[-1])
+    abs_fh = fh.to_absolute(cutoff)
 
-    converted_rel_fh = abs_fh.to_relative(train.index[-1])
+    converted_rel_fh = abs_fh.to_relative(cutoff)
     assert_array_equal(converted_rel_fh, np.arange(1, 4))
 
 
@@ -391,8 +398,9 @@ def test_to_relative(freq: str):
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
+    cutoff = get_cutoff(t, reverse_order=True, return_index=True)
     fh_abs = ForecastingHorizon(t, is_relative=False)
-    fh_rel = fh_abs.to_relative(cutoff=t.min())
+    fh_rel = fh_abs.to_relative(cutoff=cutoff)
     assert_array_equal(fh_rel, np.arange(5))
 
 
@@ -403,7 +411,7 @@ def test_to_absolute_int(idx: int, freq: str):
     # Converts from relative to absolute and back to relative
     train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3])
-    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[idx])
+    absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=train.index[[idx]])
     assert_array_equal(fh + idx, absolute_int)
 
 
