@@ -170,11 +170,13 @@ def test_subset_getitem():
     t = ExponentTransformer(power=2)
 
     t_after = t["a"]
+    t_after_with_colon = t[["a"], :]
     t_before = t[:, ["b", "c"]]
     t_both = t[["a", "b"], ["b", "c"]]
     t_none = t[:, :]
 
     assert isinstance(t_after, TransformerPipeline)
+    assert isinstance(t_after_with_colon, TransformerPipeline)
     assert isinstance(t_before, TransformerPipeline)
     assert isinstance(t_both, TransformerPipeline)
     assert isinstance(t_none, ExponentTransformer)
@@ -182,6 +184,7 @@ def test_subset_getitem():
     X_square = t.fit_transform(X)
 
     _assert_array_almost_equal(t_after.fit_transform(X), X_square[["a"]])
+    _assert_array_almost_equal(t_after_with_colon.fit_transform(X), X_square[["a"]])
     _assert_array_almost_equal(t_before.fit_transform(X), X_square[["b", "c"]])
     _assert_array_almost_equal(t_both.fit_transform(X), X_square[["b"]])
     _assert_array_almost_equal(t_none.fit_transform(X), X_square)
