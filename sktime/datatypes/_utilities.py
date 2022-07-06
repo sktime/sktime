@@ -104,17 +104,15 @@ GET_CUTOFF_SUPPORTED_MTYPES = [
 
 
 def _get_cutoff_from_index(idx, return_index=False, reverse_order=False):
-    """Get cutoff = latest time point of time series or time series panel.
+    """Get cutoff = latest time point of pandas index.
 
     Assumptions on obj are not checked, these should be validated separately.
     Function may return unexpected results without prior validation.
 
     Parameters
     ----------
-    obj : sktime compatible time series data container
-        must be of Series, Panel, or Hierarchical scitype
-        all mtypes are supported via conversion to internally supported types
-        to avoid conversions, pass data in one of GET_CUTOFF_SUPPORTED_MTYPES
+    obj : pd.Index, possibly MultiIndex, with last level assumed timelike or integer,
+        e.g., as in the pd.DataFrame, pd-multiindex, or pd_multiindex_hier mtypes
     return_index : bool, optional, default=False
         whether a pd.Index object should be returned (True)
             or a pandas compatible index element (False)
@@ -185,7 +183,7 @@ def get_cutoff(
         if sktime time series, must be of Series, Panel, or Hierarchical scitype
         all mtypes are supported via conversion to internally supported types
         to avoid conversions, pass data in one of GET_CUTOFF_SUPPORTED_MTYPES
-        if pandas.Index, it is assumed that last level is time-like,
+        if pandas.Index, it is assumed that last level is time-like or integer,
         e.g., as in the pd.DataFrame, pd-multiindex, or pd_multiindex_hier mtypes
     cutoff : int, optional, default=0
         current cutoff, used to offset index if obj is np.ndarray
