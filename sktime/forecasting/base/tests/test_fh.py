@@ -15,8 +15,8 @@ from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import (
     DELEGATED_METHODS,
+    _check_freq,
     _extract_freq_from_cutoff,
-    _extract_freq_from_inputs,
 )
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -544,16 +544,10 @@ def test_auto_arima():
 
 def test_extract_freq_from_inputs() -> None:
     """Test extract frequency from inputs."""
-    assert _extract_freq_from_inputs() is None
+    assert _check_freq() is None
     cutoff = pd.Period("2020", freq="D")
-    assert _extract_freq_from_inputs(cutoff=cutoff) == "D"
-    assert _extract_freq_from_inputs(freq="D") == "D"
-    assert _extract_freq_from_inputs(cutoff=cutoff, freq="D") == "D"
-
-    with pytest.raises(
-        ValueError, match="Frequencies from two sources do not coincide"
-    ):
-        _extract_freq_from_inputs(cutoff=cutoff, freq="M")
+    assert _check_freq(cutoff=cutoff) == "D"
+    assert _check_freq("D") == "D"
 
 
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
