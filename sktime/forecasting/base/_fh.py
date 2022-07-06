@@ -378,8 +378,7 @@ class ForecastingHorizon:
 
         Raises
         ------
-        ValueError
-            Raised if both inputs are given, but do not coincide
+        ValueError : if freq is already set and discrepant from frequency of obj
         """
         freq_from_obj = _check_freq(obj)
         if hasattr(self, "_freq"):
