@@ -390,7 +390,8 @@ class ForecastingHorizon:
         """Coerces cutoff to index element, and updates self.freq with cutoff."""
         self.freq = cutoff
         if isinstance(cutoff, pd.Index):
-            cutoff = cutoff[0]
+            assert len(cutoff) > 0
+            cutoff = cutoff[-1]
         return cutoff
 
     def to_relative(self, cutoff=None):
