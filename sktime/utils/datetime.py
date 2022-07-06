@@ -6,8 +6,7 @@ __author__ = ["mloning", "xiaobenbenecho", "khrapovs"]
 __all__ = []
 
 from functools import singledispatch
-from typing import Optional
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 from warnings import warn
 
 import numpy as np
