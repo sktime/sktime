@@ -46,6 +46,14 @@ Pipelines can also be constructed using ``*``, ``+``, and ``|`` dunders.
     MultiplexForecaster
     ForecastX
 
+.. currentmodule:: sktime.forecasting.reconcile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReconcilerForecaster
+
 Reduction
 ---------
 
