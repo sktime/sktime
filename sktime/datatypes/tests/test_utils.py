@@ -163,12 +163,13 @@ def test_get_cutoff_from_index(reverse_order):
     AssertionError if _get_cutoff_from_index does not return the correct cutoff value
     """
     hier_fixture = _make_hierarchical()
+    hier_idx = hier_fixture.index
 
     cutoff = _get_cutoff_from_index(
-        hier_fixture, return_index=True, reverse_order=reverse_order
+        hier_idx, return_index=True, reverse_order=reverse_order
     )
     idx = _get_cutoff_from_index(
-        hier_fixture, return_index=False, reverse_order=reverse_order
+        hier_idx, return_index=False, reverse_order=reverse_order
     )
 
     assert isinstance(cutoff, pd.DatetimeIndex) and len(cutoff) == 1
@@ -181,12 +182,13 @@ def test_get_cutoff_from_index(reverse_order):
         assert idx == pd.Timestamp("2000-01-12")
 
     series_fixture = get_examples("pd.Series")[0]
+    series_idx = series_fixture.index
 
     cutoff = _get_cutoff_from_index(
-        series_fixture, return_index=True, reverse_order=reverse_order
+        series_idx, return_index=True, reverse_order=reverse_order
     )
     idx = _get_cutoff_from_index(
-        series_fixture, return_index=False, reverse_order=reverse_order
+        series_idx, return_index=False, reverse_order=reverse_order
     )
 
     assert isinstance(cutoff, pd.RangeIndex) and len(cutoff) == 1

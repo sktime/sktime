@@ -126,6 +126,9 @@ def _get_cutoff_from_index(idx, return_index=False, reverse_order=False):
     cutoff_index : pandas compatible index element (if return_index=False)
         pd.Index of length 1 (if return_index=True)
     """
+    if not isinstance(idx, pd.Index):
+        raise TypeError(f"idx must be a pd.Index, but found type {type(idx)}")
+
     # define "first" or "last" index depending on which is desired
     if reverse_order:
         ix = 0
