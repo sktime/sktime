@@ -402,6 +402,7 @@ class ForecastingHorizon:
         cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
+            If pd.Index, last/latest value is considered the cutoff
 
         Returns
         -------
@@ -419,6 +420,7 @@ class ForecastingHorizon:
         cutoff : pd.Period, pd.Timestamp, int, or pd.Index
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
+            If pd.Index, last/latest value is considered the cutoff
 
         Returns
         -------
@@ -438,6 +440,7 @@ class ForecastingHorizon:
         cutoff : pd.Period, pd.Timestamp, int, or pd.Index, optional (default=None)
             Cutoff value required to convert a relative forecasting
             horizon to an absolute one (and vice versa).
+            If pd.Index, last/latest value is considered the cutoff
 
         Returns
         -------
