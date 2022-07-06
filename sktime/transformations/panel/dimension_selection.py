@@ -15,8 +15,9 @@ import time
 import numpy as np
 import pandas as pd
 
-# from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestCentroid
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
 
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.transformations.base import BaseTransformer
@@ -222,3 +223,138 @@ class ElbowChannelSelection(BaseTransformer):
         """
         params = {"normalise": True}
         return params
+
+
+
+
+class ClusterChannelSelection(BaseEstimator):
+    """Channel Selection Method: KMeans.
+    
+    Apply KMeans to the distance matrix derived and creates two clusters to identify useful channels.
+
+    Parameters
+    ----------
+    normalise       : boolean, optional (default=True)
+    n_jobs          : int, optional (default=1)
+    random_state    : boolean, optional (default=None)
+    """
+
+    _tags = {
+        # Not sure what these mean, I would have thought input and output were both
+        # panel, but others are set like this, so will try this first
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
+        "requires_y": True,  # does y need to be passed in fit?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
+    }
+
+
+
+    def __init__(self, normalise=True, n_jobs=1, random_state=None):
+        self.normalise = normalise
+        self.n_jobs = n_jobs
+        self.random_state = random_state if isinstance(random_state, int) else None
+        self.dimensions_selected = None
+        self._is_fitted = False
+        self.train_time = 0
+
+    def _fit(self, X, y):
+        """Convert training data."""
+        start = int(round(time.time() * 1000))
+        centroid_obj = _shrunk_centroid(0)
+        df = centroid_obj.create_centroid(X.copy(), y)
+        obj = _distance_matrix()
+        self.distance_frame = obj.distance(df)
+        # l2 normalisng for kmeans
+        self.distance_frame = pd.DataFrame(
+            normalize(self.distance_frame, axis=0),
+            columns=self.distance_frame.columns.tolist(),
+        )
+
+        self.kmeans = KMeans(n_clusters=2, random_state=0).fit(self.distance_frame)
+        # Find the cluster name with maximum avg distance
+        self.cluster = np.argmax(self.kmeans.cluster_centers_.mean(axis=1))
+        self.dimensions_selected = [
+            id_ for id_, item in enumerate(self.kmeans.labels_) if item == self.cluster
+        ]
+        self.train_time = int(round(time.time() * 1000)) - start
+        self._is_fitted = True
+
+        return self
+
+    def _transform(self, X):
+        """Return the transformed data."""
+        # Modified from original version which used pandas and this version uses numpy arrays
+        # return X.iloc[:, self.relevant_dims]
+        return X[:, self.dimensions_selected, :]
+
+
+class ElbowClassPairwise(BaseEstimator):
+    """Channel Selection Method: ECP.
+    
+    Apply to a set of multivariate time series instances (referred to as a Panel),
+    in order to select dimensions using a scoring then elbow method (more details to
+    follow).
+
+    Parameters
+    ----------
+    normalise       : boolean, optional (default=True)
+    n_jobs          : int, optional (default=1)
+    random_state    : boolean, optional (default=None)
+    """
+
+    _tags = {
+        # Not sure what these mean, I would have thought input and output were both
+        # panel, but others are set like this, so will try this first
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Primitives",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
+        "requires_y": True,  # does y need to be passed in fit?
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
+    }
+
+    def __init__(self, normalise=True, n_jobs=1, random_state=None):
+        self.normalise = normalise
+        self.n_jobs = n_jobs
+        self.random_state = random_state if isinstance(random_state, int) else None
+        self.dimensions_selected = None
+        self._is_fitted = False
+        self.train_time = 0
+
+    def _fit(self, X, y):
+        start = int(round(time.time() * 1000))
+        """Convert training data."""
+        centroid_obj = _shrunk_centroid(0)
+        df = centroid_obj.create_centroid(X.copy(), y)
+        obj = _distance_matrix()
+        self.distance_frame = obj.distance(df)
+
+        self.dimensions_selected = []
+        for pairdistance in self.distance_frame.iteritems():
+            distance = pairdistance[1].sort_values(ascending=False).values
+            indices = pairdistance[1].sort_values(ascending=False).index
+            # print(distance, indices)
+            self.dimensions_selected.extend(_detect_knee_point(distance, indices)[0])
+            self.dimensions_selected = list(set(self.dimensions_selected))
+        self.train_time = int(round(time.time() * 1000)) - start
+        self._is_fitted = True
+        return self
+
+    def _transform(self, X):
+        """Return the transformed data."""
+        # Modified from original version which used pandas and this version uses numpy arrays
+        # return X.iloc[:, self.relevant_dims]
+        return X[:, self.dimensions_selected, :]
