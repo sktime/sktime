@@ -1,16 +1,16 @@
+# -*- coding: utf-8 -*-
+"""Channel Selection techniques for Multivariate Time Series Classification.
+
+A transformer that selects a subset of dimensions/channels for time series
+classification using a scoring system with an elbow point method.
 """
-Channel Selection techniques for Multivariate Time Series Classification.
 
-This code originated from pull request
-[ENH] Channel selection algorithms from Dhariyal et al, AALTD@ECMLPKDD21 #1821
-Author: Bhaskar Dhariyal
+__author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall"]
+__all__ = ["RandomShapeletTransform"]
 
-Only modified the use of numpy arrays instead of pandas dataframe from original
-version
-
-"""
 
 import itertools
+import time
 
 import numpy as np
 import pandas as pd
@@ -18,29 +18,27 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestCentroid
 from sklearn.preprocessing import normalize
-import time
 
-from sktime.datatypes._panel._convert import (from_3d_numpy_to_nested
-)
+from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 
 
-def eu_dist(x, y):
+def _eu_dist(x, y):
     """Calculate the euclidean distance."""
     return np.sqrt(np.sum((x - y) ** 2))
 
 
-def detect_knee_point(values, indices):
+def _detect_knee_point(values, indices):
     """Find elbow point."""
     n_points = len(values)
     all_coords = np.vstack((range(n_points), values)).T
     first_point = all_coords[0]
     line_vec = all_coords[-1] - all_coords[0]
-    line_vec_norm = line_vec / np.sqrt(np.sum(line_vec ** 2))
+    line_vec_norm = line_vec / np.sqrt(np.sum(line_vec**2))
     vec_from_first = all_coords - first_point
     scalar_prod = np.sum(vec_from_first * np.tile(line_vec_norm, (n_points, 1)), axis=1)
     vec_from_first_parallel = np.outer(scalar_prod, line_vec_norm)
     vec_to_line = vec_from_first - vec_from_first_parallel
-    dist_to_line = np.sqrt(np.sum(vec_to_line ** 2, axis=1))
+    dist_to_line = np.sqrt(np.sum(vec_to_line**2, axis=1))
     knee_idx = np.argmax(dist_to_line)
     knee = values[knee_idx]
     best_dims = [idx for (elem, idx) in zip(values, indices) if elem > knee]
@@ -50,7 +48,7 @@ def detect_knee_point(values, indices):
     return (best_dims,)
 
 
-class distance_matrix:
+class _distance_matrix:
     """Create distance matrix."""
 
     def distance(self, centroid_frame):
@@ -67,13 +65,13 @@ class distance_matrix:
             class_pair = []
             # calculate the distance of centroid here
             for _, (q, t) in enumerate(
-                    zip(
-                        centroid_frame.drop(["class_vals"], axis=1).iloc[class_[0], :],
-                        centroid_frame.iloc[class_[1], :],
-                    )
+                zip(
+                    centroid_frame.drop(["class_vals"], axis=1).iloc[class_[0], :],
+                    centroid_frame.iloc[class_[1], :],
+                )
             ):
                 # print(eu_dist(q.values, t.values))
-                class_pair.append(eu_dist(q.values, t.values))
+                class_pair.append(_eu_dist(q.values, t.values))
                 dict_ = {
                     f"Centroid_{map_cls[class_[0]]}_{map_cls[class_[1]]}": class_pair
                 }
@@ -122,6 +120,7 @@ class shrunk_centroid:
 
 class ecs(TransformerMixin, BaseEstimator):
     """Channel Selection Method: ECS."""
+
     def __init__(self, normalise=True, n_jobs=1, random_state=None):
         self.normalise = normalise
         self.n_jobs = n_jobs
@@ -130,19 +129,18 @@ class ecs(TransformerMixin, BaseEstimator):
         self._is_fitted = False
         self.train_time = 0
 
-
     def fit(self, X, y):
         """Convert training data."""
         start = int(round(time.time() * 1000))
         centroid_obj = shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
-        obj = distance_matrix()
+        obj = _distance_matrix()
         self.distance_frame = obj.distance(df)
 
         self.dimensions_selected = []
         distance = self.distance_frame.sum(axis=1).sort_values(ascending=False).values
         indices = self.distance_frame.sum(axis=1).sort_values(ascending=False).index
-        self.dimensions_selected.extend(detect_knee_point(distance, indices)[0])
+        self.dimensions_selected.extend(_detect_knee_point(distance, indices)[0])
         self.train_time = int(round(time.time() * 1000)) - start
         self._is_fitted = True
         return self
@@ -155,6 +153,7 @@ class ecs(TransformerMixin, BaseEstimator):
 
 class kmeans(TransformerMixin, BaseEstimator):
     """Channel Selection Method: KMeans."""
+
     def __init__(self, normalise=True, n_jobs=1, random_state=None):
         self.normalise = normalise
         self.n_jobs = n_jobs
@@ -168,7 +167,7 @@ class kmeans(TransformerMixin, BaseEstimator):
         start = int(round(time.time() * 1000))
         centroid_obj = shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
-        obj = distance_matrix()
+        obj = _distance_matrix()
         self.distance_frame = obj.distance(df)
         # l2 normalisng for kmeans
         self.distance_frame = pd.DataFrame(
@@ -187,17 +186,16 @@ class kmeans(TransformerMixin, BaseEstimator):
 
         return self
 
-
-
     def transform(self, X):
         """Return the transformed data."""
         # Modified from original version which used pandas and this version uses numpy arrays
-        #return X.iloc[:, self.relevant_dims]
+        # return X.iloc[:, self.relevant_dims]
         return X[:, self.dimensions_selected, :]
 
 
 class ecp(TransformerMixin, BaseEstimator):
     """Channel Selection Method: ECP."""
+
     def __init__(self, normalise=True, n_jobs=1, random_state=None):
         self.normalise = normalise
         self.n_jobs = n_jobs
@@ -211,7 +209,7 @@ class ecp(TransformerMixin, BaseEstimator):
         """Convert training data."""
         centroid_obj = shrunk_centroid(0)
         df = centroid_obj.create_centroid(X.copy(), y)
-        obj = distance_matrix()
+        obj = _distance_matrix()
         self.distance_frame = obj.distance(df)
 
         self.dimensions_selected = []
@@ -219,7 +217,7 @@ class ecp(TransformerMixin, BaseEstimator):
             distance = pairdistance[1].sort_values(ascending=False).values
             indices = pairdistance[1].sort_values(ascending=False).index
             print(distance, indices)
-            self.dimensions_selected.extend(detect_knee_point(distance, indices)[0])
+            self.dimensions_selected.extend(_detect_knee_point(distance, indices)[0])
             self.dimensions_selected = list(set(self.dimensions_selected))
         self.train_time = int(round(time.time() * 1000)) - start
         self._is_fitted = True
