@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
 
-from sktime.utils.datetime import _coerce_duration_to_int, _get_freq
+from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -329,8 +329,10 @@ class ForecastingHorizon:
     def freq(self, obj) -> None:
         """Frequency setter.
 
-        Attempts to set frequency from obj.
-        Raises error if freq is already set and discrepant from frequency of obj.
+        Attempts to set/update frequency from obj.
+        Sets self._freq to a pandas offset object (frequency representation).
+        Frequency is extracted from obj, via _check_freq.
+        Raises error if _freq is already set, and discrepant from frequency of obj.
 
         Parameters
         ----------
