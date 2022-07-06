@@ -130,9 +130,11 @@ class ElbowChannelSelection(BaseTransformer):
     """
 
     _tags = {
-        "scitype:transform-input": "Panel",
+        # Not sure what these mean, I would have thought input and output were both
+        # panel, but others are set like this, so will try this first
+        "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
-        "scitype:transform-output": "Panel",
+        "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "univariate-only": False,  # can the transformer handle multivariate X?
