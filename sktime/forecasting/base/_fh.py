@@ -8,6 +8,7 @@ __all__ = ["ForecastingHorizon"]
 
 from functools import lru_cache
 from typing import Optional, Union
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -747,7 +748,12 @@ def _coerce_to_period(x, freq=None):
     # timestamp/freq combinations are deprecated from 0.13.0
     # warning should be replaced by exception in 0.14.0
     if isinstance(x, pd.Timestamp) and freq is None:
-        raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
+        freq = x.freq
+        warn(
+            "use of ForecastingHorizon methods with pd.Timestamp carrying freq "
+            "is deprecated since 0.13.0 and will raise exception from 0.14.0"
+        )
+    #   raise ValueError("_coerce_to_period requires freq if x is pd.Timestamp")
     try:
         return x.to_period(freq)
     except (ValueError, AttributeError) as e:
