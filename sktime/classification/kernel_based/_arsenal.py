@@ -435,6 +435,10 @@ class Arsenal(BaseClassifier):
         if parameter_set == "results_comparison":
             params = {"num_kernels": 20, "n_estimators": 5}
         else:
-            params = {"num_kernels": 10, "n_estimators": 2}
+            params = {
+                "num_kernels": 10,
+                "n_estimators": 2,
+                "save_transformed_data": True,
+            }
 
         return params

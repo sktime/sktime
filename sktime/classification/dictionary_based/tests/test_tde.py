@@ -18,7 +18,6 @@ def test_tde_train_estimate():
         max_ensemble_size=2,
         randomly_selected_params=3,
         random_state=0,
-        save_train_predictions=True,
     )
     tde.fit(X_train, y_train)
 
