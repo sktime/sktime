@@ -26,6 +26,7 @@ Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
     current ForecastingHorizon  - fh
+    current cutoff              - cutoff
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -38,6 +39,7 @@ __author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 __all__ = ["BaseForecaster"]
 
 from copy import deepcopy
+from itertools import product
 from warnings import warn
 
 import numpy as np
@@ -666,12 +668,6 @@ class BaseForecaster(BaseEstimator):
                 i-th (event dim 1) distribution is forecast for i-th entry of fh
                 j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
         """
-        msg = (
-            "tensorflow-probability must be installed for fully probabilistic forecasts"
-            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
-        )
-        _check_dl_dependencies(msg)
-
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not have the capability to return "
@@ -679,6 +675,18 @@ class BaseForecaster(BaseEstimator):
                 "think this estimator should have the capability, please open "
                 "an issue on sktime."
             )
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            raise NotImplementedError(
+                "automated vectorization for predict_proba is not implemented"
+            )
+
+        msg = (
+            "tensorflow-probability must be installed for fully probabilistic forecasts"
+            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
+        )
+        _check_dl_dependencies(msg)
+
         self.check_is_fitted()
         # input checks
         fh = self._check_fh(fh)
@@ -709,7 +717,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -893,7 +901,7 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
@@ -1125,11 +1133,11 @@ class BaseForecaster(BaseEstimator):
         if X is None and y is None:
             return None, None
 
-        def _most_complex_scitype(scitypes):
+        def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
-            if "Hierarchical" in scitypes:
+            if "Hierarchical" in scitypes and smaller_equal_than == "Hierarchical":
                 return "Hierarchical"
-            elif "Panel" in scitypes:
+            elif "Panel" in scitypes and smaller_equal_than != "Series":
                 return "Panel"
             elif "Series" in scitypes:
                 return "Series"
@@ -1173,15 +1181,13 @@ class BaseForecaster(BaseEstimator):
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
 
-            requires_vectorization = y_scitype not in y_inner_scitype
-
-            if (
+            req_vec_because_rows = y_scitype not in y_inner_scitype
+            req_vec_because_cols = (
                 self.get_tag("scitype:y") == "univariate"
                 and not y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    "y must be univariate, but found more than one variable"
-                )
+            )
+            requires_vectorization = req_vec_because_rows or req_vec_because_cols
+
             if (
                 self.get_tag("scitype:y") == "multivariate"
                 and y_metadata["is_univariate"]
@@ -1267,9 +1273,16 @@ class BaseForecaster(BaseEstimator):
                 as_scitype=X_scitype,  # we are dealing with series
             )
         else:
-            iterate_as = _most_complex_scitype(y_inner_scitype)
+            iterate_as = _most_complex_scitype(
+                y_inner_scitype, smaller_equal_than=y_scitype
+            )
             if y is not None:
-                y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+                y_inner = VectorizedDF(
+                    X=y,
+                    iterate_as=iterate_as,
+                    is_scitype=y_scitype,
+                    iterate_cols=req_vec_because_cols,
+                )
             else:
                 y_inner = None
             if X is not None:
@@ -1361,21 +1374,27 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        cutoff : pandas compatible index element
+        cutoff : pandas compatible index element, or None
+            pandas compatible index element, if cutoff has been set; None otherwise
         """
-        return self._cutoff
+        if self._cutoff is None:
+            return None
+        else:
+            return self._cutoff[0]
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
 
         Parameters
         ----------
-        cutoff: pandas compatible index element
+        cutoff: pandas compatible index or index element
 
         Notes
         -----
-        Set self._cutoff is to `cutoff`.
+        Set self._cutoff to `cutoff`, coerced to a pandas.Index.
         """
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index([cutoff])
         self._cutoff = cutoff
 
     def _set_cutoff_from_y(self, y):
@@ -1390,9 +1409,9 @@ class BaseForecaster(BaseEstimator):
                 pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
-        Set self._cutoff to latest index seen in `y`.
+        Set self._cutoff to pandas.Index containing latest index seen in `y`.
         """
-        cutoff_idx = get_cutoff(y, self.cutoff)
+        cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
 
     @property
@@ -1520,7 +1539,7 @@ class BaseForecaster(BaseEstimator):
 
             self._yvec = y
 
-            idx = y.get_iter_indices()
+            row_idx, col_idx = y.get_iter_indices()
             ys = y.as_list()
 
             if X is None:
@@ -1528,22 +1547,31 @@ class BaseForecaster(BaseEstimator):
             else:
                 Xs = X.as_list()
 
-            self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
-            for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = self.clone()
-                self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
+            if row_idx is None:
+                row_idx = ["forecasters"]
+            if col_idx is None:
+                col_idx = ["forecasters"]
+
+            self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
+            for ix in range(len(ys)):
+                i, j = y.get_iloc_indexer(ix)
+                self.forecasters_.iloc[i].iloc[j] = self.clone()
+                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:
             n = len(self.forecasters_.index)
+            m = len(self.forecasters_.columns)
             X = kwargs.pop("X", None)
             if X is None:
-                Xs = [None] * n
+                Xs = [None] * n * m
             else:
                 Xs = X.as_list()
             y_preds = []
-            for i in range(n):
-                method = getattr(self.forecasters_.iloc[i, 0], methodname)
+            ix = -1
+            for i, j in product(range(n), range(m)):
+                ix += 1
+                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
             y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
@@ -2051,7 +2079,8 @@ class BaseForecaster(BaseEstimator):
             self_copy = self
 
         # set cutoff to time point before data
-        self_copy._set_cutoff(_shift(y.index[0], by=-1))
+        y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
+        self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
