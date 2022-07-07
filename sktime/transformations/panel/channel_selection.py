@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Channel Selection techniques for Multivariate Time Series Classification.
 
-A transformer that selects a subset of dimensions/channels for time series
+A transformer that selects a subset of channels/dimensions for time series
 classification using a scoring system with an elbow point method.
 """
 
 __author__ = ["haskarb", "a-pasos-ruiz", "TonyBagnall"]
-__all__ = ["ElbowChannelSelection"]
+__all__ = ["ElbowChannelSelection", "ElbowClassPairwise"]
 
 
 import itertools
@@ -14,19 +14,16 @@ import time
 
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
+from scipy.spatial.distance import euclidean
 from sklearn.neighbors import NearestCentroid
-from sklearn.preprocessing import normalize
 
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.transformations.base import BaseTransformer
 
-# from sklearn.preprocessing import normalize
-
 
 def _eu_dist(x, y):
     """Calculate the euclidean distance."""
-    return np.sqrt(np.sum((x - y) ** 2))
+    return euclidean(x, y)
 
 
 def _detect_knee_point(values, indices):
@@ -116,17 +113,41 @@ class _shrunk_centroid:
 
 
 class ElbowChannelSelection(BaseTransformer):
-    """ElbowChannelSelection (ECS) transformer to select a subset of dimensions.
+    """Elbow Channel Selection (ECS) transformer to select a subset of channels.
 
-    Apply to a set of multivariate time series instances (referred to as a Panel),
-    in order to select dimensions using a scoring then elbow method (more details to
-    follow).
+    Overview: From the input of multivariate time series data, create a distance
+    matrix [1] by calculating the distance between each class centroid. The
+    ECS selects the subset of channels using the elbow method, which maximizes the
+    distance between the class centroids by aggregating the distance for every
+    class pair across each channel.
 
-    Parameters
+    Attributes
     ----------
-    normalise       : boolean, optional (default=True)
-    n_jobs          : int, optional (default=1)
-    random_state    : boolean, optional (default=None)
+    channels_selected : list
+        List of channels selected by the ECS.
+    distance_frame_ : DataFrame
+        Distance matrix between the class centroids.
+    train_time_ : int
+        Time taken to train the ECS.
+
+    Notes
+    -----
+    Original repository: https://github.com/mlgig/Channel-Selection-MTSC
+
+    References
+    ----------
+    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
+    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+
+    Examples
+    --------
+    >>> from sklearn.transformations.panel.channel_selection import ElbowClassSelection
+    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> cs = channel_selection.ElbowClassSelection()
+    >>> X_train, y_train = load_UCR_UEA_dataset("Cricket", split="train",
+                                                return_X_y=True)
+    >>> cs.fit(X_train, y_train)
+    >>> cs.transform(X_train)
 
     """
 
@@ -144,30 +165,24 @@ class ElbowChannelSelection(BaseTransformer):
         "skip-inverse-transform": True,  # is inverse-transform skipped when called?
     }
 
-    def __init__(self, normalise=True, n_jobs=1, random_state=None):
-        self.normalise = normalise
-        self.n_jobs = n_jobs
-        self.random_state = random_state
+    def __init__(self):
         self.channels_selected = []
         super(ElbowChannelSelection, self).__init__()
 
     def _fit(self, X, y):
-        """
-        Fit ECS to X and y.
-
-        private _fit containing the core logic, called from fit
+        """Fit ECS to a specified X and y.
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X: pandas DataFrame or np.ndarray
+            The training input samples.
+        y: array-like or list
+            The class values for X.
 
         Returns
         -------
-        self: reference to self
+        self : reference to self.
+
         """
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
@@ -184,154 +199,55 @@ class ElbowChannelSelection(BaseTransformer):
         """
         Transform X and return a transformed version.
 
-        private _transform containing core logic, called from transform
-
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X : pandas DataFrame or np.ndarray
+            The input data to transform.
 
         Returns
         -------
-        X with a subset of dimensions
-        """
-        return X[:, self.channels_selected, :]
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for transformers.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        params = {"normalise": True}
-        return params
-
-
-class ClusterChannelSelection(BaseTransformer):
-    """Channel Selection Method: KMeans.
-
-    Apply KMeans to the distance matrix derived and
-    creates two clusters to identify useful channels.
-
-    Parameters
-    ----------
-    normalise       : boolean, optional (default=True)
-    n_jobs          : int, optional (default=1)
-    random_state    : boolean, optional (default=None)
-    """
-
-    _tags = {
-        # "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        # "scitype:transform-output": "Primitives",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
-        "requires_y": True,  # does y need to be passed in fit?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
-        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-    }
-
-    def __init__(self, normalise=True, n_jobs=1, random_state=None):
-        self.normalise = normalise
-        self.n_jobs = n_jobs
-        self.random_state = random_state if isinstance(random_state, int) else None
-        self.channels_selected = []
-        self._is_fitted = False
-        self.train_time = 0
-        super(ClusterChannelSelection, self).__init__()
-
-    def _fit(self, X, y):
-        """
-        Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: reference to self
-        """
-        start = int(round(time.time() * 1000))
-        centroid_obj = _shrunk_centroid(0)
-        df = centroid_obj.create_centroid(X.copy(), y)
-        obj = _distance_matrix()
-        self.distance_frame_ = obj.distance(df)
-        # l2 normalisng for kmeans
-        self.distance_frame_ = pd.DataFrame(
-            normalize(self.distance_frame_, axis=0),
-            columns=self.distance_frame_.columns.tolist(),
-        )
-
-        self.kmeans = KMeans(n_clusters=2, random_state=0).fit(self.distance_frame_)
-        # Find the cluster name with maximum avg distance
-        self.cluster = np.argmax(self.kmeans.cluster_centers_.mean(axis=1))
-        self.channels_selected = [
-            id_ for id_, item in enumerate(self.kmeans.labels_) if item == self.cluster
-        ]
-        self.train_time = int(round(time.time() * 1000)) - start
-        self._is_fitted = True
-
-        return self
-
-    def _transform(self, X, y):
-        """
-        Transform X and return a transformed version.
-
-        private _transform containing core logic, called from transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        X with a subset of dimensions
+        output : pandas DataFrame
+            X with a subset of channels
         """
         return X[:, self.channels_selected, :]
 
 
 class ElbowClassPairwise(BaseTransformer):
-    """Channel Selection Method: ECP.
+    """Elbow Class Pairwise (ECP) transformer to select a subset of channels.
 
-    Apply to a set of multivariate time series instances (referred to as a Panel),
-    in order to select dimensions using a scoring then elbow method (more details to
-    follow).
+    Overview: From the input of multivariate time series data, create a distance
+    matrix [1] by calculating the distance between each class centroid. The ECP
+    selects the subset of channels using the elbow method that maximizes the
+    distance between each class centroids pair across all channels.
 
-    Parameters
+    Attributes
     ----------
-    normalise       : boolean, optional (default=True)
-    n_jobs          : int, optional (default=1)
-    random_state    : boolean, optional (default=None)
+    channels_selected : list
+        List of channels selected by the ECP.
+    distance_frame_ : DataFrame
+        Distance matrix between the class centroids.
+    train_time_ : int
+        Time taken to train the ECP.
+
+    Notes
+    -----
+    Original repository: https://github.com/mlgig/Channel-Selection-MTSC
+
+    References
+    ----------
+    ..[1]: Bhaskar Dhariyal et al. “Fast Channel Selection for Scalable Multivariate
+    Time Series Classification.” AALTD, ECML-PKDD, Springer, 2021
+
+    Examples
+    --------
+    >>> from sklearn.transformations.panel.channel_selection import ElbowClassPairwise
+    >>> from sktime.datasets import load_UCR_UEA_dataset
+    >>> cs = channel_selection.ElbowClassPairwise()
+    >>> X_train, y_train = load_UCR_UEA_dataset("Cricket", split="train",
+                                                return_X_y=True)
+    >>> cs.fit(X_train, y_train)
+    >>> cs.transform(X_train)
+
     """
 
     _tags = {
@@ -358,22 +274,19 @@ class ElbowClassPairwise(BaseTransformer):
         super(ElbowClassPairwise, self).__init__()
 
     def _fit(self, X, y):
-        """
-        Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
+        """Fit ECP to a specified X and y.
 
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X: pandas DataFrame or np.ndarray
+            The training input samples.
+        y: array-like or list
+            The class values for X.
 
         Returns
         -------
-        self: reference to self
+        self : reference to self.
+
         """
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(0)
@@ -390,22 +303,18 @@ class ElbowClassPairwise(BaseTransformer):
         self._is_fitted = True
         return self
 
-    def _transform(self, X, y):
+    def _transform(self, X, y=None):
         """
         Transform X and return a transformed version.
 
-        private _transform containing core logic, called from transform
-
         Parameters
         ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
+        X : pandas DataFrame or np.ndarray
+            The input data to transform.
 
         Returns
         -------
-        X with a subset of dimensions
+        output : pandas DataFrame
+            X with a subset of channels
         """
         return X[:, self.channels_selected, :]
