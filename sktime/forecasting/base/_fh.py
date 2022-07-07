@@ -164,12 +164,6 @@ def _check_freq(obj):
         return to_offset(obj)
     else:
         return None
-    # else:
-    #     raise TypeError(
-    #         "freq passed to ForecastingHorizon must be "
-    #         "pd.Index, pd.offset, str, or None,"
-    #         f" but found freq of type {type(obj)}"
-    #     )
 
 
 def _extract_freq_from_cutoff(x) -> Optional[str]:
