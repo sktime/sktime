@@ -48,7 +48,7 @@ class DSPipeline(BaseClassifier):
         self._pipeline = make_pipeline(self.ds_transformer, self.ds_classifier)
         self._pipeline.fit(X, y)
         self.ds_num_dimensions = n_dims
-        self.ds_train_time = self.ds_transformer.train_time
+        self.ds_train_time = self.ds_transformer.train_time_
         self.ds_num_selected_dimensions = len(self.ds_transformer.dimensions_selected)
         return self
 

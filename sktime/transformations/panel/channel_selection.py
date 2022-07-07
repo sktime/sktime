@@ -116,7 +116,7 @@ class _shrunk_centroid:
 
 
 class ElbowChannelSelection(BaseTransformer):
-    """Transformer to select a subset of dimensions.
+    """ElbowChannelSelection (ECS) transformer to select a subset of dimensions.
 
     Apply to a set of multivariate time series instances (referred to as a Panel),
     in order to select dimensions using a scoring then elbow method (more details to
@@ -127,6 +127,8 @@ class ElbowChannelSelection(BaseTransformer):
     normalise       : boolean, optional (default=True)
     n_jobs          : int, optional (default=1)
     random_state    : boolean, optional (default=None)
+
+
     """
 
     _tags = {
@@ -152,7 +154,7 @@ class ElbowChannelSelection(BaseTransformer):
 
     def _fit(self, X, y):
         """
-        Fit transformer to X and y.
+        Fit ECS to X and y.
 
         private _fit containing the core logic, called from fit
 
@@ -353,7 +355,7 @@ class ElbowClassPairwise(BaseTransformer):
         self.random_state = random_state if isinstance(random_state, int) else None
         self.channels_selected = []
         self._is_fitted = False
-        self.train_time = 0
+        self.train_time_ = 0
         super(ElbowClassPairwise, self).__init__()
 
     def _fit(self, X, y):
@@ -385,7 +387,7 @@ class ElbowClassPairwise(BaseTransformer):
             indices = pairdistance[1].sort_values(ascending=False).index
             self.channels_selected.extend(_detect_knee_point(distance, indices)[0])
             self.channels_selected = list(set(self.channels_selected))
-        self.train_time = int(round(time.time() * 1000)) - start
+        self.train_time_ = int(round(time.time() * 1000)) - start
         self._is_fitted = True
         return self
 
