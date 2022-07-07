@@ -296,8 +296,6 @@ class ClusterChannelSelection(BaseTransformer):
             id_ for id_, item in enumerate(self.kmeans.labels_) if item == self.cluster
         ]
         self.train_time = int(round(time.time() * 1000)) - start
-        self._is_fitted = True
-
         return self
 
     def _transform(self, X, y):

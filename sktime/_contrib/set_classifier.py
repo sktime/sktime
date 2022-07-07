@@ -2,7 +2,6 @@
 """Set classifier function."""
 __author__ = ["TonyBagnall"]
 
-from _contrib.classification.ds import DSPipeline
 from sklearn.ensemble import RandomForestClassifier
 
 from sktime.classification.deep_learning import CNNClassifier
@@ -143,33 +142,6 @@ def set_classifier(cls, resample_id=None, train_file=False):
         return HIVECOTEV1(random_state=resample_id)
     elif name == "hc2" or name == "hivecotev2":
         return HIVECOTEV2(random_state=resample_id)
-    elif name == "hc2-ecs" or name == "hivecotev2ecs":
-        return DSPipeline(
-            random_state=resample_id,
-            time_limit_in_minutes=0,
-            ds_transformer=ecs(),
-            ds_classifier=HIVECOTEV2(
-                random_state=resample_id, n_jobs=1, time_limit_in_minutes=0, verbose=1
-            ),
-        )
-    elif name == "hc2-kmeans" or name == "hivecotev2kmeans":
-        return DSPipeline(
-            random_state=resample_id,
-            time_limit_in_minutes=0,
-            ds_transformer=kmeans(),
-            ds_classifier=HIVECOTEV2(
-                random_state=resample_id, n_jobs=1, time_limit_in_minutes=0, verbose=1
-            ),
-        )
-    elif name == "hc2-ecp" or name == "hivecotev2secp":
-        return DSPipeline(
-            random_state=resample_id,
-            time_limit_in_minutes=0,
-            ds_transformer=ecp(),
-            ds_classifier=HIVECOTEV2(
-                random_state=resample_id, n_jobs=1, time_limit_in_minutes=0, verbose=1
-            ),
-        )
 
     # Interval based
     elif name == "rise" or name == "randomintervalspectralforest":
