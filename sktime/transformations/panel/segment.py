@@ -39,7 +39,9 @@ class IntervalSegmenter(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
-        "fit-in-transform": False,  # is fit empty and can be skipped? Yes = True
+        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "capability:unequal_length:removes": True,
+        # is transform result always guaranteed to be equal length (and series)?
     }
 
     def __init__(self, intervals=10):
@@ -133,8 +135,15 @@ class IntervalSegmenter(BaseTransformer):
         return Xt
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
@@ -261,8 +270,15 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         return self
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
@@ -379,7 +395,7 @@ class SlidingWindowSegmenter(BaseTransformer):
 
     _tags = {
         "univariate-only": True,
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",

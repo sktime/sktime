@@ -7,7 +7,6 @@ No other place is necessary to add new tags.
 This module exports the following:
 
 ---
-
 ESTIMATOR_TAG_REGISTER - list of tuples
 
 each tuple corresponds to a tag, elements as follows:
@@ -57,16 +56,10 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "fit-in-transform",
-        ["transformer", "transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "does fit contain no logic and can be skipped? yes/no",
-    ),
-    (
-        "fit-in-predict",
+        "fit_is_empty",
         "estimator",
         "bool",
-        "does fit contain no logic and can be skipped? yes/no",
+        "fit contains no logic and can be skipped? Yes=True, No=False",
     ),
     (
         "transform-returns-same-time-index",
@@ -193,25 +186,43 @@ ESTIMATOR_TAG_REGISTER = [
         "does the forecaster implement predict_interval or predict_quantiles?",
     ),
     (
+        "capability:pred_var",
+        "forecaster",
+        "bool",
+        "does the forecaster implement predict_variance?",
+    ),
+    (
         "capability:multivariate",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier classify time series with 2 or more variables?",
     ),
     (
         "capability:unequal_length",
-        "classifier",
+        ["classifier", "early_classifier", "transformer"],
         "bool",
-        "can the classifier handle unequal length time series?",
+        "can the estimator handle unequal length time series?",
     ),
     # "capability:missing_values" is same as "handles-missing-data" tag.
     # They are kept distinct intentionally for easier TSC refactoring.
     # Will be merged after refactor completion.
     (
         "capability:missing_values",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier handle missing data (NA, np.nan) in inputs?",
+    ),
+    (
+        "capability:unequal_length:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to be equal length series (and series)?",
+    ),
+    (
+        "capability:missing_values:removes",
+        "transformer",
+        "bool",
+        "is the transformer result guaranteed to have no missing values?",
     ),
     (
         "capability:train_estimate",
@@ -235,7 +246,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "capability:multithreading",
-        "classifier",
+        ["classifier", "early_classifier"],
         "bool",
         "can the classifier set n_jobs to use multiple threads?",
     ),
@@ -277,27 +288,33 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "requires-y-train",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "does metric require y-train data to be passed?",
     ),
     (
         "requires-y-pred-benchmark",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "does metric require a predictive benchmark?",
     ),
     (
         "univariate-metric",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "bool",
         "Does the metric only work on univariate y data?",
     ),
     (
         "scitype:y_pred",
-        "estimator",
+        "estimator",  # todo: should be metric, will cause errors currently
         "str",
         "What is the scitype of y_pred: quantiles, proba, interval?",
+    ),
+    (
+        "lower_is_better",
+        "estimator",  # todo: should be metric, will cause errors currently
+        "bool",
+        "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
 ]
 

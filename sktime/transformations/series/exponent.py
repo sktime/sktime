@@ -78,7 +78,7 @@ class ExponentTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-in-transform": True,
+        "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "univariate-only": False,
         "capability:inverse_transform": True,

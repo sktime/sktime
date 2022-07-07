@@ -2,13 +2,33 @@
 """Meta-transformers for building composite transformers."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from sklearn.base import clone
+import pandas as pd
+from sklearn import clone
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.transformations._delegate import _DelegatedTransformer
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.multiindex import flatten_multiindex
+from sktime.utils.sklearn import is_sklearn_classifier, is_sklearn_transformer
 
-__author__ = ["fkiraly"]
-__all__ = ["TransformerPipeline"]
+__author__ = ["fkiraly", "mloning", "miraep8"]
+__all__ = [
+    "TransformerPipeline",
+    "FeatureUnion",
+    "FitInTransform",
+    "MultiplexTransformer",
+]
+
+
+def _coerce_to_sktime(other):
+    """Check and format inputs to dunders for compose."""
+    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+
+    # if sklearn transformer, adapt to sktime transformer first
+    if is_sklearn_transformer(other):
+        return TabularToSeriesAdaptor(other)
+
+    return other
 
 
 class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
@@ -65,17 +85,17 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> # we'll construct a pipeline from 2 transformers below, in three different ways
-    >>> # preparing the transformers
+    We'll construct a pipeline from 2 transformers below, in three different ways
+    Preparing the transformers
     >>> from sktime.transformations.series.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
 
-    >>> # Example 1: construct without strings
+    Example 1, option A: construct without strings
     >>> pipe = TransformerPipeline(steps = [t1, t2])
     >>> # unique names are generated for the two components t1 and t2
 
-    >>> # Example 2: construct with strings to give custom names to steps
+    Example 1, option B: construct with strings to give custom names to steps
     >>> pipe = TransformerPipeline(
     ...         steps = [
     ...             ("trafo1", t1),
@@ -83,38 +103,91 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     ...         ]
     ...     )
 
-    >>> # Example 3: for quick construction, the * dunder method can be used
+    Example 1, option C: for quick construction, the * dunder method can be used
     >>> pipe = t1 * t2
+
+    Example 2: sklearn transformers can be used in the pipeline.
+    If applied to Series, sklearn transformers are applied by series instance.
+    If applied to Table, sklearn transformers are applied to the table as a whole.
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sktime.transformations.series.summarize import SummaryTransformer
+
+    This applies the scaler per series, then summarizes:
+    >>> pipe = StandardScaler() * SummaryTransformer()
+
+    This applies the sumamrization, then scales the full summary table:
+    >>> pipe = SummaryTransformer() * StandardScaler()
+
+    This scales the series, then summarizes, then scales the full summary table:
+    >>> pipe = StandardScaler() * SummaryTransformer() * StandardScaler()
     """
 
     _required_parameters = ["steps"]
 
-    # no default tag values - these are set dynamically below
+    _tags = {
+        # we let all X inputs through to be handled by first transformer
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "np.ndarray",
+            "pd.Series",
+            "pd-multiindex",
+            "df-list",
+            "nested_univ",
+            "numpy3D",
+            "pd_multiindex_hier",
+        ],
+    }
+
+    # no further default tag values - these are set dynamically below
 
     def __init__(self, steps):
 
         self.steps = steps
-        self.steps_ = self._check_estimators(steps)
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
 
         super(TransformerPipeline, self).__init__()
 
-        first_trafo = self.steps_[0][1]
-        last_trafo = self.steps_[-1][1]
+        # abbreviate for readability
+        ests = self.steps_
+        first_trafo = ests[0][1]
+        last_trafo = ests[-1][1]
 
-        self.clone_tags(first_trafo, ["X_inner_mtype", "scitype:transform-input"])
-        self.clone_tags(last_trafo, "scitype:transform-output")
+        # input mtype and input type are as of the first estimator
+        self.clone_tags(first_trafo, ["scitype:transform-input"])
+        # output type is that of last estimator, if no "Primitives" occur in the middle
+        # if "Primitives" occur in the middle, then output is set to that too
+        # this is in a case where "Series-to-Series" is applied to primitive df
+        #   e.g., in a case of pipelining with scikit-learn transformers
+        last_out = last_trafo.get_tag("scitype:transform-output")
+        self._anytagis_then_set(
+            "scitype:transform-output", "Primitives", last_out, ests
+        )
 
-        self._anytag_notnone_set("y_inner_mtype")
-        self._anytag_notnone_set("scitype:transform-labels")
+        # set property tags based on tags of components
+        self._anytag_notnone_set("y_inner_mtype", ests)
+        self._anytag_notnone_set("scitype:transform-labels", ests)
 
-        self._anytagis_then_set("scitype:instancewise", False, True)
-        self._anytagis_then_set("X-y-must-have-same-index", True, False)
-        self._anytagis_then_set("fit-in-transform", False, True)
-        self._anytagis_then_set("transform-returns-same-time-index", False, True)
-        self._anytagis_then_set("skip-inverse-transform", True, False)
-        self._anytagis_then_set("capability:inverse_transform", False, True)
-        self._anytagis_then_set("handles-missing-data", False, True)
-        self._anytagis_then_set("univariate-only", True, False)
+        self._anytagis_then_set("scitype:instancewise", False, True, ests)
+        self._anytagis_then_set("fit_is_empty", False, True, ests)
+        self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
+        self._anytagis_then_set("skip-inverse-transform", True, False, ests)
+        self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        self._anytagis_then_set("univariate-only", True, False, ests)
+
+        # can handle missing data iff all estimators can handle missing data
+        #   up to a potential estimator when missing data is removed
+        # removes missing data iff can handle missing data,
+        #   and there is an estimator in the chain that removes it
+        self._tagchain_is_linked_set(
+            "handles-missing-data", "capability:missing_values:removes", ests
+        )
+        # can handle unequal length iff all estimators can handle unequal length
+        #   up to a potential estimator which turns the series equal length
+        # removes unequal length iff can handle unequal length,
+        #   and there is an estimator in the chain that renders series equal length
+        self._tagchain_is_linked_set(
+            "capability:unequal_length", "capability:unequal_length:removes", ests
+        )
 
     @property
     def _steps(self):
@@ -139,31 +212,21 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `self` (first) with `other` (last).
             not nested, contains only non-TransformerPipeline `sktime` transformers
         """
-        # we don't use names but _get_estimator_names to get the *original* names
-        #   to avoid multiple "make unique" calls which may grow strings too much
-        _, trafos = zip(*self.steps_)
-        names = tuple(self._get_estimator_names(self.steps))
-        if isinstance(other, TransformerPipeline):
-            _, trafos_o = zip(*other.steps_)
-            names_o = tuple(other._get_estimator_names(other.steps))
-            new_names = names + names_o
-            new_trafos = trafos + trafos_o
-        elif isinstance(other, BaseTransformer):
-            new_names = names + (type(other).__name__,)
-            new_trafos = trafos + (other,)
-        elif self._is_name_and_trafo(other):
-            other_name = other[0]
-            other_trafo = other[1]
-            new_names = names + (other_name,)
-            new_trafos = trafos + (other_trafo,)
-        else:
-            return NotImplemented
+        from sktime.classification.compose import SklearnClassifierPipeline
 
-        # if all the names are equal to class names, we eat them away
-        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return TransformerPipeline(steps=list(new_trafos))
-        else:
-            return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
+        other = _coerce_to_sktime(other)
+
+        # if sklearn classifier, use sklearn classifier pipeline
+        if is_sklearn_classifier(other):
+            return SklearnClassifierPipeline(classifier=other, transformers=self.steps)
+
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=TransformerPipeline,
+            attr_name="steps",
+            concat_order="left",
+        )
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated TransformerPipeline.
@@ -180,96 +243,14 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         TransformerPipeline object, concatenation of `other` (first) with `self` (last).
             not nested, contains only non-TransformerPipeline `sktime` steps
         """
-        _, trafos = zip(*self.steps_)
-        names = tuple(self._get_estimator_names(self.steps))
-        if isinstance(other, TransformerPipeline):
-            _, trafos_o = zip(*other.steps_)
-            names_o = tuple(other._get_estimator_names(other.steps))
-            new_names = names_o + names
-            new_trafos = trafos_o + trafos
-        elif isinstance(other, BaseTransformer):
-            new_names = (type(other).__name__,) + names
-            new_trafos = (other,) + trafos
-        elif self._is_name_and_trafo(other):
-            other_name = other[0]
-            other_trafo = other[1]
-            new_names = (other_name,) + names
-            new_trafos = (other_trafo,) + trafos
-        else:
-            return NotImplemented
-
-        # if all the names are equal to class names, we eat them away
-        if all(type(x[1]).__name__ == x[0] for x in zip(new_names, new_trafos)):
-            return TransformerPipeline(steps=list(new_trafos))
-        else:
-            return TransformerPipeline(steps=list(zip(new_names, new_trafos)))
-
-    @staticmethod
-    def _is_name_and_trafo(obj):
-        if not isinstance(obj, tuple) or len(obj) != 2:
-            return False
-        if not isinstance(obj[0], str) or not isinstance(obj[1], BaseTransformer):
-            return False
-        return True
-
-    def _make_strings_unique(self, strlist):
-        """Make a list or tuple of strings unique by appending _int of occurrence."""
-        # if already unique, just return
-        if len(set(strlist)) == len(strlist):
-            return strlist
-
-        # we convert internally to list, but remember whether it was tuple
-        if isinstance(strlist, tuple):
-            strlist = list(strlist)
-            was_tuple = True
-        else:
-            was_tuple = False
-
-        from collections import Counter
-
-        strcount = Counter(strlist)
-
-        # if any duplicates, we append _integer of occurrence to non-uniques
-        nowcount = Counter()
-        uniquestr = strlist
-        for i, x in enumerate(uniquestr):
-            if strcount[x] > 1:
-                nowcount.update([x])
-                uniquestr[i] = x + "_" + str(nowcount[x])
-
-        if was_tuple:
-            uniquestr = tuple(uniquestr)
-
-        # repeat until all are unique
-        #   the algorithm recurses, but will always terminate
-        #   because potential clashes are lexicographically increasing
-        return self._make_strings_unique(uniquestr)
-
-    def _anytagis(self, tag_name, value):
-        """Return whether any estimator in list has tag `tag_name` of value `value`."""
-        tagis = [est.get_tag(tag_name, value) == value for _, est in self.steps_]
-        return any(tagis)
-
-    def _anytagis_then_set(self, tag_name, value, value_if_not):
-        """Set self's `tag_name` tag to `value` if any estimator on the list has it."""
-        if self._anytagis(tag_name=tag_name, value=value):
-            self.set_tags(**{tag_name: value})
-        else:
-            self.set_tags(**{tag_name: value_if_not})
-
-    def _anytag_notnone_val(self, tag_name):
-        """Return first non-'None' value of tag `tag_name` in estimator list."""
-        for _, est in self.steps_:
-            tag_val = est.get_tag(tag_name)
-            if tag_val != "None":
-                return tag_val
-        return tag_val
-
-    def _anytag_notnone_set(self, tag_name):
-        """Set self's `tag_name` tag to first non-'None' value in estimator list."""
-        tag_val = self._anytag_notnone_val(tag_name=tag_name)
-        if tag_val != "None":
-            self.set_tags(**{tag_name: tag_val})
+        other = _coerce_to_sktime(other)
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=TransformerPipeline,
+            attr_name="steps",
+            concat_order="right",
+        )
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -288,6 +269,8 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self: reference to self
         """
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+
         Xt = X
         for _, transformer in self.steps_:
             Xt = transformer.fit_transform(X=Xt, y=y)
@@ -313,7 +296,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         """
         Xt = X
         for _, transformer in self.steps_:
-            if not self.get_tag("fit-in-transform", False):
+            if not self.get_tag("fit_is_empty", False):
                 Xt = transformer.transform(X=Xt, y=y)
             else:
                 Xt = transformer.fit_transform(X=Xt, y=y)
@@ -338,8 +321,11 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         inverse transformed version of X
         """
         Xt = X
-        for _, transformer in self.steps_:
-            Xt = transformer.inverse_transform(X=Xt, y=y)
+        for _, transformer in reversed(self.steps_):
+            if not self.get_tag("fit_is_empty", False):
+                Xt = transformer.inverse_transform(X=Xt, y=y)
+            else:
+                Xt = transformer.fit(X=Xt, y=y).inverse_transform(X=Xt, y=y)
 
         return Xt
 
@@ -372,7 +358,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : boolean, optional, default=True
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
 
@@ -395,108 +381,15 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._set_params("_steps", **kwargs)
         return self
 
-    def _check_estimators(self, estimators, attr_name="steps"):
-
-        msg = (
-            f"Invalid '{attr_name}' attribute, '{attr_name}' should be a list"
-            " of estimators, or a list of (string, estimator) tuples."
-        )
-
-        if (
-            estimators is None
-            or len(estimators) == 0
-            or not isinstance(estimators, list)
-        ):
-            raise TypeError(msg)
-
-        if not isinstance(estimators[0], (BaseTransformer, tuple)):
-            raise TypeError(msg)
-
-        if isinstance(estimators[0], BaseTransformer):
-            if not all(isinstance(est, BaseTransformer) for est in estimators):
-                raise TypeError(msg)
-        if isinstance(estimators[0], tuple):
-            if not all(isinstance(est, tuple) for est in estimators):
-                raise TypeError(msg)
-            if not all(isinstance(est[0], str) for est in estimators):
-                raise TypeError(msg)
-            if not all(isinstance(est[1], BaseTransformer) for est in estimators):
-                raise TypeError(msg)
-
-        return self._get_estimator_tuples(estimators, clone_ests=True)
-
-    def _get_estimator_list(self, estimators):
-        """Return list of estimators, from a list or tuple.
-
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
-
-        Returns
-        -------
-        list of estimators - identical with estimators if list of estimators
-            if list of (str, estimator) tuples, the str get removed
-        """
-        if isinstance(estimators[0], tuple):
-            return [x[1] for x in estimators]
-        else:
-            return estimators
-
-    def _get_estimator_names(self, estimators, make_unique=False):
-        """Return names for the estimators, optionally made unique.
-
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
-        make_unique : bool, optional, default=False
-            whether names should be made unique in the return
-
-        Returns
-        -------
-        names : list of str, unique entries, of equal length as estimators
-            names for estimators in estimators
-            if make_unique=True, made unique using _make_strings_unique
-        """
-        if estimators is None or len(estimators) == 0:
-            names = []
-        elif isinstance(estimators[0], tuple):
-            names = [x[0] for x in estimators]
-        elif isinstance(estimators[0], BaseTransformer):
-            names = [type(e).__name__ for e in estimators]
-        else:
-            raise RuntimeError(
-                "unreachable condition in _get_estimator_names, "
-                " likely input assumptions are violated,"
-                " run _check_estimators before running _get_estimator_names"
-            )
-        if make_unique:
-            names = self._make_strings_unique(names)
-        return names
-
-    def _get_estimator_tuples(self, estimators, clone_ests=False):
-        """Return list of estimator tuples, from a list or tuple.
-
-        Arguments
-        ---------
-        estimators : list of estimators, or list of (str, estimator tuples)
-        clone_ests : bool, whether estimators get cloned in the process
-
-        Returns
-        -------
-        est_tuples : list of (str, estimator) tuples
-            if estimators was a list of (str, estimator) tuples, then identical/cloned
-            if was a list of estimators, then str are generated via _name_names
-        """
-        ests = self._get_estimator_list(estimators)
-        if clone_ests:
-            ests = [clone(e) for e in ests]
-        unique_names = self._get_estimator_names(estimators, make_unique=True)
-        est_tuples = list(zip(unique_names, ests))
-        return est_tuples
-
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -523,3 +416,638 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         params3 = {"steps": [("foo", t1), ("foo", t2), ("foo_1", t3)]}
 
         return [params1, params2, params3]
+
+
+class FeatureUnion(BaseTransformer, _HeterogenousMetaEstimator):
+    """Concatenates results of multiple transformer objects.
+
+    This estimator applies a list of transformer objects in parallel to the
+    input data, then concatenates the results. This is useful to combine
+    several feature extraction mechanisms into a single transformer.
+    Parameters of the transformations may be set using its name and the
+    parameter name separated by a '__'. A transformer may be replaced entirely by
+    setting the parameter with its name to another transformer,
+    or removed by setting to 'drop' or ``None``.
+
+    Parameters
+    ----------
+    transformer_list : list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer.
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context.
+        ``-1`` means using all processors.
+    transformer_weights : dict, optional
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
+    flatten_transform_index : bool, optional (default=True)
+        if True, columns of return DataFrame are flat, by "transformer__variablename"
+        if False, columns are MultiIndex (transformer, variablename)
+        has no effect if return mtype is one without column names
+    """
+
+    _required_parameters = ["transformer_list"]
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Series",
+        "scitype:transform-labels": "None",
+        "scitype:instancewise": False,  # depends on components
+        "univariate-only": False,  # depends on components
+        "handles-missing-data": False,  # depends on components
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": "None",
+        "X-y-must-have-same-index": False,
+        "enforce_index_type": None,
+        "fit_is_empty": False,
+        "transform-returns-same-time-index": False,
+        "skip-inverse-transform": False,
+        "capability:inverse_transform": False,
+        # unclear what inverse transform should be, since multiple inverse_transform
+        #   would have to inverse transform to one
+    }
+
+    def __init__(
+        self,
+        transformer_list,
+        n_jobs=None,
+        transformer_weights=None,
+        flatten_transform_index=True,
+    ):
+
+        self.transformer_list = transformer_list
+        self.transformer_list_ = self._check_estimators(
+            transformer_list, cls_type=BaseTransformer
+        )
+
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
+        self.flatten_transform_index = flatten_transform_index
+
+        super(FeatureUnion, self).__init__()
+
+        # todo: check for transform-input, transform-output
+        #   for now, we assume it's always Series/Series or Series/Panel
+        #   but no error is currently raised
+
+        # abbreviate for readability
+        ests = self.transformer_list_
+
+        # set property tags based on tags of components
+        self._anytag_notnone_set("y_inner_mtype", ests)
+        self._anytag_notnone_set("scitype:transform-labels", ests)
+
+        self._anytagis_then_set("scitype:instancewise", False, True, ests)
+        self._anytagis_then_set("X-y-must-have-same-index", True, False, ests)
+        self._anytagis_then_set("fit_is_empty", False, True, ests)
+        self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
+        self._anytagis_then_set("skip-inverse-transform", True, False, ests)
+        # self._anytagis_then_set("capability:inverse_transform", False, True, ests)
+        self._anytagis_then_set("handles-missing-data", False, True, ests)
+        self._anytagis_then_set("univariate-only", True, False, ests)
+
+    @property
+    def _transformer_list(self):
+        return self._get_estimator_tuples(self.transformer_list, clone_ests=False)
+
+    @_transformer_list.setter
+    def _transformer_list(self, value):
+        self.transformer_list = value
+        self.transformer_list_ = self._check_estimators(value, cls_type=BaseTransformer)
+
+    def __add__(self, other):
+        """Magic + method, return (right) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-FeatureUnion `sktime` transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=FeatureUnion,
+            attr_name="transformer_list",
+            concat_order="left",
+        )
+
+    def __radd__(self, other):
+        """Magic + method, return (left) concatenated FeatureUnion.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformerPipeline object, concatenation of `self` (last) with `other` (first).
+            not nested, contains only non-FeatureUnion `sktime` transformers
+        """
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=FeatureUnion,
+            attr_name="transformer_list",
+            concat_order="right",
+        )
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self.transformer_list_ = self._check_estimators(
+            self.transformer_list, cls_type=BaseTransformer
+        )
+
+        for _, transformer in self.transformer_list_:
+            transformer.fit(X=X, y=y)
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : pd.DataFrame, Series, Panel, or Hierarchical mtype format
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
+        # retrieve fitted transformers, apply to the new data individually
+        transformers = self._get_estimator_list(self.transformer_list_)
+        if not self.get_tag("fit_is_empty", False):
+            Xt_list = [trafo.transform(X, y) for trafo in transformers]
+        else:
+            Xt_list = [trafo.fit_transform(X, y) for trafo in transformers]
+
+        transformer_names = self._get_estimator_names(self.transformer_list_)
+
+        Xt = pd.concat(
+            Xt_list, axis=1, keys=transformer_names, names=["transformer", "variable"]
+        )
+
+        if self.flatten_transform_index:
+            Xt.columns = flatten_multiindex(Xt.columns)
+
+        return Xt
+
+    def get_params(self, deep=True):
+        """Get parameters of estimator in `_forecasters`.
+
+        Parameters
+        ----------
+        deep : boolean, optional, default=True
+            If True, will return the parameters for this estimator and
+            contained sub-objects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("transformer_list", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of estimator in `_forecasters`.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        self._set_params("transformer_list", **kwargs)
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Test parameters for FeatureUnion."""
+        from sktime.transformations.series.exponent import ExponentTransformer
+
+        TRANSFORMERS = [
+            ("transformer1", ExponentTransformer(power=4)),
+            ("transformer2", ExponentTransformer(power=0.25)),
+        ]
+
+        return {"transformer_list": TRANSFORMERS}
+
+
+class FitInTransform(BaseTransformer):
+    """Transformer composition to always fit a given transformer on the transform data only.
+
+    In panel settings, e.g., time series classification, it can be preferable
+    (or, necessary) to fit and transform on the test set, e.g., interpolate within the
+    same series that interpolation parameters are being fitted on. `FitInTransform` can
+    be used to wrap any transformer to ensure that `fit` and `transform` happen always
+    on the same series, by delaying the `fit` to the `transform` batch.
+
+    Warning: The use of `FitInTransform` will typically not be useful, or can constitute
+    a mistake (data leakage) when naively used in a forecasting setting.
+
+    Parameters
+    ----------
+    transformer : Estimator
+        scikit-learn-like or sktime-like transformer to fit and apply to series.
+    skip_inverse_transform : bool
+        The FitInTransform will skip inverse_transform by default, of the param
+        skip_inverse_transform=False, then the inverse_transform is calculated
+        by means of transformer.fit(X=X, y=y).inverse_transform(X=X, y=y) where
+        transformer is the inner transformer. So the inner transformer is
+        fitted on the inverse_transform data. This is required to have a non-
+        state changing transform() method of FitInTransform.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.compose import ForecastingPipeline
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.transformations.compose import FitInTransform
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
+    >>> # we want to fit the Imputer only on the predict (=transform) data.
+    >>> # note that NaiveForecaster cant use X data, this is just a show case.
+    >>> pipe = ForecastingPipeline(
+    ...     steps=[
+    ...         ("imputer", FitInTransform(Imputer(method="mean"))),
+    ...         ("forecaster", NaiveForecaster()),
+    ...     ]
+    ... )
+    >>> pipe.fit(y_train, X_train)
+    ForecastingPipeline(...)
+    >>> y_pred = pipe.predict(fh=fh, X=X_test)
+    """
+
+    def __init__(self, transformer, skip_inverse_transform=True):
+        self.transformer = transformer
+        self.skip_inverse_transform = skip_inverse_transform
+        super(FitInTransform, self).__init__()
+        self.clone_tags(transformer, None)
+        self.set_tags(
+            **{
+                "fit_is_empty": True,
+                "skip-inverse-transform": self.skip_inverse_transform,
+            }
+        )
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
+        return clone(self.transformer).fit_transform(X=X, y=y)
+
+    def _inverse_transform(self, X, y=None):
+        """Inverse transform, inverse operation to transform.
+
+        private _inverse_transform containing core logic, called from inverse_transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _inverse_transform must support all types in it
+            Data to be inverse transformed
+        y : Series or Panel of mtype y_inner_mtype, optional (default=None)
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        inverse transformed version of X
+        """
+        return clone(self.transformer).fit(X=X, y=y).inverse_transform(X=X, y=y)
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+        """
+        return self.transformer_.get_fitted_params()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for transformers.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sktime.transformations.series.boxcox import BoxCoxTransformer
+
+        params = [
+            {"transformer": BoxCoxTransformer()},
+            {"transformer": BoxCoxTransformer(), "skip_inverse_transform": False},
+        ]
+        return params
+
+
+class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
+    """Facilitate an AutoML based selection of the best transformer.
+
+    When used in combination with either TransformedTargetForecaster or
+    ForecastingPipeline in combination with ForecastingGridSearchCV
+    MultiplexTransformer provides a framework for transformer selection.  Through
+    selection of the appropriate pipeline (ie TransformedTargetForecaster vs
+    ForecastingPipeline) the transformers in MultiplexTransformer will either be
+    applied to exogenous data, or to the target data.
+
+    MultiplexTransformer delegates all transforming tasks (ie, calls to fit, transform,
+    inverse_transform, and update) to a copy of the transformer in transformers
+    whose name matches selected_transformer.  All other transformers in transformers
+    will be ignored.
+
+    Parameters
+    ----------
+    transformers : list of sktime transformers, or
+        list of tuples (str, estimator) of named sktime transformers
+        MultiplexTransformer can switch ("multiplex") between these transformers.
+        Note - all the transformers passed in "transformers" should be thought of as
+        blueprints.  Calling transformation functions on MultiplexTransformer will not
+        change their state at all. - Rather a copy of each is created and this is what
+        is updated.
+    selected_transformer: str or None, optional, Default=None.
+        If str, must be one of the transformer names.
+            If passed in transformers were unnamed then selected_transformer must
+            coincide with auto-generated name strings.
+            To inspect auto-generated name strings, call get_params.
+        If None, selected_transformer defaults to the name of the first transformer
+           in transformers.
+        selected_transformer represents the name of the transformer MultiplexTransformer
+           should behave as (ie delegate all relevant transformation functionality to)
+
+    Attributes
+    ----------
+    transformer_ : sktime transformer
+        clone of the transformer named by selected_transformer to which all the
+        transformation functionality is delegated to.
+    _transformers : list of (name, est) tuples, where est are direct references to
+        the estimators passed in transformers passed. If transformers was passed
+        without names, those be auto-generated and put here.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_shampoo_sales
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.transformations.compose import MultiplexTransformer
+    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.forecasting.compose import TransformedTargetForecaster
+    >>> from sktime.forecasting.model_selection import (
+    ...     ForecastingGridSearchCV,
+    ...     ExpandingWindowSplitter)
+    >>> # create MultiplexTransformer:
+    >>> multiplexer = MultiplexTransformer(transformers=[
+    ...     ("impute_mean", Imputer(method="mean", missing_values = -1)),
+    ...     ("impute_near", Imputer(method="nearest", missing_values = -1)),
+    ...     ("impute_rand", Imputer(method="random", missing_values = -1))])
+    >>> cv = ExpandingWindowSplitter(
+    ...     initial_window=24,
+    ...     step_length=12,
+    ...     start_with_window=True,
+    ...     fh=[1,2,3])
+    >>> pipe = TransformedTargetForecaster(steps = [
+    ...     ("multiplex", multiplexer),
+    ...     ("forecaster", NaiveForecaster())
+    ...     ])
+    >>> gscv = ForecastingGridSearchCV(
+    ...     cv=cv,
+    ...     param_grid={"multiplex__selected_transformer":
+    ...     ["impute_mean", "impute_near", "impute_rand"]},
+    ...     forecaster=pipe,
+    ...     )
+    >>> y = load_shampoo_sales()
+    >>> # randomly make some of the values nans:
+    >>> y.loc[y.sample(frac=0.1).index] = -1
+    >>> gscv = gscv.fit(y)
+    """
+
+    # tags will largely be copied from selected_transformer
+    _tags = {
+        "fit_is_empty": False,
+        "univariate-only": False,
+    }
+
+    _delegate_name = "transformer_"
+
+    def __init__(
+        self,
+        transformers: list,
+        selected_transformer=None,
+    ):
+        super(MultiplexTransformer, self).__init__()
+        self.selected_transformer = selected_transformer
+
+        self.transformers = transformers
+        self._check_estimators(
+            transformers,
+            attr_name="transformers",
+            cls_type=BaseTransformer,
+            clone_ests=False,
+        )
+        self._set_transformer()
+        self.clone_tags(self.transformer_)
+        self.set_tags(**{"fit_is_empty": False})
+
+    @property
+    def _transformers(self):
+        """Forecasters turned into name/est tuples."""
+        return self._get_estimator_tuples(self.transformers, clone_ests=False)
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers = value
+
+    def _check_selected_transformer(self):
+        component_names = self._get_estimator_names(
+            self._transformers, make_unique=True
+        )
+        selected = self.selected_transformer
+        if selected is not None and selected not in component_names:
+            raise Exception(
+                f"Invalid selected_transformer parameter value provided, "
+                f" found: {selected}. Must be one of these"
+                f" valid selected_transformer parameter values: {component_names}."
+            )
+
+    def _set_transformer(self):
+        self._check_selected_transformer()
+        # clone the selected transformer to self.transformer_
+        if self.selected_transformer is not None:
+            for name, transformer in self._get_estimator_tuples(self.transformers):
+                if self.selected_transformer == name:
+                    self.transformer_ = transformer.clone()
+        else:
+            # if None, simply clone the first transformer to self.transformer_
+            self.transformer_ = self._get_estimator_list(self.transformers)[0].clone()
+
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params("_transformers", deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
+        self._set_params("_transformers", **kwargs)
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.transformations.series.impute import Imputer
+
+        # test with 2 simple detrend transformations with selected_transformer
+        params1 = {
+            "transformers": [
+                ("imputer_mean", Imputer(method="mean")),
+                ("imputer_near", Imputer(method="nearest")),
+            ],
+            "selected_transformer": "imputer_near",
+        }
+        # test no selected_transformer
+        params2 = {
+            "transformers": [
+                Imputer(method="mean"),
+                Imputer(method="nearest"),
+            ],
+        }
+        return [params1, params2]
+
+    def __or__(self, other):
+        """Magic | (or) method, return (right) concatenated MultiplexTransformer.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        MultiplexTransformer object, concatenation of `self` (first) with `other`
+            (last).not nested, contains only non-MultiplexTransformer `sktime`
+            transformers
+
+        Raises
+        ------
+        ValueError if other is not of type MultiplexTransformer or BaseTransformer.
+        """
+        other = _coerce_to_sktime(other)
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=MultiplexTransformer,
+            attr_name="transformers",
+            concat_order="left",
+        )
+
+    def __ror__(self, other):
+        """Magic | (or) method, return (left) concatenated MultiplexTransformer.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        MultiplexTransformer object, concatenation of `self` (last) with `other`
+            (first). not nested, contains only non-MultiplexTransformer `sktime`
+            transformers
+        """
+        other = _coerce_to_sktime(other)
+        return self._dunder_concat(
+            other=other,
+            base_class=BaseTransformer,
+            composite_class=MultiplexTransformer,
+            attr_name="forecasters",
+            concat_order="right",
+        )

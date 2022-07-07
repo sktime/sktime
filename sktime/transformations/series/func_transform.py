@@ -84,7 +84,7 @@ class FunctionTransformer(BaseTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series", "np.ndarray"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "fit-in-transform": False,
+        "fit_is_empty": False,
         "handles-missing-data": True,
         "capability:inverse_transform": True,
     }
@@ -188,8 +188,15 @@ class FunctionTransformer(BaseTransformer):
         return func(Z, **(kw_args if kw_args else {}))
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

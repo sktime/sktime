@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements trend based forecasters."""
 
-__author__ = ["Anthony Jancso", "mloning", "aiwalter"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
 import numpy as np
@@ -15,7 +15,6 @@ from sklearn.preprocessing import PolynomialFeatures
 from statsmodels.tsa.seasonal import STL as _STL
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.utils.datetime import _get_duration
 
@@ -81,7 +80,7 @@ class TrendForecaster(BaseForecaster):
         self.regressor_.fit(X, y)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Make forecasts for the given forecast horizon.
 
         Parameters
@@ -90,17 +89,11 @@ class TrendForecaster(BaseForecaster):
             The forecast horizon with the steps ahead to predict
         X : pd.DataFrame, default=None
             Exogenous variables (ignored)
-        return_pred_int : bool, default=False
-            Return the prediction intervals for the forecast.
-        alpha : float or list, default=0.95
-            If alpha is iterable, multiple intervals will be calculated.
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions for the forecast
-        y_pred_int : pd.DataFrame
-            Prediction intervals for the forecast
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
@@ -188,7 +181,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         self.regressor_.fit(X, y)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None):
         """Make forecasts for the given forecast horizon.
 
         Parameters
@@ -197,17 +190,11 @@ class PolynomialTrendForecaster(BaseForecaster):
             The forecast horizon with the steps ahead to predict
         X : pd.DataFrame, default=None
             Exogenous variables (ignored)
-        return_pred_int : bool, default=False
-            Return the prediction intervals for the forecast.
-        alpha : float or list, default=0.95
-            If alpha is iterable, multiple intervals will be calculated.
 
         Returns
         -------
         y_pred : pd.Series
             Point predictions for the forecast
-        y_pred_int : pd.DataFrame
-            Prediction intervals for the forecast
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
@@ -409,18 +396,18 @@ class STLForecaster(BaseForecaster):
         self.forecaster_seasonal_ = (
             NaiveForecaster(sp=self.sp, strategy="last")
             if self.forecaster_seasonal is None
-            else clone(self.forecaster_seasonal)
+            else self.forecaster_seasonal.clone()
         )
         # trend forecaster does not need sp
         self.forecaster_trend_ = (
             NaiveForecaster(strategy="drift")
             if self.forecaster_trend is None
-            else clone(self.forecaster_trend)
+            else self.forecaster_trend.clone()
         )
         self.forecaster_resid_ = (
             NaiveForecaster(sp=self.sp, strategy="mean")
             if self.forecaster_resid is None
-            else clone(self.forecaster_resid)
+            else self.forecaster_resid.clone()
         )
 
         # fitting forecasters to different components
@@ -428,7 +415,7 @@ class STLForecaster(BaseForecaster):
         self.forecaster_trend_.fit(y=self.trend_, X=X, fh=fh)
         self.forecaster_resid_.fit(y=self.resid_, X=X, fh=fh)
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Parameters
@@ -437,9 +424,6 @@ class STLForecaster(BaseForecaster):
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
                 Exogenous time series
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
 
         Returns
         -------

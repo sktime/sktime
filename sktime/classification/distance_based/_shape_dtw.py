@@ -112,18 +112,26 @@ class ShapeDTW(BaseClassifier):
 
     """
 
+    _tags = {
+        "classifier_type": "distance",
+    }
+
     def __init__(
         self,
         n_neighbors=1,
         subsequence_length=30,
         shape_descriptor_function="raw",
-        shape_descriptor_functions=["raw", "derivative"],  # noqa from flake8 B006
+        shape_descriptor_functions=None,
         metric_params=None,
     ):
         self.n_neighbors = n_neighbors
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
+        if shape_descriptor_functions is None:
+            self._shape_descriptor_functions = ["raw", "derivative"]
+        else:
+            self._shape_descriptor_functions = shape_descriptor_functions
         self.metric_params = metric_params
 
         super(ShapeDTW, self).__init__()
@@ -214,7 +222,7 @@ class ShapeDTW(BaseClassifier):
             n = self.n_neighbors
             sl = self.subsequence_length
             sdf = self.shape_descriptor_function
-            sdfs = self.shape_descriptor_functions
+            sdfs = self._shape_descriptor_functions
             if sdfs is None or not (len(sdfs) == 2):
                 raise ValueError(
                     "When using 'compound', "
@@ -253,7 +261,7 @@ class ShapeDTW(BaseClassifier):
 
         return X
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Perform predictions on the testing data X.
 
         This function returns the probabilities for each class.
@@ -273,7 +281,7 @@ class ShapeDTW(BaseClassifier):
         # Classify the test data
         return self.knn.predict_proba(X)
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X.
 
         Parameters
@@ -302,7 +310,7 @@ class ShapeDTW(BaseClassifier):
             self.transformer = [self._get_transformer(self.shape_descriptor_function)]
         else:
             self.transformer = []
-            for x in self.shape_descriptor_functions:
+            for x in self._shape_descriptor_functions:
                 self.transformer.append(self._get_transformer(x))
             if not (len(self.transformer) == 2):
                 raise ValueError(

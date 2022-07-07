@@ -96,20 +96,20 @@ class HIVECOTEV1(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.hybrid import HIVECOTEV1
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
     >>> clf = HIVECOTEV1(
     ...     stc_params={
     ...         "estimator": RotationForest(n_estimators=3),
-    ...         "n_shapelet_samples": 500,
-    ...         "max_shapelets": 20,
-    ...         "batch_size": 100,
+    ...         "n_shapelet_samples": 100,
+    ...         "max_shapelets": 10,
+    ...         "batch_size": 20,
     ...     },
-    ...     tsf_params={"n_estimators": 10},
-    ...     rise_params={"n_estimators": 10},
-    ...     cboss_params={"n_parameter_samples": 25, "max_ensemble_size": 5},
+    ...     tsf_params={"n_estimators": 3},
+    ...     rise_params={"n_estimators": 3},
+    ...     cboss_params={"n_parameter_samples": 10, "max_ensemble_size": 3},
     ... )
     >>> clf.fit(X_train, y_train)
     HIVECOTEV1(...)
@@ -300,7 +300,7 @@ class HIVECOTEV1(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         """Predicts labels for sequences in X.
 
         Parameters
@@ -321,7 +321,7 @@ class HIVECOTEV1(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         """Predicts labels probabilities for sequences in X.
 
         Parameters
@@ -359,3 +359,52 @@ class HIVECOTEV1(BaseClassifier):
 
         # Make each instances probability array sum to 1 and return
         return dists / dists.sum(axis=1, keepdims=True)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+
+        if parameter_set == "results_comparison":
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=3),
+                    "n_shapelet_samples": 50,
+                    "max_shapelets": 5,
+                    "batch_size": 10,
+                },
+                "tsf_params": {"n_estimators": 3},
+                "rise_params": {"n_estimators": 3},
+                "cboss_params": {"n_parameter_samples": 5, "max_ensemble_size": 3},
+            }
+        else:
+            return {
+                "stc_params": {
+                    "estimator": RandomForestClassifier(n_estimators=1),
+                    "n_shapelet_samples": 5,
+                    "max_shapelets": 5,
+                    "batch_size": 5,
+                },
+                "tsf_params": {"n_estimators": 1},
+                "rise_params": {"n_estimators": 1},
+                "cboss_params": {"n_parameter_samples": 1, "max_ensemble_size": 1},
+            }

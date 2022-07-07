@@ -17,7 +17,6 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.classification.feature_based import Catch22Classifier
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.utils.validation.panel import check_X
 
@@ -148,7 +147,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
 
         return self
 
-    def _predict(self, X):
+    def _predict(self, X) -> np.ndarray:
         rng = check_random_state(self.random_state)
         return np.array(
             [
@@ -157,7 +156,7 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
             ]
         )
 
-    def _predict_proba(self, X):
+    def _predict_proba(self, X) -> np.ndarray:
         _, _, series_length = X.shape
         idx = self._classification_point_dictionary.get(series_length, -1)
         if idx == -1:
@@ -281,14 +280,23 @@ class ProbabilityThresholdEarlyClassifier(BaseClassifier):
         return estimator
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from sktime.classification.feature_based import Catch22Classifier
+
         params = {
             "classification_points": [3],
             "estimator": Catch22Classifier(

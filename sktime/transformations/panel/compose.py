@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Meta Transformers module
+"""Meta Transformers module.
 
 This module has meta-transformations that is build using the pre-existing
 transformations as building blocks.
@@ -10,17 +10,21 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.transformations.base import _SeriesToPrimitivesTransformer
-from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.datatypes._panel._convert import from_2d_array_to_nested
-from sktime.datatypes._panel._convert import from_3d_numpy_to_2d_array
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
+from sktime.datatypes._panel._convert import (
+    from_2d_array_to_nested,
+    from_3d_numpy_to_2d_array,
+    from_nested_to_2d_array,
+)
+from sktime.transformations.base import (
+    BaseTransformer,
+    _PanelToPanelTransformer,
+    _PanelToTabularTransformer,
+    _SeriesToPrimitivesTransformer,
+    _SeriesToSeriesTransformer,
+)
 from sktime.utils.validation.panel import check_X
 
-__author__ = ["Markus Löning", "Sajay Ganesh"]
+__author__ = ["mloning", "sajaysurya"]
 __all__ = [
     "ColumnTransformer",
     "SeriesToPrimitivesRowTransformer",
@@ -30,7 +34,8 @@ __all__ = [
 
 
 class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
-    """
+    """Column-wise application of transformers.
+
     Applies transformations to columns of an array or pandas DataFrame. Simply
     takes the column transformer from sklearn
     and adds capability to handle pandas dataframe.
@@ -154,7 +159,8 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
         return np.hstack(Xs)
 
     def _validate_output(self, result):
-        """
+        """Validate output of every transformer.
+
         Ensure that the output of each transformer is 2D. Otherwise
         hstack can raise an error or produce incorrect results.
 
@@ -171,31 +177,50 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
                 )
 
     def fit(self, X, y=None):
+        """Fit the transformer."""
         X = check_X(X, coerce_to_pandas=True)
         super(ColumnTransformer, self).fit(X, y)
         self._is_fitted = True
         return self
 
     def transform(self, X, y=None):
+        """Transform the data."""
         self.check_is_fitted()
         X = check_X(X, coerce_to_pandas=True)
         return super(ColumnTransformer, self).transform(X)
 
     def fit_transform(self, X, y=None):
+        """Fit and transform, shorthand."""
         # Wrap fit_transform to set _is_fitted attribute
         Xt = super(ColumnTransformer, self).fit_transform(X, y)
         self._is_fitted = True
         return Xt
 
 
-class ColumnConcatenator(_PanelToPanelTransformer):
-    """Transformer that concatenates multivariate time series/panel data
+class ColumnConcatenator(BaseTransformer):
+    """Concatenate multivariate series to a long univariate series.
+
+    Transformer that concatenates multivariate time series/panel data
     into long univariate time series/panel
         data by simply concatenating times series in time.
     """
 
-    def transform(self, X, y=None):
-        """Concatenate multivariate time series/panel data into long
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",
+        # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
+    }
+
+    def _transform(self, X, y=None):
+        """Transform the data.
+
+        Concatenate multivariate time series/panel data into long
         univariate time series/panel
         data by simply concatenating times series in time.
 
@@ -210,9 +235,6 @@ class ColumnConcatenator(_PanelToPanelTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
-        self.check_is_fitted()
-        X = check_X(X)
-
         # We concatenate by tabularizing all columns and then detabularizing
         # them into a single column
         if isinstance(X, pd.DataFrame):
@@ -223,7 +245,7 @@ class ColumnConcatenator(_PanelToPanelTransformer):
 
 
 def _from_nested_to_series(x):
-    """Helper function to un-nest series"""
+    """Un-nest series."""
     if x.shape[0] == 1:
         return np.asarray(x.iloc[0]).reshape(-1, 1)
     else:
@@ -236,10 +258,10 @@ def _from_nested_to_series(x):
 
 
 class _RowTransformer(BaseTransformer):
-    """Base class for RowTransformer"""
+    """Base class for RowTransformer."""
 
     _required_parameters = ["transformer"]
-    _tags = {"fit-in-transform": True}
+    _tags = {"fit_is_empty": True}
 
     def __init__(self, transformer, check_transformer=True):
         self.transformer = transformer
@@ -247,7 +269,7 @@ class _RowTransformer(BaseTransformer):
         super(_RowTransformer, self).__init__()
 
     def _check_transformer(self):
-        """Check transformer type compatibility"""
+        """Check transformer type compatibility."""
         assert hasattr(self, "_valid_transformer_type")
         if self.check_transformer and not isinstance(
             self.transformer, self._valid_transformer_type
@@ -265,9 +287,12 @@ class _RowTransformer(BaseTransformer):
 
 
 class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransformer):
+    """Series-to-primitives row transformer."""
+
     _valid_transformer_type = _SeriesToPrimitivesTransformer
 
     def transform(self, X, y=None):
+        """Transform the data."""
         X = self._prepare(X)
         Xt = np.zeros(X.shape[:2])
         for i in range(X.shape[0]):
@@ -278,9 +303,12 @@ class SeriesToPrimitivesRowTransformer(_RowTransformer, _PanelToTabularTransform
 
 
 class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
+    """Series-to-series row transformer."""
+
     _valid_transformer_type = _SeriesToSeriesTransformer
 
     def transform(self, X, y=None):
+        """Transform the data."""
         X = self._prepare(X)
         xts = list()
         for i in range(X.shape[0]):
@@ -290,7 +318,7 @@ class SeriesToSeriesRowTransformer(_RowTransformer, _PanelToPanelTransformer):
 
 
 def make_row_transformer(transformer, transformer_type=None, **kwargs):
-    """Factory function for creating InstanceTransformer based on transform type"""
+    """Cate InstanceTransformer based on transform type, factory function."""
     if transformer_type is not None:
         valid_transformer_types = ("series-to-series", "series-to-primitives")
         if transformer_type not in valid_transformer_types:

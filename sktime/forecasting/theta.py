@@ -84,6 +84,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
+        "scitype:y": "univariate",
         "ignores-exogeneous-X": True,
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
@@ -148,6 +149,8 @@ class ThetaForecaster(ExponentialSmoothing):
             The forecasters horizon with the steps ahead to to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
 
         Returns
         -------
@@ -214,10 +217,10 @@ class ThetaForecaster(ExponentialSmoothing):
         pred_quantiles = pd.DataFrame(columns=index)
 
         sem = self.sigma_ * np.sqrt(
-            self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
+            self.fh.to_relative(self.cutoff) * self.initial_level_**2 + 1
         )
 
-        y_pred = super(ThetaForecaster, self).predict(fh, X)
+        y_pred = self._predict(fh, X)
 
         # we assume normal additive noise with sem variance
         for a in alpha:

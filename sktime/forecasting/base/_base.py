@@ -17,13 +17,16 @@ Convenience methods:
     forecast scores    - score(y, X=None, fh=None)
 
 Optional, special capability methods (check capability tags if available):
-    forecast intervals - predict_interval(fh=None, X=None, coverage=0.90)
-    forecast quantiles - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
+    forecast intervals    - predict_interval(fh=None, X=None, coverage=0.90)
+    forecast quantiles    - predict_quantiles(fh=None, X=None, alpha=[0.05, 0.95])
+    forecast variance     - predict_var(fh=None, X=None, cov=False)
+    distribution forecast - predict_proba(fh=None, X=None, marginal=True)
 
 Inspection methods:
     hyper-parameter inspection  - get_params()
     fitted parameter inspection - get_fitted_params()
     current ForecastingHorizon  - fh
+    current cutoff              - cutoff
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
@@ -31,16 +34,16 @@ State:
     fitted state inspection - check_is_fitted()
 """
 
-__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13"]
+__author__ = ["mloning", "big-o", "fkiraly", "sveameyer13", "miraep8"]
 
 __all__ = ["BaseForecaster"]
 
-from contextlib import contextmanager
+from copy import deepcopy
+from itertools import product
 from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sklearn import clone
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -49,9 +52,12 @@ from sktime.datatypes import (
     convert_to,
     get_cutoff,
     mtype_to_scitype,
+    scitype_to_mtype,
+    update_data,
 )
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.datetime import _shift
+from sktime.utils.validation._dependencies import _check_dl_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 
@@ -87,6 +93,7 @@ class BaseForecaster(BaseEstimator):
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     def __init__(self):
@@ -103,6 +110,89 @@ class BaseForecaster(BaseEstimator):
 
         super(BaseForecaster, self).__init__()
 
+    def __mul__(self, other):
+        """Magic * method, return (right) concatenated TransformedTargetForecaster.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `self` (first) with `other` (last).
+            not nested, contains only non-TransformerPipeline `sktime` transformers
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return self_as_pipeline * other
+        elif is_sklearn_transformer(other):
+            return self * TabularToSeriesAdaptor(other)
+        else:
+            return NotImplemented
+
+    def __rmul__(self, other):
+        """Magic * method, return (left) concatenated TransformerPipeline.
+
+        Implemented for `other` being a transformer, otherwise returns `NotImplemented`.
+
+        Parameters
+        ----------
+        other: `sktime` transformer, must inherit from BaseTransformer
+            otherwise, `NotImplemented` is returned
+
+        Returns
+        -------
+        TransformedTargetForecaster object,
+            concatenation of `other` (first) with `self` (last).
+            not nested, contains only non-TransformerPipeline `sktime` steps
+        """
+        from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.base import BaseTransformer
+        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+        from sktime.utils.sklearn import is_sklearn_transformer
+
+        # we wrap self in a pipeline, and concatenate with the other
+        #   the TransformedTargetForecaster does the rest, e.g., dispatch on other
+        if isinstance(other, BaseTransformer):
+            self_as_pipeline = TransformedTargetForecaster(steps=[self])
+            return other * self_as_pipeline
+        elif is_sklearn_transformer(other):
+            return TabularToSeriesAdaptor(other) * self
+        else:
+            return NotImplemented
+
+    def __or__(self, other):
+        """Magic | method, return MultiplexForecaster.
+
+        Implemented for `other` being either a MultiplexForecaster or a forecaster.
+
+        Parameters
+        ----------
+        other: `sktime` forecaster or sktime MultiplexForecaster
+
+        Returns
+        -------
+        MultiplexForecaster object
+        """
+        from sktime.forecasting.compose import MultiplexForecaster
+
+        if isinstance(other, MultiplexForecaster) or isinstance(other, BaseForecaster):
+            multiplex_self = MultiplexForecaster([self])
+            return multiplex_self | other
+        else:
+            return NotImplemented
+
     def fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -118,19 +208,33 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster.
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasting horizon encoding the time stamps to forecast at.
             if self.get_tag("requires-fh-in-fit"), must be passed, not optional
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series to fit to
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            there are no restrictions on number of columns (unlike for y)
 
         Returns
         -------
@@ -139,9 +243,10 @@ class BaseForecaster(BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, fitted state is re-set
-        self._is_fitted = False
+        # if fit is called, estimator is reset, including fitted state
+        self.reset()
 
+        # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
 
         # check and convert X/y
@@ -171,9 +276,6 @@ class BaseForecaster(BaseEstimator):
         self,
         fh=None,
         X=None,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-        keep_old_return_type=True,
     ):
         """Forecast time series at future horizon.
 
@@ -189,113 +291,48 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.ndarray or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
-            Exogeneous time series to predict from
+        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
+            there are no restrictions on number of columns (unlike for y)
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y passed in fit (most recently)
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            in this case, return is 2-tuple (otherwise a single y_pred)
-            Prediction intervals
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         # handle inputs
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
 
-        # todo deprecate NotImplementedError in v 10.0.1
-        if return_pred_int and not self.get_tag("capability:pred_int"):
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not have the capability to return "
-                "prediction intervals. Please set return_pred_int=False. If you "
-                "think this estimator should have the capability, please open "
-                "an issue on sktime."
-            )
-
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
-        # this is how it is supposed to be after the refactor is complete and effective
-        if not return_pred_int:
-            # we call the ordinary _predict if no looping/vectorization needed
-            if not self._is_vectorized:
-                y_pred = self._predict(fh=fh, X=X_inner)
-            else:
-                # otherwise we call the vectorized version of predict
-                y_pred = self._vectorize("predict", X=X_inner, fh=fh)
-
-            # convert to output mtype, identical with last y mtype seen
-            y_out = convert_to(
-                y_pred,
-                self._y_mtype_last_seen,
-                store=self._converter_store_y,
-                store_behaviour="freeze",
-            )
-
-            return y_out
-
-        # keep following code for downward compatibility,
-        # todo: can be deleted once refactor is completed and effective,
-        # todo: deprecate in v 10
+        # we call the ordinary _predict if no looping/vectorization needed
+        if not self._is_vectorized:
+            y_pred = self._predict(fh=fh, X=X_inner)
         else:
-            warn(
-                "return_pred_int in predict() is deprecated since version 0.10.0 "
-                " and will be removed in version 0.11.0."
-                "please use predict_interval() instead to generate "
-                "prediction intervals.",
-                DeprecationWarning,
-            )
-            if not self._has_predict_quantiles_been_refactored():
-                # this means the method is not refactored
-                y_pred = self._predict(
-                    self.fh,
-                    X=X_inner,
-                    return_pred_int=return_pred_int,
-                    alpha=alpha,
-                )
+            # otherwise we call the vectorized version of predict
+            y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
-                # returns old return type anyways
-                pred_int = y_pred[1]
-                y_pred = y_pred[0]
+        # convert to output mtype, identical with last y mtype seen
+        y_out = convert_to(
+            y_pred,
+            self._y_mtype_last_seen,
+            store=self._converter_store_y,
+            store_behaviour="freeze",
+        )
 
-            else:
-                # it's already refactored
-                # opposite definition previously vs. now
-                if isinstance(alpha, list):
-                    coverage = [1 - a for a in alpha]
-                else:
-                    coverage = alpha
-                pred_int = self.predict_interval(fh=fh, X=X_inner, coverage=coverage)
+        return y_out
 
-                if keep_old_return_type:
-                    pred_int = self._convert_new_to_old_pred_int(pred_int, alpha)
-
-            y_pred = self._predict(
-                self.fh,
-                X=X_inner,
-            )
-            # convert to output mtype, identical with last y mtype seen
-            y_out = convert_to(
-                y_pred,
-                self._y_mtype_last_seen,
-                store=self._converter_store_y,
-                store_behaviour="freeze",
-            )
-
-            return (y_out, pred_int)
-
-    def fit_predict(
-        self, y, X=None, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA
-    ):
+    def fit_predict(self, y, X=None, fh=None):
         """Fit and forecast time series at future horizon.
 
         State change:
@@ -310,31 +347,40 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster.
+            y can be in one of the following formats:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon (not optional)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series to fit to and to predict from
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
             if self.get_tag("X-y-must-have-same-index"),
-            X.index must contain y.index and fh.index
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
+                X.index must contain fh.index and y.index both
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            in this case, return is 2-tuple (otherwise a single y_pred)
-            Prediction intervals
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         # if fit is called, fitted state is re-set
         self._is_fitted = False
@@ -361,9 +407,7 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = True
         # call the public predict to avoid duplicating output conversions
         #  input conversions are skipped since we are using X_inner
-        return self.predict(
-            fh=fh, X=X_inner, return_pred_int=return_pred_int, alpha=alpha
-        )
+        return self.predict(fh=fh, X=X_inner)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
@@ -382,11 +426,14 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        alpha : float or list of float, optional (default=[0.05, 0.95])
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), must contain fh.index
+        alpha : float or list of float of unique values, optional (default=[0.05, 0.95])
             A probability or list of, at which quantile forecasts are computed.
 
         Returns
@@ -394,7 +441,9 @@ class BaseForecaster(BaseEstimator):
         quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level being the values of alpha passed to the function.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
         if not self.get_tag("capability:pred_int"):
@@ -405,17 +454,30 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
-        if alpha is None:
-            alpha = [0.05, 0.95]
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
 
-        alpha = check_alpha(alpha)
+        # default alpha
+        if alpha is None:
+            alpha = [0.05, 0.95]
+        # check alpha and coerce to list
+        alpha = check_alpha(alpha, name="alpha")
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
 
-        quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+        # we call the ordinary _predict_quantiles if no looping/vectorization needed
+        if not self._is_vectorized:
+            quantiles = self._predict_quantiles(fh=fh, X=X_inner, alpha=alpha)
+        else:
+            # otherwise we call the vectorized version of predict_quantiles
+            quantiles = self._vectorize(
+                "predict_quantiles", fh=fh, X=X_inner, alpha=alpha
+            )
+
         return quantiles
 
     def predict_interval(
@@ -440,11 +502,14 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-        coverage : float or list of float, optional (default=0.90)
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), must contain fh.index
+        coverage : float or list of float of unique values, optional (default=0.90)
            nominal coverage(s) of predictive interval(s)
 
         Returns
@@ -454,7 +519,9 @@ class BaseForecaster(BaseEstimator):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y seen in fit was Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
@@ -468,20 +535,168 @@ class BaseForecaster(BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
-        # input checks
+
+        # input checks and conversions
+
+        # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
-        coverage = check_alpha(coverage)
+        # check alpha and coerce to list
+        coverage = check_alpha(coverage, name="coverage")
 
         # check and convert X
         X_inner = self._check_X(X=X)
 
-        pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
-
-        # todo: remove if changing pred_interval format
-        # if pred_int.columns.nlevels == 3:
-        #     pred_int = _convert_pred_interval_to_quantiles(pred_int)
+        # we call the ordinary _predict_interval if no looping/vectorization needed
+        if not self._is_vectorized:
+            pred_int = self._predict_interval(fh=fh, X=X_inner, coverage=coverage)
+        else:
+            # otherwise we call the vectorized version of predict_interval
+            pred_int = self._vectorize(
+                "predict_interval", fh=fh, X=X_inner, coverage=coverage
+            )
 
         return pred_int
+
+    def predict_var(self, fh=None, X=None, cov=False):
+        """Compute/return variance forecasts.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "variance predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+        self.check_is_fitted()
+        # input checks
+        fh = self._check_fh(fh)
+
+        # check and convert X
+        X_inner = self._check_X(X=X)
+
+        # we call the ordinary _predict_interval if no looping/vectorization needed
+        if not self._is_vectorized:
+            pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
+        else:
+            # otherwise we call the vectorized version of predict_interval
+            pred_var = self._vectorize("predict_var", fh=fh, X=X_inner, cov=cov)
+
+        return pred_var
+
+    def predict_proba(self, fh=None, X=None, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        Note: currently only implemented for Series (non-panel, non-hierarchical) y.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_".
+            self.cutoff, self._is_fitted
+
+        Writes to self:
+            Stores fh to self.fh if fh is passed and has not been passed previously.
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"), must contain fh.index
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        if not self.get_tag("capability:pred_int"):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not have the capability to return "
+                "fully probabilistic predictions. If you "
+                "think this estimator should have the capability, please open "
+                "an issue on sktime."
+            )
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            raise NotImplementedError(
+                "automated vectorization for predict_proba is not implemented"
+            )
+
+        msg = (
+            "tensorflow-probability must be installed for fully probabilistic forecasts"
+            "install `sktime` deep learning dependencies by `pip install sktime[dl]`"
+        )
+        _check_dl_dependencies(msg)
+
+        self.check_is_fitted()
+        # input checks
+        fh = self._check_fh(fh)
+
+        # check and convert X
+        X_inner = self._check_X(X=X)
+
+        pred_dist = self._predict_proba(fh=fh, X=X_inner, marginal=marginal)
+
+        return pred_dist
 
     def update(self, y, X=None, update_params=True):
         """Update cutoff value and, optionally, fitted parameters.
@@ -502,22 +717,36 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        X : pd.DataFrame, or 2D np.ndarray optional (default=None)
-            Exogeneous time series to fit to
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series to fit to
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"), X.index must contain y.index
+            there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
             whether model parameters should be updated
 
@@ -526,6 +755,10 @@ class BaseForecaster(BaseEstimator):
         self : reference to self
         """
         self.check_is_fitted()
+
+        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+            warn("empty y passed to update, no update was carried out")
+            return self
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -545,8 +778,7 @@ class BaseForecaster(BaseEstimator):
         cv=None,
         X=None,
         update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
+        reset_forecaster=True,
     ):
         """Make predictions and update model iteratively over the test set.
 
@@ -559,57 +791,77 @@ class BaseForecaster(BaseEstimator):
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
-        Writes to self:
+        Writes to self, if reset_forecaster=False:
             Update self._y and self._X with `y` and `X`, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
+        Does not update state if reset_forecaster=True.
+
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        cv : temporal cross-validation generator, optional (default=None)
-        X : pd.DataFrame, or 2D np.ndarray optional (default=None)
-            Exogeneous time series to fit to and predict from
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        cv : temporal cross-validation generator inheriting from BaseSplitter, optional
+            for example, SlidingWindowSplitter or ExpandingWindowSplitter
+            default = ExpandingWindowSplitter with `initial_window=1` and defaults
+                = individual data points in y/X are added and forecast one-by-one,
+                `initial_window = 1`, `step_length = 1` and `fh = 1`
+        X : time series in sktime compatible format, optional (default=None)
+            Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
-            X.index must contain y.index and fh.index
+                X.index must contain y.index and fh.index both
+            there are no restrictions on number of columns (unlike for y)
         update_params : bool, optional (default=True)
-        return_pred_int : bool, optional (default=False)
-        alpha : int or list of ints, optional (default=None)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optional (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Point forecasts at fh, with same index as fh
-            y_pred has same type as y
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            in this case, return is 2-tuple (otherwise a single y_pred)
-            Prediction intervals
+        y_pred : object that tabulates point forecasts from multiple split batches
+            format depends on pairs (cutoff, absolute horizon) forecast overall
+            if collection of absolute horizon points is unique:
+                type is time series in sktime compatible data container format
+                cutoff is suppressed in output
+                has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
+            if collection of absolute horizon points is not unique:
+                type is a pandas DataFrame, with row and col index being time stamps
+                row index corresponds to cutoffs that are predicted from
+                column index corresponds to absolut horizons that are predicted
+                entry is the point prediction of col index predicted from row index
+                entry is nan if no prediction is made at that (cutoff, horizon) pair
         """
+        from sktime.forecasting.model_selection import ExpandingWindowSplitter
+
+        if cv is None:
+            cv = ExpandingWindowSplitter(initial_window=1)
+
         self.check_is_fitted()
-
-        if return_pred_int and not self.get_tag("capability:pred_int"):
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not have the capability to return "
-                "prediction intervals. Please set return_pred_int=False. If you "
-                "think this estimator should have the capability, please open "
-                "an issue on sktime."
-            )
-
-        if return_pred_int:
-            warn(
-                "argument return_pred_int in update_predict() is deprecated "
-                "since version 0.10.0 and will be removed in version 0.11.0."
-                "please use update() then predict_interval() or predict_quantiles() "
-                "to generate predictive quantiles or prediction intervals.",
-                DeprecationWarning,
-            )
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -621,19 +873,15 @@ class BaseForecaster(BaseEstimator):
             cv=cv,
             X=X_inner,
             update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
+            reset_forecaster=reset_forecaster,
         )
 
     def update_predict_single(
         self,
         y=None,
-        y_new=None,
         fh=None,
         X=None,
         update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
     ):
         """Update model with new data and make forecasts.
 
@@ -653,64 +901,52 @@ class BaseForecaster(BaseEstimator):
 
         Writes to self:
             Update self._y and self._X with `y` and `X`, by appending rows.
-            Updates self. cutoff and self._cutoff to last index seen in `y`.
+            Updates self.cutoff and self._cutoff to last index seen in `y`.
             If update_params=True,
                 updates fitted model attributes ending in "_".
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
-            Target time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                must have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                must have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
-        y_new : alias for y for downwards compatibility, pass only one of y, y_new
-            deprecated since version 0.10.0 and will be removed in 0.11.0
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, or 2D np.array, optional (default=None)
-            Exogeneous time series to fit to and to predict from
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
             if self.get_tag("X-y-must-have-same-index"),
-                X.index must contain y.index and fh.index
+                X.index must contain y.index and fh.index both
         update_params : bool, optional (default=False)
-        return_pred_int : bool, optional (default=False)
-            If True, prediction intervals are returned in addition to point
-            predictions.
-        alpha : float or list of floats
 
         Returns
         -------
-        y_pred : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_pred : time series in sktime compatible data container format
             Point forecasts at fh, with same index as fh
-            y_pred has same type as y
-        pred_ints : pd.DataFrame
-            Prediction intervals
+            if fh was relative, index is relative to cutoff after update with y
+            y_pred has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
-        # todo: remove return_pred_int in v0.11.0
-        self.check_is_fitted()
-        fh = self._check_fh(fh)
-
-        # handle input alias, remove in v 0.11.0
-        if y is None:
-            y = y_new
-            msg = (
-                "argument y_new in update_predict_single is deprecated since "
-                "version 0.10.0 and will be removed in version 0.11.0"
-            )
-            warn(msg, category=DeprecationWarning)
-        if y is None:
-            raise ValueError("y must be of Series type and cannot be None")
-
-        if return_pred_int:
-            warn(
-                "argument return_pred_int in update_predict_single() is deprecated "
-                "since version 0.10.0 and will be removed in version 0.11.0."
-                "please use update() then predict_interval() or predict_quantiles() "
-                "to generate predictive quantiles or prediction intervals.",
-                DeprecationWarning,
-            )
+        if y is None or (hasattr(y, "__len__") and len(y) == 0):
+            warn("empty y passed to update_predict, no update was carried out")
+            return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
         fh = self._check_fh(fh)
@@ -727,8 +963,6 @@ class BaseForecaster(BaseEstimator):
             fh=fh,
             X=X_inner,
             update_params=update_params,
-            return_pred_int=return_pred_int,
-            alpha=alpha,
         )
 
     def predict_residuals(self, y=None, X=None):
@@ -753,7 +987,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pd.Series, pd.DataFrame, np.ndarray (1D or 2D), or None
+        y : time series in sktime compatible data container format
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
             if None, the y seen so far (self._y) are used, in particular:
@@ -761,13 +995,15 @@ class BaseForecaster(BaseEstimator):
                 if fit requires fh, it must have pointed to index of y in fit
         X : pd.DataFrame, or 2D np.ndarray, optional (default=None)
             Exogeneous time series to predict from
-            if self.get_tag("X-y-must-have-same-index"), X.index must contain fh.index
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
 
         Returns
         -------
-        y_res : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+        y_res : time series in sktime compatible data container format
             Forecast residuals at fh, with same index as fh
-            y_pred has same type as y passed in fit (most recently)
+            y_res has same type as the y that has been passed most recently:
+                Series, Panel, Hierarchical scitype, same format (see above)
         """
         # if no y is passed, the so far observed y is used
         if y is None:
@@ -871,7 +1107,7 @@ class BaseForecaster(BaseEstimator):
                 VectorizedDF of y, iterated as the most complex supported scitype
                     (complexity order: Hierarchical > Panel > Series)
             Case 3: None if y was None
-        X_inner :  Series, Panel, or Hierarchical object, or VectorizedDF
+        X_inner : Series, Panel, or Hierarchical object, or VectorizedDF
                 compatible with self.get_tag("X_inner_mtype") format
             Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
                 converted/coerced version of X, mtype determined by "X_inner_mtype" tag
@@ -897,11 +1133,11 @@ class BaseForecaster(BaseEstimator):
         if X is None and y is None:
             return None, None
 
-        def _most_complex_scitype(scitypes):
+        def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
-            if "Hierarchical" in scitypes:
+            if "Hierarchical" in scitypes and smaller_equal_than == "Hierarchical":
                 return "Hierarchical"
-            elif "Panel" in scitypes:
+            elif "Panel" in scitypes and smaller_equal_than != "Series":
                 return "Panel"
             elif "Series" in scitypes:
                 return "Series"
@@ -915,6 +1151,12 @@ class BaseForecaster(BaseEstimator):
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
+        FORBIDDEN_MTYPES = ["numpyflat", "pd-wide"]
+
+        for scitype in ALLOWED_SCITYPES:
+            mtypes = set(scitype_to_mtype(scitype))
+            mtypes = list(mtypes.difference(FORBIDDEN_MTYPES))
+            mtypes_msg = f'"For {scitype} scitype: {mtypes}. '
 
         # checking y
         if y is not None:
@@ -925,25 +1167,27 @@ class BaseForecaster(BaseEstimator):
                 "y must be in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb,"
+                "If you think y is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for y. "
+                "Possible mtype specification strings are as follows. "
             )
             if not y_valid:
-                raise TypeError(msg)
+                raise TypeError(msg + mtypes_msg)
 
             y_scitype = y_metadata["scitype"]
             self._y_mtype_last_seen = y_metadata["mtype"]
 
-            requires_vectorization = y_scitype not in y_inner_scitype
-
-            if (
+            req_vec_because_rows = y_scitype not in y_inner_scitype
+            req_vec_because_cols = (
                 self.get_tag("scitype:y") == "univariate"
                 and not y_metadata["is_univariate"]
-            ):
-                raise ValueError(
-                    "y must be univariate, but found more than one variable"
-                )
+            )
+            requires_vectorization = req_vec_because_rows or req_vec_because_cols
+
             if (
                 self.get_tag("scitype:y") == "multivariate"
                 and y_metadata["is_univariate"]
@@ -954,6 +1198,7 @@ class BaseForecaster(BaseEstimator):
         else:
             # y_scitype is used below - set to None if y is None
             y_scitype = None
+            requires_vectorization = False
         # end checking y
 
         # checking X
@@ -966,24 +1211,34 @@ class BaseForecaster(BaseEstimator):
                 "X must be either None, or in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
-                "See the forecasting tutorial examples/01_forecasting.ipynb, or"
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                " See the forecasting tutorial examples/01_forecasting.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                "If you think X is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(X, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for X. "
+                "Possible mtype specification strings are as follows. "
             )
             if not X_valid:
-                raise TypeError(msg)
+                raise TypeError(msg + mtypes_msg)
 
             X_scitype = X_metadata["scitype"]
             requires_vectorization = X_scitype not in X_inner_scitype
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
+
+        # extra check: if X is ignored by inner methods, pass None to them
+        if self.get_tag("ignores-exogeneous-X"):
+            X = None
+            X_scitype = None
         # end checking X
 
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                check_equal_time_index(X, y, mode="contains")
+                if not self.get_tag("ignores-exogeneous-X"):
+                    check_equal_time_index(X, y, mode="contains")
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
@@ -1018,9 +1273,16 @@ class BaseForecaster(BaseEstimator):
                 as_scitype=X_scitype,  # we are dealing with series
             )
         else:
-            iterate_as = _most_complex_scitype(y_inner_scitype)
+            iterate_as = _most_complex_scitype(
+                y_inner_scitype, smaller_equal_than=y_scitype
+            )
             if y is not None:
-                y_inner = VectorizedDF(X=y, iterate_as=iterate_as, is_scitype=y_scitype)
+                y_inner = VectorizedDF(
+                    X=y,
+                    iterate_as=iterate_as,
+                    is_scitype=y_scitype,
+                    iterate_cols=req_vec_because_cols,
+                )
             else:
                 y_inner = None
             if X is not None:
@@ -1063,75 +1325,22 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
         """
-        # we only need to modify _y if y is not None
         if y is not None:
-            # if y is vectorized, unwrap it first
-            if isinstance(y, VectorizedDF):
-                y = y.X
-            # we want to ensure that y is either numpy (1D, 2D, 3D)
-            # or in one of the long pandas formats
-            y = convert_to(
-                y,
-                to_type=[
-                    "pd.DataFrame",
-                    "pd.Series",
-                    "np.ndarray",
-                    "pd-multiindex",
-                    "numpy3D",
-                    "pd_multiindex_hier",
-                ],
-            )
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
-            # otherwise, update _y with the new rows in y
-            #  if y is np.ndarray, we assume all rows are new
-            elif isinstance(y, np.ndarray):
-                # if 1D or 2D, axis 0 is "time"
-                if y.ndim in [1, 2]:
-                    self._y = np.concatenate(self._y, y, axis=0)
-                # if 3D, axis 2 is "time"
-                elif y.ndim == 3:
-                    self._y = np.concatenate(self._y, y, axis=2)
-            #  if y is pandas, we use combine_first to update
-            elif isinstance(y, (pd.Series, pd.DataFrame)) and len(y) > 0:
-                self._y = y.combine_first(self._y)
+            else:
+                self._y = update_data(self._y, y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
 
-        # we only need to modify _X if X is not None
         if X is not None:
-            # if X is vectorized, unwrap it first
-            if isinstance(X, VectorizedDF):
-                X = X.X
-            # we want to ensure that X is either numpy (1D, 2D, 3D)
-            # or in one of the long pandas formats
-            X = convert_to(
-                X,
-                to_type=[
-                    "pd.DataFrame",
-                    "np.ndarray",
-                    "pd-multiindex",
-                    "numpy3D",
-                    "pd_multiindex_hier",
-                ],
-            )
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
-            # otherwise, update _X with the new rows in X
-            #  if X is np.ndarray, we assume all rows are new
-            elif isinstance(X, np.ndarray):
-                # if 1D or 2D, axis 0 is "time"
-                if X.ndim in [1, 2]:
-                    self._X = np.concatenate(self._X, X, axis=0)
-                # if 3D, axis 2 is "time"
-                elif X.ndim == 3:
-                    self._X = np.concatenate(self._X, X, axis=2)
-            #  if X is pandas, we use combine_first to update
-            elif isinstance(X, pd.DataFrame) and len(X) > 0:
-                self._X = X.combine_first(self._X)
+            else:
+                self._X = update_data(self._X, X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
         """Combine in- & out-sample prediction, slices given fh.
@@ -1148,7 +1357,9 @@ class BaseForecaster(BaseEstimator):
         pd.Series
             y_pred, sliced by fh
         """
-        y_pred = y_in_sample.append(y_out_sample, ignore_index=True).rename("y_pred")
+        y_pred = pd.concat([y_in_sample, y_out_sample], ignore_index=True).rename(
+            "y_pred"
+        )
         y_pred = pd.DataFrame(y_pred)
         # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
@@ -1163,21 +1374,27 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        cutoff : pandas compatible index element
+        cutoff : pandas compatible index element, or None
+            pandas compatible index element, if cutoff has been set; None otherwise
         """
-        return self._cutoff
+        if self._cutoff is None:
+            return None
+        else:
+            return self._cutoff[0]
 
     def _set_cutoff(self, cutoff):
         """Set and update cutoff.
 
         Parameters
         ----------
-        cutoff: pandas compatible index element
+        cutoff: pandas compatible index or index element
 
         Notes
         -----
-        Set self._cutoff is to `cutoff`.
+        Set self._cutoff to `cutoff`, coerced to a pandas.Index.
         """
+        if not isinstance(cutoff, pd.Index):
+            cutoff = pd.Index([cutoff])
         self._cutoff = cutoff
 
     def _set_cutoff_from_y(self, y):
@@ -1192,28 +1409,10 @@ class BaseForecaster(BaseEstimator):
                 pd_multiindex_hier, of Hierarchical scitype
         Notes
         -----
-        Set self._cutoff to latest index seen in `y`.
+        Set self._cutoff to pandas.Index containing latest index seen in `y`.
         """
-        cutoff_idx = get_cutoff(y, self.cutoff)
+        cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
-
-    @contextmanager
-    def _detached_cutoff(self):
-        """Detached cutoff mode.
-
-        When in detached cutoff mode, the cutoff can be updated but will
-        be reset to the initial value after leaving the detached cutoff mode.
-
-        This is useful during rolling-cutoff forecasts when the cutoff needs
-        to be repeatedly reset, but afterwards should be restored to the
-        original value.
-        """
-        cutoff = self.cutoff  # keep initial cutoff
-        try:
-            yield
-        finally:
-            # re-set cutoff to initial value
-            self._set_cutoff(cutoff)
 
     @property
     def fh(self):
@@ -1326,7 +1525,12 @@ class BaseForecaster(BaseEstimator):
 
         Uses forecasters_ attribute to store one forecaster per loop index.
         """
-        PREDICT_METHODS = ["predict", "predict_quantiles"]
+        PREDICT_METHODS = [
+            "predict",
+            "predict_quantiles",
+            "predict_interval",
+            "predict_var",
+        ]
 
         if methodname == "fit":
             # create container for clones
@@ -1335,7 +1539,7 @@ class BaseForecaster(BaseEstimator):
 
             self._yvec = y
 
-            idx = y.get_iter_indices()
+            row_idx, col_idx = y.get_iter_indices()
             ys = y.as_list()
 
             if X is None:
@@ -1343,30 +1547,39 @@ class BaseForecaster(BaseEstimator):
             else:
                 Xs = X.as_list()
 
-            self.forecasters_ = pd.DataFrame(index=idx, columns=["forecasters"])
-            for i in range(len(idx)):
-                self.forecasters_.iloc[i, 0] = clone(self)
-                self.forecasters_.iloc[i, 0].fit(y=ys[i], X=Xs[i], **kwargs)
+            if row_idx is None:
+                row_idx = ["forecasters"]
+            if col_idx is None:
+                col_idx = ["forecasters"]
+
+            self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
+            for ix in range(len(ys)):
+                i, j = y.get_iloc_indexer(ix)
+                self.forecasters_.iloc[i].iloc[j] = self.clone()
+                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
 
             return self
         elif methodname in PREDICT_METHODS:
             n = len(self.forecasters_.index)
+            m = len(self.forecasters_.columns)
             X = kwargs.pop("X", None)
             if X is None:
-                Xs = [None] * n
+                Xs = [None] * n * m
             else:
                 Xs = X.as_list()
             y_preds = []
-            for i in range(n):
-                method = getattr(self.forecasters_.iloc[i, 0], methodname)
+            ix = -1
+            for i, j in product(range(n), range(m)):
+                ix += 1
+                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=False)
+            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
-            core logic
+        private _fit containing the core logic, called from fit
 
         Writes to self:
             Sets fitted model attributes ending in "_".
@@ -1380,79 +1593,82 @@ class BaseForecaster(BaseEstimator):
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : reference to self
         """
         raise NotImplementedError("abstract method")
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
-            core logic
+        private _predict containing the core logic, called from predict
 
         State required:
             Requires state to be "fitted".
 
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-            - Will be removed in v 0.10.0
-        alpha : float or list, optional (default=0.95)
+            Exogeneous time series for the forecast
 
         Returns
         -------
-        y_pred : series of a type in self.get_tag("y_inner_mtype")
-            Point forecasts at fh, with same index as fh
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals - deprecate in v 0.10.1
-
+        y_pred : pd.Series
+            Point predictions
         """
         raise NotImplementedError("abstract method")
 
     def _update(self, y, X=None, update_params=True):
         """Update time series to incremental training data.
 
+        private _update containing the core logic, called from update
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
         Writes to self:
-            If update_params=True,
-                updates fitted model attributes ending in "_".
+            Sets fitted model attributes ending in "_", if update_params=True.
+            Does not write to self if update_params=False.
 
         Parameters
         ----------
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
+            Time series with which to update the forecaster.
             if self.get_tag("scitype:y")=="univariate":
                 guaranteed to have a single column/variable
             if self.get_tag("scitype:y")=="multivariate":
                 guaranteed to have 2 or more columns
             if self.get_tag("scitype:y")=="both": no restrictions apply
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to predict from.
-        return_pred_int : bool, optional (default=False)
-            If True, returns prediction intervals for given alpha values.
-        alpha : float or list, optional (default=0.95)
+            Exogeneous time series for the forecast
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
 
         Returns
         -------
-        y_pred : series of a type in self.get_tag("y_inner_mtype")
-            Point forecasts at fh, with same index as fh
-        y_pred_int : pd.DataFrame - only if return_pred_int=True
-            Prediction intervals
+        self : reference to self
         """
         if update_params:
             # default to re-fitting if update is not implemented
@@ -1460,16 +1676,30 @@ class BaseForecaster(BaseEstimator):
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called."
+                f"`update` is called with update_params=True."
             )
             # we need to overwrite the mtype last seen, since the _y
             #    may have been converted
             mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
-            self.fit(self._y, self._X, self.fh)
+            self.fit(y=self._y, X=self._X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
+
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
+            # default to calling component _updates if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will update all component cutoffs each time"
+                f" `update` is called with update_params=False."
+            )
+            comp_forecasters = self._components(base_class=BaseForecaster)
+            for comp in comp_forecasters.values():
+                comp.update(y=y, X=X, update_params=False)
 
         return self
 
@@ -1479,9 +1709,6 @@ class BaseForecaster(BaseEstimator):
         fh,
         X=None,
         update_params=True,
-        # todo: deprecate return_pred_int in v 10.0.1
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
     ):
         """Update forecaster and then make forecasts.
 
@@ -1489,25 +1716,22 @@ class BaseForecaster(BaseEstimator):
         sequentially, but can be overwritten by subclasses
         to implement more efficient updating algorithms when available.
         """
-        self.update(y, X, update_params=update_params)
-        return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
+        self.update(y=y, X=X, update_params=update_params)
+        return self.predict(fh=fh, X=X)
 
     def _predict_interval(self, fh, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
 
-        If coverage is iterable, multiple intervals will be calculated.
-
-            core logic
-
-        State required:
-            Requires state to be "fitted".
+        private _predict_interval containing the core logic,
+            called from predict_interval and default _predict_quantiles
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-           Forecasting horizon, default = y.index (in-sample forecast)
-        X : pd.DataFrame, optional (default=None)
-           Exogenous time series
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
         coverage : float or list, optional (default=0.95)
            nominal coverage(s) of predictive interval(s)
 
@@ -1518,7 +1742,9 @@ class BaseForecaster(BaseEstimator):
                 second level coverage fractions for which intervals were computed.
                     in the same order as in input `coverage`.
                 Third level is string "lower" or "upper", for lower/upper interval end.
-            Row index is fh. Entries are forecasts of lower/upper interval end,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are forecasts of lower/upper interval end,
                 for var in col index, at nominal coverage in second col index,
                 lower/upper depending on third col index, for the row index.
                 Upper/lower interval end forecasts are equivalent to
@@ -1554,7 +1780,7 @@ class BaseForecaster(BaseEstimator):
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
             # if was univariate & unnamed variable, replace default
-            if var_names == ["Quantiles"]:
+            if len(var_names) == 1 and var_names == ["Quantiles"]:
                 var_names = ["Coverage"]
             # idx returned by _predict_interval should be
             #   3-level MultiIndex with variable names, coverage, lower/upper
@@ -1570,14 +1796,15 @@ class BaseForecaster(BaseEstimator):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
-            called from predict_quantiles and predict_interval
+            called from predict_quantiles and default _predict_interval
 
         Parameters
         ----------
-        fh : int, list, np.array or ForecastingHorizon
-            Forecasting horizon
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
         alpha : list of float, optional (default=[0.5])
             A list of probabilities at which quantile forecasts are computed.
 
@@ -1586,7 +1813,9 @@ class BaseForecaster(BaseEstimator):
         quantiles : pd.DataFrame
             Column has multi-index: first level is variable name from y in fit,
                 second level being the values of alpha passed to the function.
-            Row index is fh. Entries are quantile forecasts, for var in col index,
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
         implements_interval = self._has_implementation_of("_predict_interval")
@@ -1604,17 +1833,15 @@ class BaseForecaster(BaseEstimator):
 
         if implements_interval:
 
-            coverage = []
+            pred_int = pd.DataFrame()
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals
-                if a < 0.5:
-                    coverage.extend([2 * a])
-                else:
-                    coverage.extend([2 * (1 - a)])
+                #  this uses symmetric predictive intervals:
+                coverage = abs(1 - 2 * a)
 
-            # compute quantile forecasts corresponding to upper/lower
-            pred_int = self._predict_interval(fh=fh, X=X, coverage=coverage)
+                # compute quantile forecasts corresponding to upper/lower
+                pred_a = self._predict_interval(fh=fh, X=X, coverage=[coverage])
+                pred_int = pd.concat([pred_int, pred_a], axis=1)
 
             # now we need to subset to lower/upper depending
             #   on whether alpha was < 0.5 or >= 0.5
@@ -1629,7 +1856,7 @@ class BaseForecaster(BaseEstimator):
             # variable names (unique, in same order)
             var_names = idx.get_level_values(0).unique()
             # if was univariate & unnamed variable, replace default
-            if var_names == ["Coverage"]:
+            if len(var_names) == 1 and var_names == ["Coverage"]:
                 var_names = ["Quantiles"]
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
@@ -1639,91 +1866,244 @@ class BaseForecaster(BaseEstimator):
 
         return pred_int
 
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Compute/return variance forecasts.
+
+        private _predict_var containing the core logic, called from predict_var
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on `cov` variable
+            If cov=False:
+                Column names are exactly those of `y` passed in `fit`/`update`.
+                    For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                    variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                    2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                    covariance between time index in row and col.
+                Note: no covariance forecasts are returned between different variables.
+        """
+        from scipy.stats import norm
+
+        # default behaviour is implemented if one of the following three is implemented
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_proba = self._has_implementation_of("_predict_proba")
+        can_do_proba = implements_interval or implements_quantiles or implements_proba
+
+        if not can_do_proba:
+            raise RuntimeError(
+                f"{self.__class__.__name__} does not implement "
+                "probabilistic forecasting, "
+                'but "capability:pred_int" flag has been set to True incorrectly. '
+                "This is likely a bug, please report, and/or set the flag to False."
+            )
+
+        if implements_proba:
+            # todo: this works only univariate now, need to implement multivariate
+            pred_var = self._predict_proba(fh=fh, X=X)
+            pred_var = pd.DataFrame(pred_var)
+
+            # ensure index and columns are as expected
+            if fh.is_relative:
+                fh = fh.to_absolute(self.cutoff)
+            pred_var.index = fh.to_pandas()
+            if isinstance(self._y, pd.DataFrame):
+                pred_var.columns = self._y.columns
+
+            return pred_var
+
+        # if has one of interval/quantile predictions implemented:
+        #   we get quantile forecasts for first and third quartile
+        #   return variance of normal distribution with that first and third quartile
+        if implements_interval or implements_quantiles:
+            pred_int = self._predict_interval(fh=fh, X=X, coverage=[0.5])
+            var_names = pred_int.columns.get_level_values(0).unique()
+            vars_dict = {}
+            for i in var_names:
+                pred_int_i = pred_int[i].copy()
+                # compute inter-quartile range (IQR), as pd.Series
+                iqr_i = pred_int_i.iloc[:, 1] - pred_int_i.iloc[:, 0]
+                # dividing by IQR of normal gives std of normal with same IQR
+                std_i = iqr_i / (2 * norm.ppf(0.75))
+                # and squaring gives variance (pd.Series)
+                var_i = std_i**2
+                vars_dict[i] = var_i
+
+            # put together to pd.DataFrame
+            #   the indices and column names are already correct
+            pred_var = pd.DataFrame(vars_dict)
+
+            # check whether column format was "nameless", set it to RangeIndex then
+            if len(pred_var.columns) == 1 and pred_var.columns == ["Coverage"]:
+                pred_var.columns = pd.RangeIndex(1)
+
+        return pred_var
+
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : tfp Distribution object
+            if marginal=True:
+                batch shape is 1D and same length as fh
+                event shape is 1D, with length equal number of variables being forecast
+                i-th (batch) distribution is forecast for i-th entry of fh
+                j-th (event) index is j-th variable, order as y in `fit`/`update`
+            if marginal=False:
+                there is a single batch
+                event shape is 2D, of shape (len(fh), no. variables)
+                i-th (event dim 1) distribution is forecast for i-th entry of fh
+                j-th (event dim 1) index is j-th variable, order as y in `fit`/`update`
+        """
+        import tensorflow_probability as tfp
+
+        # default behaviour is implemented if one of the following three is implemented
+        implements_interval = self._has_implementation_of("_predict_interval")
+        implements_quantiles = self._has_implementation_of("_predict_quantiles")
+        implements_var = self._has_implementation_of("_predict_var")
+        can_do_proba = implements_interval or implements_quantiles or implements_var
+
+        if not can_do_proba:
+            raise RuntimeError(
+                f"{self.__class__.__name__} does not implement "
+                "probabilistic forecasting, "
+                'but "capability:pred_int" flag has been set to True incorrectly. '
+                "This is likely a bug, please report, and/or set the flag to False."
+            )
+
+        # if any of the above are implemented, predict_var will have a default
+        #   we use predict_var to get scale, and predict to get location
+        pred_var = self._predict_var(fh=fh, X=X)
+        pred_std = np.sqrt(pred_var)
+        pred_mean = self.predict(fh=fh, X=X)
+        # ensure that pred_mean is a pd.DataFrame
+        df_types = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+        pred_mean = convert_to(pred_mean, to_type=df_types)
+        # pred_mean and pred_var now have the same format
+
+        d = tfp.distributions.Normal
+        pred_dist = d(loc=pred_mean, scale=pred_std)
+
+        return pred_dist
+
     def _predict_moving_cutoff(
-        self,
-        y,
-        cv,
-        X=None,
-        update_params=True,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
+        self, y, cv, X=None, update_params=True, reset_forecaster=True
     ):
         """Make single-step or multi-step moving cutoff predictions.
 
         Parameters
         ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
+        y : time series in sktime compatible data container format
+                Time series to which to fit the forecaster in the update.
+            y can be in one of the following formats, must be same scitype as in fit:
+            Series scitype: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
+                for vanilla forecasting, one time series
+            Panel scitype: pd.DataFrame with 2-level row MultiIndex,
+                3D np.ndarray, list of Series pd.DataFrame, or nested pd.DataFrame
+                for global or panel forecasting
+            Hierarchical scitype: pd.DataFrame with 3 or more level row MultiIndex
+                for hierarchical forecasting
+            Number of columns admissible depend on the "scitype:y" tag:
+                if self.get_tag("scitype:y")=="univariate":
+                    y must have a single column/variable
+                if self.get_tag("scitype:y")=="multivariate":
+                    y must have 2 or more columns
+                if self.get_tag("scitype:y")=="both": no restrictions on columns apply
+            For further details:
+                on usage, see forecasting tutorial examples/01_forecasting.ipynb
+                on specification of formats, examples/AA_datatypes_and_datasets.ipynb
+        cv : temporal cross-validation generator, optional (default=None)
+        X : time series in sktime compatible format, optional (default=None)
+                Exogeneous time series for updating and forecasting
+            Should be of same scitype (Series, Panel, or Hierarchical) as y
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain y.index and fh.index both
+            there are no restrictions on number of columns (unlike for y)
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated in each update step
+        reset_forecaster : bool, optional (default=True)
+            if True, will not change the state of the forecaster,
+                i.e., update/predict sequence is run with a copy,
+                and cutoff, model parameters, data memory of self do not change
+            if False, will update self when the update/predict sequence is run
+                as if update/predict were called directly
 
         Returns
         -------
         y_pred = pd.Series
         """
-        if return_pred_int:
-            raise NotImplementedError()
-
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
 
-        # enter into a detached cutoff mode
-        with self._detached_cutoff():
-            # set cutoff to time point before data
-            self._set_cutoff(_shift(y.index[0], by=-1))
-            # iterate over data
-            for new_window, _ in cv.split(y):
-                y_new = y.iloc[new_window]
+        # enter into a detached cutoff mode, if reset_forecaster is True
+        if reset_forecaster:
+            self_copy = deepcopy(self)
+        # otherwise just work with a reference to self
+        else:
+            self_copy = self
 
-                # we use `update_predict_single` here
-                #  this updates the forecasting horizon
-                y_pred = self._update_predict_single(
-                    y_new,
-                    fh,
-                    X,
-                    update_params=update_params,
-                    return_pred_int=return_pred_int,
-                    alpha=alpha,
-                )
-                y_preds.append(y_pred)
-                cutoffs.append(self.cutoff)
-        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+        # set cutoff to time point before data
+        y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
+        self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
+        # iterate over data
+        for new_window, _ in cv.split(y):
+            y_new = y.iloc[new_window]
 
-    # TODO: remove in v0.11.0
-    def _has_predict_quantiles_been_refactored(self):
-        """Check if specific forecaster implements one of the proba methods."""
-        implements_interval = self._has_implementation_of("_predict_interval")
-        implements_quantiles = self._has_implementation_of("_predict_quantiles")
-        implements_proba = self._has_implementation_of("_predict_proba")
-
-        refactored = implements_interval or implements_quantiles or implements_proba
-
-        return refactored
-
-    # TODO: remove in v0.11.0
-    def _convert_new_to_old_pred_int(self, pred_int_new, alpha):
-        name = pred_int_new.columns.get_level_values(0).unique()[0]
-        alpha = check_alpha(alpha)
-        alphas = [alpha] if isinstance(alpha, (float, int)) else alpha
-        pred_int_old_format = [
-            pd.DataFrame(
-                {
-                    "lower": pred_int_new[(name, a, "lower")],
-                    "upper": pred_int_new[(name, a, "upper")],
-                }
+            # we use `update_predict_single` here
+            #  this updates the forecasting horizon
+            y_pred = self_copy.update_predict_single(
+                y=y_new,
+                fh=fh,
+                X=X,
+                update_params=update_params,
             )
-            for a in alphas
-        ]
+            y_preds.append(y_pred)
+            cutoffs.append(self_copy.cutoff)
 
-        # for a single alpha, return single pd.DataFrame
-        if len(alphas) == 1:
-            return pred_int_old_format[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int_old_format
+            for i in range(len(y_preds)):
+                y_preds[i] = convert_to(
+                    y_preds[i],
+                    self._y_mtype_last_seen,
+                    store=self._converter_store_y,
+                    store_behaviour="freeze",
+                )
+        return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
@@ -1757,9 +2137,12 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
     ytype = type(y_preds[0])
     if isinstance(y_preds[0], pd.DataFrame):
         ycols = y_preds[0].columns
-    for y_pred in y_preds:
+    for i, y_pred in enumerate(y_preds):
         if not isinstance(y_pred, ytype):
-            raise ValueError("all elements of y_preds must be of the same type")
+            raise ValueError(
+                "all elements of y_preds must be of the same type, "
+                f"but y_pred[0] is {ytype} and y_pred[{i}] is {type(y_pred)}"
+            )
         if not len(y_pred) == ylen:
             raise ValueError("all elements of y_preds must be of the same length")
     if isinstance(y_preds[0], pd.DataFrame):
