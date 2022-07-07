@@ -398,7 +398,7 @@ def test_to_relative(freq: str):
     """
     freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
-    cutoff = pd.date_range(start="2021-01-01", freq=freq, periods=1)
+    cutoff = get_cutoff(t, return_index=True, reverse_order=True)
     fh_abs = ForecastingHorizon(t, is_relative=False)
     fh_rel = fh_abs.to_relative(cutoff=cutoff)
     assert_array_equal(fh_rel, np.arange(5))
