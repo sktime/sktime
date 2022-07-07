@@ -177,7 +177,7 @@ def _extract_freq_from_cutoff(x) -> Optional[str]:
 
     Parameters
     ----------
-    x : pd.Period
+    x : pd.Period, pd.PeriodIndex, pd.DatetimeIndex
 
     Returns
     -------
