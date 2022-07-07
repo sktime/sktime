@@ -165,6 +165,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
                 X_win = _X
             fh = self._fh
             estimator.fit(y=y_win, X=X_win, fh=fh, update_params=update_params)
+
+            # remember that we just fitted the estimator
+            self.last_fit_cutoff_ = self.cutoff
         else:
             # if no: call update as usual
             estimator.update(y=y, X=X, update_params=update_params)
@@ -206,7 +209,7 @@ class UpdateEvery(_DelegatedForecaster):
     ----------
     update_interval : difference of sktime time indices (int or timedelta), optional
         interval that needs to elapse until inner update call with update_params=True
-        default = inf, i.e., never updates
+        default = None = infinity, i.e., never updates
         if index of y seen in fit is integer or y is index-free container type,
             update_interval must be int, is interpreted as difference of int location
         if index of y seen in fit is timestamp, must be int or pd.Timedelta
@@ -314,9 +317,13 @@ class UpdateEvery(_DelegatedForecaster):
                 index = min(update_interval, len(_y))
                 update_interval = self.cutoff - _y.index[-index]
         # case distinction based on whether the update_interval period has elapsed
+        # (None update_interval means infinite update_interval)
         #   if yes: call inner update with update_params=True, aka "true" update
-        if time_since_last_update >= update_interval and update_params:
+        if update_interval is not None and time_since_last_update >= update_interval:
             estimator.update(y=y, X=X, update_params=update_params)
+
+            # remember that we just updated the estimator
+            self.last_update_cutoff_ = self.cutoff
         else:
             # if no: call update, but with update_params=False
             estimator.update(y=y, X=X, update_params=False)
