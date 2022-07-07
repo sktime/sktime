@@ -144,7 +144,7 @@ def _check_freq(obj):
 
     Parameters
     ----------
-    obj : pd.Index, pd.Period, pd offset, or None
+    obj : pd.Index, pd.Period, pandas offset, or None
 
     Returns
     -------
