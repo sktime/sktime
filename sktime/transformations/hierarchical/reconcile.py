@@ -67,7 +67,7 @@ class Reconciler(BaseTransformer):
     >>> y = agg.fit_transform(y)
     >>> forecaster = ExponentialSmoothing()
     >>> forecaster.fit(y)
-    ExponentialSmoothing()
+    ExponentialSmoothing(...)
     >>> prds = forecaster.predict(fh=[1])
     >>> # reconcile forecasts
     >>> reconciler = Reconciler(method="ols")
