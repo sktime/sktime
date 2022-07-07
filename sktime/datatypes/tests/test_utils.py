@@ -191,7 +191,8 @@ def test_get_cutoff_from_index(reverse_order):
         series_idx, return_index=False, reverse_order=reverse_order
     )
 
-    assert isinstance(cutoff, pd.RangeIndex) and len(cutoff) == 1
+    assert isinstance(cutoff, pd.Index) and len(cutoff) == 1
+    assert cutoff.is_integer()
     assert idx == cutoff[0]
 
     if reverse_order:
