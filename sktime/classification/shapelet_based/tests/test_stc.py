@@ -3,8 +3,8 @@
 import numpy as np
 from sklearn.metrics import accuracy_score
 
-from sktime.classification._rotation_forest import RotationForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.classification_sklearn import RotationForest
 from sktime.datasets import load_unit_test
 
 

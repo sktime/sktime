@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """HIVE-COTE v2 test code."""
 
-from sktime.classification._rotation_forest import RotationForest
 from sktime.classification.hybrid import HIVECOTEV2
+from sktime.classification_sklearn import RotationForest
 from sktime.datasets import load_unit_test
 
 
