@@ -198,7 +198,7 @@ class ForecastingHorizon:
         - if None, the flag is determined automatically:
             relative, if values are of supported relative index type
             absolute, if not relative and values of supported absolute index type
-    freq : str, pd.Index, pandas offset, or BaseForecaster, optional (default=None)
+    freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
         ignored unless values is without inferrable freq
     """
