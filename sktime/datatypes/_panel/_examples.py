@@ -24,6 +24,7 @@ overall, conversions from non-lossy representations to any other ones
 
 import numpy as np
 import pandas as pd
+from gluonts.dataset.common import ListDataset
 
 example_dict = dict()
 example_dict_lossy = dict()
@@ -197,4 +198,52 @@ example_dict_metadata[("Panel", 2)] = {
     "is_empty": False,
     "has_nans": False,
     "n_instances": 1,
+}
+
+###
+# example 3: univariate, equally sampled, multiple series
+UNIVARIATE_TS = [
+    {"start": "2014-09-07", "target": [1, 2, 3, 4]},
+    {"start": "2014-09-07", "target": [5, 6, 7, 8, 9]},
+]
+X = ListDataset(UNIVARIATE_TS, freq="1D")
+example_dict[("listdataset", "Panel", 3)] = X
+example_dict_lossy[("listdataset", "Panel", 3)] = False
+
+example_dict_metadata[("Panel", 3)] = {
+    "is_univariate": True,
+    "is_one_series": False,
+    "is_equally_spaced": True,
+    "is_equal_length": False,
+    "is_empty": False,
+    "has_nans": False,
+    "n_instances": 2,
+}
+
+###
+# example 4: univariate, equally sampled, multiple series
+MULTIVARIATE_TS = [
+    {"start": "2014-09-07", "target": [[1, 2, 3, 4], [5, 6, 7, 8]]},
+    {"start": "2014-09-07", "target": [[1, 2, 3, 4, 2.5], [6.5, 5, 6, 7, 8]]},
+    {"start": "2014-09-07", "target": [[1, 2, 3, 4], [0, 0, 0, 0]]},
+    {
+        "start": "2014-09-01",
+        "target": [
+            [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 1, 2, 3, 4],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+    },
+    {"start": "2014-09-07", "target": [[1, 2, 3, 4, 0], [0, 5, 6, 7, 8]]},
+]
+X = ListDataset(MULTIVARIATE_TS, freq="1D", one_dim_target=False)
+example_dict[("listdataset", "Panel", 4)] = X
+example_dict_lossy[("listdataset", "Panel", 4)] = False
+example_dict_metadata[("Panel", 4)] = {
+    "is_univariate": False,
+    "is_one_series": False,
+    "is_equally_spaced": True,
+    "is_equal_length": False,
+    "is_empty": False,
+    "has_nans": False,
+    "n_instances": 5,
 }

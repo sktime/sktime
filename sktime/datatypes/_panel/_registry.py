@@ -33,6 +33,12 @@ MTYPE_REGISTER_PANEL = [
         "pd.DataFrame in long format, cols = (index, time_index, column)",
     ),
     ("df-list", "Panel", "list of pd.DataFrame"),
+    (
+        "listdataset",
+        "Panel",
+        "ATTENTION: Gluonts-only. List of dictionaries"
+        "Each row is one instance. Can be univ or multiv. Fixed Freq.",
+    ),
 ]
 
 MTYPE_LIST_PANEL = pd.DataFrame(MTYPE_REGISTER_PANEL)[0].values
