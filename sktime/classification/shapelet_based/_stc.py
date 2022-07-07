@@ -11,8 +11,8 @@ __all__ = ["ShapeletTransformClassifier"]
 import numpy as np
 from sklearn.model_selection import cross_val_predict
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.base._base import _clone_estimator
+from sktime.classification._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
 from sktime.utils.validation.panel import check_X_y

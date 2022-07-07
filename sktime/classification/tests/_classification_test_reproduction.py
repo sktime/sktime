@@ -2,7 +2,6 @@
 import numpy as np
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.dictionary_based import (
     MUSE,
@@ -103,6 +102,7 @@ def _reproduce_transform_basic_motions(estimator):
     return np.nan_to_num(estimator.transform(X_train.iloc[indices]), False, 0, 0, 0)
 
 
+# flake8: noqa: T001
 def _print_array(test_name, array):
     print(test_name)
     print("[")

@@ -10,8 +10,8 @@ __all__ = ["RandomIntervalClassifier"]
 
 import numpy as np
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.base._base import _clone_estimator
+from sktime.classification._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.catch22 import Catch22
 from sktime.transformations.panel.random_intervals import RandomIntervals
