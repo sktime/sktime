@@ -1,5 +1,5 @@
 def convert_from_multiindex_to_listdataset(
-    trainDF, class_val_list=None, freq="1D", startdate="1750-01-01"
+    trainDF, class_val_list=None
 ):
     """
     Output a dataset in ListDataset format compatible with gluonts.
