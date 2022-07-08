@@ -263,7 +263,6 @@ class ForecastingHorizon:
             if not is_in_valid_absolute_index_types(values):
                 raise TypeError(error_msg)
         self._is_relative = is_relative
-        self._freq = _check_freq(freq)
 
     def _new(
         self,

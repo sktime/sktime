@@ -357,8 +357,7 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
     cutoff = get_cutoff(train, return_index=True)
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
-        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3),
-        freq=freqstr,
+        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
     abs_fh = fh.to_absolute(cutoff)
 
@@ -388,8 +387,7 @@ def test_relative_to_relative_with_timedelta_horizon(freqstr):
     cutoff = get_cutoff(train, return_index=True)
     count, unit = _get_intervals_count_and_unit(freq=freqstr)
     fh = ForecastingHorizon(
-        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3),
-        freq=freqstr,
+        pd.timedelta_range(pd.to_timedelta(count, unit=unit), freq=freqstr, periods=3)
     )
     abs_fh = fh.to_absolute(cutoff)
 

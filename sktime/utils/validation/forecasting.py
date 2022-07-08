@@ -306,9 +306,6 @@ def check_fh(fh, enforce_relative: bool = False, freq=None):
     if enforce_relative and not fh.is_relative:
         raise ValueError("`fh` must be relative, but found absolute `fh`")
 
-    if fh.freq is None:
-        fh.freq = infer_freq(y)
-
     return fh
 
 
