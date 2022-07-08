@@ -306,12 +306,12 @@ class BaseTransformer(BaseEstimator):
             columns2 = key[1]
             if is_noneslice(columns1) and is_noneslice(columns2):
                 return self
-            elif is_noneslice(columns1):
-                return ColumnSelect(columns2) * self
             elif is_noneslice(columns2):
-                return self * ColumnSelect(columns1)
+                return ColumnSelect(columns1) * self
+            elif is_noneslice(columns1):
+                return self * ColumnSelect(columns2)
             else:
-                return ColumnSelect(columns2) * self * ColumnSelect(columns1)
+                return ColumnSelect(columns1) * self * ColumnSelect(columns2)
         else:
             return self * ColumnSelect(key)
 
