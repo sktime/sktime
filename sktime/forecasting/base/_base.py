@@ -1330,6 +1330,9 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series
         """
         if y is not None:
+            # unwrap y if VectorizedDF
+            if isinstance(y, VectorizedDF):
+                y = y.X_multiindex
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
@@ -1340,6 +1343,9 @@ class BaseForecaster(BaseEstimator):
             self._set_cutoff_from_y(y)
 
         if X is not None:
+            # unwrap X if VectorizedDF
+            if isinstance(X, VectorizedDF):
+                X = X.X_multiindex
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
