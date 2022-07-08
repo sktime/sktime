@@ -383,7 +383,8 @@ class SlidingWindowSegmenter(BaseTransformer):
 
     Parameters
     ----------
-        window_length : int, length of interval.
+        window_length : int, optional, default=5.
+            length of sliding window interval
 
     Returns
     -------
