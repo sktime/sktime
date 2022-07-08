@@ -25,7 +25,6 @@ import pandas as pd
 from sklearn.base import clone, is_regressor
 from sklearn.ensemble import GradientBoostingRegressor
 
-from sktime.utils.datetime import infer_freq
 from sktime.utils.validation import (
     array_is_datetime64,
     array_is_int,
