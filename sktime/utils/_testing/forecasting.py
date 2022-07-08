@@ -164,11 +164,16 @@ def _make_fh(
     else:
         kwargs = {}
 
+        if fh_type in ["datetime", "period"]:
+            cutoff_freq = cutoff.freq
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[0]
+
         if fh_type == "datetime":
-            steps *= pd.tseries.frequencies.to_offset(freq)
+            steps *= cutoff_freq
 
         if fh_type == "period":
-            kwargs = {"freq": freq}
+            kwargs = {"freq": cutoff_freq}
 
         values = cutoff + steps
         return ForecastingHorizon(

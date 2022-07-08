@@ -263,8 +263,8 @@ def check_sp(sp, enforce_list=False):
     return sp
 
 
-def check_fh(fh, enforce_relative: bool = False, y=None):
-    """Validate forecasting horizon.
+def check_fh(fh, enforce_relative: bool = False, freq=None):
+    """Coerce to ForecastingHorizon object and validate inputs.
 
     Parameters
     ----------
@@ -272,13 +272,10 @@ def check_fh(fh, enforce_relative: bool = False, y=None):
         Forecasting horizon specifying the time points to predict.
     enforce_relative : bool, optional (default=False)
         If True, checks if fh is relative.
-    y : time series in sktime compatible data container format, optional (default=None)
-        Used to infer frequency string and assign it to ForecastingHorizon.
-        If `fh` argument is not an initialized `ForecastingHorizon` object,
-        then frequency is used to construct it.
-        If `fh` argument is a `ForecastingHorizon` object,
-        but `freq` attribute is `None`, then inferred frequency
-        is used to update the attribute.
+    freq : str, or pd.Index, optional (default=None)
+        object carrying frequency information on values
+        ignored unless values is without inferrable freq
+        Frequency string or pd.Index
 
     Returns
     -------
@@ -295,7 +292,9 @@ def check_fh(fh, enforce_relative: bool = False, y=None):
     from sktime.forecasting.base import ForecastingHorizon
 
     if not isinstance(fh, ForecastingHorizon):
-        fh = ForecastingHorizon(fh, is_relative=None, freq=infer_freq(y))
+        fh = ForecastingHorizon(fh, is_relative=None, freq=freq)
+    else:
+        fh.freq = freq
 
     # Check if non-empty, note we check for empty values here, rather than
     # during construction of ForecastingHorizon because ForecastingHorizon

@@ -1014,11 +1014,9 @@ class BaseForecaster(BaseEstimator):
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
         if isinstance(y, (pd.DataFrame, pd.Series)):
-            fh = ForecastingHorizon(
-                y.index, is_relative=False, freq=infer_freq(self._y)
-            )
+            fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
-                fh = fh.to_relative(self.cutoff)
+                fh = fh.to_relative(self._cutoff)
             fh = self._check_fh(fh)
         # if np.ndarray, rows are not indexed
         # so will be interpreted as range(len), or existing fh if it is stored
@@ -1497,8 +1495,8 @@ class BaseForecaster(BaseEstimator):
 
         # B. fh is passed
         else:
-            # If fh is passed, validate (no matter the situation)
-            fh = check_fh(fh=fh, y=self._y)
+            # If fh is passed, coerce to ForecastingHorizon and validate (all cases)
+            fh = check_fh(fh=fh, freq=self._cutoff)
 
             # fh is written to self if one of the following is true
             # - estimator has not been fitted yet (for safety from side effects)
