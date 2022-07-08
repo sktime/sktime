@@ -14,6 +14,7 @@ from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.series.exponent import ExponentTransformer
 from sktime.transformations.series.impute import Imputer
 from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.series.theta import ThetaLinesTransformer
 from sktime.utils._testing.deep_equals import deep_equals
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -167,24 +168,28 @@ def test_subset_getitem():
     """Test subsetting using the [ ] dunder, __getitem__."""
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
 
-    t = ExponentTransformer(power=2)
+    t = ThetaLinesTransformer()
 
-    t_after = t["a"]
-    t_after_with_colon = t[["a"], :]
-    t_before = t[:, ["b", "c"]]
-    t_both = t[["a", "b"], ["b", "c"]]
+    t_after = t["a__0"]
+    t_before_with_colon = t[["a", "b"], :]
+    t_after_with_colon = t[:, ["a__0", "a__2"]]
+    t_both = t[["a", "b"], ["b__0", "b__2", "c__0", "c__2"]]
     t_none = t[:, :]
 
     assert isinstance(t_after, TransformerPipeline)
     assert isinstance(t_after_with_colon, TransformerPipeline)
-    assert isinstance(t_before, TransformerPipeline)
+    assert isinstance(t_before_with_colon, TransformerPipeline)
     assert isinstance(t_both, TransformerPipeline)
-    assert isinstance(t_none, ExponentTransformer)
+    assert isinstance(t_none, ThetaLinesTransformer)
 
-    X_square = t.fit_transform(X)
+    X_theta = t.fit_transform(X)
 
-    _assert_array_almost_equal(t_after.fit_transform(X), X_square[["a"]])
-    _assert_array_almost_equal(t_after_with_colon.fit_transform(X), X_square[["a"]])
-    _assert_array_almost_equal(t_before.fit_transform(X), X_square[["b", "c"]])
-    _assert_array_almost_equal(t_both.fit_transform(X), X_square[["b"]])
-    _assert_array_almost_equal(t_none.fit_transform(X), X_square)
+    _assert_array_almost_equal(t_after.fit_transform(X), X_theta[["a__0"]])
+    _assert_array_almost_equal(
+        t_after_with_colon.fit_transform(X), X_theta[["a__0", "a__2"]]
+    )
+    _assert_array_almost_equal(
+        t_before_with_colon.fit_transform(X), X_theta[["a__0", "a__2", "b__0", "b__2"]]
+    )
+    _assert_array_almost_equal(t_both.fit_transform(X), X_theta[["b__0", "b__2"]])
+    _assert_array_almost_equal(t_none.fit_transform(X), X_theta)
