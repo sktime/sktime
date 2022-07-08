@@ -1322,6 +1322,10 @@ class BaseForecaster(BaseEstimator):
             this is only done if X is not None
         cutoff : is set to latest index seen in y
 
+        _y and _X are guaranteed to be one of mtypes:
+            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
+            pd_multiindex_hier
+
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
