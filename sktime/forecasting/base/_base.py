@@ -768,7 +768,10 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
-        self._update(y=y_inner, X=X_inner, update_params=update_params)
+        if not self._is_vectorized:
+            self._update(y=y_inner, X=X_inner, update_params=update_params)
+        else:
+            self._vectorize("update", y=y_inner, X=X_inner, update_params=update_params)
 
         return self
 
@@ -1528,6 +1531,7 @@ class BaseForecaster(BaseEstimator):
 
         Uses forecasters_ attribute to store one forecaster per loop index.
         """
+        FIT_METHODS = ["fit", "update"]
         PREDICT_METHODS = [
             "predict",
             "predict_quantiles",
@@ -1535,7 +1539,7 @@ class BaseForecaster(BaseEstimator):
             "predict_var",
         ]
 
-        if methodname == "fit":
+        if methodname in FIT_METHODS:
             # create container for clones
             y = kwargs.pop("y")
             X = kwargs.pop("X", None)
@@ -1555,13 +1559,16 @@ class BaseForecaster(BaseEstimator):
             if col_idx is None:
                 col_idx = ["forecasters"]
 
-            self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
+            if methodname == "fit":
+                self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
             for ix in range(len(ys)):
                 i, j = y.get_iloc_indexer(ix)
-                self.forecasters_.iloc[i].iloc[j] = self.clone()
-                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
-
+                if methodname == "fit":
+                    self.forecasters_.iloc[i].iloc[j] = self.clone()
+                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
+                method(y=ys[ix], X=Xs[i], **kwargs)
             return self
+
         elif methodname in PREDICT_METHODS:
             n = len(self.forecasters_.index)
             m = len(self.forecasters_.columns)
