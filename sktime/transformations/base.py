@@ -965,7 +965,7 @@ class BaseTransformer(BaseEstimator):
                     ix += 1
                     method = getattr(self.transformers_.iloc[i].iloc[j], methodname)
                     Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
-                Xt = X.reconstruct(Xts, overwrite_index=False)
+                Xt = X.reconstruct(Xts, overwrite_index=False, col_multiindex="flat")
 
             # if fit_is_empty: don't store transformers, run fit/transform in one
             else:
@@ -978,7 +978,7 @@ class BaseTransformer(BaseEstimator):
                     transformer = self.clone().fit(X=Xs[ix], y=ys[i], **kwargs)
                     method = getattr(transformer, methodname)
                     Xts += [method(X=Xs[ix], y=ys[i], **kwargs)]
-                Xt = X.reconstruct(Xts, overwrite_index=False)
+                Xt = X.reconstruct(Xts, overwrite_index=False, col_multiindex="flat")
 
             # # one more thing before returning:
             #
