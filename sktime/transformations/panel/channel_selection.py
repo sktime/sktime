@@ -14,9 +14,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestCentroid
-from sklearn.preprocessing import normalize
 
 from sktime.datatypes._panel._convert import from_3d_numpy_to_nested
 from sktime.transformations.base import BaseTransformer
@@ -222,101 +220,6 @@ class ElbowChannelSelection(BaseTransformer):
         """
         params = {"normalise": True}
         return params
-
-
-class ClusterChannelSelection(BaseTransformer):
-    """Channel Selection Method: KMeans.
-
-    Apply KMeans to the distance matrix derived and
-    creates two clusters to identify useful channels.
-
-    Parameters
-    ----------
-    normalise       : boolean, optional (default=True)
-    n_jobs          : int, optional (default=1)
-    random_state    : boolean, optional (default=None)
-    """
-
-    _tags = {
-        # "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
-        # "scitype:transform-output": "Primitives",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "univariate-only": False,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
-        "requires_y": True,  # does y need to be passed in fit?
-        "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
-        "skip-inverse-transform": True,  # is inverse-transform skipped when called?
-    }
-
-    def __init__(self, normalise=True, n_jobs=1, random_state=None):
-        self.normalise = normalise
-        self.n_jobs = n_jobs
-        self.random_state = random_state if isinstance(random_state, int) else None
-        self.channels_selected = []
-        self._is_fitted = False
-        self.train_time = 0
-        super(ClusterChannelSelection, self).__init__()
-
-    def _fit(self, X, y):
-        """
-        Fit transformer to X and y.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _fit must support all types in it
-            Data to fit transform to
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        self: reference to self
-        """
-        start = int(round(time.time() * 1000))
-        centroid_obj = _shrunk_centroid(0)
-        df = centroid_obj.create_centroid(X.copy(), y)
-        obj = _distance_matrix()
-        self.distance_frame_ = obj.distance(df)
-        # l2 normalisng for kmeans
-        self.distance_frame_ = pd.DataFrame(
-            normalize(self.distance_frame_, axis=0),
-            columns=self.distance_frame_.columns.tolist(),
-        )
-
-        self.kmeans = KMeans(n_clusters=2, random_state=0).fit(self.distance_frame_)
-        # Find the cluster name with maximum avg distance
-        self.cluster = np.argmax(self.kmeans.cluster_centers_.mean(axis=1))
-        self.channels_selected = [
-            id_ for id_, item in enumerate(self.kmeans.labels_) if item == self.cluster
-        ]
-        self.train_time = int(round(time.time() * 1000)) - start
-        return self
-
-    def _transform(self, X, y):
-        """
-        Transform X and return a transformed version.
-
-        private _transform containing core logic, called from transform
-
-        Parameters
-        ----------
-        X : Series or Panel of mtype X_inner_mtype
-            if X_inner_mtype is list, _transform must support all types in it
-            Data to be transformed
-        y : Series or Panel of mtype y_inner_mtype, default=None
-            Additional data, e.g., labels for transformation
-
-        Returns
-        -------
-        X with a subset of dimensions
-        """
-        return X[:, self.channels_selected, :]
 
 
 class ElbowClassPairwise(BaseTransformer):
