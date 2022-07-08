@@ -136,6 +136,7 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             "numpy3D",
             "pd_multiindex_hier",
         ],
+        "univariate-only": False,
     }
 
     # no further default tag values - these are set dynamically below
@@ -172,7 +173,6 @@ class TransformerPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         self._anytagis_then_set("transform-returns-same-time-index", False, True, ests)
         self._anytagis_then_set("skip-inverse-transform", True, False, ests)
         self._anytagis_then_set("capability:inverse_transform", False, True, ests)
-        self._anytagis_then_set("univariate-only", True, False, ests)
 
         # can handle missing data iff all estimators can handle missing data
         #   up to a potential estimator when missing data is removed
