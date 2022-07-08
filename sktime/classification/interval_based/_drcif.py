@@ -618,4 +618,9 @@ class DrCIF(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 10, "n_intervals": 2, "att_subsample_size": 4}
         else:
-            return {"n_estimators": 2, "n_intervals": 2, "att_subsample_size": 2}
+            return {
+                "n_estimators": 2,
+                "n_intervals": 2,
+                "att_subsample_size": 2,
+                "save_transformed_data": True,
+            }
