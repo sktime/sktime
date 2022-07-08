@@ -162,6 +162,11 @@ class VectorizedDF:
 
         return row_ix, col_ix
 
+    @property
+    def index(self):
+        """Defaults to pandas index of X converted to pandas type."""
+        return self.X_multiindex.index
+
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
 
