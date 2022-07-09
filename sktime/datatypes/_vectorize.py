@@ -268,11 +268,11 @@ class VectorizedDF:
         df_list : iterable of objects of same type and sequence as __getitem__ returns.
             can be self, but will in general be another object to be useful.
             Example: [some_operation(df) for df in self] that leaves types the same
-        convert_back : bool, default = False
+        convert_back : bool, optional, default = False
             whether to convert output back to mtype of X in __init__
             if False, the return will be a pandas.DataFrame with Index or multiIndex
             if True, the return is converted to the mtype of X in __init__
-        overwrite_index : bool, default = True
+        overwrite_index : bool, optional, default = True
             if True, the resulting return will have index overwritten by that of X
                 only if applies, i.e., overwrite is possible and X had an index
             if False, no index overwrite will happen
@@ -297,14 +297,14 @@ class VectorizedDF:
             if convert_back=True, will have same format and mtype as X input to __init__
         """
         row_ix, col_ix = self.get_iter_indices()
+        multiout = False
         if row_ix is None and col_ix is None:
             X_mi_reconstructed = self.X_multiindex
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
-            if col_multiindex in ["flat", "multiindex"] or any(
-                len(x.columns) > 1 for x in df_list
-            ):
+            multiout = any(len(x.columns) > 1 for x in df_list)
+            if col_multiindex in ["flat", "multiindex"] or multiout:
                 col_keys = self.X_multiindex.columns
             else:
                 col_keys = None
@@ -315,9 +315,8 @@ class VectorizedDF:
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                if col_multiindex in ["flat", "multiindex"] or any(
-                    len(x.columns) > 1 for x in ith_col_block
-                ):
+                multiout = any(len(x.columns) > 1 for x in ith_col_block)
+                if col_multiindex in ["flat", "multiindex"] or multiout:
                     col_keys = self.X_multiindex.columns
                 else:
                     col_keys = None
@@ -328,9 +327,8 @@ class VectorizedDF:
         X_mi_index = X_mi_reconstructed.index
         X_orig_row_index = self.X_multiindex.index
 
-        if col_multiindex in ["flat"] and isinstance(
-            X_mi_reconstructed.columns, pd.MultiIndex
-        ):
+        flatten = col_multiindex in ["flat"] or (col_multiindex == "none" and multiout)
+        if flatten and isinstance(X_mi_reconstructed.columns, pd.MultiIndex):
             X_mi_reconstructed.columns = flatten_multiindex(X_mi_reconstructed.columns)
 
         if overwrite_index and len(X_mi_index.names) == len(X_orig_row_index.names):
