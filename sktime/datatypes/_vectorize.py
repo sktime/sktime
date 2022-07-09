@@ -322,9 +322,8 @@ class VectorizedDF:
         X_mi_index = X_mi_reconstructed.index
         X_orig_row_index = self.X_multiindex.index
 
-        if (multiout or col_multiindex in ["flat"]) and isinstance(
-            X_mi_reconstructed.columns, pd.MultiIndex
-        ):
+        flatten = col_multiindex in ["flat"] or (col_multiindex == "none" and multiout)
+        if flatten and isinstance(X_mi_reconstructed.columns, pd.MultiIndex):
             X_mi_reconstructed.columns = flatten_multiindex(X_mi_reconstructed.columns)
 
         if overwrite_index and len(X_mi_index.names) == len(X_orig_row_index.names):
