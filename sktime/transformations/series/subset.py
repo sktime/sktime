@@ -277,5 +277,6 @@ class ColumnSelect(BaseTransformer):
         params1 = {"columns": None}
         params2 = {"columns": [0, 2, 3]}
         params3 = {"columns": ["a", "foo", "bar"], "index_treatment": "keep"}
+        params4 = {"columns": "a", "index_treatment": "keep"}
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]

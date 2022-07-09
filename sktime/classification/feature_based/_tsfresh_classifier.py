@@ -16,6 +16,7 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
+from sktime.utils.validation._dependencies import _check_python_version
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -62,27 +63,13 @@ class TSFreshClassifier(BaseClassifier):
         scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import TSFreshClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TSFreshClassifier(
-    ...     default_fc_parameters="minimal",
-    ...     estimator=RandomForestClassifier(n_estimators=5),
-    ... )
-    >>> clf.fit(X_train, y_train)
-    TSFreshClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "feature",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -95,6 +82,8 @@ class TSFreshClassifier(BaseClassifier):
         chunksize=None,
         random_state=None,
     ):
+        _check_python_version(self, "tsfresh", severity="error")
+
         self.default_fc_parameters = default_fc_parameters
         self.relevant_feature_extractor = relevant_feature_extractor
         self.estimator = estimator
