@@ -961,7 +961,8 @@ class BaseForecaster(BaseEstimator):
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
-        # temporary workaround: unwrap VectorizedDF again
+        # temporary workaround for vectorization:
+        # unwrap VectorizedDF again, and rely on native vectorizatino of update/predict
         # todo: refactor update_predict and deal with vectorization properly
         if isinstance(y_inner, VectorizedDF):
             y_inner = y_inner.X
