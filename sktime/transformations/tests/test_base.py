@@ -35,6 +35,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformSeriesUnivariate,
 )
+from sktime.utils._testing.series import _make_series
 
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
@@ -592,10 +593,15 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit():
 def test_vectorize_reconstruct_unique_columns():
     """Tests that vectorization on multivariate output yields unique columns.
 
+    Also test that the column names are as expected:
+    <variable>__<transformed> if multiple transformed variables per variable are present
+    <variable> if one variable is transformed to one output
+
     Raises
     ------
     AssertionError if output columns are not as expected.
     """
+    from sktime.transformations.series.detrend import Detrender
     from sktime.transformations.series.theta import ThetaLinesTransformer
 
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
@@ -609,3 +615,8 @@ def test_vectorize_reconstruct_unique_columns():
 
     X_mi_cols = t.fit_transform(X_mi)
     assert set(X_mi_cols) == set(["var_0__0", "var_0__2", "var_1__0", "var_1__2"])
+
+    X = _make_series(n_columns=2, n_timepoints=15)
+    t = Detrender.create_test_instance()
+    Xt = t.fit_transform(X)
+    assert set(Xt.columns) == set([0, 1])
