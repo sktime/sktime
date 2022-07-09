@@ -1557,7 +1557,6 @@ class BaseForecaster(BaseEstimator):
             "predict_interval",
             "predict_var",
         ]
-        MULTI_IDX_RETURN = ["predict_quantiles", "predict_interval"]
 
         if methodname in FIT_METHODS:
             # create container for clones
@@ -1613,7 +1612,7 @@ class BaseForecaster(BaseEstimator):
                 y_preds, overwrite_index=True, col_multiindex=col_multiindex
             )
             # if vectorize over columns replace top column level with variable names
-            if methodname in MULTI_IDX_RETURN:
+            if col_multiindex == "multiindex":
                 y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 

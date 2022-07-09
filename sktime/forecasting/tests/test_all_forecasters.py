@@ -400,7 +400,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             # multiply variables with all alpha values
             expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
-        assert all(expected == pred_quantiles.columns.to_flat_index())
+        found = pred_quantiles.columns.to_flat_index()
+        assert all(expected == found)
 
         if isinstance(alpha, list):
             # sorts the columns that correspond to alpha values
