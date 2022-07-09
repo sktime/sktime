@@ -961,6 +961,13 @@ class BaseForecaster(BaseEstimator):
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
+        # temporary workaround: unwrap VectorizedDF again
+        # todo: refactor update_predict and deal with vectorization properly
+        if isinstance(y_inner, VectorizedDF):
+            y_inner = y_inner.X
+        if isinstance(X_inner, VectorizedDF):
+            X_inner = X_inner.X
+
         return self._update_predict_single(
             y=y_inner,
             fh=fh,
@@ -2114,6 +2121,12 @@ class BaseForecaster(BaseEstimator):
         # set cutoff to time point before data
         y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
         self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
+
+        if isinstance(y, VectorizedDF):
+            y = y.X
+        if isinstance(X, VectorizedDF):
+            X = X.X
+
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
