@@ -140,6 +140,11 @@ class AutoETS(_StatsModelsAdapter):
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
+    random_state : int, RandomState instance or None, optional ,
+        default=None – If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by np.random.
 
     References
     ----------
@@ -198,7 +203,7 @@ class AutoETS(_StatsModelsAdapter):
         additive_only=False,
         ignore_inf_ic=True,
         n_jobs=None,
-        **kwargs
+        random_state=None,
     ):
         # Model params
         self.error = error
@@ -230,7 +235,7 @@ class AutoETS(_StatsModelsAdapter):
         self.ignore_inf_ic = ignore_inf_ic
         self.n_jobs = n_jobs
 
-        super(AutoETS, self).__init__()
+        super(AutoETS, self).__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
 
@@ -444,7 +449,7 @@ class AutoETS(_StatsModelsAdapter):
 
         start, end = valid_indices[[0, -1]]
         prediction_results = self._fitted_forecaster.get_prediction(
-            start=start, end=end
+            start=start, end=end, random_state=self.random_state
         )
 
         pred_int = pd.DataFrame()

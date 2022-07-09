@@ -12,6 +12,10 @@ all_tags(estimator_types)
     lookup and filtering of estimator tags
 """
 
+__author__ = ["fkiraly", "mloning", "katiebuc", "miraep8", "xloem"]
+# all_estimators is also based on the sklearn utility of the same name
+
+
 import inspect
 import pkgutil
 from copy import deepcopy
@@ -129,7 +133,7 @@ def all_estimators(
     import sys
     import warnings
 
-    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking")
+    MODULES_TO_IGNORE = ("tests", "setup", "contrib", "benchmarking", "utils")
 
     all_estimators = []
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory

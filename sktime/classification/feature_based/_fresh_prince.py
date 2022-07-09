@@ -238,4 +238,5 @@ class FreshPRINCE(BaseClassifier):
             return {
                 "n_estimators": 2,
                 "default_fc_parameters": "minimal",
+                "save_transformed_data": True,
             }

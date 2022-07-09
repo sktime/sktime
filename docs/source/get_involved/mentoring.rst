@@ -33,7 +33,7 @@ In addition to the individual project work, all students are be expected to:
 * Discuss proposed changes online on GitHub issues,
 * Write a final blog post about your contribution.
 
-Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/main/CODE_OF_CONDUCT.rst>`_.
+Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/main/docs/source/get_involved/code_of_conduct.rst>`_.
 
 How to apply
 ------------

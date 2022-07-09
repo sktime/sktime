@@ -41,10 +41,10 @@ def retrieve_scenarios(obj, filter_tags=None):
 
     Parameters
     ----------
-    obj : class or object, or string.
+    obj : class or object, or string, or list of str.
         Which kind of estimator/object to retrieve scenarios for.
         If object, must be a class or object inheriting from BaseObject.
-        If string, must be in registry.BASE_CLASS_REGISTER (first col)
+        If string(s), must be in registry.BASE_CLASS_REGISTER (first col)
             for instance 'classifier', 'regressor', 'transformer', 'forecaster'
     filter_tags: dict of (str or list of str), default=None
         subsets the returned objectss as follows:
@@ -65,25 +65,28 @@ def retrieve_scenarios(obj, filter_tags=None):
             "see registry.BASE_CLASS_SCITYPE_LIST for valid scitype strings"
         )
 
+    # if class, get scitypes from inference; otherwise, str or list of str
     if not isinstance(obj, str):
         estimator_type = scitype(obj)
     else:
         estimator_type = obj
 
-    if isinstance(obj, list):
-        scenarios_for_type = []
-        for est_type in estimator_type:
-            scens = scenarios.get(est_type)
-            if scens is not None:
-                scenarios_for_type += scenarios.get(est_type)
-    else:
-        scenarios_for_type = scenarios.get(estimator_type)
-        if scenarios_for_type is None:
-            scenarios_for_type = []
+    # coerce to list, ensure estimator_type is list of str
+    if not isinstance(estimator_type, list):
+        estimator_type = [estimator_type]
 
+    # now loop through types and retrieve scenarios
+    scenarios_for_type = []
+    for est_type in estimator_type:
+        scens = scenarios.get(est_type)
+        if scens is not None:
+            scenarios_for_type += scenarios.get(est_type)
+
+    # instantiate all scenarios by calling constructor
     scenarios_for_type = [x() for x in scenarios_for_type]
 
-    if not isinstance(obj, str):
+    # if obj was an object, filter to applicable scenarios
+    if not isinstance(obj, str) and not isinstance(obj, list):
         scenarios_for_type = [x for x in scenarios_for_type if x.is_applicable(obj)]
 
     if filter_tags is not None:

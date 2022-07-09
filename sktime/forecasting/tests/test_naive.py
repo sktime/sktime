@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import (
@@ -60,7 +61,8 @@ def test_strategy_last_seasonal(fh, sp):
     y_pred = f.predict(fh)
 
     # check predicted index
-    _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+    cutoff = get_cutoff(y_train, return_index=True)
+    _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
     # check values
     fh = check_fh(fh)  # get well formatted fh
@@ -80,7 +82,8 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         y_pred = f.predict(fh)
 
         # check predicted index
-        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        cutoff = get_cutoff(y_train, return_index=True)
+        _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
         if window_length is None:
             window_length = len(y_train)
@@ -199,9 +202,10 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1H")
+    kwargs = dict(closed="left") if pd.__version__ < "1.4.0" else dict(inclusive="left")
     data = pd.Series(
         index=pd.date_range(
-            "2021-06-01 00:00", periods=n * window_length, freq=freq, closed="left"
+            "2021-06-01 00:00", periods=n * window_length, freq=freq, **kwargs
         ),
         data=([float(i) for i in range(1, sp + 1)] * n * window_length)[
             : n * window_length
