@@ -10,8 +10,8 @@ __all__ = ["FreshPRINCE"]
 
 import numpy as np
 
-from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
+from sktime.classification_sklearn import RotationForest
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
@@ -62,7 +62,7 @@ class FreshPRINCE(BaseClassifier):
     Examples
     --------
     >>> from sktime.classification.feature_based import FreshPRINCE
-    >>> from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
+    >>> from sktime.classification_sklearn import RotationForest
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
@@ -238,4 +238,5 @@ class FreshPRINCE(BaseClassifier):
             return {
                 "n_estimators": 2,
                 "default_fc_parameters": "minimal",
+                "save_transformed_data": True,
             }
