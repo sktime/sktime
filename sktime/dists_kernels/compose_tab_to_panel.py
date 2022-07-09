@@ -12,6 +12,7 @@ __author__ = ["fkiraly"]
 import numpy as np
 
 from sktime.dists_kernels._base import BasePairwiseTransformerPanel
+from sktime.utils._testing.deep_equals import deep_equals
 
 
 class AggrDist(BasePairwiseTransformerPanel):
@@ -75,7 +76,7 @@ class AggrDist(BasePairwiseTransformerPanel):
         n = len(X)
         m = len(X2)
 
-        X_equals_X2 = self.X_equals_X2
+        X_equals_X2 = deep_equals(X, X2)
 
         aggfunc = self.aggfunc
         aggfunc_is_symm = self.aggfunc_is_symm

@@ -1,4 +1,31 @@
 # -*- coding: utf-8 -*-
+"""Machine type converters for Panel scitype.
+
+Exports conversion and mtype dictionary for Panel scitype:
+
+convert_dict: dict indexed by triples of str
+  1st element = convert from - str
+  2nd element = convert to - str
+  3rd element = considered as this scitype - str
+elements are conversion functions of machine type (1st) -> 2nd
+
+Function signature of all elements
+convert_dict[(from_type, to_type, as_scitype)]
+
+Parameters
+----------
+obj : from_type - object to convert
+store : dictionary - reference of storage for lossy conversions, default=None (no store)
+
+Returns
+-------
+converted_obj : to_type - object obj converted to to_type
+
+Raises
+------
+ValueError and TypeError, if requested conversion is not possible
+                            (depending on conversion logic)
+"""
 
 import numpy as np
 import pandas as pd
@@ -7,7 +34,6 @@ __all__ = [
     "convert_dict",
 ]
 
-from sktime.datatypes._panel._check import is_nested_dataframe
 from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
 
 # dictionary indexed by triples of types
@@ -530,7 +556,7 @@ def from_long_to_nested_adp(obj, store=None):
 convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
 
 
-def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
+def from_multi_index_to_3d_numpy(X):
     """Convert pandas multi-index Panel to numpy 3D Panel.
 
     Convert panel data stored as pandas multi-index DataFrame to
@@ -540,15 +566,6 @@ def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     ----------
     X : pd.DataFrame
         The multi-index pandas DataFrame
-
-    instance_index, time_index are deprecated since 0.11.0 and will be removed in 0.12.0
-        these are not necessary, since: as of before 0.11.0, the column names are
-            guaranteed if the mtype is pd-multiindex, and after 0.12.0 the condition
-            on column names is relaxed
-    instance_index : str
-        Name of the multi-index level corresponding to the DataFrame's instances
-    time_index : str
-        Name of multi-index level corresponding to DataFrame's timepoints
 
     Returns
     -------
@@ -706,7 +723,7 @@ def from_multi_index_to_nested(
             ]
 
         x_nested[_label] = pd.Series(dim_list)
-    x_nested = pd.DataFrame(x_nested)
+    x_nested = pd.DataFrame(x_nested).set_axis(instance_idxs)
 
     col_msg = "Multi-index and nested DataFrames should have same columns names"
     assert (x_nested.columns == multi_ind_dataframe.columns).all(), col_msg
@@ -747,9 +764,6 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         The multi-indexed pandas DataFrame
 
     """
-    if not is_nested_dataframe(X):
-        raise ValueError("Input DataFrame is not a nested DataFrame")
-
     # this contains the right values, but does not have the right index
     #   need convert_dtypes or dtypes will always be object
     X_mi = X.explode(tuple(X.columns)).convert_dtypes()
@@ -796,15 +810,6 @@ def from_nested_to_3d_numpy(X):
     X_3d : np.ndarrray
         3-dimensional NumPy array
     """
-    # n_instances, n_columns = X.shape
-    # n_timepoints = X.iloc[0, 0].shape[0]
-    # array = np.empty((n_instances, n_columns, n_timepoints))
-    # for column in range(n_columns):
-    #     array[:, column, :] = X.iloc[:, column].tolist()
-    # return array
-    if not is_nested_dataframe(X):
-        raise ValueError("Input DataFrame is not a nested DataFrame")
-
     # n_columns = X.shape[1]
     nested_col_mask = [*are_columns_nested(X)]
 
@@ -908,9 +913,8 @@ convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
 def from_multiindex_to_dflist(obj, store=None):
 
     instance_index = obj.index.levels[0]
-    n = len(instance_index)
 
-    Xlist = [obj.loc[i].rename_axis(None) for i in range(n)]
+    Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
 
     return Xlist
 
@@ -1031,12 +1035,14 @@ def _concat(fun1, fun2):
 
 for tp in set(MTYPE_LIST_PANEL).difference(["numpyflat", "numpy3D"]):
     if ("numpy3D", tp, "Panel") in convert_dict.keys():
-        convert_dict[("numpyflat", tp, "Panel")] = _concat(
-            convert_dict[("numpyflat", "numpy3D", "Panel")],
-            convert_dict[("numpy3D", tp, "Panel")],
-        )
+        if ("numpyflat", tp, "Panel") not in convert_dict.keys():
+            convert_dict[("numpyflat", tp, "Panel")] = _concat(
+                convert_dict[("numpyflat", "numpy3D", "Panel")],
+                convert_dict[("numpy3D", tp, "Panel")],
+            )
     if (tp, "numpy3D", "Panel") in convert_dict.keys():
-        convert_dict[(tp, "numpyflat", "Panel")] = _concat(
-            convert_dict[(tp, "numpy3D", "Panel")],
-            convert_dict[("numpy3D", "numpyflat", "Panel")],
-        )
+        if (tp, "numpyflat", "Panel") not in convert_dict.keys():
+            convert_dict[(tp, "numpyflat", "Panel")] = _concat(
+                convert_dict[(tp, "numpy3D", "Panel")],
+                convert_dict[("numpy3D", "numpyflat", "Panel")],
+            )

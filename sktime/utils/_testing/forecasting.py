@@ -34,7 +34,7 @@ def _get_n_columns(tag):
     return n_columns_list
 
 
-def _get_expected_index_for_update_predict(y, fh, step_length):
+def _get_expected_index_for_update_predict(y, fh, step_length, initial_window):
     """Compute expected time index from update_predict()."""
     # time points at which to make predictions
     fh = check_fh(fh)
@@ -46,7 +46,7 @@ def _get_expected_index_for_update_predict(y, fh, step_length):
     assert fh.is_relative
 
     freq = index.freq
-    start = index[0] - 1 * freq  # initial cutoff
+    start = index[0] + (-1 + initial_window) * freq  # initial cutoff
     end = index[-1]  # last point to predict
 
     # generate date-time range
@@ -156,11 +156,16 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
     else:
         kwargs = {}
 
+        if fh_type in ["datetime", "period"]:
+            cutoff_freq = cutoff.freq
+        if isinstance(cutoff, pd.Index):
+            cutoff = cutoff[0]
+
         if fh_type == "datetime":
-            steps *= cutoff.freq
+            steps *= cutoff_freq
 
         if fh_type == "period":
-            kwargs = {"freq": cutoff.freq}
+            kwargs = {"freq": cutoff_freq}
 
         values = cutoff + steps
         return ForecastingHorizon(fh_class(values, **kwargs), is_relative)

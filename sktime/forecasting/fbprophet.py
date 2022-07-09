@@ -9,13 +9,25 @@ __all__ = ["Prophet"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_python_version,
+    _check_soft_dependencies,
+)
 
 _check_soft_dependencies("prophet", severity="warning")
 
 
 class Prophet(_ProphetAdapter):
     """Prophet forecaster by wrapping Facebook's prophet algorithm [1]_.
+
+    Direct interface to Facebook prophet, using the sktime interface.
+    All hyper-parameters are exposed via the constructor.
+
+    Data can be passed in one of the sktime compatible formats,
+    naming a column `ds` such as in the prophet package is not necessary.
+
+    Integer indices can also be passed, in which case internally a conversion
+    to days since Jan 1, 2000 is carried out before passing to prophet.
 
     Parameters
     ----------
@@ -37,7 +49,15 @@ class Prophet(_ProphetAdapter):
             country_name: Name of the country, like 'UnitedStates' or 'US'
     growth: str, default="linear"
         String 'linear' or 'logistic' to specify a linear or logistic
-        trend.
+        trend. If 'logistic' specified float for 'growth_cap' must be provided.
+    growth_floor: float, default=0
+        Growth saturation minimum value.
+        Used only if  `growth="logistic"`, has no effect otherwise
+        (if `growth` is not `"logistic"`).
+    growth_cap: float, default=None
+        Growth saturation maximum aka carrying capacity.
+        Mandatory (float) iff `growth="logistic"`, has no effect and is optional,
+        otherwise (if `growth` is not `"logistic"`).
     changepoints: list or None, default=None
         List of dates at which to include potential changepoints. If
         not specified, potential changepoints are selected automatically.
@@ -126,6 +146,8 @@ class Prophet(_ProphetAdapter):
         add_country_holidays=None,
         # Args of fbprophet
         growth="linear",
+        growth_floor=0.0,
+        growth_cap=None,
         changepoints=None,
         n_changepoints=25,
         changepoint_range=0.8,
@@ -142,8 +164,8 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
         verbose=0,
-        interval_width=0,
     ):
+        _check_python_version(self, "prophet", severity="error")
         _check_soft_dependencies("prophet", severity="error", object=self)
 
         self.freq = freq
@@ -151,6 +173,8 @@ class Prophet(_ProphetAdapter):
         self.add_country_holidays = add_country_holidays
 
         self.growth = growth
+        self.growth_floor = growth_floor
+        self.growth_cap = growth_cap
         self.changepoints = changepoints
         self.n_changepoints = n_changepoints
         self.changepoint_range = changepoint_range
@@ -167,7 +191,6 @@ class Prophet(_ProphetAdapter):
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
         self.verbose = verbose
-        self.interval_width = interval_width
 
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
