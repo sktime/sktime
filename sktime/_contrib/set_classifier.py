@@ -39,11 +39,6 @@ from sktime.classification.interval_based import (
 )
 from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.transformations.panel.channel_selection import (
-    ClusterChannelSelection,
-    ElbowChannelSelection,
-    ElbowClassPairwise,
-)
 from sktime.transformations.series.summarize import SummaryTransformer
 
 
