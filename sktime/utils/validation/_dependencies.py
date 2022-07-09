@@ -216,7 +216,7 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         raise InvalidSpecifier(msg_version)
 
     # python sys version, e.g., "3.8.12"
-    sys_version = sys.version_info.split(" ")[0]
+    sys_version = sys.version.split(" ")[0]
 
     if sys_version in est_specifier:
         return None
