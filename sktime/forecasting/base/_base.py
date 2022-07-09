@@ -1227,7 +1227,8 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError(msg + mtypes_msg)
 
             X_scitype = X_metadata["scitype"]
-            requires_vectorization = X_scitype not in X_inner_scitype
+            X_requires_vectorization = X_scitype not in X_inner_scitype
+            requires_vectorization = requires_vectorization or X_requires_vectorization
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
@@ -1586,8 +1587,10 @@ class BaseForecaster(BaseEstimator):
             X = kwargs.pop("X", None)
             if X is None:
                 Xs = [None] * n * m
-            else:
+            elif isinstance(X, VectorizedDF):
                 Xs = X.as_list()
+            else:
+                Xs = [X]
             y_preds = []
             ix = -1
             for i, j in product(range(n), range(m)):
