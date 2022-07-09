@@ -293,10 +293,12 @@ class VectorizedDF:
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
+
         def coerce_to_df(x):
             return self._coerce_to_df(
                 x, self.is_scitype, store=self.converter_store, store_behaviour="freeze"
             )
+
         df_list = [coerce_to_df(x) for x in df_list]
 
         row_ix, col_ix = self.get_iter_indices()
