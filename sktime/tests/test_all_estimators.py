@@ -51,7 +51,8 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.validation._dependencies import (
-    _check_dl_dependencies, _check_python_version
+    _check_dl_dependencies,
+    _check_python_version,
 )
 
 
@@ -207,9 +208,9 @@ class BaseFixtureGenerator:
 
         # exclude classes based on python version compatibility
         estimator_classes_to_test = [
-            est for est in estimator_classes_to_test if _check_python_version(
-                est, severity="none"
-            )
+            est
+            for est in estimator_classes_to_test
+            if _check_python_version(est, severity="none")
         ]
 
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
