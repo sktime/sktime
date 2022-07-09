@@ -10,6 +10,7 @@ from sktime.transformations.panel.signature_based._rescaling import (
 from sktime.transformations.panel.signature_based._window import _window_getter
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
+
 _check_soft_dependencies("esig", severity="warning")
 
 
@@ -37,6 +38,7 @@ class _WindowSignatureTransform(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
         "python_dependencies": "esig",
+        "python_version": "<3.10",
     }
 
     def __init__(

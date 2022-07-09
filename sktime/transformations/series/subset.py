@@ -228,8 +228,10 @@ class ColumnSelect(BaseTransformer):
 
         if columns is None:
             return X
-        else:
-            columns = pd.Index(columns)
+        if pd.api.types.is_scalar(columns):
+            columns = [columns]
+
+        columns = pd.Index(columns)
 
         if integer_treatment == "col" and columns.is_integer():
             columns = [x for x in columns if x < len(X.columns)]
@@ -275,5 +277,6 @@ class ColumnSelect(BaseTransformer):
         params1 = {"columns": None}
         params2 = {"columns": [0, 2, 3]}
         params3 = {"columns": ["a", "foo", "bar"], "index_treatment": "keep"}
+        params4 = {"columns": "a", "index_treatment": "keep"}
 
-        return [params1, params2, params3]
+        return [params1, params2, params3, params4]
