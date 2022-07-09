@@ -768,7 +768,10 @@ class BaseForecaster(BaseEstimator):
         self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
-        self._update(y=y_inner, X=X_inner, update_params=update_params)
+        if not self._is_vectorized:
+            self._update(y=y_inner, X=X_inner, update_params=update_params)
+        else:
+            self._vectorize("update", y=y_inner, X=X_inner, update_params=update_params)
 
         return self
 
@@ -957,6 +960,14 @@ class BaseForecaster(BaseEstimator):
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
+
+        # temporary workaround for vectorization:
+        # unwrap VectorizedDF again, and rely on native vectorizatino of update/predict
+        # todo: refactor update_predict and deal with vectorization properly
+        if isinstance(y_inner, VectorizedDF):
+            y_inner = y_inner.X
+        if isinstance(X_inner, VectorizedDF):
+            X_inner = X_inner.X
 
         return self._update_predict_single(
             y=y_inner,
@@ -1224,7 +1235,8 @@ class BaseForecaster(BaseEstimator):
                 raise TypeError(msg + mtypes_msg)
 
             X_scitype = X_metadata["scitype"]
-            requires_vectorization = X_scitype not in X_inner_scitype
+            X_requires_vectorization = X_scitype not in X_inner_scitype
+            requires_vectorization = requires_vectorization or X_requires_vectorization
         else:
             # X_scitype is used below - set to None if X is None
             X_scitype = None
@@ -1319,6 +1331,10 @@ class BaseForecaster(BaseEstimator):
             this is only done if X is not None
         cutoff : is set to latest index seen in y
 
+        _y and _X are guaranteed to be one of mtypes:
+            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
+            pd_multiindex_hier
+
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
@@ -1327,6 +1343,9 @@ class BaseForecaster(BaseEstimator):
             Exogeneous time series
         """
         if y is not None:
+            # unwrap y if VectorizedDF
+            if isinstance(y, VectorizedDF):
+                y = y.X_multiindex
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
@@ -1337,6 +1356,9 @@ class BaseForecaster(BaseEstimator):
             self._set_cutoff_from_y(y)
 
         if X is not None:
+            # unwrap X if VectorizedDF
+            if isinstance(X, VectorizedDF):
+                X = X.X_multiindex
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
@@ -1528,6 +1550,7 @@ class BaseForecaster(BaseEstimator):
 
         Uses forecasters_ attribute to store one forecaster per loop index.
         """
+        FIT_METHODS = ["fit", "update"]
         PREDICT_METHODS = [
             "predict",
             "predict_quantiles",
@@ -1535,7 +1558,7 @@ class BaseForecaster(BaseEstimator):
             "predict_var",
         ]
 
-        if methodname == "fit":
+        if methodname in FIT_METHODS:
             # create container for clones
             y = kwargs.pop("y")
             X = kwargs.pop("X", None)
@@ -1555,28 +1578,42 @@ class BaseForecaster(BaseEstimator):
             if col_idx is None:
                 col_idx = ["forecasters"]
 
-            self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
+            if methodname == "fit":
+                self.forecasters_ = pd.DataFrame(index=row_idx, columns=col_idx)
             for ix in range(len(ys)):
                 i, j = y.get_iloc_indexer(ix)
-                self.forecasters_.iloc[i].iloc[j] = self.clone()
-                self.forecasters_.iloc[i].iloc[j].fit(y=ys[ix], X=Xs[i], **kwargs)
-
+                if methodname == "fit":
+                    self.forecasters_.iloc[i].iloc[j] = self.clone()
+                method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
+                method(y=ys[ix], X=Xs[i], **kwargs)
             return self
+
         elif methodname in PREDICT_METHODS:
             n = len(self.forecasters_.index)
             m = len(self.forecasters_.columns)
             X = kwargs.pop("X", None)
             if X is None:
                 Xs = [None] * n * m
-            else:
+            elif isinstance(X, VectorizedDF):
                 Xs = X.as_list()
+            else:
+                Xs = [X]
             y_preds = []
             ix = -1
             for i, j in product(range(n), range(m)):
                 ix += 1
                 method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
+
+            # if we vectorize over columns,
+            #   we need to replace top column level with variable names - part 1
+            col_multiindex = "multiindex" if m > 1 else "none"
+            y_pred = self._yvec.reconstruct(
+                y_preds, overwrite_index=True, col_multiindex=col_multiindex
+            )
+            # if vectorize over columns replace top column level with variable names
+            if col_multiindex == "multiindex":
+                y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
@@ -2084,6 +2121,12 @@ class BaseForecaster(BaseEstimator):
         # set cutoff to time point before data
         y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
         self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
+
+        if isinstance(y, VectorizedDF):
+            y = y.X
+        if isinstance(X, VectorizedDF):
+            X = X.X
+
         # iterate over data
         for new_window, _ in cv.split(y):
             y_new = y.iloc[new_window]
