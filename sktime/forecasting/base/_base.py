@@ -961,20 +961,29 @@ class BaseForecaster(BaseEstimator):
         # this also updates cutoff from y
         self._update_y_X(y_inner, X_inner)
 
-        # temporary workaround for vectorization:
-        # unwrap VectorizedDF again, and rely on native vectorizatino of update/predict
-        # todo: refactor update_predict and deal with vectorization properly
-        if isinstance(y_inner, VectorizedDF):
-            y_inner = y_inner.X
-        if isinstance(X_inner, VectorizedDF):
-            X_inner = X_inner.X
+        # checks and conversions complete, pass to inner update_predict_single
+        if not self._is_vectorized:
+            y_pred = self._update_predict_single(
+                y=y_inner, X=X_inner, fh=fh, update_params=update_params
+            )
+        else:
+            y_pred = self._vectorize(
+                "update_predict_single",
+                y=y_inner,
+                X=X_inner,
+                fh=fh,
+                update_params=update_params,
+            )
 
-        return self._update_predict_single(
-            y=y_inner,
-            fh=fh,
-            X=X_inner,
-            update_params=update_params,
+        # convert to output mtype, identical with last y mtype seen
+        y_pred = convert_to(
+            y_pred,
+            self._y_mtype_last_seen,
+            store=self._converter_store_y,
+            store_behaviour="freeze",
         )
+
+        return y_pred
 
     def predict_residuals(self, y=None, X=None):
         """Return residuals of time series forecasts.
@@ -1553,6 +1562,7 @@ class BaseForecaster(BaseEstimator):
         FIT_METHODS = ["fit", "update"]
         PREDICT_METHODS = [
             "predict",
+            "update_predict_single",
             "predict_quantiles",
             "predict_interval",
             "predict_var",
@@ -1598,12 +1608,24 @@ class BaseForecaster(BaseEstimator):
                 Xs = X.as_list()
             else:
                 Xs = [X]
+
+            if methodname == "update_predict_single":
+                y = kwargs.pop("y")
+                self._yvec = y
+                ys = y.as_list()
+
             y_preds = []
             ix = -1
             for i, j in product(range(n), range(m)):
                 ix += 1
                 method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
-                y_preds += [method(X=Xs[i], **kwargs)]
+
+                if methodname != "update_predict_single":
+                    y_preds += [method(X=Xs[i], **kwargs)]
+                else:
+                    y_preds += [method(y=ys[ix], X=Xs[i], **kwargs)]
+
+            print(y_preds)
 
             # if we vectorize over columns,
             #   we need to replace top column level with variable names - part 1
