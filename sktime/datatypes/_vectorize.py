@@ -296,7 +296,9 @@ class VectorizedDF:
 
         def coerce_to_df(x):
             if not isinstance(x, pd.DataFrame):
-                self._coerce_to_df(x)
+                return self._coerce_to_df(x)
+            else:
+                return x
 
         df_list = [coerce_to_df(x) for x in df_list]
 
