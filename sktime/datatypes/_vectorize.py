@@ -10,6 +10,7 @@ import pandas as pd
 
 from sktime.datatypes._check import check_is_scitype, mtype
 from sktime.datatypes._convert import convert_to
+from sktime.utils.multiindex import flatten_multiindex
 
 
 class VectorizedDF:
@@ -253,7 +254,13 @@ class VectorizedDF:
         """Shorthand to retrieve self (iterator) as list."""
         return list(self)
 
-    def reconstruct(self, df_list, convert_back=False, overwrite_index=True):
+    def reconstruct(
+        self,
+        df_list,
+        convert_back=False,
+        overwrite_index=True,
+        col_multiindex="none",
+    ):
         """Reconstruct original format from iterable of vectorization instances.
 
         Parameters
@@ -269,6 +276,17 @@ class VectorizedDF:
             if True, the resulting return will have index overwritten by that of X
                 only if applies, i.e., overwrite is possible and X had an index
             if False, no index overwrite will happen
+        col_multiindex : str, one of "none", "flat", "multiindex", default = "none"
+            whether column multiindex is introduced, and if yes, what kind of,
+            in case of column vectorization being applied
+            "none" - columns are concatenated, can cause non-unique column names
+            "multiindex" - additional level is introduced, by names of X passed to init,
+                if there would be more than one column underneath at least one level
+                this is added as an additional pandas MultiIndex level
+            "flat" - additional level is introduced, by names of X passed to init
+                if there would be more than one column underneath at least one level
+                like "multiindex", but new level is flattened to "var__colname" strings
+                no new multiindex level is introduced
 
         Returns
         -------
@@ -284,18 +302,37 @@ class VectorizedDF:
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
-            X_mi_reconstructed = pd.concat(df_list, axis=1)
+            if col_multiindex in ["flat", "multiindex"] and any(
+                len(x.columns) > 1 for x in df_list
+            ):
+                col_keys = self.X_multiindex.columns
+            else:
+                col_keys = None
+            X_mi_reconstructed = pd.concat(df_list, axis=1, keys=col_keys)
         else:  # both col_ix and row_ix are not None
             col_concats = []
             row_n = len(row_ix)
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                col_concats += [pd.concat(ith_col_block, axis=1)]
+                if col_multiindex in ["flat", "multiindex"] and any(
+                    len(x.columns) > 1 for x in ith_col_block
+                ):
+                    col_keys = self.X_multiindex.columns
+                else:
+                    col_keys = None
+                col_concats += [pd.concat(ith_col_block, axis=1, keys=col_keys)]
+
             X_mi_reconstructed = pd.concat(col_concats, keys=row_ix, axis=0)
 
         X_mi_index = X_mi_reconstructed.index
         X_orig_row_index = self.X_multiindex.index
+
+        if col_multiindex in ["flat"] and isinstance(
+            X_mi_reconstructed.columns, pd.MultiIndex
+        ):
+            X_mi_reconstructed.columns = flatten_multiindex(X_mi_reconstructed.columns)
+
         if overwrite_index and len(X_mi_index.names) == len(X_orig_row_index.names):
             X_mi_reconstructed.index = X_mi_index.set_names(X_orig_row_index.names)
 
