@@ -106,7 +106,7 @@ class VectorizedDF:
         self.X_multiindex = self._init_conversion(X)
         self.iter_indices = self._init_iter_indices()
 
-    def _coerce_to_pandas(self, obj, scitype=None, store=None, store_behaviour=None):
+    def _coerce_to_df(self, obj, scitype=None, store=None, store_behaviour=None):
         """Coerce obj to a pandas multiindex format."""
         pandas_dict = {
             "Series": "pd.DataFrame",
@@ -132,7 +132,7 @@ class VectorizedDF:
     def _init_conversion(self, X):
         """Convert X to a pandas multiindex format."""
         is_scitype = self.is_scitype
-        return self._coerce_to_pandas(X, is_scitype, store=self.converter_store)
+        return self._coerce_to_df(X, is_scitype, store=self.converter_store)
 
     def _init_iter_indices(self):
         """Initialize indices that are iterated over in vectorization."""
@@ -159,6 +159,11 @@ class VectorizedDF:
             col_ix = None
 
         return row_ix, col_ix
+
+    @property
+    def index(self):
+        """Defaults to pandas index of X converted to pandas type."""
+        return self.X_multiindex.index
 
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
@@ -288,11 +293,11 @@ class VectorizedDF:
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
-        def coerce_to_pandas(x):
-            return self._coerce_to_pandas(
+        def coerce_to_df(x):
+            return self._coerce_to_df(
                 x, self.is_scitype, store=self.converter_store, store_behaviour="freeze"
             )
-        df_list = [coerce_to_pandas(x) for x in df_list]
+        df_list = [coerce_to_df(x) for x in df_list]
 
         row_ix, col_ix = self.get_iter_indices()
         multiout = False
