@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
+__author__ = ["fkiraly", "mloning"]
+
 import io
 import sys
 import warnings
 from importlib import import_module
 from inspect import isclass
+
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
 
 def _check_soft_dependencies(
@@ -172,7 +176,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
-    """Check if package dependencies are installed.
+    """Check if system python version is compatible with requirements of obj.
 
     Parameters
     ----------
@@ -182,44 +186,46 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         if given, will be used in error message as package name
     msg : str, optional, default = default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default) or "warning"
-        whether the check should raise an error, or only a warning
+    severity : str, "error" (default), "warning", or "none"
+        whether the check should raise an error, a warning, or nothing
 
     Returns
     -------
-    reference to obj
+    compatible : bool, whether obj is compatible with system python version
+        check is using the python_version tag of obj
 
     Raises
     ------
     ModuleNotFoundError
-        User friendly error if obj has python_version_upper_bound tag that is
+        User friendly error if obj has python_version tag that is
         incompatible with the system python version. If package is given,
-        error message gives package as the reason for upper bound.
+        error message gives package as the reason for incompatibility.
     """
-    sys_version = sys.version_info
-    est_upper_bound = obj.get_class_tag(
-        "python_version_upper_bound", tag_value_default="None"
-    )
-    if est_upper_bound == "None":
-        return None
+    est_specifier_tag = obj.get_class_tag("python_version", tag_value_default="None")
+    if est_specifier_tag in ["None", None]:
+        return True
 
-    est_version = tuple(int(x) for x in est_upper_bound.split("."))
-    msg_version = (
-        f"wrong format for python_version_upper_bound tag, "
-        f'must be string "A.B" or "A.B.C" with A, B, C integers, but found'
-        f' "{est_upper_bound}"'
-    )
-    assert len(est_version) > 1, msg_version
-    assert len(est_version) < 4, msg_version
+    try:
+        est_specifier = SpecifierSet(est_specifier_tag)
+    except InvalidSpecifier:
+        msg_version = (
+            f"wrong format for python_version tag, "
+            f'must be PEP 440 compatible specifier string, e.g., "<3.9, >= 3.6.3",'
+            f' but found "{est_specifier_tag}"'
+        )
+        raise InvalidSpecifier(msg_version)
 
-    if sys_version < est_version:
-        return None
-    # now we know that sys_version >= est_version, i.e., error must be raised
+    # python sys version, e.g., "3.8.12"
+    sys_version = sys.version.split(" ")[0]
+
+    if sys_version in est_specifier:
+        return True
+    # now we know that est_version is not compatible with sys_version
 
     if not isinstance(msg, str):
         msg = (
-            f"{type(obj).__name__} requires python version to be strictly lower than"
-            f"{est_upper_bound}, but system version is {sys.version}."
+            f"{type(obj).__name__} requires python version to be {est_specifier},"
+            f" but system python version is {sys.version}."
         )
 
         if package is not None:
@@ -231,13 +237,14 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         raise ModuleNotFoundError(msg)
     elif severity == "warning":
         warnings.warn(msg)
+    elif severity == "none":
+        return False
     else:
         raise RuntimeError(
             "Error in calling _check_python_version, severity "
-            f'argument must be "error" or "warning", found "{severity}".'
+            f'argument must be "error", "warning", or "none", found "{severity}".'
         )
-
-    return obj
+    return True
 
 
 def _check_estimator_deps(obj, msg=None, severity="error"):

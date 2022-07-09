@@ -77,6 +77,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # todo: add any hyper-parameters and components to constructor

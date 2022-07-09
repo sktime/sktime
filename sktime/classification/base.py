@@ -63,6 +63,7 @@ class BaseClassifier(BaseEstimator, ABC):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     def __init__(self):
@@ -77,7 +78,6 @@ class BaseClassifier(BaseEstimator, ABC):
         self._estimator_type = "classifier"
 
         super(BaseClassifier, self).__init__()
-
         _check_estimator_deps(self)
 
     def __rmul__(self, other):

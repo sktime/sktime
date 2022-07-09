@@ -2,7 +2,7 @@
 """tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
+__author__ = ["AyushmaanSeth", "Markus Löning", "Alwin Wang"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
@@ -28,6 +28,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": "tsfresh",
+        "python_version": "<3.10",
     }
 
     def __init__(
