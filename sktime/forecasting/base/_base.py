@@ -1625,8 +1625,6 @@ class BaseForecaster(BaseEstimator):
                 else:
                     y_preds += [method(y=ys[ix], X=Xs[i], **kwargs)]
 
-            print(y_preds)
-
             # if we vectorize over columns,
             #   we need to replace top column level with variable names - part 1
             col_multiindex = "multiindex" if m > 1 else "none"
