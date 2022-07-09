@@ -176,7 +176,7 @@ def _check_dl_dependencies(msg=None, severity="error"):
 
 
 def _check_python_version(obj, package=None, msg=None, severity="error"):
-    """Check if deep learning dependencies are installed.
+    """Check if system python version is compatible with requirements of obj.
 
     Parameters
     ----------
@@ -219,7 +219,7 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
     sys_version = sys.version.split(" ")[0]
 
     if sys_version in est_specifier:
-        return None
+        return True
     # now we know that est_version is not compatible with sys_version
 
     if not isinstance(msg, str):
