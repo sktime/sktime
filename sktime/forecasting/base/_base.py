@@ -1568,11 +1568,12 @@ class BaseForecaster(BaseEstimator):
             "predict_var",
         ]
 
+        # retrieve data arguments
+        y = kwargs.pop("y", None)
+        X = kwargs.pop("X", None)
+
         if methodname in FIT_METHODS:
             # create container for clones
-            y = kwargs.pop("y")
-            X = kwargs.pop("X", None)
-
             self._yvec = y
 
             row_idx, col_idx = y.get_iter_indices()
@@ -1601,7 +1602,7 @@ class BaseForecaster(BaseEstimator):
         elif methodname in PREDICT_METHODS:
             n = len(self.forecasters_.index)
             m = len(self.forecasters_.columns)
-            X = kwargs.pop("X", None)
+
             if X is None:
                 Xs = [None] * n * m
             elif isinstance(X, VectorizedDF):
@@ -1610,7 +1611,6 @@ class BaseForecaster(BaseEstimator):
                 Xs = [X]
 
             if methodname == "update_predict_single":
-                y = kwargs.pop("y")
                 self._yvec = y
                 ys = y.as_list()
 
