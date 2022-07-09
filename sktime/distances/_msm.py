@@ -45,15 +45,15 @@ class _MsmDistance(NumbaDistance):
     """
 
     def _distance_alignment_path_factory(
-        self,
-        x: np.ndarray,
-        y: np.ndarray,
-        return_cost_matrix: bool = False,
-        c: float = 0.0,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        **kwargs: dict,
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            return_cost_matrix: bool = False,
+            c: float = 0.0,
+            window: float = None,
+            itakura_max_slope: float = None,
+            bounding_matrix: np.ndarray = None,
+            **kwargs: dict,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled MSM distance path callable.
 
@@ -101,8 +101,8 @@ class _MsmDistance(NumbaDistance):
 
             @njit(cache=True)
             def numba_msm_distance_alignment_path(
-                _x: np.ndarray,
-                _y: np.ndarray,
+                    _x: np.ndarray,
+                    _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
@@ -112,8 +112,8 @@ class _MsmDistance(NumbaDistance):
 
             @njit(cache=True)
             def numba_msm_distance_alignment_path(
-                _x: np.ndarray,
-                _y: np.ndarray,
+                    _x: np.ndarray,
+                    _y: np.ndarray,
             ) -> Tuple[List, float]:
                 cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
@@ -122,14 +122,14 @@ class _MsmDistance(NumbaDistance):
         return numba_msm_distance_alignment_path
 
     def _distance_factory(
-        self,
-        x: np.ndarray,
-        y: np.ndarray,
-        c: float = 0.0,
-        window: float = None,
-        itakura_max_slope: float = None,
-        bounding_matrix: np.ndarray = None,
-        **kwargs: dict,
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            c: float = 0.0,
+            window: float = None,
+            itakura_max_slope: float = None,
+            bounding_matrix: np.ndarray = None,
+            **kwargs: dict,
     ) -> DistanceCallable:
         """Create a no_python compiled MSM distance callable.
 
@@ -161,48 +161,66 @@ class _MsmDistance(NumbaDistance):
             If the itakura_max_slope is not a float or int.
             If epsilon is not a float.
         """
-        if x.shape[0] > 1 or y.shape[0] > 1:
-            raise ValueError(
-                f"ERROR, MSM distance currently only works with "
-                f"univariate series, passed seris shape {x.shape[0]} and"
-                f"shape {y.shape[0]}"
-            )
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        @njit(cache=True)
-        def numba_msm_distance(
-            _x: np.ndarray,
-            _y: np.ndarray,
-        ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
-            return cost_matrix[-1, -1]
+        if x.shape[0] > 1 or y.shape[0] > 1:
+            @njit(cache=True)
+            def numba_msm_distance(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> float:
+                sum = 0
+                for i in range(_x.shape[0]):
+                    cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                    sum += cost_matrix[-1, -1]
+                return sum
+            return numba_msm_distance
+        else:
+            @njit(cache=True)
+            def numba_msm_distance(
+                    _x: np.ndarray,
+                    _y: np.ndarray,
+            ) -> float:
+                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                return cost_matrix[-1, -1]
 
-        return numba_msm_distance
+            return numba_msm_distance
 
 
 @njit(cache=True)
 def _cost_function(x: float, y: float, z: float, c: float) -> float:
-    if (y <= x and x <= z) or (y >= x and x >= z):
+    """Compute the cost function for the MSM algorithm.
+
+    Parameters
+    ----------
+    x: float
+        First value.
+    y: float
+        Second value.
+    z: float
+        Third value.
+    c: float
+        Parameter used in MSM (update later!)
+
+    Returns
+    -------
+    float
+        Cost function value.
+    """
+    if (y <= x <= z) or (y >= x >= z):
         return c
-    a = x - y
-    if a < 0:
-        a = -a
-    b = x - z
-    if b < 0:
-        b = -b
-    if a > b:
-        return c + b
-    return c + a
+
+    return c + min(abs(x - y), abs(x - z))
 
 
 @njit(cache=True)
 def _cost_matrix(
-    x: np.ndarray,
-    y: np.ndarray,
-    c: float,
-    bounding_matrix: np.ndarray,
+        x: np.ndarray,
+        y: np.ndarray,
+        c: float,
+        bounding_matrix: np.ndarray,
 ) -> float:
     """MSM distance compiled to no_python.
 
@@ -240,16 +258,16 @@ def _cost_matrix(
     for i in range(1, x_size):
         for j in range(1, y_size):
             if np.isfinite(bounding_matrix[i, j]):
-                d1 = cost[i - 1][j - 1] + np.abs(x[0][i] - y[0][j])
-                d2 = cost[i - 1][j] + _cost_function(x[0][i], x[0][i - 1], y[0][j], c)
-                d3 = cost[i][j - 1] + _cost_function(y[0][j], x[0][i], y[0][j - 1], c)
+                d1 = cost[i - 1, j - 1] + np.abs(x[0][i] - y[0][j])
+                d2 = cost[i - 1, j] + _cost_function(x[0][i], x[0][i - 1], y[0][j], c)
+                d3 = cost[i, j - 1] + _cost_function(y[0][j], x[0][i], y[0][j - 1], c)
 
-            temp = d1
-            if d2 < temp:
-                temp = d2
-            if d3 < temp:
-                temp = d3
+                temp = d1
+                if d2 < temp:
+                    temp = d2
+                if d3 < temp:
+                    temp = d3
 
-            cost[i][j] = temp
+                cost[i][j] = temp
 
     return cost[0:, 0:]
