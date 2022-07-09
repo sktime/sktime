@@ -2,7 +2,7 @@
 """tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
+__author__ = ["AyushmaanSeth", "Markus Löning", "Alwin Wang"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
@@ -10,7 +10,10 @@ from warnings import warn
 from sktime.datatypes._panel._convert import from_nested_to_long
 from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_python_version,
+    _check_soft_dependencies,
+)
 
 _check_soft_dependencies("tsfresh", severity="warning")
 
@@ -27,6 +30,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -43,6 +47,7 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         profiling_sorting=None,
         distributor=None,
     ):
+        _check_python_version(self, "tsfresh", severity="error")
         _check_soft_dependencies("tsfresh", severity="error", object=self)
 
         self.default_fc_parameters = default_fc_parameters

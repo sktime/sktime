@@ -316,6 +316,12 @@ ESTIMATOR_TAG_REGISTER = [
         "bool",
         "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
+    (
+        "python_version",
+        "estimator",
+        "str",
+        "python version specifier (PEP 440) for estimator, or None = all versions ok",
+    ),
 ]
 
 ESTIMATOR_TAG_TABLE = pd.DataFrame(ESTIMATOR_TAG_REGISTER)
