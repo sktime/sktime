@@ -106,36 +106,33 @@ class VectorizedDF:
         self.X_multiindex = self._init_conversion(X)
         self.iter_indices = self._init_iter_indices()
 
+    def _coerce_to_df(self, obj, scitype=None, store=None, store_behaviour=None):
+        """Coerce obj to a pandas multiindex format."""
+        pandas_dict = {
+            "Series": "pd.DataFrame",
+            "Panel": "pd-multiindex",
+            "Hierarchical": "pd_multiindex_hier",
+            None: ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        }
+
+        if scitype not in pandas_dict.keys():
+            raise RuntimeError(
+                f"unexpected value found for attribute scitype: {scitype}"
+                f"must be one of {pandas_dict.keys()}"
+            )
+
+        return convert_to(
+            obj,
+            to_type=pandas_dict[scitype],
+            as_scitype=scitype,
+            store=store,
+            store_behaviour=store_behaviour,
+        )
+
     def _init_conversion(self, X):
         """Convert X to a pandas multiindex format."""
         is_scitype = self.is_scitype
-
-        if is_scitype == "Series":
-            return convert_to(
-                X,
-                to_type="pd.DataFrame",
-                as_scitype="Series",
-                store=self.converter_store,
-            )
-        elif is_scitype == "Panel":
-            return convert_to(
-                X,
-                to_type="pd-multiindex",
-                as_scitype="Panel",
-                store=self.converter_store,
-            )
-        elif is_scitype == "Hierarchical":
-            return convert_to(
-                X,
-                to_type="pd_multiindex_hier",
-                as_scitype="Hierarchical",
-                store=self.converter_store,
-            )
-        else:
-            raise RuntimeError(
-                f"unexpected value found for attribute self.is_scitype: {is_scitype}"
-                'must be "Panel" or "Hierarchical"'
-            )
+        return self._coerce_to_df(X, is_scitype, store=self.converter_store)
 
     def _init_iter_indices(self):
         """Initialize indices that are iterated over in vectorization."""
@@ -296,6 +293,14 @@ class VectorizedDF:
                 (pd-multiindex mtype for Panel, or pd_multiindex_hier for Hierarchical)
             if convert_back=True, will have same format and mtype as X input to __init__
         """
+
+        def coerce_to_df(x):
+            return self._coerce_to_df(
+                x, self.is_scitype, store=self.converter_store, store_behaviour="freeze"
+            )
+
+        df_list = [coerce_to_df(x) for x in df_list]
+
         row_ix, col_ix = self.get_iter_indices()
         multiout = False
         if row_ix is None and col_ix is None:
