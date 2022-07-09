@@ -1548,6 +1548,7 @@ class BaseForecaster(BaseEstimator):
             "predict_interval",
             "predict_var",
         ]
+        MULTI_IDX_RETURN = ["predict_quantiles", "predict_interval"]
 
         if methodname in FIT_METHODS:
             # create container for clones
@@ -1593,7 +1594,16 @@ class BaseForecaster(BaseEstimator):
                 ix += 1
                 method = getattr(self.forecasters_.iloc[i].iloc[j], methodname)
                 y_preds += [method(X=Xs[i], **kwargs)]
-            y_pred = self._yvec.reconstruct(y_preds, overwrite_index=True)
+
+            # if we vectorize over columns,
+            #   we need to replace top column level with variable names - part 1
+            col_multiindex = "multiindex" if m > 1 else "none"
+            y_pred = self._yvec.reconstruct(
+                y_preds, overwrite_index=True, col_multiindex=col_multiindex
+            )
+            # if vectorize over columns replace top column level with variable names
+            if methodname in MULTI_IDX_RETURN:
+                y_pred.columns = y_pred.columns.droplevel(1)
             return y_pred
 
     def _fit(self, y, X=None, fh=None):
