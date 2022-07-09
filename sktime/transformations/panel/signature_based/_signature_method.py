@@ -50,7 +50,7 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
-        "python_version_upper_bound": "3.10",
+        "python_version": "<3.10",
     }
 
     def __init__(

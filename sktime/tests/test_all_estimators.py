@@ -189,14 +189,14 @@ class BaseFixtureGenerator:
         """Shorthand to check whether an estimator is compatible with python version."""
         sys_version = sys.version_info
         est_upper_bound = est.get_class_tag(
-            "python_version_upper_bound", tag_value_default="None"
+            "python_version", tag_value_default="None"
         )
         if est_upper_bound == "None":
             return True
 
         est_version = tuple(int(x) for x in est_upper_bound.split("."))
         msg = (
-            f"wrong format for python_version_upper_bound tag, "
+            f"wrong format for python_version tag, "
             f'must be string "A.B" or "A.B.C" with A, B, C integers, but found'
             f' "{est_upper_bound}"'
         )

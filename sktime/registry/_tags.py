@@ -317,10 +317,10 @@ ESTIMATOR_TAG_REGISTER = [
         "Is a lower value better for the metric? True=yes, False=higher is better",
     ),
     (
-        "python_version_upper_bound",
+        "python_version",
         "estimator",
         "str",
-        "upper version bound (exclusive) for python version, or None",
+        "python version specifier (PEP 440) for estimator, or None = all versions ok",
     ),
 ]
 
