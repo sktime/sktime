@@ -376,7 +376,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:pred_int"):
 
             pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
-            assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
+            valid, msg, _ = check_is_mtype(
+                pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+            )
+            assert valid, msg
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
