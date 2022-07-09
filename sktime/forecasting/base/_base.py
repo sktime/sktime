@@ -97,6 +97,7 @@ class BaseForecaster(BaseEstimator):
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     def __init__(self):

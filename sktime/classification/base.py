@@ -63,6 +63,7 @@ class BaseClassifier(BaseEstimator, ABC):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     def __init__(self):

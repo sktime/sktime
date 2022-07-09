@@ -123,6 +123,7 @@ class BaseTransformer(BaseEstimator):
         # todo: rename to capability:missing_values
         "capability:missing_values:removes": False,
         # is transform result always guaranteed to contain no missing values?
+        "python_version": None,  # PEP 440 python version specifier to limit versions
     }
 
     # allowed mtypes for transformers - Series and Panel
