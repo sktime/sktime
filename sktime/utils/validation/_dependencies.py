@@ -183,15 +183,20 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         if given, will be used in error message as package name
     msg : str, optional, default = default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default) or "warning"
-        whether the check should raise an error, or only a warning
+    severity : str, "error" (default), "warning", or "none"
+        whether the check should raise an error, a warning, or nothing
+
+    Returns
+    -------
+    compatible : bool, whether obj is compatible with system python version
+        check is using the python_version tag of obj
 
     Raises
     ------
     ModuleNotFoundError
         User friendly error if obj has python_version tag that is
         incompatible with the system python version. If package is given,
-        error message gives package as the reason for upper bound.
+        error message gives package as the reason for incompatibility.
     """
     est_specifier_tag = obj.get_class_tag("python_version", tag_value_default="None")
     if est_specifier_tag == "None":
@@ -229,8 +234,11 @@ def _check_python_version(obj, package=None, msg=None, severity="error"):
         raise ModuleNotFoundError(msg)
     elif severity == "warning":
         warnings.warn(msg)
+    elif severity == "none":
+        return False
     else:
         raise RuntimeError(
             "Error in calling _check_python_version, severity "
-            f'argument must be "error" or "warning", found "{severity}".'
+            f'argument must be "error", "warning", or "none", found "{severity}".'
         )
+    return True
