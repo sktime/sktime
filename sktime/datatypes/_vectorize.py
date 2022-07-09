@@ -302,7 +302,7 @@ class VectorizedDF:
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
-            if col_multiindex in ["flat", "multiindex"] and any(
+            if col_multiindex in ["flat", "multiindex"] or any(
                 len(x.columns) > 1 for x in df_list
             ):
                 col_keys = self.X_multiindex.columns
@@ -315,7 +315,7 @@ class VectorizedDF:
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                if col_multiindex in ["flat", "multiindex"] and any(
+                if col_multiindex in ["flat", "multiindex"] or any(
                     len(x.columns) > 1 for x in ith_col_block
                 ):
                     col_keys = self.X_multiindex.columns
