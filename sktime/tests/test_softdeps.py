@@ -193,7 +193,7 @@ def test_python_error(estimator):
         # defined in the `_check_python` function
         expected_error_msg = "requires python version to be"
         if expected_error_msg not in error_msg:
-            pyspec = estimator.get_tag("python_version", None)
+            pyspec = estimator.get_class_tag("python_version", None)
             raise RuntimeError(
                 f"Estimator {estimator.__name__} has python version bound "
                 f"{pyspec} according to tags, but does not raise an appropriate "
