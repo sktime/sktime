@@ -71,6 +71,7 @@ To add an estimator with a soft dependency, ensure the following:
    in an environment without the required packages.
 *  in the python module containing the estimator, the ``_check_soft_dependencies`` utility is called
    at the top of the module, with ``severity="warning"``. This will raise an informative warning message already at module import.
+   See `here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__
 *  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from 
    ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``_check_soft_dependencies``
    utility should be used in ``__init__``. Both the warning and constructor call should use the ``package_import_alias`` argument for this.
