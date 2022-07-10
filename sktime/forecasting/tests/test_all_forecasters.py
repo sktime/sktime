@@ -30,6 +30,7 @@ from sktime.forecasting.tests._config import (
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
+    _assert_correct_columns,
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
     _get_n_columns,
@@ -227,6 +228,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         except NotImplementedError:
             pass
 
+        _assert_correct_columns(y_pred, y_train)
+
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
     )
@@ -297,6 +300,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         except NotImplementedError:
             pass
+
+        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -515,6 +520,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh_int_oos)
+        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
