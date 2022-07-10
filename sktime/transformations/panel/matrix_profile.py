@@ -4,7 +4,6 @@
 __author__ = ["Claudia Rincon Sanchez"]
 
 import numpy as np
-import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
 
@@ -240,5 +239,5 @@ class MatrixProfile(BaseTransformer):
         """
         # Input checks
         n_instances = X.shape[0]
-        Xt = pd.DataFrame([_stomp_self(X[i], self.m) for i in range(n_instances)])
+        Xt = np.array([_stomp_self(X[i], self.m) for i in range(n_instances)])
         return Xt
