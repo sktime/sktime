@@ -19,7 +19,6 @@ from sktime.transformations.panel.signature_based._checks import (
 from sktime.transformations.panel.signature_based._signature_method import (
     SignatureTransformer,
 )
-from sktime.utils.validation._dependencies import _check_python_version
 
 
 class SignatureClassifier(BaseClassifier):
@@ -94,6 +93,7 @@ class SignatureClassifier(BaseClassifier):
     _tags = {
         "capability:multivariate": True,
         "classifier_type": "feature",
+        "python_dependencies": "esig",
         "python_version": "<3.10",
     }
 
@@ -110,8 +110,6 @@ class SignatureClassifier(BaseClassifier):
         depth=4,
         random_state=None,
     ):
-        _check_python_version(self, "esig", severity="error")
-        super(SignatureClassifier, self).__init__()
         self.estimator = estimator
         self.augmentation_list = augmentation_list
         self.window_name = window_name
@@ -122,6 +120,8 @@ class SignatureClassifier(BaseClassifier):
         self.sig_tfm = sig_tfm
         self.depth = depth
         self.random_state = random_state
+
+        super(SignatureClassifier, self).__init__()
 
         self.signature_method = SignatureTransformer(
             augmentation_list,

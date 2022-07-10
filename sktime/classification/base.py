@@ -35,7 +35,7 @@ from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.validation import check_n_jobs
-from sktime.utils.validation._dependencies import _check_python_version
+from sktime.utils.validation._dependencies import _check_estimator_deps
 
 
 class BaseClassifier(BaseEstimator, ABC):
@@ -78,7 +78,7 @@ class BaseClassifier(BaseEstimator, ABC):
         self._estimator_type = "classifier"
 
         super(BaseClassifier, self).__init__()
-        _check_python_version(self)
+        _check_estimator_deps(self)
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.

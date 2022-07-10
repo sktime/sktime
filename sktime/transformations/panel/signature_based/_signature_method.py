@@ -10,7 +10,6 @@ from sktime.transformations.panel.signature_based._augmentations import (
 from sktime.transformations.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.utils.validation._dependencies import _check_python_version
 
 
 class SignatureTransformer(BaseTransformer):
@@ -50,6 +49,7 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
+        "python_dependencies": "esig",
         "python_version": "<3.10",
     }
 
@@ -64,9 +64,6 @@ class SignatureTransformer(BaseTransformer):
         sig_tfm="signature",
         depth=4,
     ):
-
-        _check_python_version(self, "esig", severity="error")
-        super(SignatureTransformer, self).__init__()
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -76,6 +73,7 @@ class SignatureTransformer(BaseTransformer):
         self.sig_tfm = sig_tfm
         self.depth = depth
 
+        super(SignatureTransformer, self).__init__()
         self.setup_feature_pipeline()
 
     def setup_feature_pipeline(self):
