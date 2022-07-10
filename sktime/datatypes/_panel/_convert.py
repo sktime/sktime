@@ -832,7 +832,6 @@ def from_nested_to_3d_numpy(X):
             X_mi, instance_index="instance", time_index="timepoints"
         )
 
-    X_3d = X_3d.astype("float")
     return X_3d
 
 
@@ -937,7 +936,6 @@ def from_dflist_to_numpy3D(obj, store=None):
 
     nparr = np.array([X.to_numpy().transpose() for X in obj])
 
-    nparr = nparr.astype("float")
     return nparr
 
 
