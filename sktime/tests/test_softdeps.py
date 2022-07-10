@@ -173,7 +173,7 @@ def test_python_error(estimator):
 
         # Check if appropriate exception with useful error message is raised as
         # defined in the `_check_python` function
-        expected_error_msg = ("requires python version to be")
+        expected_error_msg = "requires python version to be"
         if expected_error_msg not in error_msg:
             pyspec = estimator.get_tag("python_version", None)
             raise RuntimeError(
