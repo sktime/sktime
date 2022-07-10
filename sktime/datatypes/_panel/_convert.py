@@ -480,7 +480,7 @@ def from_nested_to_long(
     if len(col_rename_dict) > 0:
         long_df = long_df.rename(columns=col_rename_dict)
 
-    return long_df.convert_dtypes().astype({"value": "float"})
+    return long_df
 
 
 def from_nested_to_long_adp(obj, store=None):
@@ -767,7 +767,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     # this contains the right values, but does not have the right index
     #   need convert_dtypes or dtypes will always be object
     X_mi = X.explode(list(X.columns))
-    X_mi = X_mi.convert_objects(convert_numeric=True)
+    X_mi = X_mi.infer_objects()
 
     # create the right MultiIndex and assign to X_mi
     idx_df = X.applymap(lambda x: x.index).explode(list(X.columns))
