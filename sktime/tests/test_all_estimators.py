@@ -9,7 +9,6 @@ __author__ = ["mloning", "fkiraly"]
 
 import numbers
 import pickle
-import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -186,27 +185,6 @@ class BaseFixtureGenerator:
     def is_excluded(test_name, est):
         """Shorthand to check whether test test_name is excluded for estimator est."""
         return test_name in EXCLUDED_TESTS.get(est.__name__, [])
-
-    @staticmethod
-    def is_version_compatible(est):
-        """Shorthand to check whether an estimator is compatible with python version."""
-        sys_version = sys.version_info
-        est_upper_bound = est.get_class_tag(
-            "python_version_upper_bound", tag_value_default="None"
-        )
-        if est_upper_bound == "None":
-            return True
-
-        est_version = tuple(int(x) for x in est_upper_bound.split("."))
-        msg = (
-            f"wrong format for python_version_upper_bound tag, "
-            f'must be string "A.B" or "A.B.C" with A, B, C integers, but found'
-            f' "{est_upper_bound}"'
-        )
-        assert len(est_version) > 1, msg
-        assert len(est_version) < 4, msg
-
-        return sys_version < est_version
 
     # the following functions define fixture generation logic for pytest_generate_tests
     # each function is of signature (test_name:str, **kwargs) -> List of fixtures
