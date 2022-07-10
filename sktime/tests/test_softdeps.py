@@ -31,6 +31,20 @@ SOFT_DEPENDENCIES = {
 
 MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 
+# estimators excepted from checking that they raise no import exception when constructed
+# for the reason that they are composites which have soft dependencies in examples
+# but no soft dependencies themselves, so it's temporarily fine to raise this
+# e.g., forecasting pipeline with an ARIMA estimator
+# todo: long-term all example parameter settings should be soft dependency free
+# strings of class names to avoid the imports
+EXCEPTED_FROM_NO_DEP_CHECK = [
+    "DistFromAligner",
+    "HCrystalBallForecaster",  # on the list because will soon be removed
+    "ForecastingPipeline",
+    "TransformedTargetForecaster",
+    "StackingForecaster",
+]
+
 
 def _is_test(module):
     module_parts = module.split(".")
@@ -231,6 +245,11 @@ def test_est_construct_if_softdep_available(estimator):
 @pytest.mark.parametrize("estimator", est_pyok_without_soft_dep)
 def test_est_construct_without_modulenotfound(estimator):
     """Test that estimators that do not require soft dependencies construct properly."""
+    # skip composite estimators that have no soft dependencies
+    #   but which have soft dependencies in example components
+    if estimator.__name__ in EXCEPTED_FROM_NO_DEP_CHECK:
+        return None
+
     try:
         estimator.create_test_instance()
     except ModuleNotFoundError as e:
