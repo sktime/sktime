@@ -249,6 +249,17 @@ Ensembles and stacking
     AutoEnsembleForecaster
     StackingForecaster
 
+Hierarchical reconciliation
+---------------------------
+
+.. currentmodule:: sktime.forecasting.reconcile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReconcilerForecaster
+
 Online and stream forecasting
 -----------------------------
 

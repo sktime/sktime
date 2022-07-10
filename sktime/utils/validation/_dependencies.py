@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
+__author__ = ["fkiraly", "mloning"]
+
 import io
 import sys
 import warnings
 from importlib import import_module
 from inspect import isclass
+
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
 
 def _check_soft_dependencies(
@@ -169,3 +173,75 @@ def _check_dl_dependencies(msg=None, severity="error"):
                 "Error in calling _check_dl_dependencies, severity "
                 f'argument must be "error", "warning", or "none", found "{severity}".'
             )
+
+
+def _check_python_version(obj, package=None, msg=None, severity="error"):
+    """Check if system python version is compatible with requirements of obj.
+
+    Parameters
+    ----------
+    obj : sktime estimator, BaseObject descendant
+        used to check python version
+    package : str, default = None
+        if given, will be used in error message as package name
+    msg : str, optional, default = default message (msg below)
+        error message to be returned in the `ModuleNotFoundError`, overrides default
+    severity : str, "error" (default), "warning", or "none"
+        whether the check should raise an error, a warning, or nothing
+
+    Returns
+    -------
+    compatible : bool, whether obj is compatible with system python version
+        check is using the python_version tag of obj
+
+    Raises
+    ------
+    ModuleNotFoundError
+        User friendly error if obj has python_version tag that is
+        incompatible with the system python version. If package is given,
+        error message gives package as the reason for incompatibility.
+    """
+    est_specifier_tag = obj.get_class_tag("python_version", tag_value_default="None")
+    if est_specifier_tag in ["None", None]:
+        return True
+
+    try:
+        est_specifier = SpecifierSet(est_specifier_tag)
+    except InvalidSpecifier:
+        msg_version = (
+            f"wrong format for python_version tag, "
+            f'must be PEP 440 compatible specifier string, e.g., "<3.9, >= 3.6.3",'
+            f' but found "{est_specifier_tag}"'
+        )
+        raise InvalidSpecifier(msg_version)
+
+    # python sys version, e.g., "3.8.12"
+    sys_version = sys.version.split(" ")[0]
+
+    if sys_version in est_specifier:
+        return True
+    # now we know that est_version is not compatible with sys_version
+
+    if not isinstance(msg, str):
+        msg = (
+            f"{type(obj).__name__} requires python version to be {est_specifier},"
+            f" but system python version is {sys.version}."
+        )
+
+        if package is not None:
+            msg += (
+                f" This is due to python version requirements of the {package} package."
+            )
+
+    if severity == "error":
+        raise ModuleNotFoundError(msg)
+    elif severity == "warning":
+        warnings.warn(msg)
+    elif severity == "none":
+        return False
+    else:
+        raise RuntimeError(
+            "Error in calling _check_python_version, severity "
+            f'argument must be "error", "warning", or "none", found "{severity}".'
+        )
+    return True
