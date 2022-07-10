@@ -165,28 +165,15 @@ class _MsmDistance(NumbaDistance):
             x, y, window, itakura_max_slope, bounding_matrix
         )
 
-        if x.shape[0] > 1 or y.shape[0] > 1:
-            @njit(cache=True)
-            def numba_msm_distance(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
-            ) -> float:
-                sum = 0
-                for i in range(_x.shape[0]):
-                    cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
-                    sum += cost_matrix[-1, -1]
-                return sum
-            return numba_msm_distance
-        else:
-            @njit(cache=True)
-            def numba_msm_distance(
-                    _x: np.ndarray,
-                    _y: np.ndarray,
-            ) -> float:
-                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
-                return cost_matrix[-1, -1]
+        # @njit(cache=True)
+        def numba_msm_distance(
+                _x: np.ndarray,
+                _y: np.ndarray,
+        ) -> float:
+            cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+            return cost_matrix[-1, -1]
 
-            return numba_msm_distance
+        return numba_msm_distance
 
 
 @njit(cache=True)
