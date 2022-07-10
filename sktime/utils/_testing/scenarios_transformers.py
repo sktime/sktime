@@ -191,7 +191,7 @@ X_series = convert_to(X_series, "pd.DataFrame").convert_dtypes()
 X_panel = _make_panel_X(
     n_instances=7, n_columns=1, n_timepoints=10, random_state=RAND_SEED
 )
-X_panel = convert_to(X_series, "pd-multiindex").convert_dtypes()
+X_panel = convert_to(X_panel, "pd-multiindex").convert_dtypes()
 
 
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
