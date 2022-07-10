@@ -269,8 +269,10 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     Raises
     ------
     ModuleNotFoundError
-        User friendly error if obj has python_version_upper_bound tag that is
+        User friendly error if obj has python_version tag that is
         incompatible with the system python version.
+        Compatible python versions are determined by the "python_version" tag of obj.
+        User friendly error if obj has package dependencies that are not satisfied.
         Packages are determined based on the "python_dependencies" tag of obj.
     """
     _check_python_version(obj, severity=severity)
