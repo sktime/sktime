@@ -110,7 +110,6 @@ class SignatureClassifier(BaseClassifier):
         depth=4,
         random_state=None,
     ):
-        super(SignatureClassifier, self).__init__()
         self.estimator = estimator
         self.augmentation_list = augmentation_list
         self.window_name = window_name
@@ -121,6 +120,8 @@ class SignatureClassifier(BaseClassifier):
         self.sig_tfm = sig_tfm
         self.depth = depth
         self.random_state = random_state
+
+        super(SignatureClassifier, self).__init__()
 
         self.signature_method = SignatureTransformer(
             augmentation_list,
