@@ -17,6 +17,7 @@ from importlib import import_module
 import pytest
 
 from sktime.registry import all_estimators
+from sktime.utils.validation._dependencies import _check_python_version
 
 # list of soft dependencies used
 # excludes estimators, only for soft dependencies used in non-estimator modules
@@ -137,11 +138,53 @@ def _is_in_env(modules):
 
 
 all_ests = all_estimators(return_names=False)
+
+
+# estimators that should fail to construct because of python version
+est_python_incompatible = [est for est in all_ests if not _check_python_version(est)]
+
+# estimators that have soft dependencies
 est_with_soft_dep = [est for est in all_ests if _has_soft_dep(est)]
+# estimators that have soft dependencies and are python compatible
+est_pyok_with_soft_dep = [
+    est for est in est_with_soft_dep if _check_python_version(est)
+]
+
+# estimators that have no soft dependenies
 est_without_soft_dep = [est for est in all_ests if not _has_soft_dep(est)]
+# estimators that have soft dependencies and are python compatible
+est_pyok_without_soft_dep = [
+    est for est in est_without_soft_dep if _check_python_version(est)
+]
+
+# all estimators are now a disjoint union of the three sets:
+# est_python_incompatible - python incompatible, should raise python error
+# est_pyok_without_soft_dep - python compatible, has no soft dependency
+# est_pyok_with_soft_dep - python compatible, has soft dependency
 
 
-@pytest.mark.parametrize("estimator", est_with_soft_dep)
+@pytest.mark.parametrize("estimator", est_python_incompatible)
+def test_python_error(estimator):
+    """Test that estimators raise error if python version is wrong."""
+    try:
+        estimator.create_test_instance()
+    except ModuleNotFoundError as e:
+        error_msg = str(e)
+
+        # Check if appropriate exception with useful error message is raised as
+        # defined in the `_check_python` function
+        expected_error_msg = ("requires python version to be")
+        if expected_error_msg not in error_msg:
+            pyspec = estimator.get_tag("python_version", None)
+            raise RuntimeError(
+                f"Estimator {estimator.__name__} has python version bound "
+                f"{pyspec} according to tags, but does not raise an appropriate "
+                f"error message on __init__ for incompatible python environments. "
+                f"Likely reason is that __init__ does not call super(cls).__init__."
+            ) from e
+
+
+@pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
     softdeps = _get_soft_deps(estimator)
@@ -166,7 +209,7 @@ def test_softdep_error(estimator):
                 ) from e
 
 
-@pytest.mark.parametrize("estimator", est_with_soft_dep)
+@pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_est_construct_if_softdep_available(estimator):
     """Test that estimators construct if required soft dependencies are there."""
     softdeps = _get_soft_deps(estimator)
@@ -185,7 +228,7 @@ def test_est_construct_if_softdep_available(estimator):
             ) from e
 
 
-@pytest.mark.parametrize("estimator", est_without_soft_dep)
+@pytest.mark.parametrize("estimator", est_pyok_without_soft_dep)
 def test_est_construct_without_modulenotfound(estimator):
     """Test that estimators that do not require soft dependencies construct properly."""
     try:
@@ -195,6 +238,7 @@ def test_est_construct_without_modulenotfound(estimator):
         raise RuntimeError(
             f"Estimator {estimator.__name__} does not require soft dependencies "
             f"according to tags, but raises ModuleNotFoundError "
-            f"on __init__. Required soft dependencies should be added "
-            f'to the "python_dependencies" tag. Exception text: {error_msg}'
+            f"on __init__. Any required soft dependencies should be added "
+            f'to the "python_dependencies" tag, and python version bouds should be'
+            f' added to the "python_version" tag. Exception text: {error_msg}'
         ) from e
