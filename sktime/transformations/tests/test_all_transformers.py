@@ -108,6 +108,10 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if type(estimator_instance).__name__ in ["Aggregator", "Reconciler"]:
             return None
 
+        # if DataFrame is returned, columns must be unique
+        if hasattr(Xt, "columns"):
+            assert Xt.columns.is_unique
+
         # if we vectorize, number of instances before/after transform should be same
 
         # series-to-series transformers
