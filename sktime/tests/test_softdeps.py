@@ -154,24 +154,29 @@ def _is_in_env(modules):
         return False
 
 
+def _python_compat(est):
+    """Shorthand for silent python compatibility check."""
+    return _check_python_version(est, severity="none")
+
+
 all_ests = all_estimators(return_names=False)
 
 
 # estimators that should fail to construct because of python version
-est_python_incompatible = [est for est in all_ests if not _check_python_version(est)]
+est_python_incompatible = [est for est in all_ests if not _python_compat(est)]
 
 # estimators that have soft dependencies
 est_with_soft_dep = [est for est in all_ests if _has_soft_dep(est)]
 # estimators that have soft dependencies and are python compatible
 est_pyok_with_soft_dep = [
-    est for est in est_with_soft_dep if _check_python_version(est)
+    est for est in est_with_soft_dep if _python_compat(est)
 ]
 
 # estimators that have no soft dependenies
 est_without_soft_dep = [est for est in all_ests if not _has_soft_dep(est)]
 # estimators that have soft dependencies and are python compatible
 est_pyok_without_soft_dep = [
-    est for est in est_without_soft_dep if _check_python_version(est)
+    est for est in est_without_soft_dep if _python_compat(est)
 ]
 
 # all estimators are now a disjoint union of the three sets:
