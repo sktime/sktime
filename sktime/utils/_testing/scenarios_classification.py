@@ -13,6 +13,7 @@ from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.classification.base import BaseClassifier
+from sktime.datatypes import convert_to
 from sktime.regression.base import BaseRegressor
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
@@ -104,6 +105,9 @@ X_test_multivariate = _make_panel_X(
     n_instances=5, n_columns=2, n_timepoints=20, random_state=RAND_SEED
 )
 
+X_multivariate = convert_to(X_multivariate, "pd-multiindex").convert_dtypes()
+X_test_multivariate = convert_to(X_test_multivariate, "pd-multiindex").convert_dtypes()
+
 
 class ClassifierFitPredict(ClassifierTestScenario):
     """Fit/predict with univariate panel X and labels y."""
@@ -143,10 +147,10 @@ class ClassifierFitPredictMultivariate(ClassifierTestScenario):
 
 X_unequal_length = _make_hierarchical(
     hierarchy_levels=(10,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
-)
+).convert_dtypes()
 X_unequal_length_test = _make_hierarchical(
     hierarchy_levels=(5,), min_timepoints=10, max_timepoints=15, random_state=RAND_SEED
-)
+).convert_dtypes()
 
 
 class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
