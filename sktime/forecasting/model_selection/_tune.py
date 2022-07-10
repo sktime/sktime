@@ -138,34 +138,6 @@ class BaseGridSearch(BaseForecaster):
         self.check_is_fitted("inverse_transform")
         return self.best_forecaster_.inverse_transform(y, X)
 
-    def score(self, y, X=None, fh=None):
-        """Return the score on the given data, if forecaster been refitted.
-
-        This uses the score defined by ``scoring`` where provided, and the
-        ``best_forecaster_.score`` method otherwise.
-
-        Parameters
-        ----------
-        y : pandas.Series
-            Target time series to which to compare the forecasts.
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables.
-        fh : ForecastingHorizon, int, np.ndarray, pd.Index, optional (default=None)
-            Forecasting horizon
-
-        Returns
-        -------
-        score : float
-        """
-        self.check_is_fitted("score")
-
-        if self.scoring is None:
-            return self.best_forecaster_.score(y, X=X, fh=fh)
-
-        else:
-            y_pred = self.best_forecaster_.predict(fh, X=X)
-            return self.scoring(y, y_pred)
-
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("abstract method")
 

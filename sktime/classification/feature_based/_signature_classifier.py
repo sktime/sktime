@@ -19,6 +19,7 @@ from sktime.transformations.panel.signature_based._checks import (
 from sktime.transformations.panel.signature_based._signature_method import (
     SignatureTransformer,
 )
+from sktime.utils.validation._dependencies import _check_python_version
 
 
 class SignatureClassifier(BaseClassifier):
@@ -88,23 +89,12 @@ class SignatureClassifier(BaseClassifier):
     See Also
     --------
     SignatureTransformer
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import SignatureClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = SignatureClassifier(estimator=RandomForestClassifier(n_estimators=5))
-    >>> clf.fit(X_train, y_train)
-    SignatureClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "classifier_type": "feature",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -120,6 +110,7 @@ class SignatureClassifier(BaseClassifier):
         depth=4,
         random_state=None,
     ):
+        _check_python_version(self, "esig", severity="error")
         super(SignatureClassifier, self).__init__()
         self.estimator = estimator
         self.augmentation_list = augmentation_list
