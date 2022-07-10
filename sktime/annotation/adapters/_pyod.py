@@ -32,6 +32,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
         * If "score", returned values are floats, giving the outlier score.
     """
 
+    _tags = {"python_dependencies": "pyod"}
+
     def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
         super(PyODAnnotator, self).__init__(fmt=fmt, labels=labels)
