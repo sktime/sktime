@@ -7,10 +7,13 @@ import numpy as np
 from sklearn.base import clone
 
 from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
+
+_check_soft_dependencies("pyod", severity="warning")
 
 
 class PyODAnnotator(BaseSeriesAnnotator):
@@ -31,6 +34,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
         outlier,
         * If "score", returned values are floats, giving the outlier score.
     """
+
+    _tags = {"python_dependencies": "pyod"}
 
     def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
@@ -119,6 +124,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        _check_soft_dependencies("pyod", severity="error")
+
         from pyod.models.knn import KNN
 
         params = {"estimator": KNN()}

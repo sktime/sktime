@@ -16,7 +16,6 @@ from sktime.transformations.panel.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.utils.validation._dependencies import _check_python_version
 
 
 class TSFreshClassifier(BaseClassifier):
@@ -82,8 +81,6 @@ class TSFreshClassifier(BaseClassifier):
         chunksize=None,
         random_state=None,
     ):
-        _check_python_version(self, "tsfresh", severity="error")
-
         self.default_fc_parameters = default_fc_parameters
         self.relevant_feature_extractor = relevant_feature_extractor
         self.estimator = estimator

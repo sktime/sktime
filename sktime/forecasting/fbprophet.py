@@ -9,10 +9,7 @@ __all__ = ["Prophet"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
-from sktime.utils.validation._dependencies import (
-    _check_python_version,
-    _check_soft_dependencies,
-)
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("prophet", severity="warning")
 
@@ -165,9 +162,6 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
-        _check_python_version(self, "prophet", severity="error")
-        _check_soft_dependencies("prophet", severity="error", object=self)
-
         self.freq = freq
         self.add_seasonality = add_seasonality
         self.add_country_holidays = add_country_holidays
@@ -192,12 +186,12 @@ class Prophet(_ProphetAdapter):
         self.stan_backend = stan_backend
         self.verbose = verbose
 
+        super(Prophet, self).__init__()
+
         # import inside method to avoid hard dependency
         from prophet.forecaster import Prophet as _Prophet
 
         self._ModelClass = _Prophet
-
-        super(Prophet, self).__init__()
 
     def _instantiate_model(self):
         self._forecaster = self._ModelClass(
