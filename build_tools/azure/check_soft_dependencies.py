@@ -77,7 +77,10 @@ for _, module, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
         expected_error_msg = (
             "is a soft dependency and not included in the sktime installation"
         )
-        if expected_error_msg not in error_msg:
+        # message is different for deep learning deps tensorflow, tensorflow-proba
+        error_msg_alt = "required for deep learning"
+
+        if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
             raise RuntimeError(
                 f"The module: {module} seems to require a soft "
                 f"dependency, but does not raise an appropriate error "
