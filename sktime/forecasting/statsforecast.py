@@ -197,8 +197,6 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         biasadj: bool = False,
         parallel: bool = False,
     ):
-        _check_soft_dependencies("statsforecast", severity="error", object=self)
-
         self.start_p = start_p
         self.d = d
         self.start_q = start_q

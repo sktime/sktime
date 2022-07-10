@@ -105,6 +105,15 @@ Wrappers that add prediction intervals to any forecaster.
 
     ConformalIntervals
 
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BaggingForecaster
+
+
 Trend forecasters
 -----------------
 
@@ -239,6 +248,17 @@ Ensembles and stacking
     EnsembleForecaster
     AutoEnsembleForecaster
     StackingForecaster
+
+Hierarchical reconciliation
+---------------------------
+
+.. currentmodule:: sktime.forecasting.reconcile
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReconcilerForecaster
 
 Online and stream forecasting
 -----------------------------

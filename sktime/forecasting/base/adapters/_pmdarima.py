@@ -20,6 +20,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": True,
+        "python_dependencies": "pmdarima",
     }
 
     def __init__(self):
