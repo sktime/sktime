@@ -160,8 +160,9 @@ def test_softdep_error(estimator):
                 raise RuntimeError(
                     f"Estimator {estimator.__name__} requires soft dependencies "
                     f"{softdeps} according to tags, but does not raise an appropriate "
-                    f"error message on __init__, when the soft dependency is missing."
-                    f"Likely reason is that __init__ does not call super(cls).__init__"
+                    f"error message on __init__, when the soft dependency is missing. "
+                    f"Likely reason is that __init__ does not call super(cls).__init__,"
+                    f" or imports super(cls).__init__ only after an attempted import."
                 ) from e
 
 
