@@ -766,13 +766,19 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     """
     # this contains the right values, but does not have the right index
     #   need convert_dtypes or dtypes will always be object
-    X_mi = X.explode(list(X.columns))
-    X_mi = X_mi.infer_objects()
+    # explode by column to ensure we deal with unequal length series properly
+    X_mi = pd.DataFrame()
 
-    # create the right MultiIndex and assign to X_mi
-    idx_df = X.applymap(lambda x: x.index).explode(list(X.columns))
-    idx_df = idx_df.set_index(X.columns[0], append=True)
-    X_mi.index = idx_df.index.set_names([instance_index, time_index])
+    for c in X.columns:
+        X_col = X[[c]].explode(c)
+        X_col = X_col.infer_objects()
+
+        # create the right MultiIndex and assign to X_mi
+        idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
+        idx_df = idx_df.set_index(c, append=True)
+        X_col.index = idx_df.index.set_names([instance_index, time_index])
+
+        X_mi[[c]] = X_col
 
     return X_mi
 
