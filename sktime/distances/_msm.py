@@ -83,10 +83,12 @@ class _MsmDistance(NumbaDistance):
             be infinity.
         kwargs: any
             extra kwargs.
+
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled MSM distance callable.
+
         Raises
         ------
         ValueError
@@ -144,7 +146,7 @@ class _MsmDistance(NumbaDistance):
     ) -> DistanceCallable:
         """Create a no_python compiled MSM distance callable.
 
-        Series should be shape (d, m), where m is the series length. Series can be
+        Series should be shape (d, m) where m is the series length. Series can be
         different lengths.
 
         Parameters
@@ -168,10 +170,12 @@ class _MsmDistance(NumbaDistance):
             be infinity.
         kwargs: any
             extra kwargs.
+
         Returns
         -------
         Callable[[np.ndarray, np.ndarray], float]
             No_python compiled MSM distance callable.
+
         Raises
         ------
         ValueError
@@ -194,8 +198,8 @@ class _MsmDistance(NumbaDistance):
 
         @njit(cache=True)
         def numba_msm_distance(
-                _x: np.ndarray,
-                _y: np.ndarray,
+            _x: np.ndarray,
+            _y: np.ndarray,
         ) -> float:
             cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
             return cost_matrix[-1, -1]
@@ -231,10 +235,10 @@ def _cost_function(x: float, y: float, z: float, c: float) -> float:
 
 @njit(cache=True)
 def _cost_matrix(
-        x: np.ndarray,
-        y: np.ndarray,
-        c: float,
-        bounding_matrix: np.ndarray,
+    x: np.ndarray,
+    y: np.ndarray,
+    c: float,
+    bounding_matrix: np.ndarray,
 ) -> float:
     """MSM distance compiled to no_python.
 

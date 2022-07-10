@@ -701,6 +701,7 @@ def msm_distance(
     **kwargs: dict,
 ) -> float:
     """Compute the move-split-merge distance.
+
     This metric uses as building blocks three fundamental operations: Move, Split,
     and Merge. A Move operation changes the value of a single element, a Split
     operation converts a single element into two consecutive elements, and a Merge
@@ -708,6 +709,7 @@ def msm_distance(
     associated cost, and the MSM distance between two time series is defined to be
     the cost of the cheapest sequence of operations that transforms the first time
     series into the second one.
+
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)
@@ -729,10 +731,12 @@ def msm_distance(
         be infinity.
     kwargs: any
         extra kwargs.
+
     Returns
     -------
     float
         Msm distance between x and y.
+
     Raises
     ------
     ValueError
@@ -1654,6 +1658,7 @@ def msm_alignment_path(
         be infinity.
     kwargs: any
         extra kwargs.
+
     Returns
     -------
     list[tuple]
@@ -1663,6 +1668,7 @@ def msm_alignment_path(
     np.ndarray (of shape (len(x), len(y)).
         Optional return only given if return_cost_matrix = True.
         Cost matrix used to compute the distance.
+
     Raises
     ------
     ValueError
