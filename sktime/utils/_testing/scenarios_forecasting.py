@@ -225,7 +225,7 @@ class ForecasterFitPredictMultivariateWithX(ForecasterTestScenario):
 y_panel = _make_panel_X(
     n_instances=3, n_timepoints=10, n_columns=1, random_state=RAND_SEED
 )
-y_panel = convert_to(y_panel, "pd-multiindex").convert_ctypes()
+y_panel = convert_to(y_panel, "pd-multiindex").convert_dtypes()
 
 
 class ForecasterFitPredictPanelSimple(ForecasterTestScenario):
