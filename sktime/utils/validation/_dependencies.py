@@ -88,7 +88,7 @@ def _check_soft_dependencies(
             if object is None:
                 msg = (
                     f"{e}. '{package}' is a soft dependency and not included in the "
-                    f"sktime installation. Please run: `pip install {package}` to "
+                    f"base sktime installation. Please run: `pip install {package}` to "
                     f"install the {package} package. "
                     f"To install all soft dependencies, run: `pip install "
                     f"sktime[all_extras]`"
@@ -269,15 +269,18 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     Raises
     ------
     ModuleNotFoundError
-        User friendly error if obj has python_version_upper_bound tag that is
+        User friendly error if obj has python_version tag that is
         incompatible with the system python version.
+        Compatible python versions are determined by the "python_version" tag of obj.
+        User friendly error if obj has package dependencies that are not satisfied.
         Packages are determined based on the "python_dependencies" tag of obj.
     """
+    _check_python_version(obj, severity=severity)
+
     pkg_deps = obj.get_tag("python_dependencies", None, raise_error=False)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
         _check_soft_dependencies(*pkg_deps, severity=severity, object=obj)
-    _check_python_version(obj, severity=severity)
 
     return obj
