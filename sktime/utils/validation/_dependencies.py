@@ -273,11 +273,12 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         incompatible with the system python version.
         Packages are determined based on the "python_dependencies" tag of obj.
     """
+    _check_python_version(obj, severity=severity)
+
     pkg_deps = obj.get_tag("python_dependencies", None, raise_error=False)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
         _check_soft_dependencies(*pkg_deps, severity=severity, object=obj)
-    _check_python_version(obj, severity=severity)
 
     return obj
