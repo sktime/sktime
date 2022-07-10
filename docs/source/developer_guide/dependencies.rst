@@ -65,21 +65,17 @@ To add an estimator with a soft dependency, ensure the following:
 
 *  imports of the soft dependency only happen inside the estimator,
    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
-*  the ``python_dependencies`` tag of the estimator should be populated, with a ``str``,
+   In ``__init__``, imports should happen only after calls to ``super(cls).__init__``.
+*  the ``python_dependencies`` tag of the estimator is populated with a ``str``,
    or a ``list`` of ``str``, of import dependencies. Exceptions will automatically raised when constructing the estimator
    in an environment without the required packages.
-*  If the soft dependencies require specific python versions, the ``python_version_upper_bound``
-   tag should also be populated, with a ``str`` such as ``"3.10"``. The upper bound is exclusive, i.e., an estimator
-   with dependencies that require 3.8 or lower should have the tag value ``"3.9"``.
-*  Errors and warnings, with informative instructions on how to install the soft dependency,
-   are raised through ``_check_soft_dependencies``
-   `here <https://github.com/alan-turing-institute/sktime/blob/main/sktime/utils/validation/_dependencies.py>`__.
-   In the python module containing the estimator, the function should be called
-   at the top of the module, with ``severity="warning"``.
-*  ensure the module containing the estimator is registered
-   `here <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__.
-   This allows continuous integration tests to check if all soft dependencies are properly isolated to specific modules.
-
+*  in the python module containing the estimator, the ``_check_soft_dependencies`` utility is called
+   at the top of the module, with ``severity="warning"``. This will raise an informative warning message already at module import.
+*  In a case where the package import differs from the package name, i.e., ``import package_string`` is different from 
+   ``pip install different-package-string`` (usually the case for packages containing a dash in the name), the ``_check_soft_dependencies``
+   utility should be used in ``__init__``. Both the warning and constructor call should use the ``package_import_alias`` argument for this.
+*  If the soft dependencies require specific python versions, the ``python_version``
+   tag should also be populated, with a PEP 440 compliant version specification ``str`` such as ``"<3.10"`` or ``">3.6,~=3.8"``.
 
 Adding a core or developer dependency
 -------------------------------------
