@@ -5,6 +5,7 @@
 
 import inspect
 
+import numpy as np
 from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
@@ -18,7 +19,9 @@ _check_soft_dependencies("dynamicfactor", severity="warning")
 
 class DynamicFactor(_StatsModelsAdapter):
     """Dynamic Factor Foracster.
+
     Direct interface for `statsmodels.tsa.statespace.dynamic_factor
+
     Parameters
     ----------
     k_factors : int
@@ -103,6 +106,7 @@ class DynamicFactor(_StatsModelsAdapter):
         If used, some features of the results object will not be available
         (including smoothed results and in-sample prediction),
         although out-of-sample forecasting is possible.
+
     See Also
     --------
     statsmodels.tsa.statespace.dynamic_factor.DynamicFactor
@@ -176,9 +180,7 @@ class DynamicFactor(_StatsModelsAdapter):
         self.flags = flags
         self.low_memory = low_memory
 
-        super(
-            DynamicFactor, self
-        ).__init__()
+        super(DynamicFactor, self).__init__()
 
     def _predict(self, fh, X=None):
         """Make forecasts.
@@ -201,22 +203,22 @@ class DynamicFactor(_StatsModelsAdapter):
         # beginning of the training series when passing integers
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
-        print("=== Predict is stating ===")
-        print(f"fh is {fh}")
-        print(f"Start is {start}")
-        print(f"End is {end}")
-
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
             y_pred = self._fitted_forecaster.predict(start=start, end=end)
-        print(f"y_pred is \n {y_pred}")
         # statsmodels forecasts all periods from start to end of forecasting
         # horizon, but only return given time points in forecasting horizon
+
+        if "int" in (self._y.index[0]).__class__.__name__:  # Rather fishy solution
+            y_pred.index = np.arange(
+                start + self._y.index[0], end + self._y.index[0] + 1
+            )
         return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
     def _fit_forecaster(self, y, X=None):
         """Fit to training data.
+
         Parameters
         ----------
         y:pd.Series
@@ -274,7 +276,9 @@ class DynamicFactor(_StatsModelsAdapter):
         **kwargs,
     ):
         r"""Simulate a new time series following the state space model.
+
         Taken from original statsmodels implementation.
+
         Parameters
         ----------
         nsimulations : int
@@ -350,6 +354,7 @@ class DynamicFactor(_StatsModelsAdapter):
         acf_kwargs=None,
     ):
         """Diagnostic plots for standardized residuals of one endogenous variable.
+
         Parameters
         ----------
         variable : int , optional
@@ -385,6 +390,7 @@ class DynamicFactor(_StatsModelsAdapter):
         acf_kwargs : dict , optional
             Optional dictionary of keyword arguments that are directly
             passed on to the correlogram Matplotlib plot produced by plot_acf().
+
         Returns
         -------
         Figure
@@ -404,12 +410,14 @@ class DynamicFactor(_StatsModelsAdapter):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
         Parameters
         ----------
         parameter_set : str , default = "default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
             There are currently no reserved values for forecasters.
+
         Returns
         -------
         params :dict or list of dict , default = {}
