@@ -37,7 +37,6 @@ from sktime.utils._testing.forecasting import (
     make_forecasting_problem,
 )
 from sktime.utils._testing.series import _make_series
-from sktime.utils.datetime import infer_freq
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
@@ -219,13 +218,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
         cutoff = get_cutoff(y_train, return_index=True)
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=fh_int,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=infer_freq(y_train),
-        )
+        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
@@ -255,13 +248,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             n_columns=n_columns, index_type=index_type, n_timepoints=50
         )
         cutoff = get_cutoff(y_train, return_index=True)
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=fh_int,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=infer_freq(y_train),
-        )
+        fh = _make_fh(cutoff, fh_int, fh_type, is_relative)
         try:
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
@@ -298,14 +285,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y.index[len(y) // 2]
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=fh_int_oos,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=infer_freq(y),
-        )
+        cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
+        fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
@@ -335,13 +316,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         cutoff = get_cutoff(y_train, return_index=True)
         steps = -np.arange(len(y_train))
-        fh = _make_fh(
-            cutoff=cutoff,
-            steps=steps,
-            fh_type=fh_type,
-            is_relative=is_relative,
-            freq=infer_freq(y_train),
-        )
+        fh = _make_fh(cutoff, steps, fh_type, is_relative)
 
         try:
             estimator_instance.fit(y_train, fh=fh)
