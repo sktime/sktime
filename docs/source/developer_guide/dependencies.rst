@@ -52,9 +52,6 @@ the following files need to be updated:
    adding the dependency or version bounds in the ``all_extras`` dependency set.
    Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
    including build time dependencies and optional dependencies are specified in this file.
-*  `check_soft_dependencies.py <https://github.com/alan-turing-institute/sktime/blob/main/build_tools/azure/check_soft_dependencies.py>`__,
-   the dependency needs to be added together with the module that depends on it.
-   We use continuous integration tests to check if all soft dependencies are properly isolated to specific modules.
 
 Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
 This is handled through our ``_check_soft_dependencies`` utility
