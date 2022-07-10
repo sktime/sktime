@@ -1622,6 +1622,7 @@ def msm_alignment_path(
     **kwargs: dict,
 ) -> AlignmentPathReturn:
     """Compute the move-split-merge alignment path.
+
     This metric uses as building blocks three fundamental operations: Move, Split,
     and Merge. A Move operation changes the value of a single element, a Split
     operation converts a single element into two consecutive elements, and a Merge
@@ -1629,6 +1630,7 @@ def msm_alignment_path(
     associated cost, and the MSM distance between two time series is defined to be
     the cost of the cheapest sequence of operations that transforms the first time
     series into the second one.
+
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)

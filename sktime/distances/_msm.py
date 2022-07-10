@@ -56,8 +56,10 @@ class _MsmDistance(NumbaDistance):
         **kwargs: dict,
     ) -> DistanceAlignmentPathCallable:
         """Create a no_python compiled MSM distance path callable.
+
         Series should be shape (1, m), where m is the series length. Series can be
         different lengths.
+
         Parameters
         ----------
         x: np.ndarray (2d array of shape (d,m1)).
@@ -141,8 +143,10 @@ class _MsmDistance(NumbaDistance):
         **kwargs: dict,
     ) -> DistanceCallable:
         """Create a no_python compiled MSM distance callable.
+
         Series should be shape (d, m), where m is the series length. Series can be
         different lengths.
+
         Parameters
         ----------
         x: np.ndarray (2d array of shape (d,m1)).
