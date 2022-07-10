@@ -168,16 +168,12 @@ est_python_incompatible = [est for est in all_ests if not _python_compat(est)]
 # estimators that have soft dependencies
 est_with_soft_dep = [est for est in all_ests if _has_soft_dep(est)]
 # estimators that have soft dependencies and are python compatible
-est_pyok_with_soft_dep = [
-    est for est in est_with_soft_dep if _python_compat(est)
-]
+est_pyok_with_soft_dep = [est for est in est_with_soft_dep if _python_compat(est)]
 
 # estimators that have no soft dependenies
 est_without_soft_dep = [est for est in all_ests if not _has_soft_dep(est)]
 # estimators that have soft dependencies and are python compatible
-est_pyok_without_soft_dep = [
-    est for est in est_without_soft_dep if _python_compat(est)
-]
+est_pyok_without_soft_dep = [est for est in est_without_soft_dep if _python_compat(est)]
 
 # all estimators are now a disjoint union of the three sets:
 # est_python_incompatible - python incompatible, should raise python error
