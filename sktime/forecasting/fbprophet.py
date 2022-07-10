@@ -9,7 +9,10 @@ __all__ = ["Prophet"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base.adapters import _ProphetAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.validation._dependencies import (
+    _check_python_version,
+    _check_soft_dependencies,
+)
 
 _check_soft_dependencies("prophet", severity="warning")
 
@@ -162,6 +165,7 @@ class Prophet(_ProphetAdapter):
         stan_backend=None,
         verbose=0,
     ):
+        _check_python_version(self, "prophet", severity="error")
         _check_soft_dependencies("prophet", severity="error", object=self)
 
         self.freq = freq

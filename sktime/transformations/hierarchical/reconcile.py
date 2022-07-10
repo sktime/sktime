@@ -43,9 +43,35 @@ class Reconciler(BaseTransformer):
             "wls_str" - weighted least squares (structural)
             "td_fcst" - top down based on (forecast) proportions
 
+    See Also
+    --------
+    Aggregator
+    ReconcilerForecaster
+
     References
     ----------
     .. [1] https://otexts.com/fpp3/hierarchical.html
+
+    Examples
+    --------
+    >>> from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+    >>> from sktime.transformations.hierarchical.reconcile import Reconciler
+    >>> from sktime.transformations.hierarchical.aggregate import Aggregator
+    >>> from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+    >>> agg = Aggregator()
+    >>> y = _bottom_hier_datagen(
+    ...     no_bottom_nodes=3,
+    ...     no_levels=1,
+    ...     random_seed=123,
+    ... )
+    >>> y = agg.fit_transform(y)
+    >>> forecaster = ExponentialSmoothing()
+    >>> forecaster.fit(y)
+    ExponentialSmoothing(...)
+    >>> prds = forecaster.predict(fh=[1])
+    >>> # reconcile forecasts
+    >>> reconciler = Reconciler(method="ols")
+    >>> prds_recon = reconciler.fit_transform(prds)
     """
 
     _tags = {
