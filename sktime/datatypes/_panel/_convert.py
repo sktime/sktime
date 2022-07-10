@@ -766,7 +766,8 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     """
     # this contains the right values, but does not have the right index
     #   need convert_dtypes or dtypes will always be object
-    X_mi = X.explode(list(X.columns)).convert_dtypes()
+    X_mi = X.explode(list(X.columns))
+    X_mi = X_mi.convert_objects(convert_numeric=True)
 
     # create the right MultiIndex and assign to X_mi
     idx_df = X.applymap(lambda x: x.index).explode(list(X.columns))
