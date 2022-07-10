@@ -87,7 +87,10 @@ def test_module_softdeps(module):
         expected_error_msg = (
             "is a soft dependency and not included in the base sktime installation"
         )
-        if expected_error_msg not in error_msg:
+        # message is different for deep learning deps tensorflow, tensorflow-proba
+        error_msg_alt = "required for deep learning"
+
+        if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
             raise RuntimeError(
                 f"The module: {module} seems to require a soft "
                 f"dependency, but does not raise an appropriate error "
@@ -213,7 +216,10 @@ def test_softdep_error(estimator):
             expected_error_msg = (
                 "is a soft dependency and not included in the base sktime installation"
             )
-            if expected_error_msg not in error_msg:
+            # message is different for deep learning deps tensorflow, tensorflow-proba
+            error_msg_alt = "required for deep learning"
+
+            if expected_error_msg not in error_msg and error_msg_alt not in error_msg:
                 raise RuntimeError(
                     f"Estimator {estimator.__name__} requires soft dependencies "
                     f"{softdeps} according to tags, but does not raise an appropriate "

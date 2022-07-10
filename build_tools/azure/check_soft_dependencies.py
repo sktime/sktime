@@ -75,7 +75,7 @@ for _, module, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
         # Check if appropriate exception with useful error message is raised as
         # defined in the `_check_soft_dependencies` function
         expected_error_msg = (
-            "is a soft dependency and not included in the sktime installation"
+            "is a soft dependency and not included in the base sktime installation"
         )
         # message is different for deep learning deps tensorflow, tensorflow-proba
         error_msg_alt = "required for deep learning"
