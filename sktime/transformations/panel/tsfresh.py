@@ -57,10 +57,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         self.profiling_filename = profiling_filename
         self.distributor = distributor
 
+        super(_TSFreshFeatureExtractor, self).__init__()
+
+        # _get_extraction_params should be after the init because this imports tsfresh
+        # and the init checks for python version and tsfresh being present
         self.default_fc_parameters_ = None
         self.default_fc_parameters_ = self._get_extraction_params()
-
-        super(_TSFreshFeatureExtractor, self).__init__()
 
     def _get_extraction_params(self):
         """Set default parameters from tsfresh."""
