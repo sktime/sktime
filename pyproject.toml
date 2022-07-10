@@ -58,6 +58,7 @@ all_extras = [
     "hmmlearn>=0.2.7",
     "gluonts>=0.9.0",
     "keras-self-attention",
+    "kotsu>=0.3.1",
     "matplotlib>=3.3.2",
     "mne",
     "pmdarima>=1.8.0,!=1.8.1,<3.0.0",
