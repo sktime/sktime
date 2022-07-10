@@ -694,11 +694,13 @@ def dtw_distance(
 def msm_distance(
     x: np.ndarray,
     y: np.ndarray,
-    c: float = 0.0,
-    **kwargs: Any,
+    c: float = 1.0,
+    window: float = None,
+    itakura_max_slope: float = None,
+    bounding_matrix: np.ndarray = None,
+    **kwargs: dict,
 ) -> float:
     """Compute the move-split-merge distance.
-
     This metric uses as building blocks three fundamental operations: Move, Split,
     and Merge. A Move operation changes the value of a single element, a Split
     operation converts a single element into two consecutive elements, and a Merge
@@ -706,21 +708,31 @@ def msm_distance(
     associated cost, and the MSM distance between two time series is defined to be
     the cost of the cheapest sequence of operations that transforms the first time
     series into the second one.
-
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)
         First time series.
     y: np.ndarray (1d or 2d array)
         Second time series.
-    kwargs: Any
-        Extra kwargs.
-
+    c: float, default = 1.0
+        Cost for split or merge operation.
+    window: Float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Must be between 0 and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Must be between 0 and 1.
+    bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should
+        be infinity.
+    kwargs: any
+        extra kwargs.
     Returns
     -------
     float
         Msm distance between x and y.
-
     Raises
     ------
     ValueError
@@ -731,7 +743,6 @@ def msm_distance(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
-
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
@@ -740,6 +751,9 @@ def msm_distance(
     """
     format_kwargs = {
         "c": c,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
@@ -1601,11 +1615,13 @@ def msm_alignment_path(
     x: np.ndarray,
     y: np.ndarray,
     return_cost_matrix: bool = False,
-    c: float = 0.0,
-    **kwargs: Any,
+    c: float = 1.0,
+    window: float = None,
+    itakura_max_slope: float = None,
+    bounding_matrix: np.ndarray = None,
+    **kwargs: dict,
 ) -> AlignmentPathReturn:
     """Compute the move-split-merge alignment path.
-
     This metric uses as building blocks three fundamental operations: Move, Split,
     and Merge. A Move operation changes the value of a single element, a Split
     operation converts a single element into two consecutive elements, and a Merge
@@ -1613,7 +1629,6 @@ def msm_alignment_path(
     associated cost, and the MSM distance between two time series is defined to be
     the cost of the cheapest sequence of operations that transforms the first time
     series into the second one.
-
     Parameters
     ----------
     x: np.ndarray (1d or 2d array)
@@ -1622,9 +1637,21 @@ def msm_alignment_path(
         Second time series.
     return_cost_matrix: bool, defaults = False
         Boolean that when true will also return the cost matrix.
-    kwargs: Any
-        Extra kwargs.
-
+    c: float, default = 1.0
+        Cost for split or merge operation.
+    window: float, defaults = None
+        Float that is the radius of the sakoe chiba window (if using Sakoe-Chiba
+        lower bounding). Must be between 0 and 1.
+    itakura_max_slope: float, defaults = None
+        Gradient of the slope for itakura parallelogram (if using Itakura
+        Parallelogram lower bounding). Must be between 0 and 1.
+    bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
+        Custom bounding matrix to use. If defined then other lower_bounding params
+        are ignored. The matrix should be structure so that indexes considered in
+        bound should be the value 0. and indexes outside the bounding matrix should
+        be infinity.
+    kwargs: any
+        extra kwargs.
     Returns
     -------
     list[tuple]
@@ -1634,7 +1661,6 @@ def msm_alignment_path(
     np.ndarray (of shape (len(x), len(y)).
         Optional return only given if return_cost_matrix = True.
         Cost matrix used to compute the distance.
-
     Raises
     ------
     ValueError
@@ -1645,7 +1671,6 @@ def msm_alignment_path(
         NumbaDistance.
         If a resolved metric is not no_python compiled.
         If the metric type cannot be determined
-
     References
     ----------
     .. [1]A.  Stefan,  V.  Athitsos,  and  G.  Das.   The  Move-Split-Merge  metric
@@ -1654,6 +1679,9 @@ def msm_alignment_path(
     """
     format_kwargs = {
         "c": c,
+        "window": window,
+        "itakura_max_slope": itakura_max_slope,
+        "bounding_matrix": bounding_matrix,
     }
     format_kwargs = {**format_kwargs, **kwargs}
 
