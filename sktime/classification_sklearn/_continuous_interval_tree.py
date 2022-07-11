@@ -15,7 +15,7 @@ import numpy as np
 from numba import njit
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
-from sklearn.utils import check_array, check_random_state, check_X_y
+from sklearn.utils import check_random_state
 
 from sktime.exceptions import NotFittedError
 from sktime.utils.numba.stats import iqr, mean, median, numba_max, numba_min, slope, std
@@ -117,7 +117,9 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(
+            X=X, y=y, ensure_min_samples=2, ensure_min_features=2
+        )
 
         self.n_instances_, self.n_atts_ = X.shape
         self.classes_ = np.unique(y)
@@ -126,8 +128,6 @@ class ContinuousIntervalTree(BaseEstimator):
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
-        if self.n_instances_ == 1:
-            raise ValueError("fit input X and y must contain more than one sample")
         if self.n_classes_ == 1:
             raise ValueError("fit input y must contain more than one class")
 
@@ -206,7 +206,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = check_array(X)
+        X = self._validate_data(X=X, reset=False, ensure_min_features=2)
 
         dists = np.zeros((X.shape[0], self.n_classes_))
         for i in range(X.shape[0]):

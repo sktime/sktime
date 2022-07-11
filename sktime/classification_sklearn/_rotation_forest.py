@@ -15,7 +15,7 @@ from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import check_array, check_random_state, check_X_y
+from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.exceptions import NotFittedError
@@ -159,7 +159,9 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(
+            X=X, y=y, ensure_min_samples=2, ensure_min_features=2
+        )
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -170,8 +172,6 @@ class RotationForest(BaseEstimator):
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
-        if self.n_instances_ == 1:
-            raise ValueError("fit input X and y must contain more than one sample")
         if self.n_classes_ == 1:
             raise ValueError("fit input y must contain more than one class")
 
@@ -291,7 +291,7 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = check_array(X)
+        X = self._validate_data(X=X, reset=False, ensure_min_features=2)
 
         # replace missing values with 0 and remove useless attributes
         X = X[:, self._useful_atts]
@@ -330,6 +330,7 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
+        X = self._validate_data(X=X, reset=False, ensure_min_features=2)
 
         n_instances, n_atts = X.shape
 
