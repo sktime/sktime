@@ -238,3 +238,108 @@ def test_from_nested_to_long(n_instances, n_columns, n_timepoints):
     assert isinstance(X_long, pd.DataFrame)
     assert X_long.shape == (n_instances * n_timepoints * n_columns, 4)
     assert (X_long.columns == ["case_id", "reading_id", "dim_id", "value"]).all()
+
+
+@pytest.mark.parametrize("n_instances", N_INSTANCES)
+@pytest.mark.parametrize("n_columns", N_COLUMNS)
+@pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
+def test_from_multiindex_to_listdataset(
+    number_of_instance, number_of_colum, number_of_time_point
+):
+    """Test from multiindex DF to listdataset for gluonts."""
+    import numpy as np
+    import pandas as pd
+
+    from sktime.datatypes import convert_to
+    from sktime.datatypes._adapters import load_from_multiindex_to_listdataset
+
+    def random_datetimes_or_dates(
+        start, end, out_format="datetime", n=10, random_seed=42
+    ):
+        """Generate random pd Datetime in the start to end range.
+
+        unix timestamp is in ns by default.
+        Divide the unix time value by 10**9 to make it seconds
+        (or 24*60*60*10**9 to make it days).
+        The corresponding unit variable is passed to the pd.to_datetime function.
+        Values for the (divide_by, unit) pair to select is defined by the out_format
+        parameter.
+        for 1 -> out_format='datetime'
+        for 2 -> out_format=anything else.
+        """
+        np.random.seed(random_seed)
+        (divide_by, unit) = (
+            (10**9, "s")
+            if out_format == "datetime"
+            else (24 * 60 * 60 * 10**9, "D")
+        )
+
+        start_u = start.value // divide_by
+        end_u = end.value // divide_by
+
+        return pd.to_datetime(np.random.randint(start_u, end_u, n), unit=unit)
+
+    def _make_example_multiindex(
+        number_of_instance, number_of_colum, number_of_time_point, random_seed=42
+    ) -> pd.DataFrame:
+
+        import numpy as np
+
+        start = pd.to_datetime("1750-01-01")
+        end = pd.to_datetime("2022-07-01")
+        inputDF = np.random.randint(
+            1, 99, size=(number_of_instance * number_of_time_point, number_of_colum)
+        )
+        number_of_instance = number_of_instance
+        column_name = []
+        for i in range(number_of_colum):
+            column_name.append("dim_" + str(i))
+
+        random_start_date = random_datetimes_or_dates(
+            start, end, out_format="out datetime", n=number_of_instance, random_seed=42
+        )
+
+        level0_idx = [
+            list(np.full(number_of_time_point, instance))
+            for instance in range(number_of_instance)
+        ]
+        level0_idx = np.ravel(level0_idx)
+
+        level1_idx = [
+            list(
+                pd.date_range(
+                    random_start_date[instance], periods=number_of_time_point, freq="H"
+                )
+            )
+            for instance in range(number_of_instance)
+        ]
+        level1_idx = np.ravel(level1_idx)
+
+        multi_idx = pd.MultiIndex.from_arrays(
+            [level0_idx, level1_idx], names=("instance", "datetime")
+        )
+
+        inputDF_return = pd.DataFrame(inputDF, columns=column_name, index=multi_idx)
+
+        return inputDF_return
+
+    MULTIINDEX_DF = _make_example_multiindex(
+        number_of_instance, number_of_colum, number_of_time_point
+    )
+    # Result from the converter
+    listdataset_result = load_from_multiindex_to_listdataset(MULTIINDEX_DF)
+    listdataset_result_list = list(listdataset_result)
+    # Result from raw data
+    dimension_name = MULTIINDEX_DF.columns
+    # Convert MULTIINDEX_DF to nested_univ format to compare with listdataset
+    control_result = convert_to(MULTIINDEX_DF, to_type="nested_univ")
+    control_result = control_result.reset_index()
+    control_result = control_result[dimension_name]
+
+    # Perform the test
+    for instance, _dim_name in control_result.iterrows():
+        for dim_no, dim in enumerate(dimension_name):
+            np.testing.assert_array_equal(
+                control_result.loc[instance, dim].to_numpy(),
+                listdataset_result_list[instance]["target"][dim_no],
+            )
