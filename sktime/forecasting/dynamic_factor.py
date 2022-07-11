@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""Implements DynamicFactor Model."""
+"""Implements DynamicFactor Model as interface to statsmodels."""
 
 import inspect
 
@@ -9,12 +9,9 @@ import numpy as np
 from statsmodels.tsa.statespace.dynamic_factor import DynamicFactor as _DynamicFactor
 
 from sktime.forecasting.base.adapters import _StatsModelsAdapter
-from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _all_ = ["DynamicFactor"]
-__author__ = ["Ris-Bali"]
-
-_check_soft_dependencies("dynamicfactor", severity="warning")
+__author__ = ["Ris-Bali", "lbventura"]
 
 
 class DynamicFactor(_StatsModelsAdapter):
@@ -118,7 +115,7 @@ class DynamicFactor(_StatsModelsAdapter):
     """
 
     _tags = {
-        "scitype:y": "multivariate",
+        "scitype:y": "both",
         "ignores-exogeneous-X": False,
         "handles-missing-data": True,
         "y_inner_mtype": "pd.DataFrame",
@@ -144,8 +141,8 @@ class DynamicFactor(_StatsModelsAdapter):
         cov_kwds=None,
         method="lbfgs",
         maxiter=50,
-        full_output=False,  # Changed from 1
-        disp=False,  # Changed from 5
+        full_output=True,
+        disp=5,
         callback=None,
         return_params=False,
         optim_score=None,
