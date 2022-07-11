@@ -333,7 +333,7 @@ class VectorizedDF:
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                force_flat = _force_flat(ith_col_block)
+                force_flat = force_flat or _force_flat(ith_col_block)
                 if col_multiindex in ["flat", "multiindex"] or force_flat:
                     col_keys = self.X_multiindex.columns
                 else:
