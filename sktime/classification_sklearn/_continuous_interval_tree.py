@@ -91,15 +91,6 @@ class ContinuousIntervalTree(BaseEstimator):
 
         self.random_state = random_state
 
-        # The following set in method fit
-        self.root = None
-        self.n_classes = 0
-        self.classes_ = []
-
-        self._class_dictionary = {}
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
-
         super(ContinuousIntervalTree, self).__init__()
 
     def fit(self, X, y):
@@ -129,6 +120,7 @@ class ContinuousIntervalTree(BaseEstimator):
 
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
+        self._class_dictionary = {}
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 

@@ -133,26 +133,6 @@ class RotationForest(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.n_classes = 0
-        self.n_instances = 0
-        self.n_atts = 0
-        self.classes_ = []
-        self.estimators_ = []
-        self.transformed_data = []
-
-        self._n_estimators = n_estimators
-        self._base_estimator = base_estimator
-        self._min = 0
-        self._ptp = 0
-        self._useful_atts = []
-        self._pcas = []
-        self._groups = []
-        self._class_dictionary = {}
-        self._n_jobs = n_jobs
-        self._n_atts = 0
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
-
         super(RotationForest, self).__init__()
 
     def fit(self, X, y):
@@ -185,6 +165,7 @@ class RotationForest(BaseEstimator):
         self.n_instances, self.n_atts = X.shape
         self.classes_ = np.unique(y)
         self.n_classes = self.classes_.shape[0]
+        self._class_dictionary = {}
         for index, classVal in enumerate(self.classes_):
             self._class_dictionary[classVal] = index
 
@@ -239,6 +220,8 @@ class RotationForest(BaseEstimator):
                 self._n_estimators += self._n_jobs
                 train_time = time.time() - start_time
         else:
+            self._n_estimators = self.n_estimators
+
             fit = Parallel(n_jobs=self._n_jobs)(
                 delayed(self._fit_estimator)(
                     X,
