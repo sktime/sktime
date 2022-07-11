@@ -34,6 +34,8 @@ EXCLUDE_ESTIMATORS = [
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
     "STLTransformer",
+    # SFA is non-compliant with any transformer interfaces, #2064
+    "SFA",
     # requires y in fit, this is incompatible with the old testing framework
     #    unless it inherits from the old mixins, which hard coded the y
     #    should be removed once test_all_transformers has been refactored to scenarios
@@ -50,6 +52,11 @@ EXCLUDED_TESTS = {
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
     # test fails in the Panel case for Differencer, see #2522
     "Differencer": ["test_transform_inverse_transform_equivalent"],
+    # tagged in issue #2490
+    "SignatureClassifier": [
+        "test_classifier_on_unit_test_data",
+        "test_classifier_on_basic_motions",
+    ],
     # test fail with deep problem with pickling inside tensorflow.
     "CNNClassifier": [
         "test_fit_idempotent",
@@ -74,6 +81,15 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of

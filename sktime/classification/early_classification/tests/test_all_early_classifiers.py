@@ -49,7 +49,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         y_train = scenario.args["fit"]["y"]
-        y_pred, decisions, state_info = scenario.run(
+        y_pred, decisions = scenario.run(
             estimator_instance, method_sequence=["fit", "predict"]
         )
 
@@ -65,7 +65,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
         assert isinstance(estimator_instance.get_state_info(), np.ndarray)
 
         # check predict proba (all classifiers have predict_proba by default)
-        y_proba, decisions, state_info = scenario.run(
+        y_proba, decisions = scenario.run(
             estimator_instance, method_sequence=["predict_proba"]
         )
         assert isinstance(y_proba, np.ndarray)
