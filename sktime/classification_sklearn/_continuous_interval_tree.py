@@ -117,9 +117,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = self._validate_data(
-            X=X, y=y, ensure_min_samples=2, ensure_min_features=2
-        )
+        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
 
         self.n_instances_, self.n_atts_ = X.shape
         self.classes_ = np.unique(y)
@@ -206,7 +204,7 @@ class ContinuousIntervalTree(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False, ensure_min_features=2)
+        X = self._validate_data(X=X, reset=False)
 
         dists = np.zeros((X.shape[0], self.n_classes_))
         for i in range(X.shape[0]):

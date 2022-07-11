@@ -159,9 +159,7 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X, y = self._validate_data(
-            X=X, y=y, ensure_min_samples=2, ensure_min_features=2
-        )
+        X, y = self._validate_data(X=X, y=y, ensure_min_samples=2)
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -291,7 +289,7 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False, ensure_min_features=2)
+        X = self._validate_data(X=X, reset=False)
 
         # replace missing values with 0 and remove useless attributes
         X = X[:, self._useful_atts]
@@ -330,7 +328,7 @@ class RotationForest(BaseEstimator):
                 "A valid sklearn input such as a 2d numpy array is required."
                 "Sparse input formats are currently not supported."
             )
-        X = self._validate_data(X=X, reset=False, ensure_min_features=2)
+        X = self._validate_data(X=X, reset=False)
 
         n_instances, n_atts = X.shape
 
