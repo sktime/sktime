@@ -233,6 +233,17 @@ Series-to-series transformers transform individual time series into another time
 
 When applied to panels or hierarchical data, individual series are transformed.
 
+Lagging
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Lag
+
 Element-wise transforms
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -441,6 +452,20 @@ These transformers select features in `X` based on `y`.
     :template: class.rst
 
     FeatureSelection
+
+Subsetting time points and variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These transformers subset `X` by time points (`pandas` index or index level) or variables (`pandas` columns).
+
+.. currentmodule:: sktime.transformations.series.subset
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ColumnSelect
+    IndexSubset
 
 Panel transformers
 ------------------

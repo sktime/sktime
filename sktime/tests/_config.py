@@ -81,10 +81,6 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
-    "ForecastingGridSearchCV": ["test_score"],  # unknown root cause, see #2751
-    "ForecastingRandomizedSearchCV": ["test_score"],  # unknown root cause, see #2751
-    # failure of test_score came up after a change of metric default params
-    # there should be no such failure, and all other algorithms pass. #2751 to track
 }
 
 # We here configure estimators for basic unit testing, including setting of
