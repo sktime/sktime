@@ -1,5 +1,4 @@
 #!/bin/bash
-​
 max_folds=30
 start_fold=2
 maxNumSubmitted=700
@@ -10,8 +9,8 @@ mailto="eej17ucu@uea.ac.uk"
 max_memory=8000
 max_time="168:00:00"
 start_point=1
-data_dir="/gpfs/home/eej17ucu/sktimeData/"
-results_dir="/gpfs/home/eej17ucu/ClusteringResults/averaging_experiment/"
+data_dir="/gpfs/home/ajb/Data/"
+results_dir="/gpfs/home/eej17ucu/clustering-results/averaging-experiment/"
 out_dir="/gpfs/home/eej17ucu/code/output/"
 script_file_path="/gpfs/home/eej17ucu/code/sktime/sktime/_contrib/clustering_experiments/averaging/averaging_experiments.py"
 env_name="sktime"
