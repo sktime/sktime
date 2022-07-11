@@ -192,6 +192,14 @@ All "ARIMA" models below include SARIMAX capability.
 
     VAR
 
+.. currentmodule:: sktime.forecasting.varmax
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    VARMAX
+
 Structural time series models
 -----------------------------
 
