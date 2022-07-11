@@ -77,10 +77,11 @@ def test_fh(index_type, fh_type, is_relative, steps):
     y_train, y_test = temporal_train_test_split(y, test_size=10)
 
     # choose cutoff point
-    cutoff = y_train.index[-1]
+    cutoff_idx = get_cutoff(y_train, return_index=True)
+    cutoff = cutoff_idx[0]
 
     # generate fh
-    fh = _make_fh(cutoff, steps, fh_type, is_relative)
+    fh = _make_fh(cutoff_idx, steps, fh_type, is_relative)
     # update frequency of the forecasting horizon
     fh.freq = infer_freq(y)
     if fh_type == "int":
