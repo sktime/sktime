@@ -5,9 +5,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly", "MatthewMiddlehurst"]
 
 import numpy as np
 
-from sktime.classification.tests.test_all_classifiers import (
-    TestAllClassifiers as ClassifierTests,
-)
+from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
@@ -37,7 +35,7 @@ class TestAllEarlyClassifiers(EarlyClassifierFixtureGenerator, QuickTester):
 
     def test_multivariate_input_exception(self, estimator_instance):
         """Test univariate early classifiers raise exception on multivariate X."""
-        test = ClassifierTests.test_multivariate_input_exception
+        test = TestAllClassifiers.test_multivariate_input_exception
         test(self, estimator_instance)
 
     def test_classifier_output(self, estimator_instance, scenario):
