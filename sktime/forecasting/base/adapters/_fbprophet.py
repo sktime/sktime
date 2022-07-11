@@ -21,6 +21,7 @@ class _ProphetAdapter(BaseForecaster):
         "capability:pred_int": True,
         "requires-fh-in-fit": False,
         "handles-missing-data": False,
+        "python_dependencies": "prophet",
     }
 
     def _convert_int_to_date(self, y):
@@ -262,6 +263,10 @@ class _ProphetAdapter(BaseForecaster):
         https://facebook.github.io/prophet/docs/additional_topics.html
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:
             fitted_params[name] = self._forecaster.params[name][0][0]
