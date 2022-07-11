@@ -3,6 +3,9 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNNRegressor"]
+import os
+import random
+
 import numpy as np
 
 from sktime.networks.cnn import CNNNetwork
@@ -59,7 +62,7 @@ class CNNRegressor(BaseDeepRegressor):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
-        random_seed=21,
+        random_seed=0,
     ):
         _check_dl_dependencies("tensorflow", severity="error")
         super(CNNRegressor, self).__init__(
@@ -97,13 +100,25 @@ class CNNRegressor(BaseDeepRegressor):
         import tensorflow as tf
         from tensorflow import keras
 
+        # from keras import backend as K
+
         if self.metrics is None:
             metrics = ["accuracy"]
         else:
             metrics = self.metrics
 
-        tf.random.set_seed(self.random_seed)
+        os.environ["PYTHONHASHSEED"] = str(self.random_seed)
+        random.seed(self.random_seed)
         np.random.seed(self.random_seed)
+        tf.random.set_seed(self.random_seed)
+        session_conf = tf.compat.v1.ConfigProto(
+            intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
+        )
+        sess = tf.compat.v1.Session(
+            graph=tf.compat.v1.get_default_graph(), config=session_conf
+        )
+        tf.compat.v1.keras.backend.set_session(sess)
+
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(units=1, activation="sigmoid")(output_layer)
