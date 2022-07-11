@@ -225,10 +225,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
-
-        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
@@ -298,10 +297,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred = estimator_instance.predict(X=X_test)
             cutoff = get_cutoff(y_train, return_index=True)
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
-
-        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "index_fh_comb", VALID_INDEX_FH_COMBINATIONS, ids=index_fh_comb_names
