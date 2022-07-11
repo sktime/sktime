@@ -104,8 +104,8 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             X_train = scenario.args["fit"]["X"]
             train_proba = estimator_instance._get_train_probs(X_train, y_train)
 
-            assert isinstance(y_proba, np.ndarray)
-            assert y_proba.shape == (X_new_instances, n_classes)
+            assert isinstance(train_proba, np.ndarray)
+            assert train_proba.shape == (len(X_train), n_classes)
             np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
 
     def test_classifier_on_unit_test_data(self, estimator_class):

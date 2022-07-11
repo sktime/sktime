@@ -200,6 +200,7 @@ class RotationForest(BaseEstimator):
             self.estimators_ = []
             self._pcas = []
             self._groups = []
+            self.transformed_data_ = []
 
             while (
                 train_time < time_limit
