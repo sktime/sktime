@@ -80,7 +80,10 @@ EXCLUDED_TESTS = {
     "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
+    "ColumnTransformer": [
+        "test_methods_do_not_change_state",
+        "test_fit_transform_output",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of
