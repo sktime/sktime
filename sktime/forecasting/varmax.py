@@ -3,6 +3,8 @@
 __all__ = ["VARMAX"]
 __author__ = ["KatieBuc"]
 
+import warnings
+
 import pandas as pd
 from statsmodels.tsa.statespace.varmax import VARMAX as _VARMAX
 
@@ -164,6 +166,10 @@ class VARMAX(_StatsModelsAdapter):
         True, then predictions of the "signal" :math:`Z \alpha_t` will be
         returned. Otherwise, the default is for predictions of :math:`y_t`
         to be returned.
+    suppress_warnings : bool, optional
+        Many warnings might be thrown inside of statsmodels. If
+        ``suppress_warnings`` is True, all of these warnings will be squelched.
+        Default is False.
 
     Notes
     -----
@@ -192,14 +198,13 @@ class VARMAX(_StatsModelsAdapter):
     Examples
     --------
     >>> from sktime.forecasting.varmax import VARMAX
-    >>> from sktime.datasets import load_longley
-    >>> warnings.filterwarnings("ignore")
-    >>> _, y = load_longley()
-    >>> train, test = y.iloc[:-3,], y.iloc[-3:,]
-    >>> forecaster = VARMAX()
-    >>> forecaster.fit(train[['GNPDEFL', 'POP']], X=train[['ARMED']])
+    >>> from sktime.datasets import load_macroeconomic
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> y = load_macroeconomic()
+    >>> forecaster = VARMAX(suppress_warnings=True)
+    >>> forecaster.fit(y[['realgdp', 'unemp']])
     VARMAX(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3], X=test[['ARMED']])
+    >>> y_pred = forecaster.predict(fh=[1,4,12])
     """
 
     _tags = {
@@ -242,6 +247,7 @@ class VARMAX(_StatsModelsAdapter):
         dynamic=False,
         information_set="predicted",
         signal_only=False,
+        suppress_warnings=False,
     ):
         # Model parameters
         self.order = order
@@ -270,6 +276,7 @@ class VARMAX(_StatsModelsAdapter):
         self.dynamic = dynamic
         self.information_set = information_set
         self.signal_only = signal_only
+        self.suppress_warnings = suppress_warnings
 
         super(VARMAX, self).__init__()
 
@@ -290,6 +297,9 @@ class VARMAX(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        if self.suppress_warnings:
+            warnings.filterwarnings("ignore")
+
         self._forecaster = _VARMAX(
             endog=y,
             exog=X,
