@@ -243,15 +243,13 @@ def test_from_nested_to_long(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_instances", N_INSTANCES)
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
-def test_from_multiindex_to_listdataset(
-    number_of_instance, number_of_colum, number_of_time_point
-):
+def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
     """Test from multiindex DF to listdataset for gluonts."""
     import numpy as np
     import pandas as pd
 
     from sktime.datatypes import convert_to
-    from sktime.datatypes._adapters import load_from_multiindex_to_listdataset
+    from sktime.datatypes._adapters import convert_from_multiindex_to_listdataset
 
     def random_datetimes_or_dates(
         start, end, out_format="datetime", n=10, random_seed=42
@@ -280,38 +278,35 @@ def test_from_multiindex_to_listdataset(
         return pd.to_datetime(np.random.randint(start_u, end_u, n), unit=unit)
 
     def _make_example_multiindex(
-        number_of_instance, number_of_colum, number_of_time_point, random_seed=42
+        n_instances, n_columns, n_timepoints, random_seed=42
     ) -> pd.DataFrame:
 
         import numpy as np
 
         start = pd.to_datetime("1750-01-01")
         end = pd.to_datetime("2022-07-01")
-        inputDF = np.random.randint(
-            1, 99, size=(number_of_instance * number_of_time_point, number_of_colum)
-        )
-        number_of_instance = number_of_instance
+        inputDF = np.random.randint(1, 99, size=(n_instances * n_timepoints, n_columns))
+        n_instances = n_instances
         column_name = []
-        for i in range(number_of_colum):
+        for i in range(n_columns):
             column_name.append("dim_" + str(i))
 
         random_start_date = random_datetimes_or_dates(
-            start, end, out_format="out datetime", n=number_of_instance, random_seed=42
+            start, end, out_format="out datetime", n=n_instances, random_seed=42
         )
 
         level0_idx = [
-            list(np.full(number_of_time_point, instance))
-            for instance in range(number_of_instance)
+            list(np.full(n_timepoints, instance)) for instance in range(n_instances)
         ]
         level0_idx = np.ravel(level0_idx)
 
         level1_idx = [
             list(
                 pd.date_range(
-                    random_start_date[instance], periods=number_of_time_point, freq="H"
+                    random_start_date[instance], periods=n_timepoints, freq="H"
                 )
             )
-            for instance in range(number_of_instance)
+            for instance in range(n_instances)
         ]
         level1_idx = np.ravel(level1_idx)
 
@@ -323,11 +318,9 @@ def test_from_multiindex_to_listdataset(
 
         return inputDF_return
 
-    MULTIINDEX_DF = _make_example_multiindex(
-        number_of_instance, number_of_colum, number_of_time_point
-    )
+    MULTIINDEX_DF = _make_example_multiindex(n_instances, n_columns, n_timepoints)
     # Result from the converter
-    listdataset_result = load_from_multiindex_to_listdataset(MULTIINDEX_DF)
+    listdataset_result = convert_from_multiindex_to_listdataset(MULTIINDEX_DF)
     listdataset_result_list = list(listdataset_result)
     # Result from raw data
     dimension_name = MULTIINDEX_DF.columns
