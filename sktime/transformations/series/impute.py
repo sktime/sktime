@@ -178,7 +178,7 @@ class Imputer(BaseTransformer):
         if self.method == "random":
             for col in X.columns:
                 X[col] = X[col].apply(
-                    lambda i: self._get_random(col) if np.isnan(i) else i
+                    lambda i: self._get_random(col) if np.isnan(i) else i  # noqa: B023
                 )
         elif self.method == "constant":
             X = X.fillna(value=self.value)
