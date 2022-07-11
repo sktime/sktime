@@ -276,7 +276,9 @@ class VectorizedDF:
         col_multiindex : str, one of "none", "flat", "multiindex", default = "none"
             whether column multiindex is introduced, and if yes, what kind of,
             in case of column vectorization being applied
-            "none" - columns are concatenated, can cause non-unique column names
+            "none" - df_list are simply concatenated, unless:
+                If at least one var is transformed to two or more, "flat" is enforced.
+                If this would cause non-unique column names, "flat" is enforced.
             "multiindex" - additional level is introduced, by names of X passed to init,
                 if there would be more than one column underneath at least one level
                 this is added as an additional pandas MultiIndex level
@@ -302,15 +304,25 @@ class VectorizedDF:
 
         df_list = [coerce_to_df(x) for x in df_list]
 
+        # condition where "flat" behaviour is enforced if "none":
+        def _force_flat(df_list):
+            # transformer produces at least one multivariate output
+            # and there is more than one data frame to concatenate columns of
+            force_flat = len(df_list) > 1 and any(len(x.columns) > 1 for x in df_list)
+            # or, there would be duplicate columns, after the transformation
+            all_col_idx = [ix for df in df_list for ix in df.columns]
+            force_flat = force_flat or len(set(all_col_idx)) != len(all_col_idx)
+            return force_flat
+
         row_ix, col_ix = self.get_iter_indices()
-        multiout = False
+        force_flat = False
         if row_ix is None and col_ix is None:
             X_mi_reconstructed = self.X_multiindex
         elif col_ix is None:
             X_mi_reconstructed = pd.concat(df_list, keys=row_ix, axis=0)
         elif row_ix is None:
-            multiout = any(len(x.columns) > 1 for x in df_list)
-            if col_multiindex in ["flat", "multiindex"] or multiout:
+            force_flat = _force_flat(df_list)
+            if col_multiindex in ["flat", "multiindex"] or force_flat:
                 col_keys = self.X_multiindex.columns
             else:
                 col_keys = None
@@ -321,8 +333,8 @@ class VectorizedDF:
             col_n = len(col_ix)
             for i in range(row_n):
                 ith_col_block = df_list[i * col_n : (i + 1) * col_n]
-                multiout = any(len(x.columns) > 1 for x in ith_col_block)
-                if col_multiindex in ["flat", "multiindex"] or multiout:
+                force_flat = force_flat or _force_flat(ith_col_block)
+                if col_multiindex in ["flat", "multiindex"] or force_flat:
                     col_keys = self.X_multiindex.columns
                 else:
                     col_keys = None
@@ -333,7 +345,7 @@ class VectorizedDF:
         X_mi_index = X_mi_reconstructed.index
         X_orig_row_index = self.X_multiindex.index
 
-        flatten = col_multiindex in ["flat"] or (col_multiindex == "none" and multiout)
+        flatten = col_multiindex == "flat" or (col_multiindex == "none" and force_flat)
         if flatten and isinstance(X_mi_reconstructed.columns, pd.MultiIndex):
             X_mi_reconstructed.columns = flatten_multiindex(X_mi_reconstructed.columns)
 
