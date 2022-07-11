@@ -34,8 +34,6 @@ EXCLUDE_ESTIMATORS = [
     #  (see PR 1773, blocked through open discussion) escaping until then
     "ConditionalDeseasonalizer",
     "STLTransformer",
-    # SFA is non-compliant with any transformer interfaces, #2064
-    "SFA",
     # requires y in fit, this is incompatible with the old testing framework
     #    unless it inherits from the old mixins, which hard coded the y
     #    should be removed once test_all_transformers has been refactored to scenarios
@@ -52,11 +50,6 @@ EXCLUDED_TESTS = {
     "WindowSummarizer": ["test_methods_have_no_side_effects"],
     # test fails in the Panel case for Differencer, see #2522
     "Differencer": ["test_transform_inverse_transform_equivalent"],
-    # tagged in issue #2490
-    "SignatureClassifier": [
-        "test_classifier_on_unit_test_data",
-        "test_classifier_on_basic_motions",
-    ],
     # test fail with deep problem with pickling inside tensorflow.
     "CNNClassifier": [
         "test_fit_idempotent",

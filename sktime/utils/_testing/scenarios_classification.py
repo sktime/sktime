@@ -6,7 +6,11 @@ Contains TestScenario concrete children to run in tests for classifiers/regressi
 
 __author__ = ["fkiraly"]
 
-__all__ = ["scenarios_classification", "scenarios_regression"]
+__all__ = [
+    "scenarios_classification",
+    "scenarios_early_classification",
+    "scenarios_regression",
+]
 
 from copy import deepcopy
 from inspect import isclass
@@ -168,6 +172,13 @@ class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
 
 
 scenarios_classification = [
+    ClassifierFitPredict,
+    ClassifierFitPredictMultivariate,
+    ClassifierFitPredictUnequalLength,
+]
+
+# same scenarios used for early classification
+scenarios_early_classification = [
     ClassifierFitPredict,
     ClassifierFitPredictMultivariate,
     ClassifierFitPredictUnequalLength,
