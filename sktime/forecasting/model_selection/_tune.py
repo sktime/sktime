@@ -299,7 +299,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     """Perform grid-search cross-validation to find optimal model parameters.
 
     The forecaster is fit on the initial window and then temporal
-    cross-validation is used to find the optimal parameter
+    cross-validation is used to find the optimal parameter.
 
     Grid-search cross-validation is performed based on a cross-validation
     iterator encoding the cross-validation scheme, the parameter grid to
@@ -350,7 +350,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     cv_results_ : dict
         Results from grid search cross validation
     n_splits_: int
-        Number of splits in the data for cross validation}
+        Number of splits in the data for cross validation
     refit_time_ : float
         Time (seconds) to refit the best forecaster
     scorer_ : function
@@ -455,6 +455,21 @@ class ForecastingGridSearchCV(BaseGridSearch):
             backend=backend,
         )
         self.param_grid = param_grid
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+            A dict containing both the best hyper parameters and the best estimator.
+        """
+        if not self.is_fitted:
+            raise NotFittedError
+        return {
+            "best_hyper_parameters": self.best_params_,
+            "best_estimator": self.best_forecaster_,
+        }
 
     def _check_param_grid(self, param_grid):
         """_check_param_grid from sklearn 1.0.2, before it was removed."""
@@ -617,6 +632,21 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
+
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+            A dict containing both the best hyper parameters and the best estimator.
+        """
+        if not self.is_fitted:
+            raise NotFittedError
+        return {
+            "best_hyper_parameters": self.best_params_,
+            "best_estimator": self.best_forecaster_,
+        }
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions."""

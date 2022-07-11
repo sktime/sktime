@@ -11,6 +11,7 @@ import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_longley
+from sktime.exceptions import NotFittedError
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -37,6 +38,12 @@ from sktime.transformations.series.detrend import Detrender
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
 
 
+def _check_no_fitted_params_before_fitting(tuner):
+    assert not tuner.is_fitted
+    with pytest.raises(NotFittedError):
+        tuner.get_fitted_params()
+
+
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
     scores = np.zeros(len(param_grid))
     for i, params in enumerate(param_grid):
@@ -47,22 +54,23 @@ def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
     return scores
 
 
-def _check_cv(forecaster, gscv, cv, param_grid, y, X, scoring):
-    actual = gscv.cv_results_[f"mean_test_{scoring.name}"]
+def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
+    actual = tuner.cv_results_[f"mean_test_{scoring.name}"]
 
     expected = _get_expected_scores(forecaster, cv, param_grid, y, X, scoring)
     np.testing.assert_array_equal(actual, expected)
 
     # Check if best parameters are selected.
-    best_idx = gscv.best_index_
+    best_idx = tuner.best_index_
     assert best_idx == actual.argmin()
 
-    best_params = gscv.best_params_
+    fitted_params = tuner.get_fitted_params()
+
+    best_params = fitted_params["best_hyper_parameters"]
     assert best_params == param_grid[best_idx]
 
     # Check if best parameters are contained in best forecaster.
-    best_forecaster_params = gscv.best_forecaster_.get_params()
-    best_params = gscv.best_params_
+    best_forecaster_params = fitted_params["best_estimator"].get_params()
     assert best_params.items() <= best_forecaster_params.items()
 
 
@@ -95,6 +103,8 @@ def test_gscv(forecaster, param_grid, cv, scoring):
     gscv = ForecastingGridSearchCV(
         forecaster, param_grid=param_grid, cv=cv, scoring=scoring
     )
+    _check_no_fitted_params_before_fitting(gscv)
+
     gscv.fit(y, X)
 
     param_grid = ParameterGrid(param_grid)
@@ -123,6 +133,8 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         n_iter=n_iter,
         random_state=random_state,
     )
+    _check_no_fitted_params_before_fitting(rscv)
+
     rscv.fit(y, X)
 
     param_distributions = list(
