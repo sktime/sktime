@@ -17,6 +17,7 @@ from inspect import isclass
 
 from sktime.base import BaseObject
 from sktime.classification.base import BaseClassifier
+from sktime.classification.early_classification import BaseEarlyClassifier
 from sktime.regression.base import BaseRegressor
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
@@ -77,10 +78,11 @@ class ClassifierTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        regr_or_classf = (BaseClassifier, BaseRegressor)
+        regr_or_classf = (BaseClassifier, BaseEarlyClassifier, BaseRegressor)
 
-        # applicable only if obj inherits from BaseClassifier or BaseRegressor
-        #   currently we test both classifiers and regressors using these scenarios
+        # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
+        #   BaseRegressor. currently we test both classifiers and regressors using these
+        #   scenarios
         if not isinstance(obj, regr_or_classf) and not issubclass(obj, regr_or_classf):
             return False
 
