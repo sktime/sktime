@@ -191,7 +191,6 @@ class VARMAX(_StatsModelsAdapter):
 
     Examples
     --------
-    >>> import warnings
     >>> from sktime.forecasting.varmax import VARMAX
     >>> from sktime.datasets import load_longley
     >>> warnings.filterwarnings("ignore")
