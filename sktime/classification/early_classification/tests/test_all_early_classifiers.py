@@ -6,7 +6,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly", "MatthewMiddlehurst"]
 import numpy as np
 
 from sktime.classification.tests.test_all_classifiers import (
-    TestAllClassifiers as _TestAllClassifiers
+    TestAllClassifiers as _TestAllClassifiers,
 )
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
