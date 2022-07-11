@@ -117,7 +117,7 @@ class _MsmDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float, np.ndarray]:
-                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1], cost_matrix
 
@@ -128,7 +128,7 @@ class _MsmDistance(NumbaDistance):
                 _x: np.ndarray,
                 _y: np.ndarray,
             ) -> Tuple[List, float]:
-                cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+                cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
                 path = compute_min_return_path(cost_matrix, _bounding_matrix)
                 return path, cost_matrix[-1, -1]
 
@@ -201,7 +201,7 @@ class _MsmDistance(NumbaDistance):
             _x: np.ndarray,
             _y: np.ndarray,
         ) -> float:
-            cost_matrix = _cost_matrix(_x, _y, c, _bounding_matrix)
+            cost_matrix = _cost_matrix(_x, _y, _bounding_matrix, c)
             return cost_matrix[-1, -1]
 
         return numba_msm_distance
@@ -237,8 +237,8 @@ def _cost_function(x: float, y: float, z: float, c: float) -> float:
 def _cost_matrix(
     x: np.ndarray,
     y: np.ndarray,
-    c: float,
     bounding_matrix: np.ndarray,
+    c: float,
 ) -> float:
     """MSM distance compiled to no_python.
 

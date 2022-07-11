@@ -26,6 +26,17 @@ expected_correct = {
     "lcss": 12,
 }
 
+# expected correct on test set using window params.
+expected_correct_window = {
+    "euclidean": 19,
+    "dtw": 21,
+    "wdtw": 21,
+    "msm": 10,
+    "erp": 19,
+    "edr": 20,
+    "lcss": 12,
+}
+
 
 def test_knn_on_unit_test():
     """Test function for elastic knn, to be reinstated soon."""
@@ -59,4 +70,4 @@ def test_knn_bounding_matrix():
         for j in range(0, len(pred)):
             if pred[j] == y_test[j]:
                 correct = correct + 1
-        assert correct == expected_correct[distance_functions[i]]
+        assert correct == expected_correct_window[distance_functions[i]]
