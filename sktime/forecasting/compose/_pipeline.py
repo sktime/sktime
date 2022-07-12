@@ -224,7 +224,7 @@ class _Pipeline(
         ]
         params1 = {"steps": STEPS1}
 
-        if _check_estimator_deps(ARIMA):
+        if _check_estimator_deps(ARIMA, severity="none"):
             # ARIMA has probabilistic methods, ExponentTransformer skips fit
             STEPS2 = [
                 ("transformer", ExponentTransformer()),
