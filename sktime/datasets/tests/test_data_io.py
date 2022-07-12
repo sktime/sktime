@@ -25,6 +25,7 @@ from sktime.datasets import (
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_tsf_to_dataframe,
+    load_UCR_UEA_dataset,
     load_uschange,
     write_dataframe_to_tsfile,
 )
@@ -81,6 +82,17 @@ def test_load_from_tsfile():
     X, y = load_from_tsfile(full_file_path_and_name=data_path)
     assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
     assert X.shape == (270, 12) and y.shape == (270,)
+
+
+def test_load_UCR_UEA_dataset():
+    """Tests load_UCR_UEA_dataset correctly loads a baked in data set.
+
+    Note this does not test whether download from timeseriesclassification.com works
+    correctly, since this would make testing dependent on an external website.
+    """
+    X, y = load_UCR_UEA_dataset(name="UnitTest")
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (42, 1) and y.shape == (42,)
 
 
 _CHECKS = {

@@ -62,17 +62,39 @@ def evaluate(
 
     Examples
     --------
+        The type of evaluation that is done by `evaluate` depends on metrics in
+        param `scoring`
+        When evaluating model/estimators on point forecast, users can let
+        scoring=None, which defaults to MeanAbsolutePercentageError
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_evaluation import evaluate
     >>> from sktime.forecasting.model_selection import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster(strategy="mean", sp=12)
-    >>> cv = ExpandingWindowSplitter(
-    ...     initial_window=24,
-    ...     step_length=12,
-    ...     fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=3,
+    ... fh=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
+
+        Optionally, users may select other metrics that can be supplied
+        by `scoring` argument. These can be forecast metrics of any kind,
+        i.e., point forecast metrics, interval metrics, quantile foreast metrics.
+        https://www.sktime.org/en/stable/api_reference/performance_metrics.html?highlight=metrics
+
+        To evaluate models/estimators using a specific metric, provide them to the
+        scoring arg.
+    >>> from sktime.performance_metrics.forecasting import MeanAbsoluteError
+    >>> loss = MeanAbsoluteError()
+    >>> results = evaluate(forecaster=forecaster, y=y, cv=cv, scoring=loss)
+
+        An example of an interval metric is the PinballLoss. It can be used with
+        all probabilistic forecasters.
+    >>> from sktime.forecasting.naive import NaiveVariance
+    >>> from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
+    >>> loss = PinballLoss()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> results = evaluate(forecaster=NaiveVariance(forecaster),
+    ... y=y, cv=cv, scoring=loss)
     """
     _check_strategy(strategy)
     cv = check_cv(cv, enforce_start_with_window=True)
