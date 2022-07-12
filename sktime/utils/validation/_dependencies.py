@@ -251,7 +251,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     """Check all dependencies of estimator, packages and python.
 
     Convenience wrapper around _check_python_version and _check_soft_dependencies,
-    checking against estimator tags "python_version_upper_bound", "python_dependencies".
+    checking against estimator tags "python_version", "python_dependencies".
 
     Parameters
     ----------
