@@ -259,12 +259,17 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         used to check python version
     msg : str, optional, default = default message (msg below)
         error message to be returned in the `ModuleNotFoundError`, overrides default
-    severity : str, "error" (default) or "warning"
-        whether the check should raise an error, or only a warning
-
+    severity : str, "error" (default), "warning", or "none"
+        behaviour for raising errors or warnings
+        "error" - raises a ModuleNotFoundException if environment is incompatible
+        "warning" - raises a warning if environment is incompatible
+            function returns False if environment is incompatible, otherwise True
+        "none" - does not raise exception or warning
+            function returns False if environment is incompatible, otherwise True
     Returns
     -------
     compatible : bool, whether obj is compatible with python environment
+        False is returned only if no exception is raised by the function
         checks for python version using the python_version tag of obj
         checks for soft dependencies present using the python_dependencies tag of obj
 
