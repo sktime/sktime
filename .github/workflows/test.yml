@@ -70,7 +70,7 @@ jobs:
         run: conda install -c anaconda libpython
 
       - name: Install sktime and dependencies
-        run: python -m pip install .[all_extras,dev]
+        run: python -m pip install .[dev]
 
       - name: Show dependencies
         run: python -m pip list
@@ -103,7 +103,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev]
+          python -m pip install .[dev]
 
       - name: Show dependecies
         run: python -m pip list
@@ -131,7 +131,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          python -m pip install .[all_extras,dev]
+          python -m pip install .[dev]
 
       - name: Show dependencies
         run: python -m pip list
