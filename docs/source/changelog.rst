@@ -105,17 +105,18 @@ Enhancements
 * [ENH] `VectorizedDF` to support vectorization across columns/variables (:pr:`2864`) :user:`fkiraly`
 * [ENH] preserve `index.freq` in `get_cutoff` (:pr:`2908`) :user:`fkiraly`
 * [ENH] turn private cutoff of forecasters into an index that carries `freq` (:pr:`2909`) :user:`fkiraly
-* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`) :user:`fkiraly`
-* [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2867`) :user:`fkiraly`
+* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`, :pr:`2867`) :user:`fkiraly`
 * [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2937`) :user:`fkiraly`
 * [ENH] extend `get_cutoff` to pd.Index input (:pr:`2939`) :user:`fkiraly`
 * [ENH] extend `ColumnSubset` to work for scalar `columns` parameter (:pr:`2906`) :user:`fkiraly`
 * [ENH] remove old `multiindex-df` index convention hack from `VectorizedDF` (:pr:`2863`) :user:`fkiraly`
-* [ENH]  Elbow class selection/pairwise dimension selection for multivariate time series classification
-(:pr:`2941`) :user:`haskarb`
-* [ENH] Elbow class selection/pairwise dimension selection for multivariate time series classification (:pr:`2952`) :user:`haskarb`
 * [ENH] addressing `freq` deprecation in `ForecastingHorizon` (:pr:`2932`) :user:`fkiraly` :user:`khrapovs`
 * [ENH] Avoid accessing `.freq` from `pd.Timestamp` by converting `cutoff` to `pd.Index` (:pr:`2965`) :user:`khrapovs`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] statsmodels VARMAX adapter (:pr:`2763`) :user:`katiebuc`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -135,8 +136,8 @@ Contributors
 :user:`aiwalter`,
 :user:`ciaran-g`,
 :user:`fkiraly`,
-:user:`haskarb`,
 :user:`jlopezpena`,
+:user:`katiebuc`,
 :user:`khrapovs`,
 :user:`lmmentel`,
 :user:`TNTran92`,
