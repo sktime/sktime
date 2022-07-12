@@ -14,16 +14,20 @@ from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib", "scikit_posthocs")
-import matplotlib.pyplot as plt  # noqa: E402
-
-plt.style.use("seaborn-ticks")
+_check_soft_dependencies("matplotlib", "scikit_posthocs", severity="warning")
 
 
 class Evaluator:
     """Analyze results of machine learning experiments."""
 
     def __init__(self, results):
+
+        _check_soft_dependencies("matplotlib", "scikit_posthocs")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
+        plt.style.use("seaborn-ticks")
+
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results
@@ -138,6 +142,8 @@ class Evaluator:
 
     def plot_boxplots(self, metric_name=None, **kwargs):
         """Box plot of metric."""
+        import matplotlib.pyplot as plt  # noqa: E402
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
@@ -536,6 +542,8 @@ class Evaluator:
         ----------
         original implementation by Aaron Bostrom, modified by Markus Löning.
         """
+        import matplotlib.pyplot as plt  # noqa: E402
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
