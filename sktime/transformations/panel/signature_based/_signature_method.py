@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Signature transformer."""
 
-import numpy as np
 from sklearn.pipeline import Pipeline
 
 from sktime.transformations.base import BaseTransformer
@@ -49,6 +49,8 @@ class SignatureTransformer(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?#
         "fit_is_empty": False,
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -62,7 +64,6 @@ class SignatureTransformer(BaseTransformer):
         sig_tfm="signature",
         depth=4,
     ):
-        super(SignatureTransformer, self).__init__()
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -72,6 +73,7 @@ class SignatureTransformer(BaseTransformer):
         self.sig_tfm = sig_tfm
         self.depth = depth
 
+        super(SignatureTransformer, self).__init__()
         self.setup_feature_pipeline()
 
     def setup_feature_pipeline(self):
@@ -96,17 +98,22 @@ class SignatureTransformer(BaseTransformer):
         )
 
     def _fit(self, X, y=None):
-        X = np.transpose(X, [0, 2, 1])
         self.signature_method.fit(X)
         return self
 
     def _transform(self, X, y=None):
-        X = np.transpose(X, [0, 2, 1])
         return self.signature_method.transform(X)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

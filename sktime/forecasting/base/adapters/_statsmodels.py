@@ -24,8 +24,9 @@ class _StatsModelsAdapter(BaseForecaster):
         "handles-missing-data": False,
     }
 
-    def __init__(self):
+    def __init__(self, random_state=None):
         self._forecaster = None
+        self.random_state = random_state
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
@@ -47,7 +48,7 @@ class _StatsModelsAdapter(BaseForecaster):
         """
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
+        if isinstance(y, pd.Series) and y.index.is_integer():
             y, X = _coerce_int_to_range_index(y, X)
         self._fit_forecaster(y, X)
         return self
@@ -94,6 +95,10 @@ class _StatsModelsAdapter(BaseForecaster):
         fitted_params : dict
         """
         self.check_is_fitted()
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return {"forecasters": self.forecasters_}
+
         fitted_params = {}
         for name in self._get_fitted_param_names():
             if name in ["aic", "aicc", "bic", "hqic"]:
@@ -113,7 +118,7 @@ def _coerce_int_to_range_index(y, X=None):
         np.testing.assert_array_equal(y.index, new_index)
     except AssertionError:
         raise ValueError(
-            "Coercion of pd.Int64Index to pd.RangeIndex "
+            "Coercion of integer pd.Index to pd.RangeIndex "
             "failed. Please provide `y_train` with a "
             "pd.RangeIndex."
         )

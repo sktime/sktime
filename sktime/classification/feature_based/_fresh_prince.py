@@ -10,8 +10,8 @@ __all__ = ["FreshPRINCE"]
 
 import numpy as np
 
+from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
-from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.validation.panel import check_X_y
 
@@ -58,21 +58,6 @@ class FreshPRINCE(BaseClassifier):
         scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import FreshPRINCE
-    >>> from sktime.contrib.vector_classifiers._rotation_forest import RotationForest
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = FreshPRINCE(
-    ...     default_fc_parameters="minimal",
-    ...     n_estimators=10,
-    ... )
-    >>> clf.fit(X_train, y_train)
-    FreshPRINCE(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
@@ -80,6 +65,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:multithreading": True,
         "capability:train_estimate": True,
         "classifier_type": "feature",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -208,19 +194,35 @@ class FreshPRINCE(BaseClassifier):
         return self._rotf._get_train_probs(self.transformed_data_, y)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {
-            "n_estimators": 2,
-            "default_fc_parameters": "minimal",
-        }
-        return params
+        if parameter_set == "results_comparison":
+            return {
+                "n_estimators": 10,
+                "default_fc_parameters": "minimal",
+            }
+        else:
+            return {
+                "n_estimators": 2,
+                "default_fc_parameters": "minimal",
+                "save_transformed_data": True,
+            }

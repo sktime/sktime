@@ -4,15 +4,25 @@
 """Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster", "NaiveVariance"]
-__author__ = ["mloning", "Piyush Gade", "Flix6x", "aiwalter", "IlyasMoutawwakil"]
+__author__ = [
+    "mloning",
+    "piyush1729",
+    "sri1419",
+    "Flix6x",
+    "aiwalter",
+    "IlyasMoutawwakil",
+    "fkiraly",
+    "bethrice44",
+]
 
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from sklearn.base import clone
 
+from sktime.datatypes._convert import convert, convert_to
+from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -332,6 +342,14 @@ class NaiveForecaster(BaseForecaster):
                 strategy=self.strategy, sp=self.sp, window_length=self.window_length
             )
         )
+
+        # 1st part of preserving name/columns, otherwise they get lost on occasion
+        # provisionally hard-fixing the mess of 100 nested function calls
+        # until someone finds it in their heart to simplify the NaiveForecaster
+        if isinstance(y, pd.Series):
+            self.cols_ = y.name
+        else:
+            self.cols_ = y.columns
         self._forecaster.fit(y=y, X=X, fh=fh)
 
     def _predict(self, fh=None, X=None):
@@ -350,6 +368,14 @@ class NaiveForecaster(BaseForecaster):
         if self._y.index[0] in y_pred.index:
             # fill NaN with next row values
             y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+
+        # 2nd part of preserving name/columns, otherwise they get lost on occasion
+        # provisionally hard-fixing the mess of 100 nested function calls
+        # until someone finds it in their heart to simplify the NaiveForecaster
+        if isinstance(y_pred, pd.Series):
+            y_pred.name = self.cols_
+        else:  # is pd.DataFrame
+            y_pred.columns = self.cols_
 
         return y_pred
 
@@ -372,8 +398,14 @@ class NaiveForecaster(BaseForecaster):
         return self._forecaster.update(y=y, X=X, update_params=update_params)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------
@@ -411,10 +443,19 @@ class NaiveVariance(BaseForecaster):
     - And for the covariance matrix prediction, the formula becomes
     :math:`Cov(y_k, y_l)=\frac{\sum_{i=1}^N \hat{r}_{k,k+i}*\hat{r}_{l,l+i}}{N}`.
 
+    The resulting forecaster will implement
+        `predict_interval`, `predict_quantiles`, `predict_var`, and `predict_proba`,
+        even if the wrapped forecaster `forecaster` did not have this capability;
+        for point forecasts (`predict`), behaves like the wrapped forecaster.
+
     Parameters
     ----------
     forecaster : estimator
-        Estimators to apply to the input series.
+        Estimator to which probabilistic forecasts are being added
+    initial_window : int, optional, default=1
+        number of minimum initial indices to use for fitting when computing residuals
+    verbose : bool, optional, default=False
+        whether to print warnings if windows with too few data points occur
 
     Examples
     --------
@@ -435,14 +476,14 @@ class NaiveVariance(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        # deprecated and likely to be removed in 0.12.0
         "capability:pred_var": True,
-        # deprecated and likely to be removed in 0.12.0
     }
 
-    def __init__(self, forecaster):
+    def __init__(self, forecaster, initial_window=1, verbose=False):
 
         self.forecaster = forecaster
+        self.initial_window = initial_window
+        self.verbose = verbose
         super(NaiveVariance, self).__init__()
 
         tags_to_clone = [
@@ -457,8 +498,16 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-        self.forecaster_ = clone(self.forecaster)
+
+        self.fh_early_ = fh is not None
+        self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
+
+        if self.fh_early_:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=y, X=X, forecaster=self.forecaster, initial_window=self.initial_window
+            )
+
         return self
 
     def _predict(self, fh, X=None):
@@ -466,6 +515,13 @@ class NaiveVariance(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
+        if update_params and self._fh is not None:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+            )
         return self
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
@@ -493,15 +549,21 @@ class NaiveVariance(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         y_pred = self.predict(fh, X)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         pred_var = self.predict_var(fh, X)
+        pred_var = pred_var[pred_var.columns[0]]
+        pred_var.index = y_pred.index
 
         z_scores = norm.ppf(alpha)
-        errors = [pred_var ** 0.5 * z for z in z_scores]
+        errors = [pred_var**0.5 * z for z in z_scores]
 
         index = pd.MultiIndex.from_product([["Quantiles"], alpha])
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
+
+        fh_absolute = fh.to_absolute(self.cutoff)
+        pred_quantiles.index = fh_absolute
 
         return pred_quantiles
 
@@ -523,35 +585,23 @@ class NaiveVariance(BaseForecaster):
         Returns
         -------
         pred_var :
-            if cov=False, pd.Series with index fh.
+            if cov=False, pd.DataFrame with index fh.
                 a vector of same length as fh with predictive marginal variances;
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-        y_index = self._y.index
+        if self.fh_early_:
+            residuals_matrix = self.residuals_matrix_
+        else:
+            residuals_matrix = self._compute_sliding_residuals(
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+            )
+
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
-
-        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
-        for id in y_index:
-            forecaster = clone(self.forecaster)
-            subset = self._y[:id]  # subset on which we fit
-            try:
-                forecaster.fit(subset)
-            except ValueError:
-                warn(
-                    f"Couldn't fit the model on time series of length {len(subset)}.\n"
-                )
-                continue
-
-            y_true = self._y[id:]  # subset on which we predict
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
-            except IndexError:
-                warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(subset)}.\n"
-                )
 
         if cov:
             fh_size = len(fh)
@@ -574,16 +624,71 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            pred_var = pd.Series(
-                variance,
-                index=fh_absolute,
-            )
+            if hasattr(self._y, "columns"):
+                columns = self._y.columns
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+            else:
+                pred_var = pd.DataFrame(variance, index=fh_absolute)
 
         return pred_var
 
+    def _compute_sliding_residuals(self, y, X, forecaster, initial_window):
+        """Compute sliding residuals used in uncertainty estimates.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            sktime compatible time series to use in computing residuals matrix
+        X : pd.DataFrame
+            sktime compatible exogeneous time series to use in forecasts
+        forecaster : sktime compatible forecaster
+            forecaster to use in computing the sliding residuals
+        initial_window : int
+            minimum length of initial window to use in fitting
+
+        Returns
+        -------
+        residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
+            [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
+            using a clone of the forecaster passed through the forecaster arg
+        """
+        y = convert_to(y, "pd.Series")
+
+        y_index = y.index[initial_window:]
+        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+
+        for id in y_index:
+            forecaster = forecaster.clone()
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
+            try:
+                forecaster.fit(y_train, fh=y_test.index)
+            except ValueError:
+                if self.verbose:
+                    warn(
+                        f"Couldn't fit the model on "
+                        f"time series window length {len(y_train)}.\n"
+                    )
+                continue
+            try:
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
+            except IndexError:
+                warn(
+                    f"Couldn't predict after fitting on time series of length \
+                     {len(y_train)}.\n"
+                )
+
+        return residuals_matrix
+
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
 
         Returns
         -------

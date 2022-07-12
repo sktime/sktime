@@ -5,7 +5,7 @@ Interval based STSF classifier extracting summary features from intervals select
 through a supervised process.
 """
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["matthewmiddlehurst"]
 __all__ = ["SupervisedTimeSeriesForest"]
 
 import math
@@ -80,7 +80,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
     >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = SupervisedTimeSeriesForest(n_estimators=10)
+    >>> clf = SupervisedTimeSeriesForest(n_estimators=5)
     >>> clf.fit(X_train, y_train)
     SupervisedTimeSeriesForest(...)
     >>> y_pred = clf.predict(X_test)
@@ -412,8 +412,18 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         return estimator.predict_proba(transformed_x)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -423,8 +433,10 @@ class SupervisedTimeSeriesForest(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {"n_estimators": 2}
-        return params
+        if parameter_set == "results_comparison":
+            return {"n_estimators": 10}
+        else:
+            return {"n_estimators": 2}
 
 
 def _fisher_score(X, y, classes, class_counts):
@@ -440,6 +452,6 @@ def _fisher_score(X, y, classes, class_counts):
         xy_std = np.std(X_cls)
 
         a += class_counts[i] * (xy_mean - x_mean) ** 2
-        b += class_counts[i] * xy_std ** 2
+        b += class_counts[i] * xy_std**2
 
     return 0 if b == 0 else a / b

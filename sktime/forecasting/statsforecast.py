@@ -197,8 +197,6 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         biasadj: bool = False,
         parallel: bool = False,
     ):
-        _check_soft_dependencies("statsforecast", severity="error", object=self)
-
         self.start_p = start_p
         self.d = d
         self.start_q = start_q
@@ -276,8 +274,15 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
         )
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

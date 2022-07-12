@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Configurable time series ensembles."""
-__author__ = ["mloning", "Ayushmaan Seth"]
+__author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestClassifier"]
 
 import numbers
@@ -534,8 +534,18 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
         return y, expanded_class_weight
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -545,5 +555,4 @@ class ComposableTimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier)
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {"n_estimators": 2}
-        return params
+        return {"n_estimators": 2}

@@ -88,23 +88,13 @@ class SignatureClassifier(BaseClassifier):
     See Also
     --------
     SignatureTransformer
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import SignatureClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = SignatureClassifier(estimator=RandomForestClassifier(n_estimators=10))
-    >>> clf.fit(X_train, y_train)
-    SignatureClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "classifier_type": "feature",
+        "python_dependencies": "esig",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -120,7 +110,6 @@ class SignatureClassifier(BaseClassifier):
         depth=4,
         random_state=None,
     ):
-        super(SignatureClassifier, self).__init__()
         self.estimator = estimator
         self.augmentation_list = augmentation_list
         self.window_name = window_name
@@ -131,6 +120,8 @@ class SignatureClassifier(BaseClassifier):
         self.sig_tfm = sig_tfm
         self.depth = depth
         self.random_state = random_state
+
+        super(SignatureClassifier, self).__init__()
 
         self.signature_method = SignatureTransformer(
             augmentation_list,
@@ -213,8 +204,18 @@ class SignatureClassifier(BaseClassifier):
         return self.pipeline.predict_proba(X)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
 
         Returns
         -------
@@ -224,10 +225,12 @@ class SignatureClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        params = {
-            "estimator": RandomForestClassifier(n_estimators=2),
-            "augmentation_list": ("basepoint", "addtime"),
-            "depth": 3,
-            "window_name": "global",
-        }
-        return params
+        if parameter_set == "results_comparison":
+            return {"estimator": RandomForestClassifier(n_estimators=10)}
+        else:
+            return {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "augmentation_list": ("basepoint", "addtime"),
+                "depth": 1,
+                "window_name": "global",
+            }

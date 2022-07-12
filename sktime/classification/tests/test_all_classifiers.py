@@ -6,13 +6,13 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 import numpy as np
 import pytest
-from sklearn import clone
 
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
     unit_test_proba,
 )
 from sktime.datasets import load_basic_motions, load_unit_test
+from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.scenarios_classification import (
@@ -53,13 +53,18 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:multivariate"):
             return None
 
-        error_msg = "X must be univariate"
+        error_msg = "multivariate series"
 
         scenario = ClassifierFitPredictMultivariate()
 
         # check if estimator raises appropriate error message
-        with pytest.raises(ValueError, match=error_msg):
-            scenario.run(estimator_instance, method_sequence=["fit"])
+        #   composites will raise a warning, non-composites an exception
+        if estimator_instance.is_composite():
+            with pytest.warns(UserWarning, match=error_msg):
+                scenario.run(estimator_instance, method_sequence=["fit"])
+        else:
+            with pytest.raises(ValueError, match=error_msg):
+                scenario.run(estimator_instance, method_sequence=["fit"])
 
     def test_classifier_output(self, estimator_instance, scenario):
         """Test classifier outputs the correct data types and values.
@@ -70,20 +75,39 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         n_classes = scenario.get_tag("n_classes")
         X_new = scenario.args["predict"]["X"]
         y_train = scenario.args["fit"]["y"]
+        # we use check_is_scitype to get the number instances in X_new
+        #   this is more robust against different scitypes in X_new
+        _, _, X_new_metadata = check_is_scitype(X_new, "Panel", return_metadata=True)
+        X_new_instances = X_new_metadata["n_instances"]
+
+        # run fit and predict
         y_pred = scenario.run(estimator_instance, method_sequence=["fit", "predict"])
 
         # check predict
         assert isinstance(y_pred, np.ndarray)
-        assert y_pred.shape == (X_new.shape[0],)
+        assert y_pred.shape == (X_new_instances,)
         assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
         # check predict proba (all classifiers have predict_proba by default)
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
-        assert y_proba.shape == (X_new.shape[0], n_classes)
-        np.testing.assert_allclose(y_proba.sum(axis=1), 1)
+        assert y_proba.shape == (X_new_instances, n_classes)
+        np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
 
-    @pytest.mark.skip(reason="these tests have not been fully migrated, see #2257")
+        if estimator_instance.get_tag("capability:train_estimate"):
+            if not hasattr(estimator_instance, "_get_train_probs"):
+                raise ValueError(
+                    "Classifier capability:train_estimate tag is set to "
+                    "true, but no _get_train_probs method is present."
+                )
+
+            X_train = scenario.args["fit"]["X"]
+            train_proba = estimator_instance._get_train_probs(X_train, y_train)
+
+            assert isinstance(y_proba, np.ndarray)
+            assert y_proba.shape == (X_new_instances, n_classes)
+            np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
+
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
         # we only use the first estimator instance for testing
@@ -97,9 +121,11 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(estimator_class.create_test_instance())
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
         # set random seed if possible
-        if "random_seed" in estimator_instance.get_params().keys():
+        if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
@@ -114,7 +140,6 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # assert probabilities are the same
         _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
-    @pytest.mark.skip(reason="these tests have not been fully migrated, see #2257")
     def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
         # we only use the first estimator instance for testing
@@ -128,9 +153,11 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(estimator_class.create_test_instance())
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
+        )
         # set random seed if possible
-        if "random_seed" in estimator_instance.get_params().keys():
+        if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
 
         # load unit test data
@@ -139,7 +166,7 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         indices = np.random.RandomState(4).choice(len(y_train), 10, replace=False)
 
         # train classifier and predict probas
-        estimator_instance.fit(X_train, y_train)
+        estimator_instance.fit(X_train.iloc[indices], y_train[indices])
         y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
 
         # assert probabilities are the same

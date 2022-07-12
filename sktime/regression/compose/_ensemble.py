@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements a composite Time series Forest Regressor that accepts a pipeline."""
 
-__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__author__ = ["Markus Löning", "AyushmaanSeth"]
 __all__ = ["ComposableTimeSeriesForestRegressor"]
 
 import numbers
@@ -377,3 +377,9 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # in regression, we don't validate class weights
         # TODO remove from regression
         return y, None
+
+    def _fit(self, X, y):
+        """Empty method to satisfy abstract parent. Needs refactoring."""
+
+    def _predict(self, X):
+        """Empty method to satisfy abstract parent. Needs refactoring."""

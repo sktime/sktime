@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Lower bounding enum."""
-
-__author__ = ["chrisholder"]
+__author__ = ["chrisholder", "TonyBagnall"]
 __all__ = ["LowerBounding", "resolve_bounding_matrix"]
 
 import math
@@ -64,9 +63,9 @@ def create_shape_on_matrix(
 
         if i > half_way:
             upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
-            lower_y = max(0, min(y_size - 1, math.ceil(y_lower_line[i])))
+            lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
         else:
-            upper_y = max(0, min(y_size - 1, math.floor(y_upper_line[i])))
+            upper_y = max(0, min(y_size - 1, math.ceil(y_upper_line[i])))
             lower_y = max(0, min(y_size - 1, math.floor(y_lower_line[i])))
 
         if upper_line_y_values == lower_line_y_values:
@@ -113,9 +112,9 @@ def no_bounding(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
 
     Returns
     -------
@@ -123,7 +122,7 @@ def no_bounding(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         Bounding matrix where the values inside the bound are finite values (0s) and
         outside the bounds are infinity (non finite).
     """
-    return np.zeros((x.shape[0], y.shape[0]))
+    return np.zeros((x.shape[1], y.shape[1]))
 
 
 @njit(cache=True)
@@ -133,9 +132,9 @@ def sakoe_chiba(x: np.ndarray, y: np.ndarray, window: float) -> np.ndarray:
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     window: float
         Float that is the size of the window. Must be between 0 and 1.
 
@@ -152,11 +151,11 @@ def sakoe_chiba(x: np.ndarray, y: np.ndarray, window: float) -> np.ndarray:
     """
     if window < 0 or window > 1:
         raise ValueError("Window must between 0 and 1")
-    bounding_matrix = np.full((x.shape[0], y.shape[0]), np.inf)
-    sakoe_chiba_window_radius = ((x.shape[0] / 100) * window) * 100
 
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
+    bounding_matrix = np.full((x_size, y_size), np.inf)
+    sakoe_chiba_window_radius = ((x_size / 100) * window) * 100
 
     x_upper_line_values = np.interp(
         list(range(x_size)),
@@ -185,9 +184,9 @@ def itakura_parallelogram(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     itakura_max_slope: float or int
         Gradient of the slope must be between 0 and 1.
 
@@ -204,11 +203,10 @@ def itakura_parallelogram(
     """
     if itakura_max_slope < 0 or itakura_max_slope > 1:
         raise ValueError("Window must between 0 and 1")
-    bounding_matrix = np.full((y.shape[0], x.shape[0]), np.inf)
-    itakura_max_slope = math.floor(((x.shape[0] / 100) * itakura_max_slope) * 100) / 2
-
-    x_size = x.shape[0]
-    y_size = y.shape[0]
+    x_size = x.shape[1]
+    y_size = y.shape[1]
+    bounding_matrix = np.full((y_size, x_size), np.inf)
+    itakura_max_slope = math.floor(((x_size / 100) * itakura_max_slope) * 100) / 2
 
     middle_x_upper = math.ceil(x_size / 2)
     middle_x_lower = math.floor(x_size / 2)
@@ -253,9 +251,9 @@ def numba_create_bounding_matrix(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     window: float, defaults = -1.
         Float that is the % radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Must be between 0 and 1.
@@ -359,9 +357,9 @@ class LowerBounding(Enum):
         Parameters
         ----------
         x: np.ndarray (1d, 2d or 3d array)
-            First timeseries.
+            First time series.
         y: np.ndarray (1d, 2d or 3d array)
-            Second timeseries.
+            Second time series.
         sakoe_chiba_window_radius: int, defaults = None
             Integer that is the radius of the sakoe chiba window. Must be between 0
             and 1.
@@ -379,8 +377,8 @@ class LowerBounding(Enum):
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input time series doesn't have exactly 2 dimensions.
             If the sakoe_chiba_window_radius is not an integer.
             If the itakura_max_slope is not a float or int.
         """
@@ -405,29 +403,29 @@ class LowerBounding(Enum):
 
     @staticmethod
     def _check_input_timeseries(x: np.ndarray) -> np.ndarray:
-        """Check and validate input timeseries.
+        """Check and validate input time series.
 
         Parameters
         ----------
         x: np.ndarray (1d, 2d or 3d array)
-            A timeseries.
+            A time series.
 
         Returns
         -------
         np.ndarray (2d array)
-            A validated timeseries.
+            A validated time series.
 
         Raises
         ------
         ValueError
-            If the input timeseries is not a numpy array.
-            If the input timeseries doesn't have exactly 2 dimensions.
+            If the input time series is not a numpy array.
+            If the input timen series doesn't have exactly 2 dimensions.
         """
         if not isinstance(x, np.ndarray):
-            raise ValueError("The input timeseries must be a numpy array.")
+            raise ValueError("The input time series must be a numpy array.")
         if x.ndim <= 0 or x.ndim >= 4:
             raise ValueError(
-                "The input timeseries must have more than 0 dimensions and"
+                "The input time series must have more than 0 dimensions and"
                 "less than 4 dimensions."
             )
         if x.ndim == 3:
@@ -447,9 +445,9 @@ def resolve_bounding_matrix(
     Parameters
     ----------
     x: np.ndarray (2d array)
-        First timeseries.
+        First time series.
     y: np.ndarray (2d array)
-        Second timeseries.
+        Second time series.
     window: float, defaults = None
         Float that is the % radius of the sakoe chiba window (if using Sakoe-Chiba
         lower bounding). Must be between 0 and 1.
@@ -472,8 +470,8 @@ def resolve_bounding_matrix(
     Raises
     ------
     ValueError
-        If the input timeseries is not a numpy array.
-        If the input timeseries doesn't have exactly 2 dimensions.
+        If the input time series is not a numpy array.
+        If the input time series doesn't have exactly 2 dimensions.
         If the sakoe_chiba_window_radius is not an float.
         If the itakura_max_slope is not a float or int.
         If both window and itakura_max_slope are set

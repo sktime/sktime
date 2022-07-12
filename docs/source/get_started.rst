@@ -93,7 +93,7 @@ Time Series Classification
 
 .. code-block:: python
 
-    >>> from sktime.classification.kernel_based import TimeSeriesForestClassifier
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_arrow_head
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.metrics import accuracy_score
@@ -119,11 +119,6 @@ Time Series Regression
 
 Time Series Clustering
 ~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-
-   The time series clustering API is still experimental. Features may change
-   in future releases.
 
 .. code-block:: python
 

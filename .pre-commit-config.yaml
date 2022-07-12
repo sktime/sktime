@@ -21,7 +21,7 @@ repos:
         name: isort
 
   - repo: https://github.com/psf/black
-    rev: 21.11b1
+    rev: 22.3.0
     hooks:
       - id: black
         language_version: python3
@@ -45,7 +45,7 @@ repos:
     hooks:
       - id: nbqa-black
         args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
-        additional_dependencies: [black==20.8b1]
+        additional_dependencies: [black==22.3.0]
       - id: nbqa-isort
         args: [--nbqa-mutate, --nbqa-dont-skip-bad-cells]
         additional_dependencies: [isort==5.6.4]
@@ -62,7 +62,7 @@ repos:
   # We use the Python version instead of the original version which seems to require Docker
   # https://github.com/koalaman/shellcheck-precommit
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.1
+    rev: v0.8.0.4
     hooks:
       - id: shellcheck
         name: shellcheck

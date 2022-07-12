@@ -475,7 +475,7 @@ class SFA(_PanelToPanelTransformer):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
             criterion="entropy",
-            max_depth=np.log2(self.alphabet_size),
+            max_depth=int(np.floor(np.log2(self.alphabet_size))),
             max_leaf_nodes=self.alphabet_size,
             random_state=1,
         )
@@ -1024,8 +1024,15 @@ class SFA(_PanelToPanelTransformer):
         return letters
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------

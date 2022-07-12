@@ -2,7 +2,7 @@
 """tsfresh interface class."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
+__author__ = ["AyushmaanSeth", "Markus Löning", "Alwin Wang"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
@@ -27,6 +27,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "python_dependencies": "tsfresh",
+        "python_version": "<3.10",
     }
 
     def __init__(
@@ -43,8 +45,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         profiling_sorting=None,
         distributor=None,
     ):
-        _check_soft_dependencies("tsfresh", severity="error", object=self)
-
         self.default_fc_parameters = default_fc_parameters
         self.kind_to_fc_parameters = kind_to_fc_parameters
         self.n_jobs = n_jobs
@@ -57,10 +57,12 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         self.profiling_filename = profiling_filename
         self.distributor = distributor
 
+        super(_TSFreshFeatureExtractor, self).__init__()
+
+        # _get_extraction_params should be after the init because this imports tsfresh
+        # and the init checks for python version and tsfresh being present
         self.default_fc_parameters_ = None
         self.default_fc_parameters_ = self._get_extraction_params()
-
-        super(_TSFreshFeatureExtractor, self).__init__()
 
     def _get_extraction_params(self):
         """Set default parameters from tsfresh."""
@@ -190,8 +192,15 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         return Xt.reindex(X.index)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
@@ -357,8 +366,15 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         return Xt.reindex(X.index)
 
     @classmethod
-    def get_test_params(cls):
+    def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
 
         Returns
         -------
