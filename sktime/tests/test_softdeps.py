@@ -39,7 +39,6 @@ MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 # strings of class names to avoid the imports
 EXCEPTED_FROM_NO_DEP_CHECK = [
     "DistFromAligner",
-    "HCrystalBallForecaster",  # on the list because will soon be removed
     "ForecastingPipeline",
     "TransformedTargetForecaster",
     "StackingForecaster",
