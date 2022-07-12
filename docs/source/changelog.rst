@@ -16,6 +16,39 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.13.0 - 2022-07-12
 ---------------------------
 
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* depreciated: ``_shift`` function will no longer support inputs of type ``pd.Timestamp``
+  in 0.14.0, ``pd.Timestamp`` will not have frequency
+
+Forecasting
+^^^^^^^^^^^
+
+* removed: class ``HCrystalBallForecaster``, see :pr:`2677`.
+
+Performance metrics
+^^^^^^^^^^^^^^^^^^^
+
+* removed: ``func`` and ``name`` args from all performance metric constructors.
+* changed: the ``greater_is_better`` property is replaced by the ``greater_is_better`` tag.
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* removed: ``"capability:early_prediction"`` tag from ``BaseClassifier`` descendants.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* depreciated: ``Differencer`` drop_na *argument* and its handling will be changed in 0.14.0.
+  The default behaviour will change form "drop_na" to "fill_zero".
+* removed: ``lag_config`` argument in ``WindowSummarizer``, changed to ``lag_feature`` notation.
+
+
 Maintenance
 ~~~~~~~~~~~
 
