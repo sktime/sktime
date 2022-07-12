@@ -11,7 +11,6 @@ import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_longley
-from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -71,7 +70,7 @@ NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [
         ("transformer", Detrender(PolynomialTrendForecaster())),
-        ("forecaster", ARIMA()),
+        ("forecaster", NaiveForecaster()),
     ]
 )
 PIPE_GRID = {
