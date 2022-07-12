@@ -115,7 +115,7 @@ class DynamicFactor(_StatsModelsAdapter):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "scitype:y": "multivariate",
         "ignores-exogeneous-X": False,
         "handles-missing-data": True,
         "y_inner_mtype": "pd.DataFrame",
@@ -141,8 +141,8 @@ class DynamicFactor(_StatsModelsAdapter):
         cov_kwds=None,
         method="lbfgs",
         maxiter=50,
-        full_output=True,
-        disp=5,
+        full_output=False,
+        disp=False,
         callback=None,
         return_params=False,
         optim_score=None,
