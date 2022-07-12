@@ -84,6 +84,15 @@ EXCLUDED_TESTS = {
         "test_methods_do_not_change_state",
         "test_fit_transform_output",
     ],
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of
