@@ -86,7 +86,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         from sktime.alignment.dtw_python import AlignerDTW
         from sktime.utils.validation._dependencies import _check_estimator_deps
 
-        if _check_estimator_deps(AlignerDTW):
+        if _check_estimator_deps(AlignerDTW, severity="none"):
             return {"aligner": AlignerDTW()}
         else:
             return {}
