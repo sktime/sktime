@@ -16,13 +16,36 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 0.13.0 - 2022-07-12
 ---------------------------
 
+Highlights
+~~~~~~~~~~
+
+* ``sktime`` is now ``python 3.10`` compatible, including the developer suite.
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* Python requirements and soft dependencies are now isolated to estimator classes where possible, see below.
+* ``sktime`` now allows ``numpy 1.22``.
+* ``prophet`` soft dependency now must be above 1.1, where it no longer depends on ``pystan``.
+* indirect soft dependency on ``pystan`` has been removed.
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Dependency handling
+^^^^^^^^^^^^^^^^^^^
+
+* Python requirements and soft dependencies are now isolated to estimator classes via the ``python_version`` and ``python_dependencies`` tags.
+  This allows to bundle algorithms together with their dependency requirements.
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Data types, checks, conversions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* depreciated: ``_shift`` function will no longer support inputs of type ``pd.Timestamp``
+* deprecated: ``_shift`` function will no longer support inputs of type ``pd.Timestamp``
   in 0.14.0, ``pd.Timestamp`` will not have frequency
 
 Forecasting
@@ -40,13 +63,15 @@ Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * removed: ``"capability:early_prediction"`` tag from ``BaseClassifier`` descendants.
+  Early classifiers are their own estimator type now.
+  In order to search for early classifiers, use the ``early-classifier`` scitype string instead of the tag.
 
 Transformations
 ^^^^^^^^^^^^^^^
 
-* depreciated: ``Differencer`` drop_na *argument* and its handling will be changed in 0.14.0.
-  The default behaviour will change form "drop_na" to "fill_zero".
-* removed: ``lag_config`` argument in ``WindowSummarizer``, changed to ``lag_feature`` notation.
+* removed: ``Differencer`` - ``drop_na`` *argument* has been removed.
+  Default of ``na_handling`` changed to ``fill_zero``
+* removed: ``lag_config`` argument in ``WindowSummarizer``, please use ``lag_feature`` argument instead.
 
 
 Maintenance
@@ -79,7 +104,8 @@ Enhancements
 * [ENH] upgrade the "all" modules to automatic retrieval (:pr:`2845`) :user:`fkiraly`
 * [ENH] `VectorizedDF` to support vectorization across columns/variables (:pr:`2864`) :user:`fkiraly`
 * [ENH] preserve `index.freq` in `get_cutoff` (:pr:`2908`) :user:`fkiraly`
-* [ENH] turn private cutoff of forecasters into an index that carries `freq` (:pr:`2909`) :user:`fkiraly`* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`) :user:`fkiraly`
+* [ENH] turn private cutoff of forecasters into an index that carries `freq` (:pr:`2909`) :user:`fkiraly
+* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`) :user:`fkiraly`
 * [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2867`) :user:`fkiraly`
 * [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2937`) :user:`fkiraly`
 * [ENH] extend `get_cutoff` to pd.Index input (:pr:`2939`) :user:`fkiraly`
@@ -92,12 +118,14 @@ Documentation
 * [ENH] `all_estimators` authors variable (:pr:`2861`) :user:`fkiraly`
 * [DOC] added missing credits in `naive.py` (:pr:`2876`) :user:`fkiraly`
 * [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
-* [DOC] add `_is_vectorized` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly`* [DOC] replace AyushmaanSeth name with GitHub ID (:pr:`2911`) :user:`fkiraly`
+* [DOC] add `_is_vectorized` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly
+* [DOC] replace AyushmaanSeth name with GitHub ID (:pr:`2911`) :user:`fkiraly`
 
 Other
 ~~~~~
 
-* [ENH] remove old `multiindex-df` index convention hack from `VectorizedDF` (:pr:`2863`) :user:`fkiraly`* Added docstrings code showing example of using `metrics` with `evaluate` (:pr:`2850`) :user:`TNTran92`
+* [ENH] remove old `multiindex-df` index convention hack from `VectorizedDF` (:pr:`2863`) :user:`fkiraly`
+* Added docstrings code showing example of using `metrics` with `evaluate` (:pr:`2850`) :user:`TNTran92`
 * Revert "[ENH] auto-vectorization over columns for univariate estimators - transformers" (:pr:`2936`) :user:`fkiraly`
 * [ENH]  Elbow class selection/pairwise dimension selection for multivariate time series classification
 (:pr:`2941`) :user:`haskarb`
