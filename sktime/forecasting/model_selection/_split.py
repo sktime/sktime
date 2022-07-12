@@ -610,7 +610,19 @@ class BaseSplitter(BaseObject):
             return y, "pd.Index"
 
         ALLOWED_SCITYPES = ["Series", "Panel", "Hierarchical"]
-
+        ALLOWED_MTYPES = [
+            "pd.Series",
+            "pd.DataFrame",
+            "np.ndarray",
+            "nested_univ",
+            "numpy3D",
+            # "numpyflat",
+            "pd-multiindex",
+            # "pd-wide",
+            # "pd-long",
+            "df-list",
+            "pd_multiindex_hier",
+        ]
         y_valid, _, y_metadata = check_is_scitype(
             y, scitype=ALLOWED_SCITYPES, return_metadata=True, var_name="y"
         )
@@ -619,18 +631,26 @@ class BaseSplitter(BaseObject):
                 "y must be a pandas.Index, or a time series in an sktime compatible "
                 "format, of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
                 "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+                "If you think y is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for y. "
             )
         else:
             msg = (
                 "y must be in an sktime compatible format, "
                 "of scitype Series, Panel or Hierarchical, "
                 "for instance a pandas.DataFrame with sktime compatible time indices, "
-                "or with MultiIndex and lowest level a sktime compatible time index. "
+                "or with MultiIndex and last(-1) level an sktime compatible time index."
+                f" Allowed compatible mtype format specifications are: {ALLOWED_MTYPES}"
                 "See the forecasting tutorial examples/01_forecasting.ipynb, or"
-                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
+                " the data format tutorial examples/AA_datatypes_and_datasets.ipynb, "
+                "If you think y is already in an sktime supported input format, "
+                "run sktime.datatypes.check_raise(y, mtype) to diagnose the error, "
+                "where mtype is the string of the type specification you want for y. "
             )
         if not y_valid:
             raise TypeError(msg)
@@ -1380,9 +1400,9 @@ def _split_by_fh(
     """
     if X is not None:
         check_equal_time_index(y, X)
-    fh = check_fh(fh)
-    idx = fh.to_pandas()
     index = y.index
+    fh = check_fh(fh, freq=index)
+    idx = fh.to_pandas()
 
     if fh.is_relative:
         if not fh.is_all_out_of_sample():

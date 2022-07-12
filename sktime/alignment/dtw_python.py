@@ -59,6 +59,7 @@ class AlignerDTW(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "python_dependencies": "dtw-python",
     }
 
     def __init__(
@@ -71,6 +72,8 @@ class AlignerDTW(BaseAligner):
         variable_to_align=None,
     ):
         """Construct instance."""
+        # added manually since dtw-python has an import alias
+        # default check from super.__init__ does not allow aliases
         _check_soft_dependencies(
             "dtw-python",
             package_import_alias={"dtw-python": "dtw"},
@@ -233,6 +236,7 @@ class AlignerDTWfromDist(BaseAligner):
         "capability:multiple-alignment": False,  # can align more than two sequences?
         "capability:distance": True,  # does compute/return overall distance?
         "capability:distance-matrix": True,  # does compute/return distance matrix?
+        "python_dependencies": "dtw-python",
     }
 
     def __init__(
@@ -244,6 +248,8 @@ class AlignerDTWfromDist(BaseAligner):
         open_end=False,
     ):
         """Construct instance."""
+        # added manually since dtw-python has an import alias
+        # default check from super.__init__ does not allow aliases
         _check_soft_dependencies(
             "dtw-python",
             package_import_alias={"dtw-python": "dtw"},

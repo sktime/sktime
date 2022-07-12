@@ -4,7 +4,7 @@
 
 """Test reduce."""
 
-__author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "Ayushmaan Seth"]
+__author__ = ["Lovkush Agarwal", "Markus Löning", "Luis Zugasti", "AyushmaanSeth"]
 
 import numpy as np
 import pandas as pd
