@@ -4,7 +4,7 @@
 """Meta-transformers for building composite transformers."""
 
 __author__ = ["aiwalter", "SveaMeyer13", "fkiraly"]
-__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "Featurizer"]
+__all__ = ["OptionalPassthrough", "ColumnwiseTransformer", "YtoX"]
 
 import pandas as pd
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -431,7 +431,7 @@ def _check_is_pdseries(z):
     return z, is_series
 
 
-class Featurizer(BaseTransformer):
+class YtoX(BaseTransformer):
     """Create exogeneous features which are a copy of the endogenous data.
 
     Parameters
@@ -451,7 +451,7 @@ class Featurizer(BaseTransformer):
     }
 
     def __init__(self):
-        super(Featurizer, self).__init__()
+        super(YtoX, self).__init__()
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
