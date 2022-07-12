@@ -14,16 +14,14 @@ from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
-_check_soft_dependencies("matplotlib", "scikit_posthocs")
-import matplotlib.pyplot as plt  # noqa: E402
-
-plt.style.use("seaborn-ticks")
+_check_soft_dependencies("matplotlib", "scikit_posthocs", severity="warning")
 
 
 class Evaluator:
     """Analyze results of machine learning experiments."""
 
     def __init__(self, results):
+
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results
@@ -138,6 +136,12 @@ class Evaluator:
 
     def plot_boxplots(self, metric_name=None, **kwargs):
         """Box plot of metric."""
+        _check_soft_dependencies("matplotlib")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
+        plt.style.use("seaborn-ticks")
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
@@ -399,6 +403,8 @@ class Evaluator:
         Implementation used `scikit-posthocs
         <https://github.com/maximtrp/scikit-posthocs>`_.
         """
+        _check_soft_dependencies("scikit_posthocs")
+
         # lazy import to avoid hard dependency
         from scikit_posthocs import posthoc_nemenyi
 
@@ -536,6 +542,10 @@ class Evaluator:
         ----------
         original implementation by Aaron Bostrom, modified by Markus Löning.
         """
+        _check_soft_dependencies("matplotlib")
+
+        import matplotlib.pyplot as plt  # noqa: E402
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         column = self._get_column_name(metric_name, suffix="mean")
