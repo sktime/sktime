@@ -69,6 +69,21 @@ class BaseGridSearch(_DelegatedForecaster):
 
     _delegate_name = "best_forecaster_"
 
+    def get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+            A dict containing both the best hyper parameters and the best estimator.
+        """
+        if not self.is_fitted:
+            raise NotFittedError
+        return {
+            "best_hyper_parameters": self.best_params_,
+            "best_estimator": self.best_forecaster_,
+        }
+
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("abstract method")
 
@@ -358,21 +373,6 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-            A dict containing both the best hyper parameters and the best estimator.
-        """
-        if not self.is_fitted:
-            raise NotFittedError
-        return {
-            "best_hyper_parameters": self.best_params_,
-            "best_estimator": self.best_forecaster_,
-        }
-
     def _check_param_grid(self, param_grid):
         """_check_param_grid from sklearn 1.0.2, before it was removed."""
         if hasattr(param_grid, "items"):
@@ -541,21 +541,6 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-
-    def get_fitted_params(self):
-        """Get fitted parameters.
-
-        Returns
-        -------
-        fitted_params : dict
-            A dict containing both the best hyper parameters and the best estimator.
-        """
-        if not self.is_fitted:
-            raise NotFittedError
-        return {
-            "best_hyper_parameters": self.best_params_,
-            "best_estimator": self.best_forecaster_,
-        }
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions."""

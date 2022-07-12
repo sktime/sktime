@@ -11,7 +11,6 @@ import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_longley
-from sktime.exceptions import NotFittedError
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_evaluation import evaluate
@@ -36,12 +35,6 @@ from sktime.performance_metrics.forecasting import (
 from sktime.transformations.series.detrend import Detrender
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
-
-
-def _check_no_fitted_params_before_fitting(tuner):
-    assert not tuner.is_fitted
-    with pytest.raises(NotFittedError):
-        tuner.get_fitted_params()
 
 
 def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
@@ -103,8 +96,6 @@ def test_gscv(forecaster, param_grid, cv, scoring):
     gscv = ForecastingGridSearchCV(
         forecaster, param_grid=param_grid, cv=cv, scoring=scoring
     )
-    _check_no_fitted_params_before_fitting(gscv)
-
     gscv.fit(y, X)
 
     param_grid = ParameterGrid(param_grid)
@@ -133,8 +124,6 @@ def test_rscv(forecaster, param_grid, cv, scoring, n_iter, random_state):
         n_iter=n_iter,
         random_state=random_state,
     )
-    _check_no_fitted_params_before_fitting(rscv)
-
     rscv.fit(y, X)
 
     param_distributions = list(
