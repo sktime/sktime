@@ -217,3 +217,52 @@ def test_distance_factory_1d():
 
     assert first == 14.906015491572047
     assert second == 422.81946268212846
+
+def independent_dist(x_1, y_1, dist):
+    sum = 0
+    for i in range(len(x_1)):
+        test = x_1[i]
+        sum += distance(x_1[i], y_1[i], metric=dist, window=0.2)
+
+    return sum
+
+
+def test_sanity_multivariate():
+    x_1 = np.array([
+        [2, 35, 14, 5, 68, 7.5, 68, 7, 11, 13],
+        [5, 68, 7.5, 68, 7, 11, 13, 5, 68, 7]
+    ])
+    y_1 = np.array([
+        [8, 19, 10, 12, 68, 7.5, 60, 7, 10, 14],
+        [15, 12, 4, 62, 17, 10, 3, 15, 48, 7]]
+    )
+    dtw = distance(x_1, y_1, metric="dtw", window=0.2)
+    ddtw = distance(x_1, y_1, metric="ddtw", window=0.2)
+    wdtw = distance(x_1, y_1, metric="wdtw", window=0.2)
+    wddtw = distance(x_1, y_1, metric="wddtw", window=0.2)
+    msm = independent_dist(x_1, y_1, 'msm') # just put a for loop around it
+    twe = distance(x_1, y_1, metric="twe", window=0.2)
+    erp = distance(x_1, y_1, metric="erp", window=0.2)
+    joe = ''
+
+
+def test_sanity_univariate():
+    x_1 = np.array([
+        [2, 35, 14, 5, 68, 7.5, 68, 7, 11, 13],
+        [5, 68, 7.5, 68, 7, 11, 13, 5, 68, 7]
+    ])
+    y_1 = np.array([
+        [8, 19, 10, 12, 68, 7.5, 60, 7, 10, 14],
+        [15, 12, 4, 62, 17, 10, 3, 15, 48, 7]]
+    )
+
+    dtw = independent_dist(x_1, y_1, 'dtw')
+    ddtw = independent_dist(x_1, y_1, 'ddtw')
+    wdtw = independent_dist(x_1, y_1, 'wdtw')
+    wddtw = independent_dist(x_1, y_1, 'wddtw')
+    erp = independent_dist(x_1, y_1, 'erp')
+    msm = independent_dist(x_1, y_1, 'msm')
+    twe = independent_dist(x_1, y_1, 'twe')
+
+    joe = ''
+

@@ -56,7 +56,7 @@ while read dataset; do
     conda activate $env_name
     export PYTHONPATH=$(pwd)
 
-    python ${script_file_path} ${data_dir} ${results_dir} ${distance} ${dataset} \$SLURM_ARRAY_TASK_ID ${generate_train_files} ${predefined_folds} ${clusterer}}"  > generatedFile.sub
+    python ${script_file_path} ${data_dir} ${results_dir} ${distance} ${dataset} ${max_folds} ${generate_train_files} ${predefined_folds} ${clusterer}"  > generatedFile.sub
 
     echo ${count} ${classifier}/${dataset}
 
