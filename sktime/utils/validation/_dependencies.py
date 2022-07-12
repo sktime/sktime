@@ -280,7 +280,7 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
     compatible = True
     compatible = compatible and _check_python_version(obj, severity=severity)
 
-    pkg_deps = obj.get_tag("python_dependencies", None, raise_error=False)
+    pkg_deps = obj.get_class_tag("python_dependencies", None)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
