@@ -13,6 +13,81 @@ All notable changes to this project will be documented in this file. We keep tra
 For upcoming changes and next releases, see our `milestones <https://github.com/alan-turing-institute/sktime/milestones?direction=asc&sort=due_date&state=open>`_.
 For our long-term plan, see our :ref:`roadmap`.
 
+Version 0.13.0 - 2022-07-12
+---------------------------
+
+Maintenance
+~~~~~~~~~~~
+
+* [ENH] upgrade the "all" modules to automatic retrieval (:pr:`2845`) :user:`fkiraly`
+* [MNT] Upgrade prophet to >=1.1 and remove pystan from all_extras dependencies (:pr:`2887`) :user:`khrapovs`
+* [MNT] Remove `cmdstanpy` from `all_extras` (:pr:`2900`) :user:`khrapovs`
+* [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
+* [MNT] delete duplicate classifier tests (:pr:`2912`) :user:`fkiraly`
+* [ENH][MNT] package dependency tags (:pr:`2915`) :user:`fkiraly`
+* [ENH] soft dependency testing (:pr:`2920`) :user:`fkiraly`
+* [MNT] remove Azure build tools and dependency handling instructions (:pr:`2917`) :user:`fkiraly`
+* [BUG] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
+* [MNT] Update numpy to <=1.22 (:pr:`2979`) :user:`jlopezpena`
+
+Fixes
+~~~~~
+
+* [BUG] loosen index check related tags and fix incorrect pipeline tag inference (:pr:`2842`) :user:`fkiraly`
+* [BUG] load_UCR_UEA_dataset checks for existence of files rather than just directories (:pr:`2899`) :user:`TonyBagnall`
+* [BUG] fixing `get_time_index` for 1D and 2D numpy formats (:pr:`2852`) :user:`fkiraly`
+* [BUG] fix bug in verbose mode in CNN TSC models (:pr:`2882`) :user:`tobiasweede`
+* [BUG] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
+* [BUG] fix `Prophet` to have correct output column names (:pr:`2973`) :user:`fkiraly`
+
+Enhancements
+~~~~~~~~~~~~
+
+* [ENH] upgrade the "all" modules to automatic retrieval (:pr:`2845`) :user:`fkiraly`
+* [ENH] `VectorizedDF` to support vectorization across columns/variables (:pr:`2864`) :user:`fkiraly`
+* [ENH] preserve `index.freq` in `get_cutoff` (:pr:`2908`) :user:`fkiraly`
+* [ENH] turn private cutoff of forecasters into an index that carries `freq` (:pr:`2909`) :user:`fkiraly`* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`) :user:`fkiraly`
+* [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2867`) :user:`fkiraly`
+* [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2937`) :user:`fkiraly`
+* [ENH] extend `get_cutoff` to pd.Index input (:pr:`2939`) :user:`fkiraly`
+* [ENH] extend `ColumnSubset` to work for scalar `columns` parameter (:pr:`2906`) :user:`fkiraly`
+* [ENH][MNT] package dependency tags (:pr:`2915`) :user:`fkiraly`
+
+Documentation
+~~~~~~~~~~~~~
+
+* [ENH] `all_estimators` authors variable (:pr:`2861`) :user:`fkiraly`
+* [DOC] added missing credits in `naive.py` (:pr:`2876`) :user:`fkiraly`
+* [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
+* [DOC] add `_is_vectorized` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly`* [DOC] replace AyushmaanSeth name with GitHub ID (:pr:`2911`) :user:`fkiraly`
+
+Other
+~~~~~
+
+* [ENH] remove old `multiindex-df` index convention hack from `VectorizedDF` (:pr:`2863`) :user:`fkiraly`* Added docstrings code showing example of using `metrics` with `evaluate` (:pr:`2850`) :user:`TNTran92`
+* Revert "[ENH] auto-vectorization over columns for univariate estimators - transformers" (:pr:`2936`) :user:`fkiraly`
+* [ENH]  Elbow class selection/pairwise dimension selection for multivariate time series classification
+(:pr:`2941`) :user:`haskarb`
+* [ENH] Elbow class selection/pairwise dimension selection for multivariate time series classification (:pr:`2952`) :user:`haskarb`
+* Revert "[ENH] Elbow class selection/pairwise dimension selection for multivariate time series classification" (:pr:`2953`) :user:`fkiraly`
+* & khrapovs [ENH] addressing `freq` deprecation in `ForecastingHorizon` (:pr:`2932`) :user:`fkiraly`
+* [DOC] `ReconcilerForecaster` and hierarchical transformers update (:pr:`2940`) :user:`ciaran-g`
+* [ENH] Avoid accessing `.freq` from `pd.Timestamp` by converting `cutoff` to `pd.Index` (:pr:`2965`) :user:`khrapovs`
+* [MNT] Remove hcrystalball dependency - to be merged in preparation for 0.13.0 release (:pr:`2858`) :user:`aiwalter`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`aiwalter`,
+:user:`ciaran-g`,
+:user:`fkiraly`,
+:user:`haskarb`,
+:user:`jlopezpena`,
+:user:`khrapovs`,
+:user:`lmmentel`,
+:user:`TNTran92`,
+:user:`tobiasweede`,
+:user:`TonyBagnall`
 
 Version 0.12.1 - 2022-06-28
 ---------------------------
