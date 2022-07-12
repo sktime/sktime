@@ -151,8 +151,9 @@ class _BaseWindowForecaster(BaseForecaster):
     def _get_last_window(self):
         """Select last window."""
         # Get the start and end points of the last window.
-        cutoff = self.cutoff
+        cutoff = self._cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
+        cutoff = cutoff[0]
 
         # Get the last window of the endogenous variable.
         y = self._y.loc[start:cutoff].to_numpy()

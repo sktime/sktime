@@ -327,8 +327,6 @@ class AutoARIMA(_PmdArimaAdapter):
         concentrate_scale=False,
     ):
 
-        _check_soft_dependencies("pmdarima", severity="error", object=self)
-
         self.start_p = start_p
         self.d = d
         self.start_q = start_q
@@ -663,8 +661,6 @@ class ARIMA(_PmdArimaAdapter):
         hamilton_representation=False,
         concentrate_scale=False,
     ):
-
-        _check_soft_dependencies("pmdarima", severity="error", object=self)
 
         self.order = order
         self.seasonal_order = seasonal_order
