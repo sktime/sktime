@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import generate_example_long_table, make_multi_index_dataframe
+from sktime.datatypes._adapter import convert_from_multiindex_to_listdataset
 from sktime.datatypes._panel._check import are_columns_nested, is_nested_dataframe
 from sktime.datatypes._panel._convert import (
     from_2d_array_to_nested,
@@ -249,7 +250,8 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
     import pandas as pd
 
     from sktime.datatypes import convert_to
-    from sktime.datatypes._adapters import convert_from_multiindex_to_listdataset
+
+    # from sktime.datatypes._adapters import convert_from_multiindex_to_listdataset
 
     def random_datetimes_or_dates(
         start, end, out_format="datetime", n=10, random_seed=42
