@@ -264,7 +264,9 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
 
     Returns
     -------
-    reference to obj
+    compatible : bool, whether obj is compatible with python environment
+        checks for python version using the python_version tag of obj
+        checks for soft dependencies present using the python_dependencies tag of obj
 
     Raises
     ------
@@ -275,12 +277,14 @@ def _check_estimator_deps(obj, msg=None, severity="error"):
         User friendly error if obj has package dependencies that are not satisfied.
         Packages are determined based on the "python_dependencies" tag of obj.
     """
-    _check_python_version(obj, severity=severity)
+    compatible = True
+    compatible = compatible and _check_python_version(obj, severity=severity)
 
     pkg_deps = obj.get_tag("python_dependencies", None, raise_error=False)
     if pkg_deps is not None and not isinstance(pkg_deps, list):
         pkg_deps = [pkg_deps]
     if pkg_deps is not None:
-        _check_soft_dependencies(*pkg_deps, severity=severity, object=obj)
+        pkg_deps_ok = _check_soft_dependencies(*pkg_deps, severity=severity, object=obj)
+        compatible = compatible and pkg_deps_ok
 
-    return obj
+    return compatible
