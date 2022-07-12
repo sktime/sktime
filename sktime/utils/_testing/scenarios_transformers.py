@@ -81,7 +81,7 @@ class TransformerTestScenario(TestScenario, BaseObject):
         """
         # pre-refactor classes can't deal with Series *and* Panel both
         X_scitype = self.get_tag("X_scitype")
-        y_scitype = self.get_tag("y_scitype", None)
+        y_scitype = self.get_tag("y_scitype", None, raise_error=False)
 
         if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
             return False
