@@ -29,8 +29,6 @@ Code of Conduct Committee
 
    * - Name
      - GitHub ID
-   * - Anthony Bagnall
-     - :user:`TonyBagnall`
    * - Franz Kiraly
      - :user:`fkiraly`
    * - Martina Vilas
@@ -62,6 +60,8 @@ Core Developers
      - :user:`GuzalBulatova`
    * - James Large
      - :user:`james-large`
+   * - Jason Lines
+     - :user:`jasonlines`
    * - Leonidas Tsaprounis
      - :user:`ltsaprounis`
    * - Lovkush Agarwal
@@ -93,8 +93,6 @@ Former Core Developers (inactive)
      - :user:`ayushmaanseth`
    * - Hongyi Yang
      - :user:`hyang1996`
-   * - Jason Lines
-     - :user:`jasonlines`
    * - Mathew Smith
      - :user:`matteogales`
    * - Patrick Rockenschaub
