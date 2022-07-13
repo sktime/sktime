@@ -4,8 +4,6 @@
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNNRegressor"]
 
-import numpy as np
-
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -99,20 +97,11 @@ class CNNRegressor(BaseDeepRegressor):
         from tensorflow import keras
 
         tf.random.set_seed(self.random_seed)
-        np.random.seed(self.random_seed)
 
         if self.metrics is None:
             metrics = ["accuracy"]
         else:
             metrics = self.metrics
-
-        session_conf = tf.compat.v1.ConfigProto(
-            intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
-        )
-        sess = tf.compat.v1.Session(
-            graph=tf.compat.v1.get_default_graph(), config=session_conf
-        )
-        tf.compat.v1.keras.backend.set_session(sess)
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
