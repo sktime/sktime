@@ -175,7 +175,7 @@ def test_t_test_bonfer():
 
 
 @pytest.mark.skipif(
-    _check_soft_dependencies("scikit_posthocs", severity="none"),
+    not _check_soft_dependencies("scikit_posthocs", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_nemenyi():
@@ -195,7 +195,7 @@ def test_nemenyi():
 
 
 @pytest.mark.skipif(
-    _check_soft_dependencies("matplotlib", severity="none"),
+    not _check_soft_dependencies("matplotlib", severity="none"),
     reason="skip test if required soft dependency not available",
 )
 def test_plots():
