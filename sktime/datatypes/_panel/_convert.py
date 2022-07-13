@@ -683,8 +683,8 @@ def from_multi_index_to_nested(
     multi_ind_dataframe : pd.DataFrame
         Input multi-indexed pandas DataFrame
 
-    instance_index_name : str
-        The name of multi-index level corresponding to the DataFrame's instances
+    instance_index_name : int or str, default=0 (first level = 0-th index)
+        Index or name of multi-index level corresponding to the DataFrame's instances
 
     cells_as_numpy : bool, default = False
         If True, then nested cells contain NumPy array
@@ -764,54 +764,21 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         The multi-indexed pandas DataFrame
 
     """
-    if time_index is None:
-        time_index_name = "timepoints"
-    else:
-        time_index_name = time_index
+    # this contains the right values, but does not have the right index
+    #   need convert_dtypes or dtypes will always be object
+    # explode by column to ensure we deal with unequal length series properly
+    X_mi = pd.DataFrame()
 
-    # n_columns = X.shape[1]
-    nested_col_mask = [*are_columns_nested(X)]
+    for c in X.columns:
+        X_col = X[[c]].explode(c)
+        X_col = X_col.infer_objects()
 
-    if instance_index is None:
-        instance_idxs = X.index.get_level_values(-1).unique()
-        # n_instances = instance_idxs.shape[0]
-        instance_index_name = "instance"
+        # create the right MultiIndex and assign to X_mi
+        idx_df = X[[c]].applymap(lambda x: x.index).explode(c)
+        idx_df = idx_df.set_index(c, append=True)
+        X_col.index = idx_df.index.set_names([instance_index, time_index])
 
-    else:
-        if instance_index in X.index.names:
-            instance_idxs = X.index.get_level_values(instance_index).unique()
-        else:
-            instance_idxs = X.index.get_level_values(-1).unique()
-        # n_instances = instance_idxs.shape[0]
-        instance_index_name = instance_index
-
-    instances = []
-    for instance_idx in instance_idxs:
-        iidx = instance_idx
-        series = [i[1] for i in X.loc[iidx, :].iteritems()]
-        colnames = [i[0] for i in X.loc[iidx, :].iteritems()]
-        for x in series:
-            if hasattr(x, "name"):
-                x.name = None
-
-        instance = [pd.DataFrame(s, columns=[c]) for s, c in zip(series, colnames)]
-        instance = pd.concat(instance, axis=1)
-        # For primitive (non-nested column) assume the same
-        # primitive value applies to every timepoint of the instance
-        for col_idx, is_nested in enumerate(nested_col_mask):
-            if not is_nested:
-                instance.iloc[:, col_idx] = instance.iloc[:, col_idx].ffill()
-
-        # Correctly assign multi-index
-        multi_index = pd.MultiIndex.from_product(
-            [[instance_idx], instance.index],
-            names=[instance_index_name, time_index_name],
-        )
-        instance.index = multi_index
-        instances.append(instance)
-
-    X_mi = pd.concat(instances)
-    X_mi.columns = X.columns
+        X_mi[[c]] = X_col
 
     return X_mi
 
