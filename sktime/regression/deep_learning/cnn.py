@@ -3,10 +3,6 @@
 
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNNRegressor"]
-import os
-import random
-
-import numpy as np
 
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
@@ -107,10 +103,6 @@ class CNNRegressor(BaseDeepRegressor):
         else:
             metrics = self.metrics
 
-        os.environ["PYTHONHASHSEED"] = str(self.random_seed)
-        random.seed(self.random_seed)
-        np.random.seed(self.random_seed)
-        tf.random.set_seed(self.random_seed)
         session_conf = tf.compat.v1.ConfigProto(
             intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
         )
