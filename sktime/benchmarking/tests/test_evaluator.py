@@ -174,7 +174,10 @@ def test_t_test_bonfer():
     assert np.array_equal(expected, result)
 
 
-@pytest.mark.skipif(_check_soft_dependencies("scikit_posthocs", severity="none"))
+@pytest.mark.skipif(
+    _check_soft_dependencies("scikit_posthocs", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_nemenyi():
     """Test nemenyi."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
@@ -191,7 +194,10 @@ def test_nemenyi():
     return np.array_equal(expected, result)
 
 
-@pytest.mark.skipif(_check_soft_dependencies("matplotlib", severity="none"))
+@pytest.mark.skipif(
+    _check_soft_dependencies("matplotlib", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
 def test_plots():
     """Test plots."""
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
