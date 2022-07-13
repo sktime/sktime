@@ -1207,6 +1207,6 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         out = self._out
 
         if isinstance(out, list):
-            return [X_out[t_name] for t_name in out]]
+            return [X_out[t_name] for t_name in out]
         else:
-            return [X_out[out]
+            return [X_out[out]]
