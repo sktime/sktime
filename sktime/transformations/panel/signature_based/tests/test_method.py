@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for signature method."""
 
-import sys
-
 import numpy as np
 import pytest
 
