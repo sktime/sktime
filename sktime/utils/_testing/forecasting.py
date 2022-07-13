@@ -23,12 +23,10 @@ from sktime.utils.validation.forecasting import check_fh
 def _get_n_columns(tag):
     """Return the the number of columns to use in tests."""
     n_columns_list = []
-    if tag == "univariate":
-        n_columns_list = [1]
+    if tag in ["univariate", "both"]:
+        n_columns_list = [1, 2]
     elif tag == "multivariate":
         n_columns_list = [2]
-    elif tag == "both":
-        n_columns_list = [1, 2]
     else:
         raise ValueError(f"Unexpected tag {tag} in _get_n_columns.")
     return n_columns_list

@@ -379,7 +379,10 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("capability:pred_int"):
 
             pred_ints = estimator_instance.predict_interval(fh_int_oos, coverage=alpha)
-            assert check_is_mtype(pred_ints, mtype="pred_interval", scitype="Proba")
+            valid, msg, _ = check_is_mtype(
+                pred_ints, mtype="pred_interval", scitype="Proba", return_metadata=True
+            )
+            assert valid, msg
 
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
@@ -400,7 +403,8 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         else:
             # multiply variables with all alpha values
             expected = pd.MultiIndex.from_product([y_train.columns, [alpha]])
-        assert all(expected == pred_quantiles.columns.to_flat_index())
+        found = pred_quantiles.columns.to_flat_index()
+        assert all(expected == found)
 
         if isinstance(alpha, list):
             # sorts the columns that correspond to alpha values
