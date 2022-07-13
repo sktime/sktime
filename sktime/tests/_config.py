@@ -85,10 +85,15 @@ EXCLUDED_TESTS = {
     "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # ColumnTransformer still needs to be refactored, see #2537
     "ColumnTransformer": ["test_methods_do_not_change_state"],
-    "ForecastingGridSearchCV": ["test_score"],  # unknown root cause, see #2751
-    "ForecastingRandomizedSearchCV": ["test_score"],  # unknown root cause, see #2751
-    # failure of test_score came up after a change of metric default params
-    # there should be no such failure, and all other algorithms pass. #2751 to track
+    # Early classifiers intentionally retain information from pervious predict calls
+    #   for #1.
+    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
+    #   assert_array_equal
+    "TEASER": [
+        "test_methods_do_not_change_state",
+        "test_fit_idempotent",
+        "test_persistence_via_pickle",
+    ],
 }
 
 # We here configure estimators for basic unit testing, including setting of

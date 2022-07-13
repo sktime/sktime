@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.model_selection import (
     CutoffSplitter,
@@ -461,7 +462,7 @@ def test_split_by_fh(index_type, fh_type, is_relative, values):
         #     "is currently experimental and not supported everywhere"
         # )
     y = _make_series(20, index_type=index_type)
-    cutoff = y.index[10]
+    cutoff = get_cutoff(y.iloc[:10], return_index=True)
     fh = _make_fh(cutoff, values, fh_type, is_relative)
     split = temporal_train_test_split(y, fh=fh)
     _check_train_test_split_y(fh, split)
