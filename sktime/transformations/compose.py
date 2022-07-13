@@ -1051,3 +1051,123 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
             attr_name="forecasters",
             concat_order="right",
         )
+
+
+class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
+    """Pipeline of transformers compositor.
+
+    The `TransformerPipeline` compositor allows to chain transformers.
+    The pipeline is constructed with a list of sktime transformers,
+        i.e., estimators following the BaseTransformer interface.
+    The list can be unnamed - a simple list of transformers -
+        or string named - a list of pairs of string, estimator.
+
+    For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
+        the pipeline behaves as follows:
+    `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
+        sequentially, with `trafo[i]` receiving the output of `trafo[i-1]`
+    `transform` - result is of executing `trafo1.transform`, `trafo2.transform`, etc
+        with `trafo[i].transform` input = output of `trafo[i-1].transform`,
+        and returning the output of `trafoN.transform`
+
+    Parameters
+    ----------
+    steps : list of sktime transformers, or
+        list of tuples (str, transformer) of sktime transformers
+        these are "blueprint" transformers, states do not change when `fit` is called
+
+    Attributes
+    ----------
+    steps_ : list of tuples (str, transformer) of sktime transformers
+        clones of transformers in `steps` which are fitted in the pipeline
+        is always in (str, transformer) format, even if `steps` is just a list
+        strings not passed in `steps` are replaced by unique generated strings
+        i-th transformer in `steps_` is clone of i-th in `steps`
+    """
+
+    _tags = {
+        # we let all X inputs through to be handled by first transformer
+        "X_inner_mtype": [
+            "pd.DataFrame",
+            "np.ndarray",
+            "pd.Series",
+            "pd-multiindex",
+            "df-list",
+            "nested_univ",
+            "numpy3D",
+            "pd_multiindex_hier",
+        ],
+    }
+
+    # no further default tag values - these are set dynamically below
+
+    def __init__(self, steps):
+
+        self.steps = steps
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+
+        super(TransformerGraphPipeline, self).__init__()
+
+        # abbreviate for readability
+        ests = self.steps_
+        first_trafo = ests[0][1]
+        last_trafo = ests[-1][1]
+
+    @property
+    def _steps(self):
+        return self._get_estimator_tuples(self.steps, clone_ests=False)
+
+    @_steps.setter
+    def _steps(self, value):
+        self.steps = value
+
+    def _fit(self, X, y=None):
+        """Fit transformer to X and y.
+
+        private _fit containing the core logic, called from fit
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _fit must support all types in it
+            Data to fit transform to
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        self: reference to self
+        """
+        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+
+        Xt = X
+        for _, transformer in self.steps_:
+            Xt = transformer.fit_transform(X=Xt, y=y)
+
+        return self
+
+    def _transform(self, X, y=None):
+        """Transform X and return a transformed version.
+
+        private _transform containing core logic, called from transform
+
+        Parameters
+        ----------
+        X : Series or Panel of mtype X_inner_mtype
+            if X_inner_mtype is list, _transform must support all types in it
+            Data to be transformed
+        y : Series or Panel of mtype y_inner_mtype, default=None
+            Additional data, e.g., labels for transformation
+
+        Returns
+        -------
+        transformed version of X
+        """
+        Xt = X
+        for _, transformer in self.steps_:
+            if not self.get_tag("fit_is_empty", False):
+                Xt = transformer.transform(X=Xt, y=y)
+            else:
+                Xt = transformer.fit_transform(X=Xt, y=y)
+
+        return Xt
