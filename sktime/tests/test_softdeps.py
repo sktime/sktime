@@ -25,6 +25,7 @@ SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
     "sktime.benchmarking.experiments": ["tsfresh", "esig"],
     "sktime.classification.deep_learning": ["tensorflow"],
+    "sktime.regression.deep_learning": ["tensorflow"],
     "sktime.networks": ["tensorflow"],
     "sktime.clustering.evaluation._plot_clustering": ["matplotlib"],
 }
