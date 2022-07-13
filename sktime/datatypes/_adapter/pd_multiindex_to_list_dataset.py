@@ -7,6 +7,7 @@ def convert_from_multiindex_to_listdataset(trainDF, class_val_list=None):
     ----------
     trainDF: Multiindex dataframe
         Input DF should be multi-index DataFrame.
+        Time index must be absolute.
 
     class_val_list: str
         List of classes in case of classification dataset.
