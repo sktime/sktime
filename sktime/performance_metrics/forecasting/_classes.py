@@ -65,21 +65,6 @@ __all__ = [
 ]
 
 
-class _BaseForecastingErrorMetric(BaseMetric):
-    """Base class for defining forecasting error metrics in sktime.
-
-    Extends sktime's BaseMetric to the forecasting interface. Forecasting error
-    metrics measure the error (loss) between forecasts and true values. Lower
-    values are better.
-    """
-
-    greater_is_better = False
-
-    def __init__(self, func, name=None, multioutput="uniform_average"):
-        self.multioutput = multioutput
-        super().__init__(func, name=name)
-
-
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -113,30 +98,9 @@ class BaseForecastingErrorMetric(BaseMetric):
         "inner_implements_multilevel": False,
     }
 
-    # todo: 0.13.0, remove the greater_is_better property
-    @property
-    def greater_is_better(self):
-        """Whether greater is better for the metric."""
-        warn(
-            "The greater_is_better attribute is deprecated from 0.12.0 "
-            "and will be removed in 0.13.0. Use the lower_is_better tag instead, "
-            'e.g., my_metric.get_tag("lower_is_better")',
-            DeprecationWarning,
-        )
-        return not self.get_tag("lower_is_better", False)
-
-    def __init__(
-        self,
-        func=None,
-        name=None,
-        multioutput="uniform_average",
-        multilevel="uniform_average",
-    ):
+    def __init__(self, multioutput="uniform_average", multilevel="uniform_average"):
         self.multioutput = multioutput
         self.multilevel = multilevel
-        # todo: in 0.13.0, when func/name are removed, remove func/name args
-        #   temporarily, this is how we avoid overwrite with None
-        # super().__init__(func=func, name=name)
         self.name = type(self).__name__
 
     def __call__(self, y_true, y_pred, **kwargs):
@@ -441,15 +405,25 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
         return res
 
 
-class _BaseForecastingScoreMetric(_BaseForecastingErrorMetric):
-    """Base class for defining forecasting score metrics in sktime.
+class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
+    """Class for defining forecasting error metrics from a function dynamically."""
 
-    Extends sktime's BaseMetric to the forecasting interface. Forecasting score
-    metrics measure the agreement between forecasts and true values. Higher
-    values are better.
-    """
+    def __init__(
+        self,
+        func,
+        name=None,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        lower_is_better=True,
+    ):
+        self.multioutput = multioutput
+        self.multilevel = multilevel
+        self.func = func
+        self.name = name
+        super().__init__()
 
-    _tags = {"lower_is_better": False}
+        if not lower_is_better:
+            self.set_tags(**{"lower_is_better": False})
 
 
 class _ScaledMetricTags:
@@ -463,9 +437,13 @@ class _ScaledMetricTags:
 
 
 def make_forecasting_scorer(
-    func, name=None, greater_is_better=False, multioutput="uniform_average"
+    func,
+    name=None,
+    greater_is_better=False,
+    multioutput="uniform_average",
+    multilevel="uniform_average",
 ):
-    """Create a metric class from metric functions.
+    """Create a metric class from a metric functions.
 
     Parameters
     ----------
@@ -483,16 +461,24 @@ def make_forecasting_scorer(
         If array-like, values used as weights to average the errors.
         If 'raw_values', returns a full set of errors in case of multioutput input.
         If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multilevel : {'raw_values', 'uniform_average'}
+        Defines how to aggregate metric for hierarchical data (with levels).
+        If 'uniform_average' (default), errors are mean-averaged across levels.
+        If 'raw_values', does not average errors across levels, hierarchy is retained.
 
     Returns
     -------
     scorer:
         Metric class that can be used as forecasting scorer.
     """
-    if greater_is_better:
-        return _BaseForecastingScoreMetric(func, name=name, multioutput=multioutput)
-    else:
-        return _BaseForecastingErrorMetric(func, name=name, multioutput=multioutput)
+    lower_is_better = not greater_is_better
+    return _DynamicForecastingErrorMetric(
+        func,
+        name=name,
+        multioutput=multioutput,
+        multilevel=multilevel,
+        lower_is_better=lower_is_better,
+    )
 
 
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
