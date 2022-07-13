@@ -1056,12 +1056,14 @@ class MultiplexTransformer(_DelegatedTransformer, _HeterogenousMetaEstimator):
 class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     """Pipeline of transformers compositor.
 
+    TODO: update this for the graph pipeline
     The `TransformerPipeline` compositor allows to chain transformers.
     The pipeline is constructed with a list of sktime transformers,
         i.e., estimators following the BaseTransformer interface.
     The list can be unnamed - a simple list of transformers -
         or string named - a list of pairs of string, estimator.
 
+    TODO: update this for the graph pipeline
     For a list of transformers `trafo1`, `trafo2`, ..., `trafoN`,
         the pipeline behaves as follows:
     `fit` - changes state by running `trafo1.fit_transform`, `trafo2.fit_transform`, etc
@@ -1075,6 +1077,11 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     steps : list of sktime transformers, or
         list of tuples (str, transformer) of sktime transformers
         these are "blueprint" transformers, states do not change when `fit` is called
+    edges: dict with str keys, str values, keys should be names of `steps` elements
+        output (key) - input (value) connections in the graph pipeline
+        valid keys/values are keys of `get_params` corresponding to estimators
+    out: str or list of str, all str must be names of `steps` elements
+        elements of the graph pipeline considered output nodes
 
     Attributes
     ----------
@@ -1101,17 +1108,31 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
     # no further default tag values - these are set dynamically below
 
-    def __init__(self, steps):
+    def __init__(self, steps, edges=None, out=None):
 
         self.steps = steps
         self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+        self._step_lookup = dict(self.steps_)
+
+        self.edges = edges
+        if edges is None:
+            s = self.steps_
+            n = len(s)
+            self._edges = {s[i][0]: s[i + 1][0] for i in range(n-1)}
+        else:
+            self._edges = edges
+
+        if out is None:
+            self._out = list(edges.values())[-1]
+        else:
+            self._out = out
 
         super(TransformerGraphPipeline, self).__init__()
 
-        # abbreviate for readability
-        ests = self.steps_
-        first_trafo = ests[0][1]
-        last_trafo = ests[-1][1]
+    def _sources(self):
+
+        es = self._edges
+        return [x for x in es.keys() if x not in es.values()]
 
     @property
     def _steps(self):
@@ -1138,11 +1159,18 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         self: reference to self
         """
-        self.steps_ = self._check_estimators(self.steps, cls_type=BaseTransformer)
+        t_dict = self._step_lookup
+        X_out = dict()
 
-        Xt = X
-        for _, transformer in self.steps_:
-            Xt = transformer.fit_transform(X=Xt, y=y)
+        src = self._sources()
+        for t_name in src:
+            t = t_dict[t_name]
+            X_out[t_name] = t.fit_transform(X)
+
+        for t_in_name, t_out_name in self._edges:
+            X_in = X_out[t_in_name]
+            t_out = t_dict[t_out_name]
+            X_out[t_out_name] = t_out.fit_transform(X=X_in)
 
         return self
 
@@ -1163,11 +1191,22 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         -------
         transformed version of X
         """
-        Xt = X
-        for _, transformer in self.steps_:
-            if not self.get_tag("fit_is_empty", False):
-                Xt = transformer.transform(X=Xt, y=y)
-            else:
-                Xt = transformer.fit_transform(X=Xt, y=y)
+        t_dict = self._step_lookup
+        X_out = dict()
 
-        return Xt
+        src = self._sources()
+        for t_name in src:
+            t = t_dict[t_name]
+            X_out[t_name] = t.transform(X)
+
+        for t_in_name, t_out_name in self._edges:
+            X_in = X_out[t_in_name]
+            t_out = t_dict[t_out_name]
+            X_out[t_out_name] = t_out.transform(X=X_in)
+
+        out = self._out
+
+        if isinstance(out, list):
+            return [X_out[t_name] for t_name in out]]
+        else:
+            return [X_out[out]
