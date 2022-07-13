@@ -113,10 +113,6 @@ TRANSFORMERS = [
     ),
 ]
 ESTIMATOR_TEST_PARAMS = {
-    FittedParamExtractor: {
-        "forecaster": ExponentialSmoothing(),
-        "param_names": ["initial_level"],
-    },
     SeriesToPrimitivesRowTransformer: {
         "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
         "check_transformer": False,
