@@ -669,7 +669,7 @@ def from_3d_numpy_to_multi_index_adp(obj, store=None):
     ):
         res.columns = store["columns"]
 
-    if (isinstance(store, dict) and "index_names" in store.keys()):
+    if isinstance(store, dict) and "index_names" in store.keys():
         res.index.names = store["index_names"]
 
     return res
@@ -830,7 +830,7 @@ def from_nested_to_multi_index_adp(obj, store=None):
         X=obj, instance_index="instances", time_index="timepoints"
     )
 
-    if (isinstance(store, dict) and "index_names" in store.keys()):
+    if isinstance(store, dict) and "index_names" in store.keys():
         res.index.names = store["index_names"]
 
     return res
@@ -956,7 +956,7 @@ def from_dflist_to_multiindex(obj, store=None):
 
     mi = pd.concat(obj, axis=0, keys=range(n), names=["instances", "timepoints"])
 
-    if (isinstance(store, dict) and "index_names" in store.keys()):
+    if isinstance(store, dict) and "index_names" in store.keys():
         mi.index.names = store["index_names"]
 
     return mi
