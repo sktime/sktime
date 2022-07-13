@@ -49,3 +49,20 @@ def test_basebenchmark(tmp_path):
     pd.testing.assert_frame_equal(
         expected_results_df, pd.read_csv(results_file).drop(columns=["runtime_secs"])
     )
+
+
+def test_add_estimator_args(tmp_path):
+    """Test adding estimator with args specified."""
+    benchmark = benchmarks.BaseBenchmark()
+
+    benchmark.add_estimator(
+        estimator_entrypoint=NaiveForecaster,
+        estimator_kwargs={"strategy": "mean"},
+        estimator_id="test_id-v1",
+    )
+    benchmark._add_task(factory_estimator_class_task)
+
+    results_file = tmp_path / "results.csv"
+    results_df = benchmark.run(results_file)
+
+    assert results_df.iloc[0, 1] == "test_id-v1"
