@@ -278,7 +278,31 @@ class GGS:
         return change_points
 
 
-class GGSEstimator(SklearnBaseEstimator):
+class GGSEstimator(BaseEstimator):
+    """Sklearn Adapter."""
+
+        adaptee_class = GGS
+    
+    def __init__(
+        self, Kmax: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
+    ):
+        self.Kmax = Kmax
+        self.lamb = lamb
+        self.max_shuffles = max_shuffles
+        self.verbose = verbose
+
+    def fit(self, X, y=None):
+        """Fit."""
+        self.adaptee = adaptee_class(**self.kwargs)
+        self.adaptee.initialize_intermediates()
+        return self.adaptee
+
+    def predict(self, X, y=None):
+        """Predict."""
+        return self.fit(X, y).find_change_points(X)
+
+
+class GGSEstimator(BaseEstimator):
     """Sklearn Adapter."""
 
     def __init__(self, **kwargs):
