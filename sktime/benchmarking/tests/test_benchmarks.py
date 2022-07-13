@@ -9,7 +9,7 @@ from sktime.benchmarking import benchmarks
 from sktime.forecasting.naive import NaiveForecaster
 
 
-def factory_estimator_class_task() -> Callable:
+def factory_estimator_class_task(**kwargs) -> Callable:
     """Return task for getting class of estimator."""
 
     def estimator_class_task(estimator: BaseEstimator) -> str:
@@ -66,3 +66,20 @@ def test_add_estimator_args(tmp_path):
     results_df = benchmark.run(results_file)
 
     assert results_df.iloc[0, 1] == "test_id-v1"
+
+
+def test_add_task_args(tmp_path):
+    """Test adding task with args specified."""
+    benchmark = benchmarks.BaseBenchmark()
+
+    benchmark.add_estimator(NaiveForecaster)
+    benchmark._add_task(
+        task_entrypoint=factory_estimator_class_task,
+        task_kwargs={"some_kwarg": "some_value"},
+        task_id="test_id-v1",
+    )
+
+    results_file = tmp_path / "results.csv"
+    results_df = benchmark.run(results_file)
+
+    assert results_df.iloc[0, 0] == "test_id-v1"
