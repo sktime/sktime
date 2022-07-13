@@ -12,6 +12,7 @@ from sktime.transformations.series.kalman_filter import (
     KalmanFilterTransformerFP,
     KalmanFilterTransformerPK,
 )
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 # ts stands for time steps
 ts = 10
@@ -199,6 +200,10 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
     return matrices, data
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pykalman", severity="none"),
+    reason="skip test if required soft dependency pykalman not available",
+)
 @pytest.mark.parametrize(
     "params, measurements",
     [  # test case 1 -
@@ -340,6 +345,10 @@ def test_transform_and_smooth_pk(params, measurements):
     assert np.array_equal(xt_adapter_denoising, xt_pykalman_denoising)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
+    reason="skip test if required soft dependencies pykalman, filterpy not available",
+)
 @pytest.mark.parametrize(
     "classes, params, measurements",
     [  # test case 1 -
@@ -571,6 +580,10 @@ def test_em(classes, params, measurements):
             )
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pykalman", "filterpy", severity="none"),
+    reason="skip test if required soft dependencies pykalman, filterpy not available",
+)
 @pytest.mark.parametrize(
     "classes, params, measurements",
     [  # test case 1 -
@@ -718,6 +731,10 @@ def test_bad_inputs(classes, params, measurements):
             adapter.fit(X=measurements)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("filterpy", severity="none"),
+    reason="skip test if required soft dependency filterpy not available",
+)
 @pytest.mark.parametrize(
     "params, measurements, y",
     [  # test case 1 -
