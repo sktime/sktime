@@ -75,14 +75,19 @@ class BaseGridSearch(_DelegatedForecaster):
         Returns
         -------
         fitted_params : dict
-            A dict containing both the best hyper parameters and the best estimator.
+            A dict containing the best hyper parameters and the parameters of
+            the best estimator (if available), merged together with the former
+            taking precedence.
         """
         if not self.is_fitted:
             raise NotFittedError
-        return {
-            "best_hyper_parameters": self.best_params_,
-            "best_estimator": self.best_forecaster_,
-        }
+        fitted_params = {}
+        try:
+            fitted_params = self.best_forecaster_.get_fitted_params()
+        except NotImplementedError:
+            pass
+        fitted_params = {**fitted_params, **self.best_params_}
+        return fitted_params
 
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("abstract method")

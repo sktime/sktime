@@ -58,13 +58,7 @@ def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
     assert best_idx == actual.argmin()
 
     fitted_params = tuner.get_fitted_params()
-
-    best_params = fitted_params["best_hyper_parameters"]
-    assert best_params == param_grid[best_idx]
-
-    # Check if best parameters are contained in best forecaster.
-    best_forecaster_params = fitted_params["best_estimator"].get_params()
-    assert best_params.items() <= best_forecaster_params.items()
+    assert param_grid[best_idx].items() <= fitted_params.items()
 
 
 NAIVE = NaiveForecaster(strategy="mean")
