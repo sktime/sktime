@@ -1118,9 +1118,9 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         if edges is None:
             s = self.steps_
             n = len(s)
-            self._edges = {s[i][0]: s[i + 1][0] for i in range(n-1)}
+            self._edges = {s[i][0]: s[i + 1][0] for i in range(n - 1)}
         else:
-            self._edges = edges
+            self._edges = self._coerce_to_str_keys(edges)
 
         if out is None:
             self._out = list(edges.values())[-1]
@@ -1129,8 +1129,45 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
 
         super(TransformerGraphPipeline, self).__init__()
 
-    def _sources(self):
+    def _coerce_to_str_keys(self, edges):
 
+        def str_key(i):
+            if isinstance(i, int):
+                return self.steps_[i][0]
+            elif isinstance(i, str):
+                return i
+            else:
+                raise ValueError(
+                    "keys and values of edges must be int or str, "
+                    f"but found key {i} of type {type(i)}"
+                )
+
+        str_dict = dict()
+        for k, v in edges.items():
+            str_dict[str_key(k)] = str_key(v)
+        return str_dict
+
+    def __call__(self, pipe, parents=None):
+        """Connect self to TransformerGraphPipeline pipe."""
+        if isinstance(pipe, TransformerGraphPipeline):
+            steps = pipe.steps + [self]
+            if parents is None:
+                parents = pipe._steps[-1][0]
+            n = len(pipe.edges)
+            edges = pipe.edges + {p : n + 1 for p in parents}
+        elif isinstance(pipe, BaseTransformer):
+            steps = [pipe, self]
+            edges = None
+        else:
+            raise TypeError(
+                "pipe must be a transformer, descendant of BaseTransformer, "
+                f"but found object of type {type(pipe)}"
+            )
+
+        return TransformerGraphPipeline(steps=steps, edges=edges)
+
+    def _sources(self):
+        """Find source nodes in the graph = nodes without incoming connection."""
         es = self._edges
         return [x for x in es.keys() if x not in es.values()]
 
@@ -1210,3 +1247,31 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return [X_out[t_name] for t_name in out]
         else:
             return [X_out[out]]
+
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+        """
+        from sktime.transformations.series.impute import Imputer
+
+        # test with 2 simple detrend transformations with selected_transformer
+        params1 = {
+            "transformers": [
+                ("imputer_mean", Imputer(method="mean")),
+                ("imputer_near", Imputer(method="nearest")),
+            ],
+            "selected_transformer": "imputer_near",
+        }
+
+        return params1
