@@ -1130,6 +1130,7 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         super(TransformerGraphPipeline, self).__init__()
 
     def _coerce_to_str_keys(self, edges):
+        """Coerce keys/values from integers to valid str keys."""
 
         def str_key(i):
             if isinstance(i, int):
@@ -1154,7 +1155,7 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             if parents is None:
                 parents = pipe._steps[-1][0]
             n = len(pipe.edges)
-            edges = pipe.edges + {p : n + 1 for p in parents}
+            edges = pipe.edges + {p: n + 1 for p in parents}
         elif isinstance(pipe, BaseTransformer):
             steps = [pipe, self]
             edges = None
@@ -1247,7 +1248,6 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             return [X_out[t_name] for t_name in out]
         else:
             return [X_out[out]]
-
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
