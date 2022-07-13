@@ -1096,12 +1096,7 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         # we let all X inputs through to be handled by first transformer
         "X_inner_mtype": [
             "pd.DataFrame",
-            "np.ndarray",
-            "pd.Series",
             "pd-multiindex",
-            "df-list",
-            "nested_univ",
-            "numpy3D",
             "pd_multiindex_hier",
         ],
     }
@@ -1127,6 +1122,8 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
         else:
             self._out = out
 
+        self._parent_dict = self._construct_parent_dict()
+
         super(TransformerGraphPipeline, self).__init__()
 
     def _coerce_to_str_keys(self, edges):
@@ -1148,6 +1145,7 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             str_dict[str_key(k)] = str_key(v)
         return str_dict
 
+    # this should be in BaseTransformer !
     def __call__(self, pipe, parents=None):
         """Connect self to TransformerGraphPipeline pipe."""
         if isinstance(pipe, TransformerGraphPipeline):
@@ -1180,6 +1178,15 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
     def _steps(self, value):
         self.steps = value
 
+    def _construct_parent_dict(self):
+        parent_dict = dict()
+        for k, v in self._edges.items():
+            if v not in parent_dict.keys():
+                parent_dict[v] = [k]
+            else:
+                parent_dict[v] = parent_dict[v] + [k]
+        return parent_dict
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -1205,8 +1212,10 @@ class TransformerGraphPipeline(BaseTransformer, _HeterogenousMetaEstimator):
             t = t_dict[t_name]
             X_out[t_name] = t.fit_transform(X)
 
-        for t_in_name, t_out_name in self._edges:
-            X_in = X_out[t_in_name]
+        for t_out_name in self._edges:
+            t_in_name_list = self._parent_dict[t_out_name]
+            X_ins = [X_out[t_in_name] for t_in_name in t_in_name_list]
+            X_in = pd.concat(X_ins, keys = t_in_name_list)
             t_out = t_dict[t_out_name]
             X_out[t_out_name] = t_out.fit_transform(X=X_in)
 
