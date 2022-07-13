@@ -8,7 +8,7 @@ from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
 
-_check_dl_dependencies("tensorflow", severity="warning")
+_check_dl_dependencies(severity="warning")
 
 
 class CNNRegressor(BaseDeepRegressor):
@@ -60,7 +60,7 @@ class CNNRegressor(BaseDeepRegressor):
         metrics=None,
         random_seed=0,
     ):
-        _check_dl_dependencies("tensorflow", severity="error")
+        _check_dl_dependencies(severity="error")
         super(CNNRegressor, self).__init__(
             batch_size=batch_size,
         )
