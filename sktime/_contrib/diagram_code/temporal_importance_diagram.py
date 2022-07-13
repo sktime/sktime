@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 """Temporal importance curve diagram generators for interval forests."""
 
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["MatthewMiddlehurst"]
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel import catch22
