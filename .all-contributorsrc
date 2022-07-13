@@ -1675,7 +1675,15 @@
         "test",
         "ideas"
       ]
-    }
+    },
+    {
+      "login": "mariamjabara",
+      "name": "Mariam Jabara",
+      "profile": "https://github.com/mariamjabara",
+      "contributions": [
+        "code"
+      ] }
+      
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
