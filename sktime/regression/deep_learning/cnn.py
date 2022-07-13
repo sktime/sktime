@@ -4,6 +4,8 @@
 __author__ = ["James-Large", "TonyBagnall", "AurumnPegasus"]
 __all__ = ["CNNRegressor"]
 
+import numpy as np
+
 from sktime.networks.cnn import CNNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.utils.validation._dependencies import _check_dl_dependencies
@@ -96,7 +98,8 @@ class CNNRegressor(BaseDeepRegressor):
         import tensorflow as tf
         from tensorflow import keras
 
-        # from keras import backend as K
+        tf.random.set_seed(self.random_seed)
+        np.random.seed(self.random_seed)
 
         if self.metrics is None:
             metrics = ["accuracy"]
