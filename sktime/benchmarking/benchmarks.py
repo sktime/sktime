@@ -39,7 +39,11 @@ class BaseBenchmark:
         task_id: Optional[str] = None,
     ):
         """Register a task to the benchmark."""
-        task_id = task_id or f"{task_entrypoint.__name__}-v1"
+        task_id = task_id or (
+            f"{task_entrypoint}-v1"
+            if isinstance(task_entrypoint, str)
+            else f"{task_entrypoint.__name__}-v1"
+        )
         self.validations.register(
             id=task_id, entry_point=task_entrypoint, kwargs=task_kwargs
         )
