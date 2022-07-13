@@ -128,7 +128,7 @@ class CNNClassifier(BaseDeepClassifier):
         """
         if self.callbacks is None:
             self._callbacks = []
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot, self.label_encoder, self.onehot_encoder = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 

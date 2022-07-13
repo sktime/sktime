@@ -118,4 +118,4 @@ class BaseDeepClassifier(BaseClassifier, ABC):
             y = y.reshape(len(y), 1)
             y = onehot_encoder.fit_transform(y)
 
-        return y
+        return y, label_encoder, onehot_encoder
