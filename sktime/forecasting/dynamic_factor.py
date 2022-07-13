@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-
 """Implements DynamicFactor Model as interface to statsmodels."""
 
 import inspect
@@ -108,10 +107,21 @@ class DynamicFactor(_StatsModelsAdapter):
     --------
     statsmodels.tsa.statespace.dynamic_factor.DynamicFactor
     statsmodels.tsa.statespace.dynamic_factor.DynamicFactorResults
+
     References
     ----------
-    [1] Lütkepohl, Helmut. 2007. New Introduction to Multiple Time Series Analysis.
+    .. [1] Lütkepohl, Helmut. 2007. New Introduction to Multiple Time Series Analysis.
     Berlin: Springer.
+
+    Examples
+    --------
+    >>> from sktime.utils._testing.series import _make_series
+    >>> from sktime.forecasting.dynamic_factor import DynamicFactor
+    >>> y = _make_series(n_columns=4)
+    >>> forecaster = DynamicFactor()
+    >>> forecaster.fit(y)
+    DynamicFactor(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
@@ -312,6 +322,7 @@ class DynamicFactor(_StatsModelsAdapter):
             Otherwise, an integer index should be given. Default is ‘start’.
         repetitions : int , optional
             Number of simulated paths to generate. Default is 1 simulated path
+
         Returns
         -------
         simulated_obs : ndarray
@@ -391,7 +402,7 @@ class DynamicFactor(_StatsModelsAdapter):
         Returns
         -------
         Figure
-            Figure instance with diagonistic plots.
+            Figure instance with diagnostic plots.
         """
         self._fitted_forecaster.plot_diagonistics(
             variable=variable,
