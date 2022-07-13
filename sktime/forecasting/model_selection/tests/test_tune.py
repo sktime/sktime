@@ -75,7 +75,7 @@ PIPE = TransformedTargetForecaster(
 )
 PIPE_GRID = {
     "transformer__forecaster__degree": [1, 2],
-    "forecaster__with_intercept": [True, False],
+    "forecaster__strategy": ["last", "mean"],
 }
 CVs = [
     *[SingleWindowSplitter(fh=fh) for fh in TEST_OOS_FHS],
