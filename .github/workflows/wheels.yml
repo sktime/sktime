@@ -125,7 +125,6 @@ jobs:
           mkdir -p testdir/
           cp .coveragerc testdir/
           cp setup.cfg testdir/
-          cd testdir/
           python -m pytest
 
   upload_wheels:
