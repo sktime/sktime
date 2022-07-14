@@ -13,9 +13,13 @@ Transformer scenarios cover different combinations of input data types.
 __author__ = ["fkiraly"]
 __all__ = []
 
+import sys
 from inspect import isclass
 
-from sktime.datatypes import check_is_scitype, mtype_to_scitype
+import pandas as pd
+import pytest
+
+from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
 from sktime.transformations.compose import FitInTransform
 from sktime.transformations.panel.padder import PaddingTransformer
 from sktime.transformations.panel.tsfresh import (
@@ -33,6 +37,7 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesMultivariate,
     TransformerFitTransformSeriesUnivariate,
 )
+from sktime.utils._testing.series import _make_series
 
 # other scenarios that might be needed later in development:
 # TransformerFitTransformPanelUnivariateWithClassY,
@@ -284,6 +289,7 @@ def test_panel_in_primitives_out_not_supported_fit_in_transform():
     assert len(Xt) == 7
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
 def test_series_in_primitives_out_not_supported_fit_in_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -319,6 +325,7 @@ def test_series_in_primitives_out_not_supported_fit_in_transform():
     assert len(Xt) == 1
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 10), reason="tsfresh does not work on 3.10")
 def test_panel_in_primitives_out_supported_with_y_in_fit_but_not_transform():
     """Test that fit/transform runs and returns the correct output type.
 
@@ -585,3 +592,35 @@ def test_vectorization_multivariate_and_hierarchical_empty_fit():
     # length of Xt should be number of hierarchy levels times number of time points
     assert len(Xt) == len(scenario.args["fit"]["X"])
     assert len(Xt.columns) == len(scenario.args["fit"]["X"].columns)
+
+
+def test_vectorize_reconstruct_unique_columns():
+    """Tests that vectorization on multivariate output yields unique columns.
+
+    Also test that the column names are as expected:
+    <variable>__<transformed> if multiple transformed variables per variable are present
+    <variable> if one variable is transformed to one output
+
+    Raises
+    ------
+    AssertionError if output columns are not as expected.
+    """
+    from sktime.transformations.series.detrend import Detrender
+    from sktime.transformations.series.theta import ThetaLinesTransformer
+
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+    X_mi = get_examples("pd_multiindex_hier")[0]
+
+    t = ThetaLinesTransformer()
+
+    X_t_cols = t.fit_transform(X).columns
+
+    assert set(X_t_cols) == set(["a__0", "a__2", "b__0", "b__2", "c__0", "c__2"])
+
+    X_mi_cols = t.fit_transform(X_mi)
+    assert set(X_mi_cols) == set(["var_0__0", "var_0__2", "var_1__0", "var_1__2"])
+
+    X = _make_series(n_columns=2, n_timepoints=15)
+    t = Detrender.create_test_instance()
+    Xt = t.fit_transform(X)
+    assert set(Xt.columns) == set([0, 1])
