@@ -98,20 +98,7 @@ SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
 SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
     np.mean, kw_args={"axis": 0}, check_inverse=False
 )
-TRANSFORMERS = [
-    (
-        "transformer1",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-    (
-        "transformer2",
-        SeriesToSeriesRowTransformer(
-            SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
-        ),
-    ),
-]
+
 ESTIMATOR_TEST_PARAMS = {
     FittedParamExtractor: {
         "forecaster": ExponentialSmoothing(),
@@ -124,9 +111,6 @@ ESTIMATOR_TEST_PARAMS = {
     SeriesToSeriesRowTransformer: {
         "transformer": SERIES_TO_SERIES_TRANSFORMER,
         "check_transformer": False,
-    },
-    ColumnTransformer: {
-        "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
     },
     RandomShapeletTransform: {
         "max_shapelets": 5,

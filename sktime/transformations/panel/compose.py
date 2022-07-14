@@ -9,7 +9,6 @@ import pandas as pd
 from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
-
 from sktime.datatypes._panel._convert import (
     from_2d_array_to_nested,
     from_3d_numpy_to_2d_array,
@@ -175,6 +174,38 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name)
                 )
+
+    @classmethod
+    def get_test_params(cls):
+        """Return testing parameter settings for the estimator.
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        from sklearn.preprocessing import StandardScaler
+        from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+
+        SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
+        TRANSFORMERS = [
+            (
+                "transformer1",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+            (
+                "transformer2",
+                SeriesToSeriesRowTransformer(
+                    SERIES_TO_SERIES_TRANSFORMER, check_transformer=False
+                ),
+            ),
+        ]
+
+        return {"transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS] }
 
     def fit(self, X, y=None):
         """Fit the transformer."""
