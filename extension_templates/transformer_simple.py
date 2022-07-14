@@ -123,10 +123,13 @@ class MyTransformer(BaseTransformer):
         self.parama = parama
         self.paramb = paramb
         self.paramc = paramc
-        # important: no checking or other logic should happen here
 
         # todo: change "MyTransformer" to the name of the class
         super(MyTransformer, self).__init__()
+
+        # todo: optional, parameter checking logic (if applicable) should happen here
+        # if writes derived values to self, should *not* overwrite self.parama etc
+        # instead, write to self._parama, self._newparam (starting with _)
 
     # todo: implement this, mandatory (except in special case below)
     def _fit(self, X, y=None):
