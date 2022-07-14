@@ -24,36 +24,22 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class SklearnBaseEstimator(metaclass=abc.ABCMeta):
-    """Define the domain-specific interface that Client uses."""
-
-    @abc.abstractmethod
-    def fit(self):
-        """Fit."""
-        pass
-
-    @abc.abstractmethod
-    def predict(self):
-        """Predict."""
-        pass
-
-
 class GGS:
     """
     Greedy Gaussian Segmentation.
 
     Args
     ----
-        Kmax: maximum number of change points to find
+        k_max: maximum number of change points to find
         lamb: regularization parameter
         max_shuffles:
         verbose:
     """
 
     def __init__(
-        self, Kmax: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
+        self, k_max: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
     ):
-        self.Kmax = Kmax
+        self.k_max = k_max
         self.lamb = lamb
         self.max_shuffles = max_shuffles
         self.verbose = verbose
@@ -227,7 +213,7 @@ class GGS:
 
     def find_change_points(self, data: np.ndarray) -> List[int]:
         """
-        Find K breakpoints on the data at a specific lambda.
+        Find ``k`` change points on the data at a specific lambda.
 
         Args
         ----
@@ -235,15 +221,15 @@ class GGS:
 
         Returns
         -------
-            The K change points, along with all intermediate chnge points (for k < K)
-            and their correspondingcovariance-regularized maximum likelihoods.
+            The K change points, along with all intermediate change points (for k < K)
+            and their corresponding covariance-regularized maximum likelihoods.
         """
         change_points = self.initialize_change_points(data)
         self.intermediate_change_points = [change_points[:]]
         self.intermediate_ll = [self.cumulative_log_likelihood(data, change_points)]
 
         # Start GGS Algorithm
-        for _ in range(self.Kmax):
+        for _ in range(self.k_max):
             new_index = -1
             new_value = +1
             # For each segment, find change point and increase in LL
@@ -259,13 +245,13 @@ class GGS:
                 logger.info("Adding change points!")
                 return change_points
 
-            # Add new breakpoint
+            # Add new change point
             change_points.append(new_index)
             change_points.sort()
             if self.verbose:
                 logger.info(f"Change point occurs at: {new_index}, LL: {new_value}")
 
-            # Adjust current locations of the breakpoints
+            # Adjust current locations of the change points
             change_points = self.adjust_change_points(data, change_points, [new_index])[
                 :
             ]
@@ -277,32 +263,54 @@ class GGS:
 
         return change_points
 
+    def fit(self, X):
+        change_points = self.find_change_points(X)
+        labels = np.zeros(X.shape[0], dtype=np.int32)
 
-class GGSEstimator(BaseEstimator):
-    """Sklearn Adapter."""
+        for i, (start, stop) in enumerate(zip(change_points[:-1], change_points[1:])):
+            labels[start:stop] = i
+        return labels
 
-        adaptee_class = GGS
-    
-    def __init__(
-        self, Kmax: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
-    ):
-        self.Kmax = Kmax
-        self.lamb = lamb
-        self.max_shuffles = max_shuffles
-        self.verbose = verbose
 
-    def fit(self, X, y=None):
+class SklearnBaseEstimator(metaclass=abc.ABCMeta):
+    """Define the domain-specific interface that Client uses."""
+
+    @abc.abstractmethod
+    def fit(self):
         """Fit."""
-        self.adaptee = adaptee_class(**self.kwargs)
-        self.adaptee.initialize_intermediates()
-        return self.adaptee
+        pass
 
-    def predict(self, X, y=None):
+    @abc.abstractmethod
+    def predict(self):
         """Predict."""
-        return self.fit(X, y).find_change_points(X)
+        pass
 
 
-class GGSEstimator(BaseEstimator):
+# class GGSEstimator(SklearnBaseEstimator):
+#     """Sklearn Adapter."""
+
+#     adaptee_class = GGS
+    
+#     def __init__(
+#         self, k_max: int, lamb: float, max_shuffles: int = 250, verbose: bool = False
+#     ):
+#         self.k_max = k_max
+#         self.lamb = lamb
+#         self.max_shuffles = max_shuffles
+#         self.verbose = verbose
+
+#     def fit(self, X, y=None):
+#         """Fit."""
+#         self.adaptee = self.adaptee_class(**self.kwargs)
+#         self.adaptee.initialize_intermediates()
+#         return self.adaptee
+
+#     def predict(self, X, y=None):
+#         """Predict."""
+#         return self.fit(X, y).find_change_points(X)
+
+
+class GGSEstimator(SklearnBaseEstimator):
     """Sklearn Adapter."""
 
     def __init__(self, **kwargs):
@@ -313,8 +321,14 @@ class GGSEstimator(BaseEstimator):
         """Fit."""
         self.adaptee = self.adaptee_class(**self.kwargs)
         self.adaptee.initialize_intermediates()
-        return self.adaptee
+        return self
 
     def predict(self, X, y=None):
         """Predict."""
-        return self.fit(X, y).find_change_points(X)
+        return self.fit(X, y).fit(X)
+
+    def get_params(self):
+        return self.kwargs
+
+    def set_params(self, *args, *kwargs):
+        self.adaptee_class(*args, **kwargs)
