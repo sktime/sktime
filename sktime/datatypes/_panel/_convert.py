@@ -589,6 +589,7 @@ def from_multi_index_to_3d_numpy_adp(obj, store=None):
     res = from_multi_index_to_3d_numpy(X=obj)
     if isinstance(store, dict):
         store["columns"] = obj.columns
+        store["index_names"] = obj.index.names
 
     return res
 
@@ -667,6 +668,10 @@ def from_3d_numpy_to_multi_index_adp(obj, store=None):
         and len(store["columns"]) == obj.shape[1]
     ):
         res.columns = store["columns"]
+
+    if isinstance(store, dict) and "index_names" in store.keys():
+        res.index.names = store["index_names"]
+
     return res
 
 
@@ -733,6 +738,9 @@ def from_multi_index_to_nested(
 
 def from_multi_index_to_nested_adp(obj, store=None):
 
+    if isinstance(store, dict):
+        store["index_names"] = obj.index.names
+
     return from_multi_index_to_nested(multi_ind_dataframe=obj, instance_index=None)
 
 
@@ -785,9 +793,14 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
 def from_nested_to_multi_index_adp(obj, store=None):
 
-    return from_nested_to_multi_index(
+    res = from_nested_to_multi_index(
         X=obj, instance_index="instances", time_index="timepoints"
     )
+
+    if isinstance(store, dict) and "index_names" in store.keys():
+        res.index.names = store["index_names"]
+
+    return res
 
 
 convert_dict[("nested_univ", "pd-multiindex", "Panel")] = from_nested_to_multi_index_adp
@@ -910,6 +923,9 @@ def from_dflist_to_multiindex(obj, store=None):
 
     mi = pd.concat(obj, axis=0, keys=range(n), names=["instances", "timepoints"])
 
+    if isinstance(store, dict) and "index_names" in store.keys():
+        mi.index.names = store["index_names"]
+
     return mi
 
 
@@ -921,6 +937,9 @@ def from_multiindex_to_dflist(obj, store=None):
     instance_index = obj.index.levels[0]
 
     Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
+
+    if isinstance(store, dict):
+        store["index_names"] = obj.index.names
 
     return Xlist
 
