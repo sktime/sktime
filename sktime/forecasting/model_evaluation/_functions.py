@@ -42,11 +42,11 @@ def evaluate(
         Target time series to which to fit the forecaster.
     X : pd.DataFrame, default=None
         Exogenous variables
-    strategy : {"refit", "update", "no-update"}, optional, default="refit"
+    strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
         "refit" = forecaster is refitted to each training window
         "update" = forecaster is updated with training window data, in sequence provided
-        "no-update" = fit to first training window, and re-used without fit or update
+        "no-update_params" = fit to first training window, re-used without fit or update
     scoring : subclass of sktime.performance_metrics.BaseMetric, default=None.
         Used to get a score function that takes y_pred and y_test arguments
         and accept y_train as keyword argument.
@@ -125,7 +125,7 @@ def evaluate(
             forecaster = forecaster.clone()
             forecaster.fit(y_train, X_train, fh=fh)
 
-        else:  # if strategy in ["update", "no-update"]:
+        else:  # if strategy in ["update", "no-update_params"]:
             update_params = strategy == "update"
             forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
@@ -209,13 +209,13 @@ def _check_strategy(strategy):
     ----------
     strategy : str
         strategy of how to evaluate a forecaster
-        must be in "refit", "update" , "no-update"
+        must be in "refit", "update" , "no-update_params"
 
     Raises
     ------
     ValueError
         If strategy value is not in expected values, raise error.
     """
-    valid_strategies = ("refit", "update", "no-update")
+    valid_strategies = ("refit", "update", "no-update_params")
     if strategy not in valid_strategies:
         raise ValueError(f"`strategy` must be one of {valid_strategies}")
