@@ -5,77 +5,20 @@ from sklearn.utils.validation import check_random_state
 import numpy.typing as npt
 
 
-class BaseDataGenerator(BaseObject):
-    def __call__(self, *args, **kwargs):
-        return self.sample(*args, **kwargs)
-
-    def sample(self, *args, **kwargs):
-        return NotImplementedError
-
-
-class GenBasicGauss(BaseDataGenerator):
-    """Data generator base class in order to allow composition"""
-
-    def __init__(
-        self, means, seg_lengths, sds=None, sample_funcs=None, random_seed=None
-    ):
-        self.centers = centers
-        self.seg_lengths = seg_lengths
-        self.sds = sds
-        self.sample_funcs = sample_funcs
-
-        assert len(centers) == len(seg_lengths)
-        self._sds = sds or [1 for _ in centers]
-        assert len(centers) == len(self._sds)
-
-        if not random_seed:
-            self.rng = np.random.default_rng()
-        elif isinstance(rng, int):
-            self.rng = np.random.default_rng(random_seed)
-        else:
-            self.rng = random_seed
-
-    def sample(self):
-        centers = self.centers
-        seg_lengths = self.seg_lengths
-        sds = self._sds
-        rng = self.rng
-        sample_funcs = self.sample_funcs
-
-        return gen_basic_gauss(
-            centers=centers, seg_lengths=seg_lengths, sds=sds, rng=rng
-        )
-
-
-# we would like to have a function that generates synthetic time series
-# step wise function - mean shift time series
-# input either means, or pdfs
-
 # what if we could pass data_gen functions - rather than assuming means?
 #   - could make it easier to swap out different mean assumptions
-# optionally level of noise should eb adjustable
-
-
-def labels_with_repeats(means, noises):
-    """
-    Based
-    """
-    data = [means, noises]
-    unique, indices = np.unique(data, axis=1, return_inverse=True)
-    labels = np.arange(unique.shape[1])
-    return labels[indices]
 
 
 def mean_shift(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
-    sds: Union[npt.ArrayLike, float] = 1.0,
+    noise: Union[npt.ArrayLike, float] = 1.0,
     random_state: Union[int, np.random.RandomState] = None,
 ) -> npt.ArrayLike:
     """
     Generates a series composed of segments, where each segment has length specified
     in ``lengths`` and data sampled from a normal distribution with a mean from ``means``
-    and standard deviation from ``sds``.
+    and standard deviation from ``noise``.
 
     Parameters
     ----------
@@ -83,7 +26,7 @@ def mean_shift(
         Means of the segments to be generated 
     lengths : array_like
         Lengths of the segments to be generated 
-    sds : float ir array_like
+    noise : float ir array_like
         Standard deviations fo the segments to be generated
     repeated_labels : bool
         A flag to indicate whether segment labels should be repeated for similar segments.
@@ -102,39 +45,89 @@ def mean_shift(
     rng = check_random_state(random_state)
     assert len(means) == len(lengths)
 
-    if isinstance(sds, float):
-        sds = np.repeat(sds, len(means))
+    if isinstance(noise, float):
+        noise = np.repeat(noise, len(means))
 
-    assert len(sds) == len(means)
+    assert len(noise) == len(means)
 
     segments_data = [
         rng.normal(loc=mean, scale=sd, size=[length])
-        for mean, length, sd in zip(means, lengths, sds)
+        for mean, length, sd in zip(means, lengths, noise)
     ]
     return np.concatenate(tuple(segments_data))
+
+
+def labels_with_repeats(means: npt.ArrayLike, noise: npt.ArrayLike) -> npt.ArrayLike:
+    """
+    Generate labels for unique combinations of meas and noise
+    """
+    data = [means, noise]
+    unique, indices = np.unique(data, axis=1, return_inverse=True)
+    labels = np.arange(unique.shape[1])
+    return labels[indices]
 
 
 def label_mean_shift(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
-    sds: Union[npt.ArrayLike, float] = 1.0,
+    noise: Union[npt.ArrayLike, float] = 1.0,
     repeated_labels: bool = True,
 ) -> npt.ArrayLike:
     """
     Generate labels for a series composed of segments.
-    
+
+    Parameters
+    ----------
+    means : array_like
+        Means of the segments to be generated 
+    lengths : array_like
+        Lengths of the segments to be generated 
+    noise : float ir array_like
+        Standard deviations fo the segments to be generated
+    repeated_labels : bool
+        A flag to indicate whether segment labels should be repeated for similar segments.
+        If ``True`` same label will be assigned for segments with same mean and noise,
+        independently of length. If ``False`` each consecutive segment will have a unique
+        label.
+
     Returns
     -------
     labels : np.array
         integer encoded array of labels, same length as data
     """
-    if isinstance(sds, float):
-        sds = np.repeat(sds, len(means))
+    if isinstance(noise, float):
+        noise = np.repeat(noise, len(means))
     if repeated_labels:
-        unique_labels = labels_with_repeats(means, sds)
+        unique_labels = labels_with_repeats(means, noise)
     else:
         unique_labels = range(len(lengths))
     return np.repeat(unique_labels, lengths)
+
+
+class BaseDataGenerator(BaseObject):
+    def __call__(self, *args, **kwargs):
+        return self.sample(*args, **kwargs)
+
+    def sample(self, *args, **kwargs):
+        return NotImplementedError
+
+
+class GenBasicGauss(BaseDataGenerator):
+    """Data generator base class in order to allow composition"""
+
+    def __init__(
+        self, means, lengths, noise, random_state=None
+    ):
+        self.means = means
+        self.lengths = lengths
+        self.noise = noise
+        self.random_state = random_state
+
+    def sample(self):
+        return mean_shift(
+            means=self.means, lengths=self.lengths, noise=self.noise, random_state=self.random_state
+        )
+
 
 
 # this data has no autocorrelation concerns
