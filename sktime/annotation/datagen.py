@@ -1,16 +1,11 @@
-# objective
-# make Mirae's code good
-
-
-# data generator base class in order to allow composition
 from typing import List, Tuple, Union
 import numpy as np
 from sktime.base import BaseObject
-
+from sklearn.utils.validation import check_random_state
+import numpy.typing as npt
 
 
 class BaseDataGenerator(BaseObject):
-
     def __call__(self, *args, **kwargs):
         return self.sample(*args, **kwargs)
 
@@ -18,19 +13,11 @@ class BaseDataGenerator(BaseObject):
         return NotImplementedError
 
 
-def a(x):
-    return a(x) + 1
-
-
 class GenBasicGauss(BaseDataGenerator):
+    """Data generator base class in order to allow composition"""
 
     def __init__(
-        self,
-        centers,
-        seg_lengths,
-        sds=None,
-        sample_funcs=None,
-        random_seed=None
+        self, means, seg_lengths, sds=None, sample_funcs=None, random_seed=None
     ):
         self.centers = centers
         self.seg_lengths = seg_lengths
@@ -55,69 +42,96 @@ class GenBasicGauss(BaseDataGenerator):
         rng = self.rng
         sample_funcs = self.sample_funcs
 
-        res = gen_basic_gauss(
+        return gen_basic_gauss(
             centers=centers, seg_lengths=seg_lengths, sds=sds, rng=rng
         )
-        return res
 
 
 # we would like to have a function that generates synthetic time series
-# step wise function - mean shift time series 
+# step wise function - mean shift time series
 # input either means, or pdfs
 
-# what if we could pass data_gen functions - rather than assuming means? 
+# what if we could pass data_gen functions - rather than assuming means?
 #   - could make it easier to swap out different mean assumptions
 # optionally level of noise should eb adjustable
 
 
-def gen_basic_gauss(
-    centers:list, seg_lengths:list, sds: Union[list, float] = 1., rng=None
-    ) -> Tuple[np.ndarray, np.ndarray]:
-    """Generate simple gaussian data
-    
+def labels_with_repeats(means, noises):
+    """
+    Based
+    """
+    data = [means, noises]
+    unique, indices = np.unique(data, axis=1, return_inverse=True)
+    labels = np.arange(unique.shape[1])
+    return labels[indices]
+
+
+def mean_shift(
+    means: npt.ArrayLike,
+    lengths: npt.ArrayLike,
+    sds: Union[npt.ArrayLike, float] = 1.0,
+    repeated_labels: bool = True,
+    random_state: Union[int, np.random.RandomState] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generates a series composed of segments, where each segment has length specified
+    in ``lengths`` and data sampled from a normal distribution with a mean from ``means``
+    and standard deviation from ``sds``.
+
     Parameters
     ----------
-    centers :
-    seg_lengths :
-    sds : standard deviation
+    means : array_like
+        Means of the segments to be generated 
+    lengths : array_like
+        Lengths of the segments to be generated 
+    sds : float ir array_like
+        Standard deviations fo the segments to be generated
+    repeated_labels : bool
+        A flag to indicate whether segment labels should be repeated for similar segments.
+        If ``True`` same label will be assigned for segments with same mean and noise,
+        independently of length. If ``False`` each consecutive segment will have a unique
+        label.
+    random_state : int or np.random.RandomState
+        Either a random seed or RandomState instance
 
     Returns
     -------
-    data : univariate time series as np.array
-    labels : integer encoded vector of labels, same length as data
+    data : np.array
+        univariate time series as np.array
+    labels : np.array
+        integer encoded array of labels, same length as data
     """
-    if not rng:
-        rng = np.random.default_rng()
-    assert len(centers) == len(seg_lengths)
-    
-    gauss_data = np.zeros([sum(seg_lengths)])
-    labels = np.zeros([sum(seg_lengths)])
-    
+
+    rng = check_random_state(random_state)
+    assert len(means) == len(lengths)
+
     if isinstance(sds, float):
-        sds = np.repeat(sds, len(centers))
-    
-    assert(len(sds)==len(centers))
+        sds = np.repeat(sds, len(means))
 
-    seg_data = [
-        rng.normal(loc=center, scale=sd, size=[length]) for center, length, sd in zip(centers, seg_lengths, sds)
+    assert len(sds) == len(means)
+
+    segments_data = [
+        rng.normal(loc=mean, scale=sd, size=[length])
+        for mean, length, sd in zip(means, lengths, sds)
     ]
-    gauss_data = np.concatenate(tuple(seg_data))
+    series = np.concatenate(tuple(segments_data))
 
-    num_segs = len(seg_lengths)
-    labels = np.repeat(range(num_segs), seg_lengths)
-    
-    return gauss_data, labels
+    if repeated_labels:
+        unique_labels = labels_with_repeats(means, sds)
+    else:
+        unique_labels = range(len(lengths))
+    labels = np.repeat(unique_labels, lengths)
+
+    return series, labels
 
 
-# import numpy as np
+# this data has no autocorrelation concerns
+# it just creates an (N x 6) data array,
+# where the first half of the data exists in 1D,
+# and the second half of the data exists in 3D
+# need to add noise (and parametarise)
 
-# # this data has no autocorrelation concerns
-# # it just creates an (N x 6) data array,
-# # where the first half of the data exists in 1D,
-# # and the second half of the data exists in 3D
-# # need to add noise (and parametarise)
-
-# # generate dataset
+# generate dataset
 # N=10
 # np.random.seed(10002)
 # X=np.zeros((N,6))
