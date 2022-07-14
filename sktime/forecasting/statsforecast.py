@@ -152,7 +152,7 @@ class StatsForecastAutoARIMA(_StatsForecastAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoARIMA
     >>> y = load_airline()
     >>> forecaster = StatsForecastAutoARIMA(sp=12, d=0, max_p=2, max_q=2)

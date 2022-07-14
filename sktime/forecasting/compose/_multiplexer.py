@@ -54,7 +54,7 @@ class MultiplexForecaster(_DelegatedForecaster, _HeterogenousMetaEstimator):
 
     Examples
     --------
-    >>> from sktime.forecasting.ets import AutoETS
+    >>> from sktime.forecasting.ets import AutoETS  # doctest: +SKIP
     >>> from sktime.forecasting.model_selection import (
     ...    ForecastingGridSearchCV,
     ...    ExpandingWindowSplitter)

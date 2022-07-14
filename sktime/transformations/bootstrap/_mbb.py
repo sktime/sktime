@@ -143,7 +143,7 @@ class STLBootstrapTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
     >>> transformer = STLBootstrapTransformer(10)
@@ -174,7 +174,7 @@ class STLBootstrapTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -293,6 +293,9 @@ class STLBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        Xcol = X.columns
+        X = X[X.columns[0]]
+
         if len(X) <= self.block_length_:
             raise ValueError(
                 "STLBootstrapTransformer requires that block_length is"
@@ -366,7 +369,10 @@ class STLBootstrapTransformer(BaseTransformer):
                 )
             )
 
-        return pd.concat(df_list)
+        Xt = pd.concat(df_list)
+        Xt.columns = Xcol
+
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -448,7 +454,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
     >>> transformer = MovingBlockBootstrapTransformer(10)
@@ -479,7 +485,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         # todo: what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:transform-labels": "None",
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         # X_inner_mtype can be Panel mtype even if transform-input is Series, vectorized
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:inverse_transform": False,
@@ -525,6 +531,9 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         -------
         transformed version of X
         """
+        Xcol = X.columns
+        X = X[X.columns[0]]
+
         if len(X) <= self.block_length:
             raise ValueError(
                 "MovingBlockBootstrapTransformer requires that block_length is"
@@ -573,7 +582,10 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
                 )
             )
 
-        return pd.concat(df_list)
+        Xt = pd.concat(df_list)
+        Xt.columns = Xcol
+
+        return Xt
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

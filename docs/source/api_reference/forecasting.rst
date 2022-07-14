@@ -244,6 +244,14 @@ Structural time series models
 
     UnobservedComponents
 
+.. currentmodule:: sktime.forecasting.dynamic_factor
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DynamicFactor
+
 Ensembles and stacking
 ----------------------
 

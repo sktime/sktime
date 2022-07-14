@@ -1052,8 +1052,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if hasattr(estimator, "_is_vectorized") and estimator._is_vectorized:
-            if method_nsc == "predict_proba":
+        if method_nsc == "predict_proba":
+            try:
+                scenario.run(estimator, method_sequence=[method_nsc])
+            except NotImplementedError:
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
@@ -1088,8 +1090,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
-        if hasattr(estimator, "_is_vectorized") and estimator._is_vectorized:
-            if method_nsc == "predict_proba":
+        if method_nsc == "predict_proba":
+            try:
+                scenario.run(estimator, method_sequence=[method_nsc])
+            except NotImplementedError:
                 return None
 
         # Fit the model, get args before and after

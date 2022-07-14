@@ -477,7 +477,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     Examples
     --------
         Basic example:
-    >>> import numpy as np
+    >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
@@ -486,7 +486,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>> X_transformed = transformer.fit_transform(X=X)
 
         Example of - denoising, matrix estimation and missing values:
-    >>> import numpy as np
+    >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 2
     >>>
@@ -506,7 +506,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     >>> X_transformed = transformer.fit_transform(X=X)
 
         Example of - dynamic inputs (matrix per time-step) and missing values:
-    >>> import numpy as np
+    >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
     >>>
@@ -931,7 +931,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     Examples
     --------
         Basic example:
-    >>> import numpy as np
+    >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 2, 3
     >>>
@@ -940,7 +940,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>> X_transformed = transformer.fit_transform(X=X)
 
         Example of - denoising, matrix estimation, missing values and transform with y:
-    >>> import numpy as np
+    >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 3, 3
     >>> control_variable_dim = 2
@@ -964,7 +964,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     >>> X_transformed = transformer.fit_transform(X=X, y=control_variable)
 
         Example of - dynamic inputs (matrix per time-step), missing values:
-    >>> import numpy as np
+    >>> import numpy as np  # doctest: +SKIP
     >>> import sktime.transformations.series.kalman_filter as kf
     >>> time_steps, state_dim, measurement_dim = 10, 4, 4
     >>> control_variable_dim = 4

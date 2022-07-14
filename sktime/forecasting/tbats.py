@@ -98,7 +98,7 @@ class TBATS(_TbatsAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.tbats import TBATS
     >>> y = load_airline()
     >>> forecaster = TBATS(
