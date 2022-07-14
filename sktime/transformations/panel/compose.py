@@ -178,6 +178,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
     @classmethod
     def get_test_params(cls):
         """Return testing parameter settings for the estimator.
+
         Returns
         -------
         params : dict or list of dict, default = {}
@@ -205,7 +206,9 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             ),
         ]
 
-        return {"transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS] }
+        return {
+            "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
+        }
 
     def fit(self, X, y=None):
         """Fit the transformer."""

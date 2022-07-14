@@ -19,7 +19,6 @@ from sktime.registry import (
 from sktime.regression.compose import ComposableTimeSeriesForestRegressor
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.panel.compose import (
-    ColumnTransformer,
     SeriesToPrimitivesRowTransformer,
     SeriesToSeriesRowTransformer,
 )
