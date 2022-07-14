@@ -315,10 +315,10 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
                     else:
                         raise
                 new_col_name = f"{start}_{end}_{func.__name__}"
-                if new_col_name not in columns:
+                if new_col_name in columns:
                     drop_list += [i]
                 else:
-                    columns.append(new_col_name)
+                    columns = columns + [new_col_name]
                 i += 1
 
         Xt = pd.DataFrame(Xt)
