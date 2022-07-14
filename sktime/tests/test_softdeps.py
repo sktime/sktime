@@ -37,13 +37,7 @@ MODULES_TO_IGNORE = ("sktime._contrib", "sktime.utils._testing")
 # e.g., forecasting pipeline with an ARIMA estimator
 # todo: long-term all example parameter settings should be soft dependency free
 # strings of class names to avoid the imports
-EXCEPTED_FROM_NO_DEP_CHECK = [
-    "DistFromAligner",
-    "HCrystalBallForecaster",  # on the list because will soon be removed
-    "ForecastingPipeline",
-    "TransformedTargetForecaster",
-    "StackingForecaster",
-]
+EXCEPTED_FROM_NO_DEP_CHECK = []
 
 
 def _is_test(module):
