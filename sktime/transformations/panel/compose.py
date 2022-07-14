@@ -9,6 +9,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
+
 from sktime.datatypes._panel._convert import (
     from_2d_array_to_nested,
     from_3d_numpy_to_2d_array,
@@ -188,6 +189,7 @@ class ColumnTransformer(_ColumnTransformer, _PanelToPanelTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         from sklearn.preprocessing import StandardScaler
+
         from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
 
         SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
