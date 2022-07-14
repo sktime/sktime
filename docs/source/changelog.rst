@@ -108,17 +108,18 @@ Forecasting
 * [ENH] turn private cutoff of forecasters into an index that carries ``freq`` (:pr:`2909`) :user:`fkiraly`
 * [ENH] ``VECM`` forecasting model (:pr:`2829`) :user:`AurumnPegasus`
 * [ENH] addressing ``freq`` deprecation in ``ForecastingHorizon`` (:pr:`2932`) :user:`khrapovs` :user:`fkiraly`
+* [ENH] statsmodels ``DynamicFactor`` interface (:pr:`2859`) :user:`lbventura` :user:`ris-bali`
+* [ENH] ``ReconcilerForecaster`` and hierarchical transformers update (:pr:`2940`) :user:`ciaran-g`
+* [ENH] Avoid accessing ``.freq`` from ``pd.Timestamp`` by converting ``cutoff`` to ``pd.Index`` (:pr:`2965`) :user:`khrapovs`
+* [ENH] ``statsmodels`` ``VARMAX`` adapter (:pr:`2763`) :user:`KatieBuc`
+* [ENH] add check for forecast to have correct columns (:pr:`2972`) :user:`fkiraly`
+
 
 Transformations
 ^^^^^^^^^^^^^^^
 
 * [ENH] extend ``ColumnSubset`` to work for scalar ``columns`` parameter (:pr:`2906`) :user:`fkiraly`
-* [ENH] ``ReconcilerForecaster`` and hierarchical transformers update (:pr:`2940`) :user:`ciaran-g`
-* [ENH] Avoid accessing ``.freq`` from ``pd.Timestamp`` by converting ``cutoff`` to ``pd.Index`` (:pr:`2965`) :user:`khrapovs`
-* [ENH] ``statsmodels`` ``VARMAX`` adapter (:pr:`2763`) :user:`KatieBuc`
 * [ENH] transformer vectorization: ensure unique column names if unvectorized output is multivariate (:pr:`2958`) :user:`fkiraly`
-* [ENH] add check for forecast to have correct columns (:pr:`2972`) :user:`fkiraly`
-* [ENH] statsmodels ``DynamicFactor`` interface (:pr:`2859`) :user:`lbventura` :user:`ris-bali`
 
 Fixes
 ~~~~~
@@ -128,29 +129,35 @@ Data loaders
 
 * [BUG] ``load_UCR_UEA_dataset`` checks for existence of files rather than just directories (:pr:`2899`) :user:`TonyBagnall`
 
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fixing ``get_time_index`` for 1D and 2D ``numpy`` formats (:pr:`2852`) :user:`fkiraly`
+* [BUG] Fixing broken conversions from nested data frame (:pr:`2375`) :user:`fkiraly`
+* [BUG] preserve ``pd-multiindex`` index names (:pr:`2999`) :user:`fkiraly`
+
 Forecasting
 ^^^^^^^^^^^
 
 * [BUG] loosen index check related tags and fix incorrect pipeline tag inference (:pr:`2842`) :user:`fkiraly`
 * [BUG] remove non-standard ``score`` function in ``BaseGridSearch`` (:pr:`2752`) :user:`fkiraly`
-
+* [BUG] fix ``Prophet`` to have correct output column names (:pr:`2973`) :user:`fkiraly`
+* [BUG] fixing grid/random search broken delegation (:pr:`2945`) :user:`fkiraly`
+* [BUG] forecaster vectorization for ``update`` and proba prediction, bugfixes (:pr:`2960`) :user:`fkiraly`
+* [BUG] fix pipeline vectorization for univariate estimators (:pr:`2959`) :user:`fkiraly`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-* [BUG] fixing ``get_time_index`` for 1D and 2D ``numpy`` formats (:pr:`2852`) :user:`fkiraly`
 * [BUG] fix bug in verbose mode in CNN TSC models (:pr:`2882`) :user:`tobiasweede`
-* [BUG] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
-* [BUG] fix ``Prophet`` to have correct output column names (:pr:`2973`) :user:`fkiraly`
 * [BUG] Early classification test fixes (:pr:`2980`) :user:`MatthewMiddlehurst`
-* [BUG] fixing grid/random search broken delegation (:pr:`2945`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
 * [BUG] ensure ``IntervalSegmenter`` unique column output (:pr:`2970`) :user:`fkiraly`
-* [BUG] Fixing broken conversions from nested data frame (:pr:`2375`) :user:`fkiraly`
 * [BUG] fix NaN columns in bootstrap transformers (:pr:`2974`) :user:`fkiraly`
-* [BUG] forecaster vectorization for ``update`` and proba prediction, bugfixes (:pr:`2960`) :user:`fkiraly`
-* [BUG] fix pipeline vectorization for univariate estimators (:pr:`2959`) :user:`fkiraly`
-* [BUG] preserve ``pd-multiindex`` index names, and ensure ``TruncationTransformer.transform`` output now has same columns as input (:pr:`2999`) :user:`fkiraly`
+* [BUG] ensure ``TruncationTransformer.transform`` output now has same columns as input (:pr:`2999`) :user:`fkiraly`
 
 Refactored
 ~~~~~~~~~~
@@ -184,7 +191,7 @@ Documentation
 * [DOC] added missing credits in ``naive.py`` (:pr:`2876`) :user:`fkiraly`
 * [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
 * [DOC] add ``_is_vectorized`` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly`
-* [DOC] replace AyushmaanSeth name with GitHub ID (:pr:`2911`) :user:`fkiraly`
+* [DOC] replace ``AyushmaanSeth`` name with GitHub ID (:pr:`2911`) :user:`fkiraly`
 * [DOC] Added docstrings code showing example of using ``metrics`` with ``evaluate`` (:pr:`2850`) :user:`TNTran92`
 * [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
 
