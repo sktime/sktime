@@ -295,7 +295,9 @@ Online and stream forecasting
     :toctree: auto_generated/
     :template: class.rst
 
+    UpdateEvery
     UpdateRefitsEvery
+    DontUpdate
 
 Model selection and tuning
 --------------------------
