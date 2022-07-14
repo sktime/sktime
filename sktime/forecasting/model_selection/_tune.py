@@ -81,6 +81,10 @@ class BaseGridSearch(_DelegatedForecaster):
         """
         if not self.is_fitted:
             raise NotFittedError
+
+        if self._is_vectorized:
+            return {"forecasters_": self.forecasters_}
+
         fitted_params = {}
         try:
             fitted_params = self.best_forecaster_.get_fitted_params()
