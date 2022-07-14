@@ -121,7 +121,7 @@ class Prophet(_ProphetAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.fbprophet import Prophet
     >>> # Prophet requires to have data with a pandas.DatetimeIndex
     >>> y = load_airline().to_timestamp(freq='M')

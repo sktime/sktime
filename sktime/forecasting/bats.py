@@ -96,7 +96,7 @@ class BATS(_TbatsAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.bats import BATS
     >>> y = load_airline()
     >>> forecaster = BATS(

@@ -59,7 +59,7 @@ def check_estimator(
 
     Examples
     --------
-    >>> from sktime.forecasting.arima import ARIMA
+    >>> from sktime.forecasting.arima import ARIMA  # doctest: +SKIP
     >>> from sktime.utils.estimator_checks import check_estimator
     >>> results = check_estimator(ARIMA, tests_to_run="test_pred_int_tag")
     All tests PASSED!

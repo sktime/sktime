@@ -143,7 +143,7 @@ class STLBootstrapTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.bootstrap import STLBootstrapTransformer
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
     >>> transformer = STLBootstrapTransformer(10)
@@ -454,7 +454,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.utils.plotting import plot_series
     >>> y = load_airline()
     >>> transformer = MovingBlockBootstrapTransformer(10)

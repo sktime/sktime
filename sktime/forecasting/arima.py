@@ -255,7 +255,7 @@ class AutoARIMA(_PmdArimaAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.arima import AutoARIMA
     >>> y = load_airline()
     >>> forecaster = AutoARIMA(sp=12, d=0, max_p=2, max_q=2, suppress_warnings=True)
@@ -614,7 +614,7 @@ class ARIMA(_PmdArimaAdapter):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.arima import ARIMA
     >>> y = load_airline()
     >>> forecaster = ARIMA(
