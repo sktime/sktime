@@ -19,8 +19,12 @@ Version 0.13.0 - 2022-07-12
 Highlights
 ~~~~~~~~~~
 
-* ``sktime`` is now ``python 3.10`` compatible, including the developer suite.
+* ``sktime`` is now ``python 3.10`` compatible, including the developer suite
+* all forecasters and transformers can deal with multivariate data, by vectorization (:pr:`2864`, :pr:`2865`, :pr:`2867`, :pr:`2937`) :user:`fkiraly`
 * ``BaggingForecaster`` for adding forecast intervals via bagging (:pr:`2248`) :user:`ltsaprounis`
+* ``ReconcilerForecaster`` with more options for hierarchical reconciliation (:pr:`2940`) :user:`ciaran-g`
+* new forecasters: ``VARMAX``, ``VECM``, ``DynamicFactor``
+  (:pr:`2763`, :pr:`2829`, :pr:`2859`) :user:`KatieBuc` :user:`AurumnPegasus` :user:`lbventura` :user:`ris-bali`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -30,7 +34,6 @@ Dependency changes
 * ``prophet`` soft dependency now must be above 1.1, where it no longer depends on ``pystan``.
 * indirect soft dependency on ``pystan`` has been removed.
 * soft dependency on ``hcrystalball`` has been removed.
-
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -51,21 +54,25 @@ Forecasting
 
 * all forecasters can now make mulivariate forecasts. Univariate forecasters do so by iterating/vectorizing over variables.
   In that case, individual forecasters, for variables, are stored in the ``forecasters_`` attribute.
+* ``ForecastingHorizon`` now stores frequency information in the ``freq`` attribute.
+  It can be set in the constructor via the new ``freq`` argument, and is inferred/updated any time data is passed.
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* all transformers can now transform multivariate time series. Univariate transformers do so by iterating/vectorizing over variables.
+  In that case, individual transformers, for variables, are stored in the ``transformers_`` attribute.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Data types, checks, conversions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* deprecated: ``_shift`` function will no longer support inputs of type ``pd.Timestamp``
-  in 0.14.0, ``pd.Timestamp`` will not have frequency
-
 Forecasting
 ^^^^^^^^^^^
 
-* deprecated: ``ForecastingHorizon`` will no longer function with ``freq`` attribute of ``pd.Timestamp``.
-  This is indirect through deprecation of the ``freq`` attribute in ``pandas``, and will case functioning at the point of removal in ``pandas``.
+* deprecated: use of ForecastingHorizon methods with ``pd.Timestamp`` carrying ``freq``
+  is deprecated and will raise exception from 0.14.0. Use of ``pd.Timestamp`` will remain possible.
+  This due to deprecation of the ``freq`` attribute of ``pd.Timestamp`` in ``pandas``.
+* from 0.14.0, public ``cutoff`` attribute of forecasters will change to ``pd.Index`` subtype, from index element.
 * removed: class ``HCrystalBallForecaster``, see :pr:`2677`.
 
 Performance metrics
@@ -87,7 +94,6 @@ Transformations
 * removed: ``Differencer`` - ``drop_na`` *argument* has been removed.
   Default of ``na_handling`` changed to ``fill_zero``
 * removed: ``lag_config`` argument in ``WindowSummarizer``, please use ``lag_feature`` argument instead.
-
 
 Enhancements
 ~~~~~~~~~~~~
@@ -113,7 +119,6 @@ Forecasting
 * [ENH] Avoid accessing ``.freq`` from ``pd.Timestamp`` by converting ``cutoff`` to ``pd.Index`` (:pr:`2965`) :user:`khrapovs`
 * [ENH] ``statsmodels`` ``VARMAX`` adapter (:pr:`2763`) :user:`KatieBuc`
 * [ENH] add check for forecast to have correct columns (:pr:`2972`) :user:`fkiraly`
-
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -189,7 +194,6 @@ Documentation
 * [DOC] updated forecasting tutorial with multivariate vectorization (:pr:`3000`) :user:`fkiraly`
 * [DOC] ``all_estimators`` authors variable (:pr:`2861`) :user:`fkiraly`
 * [DOC] added missing credits in ``naive.py`` (:pr:`2876`) :user:`fkiraly`
-* [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
 * [DOC] add ``_is_vectorized`` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly`
 * [DOC] replace ``AyushmaanSeth`` name with GitHub ID (:pr:`2911`) :user:`fkiraly`
 * [DOC] Added docstrings code showing example of using ``metrics`` with ``evaluate`` (:pr:`2850`) :user:`TNTran92`
