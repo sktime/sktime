@@ -3,7 +3,10 @@
 
 __author__ = ["James-Large", "TonyBagnall"]
 __all__ = ["CNNClassifier"]
+
+import tensorflow as tf
 from sklearn.utils import check_random_state
+from tensorflow import keras
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cnn import CNNNetwork
@@ -37,6 +40,16 @@ class CNNClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
     metrics         : list of strings, default=["accuracy"],
+    random_seed     : integer, default=0
+        random seeding for initialisation of tf
+    activation      : string or a tf callable, default="sigmoid"
+        Activation function used in the output linear layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias        : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+        specify the optimizer and the learning rate to be used.
 
     Notes
     -----
@@ -50,6 +63,7 @@ class CNNClassifier(BaseDeepClassifier):
 
     def __init__(
         self,
+        optimizer,
         n_epochs=2000,
         batch_size=16,
         kernel_size=7,
@@ -59,6 +73,9 @@ class CNNClassifier(BaseDeepClassifier):
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
+        random_seed=0,
+        activation="sigmoid",
+        use_bias=True,
     ):
         _check_dl_dependencies("tensorflow", severity="error")
         super(CNNClassifier, self).__init__()
@@ -71,6 +88,10 @@ class CNNClassifier(BaseDeepClassifier):
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
+        self.random_seed = random_seed
+        self.activation = activation
+        self.use_bias = use_bias
+        self.optimizer = keras.optimizers.Adam()
         self._network = CNNNetwork()
 
     def build_model(self, input_shape, n_classes, **kwargs):
@@ -92,7 +113,7 @@ class CNNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        from tensorflow import keras
+        tf.random.set_seed(self.random_seed)
 
         if self.metrics is None:
             metrics = ["accuracy"]
@@ -100,14 +121,14 @@ class CNNClassifier(BaseDeepClassifier):
             metrics = self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation="sigmoid")(
-            output_layer
-        )
+        output_layer = keras.layers.Dense(
+            units=n_classes, activation=self.activation, use_bias=self.use_bias
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
             loss=self.loss,
-            optimizer=keras.optimizers.Adam(),
+            optimizer=self.optimizer,
             metrics=metrics,
         )
         return model
