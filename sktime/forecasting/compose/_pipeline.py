@@ -295,7 +295,6 @@ class ForecastingPipeline(_Pipeline):
         self.steps_ = self._check_steps(steps, allow_postproc=False)
         super(ForecastingPipeline, self).__init__()
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
@@ -670,7 +669,6 @@ class TransformedTargetForecaster(_Pipeline):
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "scitype:y",  # which y are fine? univariate/multivariate/both
             "ignores-exogeneous-X",  # does estimator ignore the exogeneous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "handles-missing-data",  # can estimator handle missing data?
