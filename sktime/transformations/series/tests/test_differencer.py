@@ -105,28 +105,28 @@ def test_differencer_cutoff():
     from sktime.datasets import load_longley
     from sktime.forecasting.compose import TransformedTargetForecaster
     from sktime.forecasting.fbprophet import Prophet
-    from sktime.transformations.series.difference import Differencer
     from sktime.forecasting.model_selection import (
         ExpandingWindowSplitter,
         ForecastingGridSearchCV,
         temporal_train_test_split,
     )
+    from sktime.transformations.series.difference import Differencer
 
     y, X = load_longley()
 
     # split train/test both y and X
     fh = [1, 2]
     train_model, _ = temporal_train_test_split(y, fh=fh)
-    train_model.index = train_model.index.to_timestamp(freq='A')
+    train_model.index = train_model.index.to_timestamp(freq="A")
     X_train = X[X.index.isin(train_model.index)]
-    X_train.index = X_train.index.to_timestamp(freq='A')
+    X_train.index = X_train.index.to_timestamp(freq="A")
 
     # pipeline
     pipe = TransformedTargetForecaster(
         steps=[
-                ("differencer", Differencer(na_handling="fill_zero")),
-                ("myforecaster", Prophet()),
-            ]
+            ("differencer", Differencer(na_handling="fill_zero")),
+            ("myforecaster", Prophet()),
+        ]
     )
 
     # cv setup
