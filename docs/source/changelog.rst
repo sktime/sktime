@@ -20,6 +20,7 @@ Highlights
 ~~~~~~~~~~
 
 * ``sktime`` is now ``python 3.10`` compatible, including the developer suite.
+* ``BaggingForecaster`` for adding forecast intervals via bagging (:pr:`2248`) :user:`ltsaprounis`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -28,16 +29,28 @@ Dependency changes
 * ``sktime`` now allows ``numpy 1.22``.
 * ``prophet`` soft dependency now must be above 1.1, where it no longer depends on ``pystan``.
 * indirect soft dependency on ``pystan`` has been removed.
+* soft dependency on ``hcrystalball`` has been removed.
 
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``VectorizedDF`` now supports vectorization over columns
 
 Dependency handling
 ^^^^^^^^^^^^^^^^^^^
 
 * Python requirements and soft dependencies are now isolated to estimator classes via the ``python_version`` and ``python_dependencies`` tags.
   This allows to bundle algorithms together with their dependency requirements.
+
+Forecasting
+^^^^^^^^^^^
+
+* all forecasters can now make mulivariate forecasts. Univariate forecasters do so by iterating/vectorizing over variables.
+  In that case, individual forecasters, for variables, are stored in the ``forecasters_`` attribute.
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,6 +64,8 @@ Data types, checks, conversions
 Forecasting
 ^^^^^^^^^^^
 
+* deprecated: ``ForecastingHorizon`` will no longer function with ``freq`` attribute of ``pd.Timestamp``.
+  This is indirect through deprecation of the ``freq`` attribute in ``pandas``, and will case functioning at the point of removal in ``pandas``.
 * removed: class ``HCrystalBallForecaster``, see :pr:`2677`.
 
 Performance metrics
@@ -74,72 +89,122 @@ Transformations
 * removed: ``lag_config`` argument in ``WindowSummarizer``, please use ``lag_feature`` argument instead.
 
 
-Maintenance
-~~~~~~~~~~~
-
-* [MNT] upgrade the "all" modules to automatic retrieval (:pr:`2845`) :user:`fkiraly`
-* [MNT] Remove hcrystalball dependency - to be merged in preparation for 0.13.0 release (:pr:`2858`) :user:`aiwalter`
-* [MNT] Upgrade prophet to >=1.1 and remove pystan from all_extras dependencies (:pr:`2887`) :user:`khrapovs`
-* [MNT] Remove `cmdstanpy` from `all_extras` (:pr:`2900`) :user:`khrapovs`
-* [MNT] delete duplicate classifier tests (:pr:`2912`) :user:`fkiraly`
-* [MNT] remove Azure build tools and dependency handling instructions (:pr:`2917`) :user:`fkiraly`
-* [MNT] Update numpy to <=1.22 (:pr:`2979`) :user:`jlopezpena`
-* [MNT] package dependency tags (:pr:`2915`) :user:`fkiraly`
-* [MNT] soft dependency testing (:pr:`2920`) :user:`fkiraly`
-
-Fixes
-~~~~~
-
-* [BUG] loosen index check related tags and fix incorrect pipeline tag inference (:pr:`2842`) :user:`fkiraly`
-* [BUG] load_UCR_UEA_dataset checks for existence of files rather than just directories (:pr:`2899`) :user:`TonyBagnall`
-* [BUG] fixing `get_time_index` for 1D and 2D numpy formats (:pr:`2852`) :user:`fkiraly`
-* [BUG] fix bug in verbose mode in CNN TSC models (:pr:`2882`) :user:`tobiasweede`
-* [BUG] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
-* [BUG] fix `Prophet` to have correct output column names (:pr:`2973`) :user:`fkiraly`
-* [BUG] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
-
 Enhancements
 ~~~~~~~~~~~~
 
-* [ENH] upgrade the "all" modules to automatic retrieval (:pr:`2845`) :user:`fkiraly`
-* [ENH] `VectorizedDF` to support vectorization across columns/variables (:pr:`2864`) :user:`fkiraly`
-* [ENH] preserve `index.freq` in `get_cutoff` (:pr:`2908`) :user:`fkiraly`
-* [ENH] turn private cutoff of forecasters into an index that carries `freq` (:pr:`2909`) :user:`fkiraly
-* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`, :pr:`2867`) :user:`fkiraly`
-* [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2937`) :user:`fkiraly`
-* [ENH] extend `get_cutoff` to pd.Index input (:pr:`2939`) :user:`fkiraly`
-* [ENH] extend `ColumnSubset` to work for scalar `columns` parameter (:pr:`2906`) :user:`fkiraly`
-* [ENH] remove old `multiindex-df` index convention hack from `VectorizedDF` (:pr:`2863`) :user:`fkiraly`
-* [ENH] addressing `freq` deprecation in `ForecastingHorizon` (:pr:`2932`) :user:`fkiraly` :user:`khrapovs`
-* [ENH] Avoid accessing `.freq` from `pd.Timestamp` by converting `cutoff` to `pd.Index` (:pr:`2965`) :user:`khrapovs`
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``VectorizedDF`` to support vectorization across columns/variables (:pr:`2864`) :user:`fkiraly`
+* [ENH] preserve ``index.freq`` in ``get_cutoff`` (:pr:`2908`) :user:`fkiraly`
+* [ENH] extend ``get_cutoff`` to ``pd.Index`` input (:pr:`2939`) :user:`fkiraly`
 
 Forecasting
 ^^^^^^^^^^^
 
-* [ENH] statsmodels VARMAX adapter (:pr:`2763`) :user:`katiebuc`
+* [ENH] ``BaggingForecaster`` for adding forecast intervals via bagging (:pr:`2248`) :user:`ltsaprounis`
+* [ENH] auto-vectorization over columns for univariate estimators - forecasters (:pr:`2865`) :user:`fkiraly`
+* [ENH] auto-vectorization over columns for univariate estimators - transformers (:pr:`2867`, :pr:`2937`) :user:`fkiraly`
+* [ENH] turn private cutoff of forecasters into an index that carries ``freq`` (:pr:`2909`) :user:`fkiraly`
+* [ENH] ``VECM`` forecasting model (:pr:`2829`) :user:`AurumnPegasus`
+* [ENH] addressing ``freq`` deprecation in ``ForecastingHorizon`` (:pr:`2932`) :user:`khrapovs` :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] extend ``ColumnSubset`` to work for scalar ``columns`` parameter (:pr:`2906`) :user:`fkiraly`
+* [ENH] ``ReconcilerForecaster`` and hierarchical transformers update (:pr:`2940`) :user:`ciaran-g`
+* [ENH] Avoid accessing ``.freq`` from ``pd.Timestamp`` by converting ``cutoff`` to ``pd.Index`` (:pr:`2965`) :user:`khrapovs`
+* [ENH] ``statsmodels`` ``VARMAX`` adapter (:pr:`2763`) :user:`KatieBuc`
+* [ENH] transformer vectorization: ensure unique column names if unvectorized output is multivariate (:pr:`2958`) :user:`fkiraly`
+* [ENH] add check for forecast to have correct columns (:pr:`2972`) :user:`fkiraly`
+* [ENH] statsmodels ``DynamicFactor`` interface (:pr:`2859`) :user:`lbventura` :user:`ris-bali`
+
+Fixes
+~~~~~
+
+Data loaders
+^^^^^^^^^^^^
+
+* [BUG] ``load_UCR_UEA_dataset`` checks for existence of files rather than just directories (:pr:`2899`) :user:`TonyBagnall`
+
+Forecasting
+^^^^^^^^^^^
+
+* [BUG] loosen index check related tags and fix incorrect pipeline tag inference (:pr:`2842`) :user:`fkiraly`
+* [BUG] remove non-standard ``score`` function in ``BaseGridSearch`` (:pr:`2752`) :user:`fkiraly`
+
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+* [BUG] fixing ``get_time_index`` for 1D and 2D ``numpy`` formats (:pr:`2852`) :user:`fkiraly`
+* [BUG] fix bug in verbose mode in CNN TSC models (:pr:`2882`) :user:`tobiasweede`
+* [BUG] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
+* [BUG] fix ``Prophet`` to have correct output column names (:pr:`2973`) :user:`fkiraly`
+* [BUG] Early classification test fixes (:pr:`2980`) :user:`MatthewMiddlehurst`
+* [BUG] fixing grid/random search broken delegation (:pr:`2945`) :user:`fkiraly`
+* [BUG] ensure ``IntervalSegmenter`` unique column output (:pr:`2970`) :user:`fkiraly`
+* [BUG] Fixing broken conversions from nested data frame (:pr:`2375`) :user:`fkiraly`
+* [BUG] fix NaN columns in bootstrap transformers (:pr:`2974`) :user:`fkiraly`
+* [BUG] forecaster vectorization for ``update`` and proba prediction, bugfixes (:pr:`2960`) :user:`fkiraly`
+* [BUG] fix pipeline vectorization for univariate estimators (:pr:`2959`) :user:`fkiraly`
+* [BUG] preserve ``pd-multiindex`` index names, and ensure ``TruncationTransformer.transform`` output now has same columns as input (:pr:`2999`) :user:`fkiraly`
+
+Refactored
+~~~~~~~~~~
+
+* [ENH] ``NaiveForecaster``: remove manual vectorization layer in favour of base class vectorization (:pr:`2874`) :user:`fkiraly`
+* [ENH] remove old ``multiindex-df`` index convention hack from ``VectorizedDF`` (:pr:`2863`) :user:`fkiraly`
+* [ENH] delete duplicate classifier tests (:pr:`2912`) :user:`fkiraly`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] upgrade the ``all`` modules to automatic retrieval (:pr:`2845`) :user:`fkiraly`
+* [MNT] Upgrade ``prophet`` to >=1.1 and remove ``pystan`` from ``all_extras`` dependencies (:pr:`2887`) :user:`khrapovs`
+* [MNT] Remove ``cmdstanpy`` from ``all_extras`` (:pr:`2900`) :user:`khrapovs`
+* [MNT] estimator upper bound tag for selective version compatibility, test exclusion (:pr:`2660`) :user:`fkiraly`
+* [MNT] python 3.10 upgrade with estimator version tag (:pr:`2661`) :user:`fkiraly`
+* [MNT] package dependency tags (:pr:`2915`, :pr:`2994`) :user:`fkiraly`
+* [MNT] soft dependency testing (:pr:`2920`) :user:`fkiraly`
+* [MNT] remove Azure build tools and dependency handling instructions (:pr:`2917`) :user:`fkiraly`
+* [MNT] Fix changelog generator (:pr:`2892`) :user:`lmmentel`
+* [MNT] Update ``numpy`` version bound to ``<=1.22`` (:pr:`2979`) :user:`jlopezpena`
+* [MNT] 0.13.0 deprecation actions (:pr:`2895`) :user:`fkiraly`
+* [MNT] set number of ``pytest-xdist`` workers to ``auto`` (:pr:`2992`) :user:`fkiraly`
+* [MNT] Remove ``hcrystalball`` dependency (:pr:`2858`) :user:`aiwalter`
 
 Documentation
 ~~~~~~~~~~~~~
 
-* [DOC] Added docstrings code showing example of using `metrics` with `evaluate` (:pr:`2850`) :user:`TNTran92`
-* [DOC] `all_estimators` authors variable (:pr:`2861`) :user:`fkiraly`
-* [DOC] added missing credits in `naive.py` (:pr:`2876`) :user:`fkiraly`
+* [DOC] updated forecasting tutorial with multivariate vectorization (:pr:`3000`) :user:`fkiraly`
+* [DOC] ``all_estimators`` authors variable (:pr:`2861`) :user:`fkiraly`
+* [DOC] added missing credits in ``naive.py`` (:pr:`2876`) :user:`fkiraly`
 * [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
-* [DOC] add `_is_vectorized` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly
+* [DOC] add ``_is_vectorized`` to forecaster extension template exclusion list (:pr:`2878`) :user:`fkiraly`
 * [DOC] replace AyushmaanSeth name with GitHub ID (:pr:`2911`) :user:`fkiraly`
+* [DOC] Added docstrings code showing example of using ``metrics`` with ``evaluate`` (:pr:`2850`) :user:`TNTran92`
 * [DOC] updated release process to current de-facto process (:pr:`2927`) :user:`fkiraly`
-* [DOC] `ReconcilerForecaster` and hierarchical transformers update (:pr:`2940`) :user:`ciaran-g`
 
 Contributors
 ~~~~~~~~~~~~
 
+:user:`a-pasos-ruiz`,
 :user:`aiwalter`,
+:user:`AurumnPegasus`,
 :user:`ciaran-g`,
 :user:`fkiraly`,
+:user:`haskarb`,
 :user:`jlopezpena`,
-:user:`katiebuc`,
+:user:`KatieBuc`,
 :user:`khrapovs`,
+:user:`lbventura`,
 :user:`lmmentel`,
+:user:`ltsaprounis`,
+:user:`MatthewMiddlehurst`,
+:user:`ris-bali`,
 :user:`TNTran92`,
 :user:`tobiasweede`,
 :user:`TonyBagnall`
