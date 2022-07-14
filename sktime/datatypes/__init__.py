@@ -24,7 +24,7 @@ from sktime.datatypes._registry import (
     mtype_to_scitype,
     scitype_to_mtype,
 )
-from sktime.datatypes._utilities import get_cutoff
+from sktime.datatypes._utilities import get_cutoff, update_data
 from sktime.datatypes._vectorize import VectorizedDF
 
 __all__ = [
@@ -47,5 +47,6 @@ __all__ = [
     "scitype_to_mtype",
     "SCITYPE_LIST",
     "SCITYPE_REGISTER",
+    "update_data",
     "VectorizedDF",
 ]

@@ -3,7 +3,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = [
+    "DontUpdate",
+    "UpdateEvery",
     "UpdateRefitsEvery",
 ]
 
-from sktime.forecasting.stream._update import UpdateRefitsEvery
+from sktime.forecasting.stream._update import DontUpdate, UpdateEvery, UpdateRefitsEvery

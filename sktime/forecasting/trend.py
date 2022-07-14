@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements trend based forecasters."""
 
-__author__ = ["Anthony Jancso", "mloning", "aiwalter"]
+__author__ = ["tensorflow-as-tf", "mloning", "aiwalter"]
 __all__ = ["TrendForecaster", "PolynomialTrendForecaster", "STLForecaster"]
 
 import numpy as np
@@ -396,18 +396,18 @@ class STLForecaster(BaseForecaster):
         self.forecaster_seasonal_ = (
             NaiveForecaster(sp=self.sp, strategy="last")
             if self.forecaster_seasonal is None
-            else clone(self.forecaster_seasonal)
+            else self.forecaster_seasonal.clone()
         )
         # trend forecaster does not need sp
         self.forecaster_trend_ = (
             NaiveForecaster(strategy="drift")
             if self.forecaster_trend is None
-            else clone(self.forecaster_trend)
+            else self.forecaster_trend.clone()
         )
         self.forecaster_resid_ = (
             NaiveForecaster(sp=self.sp, strategy="mean")
             if self.forecaster_resid is None
-            else clone(self.forecaster_resid)
+            else self.forecaster_resid.clone()
         )
 
         # fitting forecasters to different components

@@ -98,7 +98,12 @@ def test_all_tags(estimator_scitype):
 
     # there should be at least one tag returned
     # exception: scitypes which we know don't have tags associated
-    if estimator_scitype not in SCITYPES_WITHOUT_TAGS:
+    est_list = (
+        estimator_scitype
+        if isinstance(estimator_scitype, list)
+        else [estimator_scitype]
+    )
+    if not set(est_list).issubset(SCITYPES_WITHOUT_TAGS):
         assert len(tags) > 0
 
     # checks return type specification (see docstring)
@@ -110,7 +115,7 @@ def test_all_tags(estimator_scitype):
         if isinstance(tag[2], tuple):
             assert len(tag[2]) == 2
             assert isinstance(tag[2][0], str)
-            assert isinstance(tag[2][1], list)
+            assert isinstance(tag[2][1], (str, list))
         assert isinstance(tag[3], str)
 
 

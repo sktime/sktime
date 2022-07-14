@@ -62,27 +62,14 @@ class TSFreshClassifier(BaseClassifier):
         scalable hypothesis tests (tsfresh–a python package)." Neurocomputing 307
         (2018): 72-77.
         https://www.sciencedirect.com/science/article/pii/S0925231218304843
-
-    Examples
-    --------
-    >>> from sktime.classification.feature_based import TSFreshClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = TSFreshClassifier(
-    ...     default_fc_parameters="minimal",
-    ...     estimator=RandomForestClassifier(n_estimators=5),
-    ... )
-    >>> clf.fit(X_train, y_train)
-    TSFreshClassifier(...)
-    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         "capability:multivariate": True,
         "capability:multithreading": True,
         "classifier_type": "feature",
+        "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(

@@ -6,7 +6,6 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 import numpy as np
 import pytest
-from sklearn import clone
 
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
@@ -93,7 +92,21 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         y_proba = scenario.run(estimator_instance, method_sequence=["predict_proba"])
         assert isinstance(y_proba, np.ndarray)
         assert y_proba.shape == (X_new_instances, n_classes)
-        np.testing.assert_allclose(y_proba.sum(axis=1), 1)
+        np.testing.assert_almost_equal(y_proba.sum(axis=1), 1, decimal=4)
+
+        if estimator_instance.get_tag("capability:train_estimate"):
+            if not hasattr(estimator_instance, "_get_train_probs"):
+                raise ValueError(
+                    "Classifier capability:train_estimate tag is set to "
+                    "true, but no _get_train_probs method is present."
+                )
+
+            X_train = scenario.args["fit"]["X"]
+            train_proba = estimator_instance._get_train_probs(X_train, y_train)
+
+            assert isinstance(y_proba, np.ndarray)
+            assert y_proba.shape == (X_new_instances, n_classes)
+            np.testing.assert_almost_equal(train_proba.sum(axis=1), 1, decimal=4)
 
     def test_classifier_on_unit_test_data(self, estimator_class):
         """Test classifier on unit test data."""
@@ -108,8 +121,8 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(
-            estimator_class.create_test_instance(parameter_set="results_comparison")
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
         )
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
@@ -140,8 +153,8 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             return None
 
         # we only use the first estimator instance for testing
-        estimator_instance = clone(
-            estimator_class.create_test_instance(parameter_set="results_comparison")
+        estimator_instance = estimator_class.create_test_instance(
+            parameter_set="results_comparison"
         )
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():

@@ -4,13 +4,16 @@
 """Implements outlier detection from pyOD."""
 
 import numpy as np
+from sklearn.base import clone
+
 from sktime.annotation.base._base import BaseSeriesAnnotator
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
 import pandas as pd
 
-from sklearn import clone
+_check_soft_dependencies("pyod", severity="warning")
 
 
 class PyODAnnotator(BaseSeriesAnnotator):
@@ -31,6 +34,8 @@ class PyODAnnotator(BaseSeriesAnnotator):
         outlier,
         * If "score", returned values are floats, giving the outlier score.
     """
+
+    _tags = {"python_dependencies": "pyod"}
 
     def __init__(self, estimator, fmt="dense", labels="indicator"):
         self.estimator = estimator  # pyod estimator
@@ -99,3 +104,29 @@ class PyODAnnotator(BaseSeriesAnnotator):
             Y = pd.Series(Y_val_np[Y_loc], index=X.index[Y_loc])
 
         return Y
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+            There are currently no reserved values for annotators.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        _check_soft_dependencies("pyod", severity="error")
+
+        from pyod.models.knn import KNN
+
+        params = {"estimator": KNN()}
+        return params

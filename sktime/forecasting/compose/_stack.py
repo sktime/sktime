@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements forecasters for combining forecasts via stacking."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "indinewton"]
 __all__ = ["StackingForecaster"]
 
 from warnings import warn
@@ -63,16 +63,21 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
     _tags = {
-        "ignores-exogeneous-X": True,
+        "ignores-exogeneous-X": False,
         "requires-fh-in-fit": True,
-        "handles-missing-data": False,
+        "handles-missing-data": True,
         "scitype:y": "univariate",
+        "X-y-must-have-same-index": True,
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
         super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.regressor = regressor
         self.random_state = random_state
+
+        self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
+        self._anytagis_then_set("handles-missing-data", False, True, forecasters)
+        self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
     def _fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -97,24 +102,30 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
-        cv = SingleWindowSplitter(fh=fh.to_relative(self.cutoff))
+        inner_fh = fh.to_relative(self.cutoff)
+        cv = SingleWindowSplitter(fh=inner_fh)
         train_window, test_window = next(cv.split(y))
-        y_fcst = y.iloc[train_window]
-        y_meta = y.iloc[test_window].values
+        y_train = y.iloc[train_window]
+        y_test = y.iloc[test_window]
         if X is not None:
-            X_meta = X.iloc[test_window]
+            X_test = X.iloc[test_window]
+            X_train = X.iloc[train_window]
         else:
-            X_meta = None
+            X_test = None
+            X_train = None
 
         # fit forecasters on training window
-        self._fit_forecasters(forecasters, y_fcst, fh=fh, X=X)
-        X_meta = np.column_stack(self._predict_forecasters(fh=fh, X=X_meta))
+        self._fit_forecasters(forecasters, y_train, fh=inner_fh, X=X_train)
+        y_preds = self._predict_forecasters(fh=inner_fh, X=X_test)
+
+        y_meta = y_test.values
+        X_meta = np.column_stack(y_preds)
 
         # fit final regressor on on validation window
         self.regressor_.fit(X_meta, y_meta)
 
         # refit forecasters on entire training series
-        self._fit_forecasters(forecasters, y, fh=self.fh, X=X)
+        self._fit_forecasters(forecasters, y, fh=fh, X=X)
 
         return self
 
@@ -175,6 +186,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         """
         from sktime.forecasting.naive import NaiveForecaster
 
-        FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+        f1 = NaiveForecaster()
+        f2 = NaiveForecaster(strategy="mean", window_length=3)
+        params = {"forecasters": [("f1", f1), ("f2", f2)]}
+
         return params

@@ -4,33 +4,100 @@
 """Implements simple forecasts based on naive assumptions."""
 
 __all__ = ["NaiveForecaster", "NaiveVariance"]
-__author__ = ["mloning", "Piyush Gade", "Flix6x", "aiwalter", "IlyasMoutawwakil"]
+__author__ = [
+    "mloning",
+    "piyush1729",
+    "sri1419",
+    "Flix6x",
+    "aiwalter",
+    "IlyasMoutawwakil",
+    "fkiraly",
+    "bethrice44",
+]
 
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from sklearn.base import clone
 
+from sktime.datatypes._convert import convert, convert_to
+from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base._base import DEFAULT_ALPHA, BaseForecaster
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
-from sktime.forecasting.compose import ColumnEnsembleForecaster
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_sp
 
 
-class _NaiveForecaster(_BaseWindowForecaster):
-    """Univariate NaiveForecaster."""
+class NaiveForecaster(_BaseWindowForecaster):
+    """Forecast based on naive assumptions about past trends continuing.
+
+    NaiveForecaster is a forecaster that makes forecasts using simple
+    strategies. Two out of three strategies are robust against NaNs. The
+    NaiveForecaster can also be used for multivariate data and it then
+    applies internally the ColumnEnsembleForecaster, so each column
+    is forecasted with the same strategy.
+
+    Internally, this forecaster does the following:
+    - obtains the so-called "last window", a 1D array that denotes the
+      most recent time window that the forecaster is allowed to use
+    - reshapes the last window into a 2D array according to the given
+      seasonal periodicity (prepended with NaN values to make it fit);
+    - make a prediction for each column, using the given strategy:
+      - "last": last non-NaN row
+      - "mean": np.nanmean over rows
+    - tile the predictions using the seasonal periodicity
+
+    Parameters
+    ----------
+    strategy : {"last", "mean", "drift"}, default="last"
+        Strategy used to make forecasts:
+
+        * "last":   (robust against NaN values)
+                    forecast the last value in the
+                    training series when sp is 1.
+                    When sp is not 1,
+                    last value of each season
+                    in the last window will be
+                    forecasted for each season.
+        * "mean":   (robust against NaN values)
+                    forecast the mean of last window
+                    of training series when sp is 1.
+                    When sp is not 1, mean of all values
+                    in a season from last window will be
+                    forecasted for each season.
+        * "drift":  (not robust against NaN values)
+                    forecast by fitting a line between the
+                    first and last point of the window and
+                    extrapolating it into the future.
+
+    sp : int, default=1
+        Seasonal periodicity to use in the seasonal forecasting.
+
+    window_length : int or None, default=None
+        Window length to use in the `mean` strategy. If None, entire training
+            series will be used.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> forecaster = NaiveForecaster(strategy="drift")
+    >>> forecaster.fit(y)
+    NaiveForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    """
 
     _tags = {
+        "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
+        "handles-missing-data": True,
         "scitype:y": "univariate",
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
-        super(_NaiveForecaster, self).__init__()
+        super(NaiveForecaster, self).__init__()
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
@@ -237,103 +304,6 @@ class _NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
 
-
-class NaiveForecaster(BaseForecaster):
-    """Forecast based on naive assumptions about past trends continuing.
-
-    NaiveForecaster is a forecaster that makes forecasts using simple
-    strategies. Two out of three strategies are robust against NaNs. The
-    NaiveForecaster can also be used for multivariate data and it then
-    applies internally the ColumnEnsembleForecaster, so each column
-    is forecasted with the same strategy.
-
-    Internally, this forecaster does the following:
-    - obtains the so-called "last window", a 1D array that denotes the
-      most recent time window that the forecaster is allowed to use
-    - reshapes the last window into a 2D array according to the given
-      seasonal periodicity (prepended with NaN values to make it fit);
-    - make a prediction for each column, using the given strategy:
-      - "last": last non-NaN row
-      - "mean": np.nanmean over rows
-    - tile the predictions using the seasonal periodicity
-
-    Parameters
-    ----------
-    strategy : {"last", "mean", "drift"}, default="last"
-        Strategy used to make forecasts:
-
-        * "last":   (robust against NaN values)
-                    forecast the last value in the
-                    training series when sp is 1.
-                    When sp is not 1,
-                    last value of each season
-                    in the last window will be
-                    forecasted for each season.
-        * "mean":   (robust against NaN values)
-                    forecast the mean of last window
-                    of training series when sp is 1.
-                    When sp is not 1, mean of all values
-                    in a season from last window will be
-                    forecasted for each season.
-        * "drift":  (not robust against NaN values)
-                    forecast by fitting a line between the
-                    first and last point of the window and
-                    extrapolating it into the future.
-
-    sp : int, default=1
-        Seasonal periodicity to use in the seasonal forecasting.
-
-    window_length : int or None, default=None
-        Window length to use in the `mean` strategy. If None, entire training
-            series will be used.
-
-    Examples
-    --------
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> forecaster.fit(y)
-    NaiveForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
-    """
-
-    _tags = {
-        "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
-        "scitype:y": "both",
-        "requires-fh-in-fit": False,
-        "handles-missing-data": True,  # todo: switch to True if GH1367 is fixed
-    }
-
-    def __init__(self, strategy="last", window_length=None, sp=1):
-        self.strategy = strategy
-        self.sp = sp
-        self.window_length = window_length
-        super(NaiveForecaster, self).__init__()
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit to training data.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame
-            Target time series to which to fit the forecaster.
-        fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
-        X : pd.DataFrame, default=None
-            Exogenous variables are ignored.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._forecaster = ColumnEnsembleForecaster(
-            _NaiveForecaster(
-                strategy=self.strategy, sp=self.sp, window_length=self.window_length
-            )
-        )
-        self._forecaster.fit(y=y, X=X, fh=fh)
-
     def _predict(self, fh=None, X=None):
         """Forecast time series at future horizon.
 
@@ -344,32 +314,22 @@ class NaiveForecaster(BaseForecaster):
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         """
-        y_pred = self._forecaster.predict(fh=fh, X=X)
+        y_pred = super(NaiveForecaster, self)._predict(fh=fh, X=X)
+
+        # test_predict_time_index_in_sample_full[ForecastingPipeline-0-int-int-True]
+        #   causes a pd.DataFrame to appear as y_pred, which upsets the next lines
+        #   reasons are unclear, this is coming from the _BaseWindowForecaster
+        # todo: investigate this
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.iloc[:, 0]
 
         # check for in-sample prediction, if first time point needs to be imputed
         if self._y.index[0] in y_pred.index:
-            # fill NaN with next row values
-            y_pred.loc[self._y.index[0]] = y_pred.loc[self._y.index[1]]
+            if y_pred.loc[[self._y.index[0]]].hasnans:
+                # fill NaN with observed values
+                y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
 
         return y_pred
-
-    def _update(self, y, X=None, update_params=True):
-        """Update cutoff value and, optionally, fitted parameters.
-
-        Parameters
-        ----------
-        y : pd.Series, pd.DataFrame, or np.array
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogeneous data
-        update_params : bool, optional (default=True)
-            whether model parameters should be updated
-
-        Returns
-        -------
-        self : reference to self
-        """
-        return self._forecaster.update(y=y, X=X, update_params=update_params)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -391,9 +351,9 @@ class NaiveForecaster(BaseForecaster):
         """
         params_list = [
             {},
-            {"sp": 2},
-            {"strategy": "mean"},
+            {"strategy": "mean", "sp": 2},
             {"strategy": "drift"},
+            {"strategy": "last"},
             {"strategy": "mean", "window_length": 5},
         ]
 
@@ -426,6 +386,8 @@ class NaiveVariance(BaseForecaster):
     ----------
     forecaster : estimator
         Estimator to which probabilistic forecasts are being added
+    initial_window : int, optional, default=1
+        number of minimum initial indices to use for fitting when computing residuals
     verbose : bool, optional, default=False
         whether to print warnings if windows with too few data points occur
 
@@ -448,14 +410,13 @@ class NaiveVariance(BaseForecaster):
         "handles-missing-data": False,
         "ignores-exogeneous-X": False,
         "capability:pred_int": True,
-        # deprecated and likely to be removed in 0.12.0
         "capability:pred_var": True,
-        # deprecated and likely to be removed in 0.12.0
     }
 
-    def __init__(self, forecaster, verbose=False):
+    def __init__(self, forecaster, initial_window=1, verbose=False):
 
         self.forecaster = forecaster
+        self.initial_window = initial_window
         self.verbose = verbose
         super(NaiveVariance, self).__init__()
 
@@ -471,8 +432,16 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X=None, fh=None):
-        self.forecaster_ = clone(self.forecaster)
+
+        self.fh_early_ = fh is not None
+        self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
+
+        if self.fh_early_:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=y, X=X, forecaster=self.forecaster, initial_window=self.initial_window
+            )
+
         return self
 
     def _predict(self, fh, X=None):
@@ -480,6 +449,13 @@ class NaiveVariance(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         self.forecaster_.update(y, X, update_params=update_params)
+        if update_params and self._fh is not None:
+            self.residuals_matrix_ = self._compute_sliding_residuals(
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+            )
         return self
 
     def _predict_quantiles(self, fh, X=None, alpha=0.5):
@@ -507,7 +483,10 @@ class NaiveVariance(BaseForecaster):
                 at quantile probability in second-level col index, for each row index.
         """
         y_pred = self.predict(fh, X)
+        y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         pred_var = self.predict_var(fh, X)
+        pred_var = pred_var[pred_var.columns[0]]
+        pred_var.index = y_pred.index
 
         z_scores = norm.ppf(alpha)
         errors = [pred_var**0.5 * z for z in z_scores]
@@ -516,6 +495,9 @@ class NaiveVariance(BaseForecaster):
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
             pred_quantiles[("Quantiles", a)] = y_pred + error
+
+        fh_absolute = fh.to_absolute(self.cutoff)
+        pred_quantiles.index = fh_absolute
 
         return pred_quantiles
 
@@ -537,37 +519,23 @@ class NaiveVariance(BaseForecaster):
         Returns
         -------
         pred_var :
-            if cov=False, pd.Series with index fh.
+            if cov=False, pd.DataFrame with index fh.
                 a vector of same length as fh with predictive marginal variances;
             if cov=True, pd.DataFrame with index fh and columns fh.
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
-        y_index = self._y.index
+        if self.fh_early_:
+            residuals_matrix = self.residuals_matrix_
+        else:
+            residuals_matrix = self._compute_sliding_residuals(
+                y=self._y,
+                X=self._X,
+                forecaster=self.forecaster,
+                initial_window=self.initial_window,
+            )
+
         fh_relative = fh.to_relative(self.cutoff)
         fh_absolute = fh.to_absolute(self.cutoff)
-
-        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
-        for id in y_index:
-            forecaster = clone(self.forecaster)
-            subset = self._y[:id]  # subset on which we fit
-            try:
-                forecaster.fit(subset)
-            except ValueError:
-                if self.verbose:
-                    warn(
-                        f"Couldn't fit the model on "
-                        f"time series window length {len(subset)}.\n"
-                    )
-                continue
-
-            y_true = self._y[id:]  # subset on which we predict
-            try:
-                residuals_matrix.loc[id] = forecaster.predict_residuals(y_true, self._X)
-            except IndexError:
-                warn(
-                    f"Couldn't predict after fitting on time series of length \
-                     {len(subset)}.\n"
-                )
 
         if cov:
             fh_size = len(fh)
@@ -590,12 +558,61 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            pred_var = pd.Series(
-                variance,
-                index=fh_absolute,
-            )
+            if hasattr(self._y, "columns"):
+                columns = self._y.columns
+                pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute)
+            else:
+                pred_var = pd.DataFrame(variance, index=fh_absolute)
 
         return pred_var
+
+    def _compute_sliding_residuals(self, y, X, forecaster, initial_window):
+        """Compute sliding residuals used in uncertainty estimates.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            sktime compatible time series to use in computing residuals matrix
+        X : pd.DataFrame
+            sktime compatible exogeneous time series to use in forecasts
+        forecaster : sktime compatible forecaster
+            forecaster to use in computing the sliding residuals
+        initial_window : int
+            minimum length of initial window to use in fitting
+
+        Returns
+        -------
+        residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
+            [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
+            using a clone of the forecaster passed through the forecaster arg
+        """
+        y = convert_to(y, "pd.Series")
+
+        y_index = y.index[initial_window:]
+        residuals_matrix = pd.DataFrame(columns=y_index, index=y_index, dtype="float")
+
+        for id in y_index:
+            forecaster = forecaster.clone()
+            y_train = get_slice(y, start=None, end=id)  # subset on which we fit
+            y_test = get_slice(y, start=id, end=None)  # subset on which we predict
+            try:
+                forecaster.fit(y_train, fh=y_test.index)
+            except ValueError:
+                if self.verbose:
+                    warn(
+                        f"Couldn't fit the model on "
+                        f"time series window length {len(y_train)}.\n"
+                    )
+                continue
+            try:
+                residuals_matrix.loc[id] = forecaster.predict_residuals(y_test, X)
+            except IndexError:
+                warn(
+                    f"Couldn't predict after fitting on time series of length \
+                     {len(y_train)}.\n"
+                )
+
+        return residuals_matrix
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
