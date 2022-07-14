@@ -136,6 +136,16 @@ def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     y_pred_index.equals(expected)
 
 
+def _assert_correct_columns(y_pred, y_train):
+    """Check that forecast object has right column names."""
+    if isinstance(y_pred, pd.DataFrame) and isinstance(y_train, pd.DataFrame):
+        msg = (
+            "forecast must have same columns index as past data, "
+            f"expected {y_train.columns} but found {y_pred.columns}"
+        )
+        assert (y_pred.columns == y_train.columns).all(), msg
+
+
 def _make_fh(cutoff, steps, fh_type, is_relative):
     """Construct forecasting horizons for testing."""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP

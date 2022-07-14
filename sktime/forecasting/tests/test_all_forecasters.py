@@ -30,6 +30,7 @@ from sktime.forecasting.tests._config import (
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.forecasting import (
+    _assert_correct_columns,
     _assert_correct_pred_time_index,
     _get_expected_index_for_update_predict,
     _get_n_columns,
@@ -224,6 +225,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             estimator_instance.fit(y_train, fh=fh)
             y_pred = estimator_instance.predict()
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh=fh_int)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
 
@@ -285,7 +287,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Some estimators may not support all time index types and fh types, hence we
         # need to catch NotImplementedErrors.
         y = _make_series(n_columns=n_columns, index_type=index_type)
-        cutoff = y.index[len(y) // 2]
+        cutoff = get_cutoff(y.iloc[: len(y) // 2], return_index=True)
         fh = _make_fh(cutoff, fh_int_oos, fh_type, is_relative)
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
@@ -295,6 +297,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_pred = estimator_instance.predict(X=X_test)
             cutoff = get_cutoff(y_train, return_index=True)
             _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
+            _assert_correct_columns(y_pred, y_train)
         except NotImplementedError:
             pass
 
@@ -519,6 +522,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         )
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh_int_oos)
+        _assert_correct_columns(y_pred, y_train)
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]

@@ -13,7 +13,6 @@ import numpy as np
 from sktime._contrib.vector_classifiers._rotation_forest import RotationForest
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
-from sktime.utils.validation._dependencies import _check_python_version
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -67,6 +66,7 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "classifier_type": "feature",
         "python_version": "<3.10",
+        "python_dependencies": "tsfresh",
     }
 
     def __init__(
@@ -79,8 +79,6 @@ class FreshPRINCE(BaseClassifier):
         chunksize=None,
         random_state=None,
     ):
-        _check_python_version(self, "tsfresh", severity="error")
-
         self.default_fc_parameters = default_fc_parameters
         self.n_estimators = n_estimators
 
