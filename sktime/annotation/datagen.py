@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Union
 import numpy as np
 from sktime.base import BaseObject
 from sklearn.utils.validation import check_random_state
@@ -70,9 +70,8 @@ def mean_shift(
     means: npt.ArrayLike,
     lengths: npt.ArrayLike,
     sds: Union[npt.ArrayLike, float] = 1.0,
-    repeated_labels: bool = True,
     random_state: Union[int, np.random.RandomState] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> npt.ArrayLike:
     """
     Generates a series composed of segments, where each segment has length specified
     in ``lengths`` and data sampled from a normal distribution with a mean from ``means``
@@ -98,8 +97,6 @@ def mean_shift(
     -------
     data : np.array
         univariate time series as np.array
-    labels : np.array
-        integer encoded array of labels, same length as data
     """
 
     rng = check_random_state(random_state)
@@ -114,15 +111,30 @@ def mean_shift(
         rng.normal(loc=mean, scale=sd, size=[length])
         for mean, length, sd in zip(means, lengths, sds)
     ]
-    series = np.concatenate(tuple(segments_data))
+    return np.concatenate(tuple(segments_data))
 
+
+def label_mean_shift(
+    means: npt.ArrayLike,
+    lengths: npt.ArrayLike,
+    sds: Union[npt.ArrayLike, float] = 1.0,
+    repeated_labels: bool = True,
+) -> npt.ArrayLike:
+    """
+    Generate labels for a series composed of segments.
+    
+    Returns
+    -------
+    labels : np.array
+        integer encoded array of labels, same length as data
+    """
+    if isinstance(sds, float):
+        sds = np.repeat(sds, len(means))
     if repeated_labels:
         unique_labels = labels_with_repeats(means, sds)
     else:
         unique_labels = range(len(lengths))
-    labels = np.repeat(unique_labels, lengths)
-
-    return series, labels
+    return np.repeat(unique_labels, lengths)
 
 
 # this data has no autocorrelation concerns
