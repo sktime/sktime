@@ -322,7 +322,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         Xt = pd.DataFrame(Xt)
         Xt.columns = columns
-        Xt = Xt.drop(columns=X.columns[drop_list])
+        Xt = Xt.drop(columns=Xt.columns[drop_list])
 
         return Xt
 
